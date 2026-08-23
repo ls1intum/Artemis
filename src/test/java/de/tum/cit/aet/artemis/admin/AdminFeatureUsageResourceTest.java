@@ -20,6 +20,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import de.tum.cit.aet.artemis.admin.dto.FeatureAdoptionDTO;
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageActiveDaysDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageEntryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageOverviewDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageTrendPointDTO;
@@ -285,6 +286,46 @@ class AdminFeatureUsageResourceTest extends AbstractSpringIntegrationIndependent
         // 10 from one endpoint and 7 from the other, on the same day
         assertThat(trend.getLast().usageDay()).isEqualTo(today);
         assertThat(trend.getLast().callCount()).isEqualTo(17);
+    }
+
+    /**
+     * The overview can be narrowed to a caller role, and a chart opened on such a filtered row has to answer the same
+     * question. Summing every role in the trend would silently widen the numbers the moment the chart is opened.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldRestrictTheTrendToTheRequestedRole() throws Exception {
+        // the fixture holds a STUDENT bucket today and an INSTRUCTOR bucket two days ago, both on this feature
+        List<FeatureUsageTrendPointDTO> studentOnly = request.get("/api/admin/feature-usage/trend?featureIds=" + usedFeature.getId() + "&days=7&callerRole=STUDENT", HttpStatus.OK,
+                new TypeReference<>() {
+                });
+
+        assertThat(studentOnly).hasSize(1);
+        assertThat(studentOnly.getFirst().usageDay()).isEqualTo(LocalDate.now(ZoneOffset.UTC));
+        assertThat(studentOnly.getFirst().callCount()).isEqualTo(10);
+
+        List<FeatureUsageTrendPointDTO> instructorOnly = request.get("/api/admin/feature-usage/trend?featureIds=" + usedFeature.getId() + "&days=7&callerRole=INSTRUCTOR",
+                HttpStatus.OK, new TypeReference<>() {
+                });
+
+        assertThat(instructorOnly).hasSize(1);
+        assertThat(instructorOnly.getFirst().callCount()).isEqualTo(5);
+    }
+
+    /**
+     * The table groups the endpoints behind one label into a single row, and its active-day count cannot be derived from the
+     * per-endpoint counts: summing double counts a shared day, and taking the largest misses the days only one endpoint was
+     * used on. The grouped count therefore comes from the database.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldReportTheDistinctActiveDaysPerGroupedFeature() throws Exception {
+        FeatureUsageOverviewDTO overview = getOverview(7, null);
+
+        assertThat(overview.activeDaysPerFeature()).isNotEmpty();
+        var usedFeatureDays = overview.activeDaysPerFeature().stream().filter(entry -> "configuration/used-in-test".equals(entry.featureKey())).findFirst();
+        // two buckets on two different days within the window, so the union is two days
+        assertThat(usedFeatureDays).isPresent().get().extracting(FeatureUsageActiveDaysDTO::activeDays).isEqualTo(2L);
     }
 
     @Test

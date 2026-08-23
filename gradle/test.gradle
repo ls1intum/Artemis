@@ -31,6 +31,12 @@ tasks.withType(Test).configureEach {
     // ./gradlew test --tests FeatureUsageAnnotationTest -DupdateFeatureUsageCatalogue=true
     systemProperty 'updateFeatureUsageCatalogue', System.getProperty('updateFeatureUsageCatalogue', 'false')
 
+    // Opt-in performance benchmarks are skipped unless explicitly requested, because they are far too slow for CI.
+    // Enable with: ./gradlew test --tests "*BenchmarkTest" -Dartemis.benchmark=true -x webapp
+    if (System.getProperty('artemis.benchmark') != null) {
+        systemProperty 'artemis.benchmark', System.getProperty('artemis.benchmark')
+    }
+
     // Pin the Ryuk container image version (Testcontainers reads this env var)
     environment 'TESTCONTAINERS_RYUK_CONTAINER_IMAGE', "testcontainers/ryuk:${findProperty('ryuk_version')}"
 

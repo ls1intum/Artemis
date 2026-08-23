@@ -145,11 +145,48 @@ describe('FeatureUsageComponent', () => {
         // 400ms over 40 calls
         expect(row!.meanDurationMs).toBe(10);
         expect(row!.maxDurationMs).toBe(80);
-        // days cannot be summed across endpoints, the largest is the correct lower bound
+        // no activeDaysPerFeature in this fixture, so the row falls back to the per-endpoint lower bound
         expect(row!.activeDays).toBe(5);
         expect(row!.lastUsedDay).toBe('2026-08-05');
         // both endpoints stay addressable, so the chart can cover the whole feature
         expect(row!.featureIds).toEqual([1, 2]);
+    });
+
+    it('should use the exact distinct-day union the server reports for a grouped feature', () => {
+        // The two endpoints behind the label were used on disjoint days: 3 and 5 with no overlap is 8 active days for the
+        // feature, which neither summing nor maxing the per-endpoint counts can produce from the entries alone.
+        vi.spyOn(featureUsageService, 'getOverview').mockReturnValue(
+            of({
+                ...overview,
+                activeDaysPerFeature: [{ module: 'programming', featureKey: 'configuration/static-code-analysis', activeDays: 8 }],
+            }),
+        );
+        component.ngOnInit();
+
+        const row = component.allRows().find((candidate) => candidate.feature === 'static-code-analysis');
+        expect(row!.activeDays).toBe(8);
+    });
+
+    it('should keep the caller role filter when charting a row', () => {
+        component.ngOnInit();
+        const trendSpy = vi.spyOn(featureUsageService, 'getTrend').mockReturnValue(of([{ usageDay: '2026-08-05', callCount: 10 }]));
+
+        component.onCallerRoleChanged('STUDENT');
+        const row = component.allRows().find((candidate) => candidate.feature === 'static-code-analysis');
+        component.showTrend(row!);
+
+        // otherwise opening a chart on a role-filtered table silently widens it back to every caller
+        expect(trendSpy).toHaveBeenCalledWith([1, 2], expect.any(Number), 'STUDENT');
+    });
+
+    it('should chart every caller when no role is selected', () => {
+        component.ngOnInit();
+        const trendSpy = vi.spyOn(featureUsageService, 'getTrend').mockReturnValue(of([{ usageDay: '2026-08-05', callCount: 10 }]));
+
+        const row = component.allRows().find((candidate) => candidate.feature === 'static-code-analysis');
+        component.showTrend(row!);
+
+        expect(trendSpy).toHaveBeenCalledWith([1, 2], expect.any(Number), undefined);
     });
 
     it('should count the headline numbers in features rather than in endpoints', () => {
@@ -304,7 +341,7 @@ describe('FeatureUsageComponent', () => {
 
         component.showTrend(component.allRows().find((row) => row.feature === 'push/assignment')!);
 
-        expect(trendSpy).toHaveBeenCalledWith([3], 30);
+        expect(trendSpy).toHaveBeenCalledWith([3], 30, undefined);
         expect(component.trendPoints()).toHaveLength(1);
         expect(component.trendChartData()).toBeDefined();
     });
@@ -316,7 +353,7 @@ describe('FeatureUsageComponent', () => {
         component.showTrend(component.allRows().find((row) => row.feature === 'static-code-analysis')!);
 
         // charting one of the two endpoints would report a fraction of the feature's usage as the feature's usage
-        expect(trendSpy).toHaveBeenCalledWith([1, 2], 30);
+        expect(trendSpy).toHaveBeenCalledWith([1, 2], 30, undefined);
         expect(component.selectedTrendRow()?.feature).toBe('static-code-analysis');
     });
 

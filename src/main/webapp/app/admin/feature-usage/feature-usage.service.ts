@@ -25,12 +25,14 @@ export class FeatureUsageService {
     /**
      * Retrieves the daily usage of a single feature. Days without usage are absent from the response.
      *
-     * @param featureId the feature to chart
+     * @param featureIds the endpoints behind the feature to chart
      * @param days length of the window in days
+     * @param callerRole restrict the totals to callers whose highest global role is this one; omit for every caller.
+     * Passed through so that charting a role-filtered row keeps that filter instead of silently widening to all callers.
      */
-    getTrend(featureIds: number[], days: number): Observable<FeatureUsageTrendPoint[]> {
+    getTrend(featureIds: number[], days: number, callerRole?: string): Observable<FeatureUsageTrendPoint[]> {
         // repeated rather than joined, because a labelled feature covers several endpoints and the chart sums all of them
-        return this.http.get<FeatureUsageTrendPoint[]>(`${this.resourceUrl}/trend`, { params: { featureIds, days } });
+        return this.http.get<FeatureUsageTrendPoint[]>(`${this.resourceUrl}/trend`, { params: callerRole ? { featureIds, days, callerRole } : { featureIds, days } });
     }
 
     /**

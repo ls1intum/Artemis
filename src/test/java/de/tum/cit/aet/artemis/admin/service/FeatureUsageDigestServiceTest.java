@@ -203,7 +203,7 @@ class FeatureUsageDigestServiceTest {
         long retired = features.stream().filter(FeatureUsageEntryDTO::retired).count();
         long total = features.stream().mapToLong(FeatureUsageEntryDTO::callCount).sum();
         when(queryService.getOverview(anyInt(), any()))
-                .thenReturn(new FeatureUsageOverviewDTO(7, FROM, null, features.size(), unused, retired, total, Instant.now(), Instant.now(), features, List.of()));
+                .thenReturn(new FeatureUsageOverviewDTO(7, FROM, null, features.size(), unused, retired, total, Instant.now(), Instant.now(), features, List.of(), List.of()));
     }
 
     private static FeatureUsageEntryDTO labelledEntry(String module, String featureLabel, long callCount, long errorCount, boolean retired) {

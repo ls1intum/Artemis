@@ -79,8 +79,14 @@ public class FeatureUsageQueryService {
         long unusedFeatures = annotated.stream().filter(feature -> feature.callCount() == 0 && !feature.retired()).count();
         long totalCalls = annotated.stream().mapToLong(FeatureUsageEntryDTO::callCount).sum();
 
+        // Grouped per label in the database: the client cannot derive this from the per-endpoint counts without either
+        // double counting a shared day or losing the days only one endpoint was used on.
+        var activeDaysPerFeature = callerRole == null ? featureUsageStatisticsRepository.findActiveDaysPerFeatureSince(from)
+                : featureUsageStatisticsRepository.findActiveDaysPerFeatureSinceForRole(from, callerRole);
+
         return new FeatureUsageOverviewDTO(days, from, callerRole, annotated.size(), unusedFeatures, retiredFeatures, totalCalls, inventoryRefreshedAt,
-                featureUsageStatisticsRepository.findRecordingSince().orElse(null), annotated, featureUsageStatisticsRepository.findRoleDistributionSince(from));
+                featureUsageStatisticsRepository.findRecordingSince().orElse(null), annotated, featureUsageStatisticsRepository.findRoleDistributionSince(from),
+                activeDaysPerFeature);
     }
 
     /**
@@ -97,13 +103,19 @@ public class FeatureUsageQueryService {
      *
      * @param featureIds the inventory rows behind the feature, summed per day
      * @param days       the length of the window
+     * @param callerRole optional filter, restricting the totals to callers whose highest global role is this one
      * @return the daily totals in chronological order, without the days that saw no usage
      */
-    public List<FeatureUsageTrendPointDTO> getTrend(Collection<Long> featureIds, int days) {
+    public List<FeatureUsageTrendPointDTO> getTrend(Collection<Long> featureIds, int days, @Nullable Role callerRole) {
         if (featureIds.isEmpty()) {
             return List.of();
         }
-        return featureUsageStatisticsRepository.findDailyUsageSince(featureIds, LocalDate.now(ZoneOffset.UTC).minusDays(days - 1L));
+        LocalDate from = LocalDate.now(ZoneOffset.UTC).minusDays(days - 1L);
+        // Mirrors getOverview: a chart opened on a role-filtered table has to answer the same question the table does.
+        if (callerRole != null) {
+            return featureUsageStatisticsRepository.findDailyUsageSinceForRole(featureIds, from, callerRole);
+        }
+        return featureUsageStatisticsRepository.findDailyUsageSince(featureIds, from);
     }
 
     /**

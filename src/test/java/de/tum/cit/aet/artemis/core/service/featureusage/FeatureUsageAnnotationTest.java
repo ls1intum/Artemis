@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -43,6 +44,12 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
 
     private static final Path CATALOGUE_DOCUMENT = Path.of("documentation", "docs", "developer", "feature-usage-catalogue.mdx");
 
+    /**
+     * Separator for the flattened {@code module/area/feature} map key. A control character rather than a space or a
+     * slash, because all three parts may contain either, and it is written as an escape so it stays visible in source.
+     */
+    private static final String KEY_SEPARATOR = "\u001F";
+
     /** The path prefixes WebConfigurer registers the feature usage interceptor for. Keep in step with that method. */
     private static final Set<String> INTERCEPTED_PREFIXES = Set.of("/api/", "/.well-known/");
 
@@ -58,13 +65,31 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
                 instead of a named feature. Annotate each one with the "area/feature" it belongs to.""").isEmpty();
     }
 
+    /**
+     * Covers method-level overrides as well as controller-level labels. The interceptor resolves the annotation on the
+     * handler method before falling back to the class, so a malformed override would reach the inventory; validating only
+     * the class level would let it through.
+     */
     @Test
     void everyFeatureLabelShouldBeAnAreaAndAFeatureInKebabCase() {
-        Set<String> malformed = controllers().stream().map(FeatureUsageAnnotationTest::labelOf).filter(java.util.Objects::nonNull)
-                .filter(label -> !label.matches("[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*")).collect(Collectors.toCollection(TreeSet::new));
+        Set<String> malformed = effectiveLabels().stream().filter(label -> !label.matches("[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*"))
+                .collect(Collectors.toCollection(TreeSet::new));
 
         // the admin page splits the label on the slash to build the tree, so exactly one level of nesting is expected
         assertThat(malformed).as("@FeatureUsage values must be \"area/feature\" in kebab-case").isEmpty();
+    }
+
+    /**
+     * A method-level override names a feature of its own, so it belongs in the catalogue: that document is the review
+     * surface for the taxonomy, and a feature tracked at runtime but missing from it cannot be reviewed.
+     */
+    @Test
+    void theCatalogueShouldContainMethodLevelOverrides() {
+        assertThat(effectiveLabels()).as("method-level @FeatureUsage overrides are part of the taxonomy").contains("configuration/re-evaluate-results");
+
+        Set<String> configurationFeatures = taxonomy().getOrDefault("programming", Map.of()).getOrDefault("configuration", Set.of());
+        assertThat(configurationFeatures).as("the catalogue lists the method-level override configuration/re-evaluate-results")
+                .anyMatch(entry -> entry.contains("re-evaluate-results"));
     }
 
     /**
@@ -166,17 +191,20 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
         Map<String, Map<String, Set<String>>> taxonomy = new TreeMap<>();
         Map<String, Set<String>> controllersByModuleAreaFeature = new TreeMap<>();
         for (JavaClass controller : controllers()) {
-            String label = labelOf(controller);
-            if (label == null || !label.contains("/")) {
-                continue;
-            }
             String module = moduleOf(controller);
-            String area = label.substring(0, label.indexOf('/'));
-            String feature = label.substring(label.indexOf('/') + 1);
-            controllersByModuleAreaFeature.computeIfAbsent(module + ' ' + area + ' ' + feature, key -> new TreeSet<>()).add(controller.getSimpleName());
+            // A method-level override is a separate feature at runtime, so it is listed beside the controller's own label
+            // rather than folded into it.
+            for (String label : labelsOf(controller)) {
+                if (!label.contains("/")) {
+                    continue;
+                }
+                String area = label.substring(0, label.indexOf('/'));
+                String feature = label.substring(label.indexOf('/') + 1);
+                controllersByModuleAreaFeature.computeIfAbsent(module + KEY_SEPARATOR + area + KEY_SEPARATOR + feature, key -> new TreeSet<>()).add(controller.getSimpleName());
+            }
         }
         controllersByModuleAreaFeature.forEach((key, controllerNames) -> {
-            String[] parts = key.split(" ");
+            String[] parts = key.split(KEY_SEPARATOR);
             taxonomy.computeIfAbsent(parts[0], module -> new TreeMap<>()).computeIfAbsent(parts[1], area -> new TreeSet<>())
                     .add("**%s** (%s)".formatted(parts[2], controllerNames.stream().map(name -> '`' + name + '`').collect(Collectors.joining(", "))));
         });
@@ -202,6 +230,31 @@ class FeatureUsageAnnotationTest extends AbstractArchitectureTest {
 
     private static String labelOf(JavaClass controller) {
         return controller.tryGetAnnotationOfType(FeatureUsage.class).map(FeatureUsage::value).orElse(null);
+    }
+
+    /**
+     * The {@code @FeatureUsage} values declared on a controller's handler methods. The interceptor prefers the method
+     * annotation over the class one, so each of these is a feature in its own right rather than a variant of the
+     * controller's label.
+     */
+    private static Set<String> methodLabelsOf(JavaClass controller) {
+        return controller.getMethods().stream().map(method -> method.tryGetAnnotationOfType(FeatureUsage.class).map(FeatureUsage::value).orElse(null)).filter(Objects::nonNull)
+                .collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    /** Every label the interceptor can record: the controller labels plus the method-level overrides. */
+    private Set<String> effectiveLabels() {
+        return controllers().stream().flatMap(controller -> labelsOf(controller).stream()).collect(Collectors.toCollection(TreeSet::new));
+    }
+
+    /** The labels one controller contributes: its own, when annotated, and every method-level override it declares. */
+    private static Set<String> labelsOf(JavaClass controller) {
+        Set<String> labels = new TreeSet<>(methodLabelsOf(controller));
+        String classLabel = labelOf(controller);
+        if (classLabel != null) {
+            labels.add(classLabel);
+        }
+        return labels;
     }
 
     private Set<JavaClass> controllers() {

@@ -5,6 +5,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +38,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupImportResultDTO;
@@ -44,7 +47,9 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamImportService;
+import de.tum.cit.aet.artemis.exam.service.ExerciseGroupService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 
 /**
@@ -78,8 +83,13 @@ public class ExerciseGroupResource {
 
     private final ExamImportService examImportService;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExerciseGroupService exerciseGroupService;
+
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
-            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService) {
+            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService,
+            ExerciseRepository exerciseRepository, ExerciseGroupService exerciseGroupService) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
@@ -87,6 +97,8 @@ public class ExerciseGroupResource {
         this.exerciseDeletionService = exerciseDeletionService;
         this.auditEventRepository = auditEventRepository;
         this.examImportService = examImportService;
+        this.exerciseRepository = exerciseRepository;
+        this.exerciseGroupService = exerciseGroupService;
     }
 
     /**
@@ -161,6 +173,36 @@ public class ExerciseGroupResource {
 
         ExerciseGroup result = exerciseGroupRepository.save(exerciseGroup);
         return ResponseEntity.ok(ExerciseGroupDTO.of(result));
+    }
+
+    /**
+     * PUT /courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group : Move an exam exercise into a
+     * different exercise group of the same exam.
+     * <p>
+     * Blocked once a student exam exists: generation has already picked one exercise per group, so a later move would
+     * desync those selections and the exam's point totals.
+     *
+     * @param courseId      the course to which the exam belongs to
+     * @param examId        the exam to which the exercise and both exercise groups belong to
+     * @param exerciseId    the id of the exercise to move
+     * @param assignmentDTO the target exercise group
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Void> moveExerciseToGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseId,
+            @Valid @RequestBody ExamExerciseGroupAssignmentDTO assignmentDTO) {
+        log.debug("REST request to move exercise {} in exam {} to exercise group {}", exerciseId, examId, assignmentDTO.exerciseGroupId());
+
+        ExerciseGroup targetGroup = exerciseGroupRepository.findByIdElseThrow(assignmentDTO.exerciseGroupId());
+        examAccessService.checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, courseId, examId, targetGroup);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.getExam() == null || !examId.equals(exercise.getExam().getId())) {
+            throw new BadRequestAlertException("The exercise does not belong to this exam", ENTITY_NAME, "examIdMismatch");
+        }
+        exerciseGroupService.moveExerciseToGroup(examId, exerciseId, targetGroup.getId());
+        return ResponseEntity.ok().build();
     }
 
     /**

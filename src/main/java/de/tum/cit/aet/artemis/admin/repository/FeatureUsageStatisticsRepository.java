@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.admin.dto.FeatureUsageActiveDaysDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageEntryDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageModuleCallsDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageRoleShareDTO;
@@ -93,6 +94,45 @@ public interface FeatureUsageStatisticsRepository extends ArtemisJpaRepository<T
             GROUP BY feature.id, feature.featureKind, feature.module, feature.identifier, feature.featureLabel, feature.lastRegisteredAt
             """)
     List<FeatureUsageEntryDTO> findUsageSinceForRole(@Param("from") LocalDate from, @Param("callerRole") Role callerRole);
+
+    /**
+     * The distinct days each logical feature was used on, grouped by the key the overview table groups its rows by.
+     * <p>
+     * The per-endpoint {@code activeDays} in {@link FeatureUsageEntryDTO} cannot be combined into this client-side:
+     * summing double counts a day on which two endpoints behind one label were both used, and taking the largest
+     * undercounts when they were used on different days. Only a {@code COUNT(DISTINCT)} over the whole label answers it.
+     *
+     * @param from the first day to include
+     * @return one entry per module and feature key that saw any usage in the window
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.admin.dto.FeatureUsageActiveDaysDTO(
+                feature.module,
+                COALESCE(feature.featureLabel, feature.identifier),
+                COUNT(DISTINCT bucket.usageDay))
+            FROM TrackedFeature feature
+                JOIN FeatureUsageDaily bucket ON bucket.featureId = feature.id AND bucket.usageDay >= :from
+            GROUP BY feature.module, COALESCE(feature.featureLabel, feature.identifier)
+            """)
+    List<FeatureUsageActiveDaysDTO> findActiveDaysPerFeatureSince(@Param("from") LocalDate from);
+
+    /**
+     * The distinct days each logical feature was used on, restricted to one caller role.
+     *
+     * @param from       the first day to include
+     * @param callerRole the role to restrict the days to
+     * @return one entry per module and feature key that saw usage by this role in the window
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.admin.dto.FeatureUsageActiveDaysDTO(
+                feature.module,
+                COALESCE(feature.featureLabel, feature.identifier),
+                COUNT(DISTINCT bucket.usageDay))
+            FROM TrackedFeature feature
+                JOIN FeatureUsageDaily bucket ON bucket.featureId = feature.id AND bucket.usageDay >= :from AND bucket.callerRole = :callerRole
+            GROUP BY feature.module, COALESCE(feature.featureLabel, feature.identifier)
+            """)
+    List<FeatureUsageActiveDaysDTO> findActiveDaysPerFeatureSinceForRole(@Param("from") LocalDate from, @Param("callerRole") Role callerRole);
 
     /**
      * The most recent time any node reported its endpoints, i.e. the point the inventory was last confirmed against
@@ -182,4 +222,27 @@ public interface FeatureUsageStatisticsRepository extends ArtemisJpaRepository<T
             ORDER BY bucket.usageDay ASC
             """)
     List<FeatureUsageTrendPointDTO> findDailyUsageSince(@Param("featureIds") Collection<Long> featureIds, @Param("from") LocalDate from);
+
+    /**
+     * Returns the daily calls of a single feature, restricted to one caller role.
+     * <p>
+     * The overview can be narrowed to a role, and the chart has to answer the same question: summing every role here
+     * would silently widen the numbers the moment a chart is opened on a filtered table.
+     *
+     * @param featureIds the inventory rows to chart, summed per day
+     * @param from       the first day to include
+     * @param callerRole the role to restrict the totals to
+     * @return the daily totals in chronological order
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.admin.dto.FeatureUsageTrendPointDTO(bucket.usageDay, SUM(bucket.callCount))
+            FROM FeatureUsageDaily bucket
+            WHERE bucket.featureId IN :featureIds
+                AND bucket.usageDay >= :from
+                AND bucket.callerRole = :callerRole
+            GROUP BY bucket.usageDay
+            ORDER BY bucket.usageDay ASC
+            """)
+    List<FeatureUsageTrendPointDTO> findDailyUsageSinceForRole(@Param("featureIds") Collection<Long> featureIds, @Param("from") LocalDate from,
+            @Param("callerRole") Role callerRole);
 }

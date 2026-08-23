@@ -28,8 +28,12 @@ import de.tum.cit.aet.artemis.core.security.Role;
  *                                 been recording for a week.
  * @param features             one entry per feature, including the unused ones
  * @param roleDistribution     calls per caller role over the whole window, never filtered, so it stays comparable
+ * @param activeDaysPerFeature the exact distinct-day count per logical feature. The table groups endpoints into one row
+ *                                 per label, and neither summing nor maxing the per-endpoint counts gives the right
+ *                                 answer, so the grouped count is computed in the database and looked up by row key.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FeatureUsageOverviewDTO(int days, LocalDate from, @Nullable Role callerRole, long trackedFeatures, long unusedFeatures, long retiredFeatures, long totalCalls,
-        Instant inventoryRefreshedAt, @Nullable Instant recordingSince, List<FeatureUsageEntryDTO> features, List<FeatureUsageRoleShareDTO> roleDistribution) {
+        Instant inventoryRefreshedAt, @Nullable Instant recordingSince, List<FeatureUsageEntryDTO> features, List<FeatureUsageRoleShareDTO> roleDistribution,
+        List<FeatureUsageActiveDaysDTO> activeDaysPerFeature) {
 }

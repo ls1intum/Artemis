@@ -3,10 +3,17 @@ import { admin } from '../support/users';
 import { Page, expect } from '@playwright/test';
 import { Commands } from '../support/commands';
 
+// Exactly one of the two distributed data backends contributes a health indicator, decided by
+// artemis.distributed-data.provider. Asserting on the one that is not configured would fail on a perfectly healthy
+// server, so the runner tells us which one to expect.
+const distributedDataProvider = (process.env.DISTRIBUTED_DATA_PROVIDER ?? 'hazelcast').toLowerCase();
+const distributedDataHealthCheck =
+    distributedDataProvider === 'redis' ? { selector: '#redis', name: 'redis', expectedStatus: 'UP' } : { selector: '#hazelcast', name: 'hazelcast', expectedStatus: 'UP' };
+
 const healthChecks = [
     { selector: '#continuousIntegrationServer', name: 'continuous integration server', expectedStatus: 'UP' },
     { selector: '#db', name: 'db', expectedStatus: 'UP' },
-    { selector: '#hazelcast', name: 'hazelcast', expectedStatus: 'UP' },
+    distributedDataHealthCheck,
     { selector: '#ping', name: 'ping', expectedStatus: 'UP' },
     { selector: '#readinessState', name: 'readiness state', expectedStatus: 'UP' },
     { selector: '#websocketBroker', name: 'websocket broker', expectedStatus: 'UP' },

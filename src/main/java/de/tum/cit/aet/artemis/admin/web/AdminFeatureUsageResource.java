@@ -82,16 +82,19 @@ public class AdminFeatureUsageResource {
      *
      * @param featureIds the inventory rows behind the feature, at most {@value #MAX_TREND_FEATURE_IDS}
      * @param days       the length of the window, one of 7, 30, 90 or 180
+     * @param callerRole optional filter, restricting the totals to callers whose highest global role is this one. Passed
+     *                       through from the overview, so that charting a role-filtered row keeps the same filter.
      * @return the ResponseEntity with status 200 (OK) and the daily totals in the body
      */
     @GetMapping("feature-usage/trend")
-    public ResponseEntity<List<FeatureUsageTrendPointDTO>> getFeatureUsageTrend(@RequestParam List<Long> featureIds, @RequestParam(defaultValue = "30") int days) {
-        log.debug("REST request to get the usage trend of {} features over the last {} days", featureIds.size(), days);
+    public ResponseEntity<List<FeatureUsageTrendPointDTO>> getFeatureUsageTrend(@RequestParam List<Long> featureIds, @RequestParam(defaultValue = "30") int days,
+            @RequestParam(required = false) @Nullable Role callerRole) {
+        log.debug("REST request to get the usage trend of {} features over the last {} days for role {}", featureIds.size(), days, callerRole);
         if (featureIds.size() > MAX_TREND_FEATURE_IDS) {
             // the largest labelled feature covers a few dozen endpoints, so anything beyond this is not a real chart request
             throw new BadRequestAlertException("At most " + MAX_TREND_FEATURE_IDS + " features can be charted at once", ENTITY_NAME, "tooManyFeatures");
         }
-        return ResponseEntity.ok(featureUsageQueryService.getTrend(featureIds, validateWindow(days)));
+        return ResponseEntity.ok(featureUsageQueryService.getTrend(featureIds, validateWindow(days), callerRole));
     }
 
     /**

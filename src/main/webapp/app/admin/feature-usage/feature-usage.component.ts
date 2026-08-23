@@ -29,6 +29,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ChartColorService } from 'app/shared-ui/chart/chart-color.service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -147,7 +148,10 @@ export class FeatureUsageComponent implements OnInit {
                 rowsByKey.set(key, toRow(key, entry, labelled));
             }
         }
-        return [...rowsByKey.values()].map(finalizeDerivedValues);
+        // The server counts distinct days per grouped feature; only fall back to the per-endpoint lower bound computed in
+        // mergeInto when it did not report one (nothing used in the window, so the row is at zero anyway).
+        const exactActiveDays = new Map((this.overview()?.activeDaysPerFeature ?? []).map((entry) => [`${entry.module}/${entry.featureKey}`, entry.activeDays]));
+        return [...rowsByKey.values()].map((row) => finalizeDerivedValues(cloneWith(row, { activeDays: exactActiveDays.get(row.key) ?? row.activeDays })));
     });
 
     /**
@@ -206,7 +210,7 @@ export class FeatureUsageComponent implements OnInit {
         const visit = (nodes: FeatureTreeNode[]) => {
             for (const node of nodes) {
                 const isExpanded = expanded.has(node.key);
-                rows.push({ ...node, hasChildren: node.children.length > 0, expanded: isExpanded, sharePercent: total ? (node.callCount / total) * 100 : 0 });
+                rows.push(cloneWith(node, { hasChildren: node.children.length > 0, expanded: isExpanded, sharePercent: total ? (node.callCount / total) * 100 : 0 }));
                 if (isExpanded) {
                     visit(node.children);
                 }
@@ -300,7 +304,8 @@ export class FeatureUsageComponent implements OnInit {
         }
         this.selectedTrendRow.set(row);
         this.trendPoints.set(undefined);
-        this.featureUsageService.getTrend(row.featureIds, this.selectedWindow()).subscribe({
+        const callerRole = this.selectedCallerRole();
+        this.featureUsageService.getTrend(row.featureIds, this.selectedWindow(), callerRole === ALL_ROLES ? undefined : callerRole).subscribe({
             next: (points) => this.trendPoints.set(points),
             error: (error) => this.alertService.error(error.message),
         });
@@ -416,8 +421,9 @@ function mergeInto(row: FeatureUsageRow, entry: FeatureUsageEntry): void {
     row.errorCount += entry.errorCount ?? 0;
     row.durationSumMs += entry.durationSumMs ?? 0;
     row.maxDurationMs = Math.max(row.maxDurationMs, entry.durationMaxMs ?? 0);
-    // Days cannot be summed across endpoints, they would double count a day on which two of them were used. The largest
-    // is the correct lower bound for "on how many days was this feature used".
+    // Days cannot be summed across endpoints, they would double count a day on which two of them were used, and the
+    // largest undercounts when two endpoints were used on different days. This keeps a lower bound only as the fallback
+    // for when the server reported no grouped count; allRows replaces it with the exact distinct-day union.
     row.activeDays = Math.max(row.activeDays, entry.activeDays ?? 0);
     row.lastUsedDay = maxDay(row.lastUsedDay, entry.lastUsedDay);
 }

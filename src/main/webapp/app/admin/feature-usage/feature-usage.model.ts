@@ -50,6 +50,24 @@ export interface FeatureUsageOverview {
     features?: FeatureUsageEntry[];
     /** Always covers every caller, so it stays comparable when a role filter is active. */
     roleDistribution?: FeatureUsageRoleShare[];
+    /**
+     * The exact distinct-day count per logical feature, keyed the same way the table groups its rows.
+     * Absent when nothing was used in the window.
+     */
+    activeDaysPerFeature?: FeatureUsageActiveDays[];
+}
+
+/**
+ * The number of distinct days one logical feature was used on.
+ *
+ * Computed server-side because the per-endpoint counts cannot be combined: summing double counts a day two endpoints
+ * behind one label were both used on, and taking the largest misses the days only one of them was used on.
+ */
+export interface FeatureUsageActiveDays {
+    module: string;
+    /** The feature label when it has one, otherwise the endpoint identifier. */
+    featureKey: string;
+    activeDays: number;
 }
 
 /** One day of one feature's usage. */
