@@ -146,7 +146,7 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         post = postRepository.save(post);
         searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, createdChannel));
         long postId = post.getId();
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> assertPostExistsInWeaviate(weaviateService, postId));
+        assertPostExistsInWeaviate(weaviateService, postId);
 
         // Toggle privacy via REST: public -> private
         request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + createdChannel.getId() + "/toggle-privacy", HttpStatus.OK,
@@ -155,11 +155,11 @@ class ChannelWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocal
         Channel updatedChannel = channelRepository.findByIdElseThrow(createdChannel.getId());
         assertThat(updatedChannel.getIsPublic()).isFalse();
 
-        // Both the channel and its posts should be removed from Weaviate
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-            assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
-            assertPostNotInWeaviate(weaviateService, postId);
-        });
+        // Both the channel and its posts should be removed from Weaviate. Each helper already polls for up to 30s,
+        // so they must not be wrapped in a further await: the first call would consume the whole shared budget and the
+        // outer timeout would then replace the real assertion message with a bare "null".
+        assertChannelNotInWeaviate(weaviateService, createdChannel.getId());
+        assertPostNotInWeaviate(weaviateService, postId);
     }
 
     @Nested
