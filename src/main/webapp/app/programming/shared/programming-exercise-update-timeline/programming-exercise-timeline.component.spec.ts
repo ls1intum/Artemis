@@ -136,12 +136,22 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     });
 
     it('should not show start date picker if current mode record prohibits start date', () => {
+        exercise.startDate = undefined;
         createTestComponent();
         fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { startDate: false } as Record<ProgrammingExerciseInputField, boolean>);
         fixture.detectChanges();
 
         expect(component.isDatePickerForStartDateVisible()).toBe(false);
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.startDate')).toBe(false);
+    });
+
+    it('should show a populated start date even if the current mode normally hides it', () => {
+        createTestComponent();
+        fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { startDate: false } as Record<ProgrammingExerciseInputField, boolean>);
+        fixture.detectChanges();
+
+        expect(component.isDatePickerForStartDateVisible()).toBe(true);
+        expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.startDate')).toBe(true);
     });
 
     it('should show due date picker if not in exam mode and no current mode record is available', () => {
@@ -161,12 +171,39 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     });
 
     it('should not show due date picker if current mode record prohibits due date', () => {
+        exercise.dueDate = undefined;
         createTestComponent();
         fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { dueDate: false } as Record<ProgrammingExerciseInputField, boolean>);
         fixture.detectChanges();
 
         expect(component.isDatePickerForDueDateVisible()).toBe(false);
         expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dueDate')).toBe(false);
+    });
+
+    it('should show a populated build-and-test date even if the current mode normally hides it', () => {
+        createTestComponent();
+        fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { runTestsAfterDueDate: false } as Record<
+            ProgrammingExerciseInputField,
+            boolean
+        >);
+        fixture.detectChanges();
+
+        expect(component.isEnablingToRunTestsAfterDueDateToggleVisible()).toBe(true);
+        expect(component.isDatePickerForRunningTestsAfterDueDateVisible()).toBe(true);
+        expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.dateForRunningTestsAfterDueDate')).toBe(true);
+    });
+
+    it('should show a populated example solution publication date even if the current mode normally hides it', () => {
+        createTestComponent();
+        fixture.componentRef.setInput('isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord', { exampleSolutionPublicationDate: false } as Record<
+            ProgrammingExerciseInputField,
+            boolean
+        >);
+        fixture.detectChanges();
+
+        expect(component.isExampleSolutionPublicationDateToggleVisible()).toBe(true);
+        expect(component.isDatePickerForExampleSolutionPublicationDateVisible()).toBe(true);
+        expect(component.timelineItems().some((item) => item.labelStringKey === 'artemisApp.exercise.exampleSolutionPublicationDate')).toBe(true);
     });
 
     it('should show the group notice, disable group-managed dates, and keep the programming-specific build-and-test date editable', async () => {
@@ -603,6 +640,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
     });
 
     it('should initialize as valid and not empty if no timeline is rendered', () => {
+        exercise.dueDate = undefined;
         exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         exercise.exampleSolutionPublicationDate = undefined;
         fixture = TestBed.createComponent(ProgrammingExerciseTimelineComponent);

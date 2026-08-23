@@ -78,9 +78,9 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
     feedbackSuggestionModule = model<string>();
     showTestNamesToStudents = model<boolean>();
 
-    isDatePickerForReleaseDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.releaseDate ?? true));
-    isDatePickerForStartDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.startDate ?? true));
-    isDatePickerForDueDateVisible = computed(() => !this.isExamMode() && (this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.dueDate ?? true));
+    isDatePickerForReleaseDateVisible = computed(() => this.computeIsDatePickerForReleaseDateVisible());
+    isDatePickerForStartDateVisible = computed(() => this.computeIsDatePickerForStartDateVisible());
+    isDatePickerForDueDateVisible = computed(() => this.computeIsDatePickerForDueDateVisible());
     isEnablingToRunTestsAfterDueDateToggleVisible = computed(() => this.computeIsEnablingToRunTestsAfterDueDateToggleVisible());
     isEnablingToRunTestsAfterDueDateToggleEnabled = computed(() => this.isExamMode() || !!this.dueDate());
     isDatePickerForRunningTestsAfterDueDateVisible = signal(false);
@@ -284,14 +284,34 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
         return timelineItems;
     }
 
+    private computeIsDatePickerForReleaseDateVisible(): boolean {
+        const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.releaseDate ?? true;
+        return !this.isExamMode() && (isDisplayedInCurrentMode || this.releaseDate() !== undefined);
+    }
+
+    private computeIsDatePickerForStartDateVisible(): boolean {
+        const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.startDate ?? true;
+        return !this.isExamMode() && (isDisplayedInCurrentMode || this.startDate() !== undefined);
+    }
+
+    private computeIsDatePickerForDueDateVisible(): boolean {
+        const isDisplayedInCurrentMode = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord()?.dueDate ?? true;
+        return !this.isExamMode() && (isDisplayedInCurrentMode || this.dueDate() !== undefined);
+    }
+
     private computeIsEnablingToRunTestsAfterDueDateToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        return (!isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate) && !this.isLocalCIEnabled;
+        return (
+            (!isInputDisplayedAccordingToCurrentModeRecord ||
+                isInputDisplayedAccordingToCurrentModeRecord.runTestsAfterDueDate ||
+                this.buildAndTestStudentSubmissionsAfterDueDate() !== undefined) &&
+            !this.isLocalCIEnabled
+        );
     }
 
     private computeIsSemiAutomaticAssessmentToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        return !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.assessmentDueDate;
+        return !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.assessmentDueDate || this.assessmentDueDate() !== undefined;
     }
 
     private computeIfDatePickableForSemiAutomaticAssessmentDueDateVisible(): boolean {
@@ -309,7 +329,10 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
 
     private computeIsExampleSolutionPublicationDateToggleVisible(): boolean {
         const isInputDisplayedAccordingToCurrentModeRecord = this.isInputDisplayedAccordingToCurrentOfSimpleOrAdvancedModeRecord();
-        const isInputDisplayedAccordingToCurrentMode = !isInputDisplayedAccordingToCurrentModeRecord || isInputDisplayedAccordingToCurrentModeRecord.exampleSolutionPublicationDate;
+        const isInputDisplayedAccordingToCurrentMode =
+            !isInputDisplayedAccordingToCurrentModeRecord ||
+            isInputDisplayedAccordingToCurrentModeRecord.exampleSolutionPublicationDate ||
+            this.exampleSolutionPublicationDate() !== undefined;
         return isInputDisplayedAccordingToCurrentMode && !this.isExamMode() && !this.isImport();
     }
 
