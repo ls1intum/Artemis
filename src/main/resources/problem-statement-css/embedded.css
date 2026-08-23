@@ -8,17 +8,75 @@ body.artemis-ssr-body {
     padding: var(--artemis-ssr-body-padding, 16px);
 }
 
+/* The frame is a separate document, so none of the application's typography reaches it and every size has to be
+ * restated here. Without the declarations below the whole statement falls back to the browser's defaults, which are
+ * far larger than the application's scale: 16px body text against 0.9rem, and a 2em h1 against 1.125rem.
+ *
+ * `rem` is safe to copy verbatim from the application's stylesheet: Bootstrap's $font-size-root is null and nothing
+ * sets `html { font-size }`, so the unit resolves against the browser default (typically 16px) in both documents. */
 .artemis-problem-statement {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 0.9rem; /* $font-size-base */
     line-height: 1.5;
     color: var(--body-color, #212529);
 }
 
+/* global.scss overrides h1-h4 to 400 under "Bootstrap tweaks"; h5 and h6 are not in that list and keep
+ * $headings-font-weight. */
 .artemis-problem-statement h1,
 .artemis-problem-statement h2,
 .artemis-problem-statement h3,
 .artemis-problem-statement h4 {
     font-weight: 400;
+}
+
+.artemis-problem-statement h5,
+.artemis-problem-statement h6 {
+    font-weight: 500;
+}
+
+/* Bootstrap's reboot, which the frame does not get either: without this the headings keep the browser's much larger
+ * em-based margins and their own line-height. */
+.artemis-problem-statement h1,
+.artemis-problem-statement h2,
+.artemis-problem-statement h3,
+.artemis-problem-statement h4,
+.artemis-problem-statement h5,
+.artemis-problem-statement h6 {
+    margin-top: 0;
+    margin-bottom: 0.5rem; /* $headings-margin-bottom, $spacer * 0.5 */
+    line-height: 1.2; /* $headings-line-height */
+}
+
+/* h1-h3 come from `.markdown-preview` in global.scss, h4-h6 from Bootstrap's scale on Artemis' 0.9rem base.
+ *
+ * That leaves h4 (1.35rem) larger than h1 and h5 exactly as large as h1, because `.markdown-preview` overrides only
+ * the first three. It is reproduced rather than smoothed out: parity with the legacy renderer is what this stylesheet
+ * is for, statements in the wild were authored against those sizes, and quietly rescaling h4 here would trade a
+ * visible inconsistency for an invisible one that no test can see. Correcting the hierarchy means changing
+ * `.markdown-preview` and this file together, as its own change. */
+.artemis-problem-statement h1 {
+    font-size: 1.125rem;
+}
+
+.artemis-problem-statement h2 {
+    font-size: 1.05rem;
+}
+
+.artemis-problem-statement h3 {
+    font-size: 0.975rem;
+}
+
+.artemis-problem-statement h4 {
+    font-size: 1.35rem;
+}
+
+.artemis-problem-statement h5 {
+    font-size: 1.125rem;
+}
+
+.artemis-problem-statement h6 {
+    font-size: 0.9rem;
 }
 
 .artemis-problem-statement ol,

@@ -74,9 +74,23 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<h1>Hello</h1>");
         assertThat(result.html()).contains("<strong>bold</strong>");
         assertThat(result.html()).contains("artemis-problem-statement");
-        assertThat(result.rendererVersion()).isEqualTo("1.5.0");
+        assertThat(result.rendererVersion()).isEqualTo("1.6.0");
         assertThat(result.contentHash()).isNotBlank();
         assertThat(result.interactiveScript()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderStrikethroughAsDel() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("Plain ~~gone~~ text.", null, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The GFM extension emits <del>, which jsoup's relaxed safelist does not carry by default. Without the tag on
+        // the safelist the element was stripped and only its text survived, so the strikethrough vanished without a
+        // trace instead of merely differing from the legacy pipeline's <s>. Asserting on the text alone would not have
+        // caught that, hence the explicit tag.
+        assertThat(result.html()).contains("<del>gone</del>");
     }
 
     @Test
@@ -1324,8 +1338,51 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(darkResult.html()).contains("body.artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
 
         // Dark-mode CSS keeps a body rule for the backdrop color, but the old layout properties
-        // have moved to the base rule in embedded.css.
-        assertThat(darkResult.html()).contains("body.artemis-ssr-body--dark {").contains("background: var(--body-bg, #1e1e1e);");
+        // have moved to the base rule in embedded.css. The literal is the assertion that matters: custom properties do
+        // not cross into the sandboxed frame, so the variable never resolves there and this fallback is what actually
+        // paints. It has to stay equal to $module-bg / $card-bg ($neutral-dark in themes/_dark-variables.scss), the
+        // surface the frame is placed on in both hosts, otherwise the frame draws a differently coloured rectangle
+        // inside its panel.
+        assertThat(darkResult.html()).contains("body.artemis-ssr-body--dark {").contains("background: var(--module-bg, #16191d);");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRestateTheApplicationTypographyInTheEmbeddedStylesheet() throws Exception {
+        var body = new ProblemStatementRenderRequestDTO("# Hi", null, null, "en", false, true, null, null);
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        // The frame is a separate document, so it inherits no typography and every size has to be restated in
+        // embedded.css. Nothing else can catch it if these disappear: the parity gate renders with includeCss=false
+        // and diffs markup, so a stylesheet that silently stops declaring sizes reads as full parity while the frame
+        // falls back to the browser defaults (16px body text, a 2em h1). Each value below is the application's, and
+        // the comment names where it comes from; changing one here without changing it there reintroduces the drift.
+        assertThat(result.html()).contains("font-size: 0.9rem;"); // $font-size-base
+        // `.markdown-preview` in global.scss.
+        assertThat(result.html()).contains(".artemis-problem-statement h1 {\n    font-size: 1.125rem;\n}");
+        assertThat(result.html()).contains(".artemis-problem-statement h2 {\n    font-size: 1.05rem;\n}");
+        assertThat(result.html()).contains(".artemis-problem-statement h3 {\n    font-size: 0.975rem;\n}");
+        // Bootstrap's scale on that base, which `.markdown-preview` leaves alone. h4 is genuinely larger than h1 and
+        // h5 genuinely equal to it; both are reproduced deliberately rather than smoothed out, see embedded.css.
+        assertThat(result.html()).contains(".artemis-problem-statement h4 {\n    font-size: 1.35rem;\n}");
+        assertThat(result.html()).contains(".artemis-problem-statement h5 {\n    font-size: 1.125rem;\n}");
+        assertThat(result.html()).contains(".artemis-problem-statement h6 {\n    font-size: 0.9rem;\n}");
+        // global.scss overrides h1-h4 to 400 under "Bootstrap tweaks" and leaves h5/h6 at $headings-font-weight.
+        assertThat(result.html()).contains("""
+                .artemis-problem-statement h1,
+                .artemis-problem-statement h2,
+                .artemis-problem-statement h3,
+                .artemis-problem-statement h4 {
+                    font-weight: 400;
+                }""");
+        assertThat(result.html()).contains("""
+                .artemis-problem-statement h5,
+                .artemis-problem-statement h6 {
+                    font-weight: 500;
+                }""");
+        // Bootstrap's reboot, which the frame does not get either.
+        assertThat(result.html()).contains("margin-bottom: 0.5rem;").contains("line-height: 1.2;");
     }
 
     // --- Interactive script shape ---
@@ -1353,7 +1410,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result1 = request.postWithResponseBody(POST_URL, body1, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO result2 = request.postWithResponseBody(POST_URL, body2, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result1.rendererVersion()).isEqualTo("1.5.0");
+        assertThat(result1.rendererVersion()).isEqualTo("1.6.0");
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
     }
 
@@ -1369,7 +1426,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         // still distinct under "1.3.0", which moved the feedback payload onto the container; "1.4.0" added the
         // highlight.js palette to the embedded stylesheet, which the sandboxed frame needs because no application
         // stylesheet reaches into it; "1.5.0" made the diagram placeholder unforgeable and bounded the size a
-        // formula may ask for in the interactive script). The
+        // formula may ask for in the interactive script; "1.6.0" put <del> on the safelist so that
+        // strikethrough survives sanitization). The
         // renderer version is folded into the content hash precisely so that a stale client-cached rendering does
         // not survive a semantic change to the renderer; this pins that a version bump actually changes the hash
         // for byte-for-byte identical input, rather than only changing the reported version string. If this

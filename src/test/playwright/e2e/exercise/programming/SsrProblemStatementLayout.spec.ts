@@ -99,6 +99,61 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
         expect(wizardInsideScrollArea, 'the step wizard is inside the scroll area and would scroll away').toBe(0);
     });
 
+    test('toggle ON: the frame restates the application typography', async ({ login, page, exerciseAPIRequests }) => {
+        // Read inside the frame, because that is the only place the defect was visible. The frame is a separate
+        // document with an opaque origin: no application stylesheet and no theme variable reaches it, so every size
+        // has to be restated in embedded.css. When it declared none, headings fell back to the browser defaults and
+        // the statement rendered at a visibly different scale from the rest of the page. No server-side assertion can
+        // see that, and the parity gate renders with includeCss=false and diffs markup, so the computed values are
+        // the only real guard.
+        await login(admin);
+        const headingExercise = await exerciseAPIRequests.createProgrammingExercise({
+            course,
+            problemStatement: ['# H1', '## H2', '### H3', '#### H4', '##### H5', '###### H6', '', 'Body text.'].join('\n\n'),
+        });
+        await setSsrToggle(page, true);
+
+        await login(studentOne, `/courses/${course.id}/exercises/${headingExercise.id}`);
+
+        const frame = page.locator('jhi-programming-exercise-instruction-ssr-content iframe');
+        await expect(frame).toBeVisible({ timeout: 60_000 });
+
+        const statement = page.frameLocator('jhi-programming-exercise-instruction-ssr-content iframe').locator('.artemis-problem-statement');
+        await expect(statement).toBeVisible({ timeout: 30_000 });
+
+        const typography = await statement.evaluate((root) => {
+            const of = (selector: string) => {
+                const element = root.querySelector(selector);
+                const style = getComputedStyle(element!);
+                // The line height is compared as a ratio rather than in pixels: the declaration is unitless, so a
+                // pixel expectation would have to be restated per heading and would drift on any size change.
+                return {
+                    size: style.fontSize,
+                    weight: style.fontWeight,
+                    lineHeight: Math.round((parseFloat(style.lineHeight) / parseFloat(style.fontSize)) * 100) / 100,
+                    marginTop: style.marginTop,
+                    marginBottom: style.marginBottom,
+                };
+            };
+            return { body: getComputedStyle(root).fontSize, h1: of('h1'), h2: of('h2'), h3: of('h3'), h4: of('h4'), h5: of('h5'), h6: of('h6') };
+        });
+
+        // The application's own values against the browser's 16px root: $font-size-base 0.9rem for body text, the
+        // `.markdown-preview` scale for h1-h3, Bootstrap's scale on that base for h4-h6. h4 is larger than h1 and h5
+        // equal to it because `.markdown-preview` overrides only the first three; that is reproduced on purpose.
+        expect(typography.body, 'body text no longer matches $font-size-base').toBe('14.4px');
+        // $headings-line-height 1.2 and $headings-margin-bottom 0.5rem come from Bootstrap's reboot, which the frame
+        // does not get either, so they are part of the same contract as the sizes and are asserted with them.
+        const box = { lineHeight: 1.2, marginTop: '0px', marginBottom: '8px' };
+        expect(typography.h1).toEqual({ size: '18px', weight: '400', ...box });
+        expect(typography.h2).toEqual({ size: '16.8px', weight: '400', ...box });
+        expect(typography.h3).toEqual({ size: '15.6px', weight: '400', ...box });
+        expect(typography.h4).toEqual({ size: '21.6px', weight: '400', ...box });
+        // global.scss overrides h1-h4 to 400 under "Bootstrap tweaks"; h5 and h6 keep $headings-font-weight.
+        expect(typography.h5).toEqual({ size: '18px', weight: '500', ...box });
+        expect(typography.h6).toEqual({ size: '14.4px', weight: '500', ...box });
+    });
+
     test('toggle ON: the statement is isolated in a sandboxed frame', async ({ login, page }) => {
         // Asserted against the frame the application actually built, not one the test assembled. That distinction
         // is the point: bound as `[attr.srcdoc]`, Angular's sanitizer silently reduced the document to a few

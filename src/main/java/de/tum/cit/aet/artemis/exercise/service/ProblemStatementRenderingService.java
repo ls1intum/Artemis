@@ -97,7 +97,7 @@ public class ProblemStatementRenderingService {
      * sanitization/escaping. The value itself does not need to follow strict semver; any distinct string is
      * enough to invalidate the cache.
      */
-    private static final String RENDERER_VERSION = "1.5.0";
+    private static final String RENDERER_VERSION = "1.6.0";
 
     /**
      * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
@@ -800,6 +800,11 @@ public class ProblemStatementRenderingService {
 
     private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
+        // Strikethrough. The GFM extension renders `~~text~~` as <del>, which jsoup's relaxed safelist does not carry,
+        // so without this the tag was dropped and the text rendered unmarked: the emphasis disappeared silently rather
+        // than diverging from the legacy pipeline's <s>. Nothing covered it, because the parity corpus deliberately
+        // excludes `~~` and the divergence is asserted against the legacy renderer only.
+        safelist.addTags("del");
         safelist.addAttributes("div", "class", "data-diagram-id", "data-result", "data-feedback");
         safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode",
                 "data-authored-count", "data-not-executed-count", "data-alert-type");
