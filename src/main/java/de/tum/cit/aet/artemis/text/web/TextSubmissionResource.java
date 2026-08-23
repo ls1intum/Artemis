@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.ConnectionPoolProbe;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -100,13 +99,11 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ResultRepository resultRepository;
 
-    private final ConnectionPoolProbe connectionPoolProbe;
-
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
             Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
-            ResultRepository resultRepository, ConnectionPoolProbe connectionPoolProbe) {
+            ResultRepository resultRepository) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -120,7 +117,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
         this.resultRepository = resultRepository;
-        this.connectionPoolProbe = connectionPoolProbe;
     }
 
     /**
@@ -232,9 +228,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // A slow autosave is worth attributing to a stage rather than guessing at, and the pool state distinguishes a
         // request that was waiting for a database connection from one that was doing work.
         if (end - start >= SLOW_SUBMISSION_LOG_THRESHOLD_MILLIS) {
-            log.info("Slow text submission for exercise {}: {} ms total (user {} ms, exercise {} ms, exam checks {} ms, allowance {} ms, save {} ms), pool {}", exerciseId,
-                    end - start, userNanos / 1_000_000, exerciseNanos / 1_000_000, examChecksNanos / 1_000_000, allowanceNanos / 1_000_000, saveNanos / 1_000_000,
-                    connectionPoolProbe.snapshot());
+            log.info("Slow text submission for exercise {}: {} ms total (user {} ms, exercise {} ms, exam checks {} ms, allowance {} ms, save {} ms)", exerciseId, end - start,
+                    userNanos / 1_000_000, exerciseNanos / 1_000_000, examChecksNanos / 1_000_000, allowanceNanos / 1_000_000, saveNanos / 1_000_000);
         }
         log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         // Include the student: this is the student's own submission and the client checks participation ownership
