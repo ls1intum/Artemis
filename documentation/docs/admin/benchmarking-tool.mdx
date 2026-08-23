@@ -305,8 +305,8 @@ Treat the push row as provisional.
 
 ### How the students authenticated
 
-Both runs had every student use a repository access token, which is what Artemis hands out through the
-Code button and what most students use. This matters more than it sounds: an earlier run with every
+Both cluster runs above had every student use a repository access token, which is what Artemis hands out
+through the Code button and what most students use. This matters more than it sounds: an earlier run with every
 student typing a password instead was markedly slower, because verifying a password is deliberately
 expensive and it dominated everything else on the Artemis servers. That comparison is an unverified
 observation rather than a result from the reference run above — it predates these runs, and the metric,
@@ -318,7 +318,9 @@ the authentication mix alongside the result, or two numbers will not be comparab
 
 Not every installation is a cluster, so it is worth knowing where the floor is. The measurements below
 come from one virtual machine with **4 CPUs and 3.8 GB of memory** running everything at once: Artemis,
-the build agent, PostgreSQL and the reverse proxy.
+the build agent, PostgreSQL and the reverse proxy. Unlike the cluster runs above, the authentication mix
+of these three runs was not recorded, so read the repository column on its own rather than against the
+cluster figures: password and token authentication differ enough that the two are not comparable.
 
 | Simulated students | Average response | Submit an exercise | Download a repository |
 | --- | --- | --- | --- |
