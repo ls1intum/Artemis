@@ -12,15 +12,15 @@
         <!-- right side: header bar and main content -->
         <div class="flex flex-col flex-1 overflow-hidden">
             <!-- header bar -->
-            <div class="exam-management-header flex w-full justify-content-between module-bg p-2 rounded-md align-items-center">
-                <div class="flex gap-2">
+            <div class="exam-management-header module-bg p-2 rounded-md">
+                <div class="flex gap-2 align-items-center">
                     @if (isCollapsed()) {
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
                     }
                     <h5 class="m-0">Overview</h5>
                 </div>
                 @if (course().isAtLeastInstructor) {
-                    <div class="flex gap-1 align-items-center">
+                    <div class="flex gap-2">
                         <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()">
                             <fa-icon [icon]="faFileImport" />
                             <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
