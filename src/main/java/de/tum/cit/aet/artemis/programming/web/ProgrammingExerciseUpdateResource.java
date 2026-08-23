@@ -395,6 +395,9 @@ public class ProgrammingExerciseUpdateResource {
 
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
+        if (exercise.isCourseExercise() && exercise.getDueDate() == null) {
+            exercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        }
 
         if (dto.testCasesChanged() != null) {
             exercise.setTestCasesChanged(dto.testCasesChanged());
