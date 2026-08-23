@@ -245,6 +245,12 @@ export class UnifiedFeedbackComponent {
     });
     readonly isCorrectionStatusCorrect = computed(() => this.feedback()?.correctionStatus === 'CORRECT');
 
+    /** A non-graded feedback suggestion (an Athena hint with no credits) has no points pill in read-only mode. */
+    readonly showPoints = computed(() => {
+        const feedback = this.feedback();
+        return !feedback || !Feedback.isNonGradedFeedbackSuggestion(feedback);
+    });
+
     protected readonly Feedback = Feedback;
     protected readonly faTimes = faTimes;
     protected readonly faTrashAlt = faTrashAlt;

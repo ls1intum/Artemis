@@ -2,7 +2,6 @@ import { Component, ElementRef, inject, input, linkedSignal, output, viewChild }
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
@@ -29,9 +28,6 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly Feedback = Feedback;
     protected readonly ButtonSize = ButtonSize;
     protected readonly MANUAL = FeedbackType.MANUAL;
-
-    // Expose the function to the template
-    protected readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     // Needed for the outer editor to access the DOM node of this component

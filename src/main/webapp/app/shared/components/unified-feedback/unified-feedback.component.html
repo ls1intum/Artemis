@@ -86,7 +86,7 @@
                                 }
                             }
                         </div>
-                    } @else {
+                    } @else if (showPoints()) {
                         <div class="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">{{ pointsLabel() }}</div>
                     }
                 </div>

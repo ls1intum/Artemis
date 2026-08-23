@@ -16,6 +16,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 
 describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
@@ -168,18 +169,18 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
     });
 
-    it('should not display credits and icons for non-graded feedback suggestions', () => {
+    it('should not display a points pill for non-graded feedback suggestions', () => {
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
         } as Feedback);
         fixture.detectChanges();
 
-        const badgeElement = fixture.debugElement.query(By.css('.badge'));
-        expect(badgeElement).toBeNull();
+        const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
+        expect(pointsElement).toBeNull();
     });
 
-    it('should display credits and icons for graded feedback', () => {
+    it('should display a points pill for graded feedback', () => {
         fixture.componentRef.setInput('feedback', {
             credits: 1,
             type: FeedbackType.AUTOMATIC,
@@ -187,35 +188,33 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         } as Feedback);
         fixture.detectChanges();
 
-        const badgeElement = fixture.debugElement.query(By.css('.badge'));
-        expect(badgeElement).not.toBeNull();
-        expect(badgeElement.nativeElement.textContent).toContain('1P');
+        const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
+        expect(pointsElement).not.toBeNull();
+        expect(pointsElement.nativeElement.textContent).toContain('+1');
     });
 
-    it('should use the correct translation key for non-graded feedback', () => {
+    it('should render the feedback content for non-graded feedback suggestions', () => {
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
+            detailText: 'Consider extracting this into a helper method.',
         } as Feedback);
         fixture.detectChanges();
 
-        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
-        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
-        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
-        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
+        const contentElement = fixture.debugElement.query(By.css('.unified-feedback-text')).nativeElement;
+        expect(contentElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
     });
 
-    it('should use the correct translation key for graded feedback', () => {
+    it('should render the feedback content for graded feedback', () => {
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.MANUAL,
             text: 'feedback',
+            detailText: 'Off-by-one error on this line.',
         } as Feedback);
         fixture.detectChanges();
 
-        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
-        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorComment');
-        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
-        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
+        const contentElement = fixture.debugElement.query(By.css('.unified-feedback-text')).nativeElement;
+        expect(contentElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.currentFeedback()));
     });
 
     it('should render an editable title field for a feedback suggestion while editing', async () => {
@@ -283,6 +282,20 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.detectChanges();
 
         expect(comp.currentFeedback().text).toBe(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
+    });
+
+    it('should render the collapsed view through the unified feedback card in read-only mode', () => {
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.MANUAL,
+            text: 'File testFile at line 2',
+            detailText: 'Add a null check.',
+            credits: 1,
+        } as Feedback);
+        fixture.detectChanges();
+
+        const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
+        expect(unifiedFeedback).toBeTruthy();
+        expect(unifiedFeedback.componentInstance.editable()).toBe(false);
     });
 
     it('should cancel the open edit when the built-in dismiss button is clicked', () => {
