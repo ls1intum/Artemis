@@ -1,64 +1,76 @@
 .edit-sqi {
     .grading-instructions-update-border {
-        padding: 10px;
-        border-radius: 0.1rem;
-        border-width: 1px;
-        border-style: solid;
-        border-color: var(--edit-sqi-grading-instructions-update-border);
+        padding: 1rem;
+        border-radius: 0.625rem;
+        border: 1px solid var(--border-color);
         height: auto;
     }
 
-    .re-evaluate-button {
-        display: inline-block;
-        padding: 4px;
-        cursor: default;
-
-        &:not(:disabled) {
-            cursor: pointer;
-
-            &:hover {
-                color: blue;
-            }
-        }
-    }
-
     .instruction-delete-button {
-        display: inline-block;
-        padding: 4px;
-        cursor: pointer;
-        color: #dc3545;
+        color: var(--danger);
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.4;
+        }
+    }
+}
+
+.sqi-criterion {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--overlay-background);
+
+    /* Blue accent stripe on the leading edge, matching the reference comp. */
+    &::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        inset-inline-start: 0;
+        width: 4px;
+        background-color: var(--primary);
     }
 
-    .instructions {
+    &__header {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1rem 1rem 1.25rem;
+    }
+
+    &__header-content {
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
+        align-items: flex-start;
         justify-content: space-between;
-        width: 100%;
-
-        input,
-        .input-group-btn {
-            display: inline-block;
-            width: auto;
-        }
-
-        .form-group {
-            display: flex;
-            align-items: center;
-            margin: 0 5px 15px;
-
-            > * {
-                margin: 0 4px;
-            }
-        }
-
-        .background-file {
-            display: flex;
-        }
+        gap: 0.75rem;
     }
 
-    .criterion-title-row {
-        background-color: var(--edit-sqi-criterion-title-row-background);
+    &__title-field {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        gap: 0.25rem;
     }
+
+    &__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem 1rem 1rem 1.25rem;
+    }
+}
+
+.sqi-instruction {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-wrap: anywhere;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--overlay-background);
+    padding: 1rem;
 }
 
 .assessment-criteria-generation {
