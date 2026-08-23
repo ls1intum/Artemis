@@ -193,10 +193,20 @@ jobs:
     if: needs.detect-changes.outputs.build_relevant == 'true'
     uses: ./.github/workflows/ci-build.yml
     permissions:
-      # `contents: write` is the ceiling for ci-build.yml's `upload-release` job (`gh release
-      # upload`); `build-war` itself runs read-only. `packages: write` is for the GHCR push.
+      # These are the CEILING for ci-build.yml, not a grant to its jobs: a called workflow can only
+      # narrow what the caller holds, and an unlisted scope is `none`. GitHub validates this when it
+      # builds the run graph, before any job starts and regardless of per-job `if:` conditions, so a
+      # scope missing here fails EVERY run of this workflow rather than only the release path.
+      #
+      # `contents: write` is for ci-build.yml's `upload-release` job (`gh release upload`);
+      # `packages: write` is for the GHCR push and for pushing image attestations/signatures;
+      # `id-token: write` and `attestations: write` are for the Sigstore provenance attestations in
+      # `upload-release` and `sign-release-image`. `build-war` still declares `contents: read` for
+      # itself, so the every-PR build keeps a read-only token.
       contents: write
       packages: write
+      id-token: write
+      attestations: write
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
       is_pr: ${{ github.event_name == 'pull_request' }}
