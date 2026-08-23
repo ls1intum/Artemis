@@ -577,6 +577,12 @@ public class ChannelResource extends ConversationManagementResource {
                 service.deleteAllPostsForChannelAsync(updatedChannel.getId());
             }
         });
+        // Course Memory only ever draws from public channels, but that is checked when an entry is
+        // written. Narrowing the channel now has to retract what was already stored, or answers mined
+        // while it was public keep being served to the whole course.
+        if (!updatedChannel.getIsPublic()) {
+            channelService.removeChannelFromCourseMemory(updatedChannel);
+        }
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 

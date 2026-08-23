@@ -212,4 +212,26 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
             throw new AccessForbiddenException("AnswerPost", answerPostIds);
         }
     }
+
+    /**
+     * Whether the answer post carries a human verifier, i.e. whether a tutor approved it in the verification dashboard.
+     * <p>
+     * An Iris answer published automatically on a high confidence score is also stored as {@code verified}, but with no
+     * {@code verifiedBy} — see {@code AutonomousTutorService#createAndSaveAnswerPost}, which sets only {@code verifiedAt}
+     * because there is no human reviewer. {@code verifiedBy} is therefore what tells the two apart.
+     * <p>
+     * Queried as a projection rather than read off the entity on purpose: {@code AnswerPost#verifiedBy} is a lazy
+     * {@code @ManyToOne} that the thread-loading query does not fetch, and adding it there would put an extra user join
+     * on a hot read path.
+     *
+     * @param answerPostId the ID of the {@link AnswerPost} to check
+     * @return {@code true} if a user is recorded as the verifier, {@code false} if none is or the answer post does not exist
+     */
+    @Query("""
+            SELECT CASE WHEN COUNT(answerPost) > 0 THEN TRUE ELSE FALSE END
+            FROM AnswerPost answerPost
+            WHERE answerPost.id = :answerPostId
+                AND answerPost.verifiedBy IS NOT NULL
+            """)
+    boolean hasHumanVerifier(@Param("answerPostId") long answerPostId);
 }

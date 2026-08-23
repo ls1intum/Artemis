@@ -3,10 +3,14 @@ package de.tum.cit.aet.artemis.iris.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -17,13 +21,17 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
+import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -72,6 +80,9 @@ public class CourseMemoryIngestionService {
 
     private static final String ANSWER_ID_PREFIX = "answer-";
 
+    /** The only variant the Pyris course memory pipelines define. */
+    private static final String COURSE_MEMORY_PIPELINE_VARIANT = "default";
+
     /**
      * Websocket topic suffix; the course id is appended. Resolves to
      * {@code /topic/iris/course-memory/{courseId}}, consumed client-side under {@code /user/...}.
@@ -88,18 +99,25 @@ public class CourseMemoryIngestionService {
 
     private final ConversationMessageRepository conversationMessageRepository;
 
+    private final AnswerPostRepository answerPostRepository;
+
+    private final UserRepository userRepository;
+
     private final IrisWebsocketService irisWebsocketService;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public CourseMemoryIngestionService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            AuthorizationCheckService authCheckService, ConversationMessageRepository conversationMessageRepository, IrisWebsocketService irisWebsocketService) {
+            AuthorizationCheckService authCheckService, ConversationMessageRepository conversationMessageRepository, AnswerPostRepository answerPostRepository,
+            UserRepository userRepository, IrisWebsocketService irisWebsocketService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
         this.conversationMessageRepository = conversationMessageRepository;
+        this.answerPostRepository = answerPostRepository;
+        this.userRepository = userRepository;
         this.irisWebsocketService = irisWebsocketService;
     }
 
@@ -157,18 +175,11 @@ public class CourseMemoryIngestionService {
         }
 
         AnswerPost resolvingAnswer = anchor.get();
-        if (isBotAuthored(resolvingAnswer)) {
-            // Verification (Trigger A) owns Iris-authored answers; re-ingesting here would relabel a
-            // tutor-verified entry as merely community-resolved.
-            log.info("Skipping course memory resolution ingestion for Iris-authored answer {} (owned by verification trigger)", resolvingAnswer.getId());
-            return;
-        }
-
-        // Only staff-written answers may become course memory. A student marking their own or a peer's
-        // answer as resolving does not make it correct, and storing it would let unreviewed content be
-        // replayed to future students as a prior answer.
-        if (!isAtLeastTutor(resolvingAnswer.getAuthor(), course)) {
-            log.info("Skipping course memory resolution ingestion for thread {}: resolving answer {} was written by a student", fullPost.getId(), resolvingAnswer.getId());
+        if (isBotAuthored(resolvingAnswer) && answerPostRepository.hasHumanVerifier(resolvingAnswer.getId())) {
+            // Verification (Trigger A) owns Iris answers a tutor approved in the dashboard. Re-ingesting one
+            // here would re-derive the answer by LLM extraction and silently discard the tutor's verbatim
+            // edit, which Trigger A passes as existingAnswer.
+            log.info("Skipping course memory resolution ingestion for tutor-verified Iris answer {} (owned by verification trigger)", resolvingAnswer.getId());
             return;
         }
 
@@ -177,13 +188,30 @@ public class CourseMemoryIngestionService {
             return;
         }
 
-        // The answer is tutor-written by the check above, so the trust tier turns only on whether a
-        // tutor also endorsed it as the resolving one.
-        boolean tutorVerified = isAtLeastTutor(marker, course);
-        var source = tutorVerified ? PyrisCourseMemorySource.TUTOR_WRITTEN : PyrisCourseMemorySource.THREAD_RESOLVED;
-        String verifiedBy = tutorVerified && marker != null ? marker.getLogin() : null;
-        String verifiedAt = tutorVerified ? ZonedDateTime.now().toInstant().toString() : null;
+        // The trust tier turns on who endorsed the answer by marking it resolving, not on who wrote it: a
+        // student's answer a tutor signs off on is worth as much as a tutor's own, and a tutor's answer a
+        // student marks resolving is not tutor-verified.
+        boolean tutorEndorsed = isAtLeastTutor(marker, course);
+        var source = resolveResolutionSource(resolvingAnswer, tutorEndorsed);
+        String verifiedBy = tutorEndorsed && marker != null ? marker.getLogin() : null;
+        String verifiedAt = tutorEndorsed ? ZonedDateTime.now().toInstant().toString() : null;
         ingest(fullPost, resolvingAnswer, course, marker, source, verifiedBy, verifiedAt, null);
+    }
+
+    /**
+     * The provenance label for a Trigger B ingestion.
+     * <p>
+     * Only the anchor being Iris-authored and the endorsement matter here. An Iris answer reaching this point
+     * was published automatically on a high confidence score and never reviewed by anyone (the dashboard-verified
+     * ones return above), so a tutor marking it resolving is the first and only human sign-off it gets —
+     * exactly what {@code IRIS_AUTO} denotes. Without that sign-off nothing here is tutor-verified, whoever
+     * wrote it.
+     */
+    private PyrisCourseMemorySource resolveResolutionSource(AnswerPost resolvingAnswer, boolean tutorEndorsed) {
+        if (!tutorEndorsed) {
+            return PyrisCourseMemorySource.THREAD_RESOLVED;
+        }
+        return isBotAuthored(resolvingAnswer) ? PyrisCourseMemorySource.IRIS_AUTO : PyrisCourseMemorySource.TUTOR_WRITTEN;
     }
 
     /**
@@ -204,7 +232,13 @@ public class CourseMemoryIngestionService {
     /**
      * Picks the message the extractor anchors its answer on. Prefers the answer whose flag just
      * changed; when it was deleted or un-marked, falls back to the most recent answer that still
-     * resolves the thread, then to the most recent verified Iris answer (Trigger A's entry).
+     * resolves the thread, then to the most recent tutor-verified Iris answer (Trigger A's entry).
+     * <p>
+     * The last fallback exists to <em>preserve</em> Trigger A's entry, not to ingest: it makes
+     * {@link #handleResolutionChange} skip instead of delete when a thread's last {@code resolvesPost}
+     * flag disappears but a tutor-approved Iris answer still stands. It is therefore restricted to
+     * dashboard-verified answers — an Iris answer published automatically was never signed off on, so
+     * once nothing resolves the thread any more there is nothing left to keep.
      */
     private Optional<AnswerPost> selectAnchor(List<AnswerPost> answers, @Nullable AnswerPost triggeringAnswer) {
         if (triggeringAnswer != null && Boolean.TRUE.equals(triggeringAnswer.doesResolvePost())
@@ -215,7 +249,8 @@ public class CourseMemoryIngestionService {
         if (resolving.isPresent()) {
             return resolving;
         }
-        return answers.stream().filter(answer -> isBotAuthored(answer) && answer.isVerified()).max(Comparator.comparing(Posting::getCreationDate));
+        return answers.stream().filter(answer -> isBotAuthored(answer) && answer.isVerified()).max(Comparator.comparing(Posting::getCreationDate))
+                .filter(answer -> answerPostRepository.hasHumanVerifier(answer.getId()));
     }
 
     /**
@@ -227,12 +262,40 @@ public class CourseMemoryIngestionService {
         String postId = String.valueOf(post.getId());
         String actorLogin = actor != null ? actor.getLogin() : null;
 
+        // Deletion runs no model, so the selection is immaterial; it only has to be a valid value.
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), conversationId, postId, null, actorLogin, CourseMemoryOperation.DELETE);
-        var settings = executionSettings(jobToken, course);
+        var settings = executionSettings(jobToken, course, AiSelectionDecision.CLOUD_AI);
 
         log.info("Deleting course memory for thread {} in course {}", postId, course.getId());
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), postId));
-        pyrisConnectorService.executeCourseMemoryDeletionWebhook(new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, course.getId(), postId));
+        pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forThread(settings, course.getId(), postId));
+    }
+
+    /**
+     * A channel stopped being a place Course Memory may draw from — it was deleted, or its visibility
+     * was narrowed — so every entry mined from it is removed.
+     * <p>
+     * Necessary because channel eligibility is only evaluated when an entry is <em>written</em>: without
+     * this, an answer ingested while the channel was public would keep being served to the whole course
+     * after the channel was restricted to a subset of it.
+     *
+     * @param channel the channel whose entries should be removed
+     * @param actor   the user who deleted or restricted the channel, notified about the removal
+     * @param course  the course the channel belongs to
+     */
+    public void handleChannelNoLongerEligible(Channel channel, @Nullable User actor, Course course) {
+        if (!irisSettingsService.isEnabledForCourse(course)) {
+            return;
+        }
+        String conversationId = String.valueOf(channel.getId());
+        String actorLogin = actor != null ? actor.getLogin() : null;
+
+        String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), conversationId, conversationId, null, actorLogin, CourseMemoryOperation.DELETE);
+        var settings = executionSettings(jobToken, course, AiSelectionDecision.CLOUD_AI);
+
+        log.info("Deleting all course memory entries of channel {} in course {}", conversationId, course.getId());
+        notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), conversationId));
+        pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forConversation(settings, course.getId(), conversationId));
     }
 
     /**
@@ -267,10 +330,13 @@ public class CourseMemoryIngestionService {
         String actorLogin = actor != null ? actor.getLogin() : null;
 
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), conversationId, postId, messageId, actorLogin, CourseMemoryOperation.INGEST);
-        var settings = executionSettings(jobToken, course);
+        var settings = executionSettings(jobToken, course, resolveThreadAiSelection(fullPost));
 
-        var executionDTO = new PyrisWebhookCourseMemoryIngestionExecutionDTO(settings, course.getId(), conversationId, postId, messageId, source, true, thread, verifiedBy,
-                verifiedAt, existingAnswer);
+        // The real value, not a constant: Pyris fails closed on this flag, and a hardcoded true turns its
+        // last line of defence into a no-op the moment a future trigger forgets the eligibility check.
+        boolean isPublicChannel = isPublicOrCourseWide(fullPost.getConversation());
+        var executionDTO = new PyrisWebhookCourseMemoryIngestionExecutionDTO(settings, course.getId(), conversationId, postId, messageId, source, isPublicChannel, thread,
+                verifiedBy, verifiedAt, existingAnswer);
 
         log.info("Ingesting course memory for thread {} (source={}, anchor={}) in course {}", postId, source, messageId, course.getId());
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.INGEST, course.getId(), postId));
@@ -289,9 +355,36 @@ public class CourseMemoryIngestionService {
         irisWebsocketService.send(actorLogin, COURSE_MEMORY_TOPIC_PREFIX + status.courseId(), status);
     }
 
-    private PyrisPipelineExecutionSettingsDTO executionSettings(String jobToken, Course course) {
-        String variant = irisSettingsService.getSettingsForCourse(course).variant().jsonValue();
-        return new PyrisPipelineExecutionSettingsDTO(jobToken, AiSelectionDecision.CLOUD_AI, artemisBaseUrl, variant, IrisSupportLevel.MODERATE.jsonValue());
+    private PyrisPipelineExecutionSettingsDTO executionSettings(String jobToken, Course course, AiSelectionDecision aiSelection) {
+        // Deliberately not the course's Iris variant: the course memory pipelines define only "default",
+        // so a course set to "advanced" would make every run fail Pyris variant validation with a 400 that
+        // the connector swallows — course memory would silently never work for that course. Same reason
+        // PyrisWebhookService pins "default" for lecture ingestion.
+        return new PyrisPipelineExecutionSettingsDTO(jobToken, aiSelection, artemisBaseUrl, COURSE_MEMORY_PIPELINE_VARIANT, IrisSupportLevel.MODERATE.jsonValue());
+    }
+
+    /**
+     * Resolves which inference environment may see this thread, taking the most restrictive choice of
+     * everyone whose content is forwarded: a single {@code LOCAL_AI} participant pins the whole run to
+     * on-premise inference.
+     * <p>
+     * Ingestion sends the whole transcript to an extraction model, so the question "which model may see
+     * this thread" is the same one {@code AutonomousTutorForwardingService#resolveThreadAiSelection}
+     * answers for a tutor run, and it must be answered the same way. Bot authors carry no student's
+     * preference; {@code NO_AI} authors are excluded because their content is redacted before it leaves
+     * Artemis (and a {@code NO_AI} question author or resolving author stops ingestion outright), so
+     * there is no preference of theirs left to honour.
+     * <p>
+     * Kept local rather than shared with the tutor path so this PR stays independent of the autonomous
+     * tutor branch; the two should be folded into one helper once both are on {@code develop}.
+     *
+     * @param fullPost the thread root, with all answers loaded
+     * @return {@link AiSelectionDecision#LOCAL_AI} if any forwarded author chose it, otherwise {@link AiSelectionDecision#CLOUD_AI}
+     */
+    private AiSelectionDecision resolveThreadAiSelection(Post fullPost) {
+        boolean anyLocal = Stream.concat(Stream.of(fullPost.getAuthor()), visibleAnswers(fullPost).stream().map(AnswerPost::getAuthor)).filter(Objects::nonNull)
+                .filter(author -> !author.isBot()).map(User::getSelectedLLMUsage).anyMatch(AiSelectionDecision.LOCAL_AI::equals);
+        return anyLocal ? AiSelectionDecision.LOCAL_AI : AiSelectionDecision.CLOUD_AI;
     }
 
     /**
@@ -299,8 +392,7 @@ public class CourseMemoryIngestionService {
      * Iris-enabled courses (req. 5).
      */
     private boolean isEligible(Post post, Course course) {
-        Conversation conversation = post.getConversation();
-        if (!(conversation instanceof Channel channel) || !(channel.getIsPublic() || channel.getIsCourseWide())) {
+        if (!isPublicOrCourseWide(post.getConversation())) {
             log.info("Skipping course memory operation for thread {}: not a public/course-wide channel", post.getId());
             return false;
         }
@@ -309,6 +401,17 @@ public class CourseMemoryIngestionService {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Whether a conversation is a channel every course member can read, which is the only kind Course
+     * Memory may draw from (req. 5).
+     *
+     * @param conversation the conversation to check
+     * @return {@code true} for a public or course-wide channel
+     */
+    private boolean isPublicOrCourseWide(@Nullable Conversation conversation) {
+        return conversation instanceof Channel channel && (channel.getIsPublic() || channel.getIsCourseWide());
     }
 
     /**
@@ -347,31 +450,48 @@ public class CourseMemoryIngestionService {
         postings.add(fullPost);
         postings.addAll(visibleAnswers(fullPost));
 
-        Map<Long, Boolean> isTutorByUserId = resolveTutorRoles(postings, course);
+        Map<Long, UserRole> rolesByUserId = resolveThreadAuthorRoles(postings, course);
 
         List<PyrisCourseMemoryThreadMessageDTO> thread = new ArrayList<>();
         for (Posting posting : postings) {
             User author = posting.getAuthor();
             boolean isBot = author != null && author.isBot();
-            String authorRole;
-            if (isBot) {
-                authorRole = "iris";
-            }
-            else if (author != null && Boolean.TRUE.equals(isTutorByUserId.get(author.getId()))) {
-                authorRole = "tutor";
-            }
-            else {
-                authorRole = "student";
-            }
+            String authorRole = resolveAuthorRole(author, isBot, rolesByUserId);
             String createdAt = posting.getCreationDate() != null ? posting.getCreationDate().toInstant().toString() : null;
             boolean isAnswer = posting instanceof AnswerPost;
             String id = (isAnswer ? ANSWER_ID_PREFIX : POST_ID_PREFIX) + posting.getId();
             boolean isVerifiedAnswer = isAnswer && posting.getId().equals(anchorAnswerId);
-            boolean isStaffAuthored = isBot || (author != null && Boolean.TRUE.equals(isTutorByUserId.get(author.getId())));
-            boolean resolvesPost = isStaffAuthored && posting instanceof AnswerPost answerPost && Boolean.TRUE.equals(answerPost.doesResolvePost());
-            thread.add(new PyrisCourseMemoryThreadMessageDTO(id, authorRole, posting.getContent(), createdAt, isBot, isVerifiedAnswer, resolvesPost));
+            boolean resolvesPost = posting instanceof AnswerPost answerPost && Boolean.TRUE.equals(answerPost.doesResolvePost());
+
+            // A participant who opted out of AI still occupies a slot in the transcript so the thread reads
+            // in order, but none of their words travel. Their flags are cleared with their content: Pyris
+            // merges every flagged message into the stored answer, and a placeholder must never become
+            // part of it. The anchor itself can never be redacted — an opted-out resolving author stops the
+            // ingestion outright in handleResolutionChange.
+            boolean redacted = hasOptedOutOfAi(author);
+            String content = redacted ? "" : posting.getContent();
+            if (redacted) {
+                isVerifiedAnswer = false;
+                resolvesPost = false;
+            }
+            thread.add(new PyrisCourseMemoryThreadMessageDTO(id, authorRole, content, createdAt, isBot, isVerifiedAnswer, resolvesPost, redacted));
         }
         return thread;
+    }
+
+    private String resolveAuthorRole(@Nullable User author, boolean isBot, Map<Long, UserRole> rolesByUserId) {
+        if (isBot) {
+            return "iris";
+        }
+        if (author == null) {
+            return "student";
+        }
+        // Instructors and editors reach the extractor as tutors: the prompt's vocabulary is a trust tier
+        // (student / tutor / iris), not a course role.
+        return switch (rolesByUserId.getOrDefault(author.getId(), UserRole.USER)) {
+            case INSTRUCTOR, TUTOR -> "tutor";
+            case USER -> "student";
+        };
     }
 
     private boolean isBotAuthored(AnswerPost answerPost) {
@@ -391,20 +511,26 @@ public class CourseMemoryIngestionService {
     }
 
     /**
-     * Resolves which thread authors are at least teaching assistants in the course. The check runs by
-     * login so it stays a plain database lookup and never touches lazily-loaded course roles on the
-     * (possibly detached) author entities. A thread has only a handful of distinct authors, so the
-     * per-author query is cheap and each author is resolved at most once.
+     * Resolves the course role of every thread author in a single query, rather than one role lookup per
+     * distinct author. The roles come from the database rather than from the author entities, whose course
+     * roles are lazily loaded and may be detached once the originating request transaction has closed.
+     *
+     * @param postings the thread's messages, root post first
+     * @param course   the course the thread belongs to
+     * @return the course roles keyed by user id; authors without a resolvable role are absent
      */
-    private Map<Long, Boolean> resolveTutorRoles(List<Posting> postings, Course course) {
-        Map<Long, Boolean> isTutorByUserId = new HashMap<>();
+    private Map<Long, UserRole> resolveThreadAuthorRoles(List<Posting> postings, Course course) {
+        Set<Long> userIds = new HashSet<>();
         for (Posting posting : postings) {
             User author = posting.getAuthor();
-            if (author == null || author.isBot() || isTutorByUserId.containsKey(author.getId())) {
-                continue;
+            if (author != null && !author.isBot()) {
+                userIds.add(author.getId());
             }
-            isTutorByUserId.put(author.getId(), authCheckService.isAtLeastTeachingAssistantInCourse(author.getLogin(), course.getId()));
         }
-        return isTutorByUserId;
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return userRepository.findUserRolesInCourse(userIds, course.getId()).stream().filter(userRole -> userRole.role() != null)
+                .collect(Collectors.toMap(UserRoleDTO::userId, UserRoleDTO::role, (first, second) -> first));
     }
 }

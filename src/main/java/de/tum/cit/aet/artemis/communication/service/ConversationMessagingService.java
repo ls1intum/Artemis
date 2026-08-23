@@ -380,6 +380,19 @@ public class ConversationMessagingService extends PostingService {
         preparePostForBroadcast(updatedPost);
         broadcastForPost(updatedPost, MetisCrudAction.UPDATE, course.getId(), null);
 
+        // The stored Course Memory question is derived from this post, so an edited question has to be
+        // re-extracted; otherwise Iris keeps matching future students against the wording that was just
+        // corrected. Only resolved threads have an entry to update, and the upsert is keyed on the thread,
+        // so this replaces the entry rather than adding a second one.
+        if (updatedPost.isResolved()) {
+            try {
+                courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolutionChanged(updatedPost, null, user, course));
+            }
+            catch (Exception e) {
+                log.error("Failed to update course memory after edit of thread {}", updatedPost.getId(), e);
+            }
+        }
+
         return updatedPost;
     }
 

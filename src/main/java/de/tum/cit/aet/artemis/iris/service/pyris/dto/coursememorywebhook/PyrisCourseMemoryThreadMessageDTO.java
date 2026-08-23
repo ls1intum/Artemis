@@ -22,8 +22,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *                             (Trigger A: the just-verified Iris draft; Trigger B: the just-marked answer)
  * @param resolvesPost     {@code true} if this answer carries the durable {@code resolvesPost} flag; a thread
  *                             may contain several, since a post counts as resolved if <em>any</em> answer resolves it
+ * @param redacted         {@code true} when the author opted out of AI: {@code content} is empty and the message
+ *                             is a placeholder Pyris renders but never quotes. Mirrors
+ *                             {@code PyrisAnswerPostDTO#redacted}, so the placeholder text has a single owner on
+ *                             the Pyris side rather than being duplicated here
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisCourseMemoryThreadMessageDTO(String id, String authorRole, String content, String createdAt, @JsonProperty("isIrisDraft") boolean isIrisDraft,
-        @JsonProperty("isVerifiedAnswer") boolean isVerifiedAnswer, @JsonProperty("resolvesPost") boolean resolvesPost) {
+        @JsonProperty("isVerifiedAnswer") boolean isVerifiedAnswer, @JsonProperty("resolvesPost") boolean resolvesPost, @JsonProperty("redacted") boolean redacted) {
 }

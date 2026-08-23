@@ -258,17 +258,32 @@ public class AnswerMessageService extends PostingService {
 
         this.preparePostAndBroadcast(updatedAnswerMessage, course);
 
-        // Trigger B: the thread's resolution state changed. Fires in both directions so un-marking the
-        // last resolving answer retracts the Course Memory entry instead of leaving it served as verified.
-        if (resolutionChanged) {
+        // Trigger B: the thread's resolution state changed, or the text an existing entry was built from
+        // did. Resolution changes fire in both directions so un-marking the last resolving answer retracts
+        // the entry instead of leaving it served as verified. Content edits re-ingest because the entry
+        // would otherwise keep serving the wording the author just corrected — the upsert is keyed on the
+        // thread, so re-sending it replaces the entry rather than adding a second one.
+        if (resolutionChanged || contributesToCourseMemory(updatedAnswerMessage)) {
             try {
                 courseMemoryIngestionApi.ifPresent(api -> api.onThreadResolutionChanged(updatedAnswerMessage.getPost(), updatedAnswerMessage, user, course));
             }
             catch (Exception e) {
-                log.error("Failed to update course memory after resolution change on answer post {}", updatedAnswerMessage.getId(), e);
+                log.error("Failed to update course memory after update of answer post {}", updatedAnswerMessage.getId(), e);
             }
         }
         return updatedAnswerMessage;
+    }
+
+    /**
+     * Whether this answer is what a thread's Course Memory entry would have been built from, i.e. whether
+     * changing or removing it has to be reflected there. True for an answer that resolves the thread and
+     * for a verified Iris answer, which the verification trigger stores in its own right.
+     *
+     * @param answerMessage the answer to check
+     * @return {@code true} if the thread's entry depends on this answer
+     */
+    private boolean contributesToCourseMemory(AnswerPost answerMessage) {
+        return Boolean.TRUE.equals(answerMessage.doesResolvePost()) || (answerMessage.getAuthor() != null && answerMessage.getAuthor().isBot() && answerMessage.isVerified());
     }
 
     private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
@@ -314,9 +329,9 @@ public class AnswerMessageService extends PostingService {
         ensureConversationBelongsToCourseElseThrow(conversation, courseId);
 
         // An answer that resolved the thread or that was a verified Iris answer is what the thread's
-        // Course Memory entry was built from, so its removal has to be reflected there too.
-        boolean contributedToCourseMemory = Boolean.TRUE.equals(answerMessage.doesResolvePost())
-                || (answerMessage.getAuthor() != null && answerMessage.getAuthor().isBot() && answerMessage.isVerified());
+        // Course Memory entry was built from, so its removal has to be reflected there too. Evaluated
+        // before the delete, while the answer is still loaded.
+        boolean contributedToCourseMemory = contributesToCourseMemory(answerMessage);
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedMessage = answerMessage.getPost();

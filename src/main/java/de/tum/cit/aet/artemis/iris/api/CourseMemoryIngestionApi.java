@@ -8,6 +8,7 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.CourseMemoryIngestionService;
@@ -62,5 +63,18 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
      */
     public void onThreadDeleted(Post post, @Nullable User actor, Course course) {
         courseMemoryIngestionService.handleThreadDeleted(post, actor, course);
+    }
+
+    /**
+     * A channel was deleted or stopped being public, so every Course Memory entry mined from it is
+     * removed. Eligibility is only checked when an entry is written, so an entry would otherwise keep
+     * being served after its source channel was restricted or removed.
+     *
+     * @param channel the channel whose entries should be removed
+     * @param actor   the user who deleted or restricted the channel, notified about the removal
+     * @param course  the course the channel belongs to
+     */
+    public void onChannelNoLongerEligible(Channel channel, @Nullable User actor, Course course) {
+        courseMemoryIngestionService.handleChannelNoLongerEligible(channel, actor, course);
     }
 }
