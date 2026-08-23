@@ -176,9 +176,9 @@ export class Feedback implements BaseEntity {
         return undefined;
     }
 
-    /** Tutor-facing title stored in {@link text}, without suggestion prefixes. */
+    /** Tutor-facing title stored in {@link text}, without suggestion prefixes. Linked grading instructions own the title. */
     public static getDisplayTitle(feedback: Feedback): string | undefined {
-        if (!feedback.text) {
+        if (feedback.gradingInstruction || !feedback.text) {
             return undefined;
         }
         const prefix = Feedback.getFeedbackSuggestionPrefix(feedback.text);
@@ -186,10 +186,7 @@ export class Feedback implements BaseEntity {
             const title = feedback.text.slice(prefix.length);
             return title || undefined;
         }
-        if (!feedback.gradingInstruction) {
-            return feedback.text;
-        }
-        return undefined;
+        return feedback.text;
     }
 
     public static hasDetailText(that: Feedback): boolean {

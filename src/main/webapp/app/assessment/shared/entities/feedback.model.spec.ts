@@ -27,6 +27,15 @@ describe('Feedback', () => {
                 } as Feedback),
             ).toBeUndefined();
         });
+
+        it('should not expose a suggestion title when linked to a grading instruction', () => {
+            expect(
+                Feedback.getDisplayTitle({
+                    text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Model`,
+                    gradingInstruction: { id: 1 },
+                } as Feedback),
+            ).toBeUndefined();
+        });
     });
 
     describe('getReferenceLineRange', () => {
