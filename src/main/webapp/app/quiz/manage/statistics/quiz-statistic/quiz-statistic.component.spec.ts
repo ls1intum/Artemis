@@ -85,8 +85,8 @@ describe('QuizStatisticComponent', () => {
             const loadQuizSuccessSpy = vi.spyOn(comp, 'loadQuizSuccess');
             vi.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
@@ -127,8 +127,8 @@ describe('QuizStatisticComponent', () => {
             // setup
             const loadDataSpy = vi.spyOn(comp, 'loadData');
             quizExercise.quizQuestions = [
-                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
@@ -145,8 +145,8 @@ describe('QuizStatisticComponent', () => {
         it('should call navigate to courses if called by student', () => {
             // setup
             quizExercise.quizQuestions = [
-                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.participantsRated = 42;
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
@@ -171,8 +171,8 @@ describe('QuizStatisticComponent', () => {
         it('should return MaxScore by looping over scores', () => {
             // setup
             quizExercise.quizQuestions = [
-                { statistic: quizQuestionStatOne, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { statistic: quizQuestionStatTwo, points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 1, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 2, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             comp.quizExercise.set(quizExercise);
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
@@ -211,8 +211,8 @@ describe('QuizStatisticComponent', () => {
         it('should use values of quizExercise and rated data', () => {
             // setup
             quizExercise.quizQuestions = [
-                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.participantsRated = 42;
             comp.quizExercise.set(quizExercise);
@@ -235,8 +235,8 @@ describe('QuizStatisticComponent', () => {
         it('should use values of quizExercise and unrated data', () => {
             // setup
             quizExercise.quizQuestions = [
-                { statistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
-                { statistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatOne, points: 5, invalid: false, exportQuiz: false, randomizeOrder: true },
+                { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.participantsRated = 42;
             comp.quizExercise.set(quizExercise);

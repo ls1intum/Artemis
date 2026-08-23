@@ -37,7 +37,7 @@ let quizExercise = {
     quizStarted: true,
     course,
     quizQuestions: [question],
-    statistic: { pointCounters } as QuizPointStatistic,
+    quizPointStatistic: { pointCounters } as QuizPointStatistic,
 } as QuizPointStatisticsResponse;
 
 describe('QuizExercise Point Statistic Component', () => {
@@ -80,7 +80,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], statistic: { pointCounters } } as QuizPointStatisticsResponse;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], quizPointStatistic: { pointCounters } } as QuizPointStatisticsResponse;
     });
 
     describe('onInit', () => {
@@ -93,8 +93,8 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
             comp.quizExercise.set(quizExercise);
-            comp.quizExercise().statistic = new QuizPointStatistic();
-            comp.quizExercise().statistic.pointCounters = pointCounters;
+            comp.quizExercise()!.quizPointStatistic = new QuizPointStatistic();
+            comp.quizExercise()!.quizPointStatistic.pointCounters = pointCounters;
 
             // call
             comp.ngOnInit();
@@ -166,8 +166,8 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should call router if called by student', () => {
             // setup
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            quizExercise.statistic = new QuizPointStatistic();
-            quizExercise.statistic.pointCounters = pointCounters;
+            quizExercise.quizPointStatistic = new QuizPointStatistic();
+            quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
             // call
             comp.loadQuizSuccess(quizExercise);
@@ -179,8 +179,8 @@ describe('QuizExercise Point Statistic Component', () => {
         it('should load the quiz', () => {
             // setup
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            quizExercise.statistic = new QuizPointStatistic();
-            quizExercise.statistic.pointCounters = pointCounters;
+            quizExercise.quizPointStatistic = new QuizPointStatistic();
+            quizExercise.quizPointStatistic.pointCounters = pointCounters;
 
             // call
             comp.loadQuizSuccess(quizExercise);

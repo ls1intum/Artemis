@@ -31,7 +31,7 @@ const dropLocationCounter2 = { dropLocationId: 2, ratedCounter: 0, unRatedCounte
 const questionStatistic = { dropLocationCounters: [dropLocationCounter1, dropLocationCounter2] } as DragAndDropQuestionStatistic;
 const question = { id: 1, dropLocations: [dropLocation1, dropLocation2] } as DragAndDropQuestion;
 const course = { id: 2 } as Course;
-let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], questionId: 1, statistic: questionStatistic } as QuizQuestionStatisticResponse;
+let quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], questionId: 1, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
 
 describe('QuizExercise Drag And Drop Question Statistic Component', () => {
     let comp: DragAndDropQuestionStatisticComponent;
@@ -67,7 +67,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
     });
 
     afterEach(() => {
-        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], questionId: 1, statistic: questionStatistic } as QuizQuestionStatisticResponse;
+        quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question], questionId: 1, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
     });
 
     describe('onInit', () => {

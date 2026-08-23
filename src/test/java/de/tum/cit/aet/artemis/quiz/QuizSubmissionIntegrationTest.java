@@ -125,6 +125,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private ResultTestRepository resultRepository;
+
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
@@ -253,6 +256,13 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         Result latestResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate, latestSubmission, true, false, 100);
         assertThat(latestResult.getId()).isGreaterThan(supersededResult.getId());
 
+        QuizSubmission newerUnscoredSubmission = createScoredSubmission(quizExercise, false, tiedCompletionDate.plusSeconds(3));
+        participationUtilService.addSubmission((StudentParticipation) latestSubmission.getParticipation(), newerUnscoredSubmission);
+        Result newerUnscoredResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(3), newerUnscoredSubmission, true,
+                false, 0);
+        newerUnscoredResult.score(null);
+        resultRepository.saveAndFlush(newerUnscoredResult);
+
         QuizSubmission nullRatedSubmission = createScoredSubmission(quizExercise, false, tiedCompletionDate.plusSeconds(1));
         participationUtilService.addSubmission(quizExercise, nullRatedSubmission, TEST_PREFIX + "student2");
         Result nullRatedResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(1), nullRatedSubmission, true, false, 0);
@@ -284,7 +294,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(overviewQuestionStatistic.path("unRatedCorrectCounter").asInt()).isOne();
 
         JsonNode questionResponse = request.get(statisticsPath + "/questions/" + multipleChoiceQuestion.getId(), HttpStatus.OK, JsonNode.class);
-        JsonNode questionStatistic = findNodeByLong(questionResponse.path("quizQuestions"), "id", multipleChoiceQuestion.getId()).path("quizQuestionStatistic");
+        JsonNode questionStatistic = questionResponse.path("quizQuestionStatistic");
         AnswerOption correctAnswer = multipleChoiceQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().orElseThrow();
         AnswerOption incorrectAnswer = multipleChoiceQuestion.getAnswerOptions().stream().filter(answer -> !answer.isIsCorrect()).findFirst().orElseThrow();
         JsonNode correctAnswerCounter = findNodeByLong(questionStatistic.path("answerCounters"), "answerId", correctAnswer.getId());

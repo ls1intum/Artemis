@@ -145,7 +145,7 @@ describe('QuizExercise Service', () => {
         ['overview', () => service.findStatisticsOverview(123), 'api/quiz/quiz-exercises/123/statistics/overview'],
         ['point', () => service.findPointStatistic(123), 'api/quiz/quiz-exercises/123/statistics/points'],
         ['question', () => service.findQuestionStatistic(123, 456), 'api/quiz/quiz-exercises/123/statistics/questions/456'],
-    ])('should load the %s statistics endpoint', async (_name, request, url) => {
+    ])('should load the %s statistics endpoint', async (_name, request: () => Observable<HttpResponse<unknown>>, url) => {
         const result = firstValueFrom(request());
         const req = httpMock.expectOne({ method: 'GET', url });
         req.flush(elemDefault);
