@@ -87,7 +87,7 @@
                             }
                         </div>
                     } @else {
-                        <div class="unified-feedback-points">{{ formattedPoints() }}</div>
+                        <div class="unified-feedback-points" [ngClass]="'unified-feedback-points--' + pointsSeverity()">{{ pointsLabel() }}</div>
                     }
                 </div>
             </div>

@@ -167,6 +167,26 @@ describe('UnifiedFeedbackComponent', () => {
         expect(fixture.nativeElement.querySelector('.unified-feedback-text')?.innerHTML).toContain('<p>Hello</p>');
     });
 
+    it('should render the read-only points pill as a signed number without a "Point(s)" word, colored by sign', () => {
+        fixture.componentRef.setInput('points', 3);
+        fixture.detectChanges();
+        let pill = fixture.nativeElement.querySelector('.unified-feedback-points') as HTMLElement;
+        expect(pill.textContent?.trim()).toBe('+3');
+        expect(pill.classList).toContain('unified-feedback-points--positive');
+
+        fixture.componentRef.setInput('points', -2);
+        fixture.detectChanges();
+        pill = fixture.nativeElement.querySelector('.unified-feedback-points') as HTMLElement;
+        expect(pill.textContent?.trim()).toBe('-2');
+        expect(pill.classList).toContain('unified-feedback-points--negative');
+
+        fixture.componentRef.setInput('points', 0);
+        fixture.detectChanges();
+        pill = fixture.nativeElement.querySelector('.unified-feedback-points') as HTMLElement;
+        expect(pill.textContent?.trim()).toBe('0');
+        expect(pill.classList).toContain('unified-feedback-points--neutral');
+    });
+
     it('should wrap the type icon in a circular icon badge', () => {
         fixture.detectChanges();
         const badge = fixture.nativeElement.querySelector('.unified-feedback-icon-badge');

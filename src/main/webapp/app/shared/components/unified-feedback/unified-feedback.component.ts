@@ -199,11 +199,23 @@ export class UnifiedFeedbackComponent {
         return this.feedbackTypeConfigs[this.inferredType()].alertClass;
     });
 
-    readonly formattedPoints = computed(() => {
+    /** Signed, compact points label for the read-only pill, e.g. `+10`, `-5`, `0` (no "Point(s)" word). */
+    readonly pointsLabel = computed(() => {
         const points = this.points();
         const formatted = this.localeConversionService.toLocaleString(points, this.scoreAccuracy());
-        const key = `artemisApp.assessment.detail.points.${Math.abs(points) === 1 ? 'one' : 'many'}`;
-        return this.artemisTranslatePipe.transform(key, { points: formatted });
+        return points > 0 ? `+${formatted}` : formatted;
+    });
+
+    /** Read-only pill color: follows the sign of the points value directly, independent of the inferred/explicit type. */
+    readonly pointsSeverity = computed<'positive' | 'negative' | 'neutral'>(() => {
+        const points = this.points();
+        if (points > 0) {
+            return 'positive';
+        }
+        if (points < 0) {
+            return 'negative';
+        }
+        return 'neutral';
     });
 
     readonly displayTitle = computed(() => this.stripFeedbackSuggestionPrefix(this.feedbackTitle() ?? ''));
