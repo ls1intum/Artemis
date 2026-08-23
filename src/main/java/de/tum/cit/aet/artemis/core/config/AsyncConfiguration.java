@@ -219,9 +219,13 @@ public class AsyncConfiguration implements AsyncConfigurer {
             return new SyncTaskExecutor();
         }
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(8);
-        executor.setMaxPoolSize(16);
-        executor.setQueueCapacity(1000);
+        // Deliberately small. Queueing a build competes with request handling for database connections and processor
+        // time, and a pool wide enough to absorb an exam's worth of pushes at once starves the endpoints students are
+        // waiting on. Kept narrow, the caller-runs fallback pushes the work back onto the git thread that produced it,
+        // which is where the natural backpressure was before this became asynchronous.
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(2000);
         executor.setThreadNamePrefix("build-trigger-");
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return new ExceptionHandlingAsyncTaskExecutor(executor);

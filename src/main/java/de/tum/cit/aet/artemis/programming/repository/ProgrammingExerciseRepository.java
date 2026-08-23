@@ -51,6 +51,19 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "buildConfig" })
     Optional<ProgrammingExercise> findWithTemplateParticipationAndBuildConfigById(long exerciseId);
 
+    /**
+     * Loads a programming exercise with everything the build trigger reads off it.
+     * <p>
+     * The trigger otherwise resolves the build config and the auxiliary repositories with a query each, per push, for
+     * what are per-exercise values. Both of their loaders return the association when it is already initialized, so one
+     * load here removes both queries without introducing anything that has to be invalidated.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the exercise with its build config and auxiliary repositories
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "buildConfig", "auxiliaryRepositories" })
+    Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(long exerciseId);

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -13,8 +14,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * Queues continuous integration builds off the request thread.
@@ -37,8 +40,12 @@ public class AsyncBuildTriggerService {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
-    public AsyncBuildTriggerService(Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    public AsyncBuildTriggerService(Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -57,11 +64,38 @@ public class AsyncBuildTriggerService {
         // thread as well; the calling thread's one does not carry over.
         SecurityUtils.setAuthorizationObject();
         try {
+            attachExerciseDetailsNeededByTheTrigger(participation);
             continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commitHash, triggeredByPushTo);
         }
         catch (Exception e) {
             // Mirrors the previous inline behaviour, which swallowed a failed trigger rather than failing the push.
             log.error("Could not queue a build for participation {} and commit {}", participation.getId(), commitHash, e);
         }
+    }
+
+    /**
+     * Loads the build config and the auxiliary repositories onto the exercise before the trigger reads them.
+     * <p>
+     * Both are per-exercise values that the trigger otherwise resolves with a query each, on every push, for the same
+     * handful of exercises. Their loaders return the association when it is already initialized, so one load here
+     * replaces both queries. Nothing is retained between pushes, so there is nothing to invalidate when an instructor
+     * changes the exercise: the next push reads it again.
+     *
+     * @param participation the participation whose exercise should carry the details the trigger needs
+     */
+    private void attachExerciseDetailsNeededByTheTrigger(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            return;
+        }
+        boolean buildConfigLoaded = exercise.getBuildConfig() != null && Hibernate.isInitialized(exercise.getBuildConfig());
+        boolean auxiliaryRepositoriesLoaded = Hibernate.isInitialized(exercise.getAuxiliaryRepositories());
+        if (buildConfigLoaded && auxiliaryRepositoriesLoaded) {
+            return;
+        }
+        programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exercise.getId()).ifPresent(loaded -> {
+            exercise.setBuildConfig(loaded.getBuildConfig());
+            exercise.setAuxiliaryRepositories(loaded.getAuxiliaryRepositories());
+        });
     }
 }
