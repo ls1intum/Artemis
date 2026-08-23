@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -64,17 +65,19 @@ public class TextSubmissionService extends SubmissionService {
     /**
      * Handles text submissions sent from the client and saves them in the database.
      *
-     * @param textSubmission the text submission that should be saved
-     * @param exercise       the corresponding text exercise
-     * @param user           the user who initiated the save/submission
+     * @param textSubmission            the text submission that should be saved
+     * @param exercise                  the corresponding text exercise
+     * @param user                      the user who initiated the save/submission
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return the saved text submission
      */
-    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user) {
+    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user, @Nullable StudentParticipation participationFromExamGate) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        // Reuse the participation the exam multiple-submission guard already resolved, when it left one on the
-        // submission. It only does so for a single, non test run participation of an exam exercise, which is exactly the
-        // case where this lookup would return the same row. Every other case still resolves it here.
-        final var optionalParticipation = textSubmission.getParticipation() instanceof StudentParticipation alreadyResolved ? Optional.of(alreadyResolved)
+        // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
+        // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
+        // would return the same row. Every other caller passes null and the participation is resolved here.
+        final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
                 : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());

@@ -249,6 +249,7 @@ public class QuizSubmissionResource {
 
         QuizSubmission quizSubmission = quizSubmissionService.buildSubmissionFromLiveClientDTO(submissionDTO, quizExercise);
 
+        StudentParticipation participationFromExamGate = null;
         if (quizExercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
@@ -263,11 +264,12 @@ public class QuizSubmissionResource {
                 quizSubmission.setId(null);
             }
 
-            // Prevent multiple submissions (currently only for exam submissions)
-            quizSubmission = (QuizSubmission) api.preventMultipleSubmissions(quizExercise, quizSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(quizExercise, quizSubmission, user);
         }
 
-        QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user);
+        QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user, participationFromExamGate);
         long end = System.currentTimeMillis();
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(QuizSubmissionBeforeEvaluationDTO.of(updatedQuizSubmission));

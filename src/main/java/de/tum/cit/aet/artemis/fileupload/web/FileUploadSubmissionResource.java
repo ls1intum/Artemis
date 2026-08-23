@@ -139,15 +139,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
         validateSubmissionIdBelongsToExercise(fileUploadSubmissionInput.id(), exerciseId);
 
+        StudentParticipation participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
-            // Prevent multiple submissions (currently only for exam submissions)
-            fileUploadSubmission = (FileUploadSubmission) api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
         }
 
         final FileUploadSubmission submission;
         try {
-            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user);
+            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user, participationFromExamGate);
         }
         catch (IOException e) {
             throw new BadRequestAlertException("The uploaded file could not be saved on the server", ENTITY_NAME, "cantSaveFile");

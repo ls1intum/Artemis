@@ -158,15 +158,24 @@ public class ExamSubmissionService {
      * <p>
      * TODO: we might want to move this to the SubmissionService
      *
+     * The submission is modified in place, so the caller keeps the instance it passed in. What is returned instead is
+     * the participation this call resolved, so the per-type save can reuse it rather than reading the same row again.
+     * It is returned rather than left on the submission because {@code Submission#participation} is deserialized from
+     * the request body: a caller that read it back off the submission would be trusting whatever participation the
+     * client named. Two cases deliberately return null and leave the lookup to the caller: several participations,
+     * where that lookup decides (and reports) which one applies, and a test run, where the lookup filters on
+     * {@code testRun = FALSE} and would therefore select a different participation than this one.
+     *
      * @param exercise   the exercise for which the submission should be saved
-     * @param submission the submission
+     * @param submission the submission, whose id is set in place when an earlier submission exists
      * @param user       the current user
-     * @return the submission. If a submission already exists for the exercise we will set the id
+     * @return the participation the caller may reuse, or null if the caller has to resolve it itself
      */
-    public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
+    @Nullable
+    public StudentParticipation preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submission or if it is a programming exercise or if it is a test exam exercise
         if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExam().isTestExam()) {
-            return submission;
+            return null;
         }
 
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, user.getId());
@@ -180,16 +189,12 @@ public class ExamSubmissionService {
                 submission.setId(existingSubmission.getId());
             }
             StudentParticipation resolved = participations.getFirst();
-            // Hand the resolved participation to the caller on the submission, so the per-type save does not look the
-            // same row up again. Two cases are deliberately left to the caller's own lookup rather than reused here:
-            // several participations, where that lookup decides (and reports) which one applies, and a test run, where
-            // the lookup filters on testRun = FALSE and would therefore select a different participation than this one.
             if (participations.size() == 1 && !resolved.isTestRun()) {
-                submission.setParticipation(resolved);
+                return resolved;
             }
         }
 
-        return submission;
+        return null;
     }
 
     private boolean isSubmissionInTime(Exercise exercise, StudentExamSubmissionGateDTO submissionGate, boolean withGracePeriod) {

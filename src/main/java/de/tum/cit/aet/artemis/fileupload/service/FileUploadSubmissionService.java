@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -73,21 +74,23 @@ public class FileUploadSubmissionService extends SubmissionService {
     /**
      * Handles file upload submissions sent from the client and saves them in the database.
      *
-     * @param fileUploadSubmission the file upload submission that should be saved
-     * @param exercise             the corresponding file upload exercise
-     * @param file                 the file that will be stored on the server
-     * @param user                 the user who initiated the save/submission
+     * @param fileUploadSubmission      the file upload submission that should be saved
+     * @param exercise                  the corresponding file upload exercise
+     * @param file                      the file that will be stored on the server
+     * @param user                      the user who initiated the save/submission
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return the saved file upload submission
      * @throws IOException        if file can't be saved
      * @throws EmptyFileException if file is empty
      */
-    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
-            throws IOException, EmptyFileException {
+    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user,
+            @Nullable StudentParticipation participationFromExamGate) throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        // Reuse the participation the exam multiple-submission guard already resolved, when it left one on the
-        // submission. It only does so for a single, non test run participation of an exam exercise, which is exactly the
-        // case where this lookup would return the same row. Every other case still resolves it here.
-        final var optionalParticipation = fileUploadSubmission.getParticipation() instanceof StudentParticipation alreadyResolved ? Optional.of(alreadyResolved)
+        // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
+        // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
+        // would return the same row. Every other caller passes null and the participation is resolved here.
+        final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
                 : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());

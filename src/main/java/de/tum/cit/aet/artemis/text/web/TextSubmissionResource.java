@@ -201,14 +201,16 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         long exerciseNanos = System.nanoTime() - stageStart;
 
         stageStart = System.nanoTime();
+        StudentParticipation participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
             // Apply further checks if it is an exam submission
             api.checkSubmissionAllowanceElseThrow(exercise, user);
 
-            // Prevent multiple submissions (currently only for exam submissions)
-            textSubmission = (TextSubmission) api.preventMultipleSubmissions(exercise, textSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(exercise, textSubmission, user);
         }
         long examChecksNanos = System.nanoTime() - stageStart;
 
@@ -221,7 +223,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             textSubmission.setId(null);
         }
         stageStart = System.nanoTime();
-        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user);
+        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, participationFromExamGate);
         long saveNanos = System.nanoTime() - stageStart;
         textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
