@@ -308,6 +308,9 @@ public class UserCreationService {
         // it in both places recorded a single activation twice.
         if (isBeingDeactivated) {
             auditAccountStateChange(savedUser, Constants.DEACTIVATE_USER);
+            // Same reason as in deactivateUser. Deliberately not done for a plain administrative password change, which
+            // also revokes credentials but must leave an administrator-created account's invitation keys intact.
+            userRecoveryKeyService.clearAll(savedUser.getId());
         }
         boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
         boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
@@ -362,6 +365,9 @@ public class UserCreationService {
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
         // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
         accountCredentialRevocationService.revokeAllCredentials(user, "user deactivated");
+        // An outstanding activation key would be a way to undo this: an account still awaiting self-activation would
+        // otherwise keep a working link that flips `activated` back on. A pending reset key goes for the same reason.
+        userRecoveryKeyService.clearAll(user.getId());
         log.info("Deactivated user: {}", user);
     }
 

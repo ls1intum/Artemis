@@ -211,6 +211,55 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         });
     }
 
+    /**
+     * Deactivation takes control of the account away, so it must not leave a way back in. An account still awaiting
+     * self-activation holds an activation key, and that key flips {@code activated} back on when redeemed - so the keys go
+     * with the other credentials.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void deactivatingAnAccountDropsItsOutstandingRecoveryKeys() {
+        userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-1");
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-1", Instant.now());
+
+        userCreationService.deactivateUser(user);
+
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).isNull();
+        assertThat(userRecoveryKeyService.findResetKey(user.getId())).isNull();
+        // And the key can no longer be redeemed, which is the point of clearing it.
+        assertThat(userRecoveryKeyService.findUserIdByActivationKey("activation-key-1")).isEmpty();
+    }
+
+    /**
+     * A password change made by an administrator revokes credentials too, but an administrator-created account is handed
+     * its activation and reset keys precisely so its owner can get in for the first time. Those must survive.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void anAdministrativePasswordChangeKeepsTheInvitationKeys() {
+        userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-2");
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-2", Instant.now());
+
+        accountCredentialRevocationService.revokeAllCredentials(user, "password changed by an administrator");
+
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).isEqualTo("activation-key-2");
+        assertThat(userRecoveryKeyService.findResetKey(user.getId())).isEqualTo("reset-key-2");
+    }
+
+    /**
+     * Presenting no key at all must match nothing. A derived query turns a null argument into {@code IS NULL}, which
+     * would otherwise match the row of an account that holds only the other key.
+     */
+    @Test
+    void anAbsentKeyMatchesNothing() {
+        userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-3");
+
+        assertThat(userRecoveryKeyService.findByResetKey(null)).isEmpty();
+        assertThat(userRecoveryKeyService.findByResetKey("")).isEmpty();
+        assertThat(userRecoveryKeyService.findUserIdByActivationKey(null)).isEmpty();
+        assertThat(userRecoveryKeyService.findUserIdByActivationKey("  ")).isEmpty();
+    }
+
     private void giveUserCredentials() {
         // Cleared first: the fixture user is reused across the tests in this class, so a test that deliberately leaves a
         // credential in place would otherwise make a later test see two of them.

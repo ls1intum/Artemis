@@ -4,11 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.UserRecoveryKey;
 import de.tum.cit.aet.artemis.account.repository.UserRecoveryKeyRepository;
@@ -85,7 +87,12 @@ public class UserRecoveryKeyService {
      * @param activationKey the key presented by the caller
      * @return the id of the account, or empty if no account has that key outstanding
      */
-    public Optional<Long> findUserIdByActivationKey(String activationKey) {
+    public Optional<Long> findUserIdByActivationKey(@Nullable String activationKey) {
+        if (!StringUtils.hasText(activationKey)) {
+            // A derived query turns a null argument into `IS NULL`, which would match a row that holds only a reset key.
+            // Nothing may be redeemed by presenting no key at all.
+            return Optional.empty();
+        }
         return userRecoveryKeyRepository.findByActivationKey(activationKey).map(UserRecoveryKey::getUserId);
     }
 
@@ -96,7 +103,11 @@ public class UserRecoveryKeyService {
      * @param resetKey the key presented by the caller
      * @return the pending row, or empty if no account has that key outstanding
      */
-    public Optional<UserRecoveryKey> findByResetKey(String resetKey) {
+    public Optional<UserRecoveryKey> findByResetKey(@Nullable String resetKey) {
+        if (!StringUtils.hasText(resetKey)) {
+            // See findUserIdByActivationKey: a null key must not match the row of an account that has none outstanding.
+            return Optional.empty();
+        }
         return userRecoveryKeyRepository.findByResetKey(resetKey);
     }
 
@@ -130,7 +141,7 @@ public class UserRecoveryKeyService {
         userRecoveryKeyRepository.findByUserId(userId).ifPresent(userRecoveryKeyRepository::delete);
     }
 
-    private void clear(long userId, java.util.function.Consumer<UserRecoveryKey> mutation) {
+    private void clear(long userId, Consumer<UserRecoveryKey> mutation) {
         userRecoveryKeyRepository.findByUserId(userId).ifPresent(row -> {
             mutation.accept(row);
             if (row.isEmpty()) {

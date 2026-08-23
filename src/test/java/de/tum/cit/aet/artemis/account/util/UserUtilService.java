@@ -159,7 +159,7 @@ public class UserUtilService {
             // the following line either creates the user or resets and existing user to its original state
             User user = createOrReuseExistingUser(login, commonPasswordHash);
             user.setAuthorities(authorities);
-            user = userTestRepository.save(user);
+            user = saveWithDefaultAiPreference(user);
             generatedUsers.add(user);
         }
         return generatedUsers;
@@ -203,9 +203,7 @@ public class UserUtilService {
      */
     public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
-        User saved = userTestRepository.save(user);
-        seedDefaultAiPreference(saved);
-        return saved;
+        return saveWithDefaultAiPreference(user);
     }
 
     /**
@@ -293,7 +291,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userTestRepository.save(user);
+        return saveWithDefaultAiPreference(user);
     }
 
     /**
@@ -324,7 +322,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userTestRepository.save(user);
+        return saveWithDefaultAiPreference(user);
     }
 
     /**
@@ -410,7 +408,7 @@ public class UserUtilService {
      */
     public void addStudents(String prefix, int from, int to) {
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD), studentAuthorities, from, to);
-        userTestRepository.saveAllOrUpdate(students);
+        userTestRepository.saveAllOrUpdate(students).forEach(this::seedDefaultAiPreference);
     }
 
     /**
@@ -441,7 +439,7 @@ public class UserUtilService {
     public void addInstructor(final String instructorName) {
         User instructor = createOrReuseExistingUser(instructorName, UserFactory.USER_PASSWORD);
         instructor.setAuthorities(instructorAuthorities);
-        instructor = userTestRepository.save(instructor);
+        instructor = saveWithDefaultAiPreference(instructor);
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
@@ -456,7 +454,7 @@ public class UserUtilService {
     public void addEditor(final String editorName) {
         User editor = createOrReuseExistingUser(editorName, UserFactory.USER_PASSWORD);
         editor.setAuthorities(editorAuthorities);
-        editor = userTestRepository.save(editor);
+        editor = saveWithDefaultAiPreference(editor);
         assertThat(editor.getId()).as("Editor has been created").isNotNull();
     }
 
@@ -471,7 +469,7 @@ public class UserUtilService {
     public void addTeachingAssistant(final String taName) {
         User ta = createOrReuseExistingUser(taName, UserFactory.USER_PASSWORD);
         ta.setAuthorities(tutorAuthorities);
-        ta = userTestRepository.save(ta);
+        ta = saveWithDefaultAiPreference(ta);
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
@@ -486,7 +484,7 @@ public class UserUtilService {
     public void addStudent(final String studentName) {
         User student = createOrReuseExistingUser(studentName, UserFactory.USER_PASSWORD);
         student.setAuthorities(studentAuthorities);
-        student = userTestRepository.save(student);
+        student = saveWithDefaultAiPreference(student);
         assertThat(student.getId()).as("Student has been created").isNotNull();
     }
 
@@ -589,7 +587,7 @@ public class UserUtilService {
         String superAdminLogin = prefix + "superadmin";
         User superAdmin = createOrReuseExistingUser(superAdminLogin, UserFactory.USER_PASSWORD);
         superAdmin.setAuthorities(superAdminAuthorities);
-        superAdmin = userTestRepository.save(superAdmin);
+        superAdmin = saveWithDefaultAiPreference(superAdmin);
         assertThat(superAdmin.getId()).as("Super admin has been created").isNotNull();
     }
 
@@ -602,7 +600,7 @@ public class UserUtilService {
         String adminLogin = prefix + "admin";
         User admin = createOrReuseExistingUser(adminLogin, UserFactory.USER_PASSWORD);
         admin.setAuthorities(adminAuthorities);
-        admin = userTestRepository.save(admin);
+        admin = saveWithDefaultAiPreference(admin);
         assertThat(admin.getId()).as("Admin has been created").isNotNull();
     }
 
@@ -744,9 +742,27 @@ public class UserUtilService {
      * @param user a saved account
      */
     private void seedDefaultAiPreference(User user) {
-        if (user.getId() != null) {
+        if (user.getId() == null) {
+            return;
+        }
+        // Only when nothing is recorded yet. A helper that re-saves an existing account must not overwrite a decision the
+        // test set on purpose, and the create helpers all funnel through here.
+        if (userAiPreferenceService.findDecision(user.getId()) == null) {
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
         }
+    }
+
+    /**
+     * Saves a generated account and records the fixture's default AI decision for it, which UserFactory used to set on the
+     * entity before the preference became a row keyed on the user id.
+     *
+     * @param user the generated account
+     * @return the saved account
+     */
+    private User saveWithDefaultAiPreference(User user) {
+        User saved = userTestRepository.save(user);
+        seedDefaultAiPreference(saved);
+        return saved;
     }
 
     /**

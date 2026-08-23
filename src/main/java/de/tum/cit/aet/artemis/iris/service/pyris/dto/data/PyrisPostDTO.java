@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.data;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,17 @@ public record PyrisPostDTO(Long id, String content, Set<PyrisAnswerPostDTO> answ
                         .map(answer -> AiSelectionDecision.NO_AI.equals(decisionOf(decisions, answer)) ? PyrisAnswerPostDTO.redacted(answer) : new PyrisAnswerPostDTO(answer))
                         .collect(Collectors.toSet()),
                 post.getAuthor().getId());
+    }
+
+    /**
+     * The ids of the authors of a post's answers, which is exactly the set of decisions this DTO needs. Callers load them
+     * in one query through {@code UserAiPreferenceService.findDecisions} instead of one per answer.
+     *
+     * @param post the post whose answers are forwarded
+     * @return the distinct author ids, skipping answers without a persisted author
+     */
+    public static Set<Long> answerAuthorIds(Post post) {
+        return post.getAnswers().stream().map(answer -> answer.getAuthor() == null ? null : answer.getAuthor().getId()).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     private static AiSelectionDecision decisionOf(Map<Long, AiSelectionDecision> decisions, AnswerPost answer) {

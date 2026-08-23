@@ -4,8 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -25,8 +23,6 @@ import de.tum.cit.aet.artemis.account.repository.UserActivityRepository;
 @Service
 public class UserActivityService {
 
-    private static final Logger log = LoggerFactory.getLogger(UserActivityService.class);
-
     private final UserActivityRepository userActivityRepository;
 
     public UserActivityService(UserActivityRepository userActivityRepository) {
@@ -35,14 +31,15 @@ public class UserActivityService {
 
     /**
      * Records that the account just authenticated.
+     * <p>
+     * The production login path does not come through here: it is triggered from {@code CustomAuditEventRepository}, and a
+     * repository must not reach into a service, so it calls the same repository method directly.
      *
      * @param login the login of the account
      * @param when  the moment of the login
      */
     public void recordLogin(String login, Instant when) {
-        if (userActivityRepository.recordLogin(login, when) == 0) {
-            createRowThen(login, row -> row.setLastLoginDate(when));
-        }
+        userActivityRepository.recordLoginCreatingRowIfMissing(login, when);
     }
 
     /**
@@ -52,9 +49,7 @@ public class UserActivityService {
      * @param when  the moment the warning was sent
      */
     public void recordDeletionWarning(String login, Instant when) {
-        if (userActivityRepository.recordDeletionWarning(login, when) == 0) {
-            createRowThen(login, row -> row.setDeletionWarningSentDate(when));
-        }
+        userActivityRepository.recordDeletionWarningCreatingRowIfMissing(login, when);
     }
 
     /**
@@ -87,15 +82,4 @@ public class UserActivityService {
         return userActivityRepository.findByUserId(userId).map(UserActivity::getDeletionWarningSentDate).orElse(null);
     }
 
-    /**
-     * Creates the row for an account that does not have one yet and applies the given change to it. Reached only by an
-     * account created after the migration, on the first write of either timestamp.
-     */
-    private void createRowThen(String login, java.util.function.Consumer<UserActivity> mutation) {
-        userActivityRepository.findUserIdByLogin(login).ifPresentOrElse(userId -> {
-            UserActivity row = userActivityRepository.findByUserId(userId).orElseGet(() -> new UserActivity(userId));
-            mutation.accept(row);
-            userActivityRepository.save(row);
-        }, () -> log.debug("No account with login {}, so no activity was recorded", login));
-    }
 }

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -67,10 +68,14 @@ public class LtiService {
 
     private final UserLtiRepository userLtiRepository;
 
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService, UserLtiRepository userLtiRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, JWTCookieService jwtCookieService, UserLtiRepository userLtiRepository,
+            UserRecoveryKeyService userRecoveryKeyService) {
         this.userCreationService = userCreationService;
         this.userLtiRepository = userLtiRepository;
+        this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
@@ -139,11 +144,13 @@ public class LtiService {
         final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
             var password = RandomUtil.generatePassword();
             final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
-            // Marked in user_lti rather than on the user row, which the lti module does not own.
-            userRepository.save(newUser);
+            // Marked in user_lti rather than on the user row, which the lti module does not own. createUser already saved
+            // the account, so the id is available and no further save of the user itself is needed.
             userLtiRepository.save(new UserLti(newUser.getId(), true));
-
-            userRepository.save(newUser);
+            // createUser issues an activation key for every internal account. A launch-provisioned account never receives
+            // the activation mail and must not be activatable by that key, so it is dropped again here - the account uses
+            // `activated` as its own "already initialised" marker instead. See User#activated.
+            userRecoveryKeyService.clearActivationKey(newUser.getId());
 
             log.info("Created new user {}", newUser);
             return newUser;

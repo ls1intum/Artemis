@@ -508,6 +508,8 @@ public class UserService {
             // Covers the participation and repository tokens and the SSH keys this method used to delete individually,
             // and additionally the passkeys and the personal VCS access token, which it did not.
             accountCredentialRevocationService.revokeAllCredentials(user, "user soft deleted");
+            // A reset or activation mail sent before the deletion must not remain a way into the anonymised account.
+            userRecoveryKeyService.clearAll(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());

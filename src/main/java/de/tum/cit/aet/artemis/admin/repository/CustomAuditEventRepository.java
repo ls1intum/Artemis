@@ -19,7 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.account.service.UserActivityService;
+import de.tum.cit.aet.artemis.account.repository.UserActivityRepository;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
@@ -44,15 +44,15 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final AuditEventConverter auditEventConverter;
 
-    private final UserActivityService userActivityService;
+    private final UserActivityRepository userActivityRepository;
 
     private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
     public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository, AuditEventConverter auditEventConverter,
-            UserActivityService userActivityService) {
+            UserActivityRepository userActivityRepository) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
-        this.userActivityService = userActivityService;
+        this.userActivityRepository = userActivityRepository;
         this.isSaml2Active = new ArtemisConfigHelper().isSaml2Enabled(environment);
     }
 
@@ -109,7 +109,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
      */
     private void recordLastLogin(String principal, Instant timestamp) {
         try {
-            userActivityService.recordLogin(principal, timestamp);
+            userActivityRepository.recordLoginCreatingRowIfMissing(principal, timestamp);
         }
         catch (Exception e) {
             log.warn("Could not record last login date for principal {}", principal, e);

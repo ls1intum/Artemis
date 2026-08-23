@@ -204,7 +204,7 @@ public class PyrisPipelineService {
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                new PyrisPostDTO(post, userAiPreferenceService.findDecisions(answerAuthorIds(post))),
+                new PyrisPostDTO(post, userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post))),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 toPyrisUserDTO(user),
                 executionDto.settings(),
@@ -216,14 +216,6 @@ public class PyrisPipelineService {
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error)
         );
         // @formatter:on
-    }
-
-    /**
-     * The ids of the authors of a post's answers, so their decisions can be loaded in one query rather than per answer.
-     */
-    private static java.util.Set<Long> answerAuthorIds(de.tum.cit.aet.artemis.communication.domain.Post post) {
-        return post.getAnswers().stream().map(answer -> answer.getAuthor() == null ? null : answer.getAuthor().getId()).filter(java.util.Objects::nonNull)
-                .collect(java.util.stream.Collectors.toSet());
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {

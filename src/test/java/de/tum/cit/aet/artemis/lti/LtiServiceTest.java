@@ -2,9 +2,13 @@ package de.tum.cit.aet.artemis.lti;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +33,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.security.ArtemisAuthenticationProvider;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.AuthorityService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -40,6 +45,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.UserLti;
 import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -67,6 +73,9 @@ class LtiServiceTest {
     @Mock
     private UserLtiRepository userLtiRepository;
 
+    @Mock
+    private UserRecoveryKeyService userRecoveryKeyService;
+
     private Exercise exercise;
 
     private LtiService ltiService;
@@ -82,7 +91,7 @@ class LtiServiceTest {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         ltiService = new LtiService(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService,
-                userLtiRepository);
+                userLtiRepository, userRecoveryKeyService);
         Course course = new Course();
         course.setId(100L);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
@@ -94,7 +103,6 @@ class LtiServiceTest {
         user.setId(1L);
         user.setLogin("login");
         user.setPassword("password");
-        user.setLtiCreated(true);
     }
 
     @AfterEach
@@ -102,7 +110,8 @@ class LtiServiceTest {
         if (closeable != null) {
             closeable.close();
         }
-        reset(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService, userLtiRepository);
+        reset(userCreationService, userRepository, userCourseRoleTestRepository, authorityService, artemisAuthenticationProvider, jwtCookieService, userLtiRepository,
+                userRecoveryKeyService);
     }
 
     @Test
@@ -229,6 +238,36 @@ class LtiServiceTest {
 
         assertThatExceptionOfType(InternalAuthenticationServiceException.class)
                 .isThrownBy(() -> ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser()));
+    }
+
+    /**
+     * A launch that provisions a new account has to leave two things behind: the marker row in {@code user_lti}, and no
+     * activation key. {@code createUser} issues one for every internal account, but a launch-provisioned account never
+     * receives the activation mail, so a key left in place would be a link nobody sent that still flips {@code activated}
+     * back on. See {@link de.tum.cit.aet.artemis.account.domain.User#activated}.
+     */
+    @Test
+    void authenticateLtiUser_createsTheLaunchMarkerAndDropsTheActivationKey() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        when(artemisAuthenticationProvider.getUsernameForEmail("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByEmailIgnoreCase("email")).thenReturn(Optional.empty());
+        when(userRepository.findOneByLogin("username")).thenReturn(Optional.empty());
+        User created = new User();
+        created.setId(42L);
+        created.setLogin("username");
+        created.setPassword("password");
+        when(userCreationService.createUser(eq("username"), anyString(), eq("firstname"), eq("lastname"), eq("email"), isNull(), isNull(), anyString(), eq(true)))
+                .thenReturn(created);
+
+        ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", false);
+
+        var marker = ArgumentCaptor.forClass(UserLti.class);
+        verify(userLtiRepository).save(marker.capture());
+        assertThat(marker.getValue().getUserId()).isEqualTo(42L);
+        assertThat(marker.getValue().isCreatedByLaunch()).isTrue();
+        verify(userRecoveryKeyService).clearActivationKey(42L);
+        // createUser already persisted the account; saving it again here would be a redundant write.
+        verify(userRepository, never()).save(created);
     }
 
     @Test
