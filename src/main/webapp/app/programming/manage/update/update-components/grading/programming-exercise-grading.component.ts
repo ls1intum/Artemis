@@ -54,6 +54,10 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     programmingExerciseCreationConfig = input.required<ProgrammingExerciseCreationConfig>();
     importOptions = input.required<ImportOptions>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    /** Whether grading controls may currently be changed. */
+    editable = input(true);
+    /** Emitted when generated criteria modify the programming exercise. */
+    criteriaGenerated = output<void>();
     /** When true the timeline dates are governed by the exercise's variant group (see {@link ExerciseTimelineComponent}). */
     lockedToGroup = input<boolean>(false);
     /** Emitted when the user clicks the locked timeline so the host can open the group-edit dialog. */
