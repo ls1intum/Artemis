@@ -203,9 +203,9 @@ public class ExerciseVariantGroupService {
      */
     private ProgrammingExercise updateProgrammingExerciseTimeline(ProgrammingExercise programmingExercise, ExerciseVariantGroup group,
             @Nullable Duration originalBuildAndTestOffset) {
+        ZonedDateTime buildAndTestDate = group.getDueDate() == null || originalBuildAndTestOffset == null ? null : group.getDueDate().plus(originalBuildAndTestOffset);
         ProgrammingExerciseTimelineUpdateDTO timelineUpdate = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), group.getReleaseDate(), group.getStartDate(),
-                group.getDueDate(), programmingExercise.getAssessmentType(), group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(),
-                programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+                group.getDueDate(), programmingExercise.getAssessmentType(), group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(), buildAndTestDate);
         return programmingExerciseCreationUpdateService.updateTimeline(timelineUpdate, null, originalBuildAndTestOffset);
     }
 
