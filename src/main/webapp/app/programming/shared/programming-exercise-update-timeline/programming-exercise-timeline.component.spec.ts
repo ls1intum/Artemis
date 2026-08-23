@@ -223,7 +223,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
 
         expect(controls.nativeElement.firstElementChild).toBe(notice.nativeElement);
         expect(controls.nativeElement.lastElementChild).toBe(assessmentSection.nativeElement);
-        expect(buildAndTestItem?.disabled).toBeFalsy();
+        expect(buildAndTestItem?.disabled).toBe(false);
         expect(groupManagedItems.length).toBeGreaterThan(0);
         expect(groupManagedItems.every((item) => item.disabled)).toBe(true);
         expect(exampleSolutionPublicationDateToggle.disabled).toBe(true);
