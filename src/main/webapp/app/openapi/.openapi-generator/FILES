@@ -1,5 +1,6 @@
 api/calendar-api.ts
 api/global-search-api.ts
+api/hyperion-assessment-criteria-generation-api.ts
 api/hyperion-code-generation-api.ts
 api/hyperion-faq-api.ts
 api/hyperion-problem-statement-api.ts
@@ -12,6 +13,8 @@ api/tutorial-group-session-api.ts
 api/tutorial-groups-configuration-api.ts
 model/answer-option-with-solution.ts
 model/artifact-location.ts
+model/assessment-criteria-generation-request.ts
+model/assessment-criteria-generation-response.ts
 model/bloom-radar.ts
 model/calendar-event.ts
 model/channel.ts
@@ -36,6 +39,8 @@ model/drag-item.ts
 model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
+model/generated-assessment-criterion.ts
+model/generated-assessment-instruction.ts
 model/global-search-result.ts
 model/inferred-competency.ts
 model/leaderboard-entry.ts
