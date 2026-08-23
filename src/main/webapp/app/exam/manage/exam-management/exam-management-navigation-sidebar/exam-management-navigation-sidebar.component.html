@@ -17,7 +17,7 @@
                 </div>
                 <div class="scrollable-content">
                     @for (exam of exams(); track exam.id; let first = $first) {
-                        <div class="pointer">
+                        <div class="pointer" [id]="'exam-' + exam.id">
                             @if (first) {
                                 <hr />
                             }
