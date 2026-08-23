@@ -101,7 +101,9 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
             child = child.firstChild;
         }
         const examId = Number(child.paramMap.get('examId'));
-        if (examId) {
+
+        // Do not set the current exam to the source exam when importing
+        if (examId && !this.router.url.includes('/import/')) {
             const exam = this.exams()?.find((e) => e.id === examId);
             this.currentExam.set(exam);
         } else {
