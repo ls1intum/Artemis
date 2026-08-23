@@ -1,0 +1,193 @@
+.main {
+    padding: 3rem 0 4rem;
+}
+
+.header {
+    max-width: 52rem;
+}
+
+.title {
+    margin-bottom: 0.75rem;
+}
+
+.lead {
+    margin-bottom: 0;
+    color: var(--ifm-color-emphasis-700);
+    font-size: 1.15rem;
+    line-height: 1.6;
+}
+
+.section {
+    margin-top: 3rem;
+}
+
+.sectionIntro {
+    max-width: 52rem;
+    color: var(--ifm-color-emphasis-800);
+}
+
+.loop {
+    display: grid;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    list-style: none;
+    counter-reset: loop-step;
+}
+
+.loopStep {
+    padding: 1.15rem 1.25rem;
+    border: 1px solid var(--ifm-color-emphasis-300);
+    border-radius: var(--ifm-global-radius);
+    background: var(--ifm-background-surface-color);
+}
+
+.loopStepNumber {
+    display: block;
+    margin-bottom: 0.35rem;
+    color: var(--ifm-color-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.loopStepTitle {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.loopStepBody {
+    color: var(--ifm-color-emphasis-700);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.viewToggle {
+    display: flex;
+    margin: 1.5rem 0 2rem;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.viewToggleLabel {
+    margin-right: 0.25rem;
+    color: var(--ifm-color-emphasis-700);
+    font-size: 0.95rem;
+}
+
+.viewButton {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--ifm-color-emphasis-300);
+    border-radius: 2rem;
+    background: transparent;
+    color: var(--ifm-font-color-base);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.95rem;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease;
+}
+
+.viewButton:hover {
+    border-color: var(--ifm-color-primary);
+}
+
+.viewButton[aria-pressed='true'] {
+    border-color: var(--ifm-color-primary);
+    background: var(--ifm-color-primary);
+    color: var(--ifm-color-white);
+}
+
+.groupTitle {
+    margin-top: 2.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--ifm-color-emphasis-300);
+    font-size: 1.35rem;
+}
+
+.publicationList {
+    margin: 1.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.publication {
+    padding: 0 0 1.25rem;
+    border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.publication + .publication {
+    padding-top: 1.25rem;
+}
+
+.publication:last-child {
+    border-bottom: 0;
+}
+
+.publicationTitle {
+    margin: 0 0 0.3rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+.publicationAuthors {
+    margin: 0 0 0.15rem;
+    font-size: 0.95rem;
+}
+
+.publicationVenue {
+    margin: 0 0 0.5rem;
+    color: var(--ifm-color-emphasis-700);
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+.publicationMeta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.topicTag {
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--ifm-color-emphasis-300);
+    border-radius: 2rem;
+    color: var(--ifm-color-emphasis-800);
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.forthcomingTag {
+    padding: 0.1rem 0.55rem;
+    border: 1px solid var(--ifm-color-warning-dark);
+    border-radius: 2rem;
+    color: var(--ifm-color-warning-contrast-foreground);
+    background: var(--ifm-color-warning-contrast-background);
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.note {
+    margin-top: 3rem;
+    padding: 1.15rem 1.25rem;
+    border-left: 4px solid var(--ifm-color-primary);
+    border-radius: var(--ifm-global-radius);
+    background: var(--ifm-color-emphasis-100);
+}
+
+.note p {
+    margin-bottom: 0;
+}
+
+.note p + p {
+    margin-top: 0.6rem;
+}
