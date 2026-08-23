@@ -499,8 +499,9 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
 
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        ZonedDateTime originalDueDate = programmingExercise.getDueDate();
+        ZonedDateTime originalDueDate = programmingExercise.getDueDate().truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime originalBuildAndTestDate = originalDueDate.plusHours(1);
+        programmingExercise.setDueDate(originalDueDate);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(originalBuildAndTestDate);
         exerciseRepository.save(programmingExercise);
 
@@ -509,8 +510,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
         ProgrammingExercise reloadedExercise = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
         assertThat(reloadedExercise.getExerciseVariantGroup()).isNull();
-        assertThat(reloadedExercise.getDueDate().toInstant()).isEqualTo(originalDueDate.truncatedTo(ChronoUnit.MILLIS).toInstant());
-        assertThat(reloadedExercise.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).isEqualTo(originalBuildAndTestDate.truncatedTo(ChronoUnit.MILLIS).toInstant());
+        assertThat(reloadedExercise.getDueDate().toInstant()).isEqualTo(originalDueDate.toInstant());
+        assertThat(reloadedExercise.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).isEqualTo(originalBuildAndTestDate.toInstant());
     }
 
     @Test
