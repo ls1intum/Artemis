@@ -12,6 +12,8 @@ import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback
 import { vi } from 'vitest';
 import { faMinus } from '@fortawesome/free-solid-svg-icons';
 
+const CREDITS_STEP = 0.5;
+
 describe('UnifiedFeedbackComponent', () => {
     let component: UnifiedFeedbackComponent;
     let fixture: ComponentFixture<UnifiedFeedbackComponent>;
@@ -330,10 +332,10 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackCredits.set(1);
         fixture.detectChanges();
 
-        component.stepCredits(component.CREDITS_STEP);
+        component.stepCredits(CREDITS_STEP);
         expect(component.feedbackCredits()).toBe(1.5);
 
-        component.stepCredits(-component.CREDITS_STEP);
+        component.stepCredits(-CREDITS_STEP);
         expect(component.feedbackCredits()).toBe(1);
     });
 
@@ -342,11 +344,11 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackCredits.set(1.3);
         fixture.detectChanges();
 
-        component.stepCredits(component.CREDITS_STEP);
+        component.stepCredits(CREDITS_STEP);
         expect(component.feedbackCredits()).toBe(1.5);
 
         component.feedbackCredits.set(1.3);
-        component.stepCredits(-component.CREDITS_STEP);
+        component.stepCredits(-CREDITS_STEP);
         expect(component.feedbackCredits()).toBe(1);
     });
 
@@ -366,14 +368,14 @@ describe('UnifiedFeedbackComponent', () => {
         component.feedbackCredits.set(1);
         fixture.detectChanges();
 
-        component.stepCredits(component.CREDITS_STEP);
+        component.stepCredits(CREDITS_STEP);
         expect(component.feedbackCredits()).toBe(1);
 
         fixture.componentRef.setInput('readOnly', false);
         fixture.componentRef.setInput('feedback', { credits: 1, gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 } } as any);
         fixture.detectChanges();
 
-        component.stepCredits(component.CREDITS_STEP);
+        component.stepCredits(CREDITS_STEP);
         expect(component.feedbackCredits()).toBe(1);
     });
 
