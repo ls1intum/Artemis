@@ -178,10 +178,12 @@ public class ExerciseVariantGroup extends DomainObject {
     }
 
     private boolean validateAssessmentDueDate() {
-        if (assessmentDueDate == null)
+        if (assessmentDueDate == null) {
             return true;
-        if (dueDate == null)
+        }
+        if (dueDate == null) {
             return false;
+        }
         return validateStrictDateSequence(Arrays.asList(releaseDate, startDate, dueDate), assessmentDueDate, Collections.singletonList(exampleSolutionPublicationDate));
     }
 

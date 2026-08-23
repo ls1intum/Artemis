@@ -881,10 +881,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     private boolean validateAssessmentDueDate() {
-        if (getAssessmentDueDate() == null)
+        if (getAssessmentDueDate() == null) {
             return true;
-        if (getDueDate() == null)
+        }
+        if (getDueDate() == null) {
             return false;
+        }
         return validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), getAssessmentDueDate(),
                 Collections.singletonList(getExampleSolutionPublicationDate()));
     }
