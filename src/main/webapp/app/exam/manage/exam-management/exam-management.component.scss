@@ -11,6 +11,6 @@
     @include title-bar-size-container;
 }
 
-:host ::ng-deep {
+.title-bar-actions-wrapper ::ng-deep {
     @include title-bar-compact-controls;
 }

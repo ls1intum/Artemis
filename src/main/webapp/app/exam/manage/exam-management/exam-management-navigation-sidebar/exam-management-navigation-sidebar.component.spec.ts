@@ -20,6 +20,7 @@ describe('ExamManagementNavigationSidebarComponent', () => {
 
         fixture = TestBed.createComponent(ExamManagementNavigationSidebarComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('course', { id: 1 } as any);
         fixture.componentRef.setInput('exams', [
             { id: 1, title: 'Exam 1' },
             { id: 2, title: 'Exam 2' },

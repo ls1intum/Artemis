@@ -9,89 +9,36 @@
                 (toggleSidebar)="toggleSidebar()"
             />
         </div>
-        <!-- right side: header bar and main content -->
+        <!-- right side: header bar and child route content -->
         <div class="flex flex-col flex-1 overflow-hidden">
-            <!-- header bar -->
-            <div class="exam-management-header module-bg p-2 rounded-md">
+            <!-- Dynamic Exam Header -->
+            <div class="exam-management-header module-bg p-2 rounded-md title-bar-actions-wrapper">
                 <div class="flex gap-2 align-items-center">
                     @if (isCollapsed()) {
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
                     }
-                    <h5 class="m-0">Overview</h5>
+                    <h5 class="m-0">{{ headerTitle() }}</h5>
                 </div>
-                @if (course().isAtLeastInstructor) {
-                    <div class="flex gap-2">
-                        <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()">
-                            <fa-icon [icon]="faFileImport" />
-                            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
-                        </tum-ui-button>
-                        <a tumUiButton size="small" id="create-exam" class="jh-create-entity create-exam" [routerLink]="['new']">
-                            <fa-icon [icon]="faPlus" />
-                            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.createExam"></span>
-                        </a>
-                    </div>
-                }
             </div>
-            <!-- main content -->
-            <div class="module-bg rounded-md p-3 flex-1 flex flex-col overflow-hidden">
-                @if (exams()) {
-                    <div class="table-responsive flex-1 overflow-auto" id="exams-table">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                                    <th class="d-md-table-cell" jhiSortBy="id">
-                                        <span jhiTranslate="global.field.id"></span>
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th jhiSortBy="title">
-                                        <span jhiTranslate="artemisApp.exam.title"></span>
-                                        <fa-icon [icon]="faSort" />
-                                    </th>
-                                    <th class="d-md-table-cell">
-                                        <span jhiTranslate="artemisApp.examStatus.columnTitle"></span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (exam of exams(); track trackId($index, exam)) {
-                                    <tr>
-                                        <td class="d-md-table-cell">
-                                            @if (course().isAtLeastInstructor) {
-                                                <span>
-                                                    <a [routerLink]="[exam.id]">{{ exam.id }}</a>
-                                                </span>
-                                            } @else {
-                                                {{ exam.id }}
-                                            }
-                                        </td>
-                                        <td class="d-md-table-cell">
-                                            <ng-container>
-                                                @if (course().isAtLeastInstructor) {
-                                                    <div class="bold">
-                                                        <a id="exam-{{ exam.id }}-title" [routerLink]="[exam.id]">{{ exam.title }}</a>
-                                                    </div>
-                                                } @else {
-                                                    <span>
-                                                        {{ exam.title }}
-                                                    </span>
-                                                }
-                                                @if (!exam.testExam) {
-                                                    <div class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></div>
-                                                }
-                                                @if (exam.testExam) {
-                                                    <div class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></div>
-                                                }
-                                            </ng-container>
-                                        </td>
-                                        <td class="d-md-table-cell">
-                                            <jhi-exam-status [exam]="exam" [course]="course()" class="d-flex justify-content-center" />
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+            <!-- child route content -->
+            <div class="module-bg rounded rounded-3 scrollable-content p-3 flex-1">
+                <!-- inject course title bar, for example in case of exercise group -->
+                @if (courseTitleBarService.titleTemplate() || courseTitleBarService.actionsTemplate()) {
+                    <div class="flex justify-between items-center mb-3 title-bar-actions-wrapper">
+                        <div>
+                            @if (courseTitleBarService.titleTemplate()) {
+                                <ng-container *ngTemplateOutlet="courseTitleBarService.titleTemplate()!" />
+                            }
+                        </div>
+                        <div class="flex gap-2">
+                            @if (courseTitleBarService.actionsTemplate()) {
+                                <ng-container *ngTemplateOutlet="courseTitleBarService.actionsTemplate()!" />
+                            }
+                        </div>
                     </div>
                 }
+                <!-- page content -->
+                <router-outlet />
             </div>
         </div>
     </div>
