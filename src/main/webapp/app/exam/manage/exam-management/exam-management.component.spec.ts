@@ -149,39 +149,6 @@ describe('Exam Management Component', () => {
         expect(comp.exams()).toEqual([exam]);
     });
 
-    it('should return false for examHasFinished when component has no exam information', () => {
-        // GIVEN
-        exam.latestIndividualEndDate = undefined;
-
-        // WHEN
-        const examHasFinished = comp.examHasFinished(exam);
-
-        // THEN
-        expect(examHasFinished).toBe(false);
-    });
-
-    it('should return true for examHasFinished when exam is in the past', () => {
-        // GIVEN
-        exam.latestIndividualEndDate = dayjs().subtract(1, 'days');
-
-        // WHEN
-        const examHasFinished = comp.examHasFinished(exam);
-
-        // THEN
-        expect(examHasFinished).toBe(true);
-    });
-
-    it('should return false for examHasFinished when exam is in the future', () => {
-        // GIVEN
-        exam.latestIndividualEndDate = dayjs().add(1, 'minute');
-
-        // WHEN
-        const examHasFinished = comp.examHasFinished(exam);
-
-        // THEN
-        expect(examHasFinished).toBe(false);
-    });
-
     it('should return exam.id, when item in the exam table is being tracked', () => {
         // WHEN
         const itemId = comp.trackId(0, exam);

@@ -168,13 +168,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
         this.exams.set([...this.sortService.sortByProperty(this.exams(), this.predicate, this.ascending)]);
     }
 
-    examHasFinished(exam: Exam): boolean {
-        if (exam.latestIndividualEndDate) {
-            return exam.latestIndividualEndDate.isBefore(dayjs());
-        }
-        return false;
-    }
-
     /**
      * Opens the import module for an exam import
      */
