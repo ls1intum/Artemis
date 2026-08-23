@@ -146,18 +146,23 @@ public class AsyncConfiguration implements AsyncConfigurer {
     /**
      * Executor for the version control access log writes (see {@code VcsAccessLogService}).
      * <p>
-     * These run on their own pool, and one that discards rather than rejects, because of how the writes are reached.
-     * A git push submits the log write from the request thread, so a rejection is thrown at the push, not at the
-     * logging: benchmarking a 2000 student exam produced 399 failed pushes this way, each one a student's commit lost
-     * to a rejected bookkeeping task. Access logging must never be able to do that.
+     * These run on their own pool because of how the writes are reached. A git push submits the log write from the
+     * request thread, so a rejection is thrown at the push, not at the logging: benchmarking a 2000 student exam
+     * produced 399 failed pushes this way, each one a student's commit lost to a rejected bookkeeping task. Access
+     * logging must never be able to do that, so saturation runs the task on the calling thread instead of rejecting it.
      * <p>
-     * The queue is deliberately short. A long queue on a small pool is worse than a short one, because it delays the
-     * point at which the pool is allowed to grow while letting a backlog build that is already stale by the time it
-     * drains. When even that is full the entry is dropped with a warning, which loses an audit record but keeps the
-     * push working. That is the right way round: the log describes the push, so it cannot be worth more than the push.
+     * Neither may it drop one. A git operation writes its log entry in two steps: {@code /info/refs} creates the entry,
+     * and the data transfer request that follows updates it, locating it as the newest entry for that repository. A
+     * dropped create therefore does not merely lose a record, it points the update at the previous operation's entry and
+     * overwrites that one with this operation's commit hash. Discarding is the wrong answer for a sequence whose later
+     * steps depend on the earlier ones having happened.
+     * <p>
+     * Single threaded for the same reason: with one worker the queue drains in submission order, so the create is
+     * always applied before the update that depends on it. The work is a handful of small inserts per git operation, far
+     * below what one thread sustains, and the bounded queue in front of it is the buffer for a burst.
      *
-     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated pool that discards on
-     *         saturation
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single threaded pool that
+     *         falls back to the caller when saturated
      */
     @Bean("vcsAccessLogExecutor")
     public Executor vcsAccessLogExecutor() {
@@ -165,12 +170,11 @@ public class AsyncConfiguration implements AsyncConfigurer {
             return new SyncTaskExecutor();
         }
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(4);
-        executor.setMaxPoolSize(8);
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
         executor.setQueueCapacity(1000);
         executor.setThreadNamePrefix("vcs-access-log-");
-        executor.setRejectedExecutionHandler((runnable, pool) -> log
-                .warn("Dropping a version control access log write: the executor is saturated ({} queued). The git operation itself is unaffected.", pool.getQueue().size()));
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
