@@ -4,10 +4,10 @@ import { ParsedOperator } from 'app/core/navbar/global-search/models/search-oper
 
 describe('search menu builders', () => {
     const translate = (key: string) => key;
-    const typeOp = (query = '', negate = false): ParsedOperator => ({ facet: 'type', negate, query, prefix: negate ? '-type:' : 'type:' });
-    const courseOp = (query = ''): ParsedOperator => ({ facet: 'course', negate: false, query, prefix: 'course:' });
+    const typeOp = (query = '', negate = false): ParsedOperator => ({ facet: 'type', negate, query, prefix: negate ? '-type:' : 'type:', start: 0, text: '' });
+    const courseOp = (query = ''): ParsedOperator => ({ facet: 'course', negate: false, query, prefix: 'course:', start: 0, text: '' });
     const type = (value: string, negate = false): FilterToken => ({ facet: 'type', value, negate });
-    const base = { pickerOpen: false, searchQuery: '', tokens: [] as FilterToken[], editingChip: -1, courses: () => [] as MenuCourse[], translate };
+    const base = { pickerOpen: false, excludeMode: false, searchQuery: '', tokens: [] as FilterToken[], editingChip: -1, courses: () => [] as MenuCourse[], translate };
 
     describe('buildFilterMenuOptions - guided picker', () => {
         it('returns nothing when no operator and the picker is closed', () => {
@@ -17,19 +17,19 @@ describe('search menu builders', () => {
         it('returns the three root actions when the picker is open', () => {
             const options = buildFilterMenuOptions({ ...base, pickerOpen: true });
             expect(options.map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
-            // The exclude row steps into a sub-menu rather than injecting an operator.
-            expect(options.find((option) => option.id === 'exclude')?.action).toEqual({ kind: 'setQuery', query: '-' });
+            // The exclude row steps into a sub-menu rather than appending an operator.
+            expect(options.find((option) => option.id === 'exclude')?.action).toEqual({ kind: 'excludeStep' });
         });
 
-        it('steps into the exclude sub-menu when the query is "-"', () => {
-            const options = buildFilterMenuOptions({ ...base, pickerOpen: true, searchQuery: '-' });
+        it('lists the exclude actions while the picker is on its exclude level', () => {
+            const options = buildFilterMenuOptions({ ...base, pickerOpen: true, excludeMode: true });
             expect(options.map((option) => option.id)).toEqual(['-type', '-course']);
             expect(options.every((option) => option.action.kind === 'operator')).toBe(true);
         });
 
-        it('narrows to the course action when the query is "cou"', () => {
-            const options = buildFilterMenuOptions({ ...base, pickerOpen: true, searchQuery: 'cou' });
-            expect(options.map((option) => option.id)).toEqual(['course']);
+        it('leaves the root actions alone while the user types, because plain text leaves the picker instead', () => {
+            const options = buildFilterMenuOptions({ ...base, pickerOpen: true, searchQuery: 'linear regression' });
+            expect(options.map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
         });
     });
 
@@ -60,6 +60,24 @@ describe('search menu builders', () => {
         it('never offers the last remaining type in exclude mode', () => {
             const excludedFive = ['course', 'exercise', 'lecture', 'communication', 'faq'].map((value) => type(value, true));
             expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true), tokens: excludedFive })).toEqual([]);
+        });
+
+        it('offers the literal search first and the recovery row second when a typed value matches nothing', () => {
+            const options = buildFilterMenuOptions({ ...base, operator: typeOp('candle'), searchQuery: 'nsjkfncs type:candle' });
+            expect(options.map((option) => option.action.kind)).toEqual(['literal', 'clearValue']);
+            expect(options[0].action).toEqual({ kind: 'literal', text: 'nsjkfncs type:candle' });
+            expect(options[0].literal).toBe('nsjkfncs type:candle');
+            expect(options[1].label).toBe('global.search.showAllTypes');
+        });
+
+        it('names the recovery row after the facet, so "type" is made concrete rather than assumed', () => {
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp('candle'), searchQuery: 'course:candle' });
+            expect(options[1].label).toBe('global.search.showYourCourses');
+        });
+
+        it('offers no literal row for an exhausted list, which is an empty menu rather than a wrong word', () => {
+            const excludedFive = ['course', 'exercise', 'lecture', 'communication', 'faq'].map((value) => type(value, true));
+            expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true), tokens: excludedFive, searchQuery: '-type:' })).toEqual([]);
         });
 
         it('filters course options by title and caps the list at eight', () => {

@@ -20,6 +20,7 @@
         [isLoading]="isLoading()"
         [operator]="operator()"
         [operatorValueValid]="operatorValueValid()"
+        [operatorUnknown]="deadEnd()"
         [menuVisible]="filterMenuOpen()"
         [activeOptionId]="activeOptionId()"
         [filterShortcutLabel]="filterShortcutLabel()"
@@ -27,7 +28,7 @@
         (chipRemoved)="onChipRemoved($event)"
         (chipSelected)="onChipSelected($event)"
         (backspaceOnEmpty)="onBackspaceRemoveFilter()"
-        (filterTrigger)="toggleFilterPicker()"
+        (filterTrigger)="toggleFilterMenu()"
     />
     <!-- Results Area — also hosts the filter menu while a filter is being composed (no overlay dropdown). -->
     <div class="results-container">
@@ -36,6 +37,7 @@
                 [options]="menuOptions()"
                 [activeIndex]="menuActiveIndex()"
                 [headerKey]="menuHeaderKey()"
+                [message]="deadEndMessage()"
                 [exclude]="operator()?.negate ?? false"
                 [showBack]="canGoBack()"
                 (optionSelected)="onOptionSelected($event)"
@@ -82,7 +84,7 @@
             </span>
             <span class="flex items-center gap-1">
                 <kbd class="key-hint-small inline-flex items-center font-mono border" aria-label="Escape">ESC</kbd>
-                <span class="ms-2">{{ (canGoBack() ? 'global.search.back' : 'global.search.toClose') | artemisTranslate }}</span>
+                <span class="ms-2">{{ escapeHintKey() | artemisTranslate }}</span>
             </span>
         </div>
     </div>

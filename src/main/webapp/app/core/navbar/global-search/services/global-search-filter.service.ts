@@ -7,17 +7,25 @@ import { SearchEntityType } from '../models/searchable-entity.model';
 import { FilterToken, TypeFacetValue } from '../models/search-token.model';
 import { TYPE_FACETS, TYPE_FACET_ORDER } from '../models/facet-catalog';
 import { addOrToggleToken, excludedCourseIds, expandTypeTokens, removeTokenAt, selectedCourseIds } from '../models/search-token.util';
-import { parseOperator } from '../models/search-operator.util';
+import { appendOperator, parseOperator, stripOperator } from '../models/search-operator.util';
 
 /**
  * Side-effect callbacks the host component wires into the filter store so the store can stay free of the
  * search pipeline and DOM: {@link FilterSideEffects.applyTokens} commits a new token set through the
- * component's search pipeline (loading skeleton + debounced request), and {@link FilterSideEffects.requestFocus}
- * returns focus to the search input.
+ * component's search pipeline (loading skeleton + debounced request), {@link FilterSideEffects.requestFocus}
+ * returns focus to the search input, and {@link FilterSideEffects.exitFilterMenu} leaves the filter surface
+ * altogether once there is no level left to step back to.
  */
 export interface FilterSideEffects {
     applyTokens: (tokens: FilterToken[]) => void;
     requestFocus: () => void;
+    /**
+     * Leaves the filter surface entirely. Only the host knows what sits behind the menu, so it decides
+     * whether to reveal the pane underneath or close the overlay when the menu was the home screen.
+     */
+    exitFilterMenu: () => void;
+    /** Re-runs the search for the current text without changing the filters (used when a literal search is accepted). */
+    refreshSearch: () => void;
 }
 
 /**
@@ -46,6 +54,14 @@ export class GlobalSearchFilterService {
     readonly filterPickerOpen: WritableSignal<boolean> = signal(false);
     /** Index of the chip currently being re-picked (tapped to change its value), or -1 when not editing. */
     readonly editingChip: WritableSignal<number> = signal(-1);
+    /** Whether the guided picker is showing its exclude level. Held as state, not as a "-" typed into the input. */
+    readonly excludeMode: WritableSignal<boolean> = signal(false);
+    /**
+     * Input text the user accepted as a literal search from the dead-end row. While the input still starts
+     * with it, the trailing `facet:` is read as ordinary text rather than as an operator, so typing on past
+     * the accepted point does not reopen the menu.
+     */
+    private readonly literalFrom: WritableSignal<string | undefined> = signal(undefined);
 
     // Query params derived from the tokens and sent to the server.
     readonly typesParam: Signal<string | undefined> = computed(() => expandTypeTokens(this.tokens()));
@@ -71,13 +87,28 @@ export class GlobalSearchFilterService {
             ),
         ),
     );
-    // The `facet:` operator being typed (drives the value menu + operator colouring), if any.
-    readonly operator = computed(() => parseOperator(this.searchQuery()));
+    /** True while the input still holds a `facet:` the user explicitly chose to search for verbatim. */
+    readonly literalAccepted: Signal<boolean> = computed(() => {
+        const from = this.literalFrom();
+        return from !== undefined && this.searchQuery().startsWith(from);
+    });
+    // The `facet:` operator being typed (drives the value menu + operator colouring), if any. Suppressed
+    // once the user has accepted the text as a literal search, which is what closes the menu on that choice.
+    readonly operator = computed(() => (this.literalAccepted() ? undefined : parseOperator(this.searchQuery())));
+    /**
+     * The text sent to the server: everything before a trailing operator, or the whole input. Because it is
+     * independent of the operator, the results for the query keep updating behind an open filter menu.
+     */
+    readonly searchText: Signal<string> = computed(() => {
+        const op = this.operator();
+        return (op ? op.text : this.searchQuery()).trim();
+    });
     // Options for the value menu, derived from the current operator + its query.
     readonly menuOptions: Signal<FilterMenuOption[]> = computed(() =>
         buildFilterMenuOptions({
             operator: this.operator(),
             pickerOpen: this.filterPickerOpen(),
+            excludeMode: this.excludeMode(),
             searchQuery: this.searchQuery(),
             tokens: this.tokens(),
             editingChip: this.editingChip(),
@@ -100,12 +131,26 @@ export class GlobalSearchFilterService {
     });
     // Whether the menu panel (value menu or filter picker) should be shown.
     readonly filterMenuOpen: Signal<boolean> = computed(() => !!this.operator() || this.filterPickerOpen());
+    /**
+     * A typed value that matches no known value: the menu collapses to the single literal-search row. This is
+     * not the same as an exhausted list (every value already applied), which keeps its way back.
+     */
+    readonly deadEnd: Signal<boolean> = computed(() => this.menuOptions().some((option) => option.action.kind === 'literal'));
+    /** Message replacing the menu header at a dead end, naming what the user typed. */
+    readonly deadEndMessage: Signal<{ key: string; value: string } | undefined> = computed(() => {
+        const op = this.operator();
+        if (!op || !this.deadEnd()) {
+            return undefined;
+        }
+        // "not one of your courses" rather than "not a course": a course by that name may well exist and
+        // simply not be visible to this user, and the flatter phrasing would be a small lie.
+        return { key: op.facet === 'type' ? 'global.search.notAType' : 'global.search.notYourCourse', value: op.query.trim() };
+    });
     // i18n key for the menu header: "Filter by" for the picker, else "Choose type" / "Choose course".
     readonly menuHeaderKey: Signal<string> = computed(() => {
         const op = this.operator();
         if (!op) {
-            // Root picker vs the exclude sub-menu (entered with a leading "-").
-            return this.filterPickerOpen() && this.searchQuery().trim().startsWith('-') ? 'global.search.chooseExclude' : 'global.search.addFilter';
+            return this.excludeMode() ? 'global.search.chooseExclude' : 'global.search.addFilter';
         }
         if (op.negate) {
             return op.facet === 'course' ? 'global.search.chooseExcludeCourse' : 'global.search.chooseExcludeType';
@@ -113,15 +158,20 @@ export class GlobalSearchFilterService {
         return op.facet === 'course' ? 'global.search.chooseCourse' : 'global.search.chooseType';
     });
 
-    /** Whether the guided picker can step back a level (i.e. we are in a value menu or the exclude sub-menu). */
-    readonly canGoBack: Signal<boolean> = computed(() => this.filterPickerOpen() && this.searchQuery().trim().length > 0);
+    /**
+     * Whether the picker can step back a level: from a value menu to the level it was opened from, or from the
+     * exclude level to the root. A dead end has no level behind it, so it offers the literal search instead.
+     */
+    readonly canGoBack: Signal<boolean> = computed(() => this.filterPickerOpen() && (!!this.operator() || this.excludeMode()) && !this.deadEnd());
 
     private sideEffects: FilterSideEffects = {
         applyTokens: () => {},
         requestFocus: () => {},
+        exitFilterMenu: () => {},
+        refreshSearch: () => {},
     };
 
-    /** Wires the host component's search-pipeline + focus side-effects. Called once, from the component constructor. */
+    /** Wires the host component's search-pipeline, focus, and menu-exit side-effects. Called once, from the component constructor. */
     configure(sideEffects: FilterSideEffects): void {
         this.sideEffects = sideEffects;
     }
@@ -134,6 +184,8 @@ export class GlobalSearchFilterService {
         this.filterPickerOpen.set(false);
         this.editingChip.set(-1);
         this.menuActiveIndex.set(0);
+        this.excludeMode.set(false);
+        this.literalFrom.set(undefined);
     }
 
     /** Applies the chosen menu option: a picker action injects an operator; a value adds / replaces a filter. */
@@ -142,17 +194,29 @@ export class GlobalSearchFilterService {
         if (!option) {
             return;
         }
-        if (option.action.kind === 'setQuery') {
-            // Step into a sub-menu (e.g. the exclude chooser) without forming an operator; keep the picker open.
-            this.searchQuery.set(option.action.query);
+        if (option.action.kind === 'excludeStep') {
+            // Step into the exclude level without touching the input; the picker stays open.
+            this.excludeMode.set(true);
             this.menuActiveIndex.set(0);
             this.sideEffects.requestFocus();
             return;
         }
         if (option.action.kind === 'operator') {
-            // Guided picker: inject the operator prefix and open the value menu. The picker stays "open" through the
-            // flow so the value menu can offer a step back to the previous level.
-            this.searchQuery.set(option.action.prefix);
+            // Guided picker: append the operator prefix and open the value menu. The picker stays "open" through
+            // the flow so the value menu can offer a step back to the previous level.
+            this.appendPrefix(option.action.prefix);
+            return;
+        }
+        if (option.action.kind === 'literal') {
+            this.acceptLiteral();
+            return;
+        }
+        if (option.action.kind === 'clearValue') {
+            // Keep the facet, drop the value that matched nothing, so the full list comes back.
+            const active = this.operator();
+            if (active) {
+                this.searchQuery.set(this.searchQuery().slice(0, active.start + active.prefix.length));
+            }
             this.menuActiveIndex.set(0);
             this.sideEffects.requestFocus();
             return;
@@ -164,9 +228,10 @@ export class GlobalSearchFilterService {
         const newToken: FilterToken = { facet: op.facet, value: option.action.value, negate: op.negate };
         const editing = this.editingChip();
         this.editingChip.set(-1);
-        this.searchQuery.set('');
-        // A value completes the flow: close the picker so the menu does not reopen on the now-empty query.
+        // Only the operator leaves the input; whatever the user was searching for stays exactly as typed.
+        this.searchQuery.set(stripOperator(this.searchQuery()));
         this.filterPickerOpen.set(false);
+        this.excludeMode.set(false);
         this.sideEffects.requestFocus();
         if (editing >= 0) {
             // Re-picking a chip: replace it in place so it keeps its position (the edit menu never offers a
@@ -181,11 +246,36 @@ export class GlobalSearchFilterService {
         this.menuActiveIndex.set(index);
     }
 
-    /** Steps one level back in the guided picker: an exclude value menu returns to the exclude chooser, everything else to the root. */
+    /** Steps one level back: an exclude value menu returns to the exclude chooser, everything else to the root. */
     back(): void {
         const op = this.operator();
-        this.searchQuery.set(op?.negate ? '-' : '');
+        this.searchQuery.set(stripOperator(this.searchQuery()));
+        this.excludeMode.set(!!op?.negate);
+        this.filterPickerOpen.set(true);
         this.editingChip.set(-1);
+        this.menuActiveIndex.set(0);
+        this.sideEffects.requestFocus();
+    }
+
+    /**
+     * Abandons the operator reading of the input and searches for the raw text instead. Chosen from the
+     * dead-end row, or by pressing Escape there, where "cancel" cannot mean deleting text the user typed.
+     */
+    private acceptLiteral(): void {
+        this.literalFrom.set(this.searchQuery());
+        this.filterPickerOpen.set(false);
+        this.excludeMode.set(false);
+        this.editingChip.set(-1);
+        this.menuActiveIndex.set(0);
+        this.sideEffects.requestFocus();
+        this.sideEffects.refreshSearch();
+    }
+
+    /** Appends an operator prefix to the input, keeping the search text in front of it. */
+    private appendPrefix(prefix: string): void {
+        this.literalFrom.set(undefined);
+        this.searchQuery.set(appendOperator(this.searchQuery(), prefix));
+        this.excludeMode.set(false);
         this.menuActiveIndex.set(0);
         this.sideEffects.requestFocus();
     }
@@ -215,40 +305,50 @@ export class GlobalSearchFilterService {
                 break;
             case 'Escape':
                 event.preventDefault();
+                if (this.deadEnd()) {
+                    // Not a filter, so there is no level to step back to, and cancel must not eat text the user
+                    // typed as a search term. Escape means the same as the literal row here.
+                    this.acceptLiteral();
+                    break;
+                }
                 if (this.canGoBack()) {
-                    // In a value menu or the exclude sub-menu: step back one level instead of closing the whole thing.
+                    // In a value menu or the exclude level: step back one level instead of leaving the menu.
                     this.back();
                     break;
                 }
-                // At the root picker (or a typed value menu): cancel the picker / chip edit and clear the operator.
-                this.filterPickerOpen.set(false);
-                this.editingChip.set(-1);
-                this.searchQuery.set('');
-                this.sideEffects.requestFocus();
+                // Nothing left to step back to: drop the operator and the picker, then let the host leave the
+                // filter surface. It never closes the menu onto an empty pane, because the picker is the home
+                // screen and nothing may render behind it there.
+                this.leaveFilterMenu();
+                this.sideEffects.exitFilterMenu();
                 break;
         }
     }
 
-    /** Toggles the guided filter picker (used by the Filter button and Cmd/Ctrl+F): open closes, closed opens. */
-    toggleFilterPicker(): void {
-        if (this.filterPickerOpen()) {
-            this.filterPickerOpen.set(false);
-            this.sideEffects.requestFocus();
-            return;
-        }
-        this.openFilterPicker();
-    }
-
-    /** Opens the guided filter picker (facet chooser). No-op while a value menu is already open. */
+    /**
+     * Shows the guided filter picker at its root (used by the Filter button and Cmd/Ctrl+F). From a value menu
+     * it steps back to the root; at the root it only returns focus to the input. The search text is never
+     * touched, which is the whole point: composing a filter must not cost the user what they were looking for.
+     */
     openFilterPicker(): void {
-        if (this.operator()) {
-            return;
-        }
         this.editingChip.set(-1);
-        this.searchQuery.set('');
+        if (!this.literalAccepted()) {
+            // A literal the user deliberately kept is text, not an operator, so it must survive this.
+            this.searchQuery.set(stripOperator(this.searchQuery()));
+        }
+        this.excludeMode.set(false);
         this.filterPickerOpen.set(true);
         this.menuActiveIndex.set(0);
         this.sideEffects.requestFocus();
+    }
+
+    /** Closes the filter surface, dropping a half-typed operator but keeping the search text. */
+    leaveFilterMenu(): void {
+        this.searchQuery.set(stripOperator(this.searchQuery()));
+        this.filterPickerOpen.set(false);
+        this.excludeMode.set(false);
+        this.editingChip.set(-1);
+        this.menuActiveIndex.set(0);
     }
 
     /** Taps a chip to re-pick its value: reopens that facet's menu; choosing a value replaces the chip. */
@@ -260,8 +360,7 @@ export class GlobalSearchFilterService {
         this.selectedChip.set(-1);
         this.filterPickerOpen.set(false);
         this.editingChip.set(index);
-        this.searchQuery.set(token.negate ? `-${token.facet}:` : `${token.facet}:`);
-        this.sideEffects.requestFocus();
+        this.appendPrefix(token.negate ? `-${token.facet}:` : `${token.facet}:`);
     }
 
     /** Removes the chip at the given index (its remove button was clicked). */

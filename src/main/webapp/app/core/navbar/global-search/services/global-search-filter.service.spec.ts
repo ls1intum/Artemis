@@ -11,6 +11,8 @@ describe('GlobalSearchFilterService', () => {
     let service: GlobalSearchFilterService;
     let applyTokens: Mock<(tokens: FilterToken[]) => void>;
     let requestFocus: Mock<() => void>;
+    let exitFilterMenu: Mock<() => void>;
+    let refreshSearch: Mock<() => void>;
 
     const mockCourseStorageService = {
         getCourse: vi.fn<(id: number) => Course | undefined>().mockReturnValue(undefined),
@@ -30,7 +32,9 @@ describe('GlobalSearchFilterService', () => {
         service = TestBed.inject(GlobalSearchFilterService);
         applyTokens = vi.fn<(tokens: FilterToken[]) => void>();
         requestFocus = vi.fn<() => void>();
-        service.configure({ applyTokens, requestFocus });
+        exitFilterMenu = vi.fn<() => void>();
+        refreshSearch = vi.fn<() => void>();
+        service.configure({ applyTokens, requestFocus, exitFilterMenu, refreshSearch });
     });
 
     describe('derived query params', () => {
@@ -72,6 +76,20 @@ describe('GlobalSearchFilterService', () => {
             expect(service.menuHeaderKey()).toBe('global.search.addFilter');
             expect(service.filterMenuOpen()).toBe(true);
         });
+
+        it('reads the operator as the trailing token and keeps the text in front of it as the search term', () => {
+            service.searchQuery.set('linear regression type:lec');
+
+            expect(service.operator()?.facet).toBe('type');
+            expect(service.operator()?.query).toBe('lec');
+            expect(service.searchText()).toBe('linear regression');
+        });
+
+        it('searches the whole input when no operator is present', () => {
+            service.searchQuery.set('linear regression');
+            expect(service.operator()).toBeUndefined();
+            expect(service.searchText()).toBe('linear regression');
+        });
     });
 
     describe('addFilter', () => {
@@ -101,19 +119,45 @@ describe('GlobalSearchFilterService', () => {
             expect(applyTokens).not.toHaveBeenCalled();
         });
 
-        it('steps into the exclude sub-menu (setQuery) without closing the picker or adding a token', () => {
+        it('steps into the exclude level without touching the input or adding a token', () => {
             service.filterPickerOpen.set(true);
-            const index = service.menuOptions().findIndex((option) => option.action.kind === 'setQuery');
+            service.searchQuery.set('linear regression');
+            const index = service.menuOptions().findIndex((option) => option.action.kind === 'excludeStep');
             expect(index).toBeGreaterThanOrEqual(0);
 
             service.onOptionSelected(index);
 
-            expect(service.searchQuery()).toBe('-');
+            expect(service.searchQuery()).toBe('linear regression');
             expect(service.filterPickerOpen()).toBe(true);
             expect(service.menuHeaderKey()).toBe('global.search.chooseExclude');
             expect(service.menuOptions().map((option) => option.id)).toEqual(['-type', '-course']);
             expect(applyTokens).not.toHaveBeenCalled();
             expect(requestFocus).toHaveBeenCalled();
+        });
+
+        it('appends the operator after the search text instead of replacing it', () => {
+            service.searchQuery.set('linear regression');
+            service.filterPickerOpen.set(true);
+            const index = service.menuOptions().findIndex((option) => option.action.kind === 'operator');
+
+            service.onOptionSelected(index);
+
+            expect(service.searchQuery()).toBe('linear regression type:');
+            expect(service.searchText()).toBe('linear regression');
+        });
+
+        it('strips only the operator when a value is chosen, leaving the search text as typed', () => {
+            service.filterPickerOpen.set(true);
+            service.searchQuery.set('linear regression type:');
+            const index = service.menuOptions().findIndex((option) => option.action.kind === 'value');
+            const chosen = service.menuOptions()[index];
+            const value = chosen.action.kind === 'value' ? chosen.action.value : '';
+
+            service.onOptionSelected(index);
+
+            expect(applyTokens).toHaveBeenCalledWith([{ facet: 'type', value, negate: false }]);
+            expect(service.searchQuery()).toBe('linear regression');
+            expect(service.filterPickerOpen()).toBe(false);
         });
 
         it('adds a value token, clears the query, closes the picker, and refocuses', () => {
@@ -158,14 +202,24 @@ describe('GlobalSearchFilterService', () => {
             expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
         });
 
-        it('returns to the exclude sub-menu from an exclude value menu', () => {
+        it('returns to the exclude level from an exclude value menu', () => {
             service.filterPickerOpen.set(true);
             service.searchQuery.set('-type:');
 
             service.back();
 
-            expect(service.searchQuery()).toBe('-');
+            expect(service.searchQuery()).toBe('');
+            expect(service.excludeMode()).toBe(true);
             expect(service.menuOptions().map((option) => option.id)).toEqual(['-type', '-course']);
+        });
+
+        it('keeps the search text when stepping back out of a value menu', () => {
+            service.filterPickerOpen.set(true);
+            service.searchQuery.set('linear regression type:lec');
+
+            service.back();
+
+            expect(service.searchQuery()).toBe('linear regression');
         });
 
         it('is unavailable at the root picker', () => {
@@ -211,6 +265,16 @@ describe('GlobalSearchFilterService', () => {
             expect(service.searchQuery()).toBe('-course:');
             expect(requestFocus).toHaveBeenCalled();
         });
+
+        it('re-picks a chip without disturbing the search text', () => {
+            service.tokens.set([{ facet: 'type', value: 'lecture' }]);
+            service.searchQuery.set('linear regression');
+
+            service.onChipSelected(0);
+
+            expect(service.searchQuery()).toBe('linear regression type:');
+            expect(service.searchText()).toBe('linear regression');
+        });
     });
 
     describe('guided picker', () => {
@@ -220,17 +284,32 @@ describe('GlobalSearchFilterService', () => {
             expect(requestFocus).toHaveBeenCalled();
         });
 
-        it('does not open the picker while a value menu operator is active', () => {
+        it('steps back to the root picker when requested from an open value menu', () => {
+            service.filterPickerOpen.set(true);
             service.searchQuery.set('type:');
+
             service.openFilterPicker();
-            expect(service.filterPickerOpen()).toBe(false);
+
+            expect(service.operator()).toBeUndefined();
+            expect(service.filterPickerOpen()).toBe(true);
+            expect(service.menuHeaderKey()).toBe('global.search.addFilter');
         });
 
-        it('toggles the picker closed when already open', () => {
+        it('stays open when requested again at the root: it is the home screen, not a toggle', () => {
             service.filterPickerOpen.set(true);
-            service.toggleFilterPicker();
-            expect(service.filterPickerOpen()).toBe(false);
+
+            service.openFilterPicker();
+
+            expect(service.filterPickerOpen()).toBe(true);
             expect(requestFocus).toHaveBeenCalled();
+        });
+
+        it('cancels a chip re-pick when the picker is requested', () => {
+            service.editingChip.set(2);
+
+            service.openFilterPicker();
+
+            expect(service.editingChip()).toBe(-1);
         });
     });
 
@@ -262,7 +341,7 @@ describe('GlobalSearchFilterService', () => {
             expect(applyTokens).toHaveBeenCalled();
         });
 
-        it('cancels the operator and refocuses on Escape', () => {
+        it('cancels a directly typed operator and leaves the filter surface on Escape', () => {
             service.searchQuery.set('type:');
             service.editingChip.set(2);
 
@@ -270,19 +349,121 @@ describe('GlobalSearchFilterService', () => {
 
             expect(service.searchQuery()).toBe('');
             expect(service.editingChip()).toBe(-1);
-            expect(requestFocus).toHaveBeenCalled();
+            expect(exitFilterMenu).toHaveBeenCalled();
         });
 
-        it('steps back to the root picker (not close) on Escape from the exclude sub-menu', () => {
+        it('hands the exit to the host on Escape at the root picker rather than dropping the menu itself', () => {
             service.filterPickerOpen.set(true);
-            service.searchQuery.set('-');
 
             service.handleMenuKey(keydown('Escape'));
 
-            expect(service.searchQuery()).toBe('');
+            expect(service.filterPickerOpen()).toBe(false);
+            expect(exitFilterMenu).toHaveBeenCalled();
+        });
+
+        it('steps back to the root picker (not out of the menu) on Escape from the exclude level', () => {
+            service.filterPickerOpen.set(true);
+            service.excludeMode.set(true);
+
+            service.handleMenuKey(keydown('Escape'));
+
+            expect(service.excludeMode()).toBe(false);
             expect(service.filterPickerOpen()).toBe(true);
             expect(service.menuHeaderKey()).toBe('global.search.addFilter');
-            expect(requestFocus).toHaveBeenCalled();
+            expect(exitFilterMenu).not.toHaveBeenCalled();
+        });
+
+        it('keeps the search text when Escape leaves the filter surface', () => {
+            service.searchQuery.set('linear regression type:');
+
+            service.handleMenuKey(keydown('Escape'));
+
+            expect(service.searchQuery()).toBe('linear regression');
+            expect(exitFilterMenu).toHaveBeenCalled();
+        });
+    });
+
+    describe('dead end (a typed value that is not a filter)', () => {
+        function keydown(key: string): KeyboardEvent {
+            const event = new KeyboardEvent('keydown', { key });
+            vi.spyOn(event, 'preventDefault');
+            return event;
+        }
+
+        it('collapses to the literal row and names what the user typed', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+
+            expect(service.deadEnd()).toBe(true);
+            expect(service.deadEndMessage()).toEqual({ key: 'global.search.notAType', value: 'candle' });
+            expect(service.canGoBack()).toBe(false);
+        });
+
+        it('says a course is not one of yours rather than claiming it does not exist', () => {
+            service.searchQuery.set('course:candle');
+
+            expect(service.deadEndMessage()).toEqual({ key: 'global.search.notYourCourse', value: 'candle' });
+        });
+
+        it('drops only the unmatched value when the recovery row is chosen, bringing the full list back', () => {
+            service.searchQuery.set('deep learning type:sdvdsc');
+            const index = service.menuOptions().findIndex((option) => option.action.kind === 'clearValue');
+
+            service.onOptionSelected(index);
+
+            expect(service.searchQuery()).toBe('deep learning type:');
+            expect(service.deadEnd()).toBe(false);
+            expect(service.menuOptions()).toHaveLength(6);
+            expect(service.searchText()).toBe('deep learning');
+        });
+
+        it('searches the raw text verbatim when the literal row is chosen', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+
+            service.onOptionSelected(0);
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.searchText()).toBe('nsjkfncs type:candle');
+            expect(service.filterMenuOpen()).toBe(false);
+            expect(refreshSearch).toHaveBeenCalled();
+        });
+
+        it('does not eat the typed text when Escape is pressed at a dead end', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+
+            service.handleMenuKey(keydown('Escape'));
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.filterMenuOpen()).toBe(false);
+            expect(exitFilterMenu).not.toHaveBeenCalled();
+        });
+
+        it('keeps typing past an accepted literal out of the menu', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+
+            service.searchQuery.set('nsjkfncs type:candles');
+
+            expect(service.filterMenuOpen()).toBe(false);
+        });
+
+        it('reopens the menu when the input is edited back in front of the accepted literal', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+
+            service.searchQuery.set('nsjkfncs type:c');
+
+            expect(service.filterMenuOpen()).toBe(true);
+            expect(service.deadEnd()).toBe(false);
+        });
+
+        it('keeps an accepted literal intact when the filter picker is opened again', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+
+            service.openFilterPicker();
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.menuHeaderKey()).toBe('global.search.addFilter');
         });
     });
 

@@ -7,12 +7,14 @@
             <div class="search-highlight" aria-hidden="true">
                 @if (operator(); as op) {
                     <span class="search-highlight-text"
-                        ><span class="op-tag" [class.op-type]="op.facet === 'type'" [class.op-course]="op.facet === 'course'" [class.op-exclude]="op.negate">{{ op.prefix }}</span
+                        >{{ leadingText()
+                        }}<span class="op-tag" [class.op-type]="op.facet === 'type'" [class.op-course]="op.facet === 'course'" [class.op-exclude]="op.negate">{{ op.prefix }}</span
                         ><span
                             class="op-value"
                             [class.op-type]="operatorValueValid() && op.facet === 'type'"
                             [class.op-course]="operatorValueValid() && op.facet === 'course'"
                             [class.op-exclude]="operatorValueValid() && op.negate"
+                            [class.op-unknown]="operatorUnknown()"
                             >{{ op.query }}</span
                         ></span
                     >

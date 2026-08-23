@@ -103,9 +103,68 @@ describe('GlobalSearchFilterMenuComponent', () => {
         expect(backSpy).toHaveBeenCalled();
     });
 
+    it('treats the whole header row as the back control, so clicking the label steps back too', () => {
+        const backSpy = vi.spyOn(component.back, 'emit');
+        fixture.componentRef.setInput('showBack', true);
+        fixture.detectChanges();
+
+        const label = fixture.nativeElement.querySelector('.filter-menu-back span');
+        expect(label).toBeTruthy();
+        label.click();
+
+        expect(backSpy).toHaveBeenCalled();
+    });
+
     it('hides the back button when showBack is false', () => {
         fixture.componentRef.setInput('showBack', false);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.filter-menu-back')).toBeNull();
+    });
+
+    it('replaces the header with the dead-end message, which has no level to step back to', () => {
+        fixture.componentRef.setInput('showBack', true);
+        fixture.componentRef.setInput('message', { key: 'global.search.notAType', value: 'candle' });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.filter-menu-header--message')).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('.filter-menu-back')).toBeNull();
+        // The marker is what stops a quiet line in the header slot reading as a caption.
+        expect(fixture.nativeElement.querySelector('.filter-menu-message-icon')).toBeTruthy();
+    });
+
+    it('leaves the literal row untinted while excluding, since it is the way out rather than an exclusion', () => {
+        fixture.componentRef.setInput('options', [
+            option('type:exercise', 'exercise'),
+            { id: 'literal', label: 'Search for', icon: faCube, literal: '-type:candle', action: { kind: 'literal', text: '-type:candle' } },
+        ]);
+        fixture.componentRef.setInput('exclude', true);
+        fixture.detectChanges();
+
+        const glyphs = fixture.nativeElement.querySelectorAll('.filter-menu-glyph');
+        expect(glyphs[0].classList).toContain('filter-menu-glyph--ex');
+        expect(glyphs[1].classList).not.toContain('filter-menu-glyph--ex');
+    });
+
+    it('centres a row with no description against its icon tile', () => {
+        fixture.componentRef.setInput('options', [{ id: 'course', label: 'Deep Learning', icon: faCube, action: { kind: 'value', value: '1' } }]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('li[role="option"]').classList).toContain('filter-menu-item--single');
+    });
+
+    it('sizes both recovery rows together, so a dead end does not show two rows at different sizes', () => {
+        fixture.componentRef.setInput('message', { key: 'global.search.notAType', value: 'candle' });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('ul[role="listbox"]').classList).toContain('filter-menu--recovery');
+    });
+
+    it('renders the raw text a literal row would search for', () => {
+        fixture.componentRef.setInput('options', [
+            { id: 'literal', label: 'Search for', icon: faCube, literal: 'nsjkfncs type:candle', action: { kind: 'literal', text: 'nsjkfncs type:candle' } },
+        ]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.filter-menu-literal').textContent).toContain('nsjkfncs type:candle');
     });
 });

@@ -146,6 +146,13 @@
     text-overflow: clip;
 }
 
+// A value that matches no known type / course: not an error, just not a filter, so it carries the
+// spell-check idiom rather than error colour on the text itself.
+.op-unknown {
+    text-decoration: underline dotted var(--bs-danger) 1.5px;
+    text-underline-offset: 3px;
+}
+
 // Guided filter picker trigger button (right of the search input).
 .filter-trigger {
     display: inline-flex;

@@ -179,4 +179,24 @@ describe('SearchInputComponent', () => {
         component['onKeyDown'](event);
         expect(spy).not.toHaveBeenCalled();
     });
+
+    it('paints only the trailing operator and leaves the search text in front of it in ordinary ink', () => {
+        fixture.componentRef.setInput('searchQuery', 'linear regression type:lec');
+        fixture.componentRef.setInput('operator', { facet: 'type', negate: false, query: 'lec', prefix: 'type:', start: 18, text: 'linear regression' });
+        fixture.detectChanges();
+
+        const highlight = fixture.nativeElement.querySelector('.search-highlight-text');
+        expect(highlight.textContent).toBe('linear regression type:lec');
+        expect(highlight.querySelector('.op-tag').textContent).toBe('type:');
+        expect(component['leadingText']()).toBe('linear regression ');
+    });
+
+    it('marks a value that matches no filter without colouring it as an error', () => {
+        fixture.componentRef.setInput('searchQuery', 'type:candle');
+        fixture.componentRef.setInput('operator', { facet: 'type', negate: false, query: 'candle', prefix: 'type:', start: 0, text: '' });
+        fixture.componentRef.setInput('operatorUnknown', true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.op-value').classList).toContain('op-unknown');
+    });
 });

@@ -21,7 +21,6 @@ import { filterOptionDomId } from '../../models/search-menu.model';
 import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
 import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
-import { parseOperator } from '../../models/search-operator.util';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
 
 interface SearchState {
@@ -78,6 +77,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly filterPickerOpen = this.filter.filterPickerOpen;
     protected readonly editingChip = this.filter.editingChip;
     protected readonly filterMenuOpen = this.filter.filterMenuOpen;
+    protected readonly searchText = this.filter.searchText;
+    protected readonly deadEnd = this.filter.deadEnd;
+    protected readonly deadEndMessage = this.filter.deadEndMessage;
     protected readonly menuHeaderKey = this.filter.menuHeaderKey;
     protected readonly canGoBack = this.filter.canGoBack;
 
@@ -97,12 +99,33 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly allViews = viewChildren(SearchResultView);
     private readonly maxIndex = computed(() => (this.allViews()[0]?.itemCount() ?? 0) - 1);
     private readonly searchSubject = new Subject<SearchState | null>();
+    /** Last text pushed into the pipeline, so composing an operator does not re-request the unchanged query. */
+    private lastSearchText = '';
     // Cache for placeholder results (empty-query + filter) so re-adding a filter serves from cache
     private readonly placeholderCache = new Map<string, GlobalSearchResult[]>();
 
     // Computed properties
     protected hasResults = computed(() => this.results().length > 0);
     protected showResults = computed(() => this.isLoading() || this.hasSearched());
+    /**
+     * Whether a pane other than the filter menu can currently render: a result set, its loading skeleton, or a
+     * non-default view. This is exactly the negation of the state in which the navigation view falls back to its
+     * searchable-entity list, which the guided picker replaced as the home screen, so leaving the filter menu
+     * while this is true can never expose that list.
+     */
+    protected readonly hasPaneBehindFilterMenu = computed(() => this.showResults() || this.currentView() !== SearchView.Navigation);
+    /**
+     * i18n key for the footer's Escape hint. Escape steps back a level inside the filter menu, and also when
+     * leaving the menu reveals the pane behind it; only at the home screen, with nothing behind, does it close.
+     */
+    protected readonly escapeHintKey = computed(() => {
+        if (this.deadEnd()) {
+            // Escape cannot mean "cancel" here: the operator is not a filter, so backing out of it would
+            // delete text the user typed as a search term.
+            return 'global.search.searchAnyway';
+        }
+        return this.canGoBack() || (this.filterMenuOpen() && this.hasPaneBehindFilterMenu()) ? 'global.search.back' : 'global.search.toClose';
+    });
 
     ngOnDestroy(): void {
         if (this.overlay.isOpen()) {
@@ -115,6 +138,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.filter.configure({
             applyTokens: (tokens) => this.applyTokens(tokens),
             requestFocus: () => this.focusInput(),
+            exitFilterMenu: () => this.exitFilterMenu(),
+            refreshSearch: () => this.applyTokens(this.tokens()),
         });
 
         // Reset selection whenever the query changes; reading searchQuery() registers it as a reactive dependency.
@@ -258,6 +283,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
             return;
         }
         this.tokens.set(newTokens);
+        this.lastSearchText = '';
         this.searchSubject.next({ query: '' });
     }
 
@@ -265,33 +291,31 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchQuery.set(query);
         this.searchError.set(undefined);
 
-        const operator = parseOperator(query);
-        if (this.filterPickerOpen() && !operator) {
-            // While the guided picker is open, keep narrowing its rows as long as the text still matches a filter
-            // action (or is the "-" exclude trigger). Once nothing matches, the user is typing a normal search, so
-            // leave the picker and search instead of sitting on an empty filter list.
-            if (query.trim().startsWith('-') || this.menuOptions().length > 0) {
-                this.menuActiveIndex.set(0);
-                return;
-            }
+        // Plain typing with the root picker open means the user is searching, not filtering: the picker has
+        // three fixed rows and never needed a type-ahead, so it steps aside instead of narrowing.
+        if (this.filterPickerOpen() && !this.operator()) {
             this.filterPickerOpen.set(false);
+            this.filter.excludeMode.set(false);
         }
-
-        // A typed `facet:` operator opens the value menu instead of running a text search.
-        if (operator) {
-            return;
+        if (!this.operator()) {
+            // Typing past a facet operator cancels a chip that was being re-picked.
+            this.editingChip.set(-1);
         }
-        // Typing plain text leaves any facet operator, so cancel a chip that was being re-picked.
-        this.editingChip.set(-1);
+        this.menuActiveIndex.set(0);
 
-        // Show skeleton immediately while debounce waits, for a responsive feel
-        const trimmedQuery = query?.trim() || '';
-        const hasFilter = this.typesParam() !== undefined || this.courseIdsParam().length > 0 || this.excludeCourseIdsParam().length > 0;
-        if (trimmedQuery.length > 0 || hasFilter) {
-            this.isLoading.set(true);
+        // Only the trailing operator is stripped from the query, so the text in front of it keeps searching
+        // behind an open menu. Pushing only on a change stops the value type-ahead firing a request per keystroke.
+        const text = this.searchText();
+        if (text !== this.lastSearchText) {
+            this.lastSearchText = text;
+            const hasFilter = this.typesParam() !== undefined || this.courseIdsParam().length > 0 || this.excludeCourseIdsParam().length > 0;
+            if (text.length > 0 || hasFilter) {
+                // Show the skeleton immediately while the debounce waits, for a responsive feel.
+                this.isLoading.set(true);
+            }
+            this.searchSubject.next({ query: text });
         }
-
-        this.searchSubject.next({ query });
+        this.returnHomeIfEmpty();
     }
 
     /** Called by the search-input component when Backspace is pressed on an empty input. Removes the last token. */
@@ -302,6 +326,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     /** Removes the chip at the given index (its remove button was clicked). */
     protected onChipRemoved(index: number) {
         this.filter.onChipRemoved(index);
+        this.returnHomeIfEmpty();
     }
 
     /** Taps a chip to re-pick its value: reopens that facet's menu; choosing a value replaces the chip. */
@@ -323,14 +348,48 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.filter.back();
     }
 
-    /** Toggles the guided filter picker (used by the Filter button and Cmd/Ctrl+F). */
-    protected toggleFilterPicker() {
-        this.filter.toggleFilterPicker();
-    }
-
-    /** Opens the guided filter picker (facet chooser). */
+    /** Shows the guided filter picker (facet chooser). */
     protected openFilterPicker() {
         this.filter.openFilterPicker();
+    }
+
+    /**
+     * Switches between the filter menu and the results (Cmd/Ctrl+F and the Filter button). Both are real
+     * destinations now that the search text survives filter composition. When nothing sits behind the menu it
+     * is the home screen, so the shortcut stays on it rather than exposing the pane the picker replaced.
+     */
+    protected toggleFilterMenu() {
+        if (this.filterMenuOpen() && this.hasPaneBehindFilterMenu()) {
+            this.filter.leaveFilterMenu();
+            this.focusInput();
+            return;
+        }
+        this.openFilterPicker();
+    }
+
+    /**
+     * Leaves the filter surface after Escape at its root level. The guided picker is the modal's home screen, so
+     * it is only dismissed onto a pane that actually exists; with nothing behind it there is nowhere to go and the
+     * overlay closes, which is what the footer's "ESC to close" hint promises.
+     */
+    private exitFilterMenu() {
+        if (this.hasPaneBehindFilterMenu()) {
+            this.focusInput();
+            return;
+        }
+        this.overlay.close();
+    }
+
+    /**
+     * Returns to the home screen once the search box is empty and no filter is left, so an emptied search lands on
+     * the guided picker rather than on the navigation view's searchable-entity list. Called from the individual
+     * gestures rather than from applyTokens on purpose: navigateTo(Lecture) strips the course filter through
+     * applyTokens, and the picker must not cover the lecture view.
+     */
+    private returnHomeIfEmpty() {
+        if (this.currentView() === SearchView.Navigation && this.tokens().length === 0 && !this.searchQuery().trim()) {
+            this.filter.openFilterPicker();
+        }
     }
 
     protected removeCourseFilter() {
@@ -369,16 +428,18 @@ export class GlobalSearchModalComponent implements OnDestroy {
      */
     private applyTokens(tokens: FilterToken[]) {
         this.tokens.set(tokens);
-        const query = this.searchQuery()?.trim() || '';
+        const query = this.searchText();
         const cacheKey = this.filterCacheKey(this.typesParam(), this.courseIdsParam(), this.excludeCourseIdsParam());
         const hasCached = !query && this.placeholderCache.has(cacheKey);
         if (!hasCached) {
             this.isLoading.set(true);
         }
-        this.searchSubject.next({ query: this.searchQuery() });
+        this.lastSearchText = query;
+        this.searchSubject.next({ query });
     }
 
     private resetSearch() {
+        this.lastSearchText = '';
         this.searchSubject.next(null);
         this.filter.reset();
         this.results.set([]);
@@ -406,13 +467,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
         if (!this.overlay.isOpen()) return;
 
-        // Cmd/Ctrl+F toggles the guided filter picker (OS-appropriate modifier, consistent with Cmd/Ctrl+K).
-        // Always preventDefault to block the browser find bar, but only toggle on the initial press so
-        // holding the keys does not flicker the picker open/closed on auto-repeat.
+        // Cmd/Ctrl+F goes to the guided filter picker (OS-appropriate modifier, consistent with Cmd/Ctrl+K).
+        // Always preventDefault, including where the shortcut is inert, so the browser find bar can never open
+        // on top of the modal; acting only on the initial press keeps auto-repeat quiet.
         if (event.key.toLowerCase() === 'f' && this.osDetector.isActionKey(event)) {
             event.preventDefault();
-            if (!event.repeat) {
-                this.toggleFilterPicker();
+            // Lecture search cannot carry filters yet (see navigateTo), so the picker must not cover its results.
+            if (!event.repeat && this.currentView() === SearchView.Navigation) {
+                this.toggleFilterMenu();
             }
             return;
         }
@@ -526,6 +588,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         const remaining = this.tokens().length;
         if (remaining === 0) {
             this.exitChips();
+            this.returnHomeIfEmpty();
         } else {
             this.selectedChip.set(Math.min(index, remaining - 1));
         }

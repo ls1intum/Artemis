@@ -1,4 +1,4 @@
-import { faBan, faGraduationCap, faLayerGroup } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faGraduationCap, faLayerGroup, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FilterToken, TypeFacetValue } from './search-token.model';
 import { ParsedOperator } from './search-operator.util';
 import { TYPE_FACETS, TYPE_FACET_ORDER } from './facet-catalog';
@@ -20,11 +20,18 @@ const MAX_COURSE_OPTIONS = 8;
  * Builds the filter-menu options for the current state: the guided picker's filter actions (when no
  * operator is typed but the picker is open) or the value list for the active `facet:` operator.
  * Pure: never mutates its inputs and has no framework dependencies.
+ * <p>
+ * The picker's own rows are never narrowed by the input, because plain typing leaves the picker and
+ * searches instead; a type-ahead over three fixed rows was never worth having. When a typed value matches
+ * no known value, the list becomes a single `literal` row offering to search the raw text, so a colon in
+ * an ordinary query can never dead-end the palette.
  */
 export function buildFilterMenuOptions(params: {
     operator?: ParsedOperator;
     pickerOpen: boolean;
-    /** Raw input text, used to narrow the picker's filter actions. */
+    /** Whether the picker is showing its exclude level (reached from the "Exclude" row). */
+    excludeMode: boolean;
+    /** Raw input text, offered verbatim by the `literal` escape row. */
     searchQuery: string;
     tokens: FilterToken[];
     /** Index of the chip being re-picked, or -1; excluded from "already applied" so its value stays selectable. */
@@ -33,17 +40,12 @@ export function buildFilterMenuOptions(params: {
     courses: () => MenuCourse[];
     translate: Translate;
 }): FilterMenuOption[] {
-    const { operator, pickerOpen, searchQuery, tokens, editingChip, courses, translate } = params;
+    const { operator, pickerOpen, excludeMode, searchQuery, tokens, editingChip, courses, translate } = params;
     if (!operator) {
         if (!pickerOpen) {
             return [];
         }
-        const pickerQuery = searchQuery.trim().toLowerCase();
-        // A leading "-" steps into the exclude sub-menu (choose a type or a course to hide); the picker stays open.
-        if (pickerQuery.startsWith('-')) {
-            return excludeActions(translate).filter((action) => matchesQuery(action, pickerQuery.slice(1).trim()));
-        }
-        return rootActions(translate).filter((action) => matchesQuery(action, pickerQuery));
+        return excludeMode ? excludeActions(translate) : rootActions(translate);
     }
     const query = operator.query.trim().toLowerCase();
     // Values already applied in the same include/exclude state are hidden, so the menu only ever adds a
@@ -51,7 +53,13 @@ export function buildFilterMenuOptions(params: {
     const applied = new Set(
         tokens.filter((token, index) => index !== editingChip && token.facet === operator.facet && !!token.negate === !!operator.negate).map((token) => token.value),
     );
-    return operator.facet === 'type' ? typeOptions(operator, applied, query, translate) : courseOptions(courses(), applied, query, translate);
+    const values = operator.facet === 'type' ? typeOptions(operator, applied, query, translate) : courseOptions(courses(), applied, query, translate);
+    // A value the user typed that matches nothing is not a filter, so offer the literal search instead. An
+    // empty value with nothing left to offer is a different thing entirely: an exhausted list, which keeps
+    // its way back rather than pushing the user into a search for a bare "type:".
+    // Two ways forward, because a dead end has two causes: an ordinary query that happens to contain a colon,
+    // and a mistyped facet value. Searching verbatim leads, so Enter and Escape agree.
+    return values.length === 0 && query.length > 0 ? [literalAction(searchQuery, translate), clearValueAction(operator, translate)] : values;
 }
 
 /** Resolves a token into its display chip (label, icon, colour family, selection). Pure. */
@@ -109,12 +117,12 @@ function rootActions(translate: Translate): FilterMenuOption[] {
             icon: faBan,
             // The "{filter}" placeholder is rendered faded — it shows the exclude command shape (−<facet>:).
             hint: '−{filter}:',
-            action: { kind: 'setQuery', query: '-' },
+            action: { kind: 'excludeStep' },
         },
     ];
 }
 
-/** The exclude sub-menu: pick whether to hide a type or a course (reached via the exclude row or by typing "-"). */
+/** The exclude sub-menu: pick whether to hide a type or a course (reached via the exclude row). */
 function excludeActions(translate: Translate): FilterMenuOption[] {
     return [
         {
@@ -134,6 +142,29 @@ function excludeActions(translate: Translate): FilterMenuOption[] {
             action: { kind: 'operator', prefix: '-course:' },
         },
     ];
+}
+
+/** The way out of a value menu whose typed value is not a known value: search the raw input verbatim. */
+function literalAction(searchQuery: string, translate: Translate): FilterMenuOption {
+    const text = searchQuery.trim();
+    return {
+        id: 'literal',
+        label: translate('global.search.searchFor'),
+        icon: faMagnifyingGlass,
+        literal: text,
+        action: { kind: 'literal', text },
+    };
+}
+
+/** Recovery row at a dead end: drop the value that matched nothing and show the facet's full list. */
+function clearValueAction(operator: ParsedOperator, translate: Translate): FilterMenuOption {
+    const isType = operator.facet === 'type';
+    return {
+        id: 'clear-value',
+        label: translate(isType ? 'global.search.showAllTypes' : 'global.search.showYourCourses'),
+        icon: isType ? faLayerGroup : faGraduationCap,
+        action: { kind: 'clearValue' },
+    };
 }
 
 function typeOptions(operator: ParsedOperator, applied: Set<string>, query: string, translate: Translate): FilterMenuOption[] {
@@ -165,8 +196,4 @@ function courseOptions(courses: MenuCourse[], applied: Set<string>, query: strin
             icon: faGraduationCap,
             action: { kind: 'value', value: String(course.id) },
         }));
-}
-
-function matchesQuery(option: FilterMenuOption, query: string): boolean {
-    return !query || option.label.toLowerCase().includes(query) || (option.hint ?? '').toLowerCase().includes(query);
 }

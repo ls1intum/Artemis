@@ -23,11 +23,14 @@ export interface FilterChipView {
 }
 
 /**
- * What selecting a menu row does: the guided picker injects an operator prefix into the input; the
- * value menu contributes a value that the modal turns into a token for the active operator's facet;
- * `setQuery` just sets the input (e.g. to `-`) to step into a sub-menu without forming an operator yet.
+ * What selecting a menu row does: the guided picker appends an operator prefix to the input; the value
+ * menu contributes a value that becomes a token for the active operator's facet; `excludeStep` moves the
+ * picker into its exclude level without touching the input; `literal` abandons the operator reading and
+ * searches for the raw text instead; `clearValue` drops an unmatched value and shows the facet's full list,
+ * which is the recovery for a mistyped value rather than for a search that merely contains a colon.
  */
-export type FilterMenuAction = { kind: 'operator'; prefix: string } | { kind: 'value'; value: string } | { kind: 'setQuery'; query: string };
+export type FilterMenuAction =
+    { kind: 'operator'; prefix: string } | { kind: 'value'; value: string } | { kind: 'excludeStep' } | { kind: 'literal'; text: string } | { kind: 'clearValue' };
 
 /** One selectable row in the filter menu (guided picker or facet value list). */
 export interface FilterMenuOption {
@@ -39,6 +42,8 @@ export interface FilterMenuOption {
     icon: IconDefinition;
     /** Operator syntax shown as a mono pill on the right (guided-picker rows only), e.g. "type:". */
     hint?: string;
+    /** Raw text a `literal` row would search for, rendered in mono after the label. */
+    literal?: string;
     /** What choosing this row does. */
     action: FilterMenuAction;
 }
