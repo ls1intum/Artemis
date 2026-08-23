@@ -26,11 +26,21 @@ import { ExamChecklistComponent } from '../exam-checklist-component/exam-checkli
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, CourseExamArchiveButtonComponent, ExamChecklistComponent, DetailOverviewListComponent],
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        DeleteButtonDirective,
+        CourseExamArchiveButtonComponent,
+        ExamChecklistComponent,
+        DetailOverviewListComponent,
+        FeatureOverlayComponent,
+    ],
     providers: [ArtemisDurationFromSecondsPipe],
 })
 export class ExamDetailComponent implements OnInit, OnDestroy {
