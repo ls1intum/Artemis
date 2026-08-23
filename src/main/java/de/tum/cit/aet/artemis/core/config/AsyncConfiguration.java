@@ -144,6 +144,33 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Executor for the few background jobs that are long running and heavy rather than small and frequent: archiving a
+     * course, archiving an exam, and splitting a lecture attachment into slides.
+     * <p>
+     * These share nothing with the rest of the {@code @Async} work except the annotation. An archive zips every
+     * submission of a course, including programming repositories, and a slide split holds a PDF in memory. On the
+     * shared pool they were bounded by its core size of two, and nothing else bounds them: any instructor of a finished
+     * course can start an archive, and there is no guard against several running at once. Widening the shared pool for
+     * the many small tasks would therefore also have let these fan out, which is a memory and disk profile nobody asked
+     * for and nobody measured.
+     * <p>
+     * Two threads keeps them where they were. The queue is long enough that the rejection handler is unreachable in
+     * practice, which matters because the caller is a request thread that returns immediately and must not be made to
+     * run an archive itself.
+     *
+     * @return a dedicated pool for long running background jobs
+     */
+    @Bean("longRunningJobExecutor")
+    public Executor longRunningJobExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("long-running-job-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Executor for the version control access log writes (see {@code VcsAccessLogService}).
      * <p>
      * These run on their own pool because of how the writes are reached. A git push submits the log write from the

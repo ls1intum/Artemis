@@ -1428,7 +1428,7 @@ public class ExamService {
      *
      * @param exam the exam to archive
      */
-    @Async
+    @Async("longRunningJobExecutor")
     public void archiveExam(Exam exam) {
         long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
