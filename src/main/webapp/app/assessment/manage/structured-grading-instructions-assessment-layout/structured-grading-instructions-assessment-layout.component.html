@@ -41,12 +41,17 @@
                         (usageLimit > 0 ? 'artemisApp.assessment.detail.feedbackUsage.limited' : 'artemisApp.assessment.detail.feedbackUsage.unlimited')
                             | artemisTranslate: { used: useCount, limit: usageLimit };
                     <!-- draggable is bound as a property: as an interpolated attribute the string "false" would still be
-                         draggable. isDraggable also stops further drops once a finite usageCount is exhausted. -->
+                         draggable. isDraggable also stops further drops once a finite usageCount is exhausted.
+                         When selectable() is false there is no checkbox; the card itself is the keyboard apply control. -->
                     <div
                         class="flex flex-col gap-2 rounded-[0.625rem] border border-[var(--border-color)] p-3"
                         [draggable]="isDraggable(instruction)"
                         (dragstart)="disableDrag()"
                         (dragstart)="drag($event, instruction)"
+                        [attr.tabindex]="!selectable() && isDraggable(instruction) ? 0 : null"
+                        [attr.role]="!selectable() && isDraggable(instruction) ? 'button' : null"
+                        [attr.aria-label]="!selectable() && isDraggable(instruction) ? ('artemisApp.exercise.applyInstruction' | artemisTranslate) : null"
+                        (keydown)="onInstructionKeydown($event, instruction)"
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     >
                         <div class="flex flex-wrap items-center justify-between gap-3">

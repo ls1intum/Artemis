@@ -229,6 +229,22 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
         event.dataTransfer?.setData('text/plain', JSON.stringify(instruction));
     }
+
+    /**
+     * Keyboard stand-in for drag-and-drop when there is no checkbox ({@link selectable} is false): Enter/Space apply
+     * the instruction the same way a drop onto the feedback list would.
+     */
+    onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
+        if (this.selectable() || !this.isDraggable(instruction)) {
+            return;
+        }
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        event.preventDefault();
+        this.selectionService.setApplied(instruction, true);
+    }
+
     /**
      * disables drag if on readOnly mode
      */
