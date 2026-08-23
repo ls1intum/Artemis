@@ -21,9 +21,7 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     private async typePointsIntoFeedbackEditor(sectionIndex: number, feedbackPoints: number) {
-        const textField = this.getFeedbackSection(sectionIndex).locator('.unified-feedback-points-input');
-        await textField.clear();
-        await textField.fill(feedbackPoints.toString());
+        await this.setPointsViaStepper(this.getFeedbackSection(sectionIndex), feedbackPoints);
     }
 
     private getFeedbackSection(sectionIndex: number) {
