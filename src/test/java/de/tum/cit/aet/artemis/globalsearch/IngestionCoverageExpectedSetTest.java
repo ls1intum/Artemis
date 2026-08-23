@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageExpectedIdsRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -47,6 +48,9 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private IngestionCoverageExpectedIdsRepository expectedIdsRepository;
 
     @Autowired
     private AttachmentVideoUnitRepository attachmentVideoUnitRepository;
@@ -157,7 +161,7 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
     @Test
     void findsCourseAndExamExercisesAttributedToTheirCourse() {
-        List<CourseEntityIdDTO> result = exerciseRepository.findExerciseIdCourseIdPairsForCourses(List.of(courseAId));
+        List<CourseEntityIdDTO> result = expectedIdsRepository.findExerciseIdCourseIdPairsForCourses(List.of(courseAId));
 
         // The exam exercise has no direct course; it is attributed to course A through exerciseGroup -> exam -> course.
         assertThat(result).containsExactlyInAnyOrder(new CourseEntityIdDTO(courseAId, courseExerciseA.getId()), new CourseEntityIdDTO(courseAId, examExerciseA.getId()));
@@ -165,7 +169,7 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
     @Test
     void resolvesMultipleCoursesInOneQueryWithCorrectAttribution() {
-        List<CourseEntityIdDTO> exercises = exerciseRepository.findExerciseIdCourseIdPairsForCourses(List.of(courseAId, courseBId));
+        List<CourseEntityIdDTO> exercises = expectedIdsRepository.findExerciseIdCourseIdPairsForCourses(List.of(courseAId, courseBId));
         assertThat(exercises).containsExactlyInAnyOrder(new CourseEntityIdDTO(courseAId, courseExerciseA.getId()), new CourseEntityIdDTO(courseAId, examExerciseA.getId()),
                 new CourseEntityIdDTO(courseBId, courseExerciseB.getId()));
 

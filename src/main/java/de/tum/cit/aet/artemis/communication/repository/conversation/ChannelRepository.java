@@ -14,23 +14,12 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelSubTypeReferenceDatesDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
 public interface ChannelRepository extends ArtemisJpaRepository<Channel, Long> {
-
-    // Indexable channels match ChannelSearchableEntityDTO.isIndexable: not archived AND (course-wide OR public).
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(channel.course.id, channel.id)
-            FROM Channel channel
-            WHERE channel.course.id IN :courseIds
-                AND channel.isArchived = FALSE
-                AND (channel.isCourseWide = TRUE OR channel.isPublic = TRUE)
-            """)
-    List<CourseEntityIdDTO> findIndexableChannelIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
             SELECT DISTINCT channel

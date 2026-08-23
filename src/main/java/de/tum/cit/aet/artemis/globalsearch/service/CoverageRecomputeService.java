@@ -15,12 +15,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -29,22 +27,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.IngestionCoverageStatus;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionTypeCountDTO;
+import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageExpectedIdsRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.PresentMetadata;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
@@ -57,7 +52,7 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
  * <p>
  * The recompute is expensive and runs OFF the request path: the dashboard serves the last stored projection instantly and
  * triggers a background recompute only when the data is stale (stale-while-revalidate) or on an explicit refresh. A
- * cluster-wide Hazelcast lock ensures at most one recompute runs across all nodes at a time, so concurrent dashboard opens
+ * cluster-wide lock ensures at most one recompute runs across all nodes at a time, so concurrent dashboard opens
  * (which can land on any node behind the load balancer) never fan out into duplicate recomputes.
  * <p>
  * Content coverage: slides and transcript are diffed at lecture-unit granularity (expected units from the DB vs the
@@ -85,17 +80,11 @@ public class CoverageRecomputeService {
     /** How old the stored projection may be before a dashboard open triggers a background recompute. */
     private static final Duration FRESHNESS_WINDOW = Duration.ofMinutes(15);
 
-    private static final String LOCK_MAP = "ingestion-coverage-recompute";
+    private static final String LOCK_NAME = "ingestion-coverage-recompute";
 
-    private static final String LOCK_KEY = "recompute";
+    private static final Duration LOCK_WAIT = Duration.ofSeconds(1);
 
-    private static final int LOCK_WAIT_SECONDS = 1;
-
-    private final ExerciseRepository exerciseRepository;
-
-    private final FaqRepository faqRepository;
-
-    private final ChannelRepository channelRepository;
+    private final IngestionCoverageExpectedIdsRepository expectedIdsRepository;
 
     private final CourseRepository courseRepository;
 
@@ -109,22 +98,19 @@ public class CoverageRecomputeService {
 
     private final IngestionCoverageRepository coverageRepository;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    public CoverageRecomputeService(ExerciseRepository exerciseRepository, FaqRepository faqRepository, ChannelRepository channelRepository, CourseRepository courseRepository,
+    public CoverageRecomputeService(IngestionCoverageExpectedIdsRepository expectedIdsRepository, CourseRepository courseRepository,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<ExamRepositoryApi> examRepositoryApi,
-            IngestionCoverageWeaviateReadService weaviateReadService, IngestionCoverageRepository coverageRepository,
-            @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.exerciseRepository = exerciseRepository;
-        this.faqRepository = faqRepository;
-        this.channelRepository = channelRepository;
+            IngestionCoverageWeaviateReadService weaviateReadService, IngestionCoverageRepository coverageRepository, DistributedDataProvider distributedDataProvider) {
+        this.expectedIdsRepository = expectedIdsRepository;
         this.courseRepository = courseRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.examRepositoryApi = examRepositoryApi;
         this.weaviateReadService = weaviateReadService;
         this.coverageRepository = coverageRepository;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -154,10 +140,10 @@ public class CoverageRecomputeService {
      * @return {@code true} if a recompute ran, {@code false} if it was skipped (lock held by another node, or fresh)
      */
     boolean runUnderLock(boolean onlyIfStale) {
-        IMap<String, Instant> lockMap = hazelcastInstance.getMap(LOCK_MAP);
+        DistributedLock lock = distributedDataProvider.getLock(LOCK_NAME);
         boolean locked = false;
         try {
-            locked = lockMap.tryLock(LOCK_KEY, LOCK_WAIT_SECONDS, TimeUnit.SECONDS);
+            locked = lock.tryLock(LOCK_WAIT);
             if (!locked) {
                 log.debug("Coverage recompute skipped: another node is already recomputing");
                 return false;
@@ -169,17 +155,13 @@ public class CoverageRecomputeService {
             recomputeAllCourses();
             return true;
         }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
         catch (Exception e) {
             log.error("Coverage recompute failed", e);
             return false;
         }
         finally {
             if (locked) {
-                lockMap.unlock(LOCK_KEY);
+                lock.unlock();
             }
         }
     }
@@ -239,9 +221,9 @@ public class CoverageRecomputeService {
     }
 
     private ExpectedSets loadExpectedSets(Collection<Long> courseIds) {
-        Map<Long, Set<Long>> exercises = bucket(exerciseRepository.findExerciseIdCourseIdPairsForCourses(courseIds));
-        Map<Long, Set<Long>> faqs = bucket(faqRepository.findFaqIdCourseIdPairsForCourses(courseIds));
-        Map<Long, Set<Long>> channels = bucket(channelRepository.findIndexableChannelIdCourseIdPairsForCourses(courseIds));
+        Map<Long, Set<Long>> exercises = bucket(expectedIdsRepository.findExerciseIdCourseIdPairsForCourses(courseIds));
+        Map<Long, Set<Long>> faqs = bucket(expectedIdsRepository.findFaqIdCourseIdPairsForCourses(courseIds));
+        Map<Long, Set<Long>> channels = bucket(expectedIdsRepository.findIndexableChannelIdCourseIdPairsForCourses(courseIds));
         Map<Long, Set<Long>> lectures = bucket(lectureRepositoryApi.map(api -> api.findLectureIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
         Map<Long, Set<Long>> exams = bucket(examRepositoryApi.map(api -> api.findExamIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
         Map<Long, Set<Long>> lectureUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findIndexableUnitIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));

@@ -19,11 +19,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -85,8 +83,7 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
     private AttachmentRepository attachmentRepository;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider distributedDataProvider;
 
     private static final Duration TIMEOUT = Duration.ofSeconds(30);
 
@@ -191,13 +188,13 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
     @Test
     void clusterLockMakesConcurrentRecomputeANoOp() throws Exception {
-        // Hazelcast IMap locks are reentrant per thread, so the lock must be held by a DIFFERENT thread to stand in for
+        // Distributed locks are reentrant per thread, so the lock must be held by a DIFFERENT thread to stand in for
         // another cluster node; holding it on the test thread would let runUnderLock re-enter and defeat the check.
-        IMap<String, Object> lockMap = hazelcastInstance.getMap("ingestion-coverage-recompute");
+        DistributedLock lock = distributedDataProvider.getLock("ingestion-coverage-recompute");
         CountDownLatch locked = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         Thread holder = new Thread(() -> {
-            lockMap.lock("recompute");
+            lock.lock();
             locked.countDown();
             try {
                 release.await(5, TimeUnit.SECONDS);
@@ -206,7 +203,7 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
                 Thread.currentThread().interrupt();
             }
             finally {
-                lockMap.unlock("recompute");
+                lock.unlock();
             }
         });
         holder.start();
