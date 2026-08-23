@@ -772,7 +772,10 @@ public class ProgrammingExercise extends Exercise {
 
     private boolean validateBuildAndTestStudentSubmissionsAfterDueDate() {
         ZonedDateTime buildAndTestDate = getBuildAndTestStudentSubmissionsAfterDueDate();
-        return (buildAndTestDate == null || getDueDate() != null) && validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), buildAndTestDate,
+        if (buildAndTestDate == null || isExamExercise()) {
+            return true;
+        }
+        return getDueDate() != null && validateStrictDateSequence(Arrays.asList(getReleaseDate(), getStartDate(), getDueDate()), buildAndTestDate,
                 Arrays.asList(getAssessmentDueDate(), getExampleSolutionPublicationDate()));
     }
 
