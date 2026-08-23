@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,15 +23,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService.MessagePreviewData;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentSessionCacheServiceTest {
@@ -43,7 +45,7 @@ class AtlasAgentSessionCacheServiceTest {
     private Cache relationsCache;
 
     @Mock
-    private HazelcastInstance mockHazelcastInstance;
+    private DistributedDataProvider mockDistributedDataProvider;
 
     private AtlasAgentSessionCacheService service;
 
@@ -51,7 +53,7 @@ class AtlasAgentSessionCacheServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AtlasAgentSessionCacheService(cacheManager, mockHazelcastInstance);
+        service = new AtlasAgentSessionCacheService(cacheManager, mockDistributedDataProvider);
     }
 
     @Test
@@ -112,10 +114,11 @@ class AtlasAgentSessionCacheServiceTest {
 
     @Test
     void shouldNotLoseEntriesUnderConcurrentStoreCalls() throws Exception {
-        // Use a real local Hazelcast instance so the distributed IMap.lock() contract is actually exercised.
-        HazelcastInstance hazelcast = Hazelcast.newHazelcastInstance(new Config().setClusterName("atlas-session-cache-test-" + System.nanoTime()));
-        try {
-            AtlasAgentSessionCacheService realService = new AtlasAgentSessionCacheService(cacheManager, hazelcast);
+        // Use a real provider so the per-key locking that guards the read-modify-write is actually exercised. The local
+        // provider is enough for that: the cross-backend lock contract itself is covered by AbstractDistributedDataTest.
+        LocalDataProviderService provider = new LocalDataProviderService();
+        {
+            AtlasAgentSessionCacheService realService = new AtlasAgentSessionCacheService(cacheManager, provider);
 
             int threads = 32;
             ExecutorService pool = Executors.newFixedThreadPool(threads);
@@ -129,17 +132,38 @@ class AtlasAgentSessionCacheServiceTest {
                     return null;
                 }));
             }
-            start.countDown();
-            for (Future<?> f : futures) {
-                f.get(10, TimeUnit.SECONDS);
+            try {
+                start.countDown();
+                for (Future<?> f : futures) {
+                    f.get(10, TimeUnit.SECONDS);
+                }
             }
-            pool.shutdown();
+            finally {
+                // A throwing Future#get would otherwise leave the fixed pool's threads alive and hang the test JVM.
+                pool.shutdownNow();
+                pool.awaitTermination(10, TimeUnit.SECONDS);
+            }
 
             assertThat(realService.getPreviewHistory(SESSION_ID)).hasSize(threads);
         }
-        finally {
-            hazelcast.shutdown();
-        }
+    }
+
+    /**
+     * The preview history has to keep expiring. {@code HazelcastConfiguration} gives this map a two-hour TTL, but a map
+     * from {@code DistributedDataProvider#getMap} never expires by contract, so requesting a plain map here would keep
+     * every session's history forever on any provider that does not read the Hazelcast map configuration.
+     */
+    @Test
+    void shouldRequestTheExpiringPreviewHistoryMap() {
+        DistributedMap<String, Map<Integer, MessagePreviewData>> historyMap = new LocalDataProviderService()
+                .getMap(AtlasAgentSessionCacheService.ATLAS_SESSION_PREVIEW_HISTORY_CACHE);
+        // doReturn rather than when(...).thenReturn(...), because getExpiringMap is generic and has no assignment context
+        // here for the type arguments to be inferred from.
+        doReturn(historyMap).when(mockDistributedDataProvider).getExpiringMap(AtlasAgentSessionCacheService.ATLAS_SESSION_PREVIEW_HISTORY_CACHE, Duration.ofHours(2));
+
+        service.getPreviewHistory(SESSION_ID);
+
+        verify(mockDistributedDataProvider).getExpiringMap(AtlasAgentSessionCacheService.ATLAS_SESSION_PREVIEW_HISTORY_CACHE, Duration.ofHours(2));
     }
 
     @Test

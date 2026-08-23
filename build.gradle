@@ -450,6 +450,11 @@ dependencies {
 
 
     // Required for synchronization between nodes and build agents (LocalCI)
+    // Per-node cache for large values (file contents, rendered diagrams). Deliberately not distributed: pushing
+    // multi-MB blobs through a shared grid costs a network transfer per read and, on Redis, blocks the single-threaded
+    // server for every other operation. Version is managed by the Spring Boot BOM.
+    implementation "com.github.ben-manes.caffeine:caffeine"
+
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     // alternative for Hazelcast
@@ -499,12 +504,14 @@ dependencies {
     implementation "org.springframework.data:spring-data-ldap"
     implementation "org.springframework.ldap:spring-ldap-core"
 
-    // Spring Cloud 2025.1.2 (Oakwood) — individual module versions are pinned because the
-    // spring-cloud-dependencies BOM does not publish versions for these specific modules.
-    // 2025.1.2 introduces Spring Boot 4.1.0 compatibility; the 2025.1.1 verifier rejected 4.1.0 and shut the app down.
+    // Spring Cloud (Oakwood 2025.1.x; the exact train is spring_cloud_version in gradle.properties) —
+    // these individual module versions are pinned because the spring-cloud-dependencies BOM does not
+    // publish versions for them. The train's compatibility verifier accepts Spring Boot 4.0.x and 4.1.x;
+    // do not drop below 2025.1.2, because 2025.1.1 rejected Boot 4.1.0 and shut the app down at startup.
+    // eureka-client trails the other two: spring-cloud-netflix was not re-released in 2025.1.3.
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.2"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.4"
-    implementation "org.springframework.cloud:spring-cloud-commons:5.0.2"
+    implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.5"
+    implementation "org.springframework.cloud:spring-cloud-commons:5.0.3"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support).
     // Version managed by the Spring Boot BOM.
@@ -531,6 +538,8 @@ dependencies {
 
     implementation "com.bucket4j:bucket4j_jdk17:${bucket4j_version}"
     implementation "com.bucket4j:bucket4j_jdk17-hazelcast:${bucket4j_version}"
+    // Rate-limit bucket storage for the Redis provider; the Hazelcast module above covers the Hazelcast provider.
+    implementation "com.bucket4j:bucket4j_jdk17-redisson:${bucket4j_version}"
 
     // Weaviate vector database client for semantic search
     implementation "io.weaviate:client6:${weaviate_client_version}"
@@ -565,7 +574,10 @@ dependencies {
 
     // required by sshd-git; pinned to a patched release addressing GHSA-4jwv-qpf8-5w8v, GHSA-6w4m-2xhg-2658, GHSA-fwcp-hj66-p6g3
     implementation "org.bouncycastle:bcpkix-jdk18on:1.85"
-    implementation "org.bouncycastle:bcprov-jdk18on:1.85"
+    // 1.85.2 is a provider-only patch (AES CBC-256 via the id_aes256_CBC OID silently derived a 192-bit key,
+    // bc-java #2390) with no bcpkix/bcpg/bcutil counterpart; spring-cloud-starter 5.0.3 asks for it too. See the
+    // org.bouncycastle entry in gradle/dependency-families.gradle for why the family guard accepts the odd one out.
+    implementation "org.bouncycastle:bcprov-jdk18on:1.85.2"
     // pulled transitively by sshd-git; pin to patched version
     implementation "org.bouncycastle:bcpg-jdk18on:1.85"
 

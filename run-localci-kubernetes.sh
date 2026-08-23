@@ -87,6 +87,21 @@ require_command() {
     command -v "$1" >/dev/null 2>&1 || fail "Required command '$1' was not found"
 }
 
+current_kubectl_context() {
+    kubectl config current-context 2>/dev/null || true
+}
+
+# Whether the active kubectl context is the local Docker Desktop cluster. Returns non-zero when kubectl is missing or
+# reports nothing, so an unanswerable question counts as "not local" rather than as permission to proceed.
+is_local_kubectl_context() {
+    [[ "$(current_kubectl_context)" == "docker-desktop" ]]
+}
+
+# Hard guard for commands that mutate a cluster without going through check_cluster_topology first.
+require_local_kubectl_context() {
+    is_local_kubectl_context || fail "Refusing to touch the cluster: this script only manages the local docker-desktop context, but the current context is '$(current_kubectl_context 2>/dev/null || true)'. Switch with 'kubectl config use-context docker-desktop'."
+}
+
 version_at_least() {
     local actual="$1"
     local required="$2"
@@ -445,19 +460,25 @@ run_acceptance_test() {
 tear_down() {
     stop_workload_monitor
     stop_port_forward
-    if command -v helm >/dev/null 2>&1; then
-        helm uninstall "$RELEASE_NAME" --namespace "$ARTEMIS_NAMESPACE" --ignore-not-found --wait || true
-    fi
-    if command -v kubectl >/dev/null 2>&1; then
-        kubectl delete namespace "$BUILD_NAMESPACE" --ignore-not-found --wait=false || true
-        kubectl delete namespace "$ARTEMIS_NAMESPACE" --ignore-not-found --wait=false || true
-        if [[ "$(kubectl config current-context 2>/dev/null || true)" == "docker-desktop" ]]; then
+    # The context is checked before anything below can mutate a cluster, not after. These are unconditional namespace
+    # deletions of two fixed names, so aimed at the wrong context they would delete a real cluster's artemis and
+    # artemis-builds namespaces. `down` also runs this without having gone through check_cluster_topology, and this
+    # function doubles as an EXIT trap, so the guard has to live here rather than only at the call site.
+    if ! is_local_kubectl_context; then
+        log "Skipped the cluster teardown: the current kubectl context is '$(current_kubectl_context)', not docker-desktop"
+    else
+        if command -v helm >/dev/null 2>&1; then
+            helm uninstall "$RELEASE_NAME" --namespace "$ARTEMIS_NAMESPACE" --ignore-not-found --wait || true
+        fi
+        if command -v kubectl >/dev/null 2>&1; then
+            kubectl delete namespace "$BUILD_NAMESPACE" --ignore-not-found --wait=false || true
+            kubectl delete namespace "$ARTEMIS_NAMESPACE" --ignore-not-found --wait=false || true
             kubectl label nodes --all artemis.cit.tum.de/core- artemis.cit.tum.de/build-worker- >/dev/null 2>&1 || true
         fi
+        log "Removed the local release, namespaces, and Artemis node labels; locally built images were retained"
     fi
     rm -f "$COOKIE_FILE" "$WORKLOAD_NODE_FILE" "$PORT_FORWARD_LOG_FILE"
     rmdir "$STATE_DIRECTORY" >/dev/null 2>&1 || true
-    log "Removed the local release, namespaces, and Artemis node labels; locally built images were retained"
 }
 
 trap stop_workload_monitor EXIT
@@ -495,6 +516,8 @@ case "$COMMAND" in
         show_logs
         ;;
     down)
+        # Explicitly requested, so a wrong context is an error to report rather than something to skip silently.
+        require_local_kubectl_context
         tear_down
         ;;
     -h|--help|help)

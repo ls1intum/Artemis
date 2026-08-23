@@ -198,7 +198,7 @@ public class BuildAgentInformationService {
     public void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob, boolean isPaused, boolean isPausedDueToFailures, int consecutiveFailures) {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
+            log.debug("Not connected to the distributed data provider yet. Skipping build agent information update.");
             return;
         }
 
