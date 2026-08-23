@@ -93,7 +93,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
         const examId = Number(child.paramMap.get('examId'));
         if (examId) {
             const exam = this.exams()?.find((e) => e.id === examId);
-            this.headerTitle.set(exam?.title ?? `Exam ${examId}`);
+            this.headerTitle.set(exam?.title ?? '');
         } else if (this.router.url.endsWith('/new')) {
             this.headerTitle.set(this.translateService.instant('artemisApp.examManagement.createExam'));
         } else {

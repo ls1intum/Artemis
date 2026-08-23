@@ -11,6 +11,7 @@ import { filter } from 'rxjs/operators';
 import { SidebarSubpageItem } from 'app/exam/manage/exam-management/exam-management-navigation-sidebar/sidebar-subpage-item/sidebar-subpage-item';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-management-navigation-sidebar',
@@ -25,6 +26,7 @@ import { Course } from 'app/course/shared/entities/course.model';
         RouterModule,
         SidebarSubpageItem,
         ArtemisTranslatePipe,
+        TranslateDirective,
     ],
 })
 export class ExamManagementNavigationSidebarComponent {
