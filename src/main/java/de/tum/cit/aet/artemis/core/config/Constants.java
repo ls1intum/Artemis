@@ -303,9 +303,9 @@ public final class Constants {
 
     public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
 
-    public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
+    public static final String PLAGIARISM_CACHE_PREFIX = "plagiarism-";
 
-    public static final String HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = HAZELCAST_PLAGIARISM_PREFIX + "active-plagiarism-checks-per-course-cache";
+    public static final String ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = PLAGIARISM_CACHE_PREFIX + "active-plagiarism-checks-per-course-cache";
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
