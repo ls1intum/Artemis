@@ -336,8 +336,24 @@ public class FileUtil {
         if (parent != null) {
             Files.createDirectories(parent);
         }
-        try (OutputStream outputStream = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+        // Opened outside the try so that a failure of the open itself is NOT cleaned up: it throws
+        // FileAlreadyExistsException precisely when the path is somebody else's file or symlink, and that is the case
+        // this method exists to protect. Only once the open succeeds is the file ours to delete.
+        OutputStream outputStream = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
+        try (outputStream) {
             inputStream.transferTo(outputStream);
+        }
+        catch (IOException | RuntimeException e) {
+            // CREATE_NEW creates the file before any byte is copied, so a failure part-way through would otherwise leave
+            // a truncated file behind. The caller only registers the path for deletion after this method returns, so
+            // nothing else would ever remove it.
+            try {
+                Files.deleteIfExists(target);
+            }
+            catch (IOException cleanupFailure) {
+                e.addSuppressed(cleanupFailure);
+            }
+            throw e;
         }
     }
 

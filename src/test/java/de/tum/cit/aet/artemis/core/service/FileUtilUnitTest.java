@@ -122,6 +122,47 @@ class FileUtilUnitTest {
         assertThat(Files.readString(target)).isEqualTo("content");
     }
 
+    /**
+     * CREATE_NEW creates the file before the first byte is copied, and the caller only registers the path for deletion
+     * once the write returns, so a failure part-way through must not leave a truncated file nobody will clean up.
+     */
+    @Test
+    void removesThePartialFileWhenTheTransferFails(@TempDir Path tempDir) {
+        Path target = tempDir.resolve("partial.txt");
+        InputStream failingHalfWay = new InputStream() {
+
+            private int remaining = 8;
+
+            @Override
+            public int read() throws IOException {
+                if (remaining-- > 0) {
+                    return 'x';
+                }
+                throw new IOException("stream broke after writing bytes");
+            }
+        };
+
+        assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(failingHalfWay, target)).isInstanceOf(IOException.class).hasMessageContaining("stream broke");
+
+        assertThat(Files.exists(target)).as("the truncated file must not be left behind").isFalse();
+    }
+
+    /**
+     * The counterpart to the cleanup above: when the open itself fails the path belongs to something else - the planted
+     * symlink case - and deleting it would destroy exactly what the exclusive create is there to protect.
+     */
+    @Test
+    void keepsAnExistingFileWhenTheOpenIsRefused(@TempDir Path tempDir) throws Exception {
+        Path target = tempDir.resolve("existing.txt");
+        Files.writeString(target, "original");
+
+        try (InputStream inputStream = new ByteArrayInputStream("replacement".getBytes(StandardCharsets.UTF_8))) {
+            assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(inputStream, target)).isInstanceOf(FileAlreadyExistsException.class);
+        }
+
+        assertThat(Files.readString(target)).isEqualTo("original");
+    }
+
     @Test
     void refusesToOverwriteAnExistingFile(@TempDir Path tempDir) throws Exception {
         Path target = tempDir.resolve("file.txt");
