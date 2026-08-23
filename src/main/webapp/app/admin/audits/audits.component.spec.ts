@@ -309,19 +309,34 @@ describe('AuditsComponent', () => {
                 { data: { reason: 'unknown-identifier' }, principal: 'anonymous', timestamp: '2026-08-21T10:01:00Z', type: 'PASSWORD_RESET_REQUEST_REJECTED' },
             ]);
 
-            expect(comp.auditRows().map((row) => row.otherData)).toEqual([[['course', 'Intro to Programming']], [['reason', 'unknown-identifier']]]);
+            expect(comp.auditRows().map((row) => row.otherData)).toEqual([[{ key: 'course', value: 'Intro to Programming' }], [{ key: 'reason', value: 'unknown-identifier' }]]);
         });
 
         it('leaves out the keys that have their own rendering, so they are not shown twice', () => {
-            comp.audits.set([{ data: { message: 'a message', remoteAddress: '127.0.0.1', sessionId: 'abc' }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'X' }]);
+            comp.audits.set([{ data: { message: 'a message', remoteAddress: '127.0.0.1', course: 'kept' }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'X' }]);
 
-            expect(comp.auditRows()[0].otherData).toEqual([['sessionId', 'abc']]);
+            expect(comp.auditRows()[0].otherData).toEqual([{ key: 'course', value: 'kept' }]);
+        });
+
+        it('never puts the session id on screen: it identifies a session rather than describing the event', () => {
+            comp.audits.set([{ data: { sessionId: 'A1B2C3SESSIONTOKEN', course: 'kept' }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'X' }]);
+
+            expect(comp.auditRows()[0].otherData).toEqual([{ key: 'course', value: 'kept' }]);
+        });
+
+        it("keeps the login record's user agent, which the cell clips to one line", () => {
+            // Every successful login carries one; dropping it would hide real audit data, so the template truncates
+            // instead. The whole value stays in the row's title attribute.
+            const userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36';
+            comp.audits.set([{ data: { userAgent }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'AUTHENTICATION_SUCCESS' }]);
+
+            expect(comp.auditRows()[0].otherData).toEqual([{ key: 'userAgent', value: userAgent }]);
         });
 
         it('leaves out empty values rather than rendering a dangling label', () => {
-            comp.audits.set([{ data: { course: '', reason: undefined, kept: 'yes' }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'X' }]);
+            comp.audits.set([{ data: { course: '', reason: undefined, missing: null as never, kept: 'yes' }, principal: 'admin', timestamp: '2026-08-21T10:00:00Z', type: 'X' }]);
 
-            expect(comp.auditRows()[0].otherData).toEqual([['kept', 'yes']]);
+            expect(comp.auditRows()[0].otherData).toEqual([{ key: 'kept', value: 'yes' }]);
         });
 
         it('tolerates an event with no payload at all', () => {

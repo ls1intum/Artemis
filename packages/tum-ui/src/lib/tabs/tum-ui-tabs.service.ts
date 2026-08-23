@@ -31,20 +31,23 @@ export class TumUiTabsService {
         this.onSelect(value);
     }
 
-    /** Publishes a tab's value, or replaces it when the tab's input changes. */
+    /**
+     * Publishes a tab's value, or replaces it when the tab's input changes.
+     *
+     * The unchanged case returns the same map instance, so the signal does not notify and the tab list is not woken for
+     * nothing. The check lives inside `update` on purpose: each tab calls this from its own effect, and reading the
+     * signal here instead would subscribe every tab's effect to every other tab's value.
+     */
     publish(tab: object, value: number | string): void {
-        if (this.publishedValues().get(tab) === value) {
-            return;
-        }
-        this.publishedValues.update((values) => new Map(values).set(tab, value));
+        this.publishedValues.update((values) => (values.get(tab) === value ? values : new Map(values).set(tab, value)));
     }
 
     /** Withdraws a destroyed tab's value, so a removed tab cannot keep the list waiting for or matching it. */
     unpublish(tab: object): void {
-        if (!this.publishedValues().has(tab)) {
-            return;
-        }
         this.publishedValues.update((values) => {
+            if (!values.has(tab)) {
+                return values;
+            }
             const remaining = new Map(values);
             remaining.delete(tab);
             return remaining;

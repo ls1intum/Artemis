@@ -57,19 +57,29 @@ export class AuditsComponent implements OnInit {
     readonly audits = signal<Audit[]>([]);
 
     /**
+     * Payload keys the generic list leaves out: `message` and `remoteAddress` are rendered above with their own
+     * formatting, and `sessionId` identifies a session rather than describing the event, so it has no place on screen.
+     */
+    private static readonly SEPARATELY_RENDERED_DATA_KEYS = new Set(['message', 'remoteAddress', 'sessionId']);
+
+    /**
      * The rows the table renders: each audit plus the entries of its `data` payload that the row does not already show
      * in a column of its own.
      *
      * Precomputed rather than derived in the template, because only the general log's payload has a known shape. A
-     * domain action records its own keys (`course`, `sessionId`, ...) and an account security event records e.g.
+     * domain action records its own keys (`course`, `exerciseId`, ...) and an account security event records e.g.
      * `reason`, so a column that only rendered `message` and `remoteAddress` would leave the Application and Security
      * tabs with an empty Extra data column for almost every row.
+     *
+     * A falsy value is dropped rather than rendered as a dangling `key:` label; the server stores the payload as
+     * strings, so an absent entry arrives as an empty string, `null` or `undefined` depending on the event.
      */
     readonly auditRows = computed(() =>
         this.audits().map((audit) => ({
             audit,
-            // remoteAddress is rendered separately, with a translated label; message is rendered on its own as prose.
-            otherData: Object.entries(audit.data ?? {}).filter(([key, value]) => key !== 'message' && key !== 'remoteAddress' && value !== undefined && value !== ''),
+            otherData: Object.entries(audit.data ?? {})
+                .filter(([key, value]) => !AuditsComponent.SEPARATELY_RENDERED_DATA_KEYS.has(key) && !!value)
+                .map(([key, value]) => ({ key, value: value as string })),
         })),
     );
 

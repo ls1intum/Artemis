@@ -74,17 +74,20 @@
                             </td>
                             <td>{{ row.audit.type }}</td>
                             <td>
-                                <div class="flex flex-col">
+                                <!-- Bounded and clipped to one line per entry: a login records its full user agent, which
+                                     would otherwise wrap over two lines on every row of the highest-volume tab. The whole
+                                     value stays available as the title. -->
+                                <div class="flex max-w-md flex-col">
                                     @if (row.audit.data?.message) {
-                                        <span>{{ row.audit.data.message }}</span>
+                                        <span class="truncate" [title]="row.audit.data.message">{{ row.audit.data.message }}</span>
                                     }
                                     @if (row.audit.data?.remoteAddress) {
                                         <span><span jhiTranslate="audits.table.data.remoteAddress"></span> {{ row.audit.data.remoteAddress }}</span>
                                     }
-                                    <!-- Everything the server recorded that has no column of its own. Keys are event-specific
-                                         (`course`, `reason`, `revokedPasskeys`, ...), so they are shown verbatim. -->
-                                    @for (entry of row.otherData; track entry[0]) {
-                                        <span>{{ entry[0] }}: {{ entry[1] }}</span>
+                                    <!-- Everything the server recorded that has no rendering of its own. Keys are
+                                         event-specific (`course`, `reason`, `revokedPasskeys`, ...), so they are shown verbatim. -->
+                                    @for (entry of row.otherData; track entry.key) {
+                                        <span class="truncate" [title]="entry.key + ': ' + entry.value">{{ entry.key }}: {{ entry.value }}</span>
                                     }
                                 </div>
                             </td>
