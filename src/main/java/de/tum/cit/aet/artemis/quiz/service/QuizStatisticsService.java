@@ -103,9 +103,10 @@ public class QuizStatisticsService {
     public QuizPointStatisticsDTO getPointStatistic(QuizExercise quizExercise) {
         long quizExerciseId = quizExercise.getId();
         double overallPoints = quizExercise.getOverallQuizPoints();
+        long roundedOverallPoints = Math.round(overallPoints);
         Map<Double, long[]> countersByPoints = new HashMap<>();
-        for (double points = 0.0; points <= overallPoints; points++) {
-            countersByPoints.put(points, new long[2]);
+        for (long points = 0; points <= roundedOverallPoints; points++) {
+            countersByPoints.put((double) points, new long[2]);
         }
 
         long ratedResultCount = 0;
@@ -159,10 +160,16 @@ public class QuizStatisticsService {
         if (!pendingNotifications.add(quizExerciseId)) {
             return;
         }
-        taskScheduler.schedule(() -> {
+        try {
+            taskScheduler.schedule(() -> {
+                pendingNotifications.remove(quizExerciseId);
+                websocketMessagingService.sendMessage("/topic/statistic/" + quizExerciseId, quizExerciseId);
+            }, Instant.now().plus(NOTIFICATION_DEBOUNCE));
+        }
+        catch (RuntimeException exception) {
             pendingNotifications.remove(quizExerciseId);
-            websocketMessagingService.sendMessage("/topic/statistic/" + quizExerciseId, quizExerciseId);
-        }, Instant.now().plus(NOTIFICATION_DEBOUNCE));
+            throw exception;
+        }
     }
 
     private long[] questionAggregate(long questionId, double questionPoints) {
@@ -224,7 +231,7 @@ public class QuizStatisticsService {
             countersByDropLocation.forEach((dropLocationId, counters) -> {
                 Set<Long> correctDragItems = correctDragItemsByDropLocation.getOrDefault(dropLocationId, Set.of());
                 Long submittedDragItem = submittedDragItemByDropLocation.get(dropLocationId);
-                boolean correct = correctDragItems.isEmpty() && submittedDragItem == null || submittedDragItem != null && correctDragItems.contains(submittedDragItem);
+                boolean correct = (correctDragItems.isEmpty() && submittedDragItem == null) || (submittedDragItem != null && correctDragItems.contains(submittedDragItem));
                 if (correct) {
                     counters[index]++;
                 }

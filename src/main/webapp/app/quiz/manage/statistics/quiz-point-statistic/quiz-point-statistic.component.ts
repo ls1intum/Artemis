@@ -39,7 +39,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     readonly round = round;
 
-    readonly quizExercise = signal<QuizPointStatisticsResponse>(undefined!);
+    readonly quizExercise = signal<QuizPointStatisticsResponse | undefined>(undefined);
     quizPointStatistic!: QuizPointStatistic; // set in loadQuizSuccess()/loadNewData() before the chart is rendered
 
     labels: string[] = [];
@@ -108,9 +108,10 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
      */
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
+        const quizExercise = this.quizExercise();
         // update remaining time
-        if (this.quizExercise() && this.quizExercise().dueDate) {
-            const endDate = this.quizExercise().dueDate!;
+        if (quizExercise?.dueDate) {
+            const endDate = quizExercise.dueDate;
             if (endDate.isAfter(this.serverDateService.now())) {
                 // quiz is still running => calculate remaining seconds and generate text based on that
                 this.remainingTimeSeconds.set(endDate.diff(this.serverDateService.now(), 'seconds'));
@@ -170,9 +171,9 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
             void this.router.navigate(['courses']);
         }
         this.quizExercise.set(quizExercise);
-        this.waitingForQuizStart = !this.quizExercise().quizStarted;
-        this.quizPointStatistic = quizExercise.statistic;
-        this.maxScore.set(calculateMaxScore(this.quizExercise()));
+        this.waitingForQuizStart = !quizExercise.quizStarted;
+        this.quizPointStatistic = quizExercise.quizPointStatistic;
+        this.maxScore.set(calculateMaxScore(quizExercise));
 
         this.loadData();
     }

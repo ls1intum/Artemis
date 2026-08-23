@@ -21,6 +21,11 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticProjections.RatedSelection;
  * <p>
  * A {@code null} rated flag has the same meaning as {@code false}, matching {@code Result#isRated()}. The result id is
  * the deterministic tie-breaker when two results have the same completion date.
+ * <p>
+ * The correlated anti-joins are required because results reference submissions while the latest-result rule is scoped to a participation and rating bucket. The normalized lookup
+ * is
+ * supported by {@code idx_submission_participation_submission_date} and {@code idx_result_submission_completion_date}; duplicate-answer anti-joins remain separate because they
+ * select the greatest answer id within one submission and question.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -50,6 +55,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
                         AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
                             OR (newer.completionDate = result.completionDate AND newer.id > result.id))
@@ -83,6 +89,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                         AND duplicateAnswer.quizQuestion = answer.quizQuestion
                         AND duplicateAnswer.id > answer.id
                 )
+                AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
                 AND NOT EXISTS (
                     SELECT newer.id
@@ -90,6 +97,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
                         AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
                             OR (newer.completionDate = result.completionDate AND newer.id > result.id))
@@ -116,6 +124,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                 JOIN answer.submission submission
                 JOIN Result result ON result.submission = submission
             WHERE question.exercise.id = :exerciseId
+                AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
                 AND NOT EXISTS (
                     SELECT duplicateAnswer.id
@@ -130,6 +139,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
                         AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
                             OR (newer.completionDate = result.completionDate AND newer.id > result.id))
@@ -142,6 +152,9 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
      * Loads the selections used to calculate component counters for one question.
      * <p>
      * Only the greatest-id answer per submission/question and the latest completed result per participation/rated bucket contribute.
+     * At most one row per participation and rating bucket is returned, so materializing the result remains bounded by the participant population and avoids a transactional
+     * streaming
+     * boundary in the service.
      *
      * @param questionId the quiz question id
      * @return the selected answer values and their rated/unrated buckets
@@ -153,6 +166,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                 JOIN answer.submission submission
                 JOIN Result result ON result.submission = submission
             WHERE answer.quizQuestion.id = :questionId
+                AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
                 AND NOT EXISTS (
                     SELECT duplicateAnswer.id
@@ -167,6 +181,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
                         AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
                             OR (newer.completionDate = result.completionDate AND newer.id > result.id))

@@ -4,7 +4,7 @@ import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
 
 export interface QuizQuestionWithStatistic extends QuizQuestion {
-    statistic: QuizQuestionStatistic;
+    quizQuestionStatistic: QuizQuestionStatistic;
 }
 
 export interface QuizStatisticsOverviewResponse extends QuizExercise {
@@ -14,10 +14,10 @@ export interface QuizStatisticsOverviewResponse extends QuizExercise {
 }
 
 export interface QuizPointStatisticsResponse extends QuizExercise {
-    statistic: QuizPointStatistic;
+    quizPointStatistic: QuizPointStatistic;
 }
 
 export interface QuizQuestionStatisticResponse extends QuizExercise {
     questionId: number;
-    statistic: QuizQuestionStatistic;
+    quizQuestionStatistic: QuizQuestionStatistic;
 }

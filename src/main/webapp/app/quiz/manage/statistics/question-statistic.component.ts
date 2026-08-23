@@ -3,10 +3,11 @@ import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-st
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { Subscription } from 'rxjs';
+import { EMPTY, map, startWith, switchMap } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TooltipItem } from 'chart.js';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
@@ -21,12 +22,13 @@ export const greyColor = '#838383';
 @Component({
     template: '',
 })
-export abstract class QuestionStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+export abstract class QuestionStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
     protected route = inject(ActivatedRoute);
     protected router = inject(Router);
     protected accountService = inject(AccountService);
     protected quizExerciseService = inject(QuizExerciseService);
     protected websocketService = inject(WebsocketService);
+    private readonly destroyRef = inject(DestroyRef);
 
     question!: QuizQuestion; // set in loadQuizCommon() before the chart is rendered
     questionStatistic!: QuizQuestionStatistic; // set in loadQuizCommon() before the chart is rendered
@@ -36,7 +38,6 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     // because the `@if (quizExercise())` guard keeps the chart (the only other signal consumer) out of the DOM.
     readonly quizExercise = signal<QuizQuestionStatisticResponse>(undefined!); // set in loadQuizCommon() before it is read
     questionIdParam!: number; // set in ngOnInit() from the route params
-    sub?: Subscription;
 
     // TODO: why do we have a second variable for labels?
     labels: string[] = [];
@@ -49,7 +50,6 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     maxScore = 0;
     showSolution = false;
     websocketChannelForData!: string; // set in ngOnInit() from the route params before use
-    private statisticSubscription?: Subscription;
 
     questionTextRendered?: SafeHtml;
 
@@ -57,31 +57,33 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
     backgroundSolutionColors: string[] = [];
 
     ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.setAxisLabels('showStatistic.questionStatistic.xAxes', 'showStatistic.questionStatistic.yAxes');
         });
-        this.sub = this.route.params.subscribe((params) => {
-            this.questionIdParam = +params['questionId'];
-            // use different REST-call if the User is a Student
-            if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.findQuestionStatistic(params['exerciseId'], this.questionIdParam).subscribe((res) => {
-                    this.loadQuiz(res.body!, false);
-                });
-            }
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    const questionId = Number(params['questionId']);
+                    this.questionIdParam = questionId;
+                    this.websocketChannelForData = `/topic/statistic/${exerciseId}`;
 
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-            // A statistics notification carries no counters; reload only the selected question.
-            this.statisticSubscription = this.websocketService.subscribe<number>(this.websocketChannelForData).subscribe(() => {
-                this.quizExerciseService.findQuestionStatistic(params['exerciseId'], this.questionIdParam).subscribe((res) => {
-                    this.loadQuiz(res.body!, true);
-                });
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
+                    }
+
+                    return this.websocketService.subscribe<number>(this.websocketChannelForData).pipe(
+                        map(() => true),
+                        startWith(false),
+                        switchMap((refresh) => this.quizExerciseService.findQuestionStatistic(exerciseId, questionId).pipe(map((response) => ({ response, questionId, refresh })))),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(({ response, questionId, refresh }) => {
+                this.questionIdParam = questionId;
+                this.loadQuiz(response.body!, refresh);
             });
-        });
-    }
-
-    ngOnDestroy() {
-        this.statisticSubscription?.unsubscribe();
     }
 
     /**
@@ -154,7 +156,7 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
             return undefined;
         }
         this.question = updatedQuestion;
-        this.questionStatistic = quiz.statistic;
+        this.questionStatistic = quiz.quizQuestionStatistic;
         return updatedQuestion;
     }
 

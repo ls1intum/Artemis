@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 public interface QuizExerciseTestRepository extends QuizExerciseRepository {
 
     /**
-     * Get one quiz exercise by id and eagerly load questions and statistics
+     * Get one quiz exercise by id and eagerly load questions, categories, and batches.
      *
      * @param quizExerciseId the id of the entity
      * @return the quiz exercise entity

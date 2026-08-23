@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizQuestionStatisticResponseDTO(@JsonUnwrapped QuizExerciseWithoutQuestionsDTO quizExercise, List<QuizQuestionWithSolutionDTO> quizQuestions, Long questionId,
-        QuizQuestionStatisticDTO statistic) {
+        QuizQuestionStatisticDTO quizQuestionStatistic) {
 
     /**
      * Creates a question-statistics response.

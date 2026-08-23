@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -8,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticsRepository;
 
 class QuizStatisticsServiceTest {
@@ -24,6 +28,8 @@ class QuizStatisticsServiceTest {
 
     private TaskScheduler taskScheduler;
 
+    private QuizStatisticsRepository quizStatisticsRepository;
+
     private QuizStatisticsService quizStatisticsService;
 
     @BeforeEach
@@ -31,7 +37,8 @@ class QuizStatisticsServiceTest {
         websocketMessagingService = mock(WebsocketMessagingService.class);
         taskScheduler = mock(TaskScheduler.class);
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenReturn(mock(ScheduledFuture.class));
-        quizStatisticsService = new QuizStatisticsService(mock(QuizStatisticsRepository.class), websocketMessagingService, taskScheduler);
+        quizStatisticsRepository = mock(QuizStatisticsRepository.class);
+        quizStatisticsService = new QuizStatisticsService(quizStatisticsRepository, websocketMessagingService, taskScheduler);
     }
 
     @Test
@@ -49,5 +56,27 @@ class QuizStatisticsServiceTest {
 
         quizStatisticsService.notifyStatisticsChanged(42L);
         verify(taskScheduler, times(2)).schedule(any(Runnable.class), any(Instant.class));
+    }
+
+    @Test
+    void shouldAllowRetryWhenSchedulingStatisticsNotificationFails() {
+        when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenThrow(new IllegalStateException("scheduler stopped")).thenReturn(mock(ScheduledFuture.class));
+
+        assertThrows(IllegalStateException.class, () -> quizStatisticsService.notifyStatisticsChanged(42L));
+        quizStatisticsService.notifyStatisticsChanged(42L);
+
+        verify(taskScheduler, times(2)).schedule(any(Runnable.class), any(Instant.class));
+    }
+
+    @Test
+    void shouldPrepopulatePointBucketsThroughRoundedOverallPoints() {
+        var quizExercise = mock(QuizExercise.class);
+        when(quizExercise.getId()).thenReturn(42L);
+        when(quizExercise.getOverallQuizPoints()).thenReturn(2.5);
+        when(quizStatisticsRepository.findPointStatistic(42L)).thenReturn(List.of());
+
+        var statistics = quizStatisticsService.getPointStatistic(quizExercise);
+
+        assertThat(statistics.quizPointStatistic().pointCounters()).hasSize(4);
     }
 }

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.quiz.dto;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
@@ -28,16 +29,14 @@ public record QuizStatisticsOverviewDTO(@JsonUnwrapped QuizExerciseWithoutQuesti
     public static QuizStatisticsOverviewDTO of(QuizExercise quizExercise, Map<Long, QuizQuestionStatisticDTO> statisticsByQuestion) {
         List<QuestionStatisticsDTO> questions = quizExercise.getQuizQuestions().stream()
                 .map(question -> QuestionStatisticsDTO.of(question, statisticsByQuestion.get(question.getId()))).toList();
-        QuizQuestionStatisticDTO participantSource = quizExercise.getQuizQuestions().stream().map(QuizQuestion::getId).map(statisticsByQuestion::get)
-                .filter(java.util.Objects::nonNull).findFirst().orElse(null);
-        int ratedCount = participantSource == null ? 0 : participantSource.participantsRated();
-        int unratedCount = participantSource == null ? 0 : participantSource.participantsUnrated();
+        int ratedCount = statisticsByQuestion.values().stream().filter(Objects::nonNull).mapToInt(QuizQuestionStatisticDTO::participantsRated).max().orElse(0);
+        int unratedCount = statisticsByQuestion.values().stream().filter(Objects::nonNull).mapToInt(QuizQuestionStatisticDTO::participantsUnrated).max().orElse(0);
         return new QuizStatisticsOverviewDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questions, ratedCount, unratedCount);
     }
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record QuestionStatisticsDTO(@JsonUnwrapped QuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO statistic) {
+record QuestionStatisticsDTO(@JsonUnwrapped QuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic) {
 
     static QuestionStatisticsDTO of(QuizQuestion question, QuizQuestionStatisticDTO statistic) {
         return new QuestionStatisticsDTO(QuizQuestionWithSolutionDTO.of(question), statistic);
