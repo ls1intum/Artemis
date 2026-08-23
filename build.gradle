@@ -497,9 +497,11 @@ dependencies {
     implementation "org.springframework.data:spring-data-ldap"
     implementation "org.springframework.ldap:spring-ldap-core"
 
-    // Spring Cloud 2025.1.2 (Oakwood) — individual module versions are pinned because the
-    // spring-cloud-dependencies BOM does not publish versions for these specific modules.
-    // 2025.1.2 introduces Spring Boot 4.1.0 compatibility; the 2025.1.1 verifier rejected 4.1.0 and shut the app down.
+    // Spring Cloud (Oakwood 2025.1.x; the exact train is spring_cloud_version in gradle.properties) —
+    // these individual module versions are pinned because the spring-cloud-dependencies BOM does not
+    // publish versions for them. The train's compatibility verifier accepts Spring Boot 4.0.x and 4.1.x;
+    // do not drop below 2025.1.2, because 2025.1.1 rejected Boot 4.1.0 and shut the app down at startup.
+    // eureka-client trails the other two: spring-cloud-netflix was not re-released in 2025.1.3.
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.0.2"
     implementation "org.springframework.cloud:spring-cloud-starter-config:5.0.5"
     implementation "org.springframework.cloud:spring-cloud-commons:5.0.3"
