@@ -23,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.calendar.dto.NonQuizExerciseCalendarEventDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.web.ExamResource;
@@ -563,25 +562,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
             """)
     Set<Long> findExerciseIdsByCourseId(@Param("courseId") Long courseId);
-
-    /**
-     * Returns the (courseId, exerciseId) pairs of all exercises belonging to the given courses, resolving each
-     * exercise's course the same way {@code getCourseViaExerciseGroupOrCourseMember()} does: course exercises by their
-     * direct course, plus exam exercises whose course is reached through {@code exerciseGroup -> exam -> course}. Bulk:
-     * all requested courses are resolved in a single query, so callers never issue a query per course.
-     *
-     * @param courseIds the ids of the courses to fetch exercises for
-     * @return the (courseId, exerciseId) pairs for the courses, including exam exercises
-     */
-    @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(COALESCE(e.course.id, exam.course.id), e.id)
-            FROM Exercise e
-                LEFT JOIN e.exerciseGroup eg
-                LEFT JOIN eg.exam exam
-            WHERE e.course.id IN :courseIds
-                OR exam.course.id IN :courseIds
-            """)
-    List<CourseEntityIdDTO> findExerciseIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     /**
      * @param courseId - course id of the exercises we want to fetch
