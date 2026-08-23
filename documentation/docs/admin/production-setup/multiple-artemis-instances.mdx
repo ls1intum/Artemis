@@ -664,7 +664,7 @@ different ports and a unique instance ID for each instance.
 
     <Image src={runConfigImg} size={ImageSize.large} alt={"Run configuration dialog in IntelliJ."} />
 
-3. Start the registry service, e.g., by running `docker compose -f docker/broker-registry.yml up`.
+3. Start the registry service, e.g., by running `docker compose --env-file .env -f docker/broker-registry.yml up`.
 
 4. Start the first instance with the default run configuration (no additional CLI arguments, `scheduling` enabled)
     and wait until it is up and running.
@@ -717,9 +717,9 @@ The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do 
     You may run into the following error when starting the containers
     `No member group is available to assign partition ownership...`. This issue should resolve itself after a few
     minutes. Otherwise, you can first start the following containers:
-    `docker compose -f docker/test-server-multi-node-mysql-localci.yml up mysql jhipster-registry activemq-broker artemis-app-node-1`.
+    `docker compose --env-file .env -f docker/test-server-multi-node-mysql-localci.yml up mysql jhipster-registry activemq-broker artemis-app-node-1`.
     After these containers are up and running, you can start the remaining containers:
-    `docker compose -f docker/test-server-multi-node-mysql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx`.
+    `docker compose --env-file .env -f docker/test-server-multi-node-mysql-localci.yml up artemis-app-node-2 artemis-app-node-3 nginx`.
 </Callout>
 
 
@@ -727,7 +727,8 @@ The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do 
 
 1. When running the Artemis container on a Unix system, you will have to give the user running in the container
     permission to access the Docker socket by adding them to the docker group. You can find the group ID of the docker
-    group by running `getent group docker | cut -d: -f3`. Afterwards, create a new file `docker/.env` with the following content:
+    group by running `getent group docker | cut -d: -f3`. Afterwards, add the following line to the `.env` file in the
+    repository root, which is the file the start command below loads:
 
     ```bash
     DOCKER_GROUP_ID=<REPLACE_WITH_DOCKER_GROUP_ID_OF_YOUR_SYSTEM>
@@ -753,7 +754,7 @@ The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do 
 3. Start the docker containers by running the following command:
 
     ```bash
-    docker compose -f docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f docker/test-server-multi-node-mysql-localci.yml up
     ```
 
 4. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
@@ -773,7 +774,7 @@ The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do 
 2. Start the docker containers by running the following command:
 
     ```yaml
-    docker compose -f docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f docker/test-server-multi-node-mysql-localci.yml up
     ```
 
 3. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.
@@ -789,7 +790,7 @@ The E2E runner scripts (`run-e2e-tests-local-multinode.sh` and its variants) do 
 3. Start the docker containers by running
 
     ```bash
-    docker compose -f docker/test-server-multi-node-mysql-localci.yml up
+    docker compose --env-file .env -f docker/test-server-multi-node-mysql-localci.yml up
     ```
 
 4. You can now access artemis on `http(s)://localhost` and the registry on http://localhost:8761.

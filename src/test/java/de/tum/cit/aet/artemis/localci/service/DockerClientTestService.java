@@ -91,9 +91,9 @@ public class DockerClientTestService {
         when(pullImageCmd.withPlatform(anyString())).thenReturn(pullImageCmd);
         BuildAgentDockerService.MyPullImageResultCallback callback1 = mock(BuildAgentDockerService.MyPullImageResultCallback.class);
         when(pullImageCmd.exec(any(BuildAgentDockerService.MyPullImageResultCallback.class))).thenReturn(callback1);
-        // The production code waits with an explicit timeout, so the timed variant has to report that the pull finished. Without this stub Mockito returns false, which
-        // the production code correctly interprets as a pull timeout.
-        when(callback1.awaitCompletion(anyLong(), any(TimeUnit.class))).thenReturn(true);
+        // The production code waits in slices on the callback's own completion signal, so this has to report that the pull finished. Without the stub Mockito returns
+        // false, which the production code correctly interprets as a pull that never completes and aborts once the stall timeout elapses.
+        when(callback1.awaitFinished(anyLong(), any(TimeUnit.class))).thenReturn(true);
 
         String dummyContainerId = "1234567890";
 
