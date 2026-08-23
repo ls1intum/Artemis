@@ -64,6 +64,20 @@ class RateLimitExemptAddressTest {
         assertThat(isExempt(service, "::ffff:203.0.113.10")).isTrue();
     }
 
+    /**
+     * The reverse of the case above: an administrator who writes the exempt entry in IPv4-mapped form has
+     * to exempt the same host arriving as a plain IPv4 address. {@link inet.ipaddr.IPAddress#contains}
+     * only matches within one address version, so the configured entry has to be normalised too.
+     */
+    @Test
+    void matchesAnIpv4ClientAgainstAnIpv6MappedConfiguredAddress() throws Exception {
+        var service = serviceExempting("::ffff:203.0.113.10");
+
+        assertThat(isExempt(service, "203.0.113.10")).isTrue();
+        assertThat(isExempt(service, "::ffff:203.0.113.10")).isTrue();
+        assertThat(isExempt(service, "203.0.113.11")).isFalse();
+    }
+
     @Test
     void ignoresAnUnparseableEntryRatherThanFailingToStart() throws Exception {
         var service = serviceExempting("not-an-address", "203.0.113.10");

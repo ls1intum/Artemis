@@ -2,22 +2,20 @@ package de.tum.cit.aet.artemis.admin.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import inet.ipaddr.AddressStringException;
-import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import inet.ipaddr.AddressStringException;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 /**
  * Service for managing rate limiting configuration.
@@ -56,7 +54,7 @@ public class RateLimitConfigurationService {
             try {
                 // Rejecting an unparseable entry at startup would take the whole application down over a
                 // typo in an optional convenience setting, so log it and carry on with the rest.
-                parsed.add(new IPAddressString(trimmed).toAddress());
+                parsed.add(normalise(new IPAddressString(trimmed).toAddress()));
             }
             catch (AddressStringException e) {
                 log.error("Ignoring unparseable rate limit exempt address '{}': {}", trimmed, e.getMessage());
@@ -69,6 +67,21 @@ public class RateLimitConfigurationService {
     }
 
     /**
+     * Collapses an IPv4-mapped IPv6 address such as {@code ::ffff:203.0.113.10} to its IPv4 form.
+     *
+     * {@link IPAddress#contains} only matches inside one address version, so both the configured entries
+     * and the client address have to be reduced to the same representation before they are compared.
+     * Applying this to the configured side as well is what makes the match symmetric: an entry written in
+     * either form then exempts a client arriving in either form.
+     *
+     * @param address the address to normalise
+     * @return the IPv4 form when the address is IPv4-convertible, otherwise the address unchanged
+     */
+    private static IPAddress normalise(IPAddress address) {
+        return address.isIPv4Convertible() ? address.toIPv4() : address;
+    }
+
+    /**
      * Whether the given client is exempt from every rate limit.
      *
      * @param clientId the client address, usually taken from the request
@@ -78,7 +91,7 @@ public class RateLimitConfigurationService {
         if (clientId == null || exemptAddresses.isEmpty()) {
             return false;
         }
-        IPAddress candidate = clientId.isIPv4Convertible() ? clientId.toIPv4() : clientId;
+        IPAddress candidate = normalise(clientId);
         return exemptAddresses.stream().anyMatch(exempt -> exempt.contains(candidate) || exempt.contains(clientId));
     }
 
