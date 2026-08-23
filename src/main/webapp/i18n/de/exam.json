@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "exam": {
+            "details": "Details",
             "detail": {
                 "sections": {
                     "general": "Informationen"

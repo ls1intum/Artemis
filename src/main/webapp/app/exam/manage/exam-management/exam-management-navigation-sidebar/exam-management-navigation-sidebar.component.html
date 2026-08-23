@@ -5,7 +5,9 @@
                 <div class="flex items-center justify-between gap-2 py-2">
                     <div class="flex items-center">
                         @if (pageTitle()) {
-                            <jhi-course-title-bar-title [title]="pageTitle()" />
+                            <a [routerLink]="['/course-management', course().id, 'exams']" class="text-decoration-none text-body">
+                                <jhi-course-title-bar-title [title]="pageTitle()" />
+                            </a>
                         }
                         <jhi-documentation-button [type]="documentationType" />
                     </div>
@@ -30,6 +32,7 @@
                             <div [ngbCollapse]="!expandedExams().has(exam.id!)" class="bg-module">
                                 @if (course().isAtLeastInstructor) {
                                     <div class="flex flex-col pl-4 pr-1">
+                                        <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="" [icon]="faInfoCircle" [title]="'artemisApp.exam.details' | artemisTranslate" />
                                         <jhi-sidebar-subpage-item
                                             [subjectId]="exam.id"
                                             subpage="exercise-groups"
