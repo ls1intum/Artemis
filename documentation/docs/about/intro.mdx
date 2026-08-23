@@ -29,7 +29,7 @@ appropriate, and human assessment is supported where human judgement is required
 
 ## What makes Artemis distinctive
 
-Artemis is organized around four ideas rather than around a catalog of course-management features.
+Artemis is organized around a handful of ideas rather than around a catalog of course-management features.
 
 ### Interactive learning
 
@@ -58,6 +58,22 @@ AI-assisted capabilities such as Iris, Athena, and Hyperion are optional, config
 integrations that keep instructors and tutors in control of assessment decisions. The
 [Artemis Intelligence overview](/admin/artemis-intelligence) documents which capability is native to
 Artemis, which is an external service, and where the boundaries are.
+
+### Speed as a feature
+
+Performance is a core quality requirement, not a tuning exercise left for later. A student waiting on a
+page during an exam is losing exam time, and an instructor who dreads opening a dashboard stops using
+it, so responsiveness is part of what the platform is for rather than a property it happens to have.
+
+That commitment is measured rather than asserted. In the
+[published reference run](/admin/benchmarking-tool#reference-run), 2,000 students worked through a
+complete exam, submitting every exercise type and pushing code to their own git repositories, and
+Artemis served 72,024 requests with **zero failures and an average response time of 0.45 seconds**.
+
+The same engineering shows up as sustainability. That run was served by eight virtual machines with
+four CPUs and 3.8 GB of memory each, every one weaker than a typical laptop. Artemis is built to run a
+large exam on a small amount of hardware, which is a power and procurement argument as much as a
+technical one.
 
 ### Open digital infrastructure
 
