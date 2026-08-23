@@ -197,14 +197,37 @@ public class LtiService {
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
 
-        if (!user.getActivated()) {
-            log.info("User is not activated. Adding initialize parameter to query.");
+        // Gated on the launch's own marker, not on `activated`: an account an administrator has deactivated is also
+        // inactive, and offering it the initialisation dialog only leads to a request the endpoint refuses.
+        if (needsInitialization(user)) {
+            log.info("User has not completed the initialization from its first launch. Adding initialize parameter to query.");
             uriComponentsBuilder.queryParam("initialize", "");
         }
 
         log.info("Add/Update JWT cookie so the user will be logged in.");
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+    }
+
+    /**
+     * Whether the account was provisioned by a launch and still has to complete the initialisation that hands it its
+     * password.
+     *
+     * @param user the account
+     * @return true if the account still has to be initialised
+     */
+    public boolean needsInitialization(User user) {
+        return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId());
+    }
+
+    /**
+     * Claims the one-time initialisation of a launch-provisioned account, so that only the first caller proceeds.
+     *
+     * @param user the account
+     * @return true if this caller claimed it and may hand out a password
+     */
+    public boolean claimInitialization(User user) {
+        return user.getId() != null && userLtiRepository.claimInitialization(user.getId()) == 1;
     }
 
     /**

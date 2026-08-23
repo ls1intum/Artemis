@@ -117,7 +117,9 @@ class LtiServiceTest {
     @Test
     void addLtiQueryParamsNewUser() {
         when(userRepository.getUser()).thenReturn(user);
-        user.setActivated(false);
+        // The dialog is offered on the launch's own marker, not on `activated`: a deactivated account is inactive too, and
+        // offering it the dialog only produces a request the endpoint refuses.
+        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId())).thenReturn(true);
         when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
@@ -137,7 +139,8 @@ class LtiServiceTest {
     @Test
     void addLtiQueryParamsExistingUser() {
         when(userRepository.getUser()).thenReturn(user);
-        user.setActivated(true);
+        // Nothing outstanding, so no dialog.
+        when(userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrueAndInitializedIsFalse(user.getId())).thenReturn(false);
         when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();

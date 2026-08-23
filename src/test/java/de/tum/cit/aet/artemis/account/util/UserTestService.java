@@ -639,7 +639,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        markCreatedByLtiLaunch(user);
+        markCreatedByLtiLaunch(user, true);
         userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -651,6 +651,53 @@ public class UserTestService {
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+    }
+
+    /**
+     * The reason initialisation has its own marker. An LTI-provisioned account that an administrator deactivated is
+     * inactive, exactly like one that has never been initialised - and this endpoint needs only an authenticated session,
+     * which a token issued before the deactivation still provides. Deciding on {@code activated} therefore let a disabled
+     * account activate itself again and collect a working password.
+     */
+    // Test
+    public void initializeUserDeactivatedAfterInitialization() throws Exception {
+        String password = passwordService.hashPassword("ThisIsAPassword");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setPassword(password);
+        user.setInternal(true);
+        user.setActivated(false);
+        markCreatedByLtiLaunch(user, true);
+        userTestRepository.save(user);
+
+        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(dto.password()).as("a deactivated account must not be handed a password").isNull();
+
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(currentUser.getPassword()).isEqualTo(password);
+        assertThat(currentUser.getActivated()).as("a deactivated account must not activate itself here").isFalse();
+    }
+
+    /**
+     * Initialisation happens once. The marker is claimed in a single conditional statement, so a second call finds nothing
+     * to claim and gets no password - which also means two concurrent calls cannot both be served.
+     */
+    // Test
+    public void initializeUserOnlyOnce() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setPassword(passwordService.hashPassword("ThisIsAPassword"));
+        user.setInternal(true);
+        user.setActivated(false);
+        markCreatedByLtiLaunch(user, false);
+        userTestRepository.save(user);
+
+        UserInitializationDTO first = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+        UserInitializationDTO second = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(first.password()).isNotEmpty();
+        assertThat(second.password()).as("the second call has nothing left to claim").isNull();
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(passwordService.checkPasswordMatch(first.password(), currentUser.getPassword())).as("the first password stays valid").isTrue();
     }
 
     // Test
@@ -1056,7 +1103,18 @@ public class UserTestService {
      * @param user the account to mark
      */
     private void markCreatedByLtiLaunch(User user) {
+        markCreatedByLtiLaunch(user, false);
+    }
+
+    /**
+     * Records that an LTI launch provisioned the account, and whether that account has already completed the one-time
+     * initialisation. The endpoint decides on this marker rather than on {@code activated}, so a test that wants an
+     * already-initialised account has to say so here.
+     */
+    private void markCreatedByLtiLaunch(User user, boolean initialized) {
         userTestRepository.save(user);
-        userLtiRepository.save(new UserLti(user.getId(), true));
+        UserLti marker = new UserLti(user.getId(), true);
+        marker.setInitialized(initialized);
+        userLtiRepository.save(marker);
     }
 }

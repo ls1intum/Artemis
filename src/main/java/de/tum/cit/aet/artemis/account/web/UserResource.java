@@ -122,12 +122,17 @@ public class UserResource {
     }
 
     /**
-     * Initialises users that are flagged as such and are LTI users by setting a new password that gets returned
+     * Completes the one-time initialisation of an account that an LTI launch provisioned, by giving it the password it
+     * authenticates with afterwards. Every other account is answered without being modified.
      * <p>
-     * An account that is not an LTI-provisioned internal account is answered without being modified. This branch used to
-     * activate the caller instead, which meant any externally managed or non-LTI account could re-activate itself here
-     * after an administrator had deactivated it - the endpoint only requires an authenticated session, and one issued
-     * before the deactivation still works.
+     * Whether the initialisation is still outstanding is decided by the lti module's own marker, never by
+     * {@code activated}. Those are different questions that the flag used to answer with the same value: an account an
+     * administrator had deactivated was indistinguishable from one that had never been initialised, so this endpoint
+     * activated it again and handed out a working password. Only an authenticated session is needed to reach it, and a
+     * session issued before the deactivation keeps working, so that was a way for a disabled account to restore itself.
+     * <p>
+     * The marker is claimed in one conditional statement, so exactly one request can proceed and a second call - or a
+     * second concurrent call - returns no password.
      *
      * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
      */
@@ -135,16 +140,12 @@ public class UserResource {
     @EnforceAtLeastStudent
     public ResponseEntity<UserInitializationDTO> initializeUser() {
         User user = userRepository.findOneWithAuthoritiesByLogin(SecurityUtils.getCurrentUserLogin().orElseThrow()).orElseThrow();
-        if (user.getActivated()) {
-            return ResponseEntity.ok().body(new UserInitializationDTO(null));
-        }
-        boolean isLtiProvisionedInternalUser = user.isInternal() && ltiApi.isPresent() && ltiApi.get().isLtiCreatedUser(user);
-        if (!isLtiProvisionedInternalUser) {
+        boolean initializationOutstanding = user.isInternal() && ltiApi.isPresent() && ltiApi.get().needsInitialization(user);
+        if (!initializationOutstanding || !ltiApi.get().claimInitialization(user)) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 
-        String result = userCreationService.setRandomPasswordAndReturn(user);
-        return ResponseEntity.ok().body(new UserInitializationDTO(result));
+        return ResponseEntity.ok().body(new UserInitializationDTO(userCreationService.storeInitialPasswordAndActivate(user).orElse(null)));
     }
 
     /**

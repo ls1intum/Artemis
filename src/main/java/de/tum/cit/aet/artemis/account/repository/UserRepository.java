@@ -917,6 +917,28 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateUserLanguageKey(@Param("userId") long userId, @Param("languageKey") String languageKey);
 
+    /**
+     * Stores the password an account is given when it completes its first LTI launch, and makes the account usable.
+     * <p>
+     * A single guarded statement rather than saving the entity the caller read: {@code save} writes every field of an
+     * instance loaded before the request, so a deactivation or soft delete that landed in between would be written back
+     * out again. The guard also means a deleted account receives no password at all.
+     *
+     * @param userId       the account
+     * @param passwordHash the hashed password to store
+     * @return the number of updated rows, 0 if the account was deleted in the meantime
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.password = :passwordHash,
+                user.activated = TRUE
+            WHERE user.id = :userId
+                AND user.deleted = FALSE
+            """)
+    int storeInitialPasswordAndActivate(@Param("userId") long userId, @Param("passwordHash") String passwordHash);
+
     @Query("""
             SELECT DISTINCT team.students AS student
             FROM Team team

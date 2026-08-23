@@ -353,8 +353,10 @@ public class UserCreationService {
      * Deactivates an account so it can no longer authenticate anywhere, records the change in the audit log, and revokes the
      * credentials that would otherwise keep working without it.
      * <p>
-     * Only an administrator can reverse this. No endpoint lets the account holder activate themselves again - see
-     * {@link de.tum.cit.aet.artemis.account.web.UserResource#initializeUser()}, which deliberately does not touch the flag.
+     * Only an administrator can reverse this. No endpoint lets the account holder activate themselves again: the one that
+     * sets the flag, {@link de.tum.cit.aet.artemis.account.web.UserResource#initializeUser()}, decides whether it may run
+     * from the lti module's own initialisation marker rather than from this flag, and a deactivated account has that marker
+     * set already.
      *
      * @param user the user that should be deactivated
      */
@@ -399,17 +401,21 @@ public class UserCreationService {
     }
 
     /**
-     * Sets for the provided user a random password and ends the initialization process.
+     * Gives the account the password it authenticates with after its first LTI launch, and makes it usable.
+     * <p>
+     * The caller must already have claimed the initialisation, which is what guarantees this happens once. Written as one
+     * guarded statement rather than by saving the entity the caller read, so that a deactivation or soft delete arriving
+     * in between is not written back out.
      *
-     * @param user the user to update
-     * @return the newly created password
+     * @param user the account being initialised
+     * @return the new password, or empty if the account no longer exists to be initialised
      */
-    public String setRandomPasswordAndReturn(User user) {
+    public Optional<String> storeInitialPasswordAndActivate(User user) {
         String newPassword = RandomUtil.generatePassword();
-        user.setPassword(passwordService.hashPassword(newPassword));
-        user.setActivated(true);
-        userRepository.save(user);
-        return newPassword;
+        if (userRepository.storeInitialPasswordAndActivate(user.getId(), passwordService.hashPassword(newPassword)) != 1) {
+            return Optional.empty();
+        }
+        return Optional.of(newPassword);
     }
 
 }

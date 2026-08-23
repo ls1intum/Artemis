@@ -6,10 +6,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 /**
- * Marks an account that an LTI launch provisioned, rather than one that reached Artemis by any other route.
+ * What the lti module knows about an account: that a launch provisioned it, and whether that account has already
+ * completed the one-time initialisation a launch-provisioned account goes through.
  * <p>
- * State the lti module owns, so it lives here rather than as a column on the account module's central table, where only
- * three of 34,354 accounts set it. A row exists only for an account the launch created, so the absence of a row means
+ * State the lti module owns, so it lives here rather than as columns on the account module's central table, where only
+ * three of 34,354 accounts set them. A row exists only for an account the launch created, so the absence of a row means
  * "not launch-created".
  */
 @Entity
@@ -22,6 +23,18 @@ public class UserLti {
 
     @Column(name = "created_by_launch", nullable = false)
     private boolean createdByLaunch = false;
+
+    /**
+     * Whether the account has completed the initialisation that follows its first launch, in which it is given the
+     * password it authenticates with afterwards.
+     * <p>
+     * The launch used to read {@code jhi_user.activated} for this, which an administrator also uses to disable an
+     * account. The initialisation endpoint could therefore not tell an account that had never been initialised apart from
+     * one that had been deactivated, and activated the latter again. This marker separates the two meanings: it only ever
+     * goes from false to true, so initialisation happens once and a later deactivation cannot be undone through it.
+     */
+    @Column(name = "initialized", nullable = false)
+    private boolean initialized = false;
 
     public UserLti() {
         // needed by Hibernate
@@ -46,5 +59,13 @@ public class UserLti {
 
     public void setCreatedByLaunch(boolean createdByLaunch) {
         this.createdByLaunch = createdByLaunch;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
+    }
+
+    public void setInitialized(boolean initialized) {
+        this.initialized = initialized;
     }
 }
