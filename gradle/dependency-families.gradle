@@ -30,6 +30,21 @@ def watchedFamilies = [
 ]
 
 /**
+ * Families that ship an out-of-band patch for a single module, where the vendor's compatibility contract is the
+ * leading version segments rather than the whole version string. Keyed by Maven group, valued by the number of
+ * leading numeric segments that Rule A requires to agree. A family absent here must match on the full version.
+ *
+ * org.bouncycastle: BC releases its modules together as `1.<release>` and occasionally patches one of them on top
+ * of that release. bcprov-jdk18on 1.85.2 is such a patch - it fixes AES CBC-256 obtained via the id_aes256_CBC OID
+ * silently deriving a 192-bit key (bc-java #2390) - and has no bcpkix/bcpg/bcutil counterpart, so 1.85.2 sitting
+ * beside 1.85 siblings is the shape BC ships rather than the mismatch this task guards against. Two agreeing
+ * segments still reject the incident recorded above, where bcprov moved to 1.85 and its siblings stayed on 1.84.
+ */
+def familyVersionPrecision = [
+    'org.bouncycastle': 2,
+]
+
+/**
  * Splits a version into its leading numeric segments and the qualifier that follows, e.g.
  * `4.2.17.Final` -> [[4, 2, 17], 'Final'] and `7.7.1.202607240634-r` -> [[7, 7, 1, 202607240634], 'r'].
  *
@@ -112,6 +127,22 @@ static int qualifierLevel(String qualifier) {
 }
 
 /**
+ * The first {@code segments} numeric segments of a version, e.g. `versionLine('1.85.2', 2)` -> `1.85`. Used by Rule A
+ * to compare members of a family that patches single modules out of band (see {@code familyVersionPrecision}).
+ * A version with fewer segments is returned as-is, so `1.85` and `1.85.2` share the line `1.85`.
+ *
+ * Truncation drops any qualifier along with the trailing segments, so this must only be used for families whose
+ * members are all final releases - which is what {@code familyVersionPrecision} opts in one group at a time.
+ */
+static String versionLine(String version, int segments) {
+    List numeric = parseVersion(version)[0] as List
+    if (numeric.size() <= segments) {
+        return version
+    }
+    return numeric[0..<segments].join('.')
+}
+
+/**
  * Self-check for {@link #compareVersions}. The comparator is the only place this task can be silently wrong - a bad
  * ordering either fails a clean build or waves through the very mismatch the task exists to catch - and there is no
  * Groovy test harness in this repository, so it verifies itself before being trusted.
@@ -143,6 +174,16 @@ static void verifyVersionComparator() {
         if (compareVersions(pair[0], pair[1]) != 0) {
             throw new GradleException("Version comparator is broken: expected ${pair[0]} == ${pair[1]}.")
         }
+    }
+    // versionLine underpins Rule A for families that patch single modules out of band, so it is checked here too:
+    // a provider-only patch must share its siblings' line, and a genuine release difference must not.
+    [['1.85.2', 2, '1.85'], ['1.85', 2, '1.85'], ['1.84', 2, '1.84'], ['7.7.1.202607240634-r', 2, '7.7']].each { c ->
+        if (versionLine(c[0], c[1]) != c[2]) {
+            throw new GradleException("versionLine is broken: expected versionLine(${c[0]}, ${c[1]}) == ${c[2]}, got ${versionLine(c[0], c[1])}.")
+        }
+    }
+    if (versionLine('1.85.2', 2) == versionLine('1.84', 2)) {
+        throw new GradleException('versionLine is broken: 1.85.2 and 1.84 must not share a line.')
     }
     // A service pack outranks the release it patches, and a release outranks a pre-release even when aliased.
     [['1.0', '1.0-sp1'], ['1.0-rc1', '1.0-sp1'], ['1.0-rc1', '1.0.Final']].each { pair ->
@@ -197,9 +238,10 @@ tasks.register('verifyDependencyFamilies') {
         }
         walk(resolutionResult.get())
 
-        // Rule A: one version per family.
+        // Rule A: one version per family, compared at the family's declared precision.
         selectedByGroup.each { group, modules ->
-            def versions = modules.values().toSet()
+            def precision = familyVersionPrecision[group]
+            def versions = modules.values().collect { precision ? versionLine(it, precision) : it }.toSet()
             if (versions.size() > 1) {
                 def detail = modules.sort().collect { name, version -> "    ${group}:${name}:${version}" }.join('\n')
                 problems << "Family '${group}' resolves to mixed versions ${versions.sort()}. Its modules are built and released together and must share one version:\n${detail}"
