@@ -730,6 +730,12 @@ public class GlobalSearchResource {
     /**
      * Builds the post type disjunct. Posts are only indexed for public channels, so course membership
      * is sufficient for access (no additional channel-level visibility check needed).
+     * <p>
+     * Carries the same {@code type}-tokenization guard as {@link #buildLectureDisjunct(CourseRoleSets)}:
+     * {@code "answer_post"} is indexed as the tokens {@code ["answer", "post"]}, so {@code type Equal "post"}
+     * also matches answer-post rows and a caller asking for posts would get replies mixed in. Unlike the
+     * lecture case this is a correctness rather than an access problem, because answer posts are gated by
+     * the same course membership, but the filter must still mean what it says.
      *
      * @param roleSets the per-course role classification for the current user
      * @return a filter matching posts the user may access, or {@code null} if no courses qualify
@@ -739,7 +745,8 @@ public class GlobalSearchResource {
             return null;
         }
         // Posts are only indexed for public channels, so course membership is sufficient for access
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
+        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.POST), typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST).not(),
+                courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
     }
 
     /**
