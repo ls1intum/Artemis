@@ -212,6 +212,102 @@ describe('GlobalSearchModalComponent', () => {
         });
     });
 
+    describe('Filter Picker Home Screen', () => {
+        /** Presses the OS filter shortcut (Cmd/Ctrl+F) and hands back the event so preventDefault can be asserted. */
+        function pressFilterShortcut(repeat = false): KeyboardEvent {
+            const event = new KeyboardEvent('keydown', { key: 'f', metaKey: true, repeat });
+            vi.spyOn(event, 'preventDefault');
+            component.handleKeyboardEvent(event);
+            return event;
+        }
+
+        beforeEach(() => {
+            mockOsDetectorService.isActionKey.mockReturnValue(true);
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+        });
+
+        it('opens the guided picker as the home screen', () => {
+            expect((component as any).filterPickerOpen()).toBe(true);
+        });
+
+        it('keeps the picker open on repeated Cmd+F instead of toggling back to the searchable-entity list', () => {
+            pressFilterShortcut();
+            expect((component as any).filterPickerOpen()).toBe(true);
+
+            pressFilterShortcut();
+            expect((component as any).filterPickerOpen()).toBe(true);
+        });
+
+        it('steps back to the root picker on Cmd+F from a value menu', () => {
+            (component as any).onSearchInput('type:');
+            expect((component as any).operator()).toBeDefined();
+
+            pressFilterShortcut();
+
+            expect((component as any).operator()).toBeUndefined();
+            expect((component as any).filterPickerOpen()).toBe(true);
+        });
+
+        it('blocks the browser find bar even where the shortcut is inert', () => {
+            const event = pressFilterShortcut();
+
+            expect(event.preventDefault).toHaveBeenCalled();
+        });
+
+        it('does not cover the lecture view with the picker, which cannot carry filters', () => {
+            (component as any).navigateTo(SearchView.Lecture);
+            (component as any).filterPickerOpen.set(false);
+
+            pressFilterShortcut();
+
+            expect((component as any).filterPickerOpen()).toBe(false);
+        });
+
+        it('closes the modal on Escape at the root picker, since nothing sits behind the home screen', () => {
+            const event = new KeyboardEvent('keydown', { key: 'Escape' });
+
+            component.handleKeyboardEvent(event);
+
+            expect(searchOverlayService.close).toHaveBeenCalled();
+        });
+
+        it('returns to the results behind the picker on Escape instead of closing the modal', () => {
+            (component as any).hasSearched.set(true);
+
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+            expect((component as any).filterPickerOpen()).toBe(false);
+            expect(searchOverlayService.close).not.toHaveBeenCalled();
+        });
+
+        it('steps back one level on Escape inside the exclude level', () => {
+            (component as any).filter.excludeMode.set(true);
+            expect((component as any).menuHeaderKey()).toBe('global.search.chooseExclude');
+
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+            expect((component as any).filterPickerOpen()).toBe(true);
+            expect((component as any).menuHeaderKey()).toBe('global.search.addFilter');
+            expect(searchOverlayService.close).not.toHaveBeenCalled();
+        });
+
+        it('shows the back hint while a level remains, and the close hint at the root', () => {
+            expect((component as any).escapeHintKey()).toBe('global.search.toClose');
+
+            (component as any).filter.excludeMode.set(true);
+
+            expect((component as any).escapeHintKey()).toBe('global.search.back');
+        });
+
+        it('offers to search anyway, rather than to close, when the typed value is not a filter', () => {
+            (component as any).onSearchInput('type:candle');
+
+            expect((component as any).deadEnd()).toBe(true);
+            expect((component as any).escapeHintKey()).toBe('global.search.searchAnyway');
+        });
+    });
+
     describe('Modal Rendering', () => {
         it('should show dialog when overlay is open', async () => {
             mockSearchOverlayService.isOpen.set(true);
@@ -373,13 +469,81 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).toHaveBeenCalledWith('deep', undefined, undefined, undefined);
         });
 
-        it('keeps the guided picker open while typed text still matches a filter action', () => {
+        it('returns to the guided picker when the search box is cleared and no filter is left', () => {
             component['openFilterPicker']();
-            component['onSearchInput']('cou');
+            component['onSearchInput']('deep');
             vi.advanceTimersByTime(300);
+            expect(component['filterPickerOpen']()).toBe(false);
+
+            component['onSearchInput']('');
 
             expect(component['filterPickerOpen']()).toBe(true);
-            expect(mockSearchService.globalSearch).not.toHaveBeenCalled();
+        });
+
+        it('stays on the results when the search box is cleared while a filter is still applied', () => {
+            component['tokens'].set([{ facet: 'type', value: 'exercise' }]);
+            component['onSearchInput']('deep');
+            vi.advanceTimersByTime(300);
+
+            component['onSearchInput']('');
+
+            expect(component['filterPickerOpen']()).toBe(false);
+        });
+
+        it('leaves the guided picker as soon as plain text is typed, because the picker no longer narrows', () => {
+            mockSearchService.globalSearch.mockReturnValue(of(queryResults));
+            component['openFilterPicker']();
+
+            component['onSearchInput']('course');
+            vi.advanceTimersByTime(300);
+
+            expect(component['filterPickerOpen']()).toBe(false);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('course', undefined, undefined, undefined);
+        });
+
+        it('keeps the search text while a filter is composed through the picker', () => {
+            mockSearchService.globalSearch.mockReturnValue(of(queryResults));
+            component['onSearchInput']('linear regression');
+            vi.advanceTimersByTime(300);
+
+            component['toggleFilterMenu']();
+            component['onOptionSelected'](component['menuOptions']().findIndex((option) => option.action.kind === 'operator'));
+            component['onOptionSelected'](component['menuOptions']().findIndex((option) => option.action.kind === 'value'));
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchQuery']()).toBe('linear regression');
+            expect(component['tokens']()).toHaveLength(1);
+            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('linear regression', 'course', undefined, undefined);
+        });
+
+        it('switches back to the results on a second Cmd+F once a search sits behind the menu', () => {
+            mockSearchService.globalSearch.mockReturnValue(of(queryResults));
+            component['onSearchInput']('linear regression');
+            vi.advanceTimersByTime(300);
+
+            component['toggleFilterMenu']();
+            expect(component['filterMenuOpen']()).toBe(true);
+
+            component['toggleFilterMenu']();
+
+            expect(component['filterMenuOpen']()).toBe(false);
+            expect(component['searchQuery']()).toBe('linear regression');
+        });
+
+        it('searches the text in front of the operator, then the raw text once the literal row is chosen', () => {
+            mockSearchService.globalSearch.mockReturnValue(of(queryResults));
+
+            component['onSearchInput']('nsjkfncs type:candle');
+            vi.advanceTimersByTime(300);
+
+            expect(component['deadEnd']()).toBe(true);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('nsjkfncs', undefined, undefined, undefined);
+
+            component['onOptionSelected'](0);
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.globalSearch).toHaveBeenLastCalledWith('nsjkfncs type:candle', undefined, undefined, undefined);
+            expect(component['filterMenuOpen']()).toBe(false);
         });
 
         it('should set searchError on HTTP failure', () => {

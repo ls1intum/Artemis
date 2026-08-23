@@ -121,6 +121,12 @@
             "filter": "Filter",
             "addFilter": "Add filter",
             "applyFilterKey": "Tab",
+            "searchFor": "Search for",
+            "showAllTypes": "Show all types",
+            "showYourCourses": "Show your courses",
+            "searchAnyway": "to search anyway",
+            "notAType": "“{{value}}” is not a valid type",
+            "notYourCourse": "“{{value}}” is not one of your courses",
             "filterAction": {
                 "type": "Filter by type",
                 "typeDescription": "Narrow results to one entity type",

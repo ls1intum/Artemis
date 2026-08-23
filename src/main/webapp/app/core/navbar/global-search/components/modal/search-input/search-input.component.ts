@@ -24,6 +24,8 @@ export class SearchInputComponent {
     operator = input<ParsedOperator | undefined>(undefined);
     /** True when the typed operator value is a recognised type / course, so it is coloured as confirmed. */
     operatorValueValid = input<boolean>(false);
+    /** True when the typed operator value matches nothing, so it is marked as not a filter (dotted underline). */
+    operatorUnknown = input<boolean>(false);
     /** Whether the filter menu (value menu or guided picker) is open — drives the combobox aria-expanded/controls. */
     menuVisible = input<boolean>(false);
     /** DOM id of the highlighted filter-menu option, for aria-activedescendant (the menu renders in the results pane). */
@@ -45,6 +47,11 @@ export class SearchInputComponent {
     protected searchInputElement = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
     protected hasChips = computed(() => this.chips().length > 0);
+    /**
+     * The search text in front of the operator. The operator is only the trailing token, so the overlay has to
+     * paint the query in ordinary ink before it and colour only the operator itself.
+     */
+    protected leadingText = computed(() => this.searchQuery().slice(0, this.operator()?.start ?? 0));
     /** Whether a `facet:` operator is active (drives the coloured overlay + transparent input). */
     protected operatorActive = computed(() => !!this.operator());
 

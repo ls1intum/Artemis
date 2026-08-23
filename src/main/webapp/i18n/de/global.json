@@ -121,6 +121,12 @@
             "filter": "Filter",
             "addFilter": "Filter hinzufügen",
             "applyFilterKey": "Tab",
+            "searchFor": "Suchen nach",
+            "showAllTypes": "Alle Typen anzeigen",
+            "showYourCourses": "Deine Kurse anzeigen",
+            "searchAnyway": "trotzdem suchen",
+            "notAType": "„{{value}}“ ist kein gültiger Typ",
+            "notYourCourse": "„{{value}}“ ist keiner deiner Kurse",
             "filterAction": {
                 "type": "Nach Typ filtern",
                 "typeDescription": "Ergebnisse auf einen Typ eingrenzen",

@@ -1,16 +1,34 @@
 <div class="filter-menu-panel">
-    <div class="filter-menu-header">
-        @if (showBack()) {
-            <button type="button" class="filter-menu-back" (click)="back.emit()" [attr.aria-label]="'global.search.back' | artemisTranslate">
-                <fa-icon [icon]="faChevronLeft" aria-hidden="true" />
-            </button>
-        }
-        <span>{{ headerKey() | artemisTranslate }}</span>
-    </div>
-    <ul class="filter-menu" role="listbox" [id]="listboxId">
+    <!-- A dead end has no level to name or step back to, so the message takes the header slot: it reads as the
+         pane describing its own state rather than as another row in the list. -->
+    @if (message(); as note) {
+        <div class="filter-menu-header filter-menu-header--message">
+            <fa-icon [icon]="faTriangleExclamation" class="filter-menu-message-icon" aria-hidden="true" />
+            <span>{{ note.key | artemisTranslate: { value: note.value } }}</span>
+        </div>
+    } @else {
+        <div class="filter-menu-header">
+            @if (showBack()) {
+                <button
+                    type="button"
+                    class="filter-menu-back"
+                    (click)="back.emit()"
+                    [attr.aria-label]="('global.search.back' | artemisTranslate) + ': ' + (headerKey() | artemisTranslate)"
+                >
+                    <fa-icon [icon]="faChevronLeft" aria-hidden="true" />
+                    <span>{{ headerKey() | artemisTranslate }}</span>
+                </button>
+            } @else {
+                <span>{{ headerKey() | artemisTranslate }}</span>
+            }
+        </div>
+    }
+    <ul class="filter-menu" [class.filter-menu--recovery]="!!message()" role="listbox" [id]="listboxId">
         @for (option of options(); track option.id; let i = $index) {
             <li
                 class="filter-menu-item"
+                [class.filter-menu-item--literal]="option.action.kind === 'literal'"
+                [class.filter-menu-item--single]="!option.description"
                 role="option"
                 [id]="optionDomId(option.id)"
                 [attr.aria-selected]="i === activeIndex()"
@@ -19,16 +37,15 @@
                 (mouseenter)="optionHovered.emit(i)"
             >
                 <div class="filter-menu-icon flex-shrink-0">
-                    <fa-icon
-                        [icon]="option.icon"
-                        size="lg"
-                        class="filter-menu-glyph"
-                        [class.filter-menu-glyph--ex]="exclude() || isExcludeHint(option.hint ?? '')"
-                        aria-hidden="true"
-                    />
+                    <fa-icon [icon]="option.icon" size="lg" class="filter-menu-glyph" [class.filter-menu-glyph--ex]="isExcludeGlyph(option)" aria-hidden="true" />
                 </div>
                 <div class="filter-menu-content min-width-0">
-                    <span class="filter-menu-label">{{ option.label }}</span>
+                    <span class="filter-menu-label">
+                        {{ option.label }}
+                        @if (option.literal; as literal) {
+                            <span class="filter-menu-literal">&ldquo;{{ literal }}&rdquo;</span>
+                        }
+                    </span>
                     @if (option.description) {
                         <span class="filter-menu-description text-secondary">{{ option.description }}</span>
                     }
