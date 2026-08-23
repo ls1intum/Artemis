@@ -465,6 +465,56 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testUpdateGroupWithInvalidProgrammingBuildAndTestDate_badRequestLeavesDatesUnchanged() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = release.plusDays(6);
+        ZonedDateTime assessmentDue = due.plusHours(2);
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, assessmentDue, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ZonedDateTime originalDueDate = programmingExercise.getDueDate();
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(originalDueDate.plusHours(1));
+        exerciseRepository.save(programmingExercise);
+        assignToGroup(programmingExercise.getId(), created.id());
+
+        ZonedDateTime invalidAssessmentDue = due.plusMinutes(30);
+        UpdateExerciseVariantGroupDTO invalidUpdate = new UpdateExerciseVariantGroupDTO(created.id(), "Programming variants", null, release, null, due, invalidAssessmentDue, null);
+        request.put(groupsUrl() + "/" + created.id(), invalidUpdate, HttpStatus.BAD_REQUEST);
+
+        ExerciseVariantGroupDTO reloadedGroup = request.get(groupsUrl() + "/" + created.id(), HttpStatus.OK, ExerciseVariantGroupDTO.class);
+        assertThat(reloadedGroup.assessmentDueDate().toInstant()).isEqualTo(assessmentDue.toInstant());
+        ProgrammingExercise reloadedExercise = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloadedExercise.getAssessmentDueDate().toInstant()).isEqualTo(assessmentDue.toInstant());
+        assertThat(reloadedExercise.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).isEqualTo(due.plusHours(1).toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignProgrammingExerciseWithInvalidBuildAndTestDate_badRequestLeavesExerciseUnchanged() throws Exception {
+        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+        ZonedDateTime due = release.plusDays(6);
+        ZonedDateTime assessmentDue = due.plusMinutes(30);
+        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, assessmentDue, null);
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ZonedDateTime originalDueDate = programmingExercise.getDueDate();
+        ZonedDateTime originalBuildAndTestDate = originalDueDate.plusHours(1);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(originalBuildAndTestDate);
+        exerciseRepository.save(programmingExercise);
+
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/variant-group";
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        ProgrammingExercise reloadedExercise = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(reloadedExercise.getExerciseVariantGroup()).isNull();
+        assertThat(reloadedExercise.getDueDate().toInstant()).isEqualTo(originalDueDate.truncatedTo(ChronoUnit.MILLIS).toInstant());
+        assertThat(reloadedExercise.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).isEqualTo(originalBuildAndTestDate.truncatedTo(ChronoUnit.MILLIS).toInstant());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateGroupToInvalidTimeline_badRequestLeavesGroupDatesUnchanged() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);

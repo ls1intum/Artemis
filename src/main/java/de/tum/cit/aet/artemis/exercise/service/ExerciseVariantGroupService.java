@@ -100,14 +100,16 @@ public class ExerciseVariantGroupService {
             }
             snapshotsByExerciseId.put(exercise.getId(), TimelineSnapshot.of(exercise));
             if (exercise instanceof ProgrammingExercise programmingExercise) {
-                buildAndTestOffsetsByExerciseId.put(exercise.getId(), getBuildAndTestOffset(programmingExercise));
-            }
-            applyGroupTimeline(group, exercise);
-            validateDates(exercise);
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                Duration buildAndTestOffset = getBuildAndTestOffset(programmingExercise);
+                buildAndTestOffsetsByExerciseId.put(exercise.getId(), buildAndTestOffset);
+                applyGroupTimeline(group, programmingExercise);
+                programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computeBuildAndTestDate(group.getDueDate(), buildAndTestOffset));
+                programmingExercise.validateDates();
                 programmingExercises.add(programmingExercise);
             }
             else {
+                applyGroupTimeline(group, exercise);
+                validateDates(exercise);
                 nonProgrammingExercises.add(exercise);
             }
         });
@@ -144,10 +146,11 @@ public class ExerciseVariantGroupService {
         exercise.setExerciseVariantGroup(group);
         if (group != null && exercise instanceof ProgrammingExercise programmingExercise) {
             // Validate the adopted timeline before persisting membership (programming validation is stricter, and a rejected
-            // assignment must not leave the exercise grouped). Membership is saved first because the programming update flow
-            // reloads by id; that flow is required to recompute the build-and-test date and reschedule the build/test jobs.
+            // assignment must not leave the exercise grouped). Membership is then saved because the programming update flow
+            // reloads by id; that flow is required to reschedule the build/test jobs.
             applyGroupTimeline(group, programmingExercise);
-            validateDates(programmingExercise);
+            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computeBuildAndTestDate(group.getDueDate(), originalBuildAndTestOffset));
+            programmingExercise.validateDates();
             exerciseRepository.save(programmingExercise);
             runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(programmingExercise, group, originalBuildAndTestOffset));
             return;
@@ -164,6 +167,10 @@ public class ExerciseVariantGroupService {
         ZonedDateTime dueDate = programmingExercise.getDueDate();
         ZonedDateTime buildAndTestDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
         return dueDate == null || buildAndTestDate == null ? null : Duration.between(dueDate, buildAndTestDate);
+    }
+
+    private ZonedDateTime computeBuildAndTestDate(@Nullable ZonedDateTime dueDate, @Nullable Duration buildAndTestOffset) {
+        return dueDate == null || buildAndTestOffset == null ? null : dueDate.plus(buildAndTestOffset);
     }
 
     /**
@@ -203,7 +210,7 @@ public class ExerciseVariantGroupService {
      */
     private ProgrammingExercise updateProgrammingExerciseTimeline(ProgrammingExercise programmingExercise, ExerciseVariantGroup group,
             @Nullable Duration originalBuildAndTestOffset) {
-        ZonedDateTime buildAndTestDate = group.getDueDate() == null || originalBuildAndTestOffset == null ? null : group.getDueDate().plus(originalBuildAndTestOffset);
+        ZonedDateTime buildAndTestDate = computeBuildAndTestDate(group.getDueDate(), originalBuildAndTestOffset);
         ProgrammingExerciseTimelineUpdateDTO timelineUpdate = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), group.getReleaseDate(), group.getStartDate(),
                 group.getDueDate(), programmingExercise.getAssessmentType(), group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(), buildAndTestDate);
         return programmingExerciseCreationUpdateService.updateTimeline(timelineUpdate, null, originalBuildAndTestOffset);
