@@ -9,14 +9,14 @@
     <p th:text="#{email.httpsCloneTip.greeting(${user.firstName != null ? user.firstName : user.login})}">Dear User,</p>
     
     <p th:text="#{email.httpsCloneTip.message}">
-        You are currently using the HTTPS password authentication method for Git operations. 
-        We recommend switching to the Token or SSH authentication option to improve your working time and security.
+        We noticed that you recently cloned a programming exercise repository using your account password over HTTPS. 
+        For better security and a smoother workflow, we recommend switching to SSH keys or VCS Access Tokens for Git operations.
     </p>
 
     <p>
-        <a th:href="@{|${baseUrl}/user-settings/ssh|}" th:text="#{email.httpsCloneTip.action}">Configure SSH / Tokens in Artemis</a>
+        <a th:href="@{|${baseUrl}/user-settings/ssh|}" th:text="#{email.httpsCloneTip.action}">Configure SSH Keys in Artemis</a>
     </p>
 
-    <p style="white-space: pre-line;" th:text="#{email.httpsCloneTip.farewell}">Regards,<br/>The Artemis Team</p>
+    <p style="white-space: pre-line;" th:text="#{email.httpsCloneTip.farewell}">Regards,<br/>The Artemis Team.</p>
 </body>
 </html>
