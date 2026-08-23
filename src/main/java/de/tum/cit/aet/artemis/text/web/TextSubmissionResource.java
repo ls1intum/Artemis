@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.ConnectionPoolProbe;
 import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -70,6 +71,11 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
 
+    /**
+     * Only report the stage breakdown of a submission when it took at least this long, so a healthy system stays quiet.
+     */
+    private static final long SLOW_SUBMISSION_LOG_THRESHOLD_MILLIS = 200;
+
     private final TextSubmissionRepository textSubmissionRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -94,11 +100,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final ResultRepository resultRepository;
 
+    private final ConnectionPoolProbe connectionPoolProbe;
+
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
             Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismAccessApi> plagiarismAccessApi, ExerciseDateService exerciseDateService,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, ConnectionPoolProbe connectionPoolProbe) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -112,6 +120,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.plagiarismAccessApi = plagiarismAccessApi;
         this.exerciseDateService = exerciseDateService;
         this.resultRepository = resultRepository;
+        this.connectionPoolProbe = connectionPoolProbe;
     }
 
     /**
@@ -187,9 +196,15 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Course roles are loaded with the user so the course-membership checks on this path (the submission
         // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
         // is the autosave path, so it runs repeatedly per student per exercise.
+        long stageStart = System.nanoTime();
         final var user = userRepository.getUserWithCourseRolesAndAuthorities();
-        final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        long userNanos = System.nanoTime() - stageStart;
 
+        stageStart = System.nanoTime();
+        final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        long exerciseNanos = System.nanoTime() - stageStart;
+
+        stageStart = System.nanoTime();
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
@@ -199,16 +214,28 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             // Prevent multiple submissions (currently only for exam submissions)
             textSubmission = (TextSubmission) api.preventMultipleSubmissions(exercise, textSubmission, user);
         }
+        long examChecksNanos = System.nanoTime() - stageStart;
 
+        stageStart = System.nanoTime();
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
+        long allowanceNanos = System.nanoTime() - stageStart;
 
         if (forceNewSubmission) {
             textSubmission.setId(null);
         }
+        stageStart = System.nanoTime();
         textSubmission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user);
+        long saveNanos = System.nanoTime() - stageStart;
         textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
+        // A slow autosave is worth attributing to a stage rather than guessing at, and the pool state distinguishes a
+        // request that was waiting for a database connection from one that was doing work.
+        if (end - start >= SLOW_SUBMISSION_LOG_THRESHOLD_MILLIS) {
+            log.info("Slow text submission for exercise {}: {} ms total (user {} ms, exercise {} ms, exam checks {} ms, allowance {} ms, save {} ms), pool {}", exerciseId,
+                    end - start, userNanos / 1_000_000, exerciseNanos / 1_000_000, examChecksNanos / 1_000_000, allowanceNanos / 1_000_000, saveNanos / 1_000_000,
+                    connectionPoolProbe.snapshot());
+        }
         log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         // Include the student: this is the student's own submission and the client checks participation ownership
         // (isOwnerOfParticipation) on the returned participation. hideDetails keeps the participant for the owner.
