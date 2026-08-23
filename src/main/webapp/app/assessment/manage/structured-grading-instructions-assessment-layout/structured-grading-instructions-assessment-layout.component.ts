@@ -15,11 +15,22 @@ import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
-/** One instruction prepared for display, with usage figures precomputed so the template does not call into the selection service while rendering. */
+/** One instruction prepared for display so the template reads properties instead of calling formatting/state methods. */
 export interface SortedGradingInstruction {
     instruction: GradingInstruction;
     useCount: number;
     usageLimit: number;
+    isDraggable: boolean;
+    showUsageStepper: boolean;
+    canDecrementApplication: boolean;
+    canIncrementApplication: boolean;
+    isLockedByReferencedFeedback: boolean;
+    isApplied: boolean;
+    pointsSeverity: TumUiTagSeverity;
+    pointsLabel: string;
+    scaleElementId: string | undefined;
+    descriptionElementId: string;
+    accessibleNameIds: string;
 }
 
 /** A criterion prepared for display: alphabetically sorted instructions plus its live "applied" counter. */
@@ -67,15 +78,31 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     readonly sortedCriteria = computed<SortedGradingCriterion[]>(() =>
         [...(this.criteria() ?? [])]
             .sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''))
-            .map((criterion) => ({
+            .map((criterion, criterionIndex) => ({
                 title: criterion.title,
                 instructions: [...(criterion.structuredGradingInstructions ?? [])]
                     .sort((a, b) => (a.instructionDescription ?? '').localeCompare(b.instructionDescription ?? ''))
-                    .map((instruction) => ({
-                        instruction,
-                        useCount: this.selectionService.applicationCount(instruction),
-                        usageLimit: instruction.usageCount ?? 0,
-                    })),
+                    .map((instruction, instructionIndex) => {
+                        const prefix = `criterion-${criterionIndex}-instruction-${instructionIndex}`;
+                        const scaleElementId = instruction.gradingScale ? `${prefix}-scale` : undefined;
+                        const descriptionElementId = `${prefix}-desc`;
+                        return {
+                            instruction,
+                            useCount: this.selectionService.applicationCount(instruction),
+                            usageLimit: instruction.usageCount ?? 0,
+                            isDraggable: this.isDraggable(instruction),
+                            showUsageStepper: this.showUsageStepper(instruction),
+                            canDecrementApplication: this.canDecrementApplication(instruction),
+                            canIncrementApplication: this.canIncrementApplication(instruction),
+                            isLockedByReferencedFeedback: this.isLockedByReferencedFeedback(instruction),
+                            isApplied: this.isApplied(instruction),
+                            pointsSeverity: pointsSeverity(instruction.credits),
+                            pointsLabel: pointsLabel(instruction.credits),
+                            scaleElementId,
+                            descriptionElementId,
+                            accessibleNameIds: [scaleElementId, descriptionElementId].filter((id): id is string => id !== undefined).join(' '),
+                        };
+                    }),
             })),
     );
 

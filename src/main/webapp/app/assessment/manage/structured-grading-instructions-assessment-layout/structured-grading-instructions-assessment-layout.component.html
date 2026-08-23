@@ -45,25 +45,25 @@
                          When selectable() is false there is no checkbox; the card itself is the keyboard apply control. -->
                     <div
                         class="flex flex-col gap-2 rounded-[0.625rem] border border-[var(--border-color)] p-3"
-                        [draggable]="isDraggable(instruction)"
+                        [draggable]="item.isDraggable"
                         (dragstart)="disableDrag()"
                         (dragstart)="drag($event, instruction)"
-                        [attr.tabindex]="!selectable() && isDraggable(instruction) ? 0 : null"
-                        [attr.role]="!selectable() && isDraggable(instruction) ? 'button' : null"
-                        [attr.aria-label]="!selectable() && isDraggable(instruction) ? ('artemisApp.exercise.applyInstruction' | artemisTranslate) : null"
+                        [attr.tabindex]="!selectable() && item.isDraggable ? 0 : null"
+                        [attr.role]="!selectable() && item.isDraggable ? 'button' : null"
+                        [attr.aria-labelledby]="!selectable() && item.isDraggable ? item.accessibleNameIds : null"
                         (keydown)="onInstructionKeydown($event, instruction)"
                         id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
                     >
                         <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="flex min-w-0 items-center gap-2">
-                                <tum-ui-tag class="shrink-0" [severity]="pointsSeverity(instruction.credits)" [value]="pointsLabel(instruction.credits)" />
+                                <tum-ui-tag class="shrink-0" [severity]="item.pointsSeverity" [value]="item.pointsLabel" />
                                 @if (instruction.gradingScale) {
-                                    <span class="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">{{ instruction.gradingScale }}</span>
+                                    <span [id]="item.scaleElementId" class="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">{{ instruction.gradingScale }}</span>
                                 }
                             </div>
                             <div class="relative flex shrink-0 items-center gap-2 whitespace-nowrap">
                                 @if (selectable()) {
-                                    @if (showUsageStepper(instruction)) {
+                                    @if (item.showUsageStepper) {
                                         <div
                                             class="inline-flex items-center overflow-hidden rounded-md border border-[var(--border-color)]"
                                             role="group"
@@ -72,7 +72,7 @@
                                             <button
                                                 type="button"
                                                 class="inline-flex size-6.5 cursor-pointer items-center justify-center border-0 border-e border-[var(--border-color)] bg-transparent p-0 text-inherit disabled:cursor-not-allowed disabled:opacity-40"
-                                                [disabled]="!canDecrementApplication(instruction)"
+                                                [disabled]="!item.canDecrementApplication"
                                                 [attr.aria-label]="'artemisApp.exercise.decreaseInstructionUsage' | artemisTranslate"
                                                 (click)="decrementApplication($event, instruction)"
                                             >
@@ -84,7 +84,7 @@
                                             <button
                                                 type="button"
                                                 class="inline-flex size-6.5 cursor-pointer items-center justify-center border-0 border-s border-[var(--border-color)] bg-transparent p-0 text-inherit disabled:cursor-not-allowed disabled:opacity-40"
-                                                [disabled]="!canIncrementApplication(instruction)"
+                                                [disabled]="!item.canIncrementApplication"
                                                 [attr.aria-label]="'artemisApp.exercise.increaseInstructionUsage' | artemisTranslate"
                                                 (click)="incrementApplication($event, instruction)"
                                             >
@@ -93,13 +93,11 @@
                                         </div>
                                     }
                                     <span
-                                        [tumUiTooltip]="
-                                            isLockedByReferencedFeedback(instruction) ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''
-                                        "
+                                        [tumUiTooltip]="item.isLockedByReferencedFeedback ? ('artemisApp.exercise.instructionAppliedToReferencedElement' | artemisTranslate) : ''"
                                     >
                                         <tum-ui-checkbox
-                                            [checked]="isApplied(instruction)"
-                                            [disabled]="isLockedByReferencedFeedback(instruction)"
+                                            [checked]="item.isApplied"
+                                            [disabled]="item.isLockedByReferencedFeedback"
                                             [ariaLabel]="'artemisApp.exercise.applyInstruction' | artemisTranslate"
                                             (click)="toggleApplied($event, instruction)"
                                         />
@@ -117,7 +115,11 @@
                             </div>
                         </div>
                         <!-- Tutor notes on when this scale level applies (muted), then the student-facing feedback. -->
-                        <div class="sgi-item__markdown text-muted-color markdown-preview text-sm" [jhiMarkdown]="instruction!.instructionDescription!"></div>
+                        <div
+                            [id]="item.descriptionElementId"
+                            class="sgi-item__markdown text-muted-color markdown-preview text-sm"
+                            [jhiMarkdown]="instruction!.instructionDescription!"
+                        ></div>
                         <div class="sgi-item__markdown markdown-preview" [jhiMarkdown]="instruction!.feedback!"></div>
                     </div>
                 }

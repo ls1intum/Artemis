@@ -379,5 +379,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(comp.selectable()).toBe(false);
         expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).toBeNull();
         expect(fixture.debugElement.query(By.css('jhi-help-icon'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement.getAttribute('aria-labelledby')).toBe('criterion-0-instruction-0-desc');
+        expect(fixture.debugElement.query(By.css('#criterion-0-instruction-0-desc'))).not.toBeNull();
     });
 });
