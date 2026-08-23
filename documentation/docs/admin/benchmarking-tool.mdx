@@ -250,7 +250,7 @@ pushes code to their own git repository, and hands the exam in, with no pause be
 | Repository storage | shared network storage | shared network storage |
 | Simulated students | 2,000 | 2,000 |
 
-Every machine is a virtual machine with 4 CPUs and 3.8 GB of memory. The clusters get their capacity
+Every machine is a virtual machine with 4 CPUs and about 3.8 GB of memory. The clusters get their capacity
 from having eleven of them rather than from any machine being large.
 
 ### What happened
@@ -307,9 +307,12 @@ Treat the push row as provisional.
 
 Both runs had every student use a repository access token, which is what Artemis hands out through the
 Code button and what most students use. This matters more than it sounds: an earlier run with every
-student typing a password instead was **58% slower**, because verifying a password is deliberately
-expensive and it dominated everything else on the Artemis servers. If you benchmark your own
-deployment, record the authentication mix alongside the result, or two numbers will not be comparable.
+student typing a password instead was markedly slower, because verifying a password is deliberately
+expensive and it dominated everything else on the Artemis servers. That comparison is an unverified
+observation rather than a result from the reference run above — it predates these runs, and the metric,
+workload and Artemis version behind the roughly 58% figure quoted at the time were not recorded
+alongside it, so it should not be cited as a benchmark. If you benchmark your own deployment, record
+the authentication mix alongside the result, or two numbers will not be comparable.
 
 ### What a single small machine can do
 
@@ -317,7 +320,7 @@ Not every installation is a cluster, so it is worth knowing where the floor is. 
 come from one virtual machine with **4 CPUs and 3.8 GB of memory** running everything at once: Artemis,
 the build agent, PostgreSQL and the reverse proxy.
 
-| Simultaneous students | Average response | Submit an exercise | Download a repository |
+| Simulated students | Average response | Submit an exercise | Download a repository |
 | --- | --- | --- | --- |
 | 50 | 0.42 s | 1.05 s | 0.88 s |
 | **100** | **0.65 s** | 1.78 s | 1.69 s |
@@ -325,9 +328,12 @@ the build agent, PostgreSQL and the reverse proxy.
 
 Every one of those runs completed with **zero failed requests**.
 
-**An exam with 100 simultaneous students works on this hardware.** At that size the average interaction
-comes back in two thirds of a second and submitting an exercise takes under two seconds, which a
-student in an exam would not notice. Remember also that the simulation is harsher than the real thing:
+**A run of 100 simulated students completed on this hardware with no failed requests.** At that size
+the average interaction comes back in two thirds of a second and submitting an exercise takes under two
+seconds, which a student in an exam would not notice. Read these as configured student counts rather
+than verified simultaneous users: as noted above, the tool caps client concurrency at ten threads per
+CPU of the machine running it, so whether a given row was genuinely concurrent depends on the
+load generator's host rather than on Artemis. Remember also that the simulation is harsher than the real thing:
 it gives students no thinking time at all, so a real cohort of the same size is a lighter load than
 this. An institution running a course rather than a faculty can start here.
 
@@ -385,7 +391,7 @@ them as the configuration to benchmark first, then measure your own peak and adj
 
 Worked example for an exam with 1,000 students taking a programming exam at once: two core nodes, ten
 build agents if you want feedback within the exam, or three or four if students can wait until
-afterwards. That difference, six or seven machines, is the budget lever described above.
+afterward. That difference, six or seven machines, is the budget lever described above.
 
 Two adjustments worth making to the units:
 
