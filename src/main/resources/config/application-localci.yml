@@ -30,6 +30,10 @@ artemis:
             expiry-days: 2
             # Time of cleanup (cron expression)
             cleanup-schedule-time: 0 0 3 * * *
+        # Superseded by `artemis.distributed-data.provider`, which selects the backend for all distributed state and not
+        # just for Local CI. This key is still honoured as a fallback for one release. Deliberately left set here rather
+        # than migrated: defaulting the new key in this file would silently override a deployment that still selects
+        # Redis through this legacy key.
         data-store: Hazelcast # set Hazelcast, Redis, Local as data store for Local CI data
         # This specifies the options that are shown to the instructor when creating a new programming exercise. Max value also defines the max timeout for the build.
         # The max value should be the same specified in application-buildagent.yml

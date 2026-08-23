@@ -23,7 +23,7 @@ The provided Keycloak configuration includes a preconfigured `artemis` realm wit
 ## Step 1: Start Keycloak
 
 ```bash
-docker compose -f docker/saml-test.yml up -d
+docker compose --env-file .env -f docker/saml-test.yml up -d
 ```
 
 This starts Keycloak with the following configuration:
@@ -157,7 +157,7 @@ The Keycloak realm also needs `http://localhost:9000/login/saml2/sso/keycloak` a
 When running Artemis as a Docker container, combine the SAML2 compose file with your Artemis compose file:
 
 ```bash
-docker compose -f docker/artemis-dev-mysql.yml -f docker/saml-test.yml up
+docker compose --env-file .env -f docker/artemis-dev-mysql.yml -f docker/saml-test.yml up
 ```
 
 Then uncomment the `artemis-app` service section in `docker/saml-test.yml` to mount the SAML2 configuration into the Artemis container:
@@ -185,7 +185,7 @@ You also need to set `ARTEMIS_USER_MANAGEMENT_SAML2_ENABLED=true` (or the equiva
 
 ## Step 4: Test the SAML2 Login
 
-1. Start Keycloak: `docker compose -f docker/saml-test.yml up -d`
+1. Start Keycloak: `docker compose --env-file .env -f docker/saml-test.yml up -d`
 2. Start Artemis with `artemis.user-management.saml2.enabled=true` and the configuration above
 3. Open Artemis in your browser
 4. Click **"SAML2 Login"** on the login page
@@ -230,8 +230,8 @@ Keycloak is rejecting the Assertion Consumer Service (ACS) URL because it is not
     If you modify the realm JSON, you must **recreate** the container (not just restart it) for changes to take effect:
 
     ```bash
-    docker compose -f docker/saml-test.yml down
-    docker compose -f docker/saml-test.yml up -d
+    docker compose --env-file .env -f docker/saml-test.yml down
+    docker compose --env-file .env -f docker/saml-test.yml up -d
     ```
 </Callout>
 
@@ -264,7 +264,7 @@ The browser stays on the Artemis login page after clicking "SAML2 Login".
 Check Keycloak logs for errors:
 
 ```bash
-docker compose -f docker/saml-test.yml logs keycloak
+docker compose --env-file .env -f docker/saml-test.yml logs keycloak
 ```
 
 ### Resetting the Keycloak Realm
@@ -272,8 +272,8 @@ docker compose -f docker/saml-test.yml logs keycloak
 To completely reset the Keycloak configuration and re-import the realm:
 
 ```bash
-docker compose -f docker/saml-test.yml down -v
-docker compose -f docker/saml-test.yml up -d
+docker compose --env-file .env -f docker/saml-test.yml down -v
+docker compose --env-file .env -f docker/saml-test.yml up -d
 ```
 
 <Callout variant={CalloutVariant.warning}>
