@@ -26,7 +26,7 @@ import inet.ipaddr.IPAddressString;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.ConsumptionProbe;
-import io.github.bucket4j.grid.hazelcast.HazelcastProxyManager;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -36,7 +36,7 @@ public class RateLimitService {
     private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
 
     // Bucket4J proxy that connects rate-limit buckets to Hazelcast for cluster-wide synchronization
-    private final HazelcastProxyManager<String> proxyManager;
+    private final ProxyManager<String> proxyManager;
 
     private final Map<Integer, BucketConfiguration> perMinuteCfgCache = new ConcurrentHashMap<>();
 
@@ -44,7 +44,7 @@ public class RateLimitService {
 
     private final FeatureToggleService featureToggleService;
 
-    public RateLimitService(HazelcastProxyManager<String> proxyManager, RateLimitConfigurationService configurationService, FeatureToggleService featureToggleService) {
+    public RateLimitService(ProxyManager<String> proxyManager, RateLimitConfigurationService configurationService, FeatureToggleService featureToggleService) {
         this.proxyManager = proxyManager;
         this.configurationService = configurationService;
         this.featureToggleService = featureToggleService;
