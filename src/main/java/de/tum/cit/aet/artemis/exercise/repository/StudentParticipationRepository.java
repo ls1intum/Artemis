@@ -1311,21 +1311,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     void updateInitializationState(@Param("participationId") long participationId, @Param("state") InitializationState state);
 
     /**
-     * Updates the initialization state of several participations in one statement, without loading them first.
-     *
-     * @param participationIds the ids of the participations to update
-     * @param state            the new initialization state
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE StudentParticipation p
-            SET p.initializationState = :state
-            WHERE p.id IN :participationIds
-            """)
-    void updateInitializationStateForAll(@Param("participationIds") Collection<Long> participationIds, @Param("state") InitializationState state);
-
-    /**
      * Updates the initialization state and the initialization date of a single participation without loading it first.
      *
      * @param participationId    the id of the participation to update

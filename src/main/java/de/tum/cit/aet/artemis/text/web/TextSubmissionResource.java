@@ -225,8 +225,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         long saveNanos = System.nanoTime() - stageStart;
         textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
-        // A slow autosave is worth attributing to a stage rather than guessing at, and the pool state distinguishes a
-        // request that was waiting for a database connection from one that was doing work.
+        // A slow autosave is worth attributing to a stage rather than guessing at, so the breakdown names which of them
+        // took the time.
         if (end - start >= SLOW_SUBMISSION_LOG_THRESHOLD_MILLIS) {
             log.info("Slow text submission for exercise {}: {} ms total (user {} ms, exercise {} ms, exam checks {} ms, allowance {} ms, save {} ms)", exerciseId, end - start,
                     userNanos / 1_000_000, exerciseNanos / 1_000_000, examChecksNanos / 1_000_000, allowanceNanos / 1_000_000, saveNanos / 1_000_000);

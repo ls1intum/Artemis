@@ -54,6 +54,11 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setMaxPoolSize(taskExecutionProperties.getPool().getMaxSize());
         executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
         executor.setThreadNamePrefix(taskExecutionProperties.getThreadNamePrefix());
+        // Run the task on the submitting thread when the pool and its queue are both full, rather than throwing
+        // TaskRejectedException at whoever called the @Async method. Most callers of the shared executor are request
+        // threads that treat the submission as fire and forget, so a rejection surfaces as a failed request and a lost
+        // task. Being as slow as a synchronous call is the right worst case; losing the work is not.
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
