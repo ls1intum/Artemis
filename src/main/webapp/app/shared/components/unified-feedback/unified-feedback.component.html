@@ -31,16 +31,33 @@
                 <div class="unified-feedback-header-right">
                     @if (editable()) {
                         <div class="unified-feedback-points-input-wrapper">
+                            <button
+                                type="button"
+                                class="unified-feedback-points-step"
+                                [attr.aria-label]="'artemisApp.assessment.detail.decreasePoints' | artemisTranslate"
+                                [disabled]="stepCreditsDisabled()"
+                                (click)="stepCredits(-CREDITS_STEP)"
+                            >
+                                <fa-icon [icon]="faMinus" />
+                            </button>
                             <input
                                 class="unified-feedback-points-input"
                                 type="number"
                                 step="0.5"
+                                readonly
                                 [ngModel]="feedbackCredits()"
-                                (ngModelChange)="onCreditsChange($event)"
                                 [attr.aria-label]="pointsAriaLabel()"
                                 [disabled]="readOnly() || !!feedback()?.gradingInstruction"
                             />
-                            <span class="unified-feedback-points-unit">pt</span>
+                            <button
+                                type="button"
+                                class="unified-feedback-points-step"
+                                [attr.aria-label]="'artemisApp.assessment.detail.increasePoints' | artemisTranslate"
+                                [disabled]="stepCreditsDisabled()"
+                                (click)="stepCredits(CREDITS_STEP)"
+                            >
+                                <fa-icon [icon]="faPlus" />
+                            </button>
                         </div>
                         <div class="unified-feedback-toolbar" (click)="$event.stopPropagation()">
                             @if (feedback()?.gradingInstruction) {

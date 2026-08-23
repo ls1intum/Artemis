@@ -58,7 +58,9 @@
                 "deductions": "Deductions",
                 "finalScore": "Final",
                 "pointsShort": "{{points}} pts",
-                "pointsOfShort": "{{points}} / {{maxPoints}} pts"
+                "pointsOfShort": "{{points}} / {{maxPoints}} pts",
+                "decreasePoints": "Decrease points",
+                "increasePoints": "Increase points"
             },
             "useAsExampleSubmissionVerificationQuestion": "Are you sure to import this submission as an example submission?",
             "messages": {

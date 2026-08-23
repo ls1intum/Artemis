@@ -3,7 +3,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faExclamationTriangle, faMinus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationTriangle, faMinus, faPlus, faQuestionCircle, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import {
     FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
     FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
@@ -40,6 +40,7 @@ interface FeedbackTypeConfig {
         GradingInstructionLinkIconComponent,
         FeedbackSuggestionBadgeComponent,
         AssessmentCorrectionRoundBadgeComponent,
+        ArtemisTranslatePipe,
     ],
 })
 export class UnifiedFeedbackComponent {
@@ -238,6 +239,13 @@ export class UnifiedFeedbackComponent {
     protected readonly faCheck = faCheck;
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly faMinus = faMinus;
+    protected readonly faPlus = faPlus;
+
+    /** Points are graded in half steps throughout Artemis, so the stepper moves in the same increments. */
+    protected readonly CREDITS_STEP = 0.5;
+
+    protected readonly stepCreditsDisabled = computed(() => this.readOnly() || !!this.feedback()?.gradingInstruction);
 
     private currentTitlePrefix(): string {
         const raw = this.feedbackTitle() ?? '';
@@ -287,8 +295,30 @@ export class UnifiedFeedbackComponent {
     }
 
     onCreditsChange(value: number): void {
-        this.feedbackCredits.set(value ?? 0);
+        this.feedbackCredits.set(this.normalizedCredits(value));
         this.markAdaptedIfSuggestion();
+    }
+
+    /**
+     * Increments or decrements the points by one half-point step, mirroring what typing into the field does. A
+     * hand-typed value is snapped onto the half-point grid in the direction of travel first, so stepping up from
+     * 1.3 lands on 1.5 (the next grid point) rather than skipping to 2.
+     * @param delta the signed step to apply
+     */
+    stepCredits(delta: number): void {
+        if (this.stepCreditsDisabled()) {
+            return;
+        }
+        const base = this.feedbackCredits() ?? 0;
+        const snapped = (delta > 0 ? Math.floor(base / this.CREDITS_STEP) : Math.ceil(base / this.CREDITS_STEP)) * this.CREDITS_STEP;
+        this.onCreditsChange(snapped + delta);
+    }
+
+    private normalizedCredits(value: number | null | undefined): number {
+        if (value === null || value === undefined || !Number.isFinite(value)) {
+            return 0;
+        }
+        return Math.round(value / this.CREDITS_STEP) * this.CREDITS_STEP;
     }
 
     handleDeleteConfirmed(): void {

@@ -239,20 +239,48 @@
 }
 
 .unified-feedback-points-input {
-    width: 2.5rem;
+    width: 1.75rem;
     border: none;
     padding: 0;
     font-weight: bold;
     font-size: 0.8rem;
-    text-align: right;
+    text-align: center;
     background: transparent;
     color: inherit;
+    cursor: default;
+
+    // Value only changes via the +/- steppers, so the native spin buttons would be redundant.
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+        appearance: none;
+        margin: 0;
+    }
+
+    appearance: textfield;
 }
 
-.unified-feedback-points-unit {
-    font-weight: 600;
-    font-size: 0.8rem;
-    color: var(--bs-secondary-color);
+.unified-feedback-points-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.1rem;
+    height: 1.1rem;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+        background: var(--bs-tertiary-bg);
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
 }
 
 .unified-feedback.alert-success .unified-feedback-points-input {

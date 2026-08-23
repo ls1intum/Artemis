@@ -305,6 +305,58 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.feedbackTitle()).toBe('Encapsulation is broken');
     });
 
+    it('should step the credits up and down by half a point', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+
+        component.stepCredits(component.CREDITS_STEP);
+        expect(component.feedbackCredits()).toBe(1.5);
+
+        component.stepCredits(-component.CREDITS_STEP);
+        expect(component.feedbackCredits()).toBe(1);
+    });
+
+    it('should snap a hand-typed value onto the half-point grid in the direction of travel when stepping', () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(1.3);
+        fixture.detectChanges();
+
+        component.stepCredits(component.CREDITS_STEP);
+        expect(component.feedbackCredits()).toBe(1.5);
+
+        component.feedbackCredits.set(1.3);
+        component.stepCredits(-component.CREDITS_STEP);
+        expect(component.feedbackCredits()).toBe(1);
+    });
+
+    it('should normalize hand-typed credits onto the half-point grid', () => {
+        fixture.componentRef.setInput('editable', true);
+
+        component.onCreditsChange(0.3);
+        expect(component.feedbackCredits()).toBe(0.5);
+
+        component.onCreditsChange(-0.3);
+        expect(component.feedbackCredits()).toBe(-0.5);
+    });
+
+    it('should not step the credits when read-only or linked to a grading instruction', () => {
+        fixture.componentRef.setInput('editable', true);
+        fixture.componentRef.setInput('readOnly', true);
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+
+        component.stepCredits(component.CREDITS_STEP);
+        expect(component.feedbackCredits()).toBe(1);
+
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('feedback', { credits: 1, gradingInstruction: { feedback: 'Fixed rubric text', credits: 1 } } as any);
+        fixture.detectChanges();
+
+        component.stepCredits(component.CREDITS_STEP);
+        expect(component.feedbackCredits()).toBe(1);
+    });
+
     it('should stay adapted once already adapted, even if a later edit happens to match the original wording', () => {
         fixture.componentRef.setInput('editable', true);
         component.feedbackTitle.set(`${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
@@ -436,9 +488,44 @@ describe('UnifiedFeedbackComponent', () => {
         expect(pointsInput).toBeTruthy();
         expect(detailInput).toBeTruthy();
         expect(detailInput.value).toBe('Some detail');
+        // Points are only ever changed via the +/- steppers, never by typing.
+        expect(pointsInput.readOnly).toBe(true);
         // credits=2, detail non-empty => confirmation required, so the plain dismiss button must not render
         expect(fixture.nativeElement.querySelector('#dismiss-icon')).toBeNull();
         expect(fixture.nativeElement.querySelector('#confirm-icon')).toBeTruthy();
+    });
+
+    it('should not change the points when typing into the (readonly) points input', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+        pointsInput.value = '99';
+        pointsInput.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+
+        expect(component.feedbackCredits()).toBe(1);
+    });
+
+    it('should increment and decrement the points via the stepper buttons', async () => {
+        fixture.componentRef.setInput('editable', true);
+        component.feedbackCredits.set(1);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
+        expect(steps).toHaveLength(2);
+
+        steps[1].click();
+        expect(component.feedbackCredits()).toBe(1.5);
+
+        steps[0].click();
+        steps[0].click();
+        expect(component.feedbackCredits()).toBe(0.5);
     });
 
     it('should render the plain dismiss button when nothing would be lost', () => {
@@ -500,9 +587,12 @@ describe('UnifiedFeedbackComponent', () => {
 
         const label = fixture.nativeElement.querySelector('.unified-feedback-rubric-label');
         const pointsInput = fixture.nativeElement.querySelector('.unified-feedback-points-input') as HTMLInputElement;
+        const steps = fixture.nativeElement.querySelectorAll('.unified-feedback-points-step') as NodeListOf<HTMLButtonElement>;
 
         expect(label?.textContent).toContain('Fixed rubric text');
         expect(pointsInput.disabled).toBe(true);
+        expect(steps[0].disabled).toBe(true);
+        expect(steps[1].disabled).toBe(true);
     });
 
     it('should not render a footer when the feedback is not a suggestion', () => {
