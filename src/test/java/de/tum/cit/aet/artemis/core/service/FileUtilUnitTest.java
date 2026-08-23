@@ -11,12 +11,15 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -58,6 +61,7 @@ import org.apache.pdfbox.pdmodel.interactive.annotation.PDAppearanceStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.util.ResourceUtils;
@@ -79,6 +83,55 @@ class FileUtilUnitTest {
     @BeforeEach
     void deleteFiles() throws IOException {
         RepositoryExportTestUtil.safeDeleteDirectory(exportTestRootPath);
+    }
+
+    /**
+     * The containment check in {@link FileUtil#resolveWithinDirectoryElseThrow(Path, String)} is lexical, so a symlink
+     * already sitting at the destination would point outside the directory. Exclusive creation is what refuses it:
+     * the write must fail and the link target must be left untouched.
+     */
+    @Test
+    void refusesToWriteThroughASymlinkPlantedAtTheDestination(@TempDir Path tempDir) throws Exception {
+        Path insideDirectory = Files.createDirectories(tempDir.resolve("temp"));
+        Path outsideTarget = tempDir.resolve("escaped.txt");
+        Files.writeString(outsideTarget, "original");
+        Path plantedLink = insideDirectory.resolve("Temp_1_lecture.pdf");
+        try {
+            Files.createSymbolicLink(plantedLink, outsideTarget);
+        }
+        catch (UnsupportedOperationException | IOException e) {
+            // Creating symlinks needs privileges this platform may withhold; nothing to assert if we cannot plant one.
+            return;
+        }
+
+        try (InputStream inputStream = new ByteArrayInputStream("attacker".getBytes(StandardCharsets.UTF_8))) {
+            assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(inputStream, plantedLink)).isInstanceOf(FileAlreadyExistsException.class);
+        }
+
+        assertThat(Files.readString(outsideTarget)).isEqualTo("original");
+    }
+
+    @Test
+    void writesANewFileAndCreatesMissingParentDirectories(@TempDir Path tempDir) throws Exception {
+        Path target = tempDir.resolve("nested").resolve("created").resolve("file.txt");
+
+        try (InputStream inputStream = new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8))) {
+            FileUtil.writeNewFileElseThrow(inputStream, target);
+        }
+
+        assertThat(Files.readString(target)).isEqualTo("content");
+    }
+
+    @Test
+    void refusesToOverwriteAnExistingFile(@TempDir Path tempDir) throws Exception {
+        Path target = tempDir.resolve("file.txt");
+        Files.writeString(target, "original");
+
+        try (InputStream inputStream = new ByteArrayInputStream("replacement".getBytes(StandardCharsets.UTF_8))) {
+            assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(inputStream, target)).isInstanceOf(FileAlreadyExistsException.class);
+        }
+
+        assertThat(Files.readString(target)).isEqualTo("original");
     }
 
     @Test

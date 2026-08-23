@@ -13,6 +13,7 @@ import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -290,6 +291,12 @@ public class FileUtil {
      * forgets to sanitise — or a future change that loosens the sanitiser — fails loudly instead of quietly reading or
      * writing an arbitrary file.
      *
+     * <p>
+     * The containment this gives is <em>lexical</em>: it compares path elements and does not resolve symlinks, so a
+     * link already present inside {@code baseDirectory} would still point elsewhere. Callers that create the file are
+     * responsible for opening it with {@link java.nio.file.StandardOpenOption#CREATE_NEW}, which refuses to follow an
+     * existing link, rather than relying on this check alone.
+     *
      * @param baseDirectory the directory the resolved path has to stay within
      * @param filename      the single filename to resolve against {@code baseDirectory}
      * @return the resolved, normalised path, guaranteed to lie inside {@code baseDirectory}
@@ -307,6 +314,31 @@ public class FileUtil {
             throw new IllegalArgumentException("Invalid filename '%s': the resolved path escapes the expected directory.".formatted(filename));
         }
         return resolvedPath;
+    }
+
+    /**
+     * Writes a stream to a path that must not exist yet, creating any missing parent directories.
+     *
+     * <p>
+     * Opens with {@link StandardOpenOption#CREATE_NEW}, which maps to {@code O_CREAT | O_EXCL}. The kernel refuses
+     * that combination when the path already exists — including when it exists only as a symlink, and including a
+     * dangling one — so the write cannot be redirected through a link planted at the destination. This is the
+     * companion to {@link #resolveWithinDirectoryElseThrow(Path, String)}, whose containment check is lexical and
+     * therefore blind to symlinks on its own.
+     *
+     * @param inputStream the stream to write; closed by the caller
+     * @param target      the file to create
+     * @throws java.nio.file.FileAlreadyExistsException if {@code target} already exists, symlink included
+     * @throws IOException                              if creating the directories or writing fails
+     */
+    public static void writeNewFileElseThrow(@NonNull InputStream inputStream, @NonNull Path target) throws IOException {
+        Path parent = target.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+        try (OutputStream outputStream = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+            inputStream.transferTo(outputStream);
+        }
     }
 
     /**
