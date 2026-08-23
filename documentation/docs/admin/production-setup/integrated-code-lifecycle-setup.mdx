@@ -112,7 +112,7 @@ For unauthorized access, your Git client will display the respective error messa
 You can also use Docker Compose to set up Integrated Code Lifecycle. Using the following command, you can start the Artemis and MySQL containers:
 
 ```bash
-docker compose -f docker/artemis-dev-local-vc-local-ci-mysql.yml up
+docker compose --env-file .env -f docker/artemis-dev-local-vc-local-ci-mysql.yml up
 ```
 
 <Callout variant={CalloutVariant.info}>

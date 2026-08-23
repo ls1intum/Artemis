@@ -139,26 +139,34 @@ jobs:
           path: build/libs/Artemis-*.war
           if-no-files-found: error
 
-  # Release-asset upload, split out so it is the ONLY job holding `contents: write` (mirrors the
-  # save-docker-tag split). Downloads the WAR `build-war` produced and attaches it to the release.
+  # Release-asset upload, split out so it is the ONLY job holding write scopes (mirrors the
+  # save-docker-tag split). Downloads the WAR `build-war` produced, derives its verifiable
+  # companions (SBOMs, checksums, build provenance) from that exact artifact, and attaches
+  # everything to the release.
+  #
+  # Provenance is attested here rather than in `build-war` on purpose: attest-build-provenance
+  # needs `id-token: write` + `attestations: write`, and `build-war` runs on every pull request.
+  # Keeping the write scopes in this release-only job preserves the read-only token on the
+  # every-PR build, which is the same reason the upload was split out in the first place.
   upload-release:
     name: Upload Release Artifact
     needs: build-war
     if: ${{ inputs.is_release }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
-      contents: write  # `gh release upload`
+      contents: write      # `gh release upload`
+      id-token: write      # Sigstore OIDC token for the provenance attestation
+      attestations: write  # store the attestation alongside the repository
     steps:
       - name: Download .war artifact
         uses: actions/download-artifact@v8
         with:
           name: Artemis.war
           path: build/libs
-      - name: Upload to the GitHub release
+      - name: Collect release assets
         # Route the tag through env to keep it out of shell-injection paths.
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -Eeuo pipefail
@@ -166,8 +174,70 @@ jobs:
             echo "::error::Refusing to upload release artifact: tag '$RELEASE_TAG' is not a valid version."
             exit 1
           fi
-          mv "build/libs/Artemis-${RELEASE_TAG}.war" /tmp/Artemis.war
-          gh release upload "$RELEASE_TAG" /tmp/Artemis.war --clobber --repo "${GITHUB_REPOSITORY}"
+          mkdir -p /tmp/release /tmp/sbom
+          mv "build/libs/Artemis-${RELEASE_TAG}.war" /tmp/release/Artemis.war
+
+          # Publish the SBOMs that are already inside the WAR (gradle/sbom.gradle copies them to
+          # build/resources/main/sbom, which a WAR maps to WEB-INF/classes/sbom) rather than
+          # regenerating them. Extracting them from the artifact guarantees the published SBOM
+          # describes exactly the bytes that ship. `-j` flattens the paths to bare filenames, and
+          # `unzip` exits 11 when nothing matches, so tolerate that and report it ourselves below.
+          unzip -o -j /tmp/release/Artemis.war 'WEB-INF/classes/sbom/*.json' -d /tmp/sbom || true
+          # Fallback for a Spring Boot jar layout, should `-Pwar` above ever become `-Pjar`. Only tried
+          # when the WAR layout yielded nothing, so the normal path stays free of `unzip` cautions.
+          if [ ! -f /tmp/sbom/server-sbom.json ] && [ ! -f /tmp/sbom/client-sbom.json ]; then
+            unzip -o -j /tmp/release/Artemis.war 'BOOT-INF/classes/sbom/*.json' -d /tmp/sbom || true
+          fi
+
+          missing=()
+          if [ -f /tmp/sbom/server-sbom.json ]; then
+            mv /tmp/sbom/server-sbom.json /tmp/release/artemis-server-sbom.cdx.json
+          else
+            missing+=("server")
+          fi
+          if [ -f /tmp/sbom/client-sbom.json ]; then
+            mv /tmp/sbom/client-sbom.json /tmp/release/artemis-client-sbom.cdx.json
+          else
+            missing+=("client")
+          fi
+          if [ "${#missing[@]}" -ne 0 ]; then
+            echo "::error::The release WAR contains no ${missing[*]} SBOM. Release builds must run with -Psbom (ci.yml sets is_release_build for release events)."
+            exit 1
+          fi
+
+          cd /tmp/release
+          sha256sum Artemis.war artemis-server-sbom.cdx.json artemis-client-sbom.cdx.json > SHA256SUMS
+          cat SHA256SUMS
+      # The WAR goes up FIRST, on its own. `upload-release` runs on `release: published`, so the
+      # release is already public by the time this job starts; if provenance or SBOM work fails
+      # afterwards, the release still carries the artifact people came for. Uploading everything at
+      # the end would mean a Sigstore outage leaves a published release with no WAR at all.
+      - name: Upload the WAR to the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: gh release upload "$RELEASE_TAG" /tmp/release/Artemis.war --clobber --repo "${GITHUB_REPOSITORY}"
+
+      - name: Attest build provenance
+        # Signed, Sigstore-backed SLSA provenance binding every release asset to this workflow run.
+        # `subject-checksums` reads the SHA256SUMS file generated above, so the SBOMs and the sums
+        # file are attested too rather than only the WAR. Consumers verify with:
+        #   gh attestation verify <asset> --repo ls1intum/Artemis
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-checksums: /tmp/release/SHA256SUMS
+
+      - name: Upload the derived release assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -Eeuo pipefail
+          gh release upload "$RELEASE_TAG" \
+            /tmp/release/artemis-server-sbom.cdx.json \
+            /tmp/release/artemis-client-sbom.cdx.json \
+            /tmp/release/SHA256SUMS \
+            --clobber --repo "${GITHUB_REPOSITORY}"
 
   # Fast PR path: single-arch (linux/amd64) image that reuses the .war from `build-war` via the
   # Dockerfile's `external_builder` stage, skipping the duplicate Angular + Gradle build the
@@ -286,3 +356,80 @@ jobs:
           name: docker-tag
           path: docker-tag.txt
           if-no-files-found: error
+
+  # Signs and attests the image that `docker-release` pushed. Kept as a separate job because the
+  # reusable workflow that builds the image is shared across ls1intum repositories and deliberately
+  # holds no attestation or signing scopes; adding them here keeps that reusable unchanged.
+  #
+  # Two artefacts are produced for the same digest, because two different consumers ask for them:
+  #   * a GitHub build-provenance attestation, pushed to the registry, verified with
+  #       gh attestation verify oci://ghcr.io/ls1intum/artemis:<tag> --repo ls1intum/Artemis
+  #   * a cosign signature, which is what Kubernetes admission controllers (Kyverno,
+  #     sigstore policy-controller) consume, verified with
+  #       cosign verify ghcr.io/ls1intum/artemis@<digest> \
+  #         --certificate-identity-regexp '^https://github.com/ls1intum/Artemis/' \
+  #         --certificate-oidc-issuer https://token.actions.githubusercontent.com
+  #
+  # Both are keyless: the signing identity is this workflow, proven through the GitHub OIDC token,
+  # so there is no private key to store or rotate.
+  sign-mainline-image:
+    name: Sign and Attest Docker Image
+    needs: docker-release
+    # Covers releases AND `develop`/`main`/`release/*` pushes, because test servers and staging pull
+    # those images too and they deserve the same verifiability. Gated on `is_release_build` rather
+    # than `!is_pr` so merge-queue and `workflow_dispatch` images do not each get a public Rekor
+    # transparency-log entry for an image nobody deploys.
+    if: ${{ inputs.is_release_build }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write      # push the signature and the attestation next to the image
+      id-token: write      # Sigstore OIDC identity
+      attestations: write  # record the attestation for the repository
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121  # v4.1.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve image digest
+        id: digest
+        # Sign by digest, never by tag: a tag is mutable, so a signature bound to one says nothing
+        # about which image a consumer actually pulled.
+        env:
+          IMAGE_TAG: ${{ needs.docker-release.outputs.image_tag }}
+        run: |
+          set -Eeuo pipefail
+          # Checked with `if !` rather than a bare assignment: under `set -e` a failing inspect would
+          # abort the step before the error message below could explain what went wrong.
+          if ! digest="$(docker buildx imagetools inspect "ghcr.io/ls1intum/artemis:${IMAGE_TAG}" --format '{{ .Manifest.Digest }}')"; then
+            echo "::error::Could not inspect ghcr.io/ls1intum/artemis:${IMAGE_TAG}. Did the docker-release job push it?"
+            exit 1
+          fi
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Unexpected digest for ghcr.io/ls1intum/artemis:${IMAGE_TAG} (got '${digest}')."
+            exit 1
+          fi
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+          echo "Signing ghcr.io/ls1intum/artemis@${digest}"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ghcr.io/ls1intum/artemis
+          subject-digest: ${{ steps.digest.outputs.digest }}
+          push-to-registry: true
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6  # v4.1.2
+
+      - name: Sign image
+        env:
+          DIGEST: ${{ steps.digest.outputs.digest }}
+        # `--recursive` also signs the per-platform manifests behind the index. Admission controllers
+        # verify whatever digest the pull resolved to, which for a node-level pull is the
+        # per-architecture manifest, and an index-only signature would not apply to it.
+        run: cosign sign --yes --recursive "ghcr.io/ls1intum/artemis@${DIGEST}"
