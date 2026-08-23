@@ -412,14 +412,33 @@ public class ProgrammingExerciseCreationUpdateService {
      */
     public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
+        return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
+    }
+
+    /**
+     * Updates the timeline attributes while preserving a build-and-test offset captured before an owning variant group
+     * changed the exercise's due date.
+     *
+     * @param timelineUpdateDTO          containing the timeline changes that have to be saved
+     * @param notificationText           optional text for a notification to all students about the update
+     * @param originalBuildAndTestOffset the build-and-test offset from the exercise's previous due date
+     * @return the updated programming exercise
+     */
+    public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText,
+            @Nullable Duration originalBuildAndTestOffset) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(timelineUpdateDTO.id());
+        return updateTimeline(timelineUpdateDTO, notificationText, originalBuildAndTestOffset, programmingExercise);
+    }
+
+    private ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText,
+            @Nullable Duration originalBuildAndTestOffset, ProgrammingExercise programmingExercise) {
 
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
         programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
         programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
-        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
-
         // Apply the DTO values to the existing exercise
         timelineUpdateDTO.applyTo(programmingExercise);
 
