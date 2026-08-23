@@ -94,7 +94,10 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         entry.setComputedAt(ZonedDateTime.now());
         ingestionCoverageRepository.save(entry);
 
-        List<IngestionCoverageDTO> coverage = request.getList(BASE + "coverage", HttpStatus.OK, IngestionCoverageDTO.class);
+        // The endpoint is paginated and defaults to 20 rows. The projection table is shared across test classes and
+        // accumulates a row per course, so without an explicit size this course's row can sit on a later page and the
+        // assertion below would fail purely on how many courses other tests happened to create.
+        List<IngestionCoverageDTO> coverage = request.getList(BASE + "coverage?size=2000", HttpStatus.OK, IngestionCoverageDTO.class);
 
         assertThat(coverage).anySatisfy(dto -> {
             assertThat(dto.courseId()).isEqualTo(course.getId());
