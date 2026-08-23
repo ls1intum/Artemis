@@ -28,7 +28,6 @@ import { GradingUsageCountAction } from 'app/editor/monaco-editor/model/actions/
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { GradingCriterionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { GradingInstructionAction } from 'app/editor/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
-import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -44,7 +43,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { defer, finalize } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumUiButtonComponent,
+    TumUiConfirmDialogComponent,
+    TumUiConfirmationService,
+    TumUiInputDirective,
+    TumUiSelectButtonComponent,
+    TumUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { AccountService } from 'app/core/auth/account.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -64,7 +70,6 @@ interface AssessmentCriteriaGenerationState {
     templateUrl: './grading-instructions-details.component.html',
     styleUrls: ['./grading-instructions-details.component.scss'],
     imports: [
-        NgClass,
         TranslateDirective,
         FormsModule,
         FaIconComponent,
@@ -74,6 +79,8 @@ interface AssessmentCriteriaGenerationState {
         ArtemisTranslatePipe,
         TumUiButtonComponent,
         TumUiConfirmDialogComponent,
+        TumUiInputDirective,
+        TumUiSelectButtonComponent,
         TumUiTooltipDirective,
     ],
     providers: [TumUiConfirmationService],
@@ -178,6 +185,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     faTrash = faTrash;
     faUndo = faUndo;
     facArtemisIntelligence = facArtemisIntelligence;
+
+    readonly editModeOptions = [
+        { value: true, labelKey: 'entity.action.edit' },
+        { value: false, labelKey: 'artemisApp.exercise.editText' },
+    ] as const;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
@@ -652,10 +664,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
      * Updates markdown text between mode switches
      */
     switchMode() {
-        if (!this.editable()) {
+        this.setEditMode(!this.showEditMode());
+    }
+
+    /** Sets the structured editor mode and refreshes the markdown snapshot used by the text editor. */
+    setEditMode(editMode: boolean) {
+        if (!this.editable() || this.showEditMode() === editMode) {
             return;
         }
-        this.showEditMode.update((mode) => !mode);
+        this.showEditMode.set(editMode);
         this.markdownEditorText.set(this.generateMarkdown());
     }
 
