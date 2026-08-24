@@ -143,6 +143,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(sidebarData.groupedData?.standalone.entityData.map((item) => item.id)).toEqual([42]);
         expect(sidebarData.groupedData?.linkedToExercise.entityData.map((item) => item.id)).toEqual([43]);
         expect(sidebarData.groupedData?.linkedToExercise.entityData[0].subtitleLeft).toBe('Exercise 1');
+        expect(sidebarData.groupedData?.linkedToExercise.entityData[0].subtitleLeftIcon).toBeDefined();
+        expect(sidebarData.groupedData?.linkedToExercise.entityData[0].icon).toBeUndefined();
+        expect(sidebarData.groupedData?.standalone.entityData[0].icon).toBeUndefined();
     });
 
     it('should use the sidebar to switch between the overall overview and a presentation', () => {

@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 
-import { faArrowUpRightFromSquare, faList, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faLink, faPencilAlt, faPlus, faSearch, faTrash, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import {
@@ -95,7 +95,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
-    protected readonly faList = faList;
+    protected readonly faLink = faLink;
     protected readonly faUsers = faUsers;
     protected readonly faSearch = faSearch;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
@@ -485,7 +485,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             id: assessment.id!,
             title: assessment.title ?? '',
             subtitleLeft: showExerciseTitle ? assessment.exerciseTitle : undefined,
-            icon: this.faList,
+            subtitleLeftIcon: showExerciseTitle ? this.faLink : undefined,
             size: 'M',
             active: this.viewMode() === 'presentations' && this.selectedPresentationId() === assessment.id,
             disableNavigation: true,

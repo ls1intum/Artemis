@@ -5,8 +5,8 @@
         </tum-ui-button>
     </div>
 
-    <div class="presentation-workspace" data-testid="presentation-master-detail">
-        <aside class="presentation-sidebar">
+    <div class="d-flex horizontal-scroll presentation-workspace" data-testid="presentation-master-detail">
+        <div class="presentation-sidebar">
             <jhi-sidebar
                 [courseId]="courseId()"
                 [sidebarData]="sidebarData()"
@@ -15,7 +15,7 @@
                 [itemSelected]="viewMode() === 'presentations'"
                 (onSelectItem)="onSidebarItemSelected($event)"
             />
-        </aside>
+        </div>
 
         <main class="presentation-content">
             @if (presentationAssessments().length) {
@@ -91,14 +91,14 @@
                                             </td>
                                             <td>
                                                 @if (hasResultPoints(row.instance?.resultPoints)) {
-                                                    <tum-ui-tag severity="success" [rounded]="true" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
+                                                    <tum-ui-tag severity="success" [bold]="false" [value]="'artemisApp.presentationAssessment.assessed' | artemisTranslate" />
                                                 } @else {
-                                                    <tum-ui-tag severity="warn" [rounded]="true" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
+                                                    <tum-ui-tag severity="warn" [bold]="false" [value]="'artemisApp.presentationAssessment.pending' | artemisTranslate" />
                                                 }
                                             </td>
                                             <td>
                                                 @if (hasResultPoints(row.instance?.resultPoints)) {
-                                                    <tum-ui-tag severity="info" [rounded]="true" [value]="row.instance!.resultPoints + ' / ' + presentationAssessment.maxPoints" />
+                                                    <tum-ui-tag severity="info" [bold]="false" [value]="row.instance!.resultPoints + ' / ' + presentationAssessment.maxPoints" />
                                                 } @else {
                                                     <span class="text-muted-color">-</span>
                                                 }
