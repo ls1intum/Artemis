@@ -199,8 +199,7 @@ public class PyrisStatusUpdateService {
     }
 
     private boolean shouldHandleAskUserPipelineEvent(PyrisChatStatusUpdateDTO statusUpdate, boolean jobWasTracked) {
-        return jobWasTracked && statusUpdate.runState() == PyrisRunState.FINISHED && statusUpdate.result() != null && statusUpdate.event() != null
-                && !Boolean.FALSE.equals(statusUpdate.finalResult());
+        return jobWasTracked && statusUpdate.runState() == PyrisRunState.FINISHED && statusUpdate.event() != null && !Boolean.FALSE.equals(statusUpdate.finalResult());
     }
 
     private PyrisChatStatusUpdateDTO withAskUserQuizFailureErrorIfReset(ChatJob job, PyrisRunState runState, PyrisChatStatusUpdateDTO statusUpdate) {

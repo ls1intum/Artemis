@@ -142,7 +142,7 @@ public class IrisAskUserService {
      */
     public void handleStatusUpdate(TrackedSessionBasedPyrisJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         var pipeEvent = getAskUserEvent(statusUpdate.event());
-        if (pipeEvent.isEmpty() || statusUpdate.result() == null) {
+        if (pipeEvent.isEmpty()) {
             return;
         }
 

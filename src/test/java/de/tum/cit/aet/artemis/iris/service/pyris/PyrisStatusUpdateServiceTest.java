@@ -110,6 +110,25 @@ class PyrisStatusUpdateServiceTest {
     }
 
     @Test
+    void chatJobWithoutResultTextButAskUserEventIsStillHandledByAskUserService() {
+        // Regression test: Pyris reports the ask-user message text via an earlier RUNNING update and then
+        // terminates the job with a FINISHED update whose result is null. The ask-user dispatch must not depend
+        // on the terminal update itself carrying a non-null result.
+        var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new PyrisChatStatusUpdateDTO(null, PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null,
+                IrisPipeEvent.USER_STARTS_QUIZ.name(), null);
+        when(irisChatSessionService.handleStatusUpdate(job, statusUpdate, statusUpdate.event())).thenReturn(job);
+        when(pyrisJobService.removeJob(job)).thenReturn(job);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        var inOrder = inOrder(irisChatSessionService, irisAskUserService, pyrisJobService);
+        inOrder.verify(irisChatSessionService).handleStatusUpdate(job, statusUpdate, statusUpdate.event());
+        inOrder.verify(pyrisJobService).removeJob(job);
+        inOrder.verify(irisAskUserService).handleStatusUpdate(job, statusUpdate);
+    }
+
+    @Test
     void chatJobResultWithAskUserEventButJobAlreadyRemovedDoesNotTriggerAskUserService() {
         var job = new ChatJob("chat-run", 1L, 2L, 3L, null, null, null);
         var statusUpdate = new PyrisChatStatusUpdateDTO("result", PyrisRunState.FINISHED, null, null, null, null, null, null, null, null, null, null, null,

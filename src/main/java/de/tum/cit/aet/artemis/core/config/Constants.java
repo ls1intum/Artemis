@@ -208,7 +208,7 @@ public final class Constants {
     public static final int IRIS_ASK_USER_MODE_TIME_LIMIT_IN_CLASS_MINUTES_MAX = 30;
 
     // This value determines the initial value of time per question in Iris sub-settings for ask-user mode.
-    public static final int IRIS_ASK_USER_MODE_TIME_LIMIT_QUESTION_SECONDS_INIT = 20;
+    public static final int IRIS_ASK_USER_MODE_TIME_LIMIT_QUESTION_SECONDS_INIT = 60;
 
     // This value determines the initial value of the time to finish the in-class quiz in Iris sub-settings for ask-user mode.
     public static final int IRIS_ASK_USER_MODE_TIME_LIMIT_IN_CLASS_MINUTES_INIT = 15;
