@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizPointStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizPointStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticResponseDTO;
-import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticProjections.QuestionAggregate;
 import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticsOverviewDTO;
+import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.QuestionAggregate;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticsRepository;
 
 /**

@@ -11,10 +11,10 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticProjections.PointBucket;
-import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticProjections.QuestionAggregate;
-import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticProjections.QuizOverviewAggregate;
-import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticProjections.RatedSelection;
+import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.PointBucket;
+import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.QuestionAggregate;
+import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.QuizOverviewAggregate;
+import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.RatedSelection;
 
 /**
  * Read-only queries for calculating quiz statistics from the latest rated and unrated result of every participation.

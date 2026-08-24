@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.quiz.dto;
+package de.tum.cit.aet.artemis.quiz;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticsOverviewDTO;
 
 class QuizStatisticsOverviewDTOTest {
 
