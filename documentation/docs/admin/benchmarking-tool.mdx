@@ -25,6 +25,9 @@ Additionally, the tool can be connected to Prometheus to collect and visualize w
 
 For more information on how to set up and use the Benchmarking Tool, please refer to the <a href="https://github.com/ls1intum/Artemis-Benchmarking?tab=readme-ov-file#readme">README</a>.
 
+Looking for how much hardware an installation needs rather than for how to measure it? See
+[Scaling Artemis](/admin/scaling), which carries the sizing guidance drawn from the runs on this page.
+
 ## Running a comparable scale test
 
 A benchmark number is only useful if someone else can reproduce it. Record the following alongside any
@@ -224,15 +227,18 @@ behind that number is real.
 Want to check it on your own infrastructure? The rest of this page explains how, and we would welcome
 your results.
 
-## Results across two clusters
+## Measured results
 
-The section above reports the headline run. This one reports both clusters we measured in more detail,
-so you can see what the load actually did to each machine. It is written for someone sizing an
-installation rather than for a performance engineer, so the metrics stay high-level: how much hardware,
-how many students, how long the work took, and what ran out first.
+The section above reports the headline run. This one reports both clusters in more detail, plus one
+single machine, so you can see what the load actually did to each component. The metrics stay
+high-level: how much hardware, how many students, how long the work took, and what ran out first.
 
-Both runs used the same scenario, the same load generator and the same student count, so they are
-comparable with each other. Every student logs in, opens the exam, submits all four exercise types,
+If you are here to size an installation rather than to reproduce a measurement, read
+[Scaling Artemis](/admin/scaling) instead: it draws the sizing conclusions from these runs and links
+back to the detail below.
+
+Both cluster runs used the same scenario, the same load generator and the same student count, so they
+are comparable with each other. Every student logs in, opens the exam, submits all four exercise types,
 pushes code to their own git repository, and hands the exam in, with no pause between actions.
 
 ### What was tested
@@ -344,69 +350,9 @@ what binds rather than processor: the machine is already using swap at 50 studen
 by 200. Adding memory helps this configuration more than adding cores would, and splitting the
 database onto its own machine helps more than either.
 
-## Scaling an installation
+## Sizing an installation from these results
 
-Artemis has two kinds of node, and they scale different things. Treating them as one pool is the most
-common sizing mistake, because it leads to buying the wrong hardware for the problem you actually have.
-
-**Artemis core nodes carry simultaneous users.** Every student who is logged in, opening an exam,
-submitting an answer or pushing code is served by a core node. These are what run out during the peak,
-and in both measured clusters they were the busiest machines by a wide margin while everything behind
-them stayed under half loaded. Add core nodes, or make them larger, when the peak is what hurts.
-
-**Build agent nodes decide how long students wait for feedback.** They do not affect whether the exam
-works, only how quickly a student sees the result of a push. A queue that drains slowly is visible and
-annoying, but it degrades gracefully: students carry on working and results arrive later.
-
-That separation is a budget lever, and a legitimate one. An institution can reasonably decide to spend
-on core nodes so that two thousand students all submit smoothly, and to run a modest number of build
-agents so that feedback during the exam takes minutes rather than seconds. The reverse, plenty of build
-agents behind too few core nodes, buys nothing: students cannot reach the exam to generate builds in
-the first place.
-
-### One large core node or several small ones
-
-Several small nodes are usually the better choice at the same total cost:
-
-- They fail independently. Losing one of three during an exam costs a third of capacity, not all of it.
-- They can be added without downtime. A new node joins the cluster automatically.
-- Artemis distributes requests across them evenly, and the measurements show that working: on both
-  clusters the load spread across all three, with the busiest node ahead of the others but not alone.
-
-A single larger node is simpler to run and avoids needing shared storage and a coordination service, so
-it is a reasonable choice for a small installation. It becomes a liability once exams matter, because
-there is no headroom when it is saturated and no redundancy when it fails.
-
-### A starting point for sizing
-
-The figures below are a **rough starting point, not a validated model**. They are extrapolated from
-measurements on two clusters of identical shape, which is not enough variety to fit a curve to. Treat
-them as the configuration to benchmark first, then measure your own peak and adjust.
-
-| Role | Suggested unit | Rule of thumb |
-| --- | --- | --- |
-| Artemis core node | 4 CPUs, 4 GB memory | one per **500** simultaneous users |
-| Build agent node | 4 CPUs, 4 GB memory | one per **100** simultaneous users, for prompt feedback |
-| Database | 4 CPUs, 8 GB memory | one, sized by dataset rather than by user count |
-| Repository storage | 4 CPUs, 4 GB memory | one |
-| Reverse proxy | 2 CPUs, 2 GB memory | one |
-
-Worked example for an exam with 1,000 students taking a programming exam at once: two core nodes, ten
-build agents if you want feedback within the exam, or three or four if students can wait until
-afterward. That difference, six or seven machines, is the budget lever described above.
-
-Two adjustments worth making to the units:
-
-- **Memory before CPUs on core nodes.** At 4 CPUs and 3.8 GB the measured nodes were tight on memory
-  well before they were tight on processor, and they swapped under load. 4 GB is the practical minimum
-  and more helps more than extra cores would.
-- **Size the database by data, not by students.** It stayed under half loaded at 2,000 students on both
-  clusters. What it needs is enough memory to hold the working set, since a database that pages its
-  cache to disk is slower than a smaller cache that fits.
-
-### What not to spend on
-
-The supporting services were never close to a limit in any measurement: repository storage around a
-tenth of one machine, the coordination service a tenth, the reverse proxy under an eighth, and the
-busiest network link under 5% of its capacity. Give them a machine each and move on. Additional
-capacity there does not buy performance, and the measurements are unambiguous about that.
+The conclusions these measurements support, from how many core nodes and build agents to run to what to
+check when something is slow and where additional capacity does not help, are collected in
+[Scaling Artemis](/admin/scaling). That is the page to read before buying hardware; this
+one is the evidence behind it.
