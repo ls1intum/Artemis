@@ -83,8 +83,9 @@ public class GlobalNotificationSettingResource {
     @GetMapping("global-notification-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, Boolean>> getAllSettings() {
-        User user = userRepository.getUserWithAuthorities();
-        Map<String, Boolean> result = globalNotificationSettingRepository.getAllSettingsAsMap(user.getId());
+        // Only the id is used. getUserWithAuthorities additionally joins the authorities collection, so this was
+        // fetching a user, their roles, and sixty columns in order to read a primary key.
+        Map<String, Boolean> result = globalNotificationSettingRepository.getAllSettingsAsMap(userRepository.getUserIdElseThrow());
         return ResponseEntity.ok(result);
     }
 }
