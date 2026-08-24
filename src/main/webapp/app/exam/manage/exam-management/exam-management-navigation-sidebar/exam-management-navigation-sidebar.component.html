@@ -33,6 +33,7 @@
                                 @if (course().isAtLeastInstructor) {
                                     <div class="flex flex-col pl-4 pr-1">
                                         <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="" [icon]="faInfoCircle" [title]="'artemisApp.exam.details' | artemisTranslate" />
+                                        <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="edit" [icon]="faWrench" [title]="'entity.action.edit' | artemisTranslate" />
                                         <jhi-sidebar-subpage-item
                                             [subjectId]="exam.id"
                                             subpage="exercise-groups"
@@ -66,10 +67,7 @@
                                             />
                                         }
                                         <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="scores" [icon]="faEye" [title]="'entity.action.scores' | artemisTranslate" />
-                                        <jhi-sidebar-subpage-item [subjectId]="exam.id" subpage="edit" [icon]="faWrench" [title]="'entity.action.edit' | artemisTranslate" />
                                     </div>
-                                } @else {
-                                    <span> Restricted </span>
                                 }
                             </div>
                             <hr />
