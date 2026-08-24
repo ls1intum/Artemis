@@ -19,7 +19,7 @@ import { PasskeyAbortError } from 'app/account/user/settings/passkey-settings/en
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
- * Should be aligned and a bit lower than HazelcastPublicKeyCredentialRequestOptionsRepository#AUTH_OPTIONS_TIME_TO_LIVE_SECONDS
+ * Should be aligned and a bit lower than DistributedPublicKeyCredentialRequestOptionsRepository#AUTH_OPTIONS_TIME_TO_LIVE_SECONDS
  * As the interval is 5 minutes there currently, until the challenge expires we refresh the challenge every 4m45s.
  */
 const CONDITIONAL_MEDIATION_REFRESH_INTERVAL_MS = 4 * 60 * 1000 + 45 * 1000;
