@@ -176,8 +176,11 @@ public class ProgrammingTriggerService {
             }
             // Worth doing even for a single participation: one load of the exercise with its build config and auxiliary
             // repositories costs less than the separate lookups the trigger would otherwise make for each of them.
-            SharedBuildTriggerData sharedData = prepareSharedTriggerData(triggerable, loadedExercise);
-            for (var participation : participationsOfExercise) {
+            SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(triggerable, loadedExercise);
+            // Only the participations that will actually be built: a participation without a submission returns from
+            // triggerBuild immediately, so counting it towards the external system's batch size would buy a pause for a
+            // build that never happened.
+            for (var participation : triggerable) {
                 // Execute requests in batches when using an external build system.
                 if (index > 0 && index % externalSystemRequestBatchSize == 0) {
                     try {
@@ -206,6 +209,30 @@ public class ProgrammingTriggerService {
      * @param participationsOfExercise the participations of one exercise that are about to be triggered
      * @return the trigger inputs shared by those participations
      */
+    /**
+     * Resolves the shared inputs, falling back to resolving nothing if that fails.
+     * <p>
+     * Resolving happens outside the per-participation error handling, so a failure here would otherwise abort the
+     * remaining exercises of the batch and skip the notification that tells the instructor the run finished. Falling
+     * back leaves every participation to resolve what it needs itself, which is what happened before the batch existed:
+     * slower, but the run still completes and a failure that is specific to one participation still only affects it.
+     *
+     * @param participationsOfExercise the participations of one exercise that are about to be triggered
+     * @param loadedExercise           an exercise the caller already loaded, or null
+     * @return the shared inputs, or {@link SharedBuildTriggerData#NONE} if they could not be resolved
+     */
+    private SharedBuildTriggerData prepareSharedTriggerDataOrNone(List<ProgrammingExerciseStudentParticipation> participationsOfExercise,
+            @Nullable ProgrammingExercise loadedExercise) {
+        try {
+            return prepareSharedTriggerData(participationsOfExercise, loadedExercise);
+        }
+        catch (Exception e) {
+            log.error("Could not resolve the shared build trigger inputs for exercise {}; each participation resolves them itself",
+                    participationsOfExercise.getFirst().getExercise().getId(), e);
+            return SharedBuildTriggerData.NONE;
+        }
+    }
+
     private SharedBuildTriggerData prepareSharedTriggerData(List<ProgrammingExerciseStudentParticipation> participationsOfExercise, @Nullable ProgrammingExercise loadedExercise) {
         if (continuousIntegrationTriggerService.isEmpty()) {
             return SharedBuildTriggerData.NONE;
