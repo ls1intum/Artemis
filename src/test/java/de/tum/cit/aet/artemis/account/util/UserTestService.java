@@ -607,6 +607,7 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
+        repoUser.setActivationKey("some-key");
         repoUser.setLtiCreated(true);
         userTestRepository.save(repoUser);
 
@@ -620,6 +621,10 @@ public class UserTestService {
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+        // The key the factory generated for the internal account is unreachable state once the account is activated, and
+        // an activated account carrying one would break the invariant the data repair for wrongly unactivated accounts
+        // relies on.
+        assertThat(currentUser.getActivationKey()).as("activating through the LTI initialization clears the activation key").isNull();
     }
 
     // Test
