@@ -21,8 +21,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
-import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -70,8 +68,6 @@ public class VariantBuildVerificationService {
     public record BuildResultOutcome(Result result, BuildResultState state) {
     }
 
-    private final GitService gitService;
-
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
@@ -80,37 +76,13 @@ public class VariantBuildVerificationService {
 
     private final ResultRepository resultRepository;
 
-    public VariantBuildVerificationService(GitService gitService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public VariantBuildVerificationService(TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository) {
-        this.gitService = gitService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
-    }
-
-    /**
-     * Blocks until the remote HEAD equals the expected commit hash or the timeout elapses.
-     *
-     * @param repositoryUri repository to poll
-     * @param expectedHash  commit hash that must be visible remotely
-     * @param timeoutMs     maximum time to wait
-     * @throws InterruptedException when the polling thread is interrupted
-     */
-    public void waitUntilRemoteHasCommit(LocalVCRepositoryUri repositoryUri, String expectedHash, long timeoutMs) throws InterruptedException {
-        long start = System.currentTimeMillis();
-        while (System.currentTimeMillis() - start < timeoutMs) {
-            try {
-                String head = gitService.getLastCommitHash(repositoryUri);
-                if (expectedHash != null && expectedHash.equals(head)) {
-                    return;
-                }
-            }
-            catch (Exception ignored) {
-            }
-            Thread.sleep(300);
-        }
     }
 
     /**

@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultState;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -47,7 +46,6 @@ class VariantBuildVerificationServiceJointWaitTest {
 
     @BeforeEach
     void setUp() {
-        GitService gitService = mock(GitService.class);
         TemplateProgrammingExerciseParticipationRepository templateRepository = mock(TemplateProgrammingExerciseParticipationRepository.class);
         SolutionProgrammingExerciseParticipationRepository solutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         ProgrammingSubmissionRepository submissionRepository = mock(ProgrammingSubmissionRepository.class);
@@ -63,7 +61,7 @@ class VariantBuildVerificationServiceJointWaitTest {
         when(solutionRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(solutionParticipation));
         when(templateRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
 
-        service = new VariantBuildVerificationService(gitService, templateRepository, solutionRepository, submissionRepository, resultRepository);
+        service = new VariantBuildVerificationService(templateRepository, solutionRepository, submissionRepository, resultRepository);
     }
 
     private Map<RepositoryType, PendingBuild> pending() {
@@ -113,7 +111,6 @@ class VariantBuildVerificationServiceJointWaitTest {
     void shouldReportParticipationNotFoundWithoutBlockingTheOtherBuild() throws Exception {
         // No solution participation exists: that type resolves to PARTICIPATION_NOT_FOUND immediately, while the
         // template still returns its fresh result.
-        GitService gitService = mock(GitService.class);
         SolutionProgrammingExerciseParticipationRepository emptySolutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         when(emptySolutionRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.empty());
         TemplateProgrammingExerciseParticipationRepository templateRepository = mock(TemplateProgrammingExerciseParticipationRepository.class);
@@ -122,7 +119,7 @@ class VariantBuildVerificationServiceJointWaitTest {
         when(templateRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
         stubResult(TEMPLATE_PARTICIPATION_ID, freshResult(0.0, 5));
 
-        service = new VariantBuildVerificationService(gitService, templateRepository, emptySolutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository);
+        service = new VariantBuildVerificationService(templateRepository, emptySolutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository);
 
         Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, pending());
 

@@ -525,16 +525,23 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void shouldHonorCancellationAtThePhaseBoundaryAndDeleteTheClone() throws Exception {
         AtomicReference<Long> provisionedExerciseId = new AtomicReference<>();
+        // Pick the job under test by its own id. Other tests in this class start jobs for the same login that
+        // never reach a terminal phase, and the job map is shared and not cleared between tests, so "the first
+        // non-terminal job of this user" could resolve to one of those and cancel the wrong job.
+        AtomicReference<String> jobIdUnderTest = new AtomicReference<>();
         // The agent round sets the cancel flag mid-TRANSFORMING (through the same service the DELETE endpoint
         // uses); the pipeline must honor it at the next phase boundary — before VERIFYING.
         scriptChatModel(PLAN_JSON, tools -> {
-            VariantJob runningJob = jobService.getJobsOfUser(EDITOR_LOGIN).stream().filter(job -> !job.getPhase().isTerminal()).findFirst().orElseThrow();
+            // The pipeline runs async, so the id may not be published yet when this round starts.
+            await().atMost(Duration.ofSeconds(10)).until(() -> jobIdUnderTest.get() != null);
+            VariantJob runningJob = jobService.getJob(jobIdUnderTest.get(), EDITOR_LOGIN).orElseThrow();
             provisionedExerciseId.set(runningJob.getVariantExerciseId());
             jobService.requestCancel(runningJob.getJobId(), EDITOR_LOGIN);
             return "round interrupted by cancellation";
         }, List.of());
 
         String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        jobIdUnderTest.set(jobId);
         VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
 
         assertThat(job.getPhase()).isEqualTo(VariantJobPhase.CANCELLED);

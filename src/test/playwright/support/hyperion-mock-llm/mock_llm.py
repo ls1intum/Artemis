@@ -249,7 +249,9 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         else:
             self._respond(200, response)
 
-    def log_message(self, format: str, *args) -> None:  # noqa: A002 - match BaseHTTPRequestHandler signature
+    def log_message(self, fmt: str, *args) -> None:
+        """Silence the per-request access log. BaseHTTPRequestHandler passes this positionally, so the parameter
+        can be named away from the `format` builtin its own signature shadows."""
         return
 
 
