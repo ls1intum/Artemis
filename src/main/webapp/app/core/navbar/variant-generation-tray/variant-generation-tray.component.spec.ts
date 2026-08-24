@@ -153,6 +153,18 @@ describe('VariantGenerationTrayComponent', () => {
         expect(routerMock.navigate).not.toHaveBeenCalled();
     });
 
+    it('opens an entry on Space without scrolling the page behind the tray', () => {
+        // The entry is a div with role="button" (it hosts the cancel button, so it cannot be a real button).
+        // That contract requires Space to activate it, and Space must not also scroll the page.
+        const event = { preventDefault: vi.fn() } as unknown as Event;
+
+        component.openJobEntryOnSpace(event, runningJob);
+
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(component.monitorJobId()).toBe('job-1');
+        expect(component.monitorVisible()).toBe(true);
+    });
+
     it('flags failed jobs and drafts with warnings as needing attention', () => {
         expect(component.needsAttention(runningJob)).toBe(false);
         expect(component.needsAttention(completedJob)).toBe(false);

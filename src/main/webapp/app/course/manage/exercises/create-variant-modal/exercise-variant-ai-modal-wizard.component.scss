@@ -136,6 +136,14 @@
 
 .option-card {
     position: relative;
+
+    // A real <button> so the cards are focusable and operable by keyboard; these declarations undo the
+    // UA button styling the card design does not want.
+    display: block;
+    width: 100%;
+    margin: 0;
+    font: inherit;
+    color: inherit;
     border: 1px solid var(--p-content-border-color);
     border-radius: 0.75rem;
     padding: 1.25rem 1rem;
@@ -145,6 +153,11 @@
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     overflow: hidden;
+
+    &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
+    }
 
     &::before {
         content: '';
@@ -185,13 +198,15 @@
         transform: translateY(-2px);
     }
 
-    h6 {
+    &__title {
+        display: block;
         font-weight: 600;
         font-size: 0.87rem;
         margin-bottom: 0.3rem;
     }
 
-    p {
+    &__hint {
+        display: block;
         font-size: 0.75rem;
         color: var(--p-text-muted-color);
         line-height: 1.35;

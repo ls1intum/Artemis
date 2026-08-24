@@ -279,6 +279,22 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
         TestBed.resetTestingModule();
     });
 
+    it('exposes the adaptation cards as real toggle buttons so they can be operated without a mouse', () => {
+        const card = document.body.querySelector('[data-testid="variant-option-narrative"]');
+
+        // A native button is focusable and fires (click) on both Enter and Space; a plain div does neither, which
+        // left step 1 impossible to complete without a mouse and the Next button permanently disabled.
+        expect(card?.tagName).toBe('BUTTON');
+        expect(card?.getAttribute('type')).toBe('button');
+        expect(card?.getAttribute('aria-pressed')).toBe('false');
+
+        (card as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(component.changeNarrative()).toBe(true);
+        expect(document.body.querySelector('[data-testid="variant-option-narrative"]')?.getAttribute('aria-pressed')).toBe('true');
+    });
+
     it('offers the storytelling option card and accepts it as the only selection', () => {
         expect(document.body.querySelector('[data-testid="variant-option-narrative"]')).not.toBeNull();
 

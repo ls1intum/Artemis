@@ -57,6 +57,7 @@
                             data-testid="variant-tray-entry"
                             (click)="openJobEntry(job)"
                             (keydown.enter)="openJobEntry(job)"
+                            (keydown.space)="openJobEntryOnSpace($event, job)"
                         >
                             <div class="flex items-center justify-between gap-2">
                                 <span class="truncate font-semibold">{{ job.sourceExerciseTitle }}</span>

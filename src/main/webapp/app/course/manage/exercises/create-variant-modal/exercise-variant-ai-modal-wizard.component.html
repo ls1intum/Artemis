@@ -71,58 +71,72 @@
         <p class="text-muted-color text-sm mb-4">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.intro' | artemisTranslate }}</p>
 
         <div class="option-cards mb-6">
-            <div class="option-card" [class.option-card--selected]="changeDifficulty()" (click)="toggleDifficulty()" data-testid="variant-option-difficulty">
+            <button
+                type="button"
+                class="option-card"
+                [class.option-card--selected]="changeDifficulty()"
+                [attr.aria-pressed]="changeDifficulty()"
+                (click)="toggleDifficulty()"
+                data-testid="variant-option-difficulty"
+            >
                 @if (changeDifficulty()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                 }
-                <div class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></div>
-                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficulty' | artemisTranslate }}</h6>
-                <p>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficultyHint' | artemisTranslate }}</p>
+                <span class="option-card__icon"><fa-icon [icon]="faGaugeHigh" /></span>
+                <span class="option-card__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficulty' | artemisTranslate }}</span>
+                <span class="option-card__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.difficultyHint' | artemisTranslate }}</span>
                 <span class="option-card__cta">
                     @if (changeDifficulty()) {
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
                     }
                 </span>
-            </div>
-            <div class="option-card" [class.option-card--selected]="changeDomain()" (click)="toggleDomain()">
+            </button>
+            <button type="button" class="option-card" [class.option-card--selected]="changeDomain()" [attr.aria-pressed]="changeDomain()" (click)="toggleDomain()">
                 @if (changeDomain()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                 }
-                <div class="option-card__icon"><fa-icon [icon]="faEarthAmericas" /></div>
-                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.domain' | artemisTranslate }}</h6>
-                <p>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.domainHint' | artemisTranslate }}</p>
+                <span class="option-card__icon"><fa-icon [icon]="faEarthAmericas" /></span>
+                <span class="option-card__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.domain' | artemisTranslate }}</span>
+                <span class="option-card__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.domainHint' | artemisTranslate }}</span>
                 <span class="option-card__cta">
                     @if (changeDomain()) {
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
                     }
                 </span>
-            </div>
-            <div class="option-card" [class.option-card--selected]="changeNarrative()" (click)="toggleNarrative()" data-testid="variant-option-narrative">
+            </button>
+            <button
+                type="button"
+                class="option-card"
+                [class.option-card--selected]="changeNarrative()"
+                [attr.aria-pressed]="changeNarrative()"
+                (click)="toggleNarrative()"
+                data-testid="variant-option-narrative"
+            >
                 @if (changeNarrative()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                 }
-                <div class="option-card__icon"><fa-icon [icon]="faBookOpen" /></div>
-                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.narrative' | artemisTranslate }}</h6>
-                <p>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.narrativeHint' | artemisTranslate }}</p>
+                <span class="option-card__icon"><fa-icon [icon]="faBookOpen" /></span>
+                <span class="option-card__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.narrative' | artemisTranslate }}</span>
+                <span class="option-card__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.narrativeHint' | artemisTranslate }}</span>
                 <span class="option-card__cta">
                     @if (changeNarrative()) {
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
                     }
                 </span>
-            </div>
-            <div class="option-card" [class.option-card--selected]="changeCustom()" (click)="toggleCustom()">
+            </button>
+            <button type="button" class="option-card" [class.option-card--selected]="changeCustom()" [attr.aria-pressed]="changeCustom()" (click)="toggleCustom()">
                 @if (changeCustom()) {
                     <span class="option-card__check"><fa-icon [icon]="faCheck" /></span>
                 }
-                <div class="option-card__icon"><fa-icon [icon]="faPenToSquare" /></div>
-                <h6>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.custom' | artemisTranslate }}</h6>
-                <p>{{ 'artemisApp.exerciseVariantGeneration.wizard.select.customHint' | artemisTranslate }}</p>
+                <span class="option-card__icon"><fa-icon [icon]="faPenToSquare" /></span>
+                <span class="option-card__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.custom' | artemisTranslate }}</span>
+                <span class="option-card__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.select.customHint' | artemisTranslate }}</span>
                 <span class="option-card__cta">
                     @if (changeCustom()) {
                         {{ 'artemisApp.exerciseVariantGeneration.wizard.selected' | artemisTranslate }}
                     }
                 </span>
-            </div>
+            </button>
         </div>
 
         <div class="flex justify-end mt-8">
@@ -397,10 +411,16 @@
                                      field, oldest first (latest at the bottom) — earlier attempt errors stay
                                      inspectable after a later attempt succeeded. -->
                                 @if (hasAnyDetail(outputs)) {
-                                    <a class="block cursor-pointer text-sm no-underline" (click)="toggleStepOutput(phase)" data-testid="variant-wizard-step-output-toggle">
+                                    <button
+                                        type="button"
+                                        class="block w-full cursor-pointer border-0 bg-transparent p-0 text-start no-underline text-sm"
+                                        [attr.aria-expanded]="!!expandedPhases()[phase]"
+                                        (click)="toggleStepOutput(phase)"
+                                        data-testid="variant-wizard-step-output-toggle"
+                                    >
                                         <fa-icon [icon]="expandedPhases()[phase] ? faChevronDown : faChevronRight" class="mr-1" />
                                         {{ outputs[outputs.length - 1].summary }}
-                                    </a>
+                                    </button>
                                     @if (expandedPhases()[phase]) {
                                         @for (stepOutput of outputs; track $index) {
                                             @if (stepOutput.detail) {
@@ -496,10 +516,16 @@
                     <div class="min-w-0">
                         <div class="font-semibold">{{ 'artemisApp.exerciseVariantGeneration.wizard.draftWithWarnings' | artemisTranslate }}</div>
                         @if (warnings().length > 0) {
-                            <a class="block cursor-pointer text-sm no-underline" (click)="toggleWarnings()" data-testid="variant-wizard-warnings-toggle">
+                            <button
+                                type="button"
+                                class="block w-full cursor-pointer border-0 bg-transparent p-0 text-start no-underline text-sm"
+                                [attr.aria-expanded]="warningsExpanded()"
+                                (click)="toggleWarnings()"
+                                data-testid="variant-wizard-warnings-toggle"
+                            >
                                 <fa-icon [icon]="warningsExpanded() ? faChevronDown : faChevronRight" class="mr-1" />
                                 {{ 'artemisApp.exerciseVariantGeneration.wizard.warningDetails' | artemisTranslate: { count: warnings().length } }}
-                            </a>
+                            </button>
                             @if (warningsExpanded()) {
                                 @for (warning of warnings(); track warning) {
                                     <pre class="step-output-detail" data-testid="variant-wizard-warning-detail">{{ warning }}</pre>
@@ -568,10 +594,16 @@
                         <!-- Collapsed: the latest message's summary. Expanded: the phase's FULL history, each
                              message in its own scrollable code field, latest at the bottom. -->
                         @if (hasAnyDetail(entry.outputs)) {
-                            <a class="block cursor-pointer no-underline" (click)="toggleStepOutput(entry.phase)" data-testid="variant-wizard-summary-toggle">
+                            <button
+                                type="button"
+                                class="block w-full cursor-pointer border-0 bg-transparent p-0 text-start no-underline"
+                                [attr.aria-expanded]="!!expandedPhases()[entry.phase]"
+                                (click)="toggleStepOutput(entry.phase)"
+                                data-testid="variant-wizard-summary-toggle"
+                            >
                                 <fa-icon [icon]="expandedPhases()[entry.phase] ? faChevronDown : faChevronRight" class="mr-1" />
                                 {{ entry.outputs[entry.outputs.length - 1].summary }}
-                            </a>
+                            </button>
                             @if (expandedPhases()[entry.phase]) {
                                 @for (stepOutput of entry.outputs; track $index) {
                                     @if (stepOutput.detail) {

@@ -159,4 +159,16 @@ export class VariantGenerationTrayComponent {
         this.monitorJobId.set(job.jobId);
         this.monitorVisible.set(true);
     }
+
+    /**
+     * Space activation for the entry. The entry carries `role="button"`, so it must respond to Space as well as
+     * Enter; the default has to be suppressed or the key scrolls the page behind the popover instead.
+     *
+     * @param event the keyboard event to suppress
+     * @param job   the job whose entry was activated
+     */
+    openJobEntryOnSpace(event: Event, job: VariantJob): void {
+        event.preventDefault();
+        this.openJobEntry(job);
+    }
 }
