@@ -62,8 +62,9 @@ programming exercise, and submits the exam.
 Read this before choosing a size, because it decides what the numbers mean. The simulation is a
 closed-loop maximum-throughput test, not a scaled-down exam:
 
-- **There is no think time.** The only pause inside a student's exam is a tenth of a second before each
-  push. A real exam spreads the same work over an hour or more.
+- **Think time is short.** A student pauses two to four seconds after each action, and a tenth of a
+  second before each push. A real exam spreads the same work over an hour or more, so a run still
+  compresses the load by a large factor.
 - **The default push count is high.** The form defaults to 8 to 15 commits and pushes per student, and
   every push is a build. At the sizes below that is tens of thousands of builds.
 
@@ -76,9 +77,11 @@ Two consequences for how a ladder is run:
 - **Keep the pushes low**, one or two per student, or the build queue rather than Artemis becomes the
   thing being measured. Estimate the drain as `students x pushes / concurrent build slots x build time`
   before committing to a maintenance window.
-- **Client concurrency is capped** at ten threads per CPU of the machine running the tool, so above that
-  many students a larger run adds duration and accumulated state rather than more simultaneous users.
-  Record the tool host's CPU count with the result, or two runs are not comparable.
+- **Client concurrency is capped** at 200 students in flight by default, independent of the tool host's
+  CPU count, and configurable through `benchmarking.simulation.max-concurrency`. Above that many
+  students a larger run adds duration and accumulated state rather than more simultaneous users. A
+  student who is in its think time does not occupy one of those slots. Record the setting with the
+  result, or two runs are not comparable.
 
 ### The ladder
 
@@ -217,9 +220,10 @@ Two honest notes, because a benchmark that flatters itself is worth nothing.
 headroom at the end. 2,000 is the largest run we measured, not the largest Artemis handled.
 
 **A simulated student is harder work than a real one.** Real students read the question, think, and
-type; these ones move to the next action the instant the previous one returns, compressing a 90-minute
-exam into three. A real cohort of the same size is a considerably lighter load, so the 2,000 here stands
-for substantially more than 2,000 people in a room.
+type; these ones pause for a couple of seconds and move on, compressing a 90-minute exam into a few
+minutes. A real cohort of the same size is a considerably lighter load, so the 2,000 here stands for
+substantially more than 2,000 people in a room. The run below was measured before the tool paused
+between actions at all, which compressed it further still.
 
 That last point lines up with operational history: Artemis runs courses and exams with more than 2,000
 students and has done for years. This run is independent evidence, on small hardware, that the room
