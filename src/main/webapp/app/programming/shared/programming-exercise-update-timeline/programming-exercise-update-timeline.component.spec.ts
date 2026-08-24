@@ -593,7 +593,7 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         fixture.detectChanges();
 
         expect(component.timelineItems()).toHaveLength(0);
-        expect(fixture.debugElement.nativeElement.querySelector('jhi-exercise-timeline')).toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('jhi-timeline')).toBeNull();
         expect(component.formValid).toBe(true);
         expect(component.formEmpty).toBe(false);
     });

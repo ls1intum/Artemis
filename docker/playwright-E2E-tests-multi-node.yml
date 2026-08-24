@@ -119,13 +119,20 @@ services:
       # variable; the test reads the value to assert the expected cluster size.
       #
       # The cluster is asymmetric:
-      #   - node-1 (profiles: core, scheduling, localvc, localci, docker)         -> Hazelcast member
-      #   - node-2 (profiles: core, buildagent, localvc, localci, docker)         -> Hazelcast member + build agent
-      #   - node-3 (profiles: buildagent only)                                    -> Hazelcast client + build agent
-      # Hazelcast `cluster.getMembers()` reports the two members (node-1, node-2). node-3
-      # connects as a client and is exposed via the build-agents endpoint instead.
+      #   - node-1 (profiles: core, scheduling, localvc, localci, docker)         -> core node
+      #   - node-2 (profiles: core, buildagent, localvc, localci, docker)         -> core node + build agent
+      #   - node-3 (profiles: buildagent only)                                    -> build agent only
+      # Only core nodes register with the distributed node registry that the websocket nodes
+      # endpoint reads, so it reports two. node-3 is exposed via the build-agents endpoint instead.
       EXPECTED_CLUSTER_NODE_COUNT: '2'
-      EXPECTED_MIN_BUILD_AGENTS: '1'
+      # node-2 and node-3 both run a build agent, each with its own short name (see node2.env / node3.env).
+      EXPECTED_MIN_BUILD_AGENTS: '2'
+      # Which distributed data backend the stack runs on. ClusterFormation.spec.ts uses it to decide which node-identity
+      # shape it may assert: Hazelcast publishes `[host]:port`, the Redis provider publishes a client name with no port.
+      DISTRIBUTED_DATA_PROVIDER: '${DISTRIBUTED_DATA_PROVIDER:-hazelcast}'
+      # Direct per-core-node URLs, so the cross-node specs can address one specific node instead of whichever
+      # the load balancer picks.
+      MULTI_NODE_URLS: 'http://artemis-app-node-1:8080,http://artemis-app-node-2:8080'
     networks:
       - artemis
 

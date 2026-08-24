@@ -623,6 +623,10 @@ export default tseslint.config(
             'localRules/no-raw-tailwind-color-palette': 'error',
             'localRules/no-primeng-component-classes': 'error',
             'localRules/require-chart-accessible-name': 'error',
+            // A property binding is re-evaluated on every change-detection pass, so `.bind()` there hands the
+            // consumer a new function identity every pass. Applies to all templates for the same reason as the two
+            // rules above: change detection works the same way everywhere.
+            'localRules/no-bind-in-template-binding': 'error',
         },
     },
     {
@@ -652,6 +656,9 @@ export default tseslint.config(
             'src/main/webapp/app/localci/build-agent-details/**/*.html',
             'src/main/webapp/app/localci/build-job-statistics/**/*.html',
             'src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.html',
+            'src/main/webapp/app/exam/manage/exercise-groups/**/*.html',
+            'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
+            'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'packages/tum-ui/src/lib/**/*.html',
         ],
         languageOptions: {

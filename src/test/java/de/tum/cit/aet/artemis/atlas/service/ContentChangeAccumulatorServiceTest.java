@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
-import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalDataProviderService;
 
 /**
  * Exercises the accumulator's debounce, per-day cap and requeue logic against a

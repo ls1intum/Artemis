@@ -30,18 +30,36 @@ test.describe('Resizable exercise split panel (p-splitter)', { tag: '@fast' }, (
         await page.mouse.up();
     }
 
-    /** Polls the panel width until two consecutive reads agree, so the splitter has finished its initial layout. */
+    /**
+     * Polls the panel width until two consecutive reads agree, so the splitter has finished its initial layout.
+     * <p>
+     * Only a width that repeated is returned. A panel that is still being laid out reports a different width on every
+     * poll, and returning the last of those as "settled" hands an in-flight layout to the resize assertion, which then
+     * compares against a number that was never the panel's resting width.
+     */
     async function waitForSettledWidth(panel: Locator): Promise<number> {
-        let previous = -1;
+        let previous: number | undefined;
         for (let i = 0; i < 20; i++) {
-            const width = (await panel.boundingBox())!.width;
-            if (Math.abs(width - previous) < 1 && width > 0) {
-                return width;
+            // No box means the panel is between renders, which is the opposite of settled: keep polling instead of
+            // dereferencing null, which turned a panel that was still laying itself out into a TypeError.
+            const box = await panel.boundingBox();
+            if (box && box.width > 0) {
+                if (previous !== undefined && Math.abs(box.width - previous) < 1) {
+                    return box.width;
+                }
+                previous = box.width;
+            } else {
+                // The reads have to be consecutive: keeping the width from before a render gap would let it agree with
+                // one from after the gap and pass a layout that was never stable across two polls as settled.
+                previous = undefined;
             }
-            previous = width;
             await panel.page().waitForTimeout(100);
         }
-        return previous;
+        throw new Error(
+            previous === undefined
+                ? 'The panel never reported a measurable width, so there is no settled layout to compare a resize against.'
+                : `The panel width never settled, last read ${previous}px, so there is no resting layout to compare a resize against.`,
+        );
     }
 
     test('repartitions the panels by dragging the splitter gutter', async ({ login, page, courseOverview }) => {
