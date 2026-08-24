@@ -23,9 +23,10 @@ import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.service.AuditEventService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.audit.AuditLogType;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -62,7 +63,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     private UserService userService;
 
     @Autowired
-    private PersistenceAuditEventRepository persistenceAuditEventRepository;
+    private SecurityAuditEventRepository securityAuditEventRepository;
 
     @Autowired
     private AuditEventService auditEventService;
@@ -191,14 +192,14 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1")
     void revokingThroughTheEndpointIsRecordedForAdministrators() throws Exception {
         giveUserCredentials();
-        persistenceAuditEventRepository.deleteAll();
+        securityAuditEventRepository.deleteAll();
 
         request.postWithoutLocation("/api/account/revoke-credentials", new CredentialRevocationChoiceDTO(true, false, false), HttpStatus.OK, null);
 
         // The audit event is how an administrator reconstructs afterwards that the owner did this to their own account.
         // Only the type and the principal are asserted here: `data` is a lazy element collection that cannot be read
         // outside a session, and AccountSecurityNotificationServiceTest already pins its contents exactly.
-        assertThat(persistenceAuditEventRepository.findAll()).anySatisfy(event -> {
+        assertThat(securityAuditEventRepository.findAll()).anySatisfy(event -> {
             assertThat(event.getAuditEventType()).isEqualTo(Constants.REVOKE_OWN_CREDENTIALS);
             assertThat(event.getPrincipal()).isEqualTo(user.getLogin());
         });
@@ -572,7 +573,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @Test
     void deactivatingWhileChangingThePasswordReportsThatEverythingWasRevoked() {
         giveUserCredentials();
-        persistenceAuditEventRepository.deleteAll();
+        securityAuditEventRepository.deleteAll();
 
         User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
         ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
@@ -585,8 +586,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         assertAllCredentialsRevoked();
         // Read through AuditEventService: it loads `data` through an entity graph, while findAll() leaves that collection
-        // lazy and unreadable outside a session.
-        assertThat(auditEventService.findAll(Pageable.unpaged())).anySatisfy(event -> {
+        // lazy and unreadable outside a session. The log to read from is the security one, because a password change is
+        // a credential change (see AuditEventConstants.SECURITY_EVENT_TYPES).
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
             assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
             assertThat(event.getData()).containsEntry("revokedPasskeys", "true").containsEntry("revokedSshKeys", "true").containsEntry("revokedVcsAccessTokens", "true");
         });

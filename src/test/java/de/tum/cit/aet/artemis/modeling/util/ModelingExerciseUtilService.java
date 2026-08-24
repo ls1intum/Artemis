@@ -265,7 +265,7 @@ public class ModelingExerciseUtilService {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         var user = userUtilService.getUserByLogin(login);
-        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
+        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user, null);
         Result result = new Result();
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
