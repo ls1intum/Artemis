@@ -146,11 +146,10 @@ export default defineConfig({
                 viewport: { width: 1920, height: 1080 },
                 // The shared `launchOptions.args` above are Chromium command-line flags, and this is the only
                 // place where a non-Chromium browser would inherit them. The Linux WebKit build refuses to start
-                // on an unrecognised one ("Cannot parse arguments: Unknown option --disable-features=..."), so
-                // every WebKit test errored at launch in CI, in the one project that exists for WebKit's sake.
-                // The macOS build ignores the flag, which is why this only ever showed up in the container.
-                // Nothing is lost by dropping them here: the certificate handling the args provide for Chromium
-                // is covered for the other engines by the context-level `ignoreHTTPSErrors` above.
+                // on an unrecognised one ("Cannot parse arguments: Unknown option --disable-features=..."), which
+                // fails every WebKit test at launch in the container; the macOS build ignores the flag, so this is
+                // invisible locally. Nothing is lost by dropping them: the certificate handling they provide for
+                // Chromium is covered for the other engines by the context-level `ignoreHTTPSErrors` above.
                 ...(browserName === 'chromium' ? {} : { launchOptions: { args: [] } }),
             },
         })),

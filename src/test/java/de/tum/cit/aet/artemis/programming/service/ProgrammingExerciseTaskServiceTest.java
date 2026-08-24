@@ -64,9 +64,9 @@ class ProgrammingExerciseTaskServiceTest extends AbstractProgrammingIntegrationI
     @Test
     void shouldResolveTestCaseWhenTheIdWrapperIsNotAtTheStartOfTheReference() {
         // `testName<testid>1</testid>` is authored in practice, and the shared grammar in TestReferenceParser matches
-        // the wrapper anywhere in the reference. Gating on the prefix made task extraction fall through to the name
-        // lookup for such a reference, so the task silently lost the test case while the problem-statement renderer
-        // resolved the very same reference by id.
+        // the wrapper anywhere in the reference. Gating on a prefix instead would send such a reference through the
+        // name lookup, so the task would silently lose the test case that the problem-statement renderer resolves by
+        // id from the very same text.
         ProgrammingExerciseTestCase testCase = mock(ProgrammingExerciseTestCase.class);
         when(testCase.getId()).thenReturn(1L);
 

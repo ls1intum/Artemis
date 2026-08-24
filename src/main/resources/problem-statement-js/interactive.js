@@ -1,19 +1,15 @@
 /**
  * Interactive feedback modal for the server-rendered problem statement.
  *
- * Attached to each .artemis-task[data-feedback] inside every .artemis-problem-statement. The task attribute lists
- * the test ids it can show; the entries themselves are carried once by the container.
- * container on the page. Click (or Enter/Space) on a task opens a modal showing the
- * associated test feedback; the modal is appended to document.body so it is not clipped
- * by host-page overflow / transform stacking contexts, and carries a dark class when its
- * owning container is dark so CSS variables alone handle theming.
+ * Attached to each .artemis-task[data-feedback] inside every .artemis-problem-statement on the page. The task
+ * attribute lists the test ids it can show; the entries themselves are carried once by the container. Click (or
+ * Enter/Space) on a task opens a modal showing the associated test feedback.
  *
- * Assumptions:
- * - katex / KaTeX is irrelevant here; feedback is plain text.
- * - The server escapes every attribute (names, messages) before it reaches this file;
- *   this file never assigns to innerHTML.
- * - __i18n is optionally injected as a literal object before this IIFE runs; fallbacks
- *   in English are used if a key is missing.
+ * The modal is appended to document.body so it is not clipped by host-page overflow or transform stacking
+ * contexts, and carries a dark class when its owning container is dark, so CSS variables alone handle theming.
+ *
+ * The server escapes every name and message before it reaches this file, which never assigns to innerHTML.
+ * __i18n is optionally injected as a literal object before this IIFE runs; a missing key falls back to English.
  */
 (function () {
     'use strict';

@@ -70,16 +70,15 @@ run_playwright() {
     local junit_file="./test-reports/results-${test_type}.xml"
 
     # `--pass-with-no-tests` buys an unambiguous exit code at the price of turning "this project selected no
-    # test at all" into a silent success, so that case is asserted separately. On an unfiltered run every
-    # project named on the command line is expected to contribute tests, and a selection that quietly matches
-    # nothing (a renamed project, a changed grep, a spec that moved out of range) is exactly how the
-    # cross-engine suite stopped running once already while CI stayed green.
+    # test at all" into a silent success, so that case is asserted separately. On an unfiltered run every project
+    # named on the command line has to contribute tests; a selection that quietly matches nothing (a renamed
+    # project, a changed grep, a spec that moved out of range) would otherwise stop a suite from running while CI
+    # stays green.
     #
-    # The assertion is per project, not per invocation, because several projects share one report: the
-    # cross-engine invocation runs three browser engines at once, and WebKit going silent while Chromium still
-    # reports would leave the aggregate non-empty. WebKit is the engine this suite exists for, since it is the
-    # only one that sends the JWT cookie from the sandboxed frame. Playwright's JUnit reporter records the
-    # project of each testsuite in its `hostname` attribute, which is where that per-project fact survives.
+    # The assertion is per project, not per invocation, because several projects share one report: the cross-engine
+    # invocation runs three browser engines at once, so WebKit going silent while Chromium still reports would leave
+    # the aggregate non-empty. Playwright's JUnit reporter records each testsuite's project in its `hostname`
+    # attribute, which is where that per-project fact survives.
     if [ "$FILTERED" -eq 0 ]; then
         local argument
         local project
@@ -106,8 +105,7 @@ run_playwright() {
         elif [ $check_result -eq 2 ]; then
             # Playwright failed and wrote no usable report, so it never got as far as running a test: a collection
             # error, a browser that is not installed, a global setup that threw. Reading that as "nothing to run"
-            # is how a suite silently stops executing while CI stays green, which is the exact bug this file
-            # already had once. It is a failure.
+            # is how a suite silently stops executing while CI stays green, so it counts as a failure.
             echo "ERROR: Project type '$test_type' exited with code $exit_code and produced no test results."
             echo "Playwright did not get as far as running a test. See ./test-reports/pw-output-${test_type}.log."
             FAILED=1
@@ -197,10 +195,9 @@ echo "E2E counts: ${E2E_PASSED} passed, ${E2E_FLAKY} flaky, ${E2E_FAILED} failed
 # moving the real report into place, so CI never consumes an outdated report.
 echo "--- Finalizing test reports ---"
 rm -f ./test-reports/results.xml
-# Globbed rather than enumerated: each invocation above writes its own results-<type>.xml, and a report
-# left out here is invisible to the JUnit report and to the failure classifier, so a failure in it cannot
-# even be named while the script still exits nonzero. The list was enumerated until a new invocation was
-# added and silently went unreported, which is precisely the failure this comment already warned about.
+# Globbed rather than enumerated: each invocation above writes its own results-<type>.xml, and a report left out
+# here is invisible to the JUnit report and to the failure classifier, so a failure in it cannot even be named
+# while the script still exits nonzero. A glob cannot fall behind when an invocation is added.
 REPORTS=()
 for report in ./test-reports/results-*.xml; do
     [ -f "$report" ] && REPORTS+=("$report")

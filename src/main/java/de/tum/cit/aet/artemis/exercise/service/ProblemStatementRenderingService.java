@@ -66,20 +66,9 @@ import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
  * Stateless renderer for problem-statement markdown.
  * <p>
  * The client sends markdown plus optional test feedback, and this service returns a self-contained HTML
- * document ready for embedding. The pipeline, in order, is:
- * <ol>
- * <li>Mask fenced and inline code blocks so downstream passes do not process their contents.</li>
- * <li>Extract PlantUML diagrams, render them server-side via {@link PlantUmlService}, sanitize the SVG,
- * and replace each diagram with an opaque placeholder.</li>
- * <li>Apply math compatibility rewrites and extract math formulas to placeholders.</li>
- * <li>Expand {@code [task]} syntax into HTML task spans with feedback data.</li>
- * <li>Strip remaining {@code <testid>} wrappers from prose (code blocks are still masked, so code
- * examples keep theirs).</li>
- * <li>Restore masked code blocks; then restore math-formula placeholders.</li>
- * <li>Render CommonMark and re-inject the sanitized SVGs.</li>
- * <li>Wrap everything in a full HTML document, include KaTeX / embedded CSS / interactive JS as needed,
- * and compute a content hash.</li>
- * </ol>
+ * document ready for embedding. Everything that must not be treated as markdown (code, diagrams, formulas) is
+ * masked out before the Artemis-specific syntax is expanded, and put back once CommonMark has run and the output
+ * has passed the safelist. The numbered steps of {@link #render} are the authoritative account of that order.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -131,8 +120,6 @@ public class ProblemStatementRenderingService {
     private static final String CODE_BLOCK_PLACEHOLDER_PREFIX = "\u0000CODE_BLOCK_";
 
     private static final String CODE_BLOCK_PLACEHOLDER_SUFFIX = "\u0000";
-
-    /** Fenced code blocks ({@code ```...```}) and inline code ({@code `...`}). */
 
     private static final String PLANTUML_START = "@startuml";
 
