@@ -5,9 +5,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.TRIGGER_INSTRUCTOR_BU
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +33,8 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -111,12 +118,15 @@ public class ProgrammingTriggerService {
     public void triggerInstructorBuildForExercise(long exerciseId) throws EntityNotFoundException {
         // Async can't access the authentication object. We need to do any security checks before this point.
         SecurityUtils.setAuthorizationObject();
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        // Loaded with the associations the trigger reads off the exercise, so the batch below does not have to load it
+        // a second time and no participation has to load either of them for itself.
+        var programmingExercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", exerciseId));
 
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
         Set<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithLatestSubmissionByExerciseId(exerciseId);
-        triggerBuildForParticipations(participations);
+        triggerBuildForParticipations(participations, programmingExercise);
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise, false);
@@ -130,21 +140,75 @@ public class ProgrammingTriggerService {
      * @param participations the participations for which the method triggerBuild should be executed.
      */
     public void triggerBuildForParticipations(Collection<ProgrammingExerciseStudentParticipation> participations) {
-        var index = 0;
-        for (var participation : participations) {
-            // Execute requests in batches when using an external build system.
-            if (index > 0 && index % externalSystemRequestBatchSize == 0) {
-                try {
-                    log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
-                    Thread.sleep(externalSystemRequestBatchWaitingTime);
-                }
-                catch (InterruptedException ex) {
-                    log.error("Exception encountered when pausing before executing successive build for participation {}", participation.getId(), ex);
-                }
-            }
-            triggerBuild(participation);
-            index++;
+        triggerBuildForParticipations(participations, null);
+    }
+
+    /**
+     * Trigger the build for all given participations, reusing an exercise the caller already loaded.
+     *
+     * @param participations the participations for which the method triggerBuild should be executed
+     * @param loadedExercise the exercise of those participations, loaded with its build config and auxiliary
+     *                           repositories, or null when the caller does not have it and it should be loaded here
+     */
+    public void triggerBuildForParticipations(Collection<ProgrammingExerciseStudentParticipation> participations, @Nullable ProgrammingExercise loadedExercise) {
+        // Everything a trigger reads off the exercise rather than off the participation is resolved once per exercise
+        // here, not once per student: the build config, the auxiliary repositories, the build statistics and the head
+        // commit of the test repository are the same for every participation of an exercise. Triggering all
+        // participations of a course of two thousand used to resolve each of them two thousand times, which is what
+        // made an instructor's "build all" spike the node handling it and the database behind it. Participations are
+        // grouped because callers do not always pass a single exercise: a student exam hands over that student's
+        // participations across the whole exam.
+        Map<Long, List<ProgrammingExerciseStudentParticipation>> participationsByExerciseId = participations.stream().filter(Objects::nonNull)
+                .filter(participation -> participation.getExercise() != null).collect(Collectors.groupingBy(participation -> participation.getExercise().getId()));
+        long groupedCount = participationsByExerciseId.values().stream().mapToLong(List::size).sum();
+        if (groupedCount != participations.size()) {
+            log.warn("Not triggering {} of {} participations: they carry no exercise", participations.size() - groupedCount, participations.size());
         }
+
+        var index = 0;
+        for (var participationsOfExercise : participationsByExerciseId.values()) {
+            SharedBuildTriggerData sharedData = prepareSharedTriggerData(participationsOfExercise, loadedExercise);
+            for (var participation : participationsOfExercise) {
+                // Execute requests in batches when using an external build system.
+                if (index > 0 && index % externalSystemRequestBatchSize == 0) {
+                    try {
+                        log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
+                        Thread.sleep(externalSystemRequestBatchWaitingTime);
+                    }
+                    catch (InterruptedException ex) {
+                        log.error("Exception encountered when pausing before executing successive build for participation {}", participation.getId(), ex);
+                    }
+                }
+                triggerBuild(participation, sharedData);
+                index++;
+            }
+        }
+    }
+
+    /**
+     * Loads the exercise of the given participations once, with the associations a trigger reads off it, and resolves
+     * the trigger inputs that are the same for all of them.
+     * <p>
+     * The loaded exercise is set on every participation, so the trigger finds the build config and the auxiliary
+     * repositories already initialized and does not query for either. Both of their loaders return the association when
+     * it is already there, so one load here replaces two queries per participation. Nothing is retained between
+     * batches, so there is nothing to invalidate when an instructor changes the exercise.
+     *
+     * @param participationsOfExercise the participations of one exercise that are about to be triggered
+     * @return the trigger inputs shared by those participations
+     */
+    private SharedBuildTriggerData prepareSharedTriggerData(List<ProgrammingExerciseStudentParticipation> participationsOfExercise, @Nullable ProgrammingExercise loadedExercise) {
+        if (continuousIntegrationTriggerService.isEmpty()) {
+            return SharedBuildTriggerData.NONE;
+        }
+        long exerciseId = participationsOfExercise.getFirst().getExercise().getId();
+        Optional<ProgrammingExercise> exercise = loadedExercise != null && exerciseId == loadedExercise.getId() ? Optional.of(loadedExercise)
+                : programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exerciseId);
+        if (exercise.isEmpty()) {
+            return SharedBuildTriggerData.NONE;
+        }
+        participationsOfExercise.forEach(participation -> participation.setProgrammingExercise(exercise.get()));
+        return continuousIntegrationTriggerService.get().prepareSharedTriggerData(exercise.get());
     }
 
     public void logTriggerInstructorBuild(User user, Exercise exercise, Course course) {
@@ -171,6 +235,17 @@ public class ProgrammingTriggerService {
      * @param participation the participation for which we create a new submission and new result
      */
     public void triggerBuild(ProgrammingExerciseStudentParticipation participation) {
+        triggerBuild(participation, SharedBuildTriggerData.NONE);
+    }
+
+    /**
+     * Trigger a CI build for the latest submission of the participation and notify its owner, reusing trigger inputs
+     * the caller resolved for the whole exercise.
+     *
+     * @param participation the participation for which we create a new submission and new result
+     * @param sharedData    the trigger inputs shared by every participation of the exercise
+     */
+    public void triggerBuild(ProgrammingExerciseStudentParticipation participation, SharedBuildTriggerData sharedData) {
         Optional<ProgrammingSubmission> optionalSubmission = participation.findLatestSubmission();
         // we only need to trigger the build if the student actually already made a submission, otherwise this is not needed
         if (optionalSubmission.isPresent()) {
@@ -183,7 +258,7 @@ public class ProgrammingTriggerService {
                     participationService.resumeProgrammingExercise(participation);
                     // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
                 }
-                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, true);
+                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, true, sharedData);
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
                 programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
             }

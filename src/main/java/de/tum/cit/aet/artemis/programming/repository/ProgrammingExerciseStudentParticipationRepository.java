@@ -143,19 +143,25 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     /**
      * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
+     * <p>
+     * Only the newest submission of each participation is fetched. The caller triggers a build for the latest
+     * submission, so fetching every submission a student ever pushed only to read the last one is a lot of rows for
+     * nothing: on the "trigger all failed builds" path that is every push of every selected participation.
      *
      * @param exerciseId       is used as a filter for the found participations.
      * @param participationIds the participations to retrieve.
-     * @return filtered list of participations.
+     * @return filtered list of participations, each carrying its newest submission if it has one
      */
     @Query("""
             SELECT participation
             FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions
+                LEFT JOIN FETCH participation.submissions s
             WHERE participation.exercise.id = :exerciseId
                 AND participation.id IN :participationIds
+                AND (s.id IS NULL OR s.id = (SELECT MAX(s2.id)
+                                             FROM participation.submissions s2))
             """)
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") long exerciseId,
+    List<ProgrammingExerciseStudentParticipation> findWithLatestSubmissionByExerciseIdAndParticipationIds(@Param("exerciseId") long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 
     @Query("""

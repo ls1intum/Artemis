@@ -215,7 +215,9 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the instructor check below resolves in memory instead of issuing its
+        // own membership query.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMember());
         programmingTriggerService.triggerInstructorBuildForExercise(exerciseId);
@@ -246,7 +248,7 @@ public class ProgrammingSubmissionResource {
 
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
-        var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exerciseId, participationIds);
+        var participations = programmingExerciseStudentParticipationRepository.findWithLatestSubmissionByExerciseIdAndParticipationIds(exerciseId, participationIds);
         programmingTriggerService.triggerBuildForParticipations(participations);
 
         return ResponseEntity.ok().build();
