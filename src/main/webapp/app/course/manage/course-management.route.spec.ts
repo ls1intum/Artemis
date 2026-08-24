@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { courseManagementRoutes } from 'app/course/manage/course-management.route';
 
 describe('courseManagementRoutes', () => {
-    const overviewRedirectRoute = courseManagementRoutes.find((route) => route.path === '' && !route.children);
     const containerRoute = courseManagementRoutes.find((route) => route.path === '' && !!route.children?.length);
 
-    it('redirects the removed management overview to the course overview', () => {
-        expect(overviewRedirectRoute?.redirectTo).toBe('/courses');
-        expect(overviewRedirectRoute?.pathMatch).toBe('full');
+    it('does not handle the removed management overview inside the lazy route tree', () => {
+        const overviewRoute = courseManagementRoutes.find((route) => route.path === '' && !route.children);
+
+        expect(overviewRoute).toBeUndefined();
         expect(containerRoute).toBeDefined();
     });
 

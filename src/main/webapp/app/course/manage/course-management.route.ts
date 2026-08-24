@@ -11,11 +11,6 @@ import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication
 
 export const courseManagementRoutes: Routes = [
     {
-        path: '',
-        pathMatch: 'full',
-        redirectTo: '/courses',
-    },
-    {
         path: 'new',
         loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
         data: {
