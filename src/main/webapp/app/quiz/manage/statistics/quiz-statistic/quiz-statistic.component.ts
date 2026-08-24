@@ -119,8 +119,8 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         for (let i = 0; i < quizQuestions.length; i++) {
             const question = quizQuestions[i];
             const statistic = question.quizQuestionStatistic;
-            const ratedCounter = statistic.ratedCorrectCounter!;
-            const unratedCounter = statistic.unRatedCorrectCounter!;
+            const ratedCounter = statistic?.ratedCorrectCounter ?? 0;
+            const unratedCounter = statistic?.unRatedCorrectCounter ?? 0;
             this.label.push(i + 1 + '.');
             this.backgroundColor.push('#5bc0de');
             this.ratedData.push(ratedCounter);

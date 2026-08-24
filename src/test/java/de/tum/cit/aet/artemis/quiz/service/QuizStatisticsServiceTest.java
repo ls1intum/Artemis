@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -62,7 +62,7 @@ class QuizStatisticsServiceTest {
     void shouldAllowRetryWhenSchedulingStatisticsNotificationFails() {
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenThrow(new IllegalStateException("scheduler stopped")).thenReturn(mock(ScheduledFuture.class));
 
-        assertThrows(IllegalStateException.class, () -> quizStatisticsService.notifyStatisticsChanged(42L));
+        assertThatThrownBy(() -> quizStatisticsService.notifyStatisticsChanged(42L)).isInstanceOf(IllegalStateException.class);
         quizStatisticsService.notifyStatisticsChanged(42L);
 
         verify(taskScheduler, times(2)).schedule(any(Runnable.class), any(Instant.class));

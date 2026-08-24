@@ -22,6 +22,9 @@ public interface ResultTestRepository extends ResultRepository {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findResultWithSubmissionsById(long resultId);
 
+    @EntityGraph(type = LOAD, attributePaths = "submission")
+    List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
+
     Set<Result> findAllBySubmissionParticipationExerciseId(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })

@@ -250,6 +250,18 @@ describe('QuizStatisticComponent', () => {
             expect(comp.data).toEqual([3, 4, 39]);
         });
 
+        it('should use zero counters for questions without calculated statistics', () => {
+            quizExercise.quizQuestions = [{ points: 5, invalid: false, exportQuiz: false, randomizeOrder: true }] as QuizStatisticsOverviewResponse['quizQuestions'];
+            quizExercise.participantsRated = 0;
+            comp.quizExercise.set(quizExercise);
+            comp.rated = true;
+            comp.maxScore = 5;
+
+            expect(() => comp.loadData()).not.toThrow();
+            expect(comp.ratedData).toEqual([0, 0]);
+            expect(comp.unratedData).toEqual([0, 0]);
+        });
+
         it('should use defaults if no quizQuestions are not set', () => {
             // setup
             const updateChartSpy = vi.spyOn(comp, 'loadDataInDiagram');
