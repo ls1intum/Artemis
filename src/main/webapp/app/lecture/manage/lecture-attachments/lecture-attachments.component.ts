@@ -20,6 +20,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { FileService } from 'app/foundation/service/file.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface LectureAttachmentFormData {
     attachmentName?: string;
@@ -191,7 +192,7 @@ export class LectureAttachmentsComponent implements OnDestroy {
         });
 
         this.attachmentToBeUpdatedOrCreated.set(attachment);
-        this.attachmentBackup = Object.assign({}, attachment, {});
+        this.attachmentBackup = deepClone(attachment);
     }
 
     deleteAttachment(attachment: Attachment): void {

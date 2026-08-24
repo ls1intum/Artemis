@@ -52,6 +52,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     readonly presentationAssessment = input.required<PresentationAssessment>();
     readonly instance = input<PresentationAssessmentInstance>();
     readonly initialAssignedStudents = input<User[]>([]);
+    readonly isSaving = input(false);
     readonly saved = output<PresentationAssessmentInstance>();
     readonly cancelled = output<void>();
 
@@ -110,10 +111,11 @@ export class PresentationAssessmentInstanceFormDialogComponent {
                 remark: instance?.remark ?? '',
             });
         });
+        effect(() => (this.isSaving() ? this.editForm.disable({ emitEvent: false }) : this.editForm.enable({ emitEvent: false })));
     }
 
     save(): void {
-        if (this.editForm.invalid || this.assignedStudents().length === 0) {
+        if (this.isSaving() || this.editForm.invalid || this.assignedStudents().length === 0) {
             this.editForm.markAllAsTouched();
             return;
         }

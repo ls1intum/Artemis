@@ -12,10 +12,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.course.service.CourseAccessService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
@@ -35,38 +36,21 @@ public class PresentationAssessmentService {
 
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
-    private final CourseAccessService courseAccessService;
+    private final UserRepository userRepository;
 
     private final ExerciseRepository exerciseRepository;
 
     private final PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
 
-    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, CourseAccessService courseAccessService,
-            ExerciseRepository exerciseRepository, PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository) {
+    public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
-        this.courseAccessService = courseAccessService;
+        this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.presentationAssessmentInstanceRepository = presentationAssessmentInstanceRepository;
     }
 
-    /**
-     * Find all presentation assessments for a course.
-     *
-     * @param courseId the course id
-     * @return the presentation assessments in the course
-     */
-    public List<PresentationAssessment> findAllByCourseId(long courseId) {
-        return presentationAssessmentRepository.findAllByCourseId(courseId);
-    }
-
-    /**
-     * Find a presentation assessment by id and course id.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @return the presentation assessment
-     */
-    public PresentationAssessment findByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
+    private PresentationAssessment findByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
         return presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
     }
 
@@ -83,7 +67,7 @@ public class PresentationAssessmentService {
         }
         PresentationAssessment presentationAssessment = new PresentationAssessment();
         presentationAssessment.setCourse(course);
-        Set<User> students = findCourseStudentsByLogins(course, dto.studentLogins());
+        Set<User> students = resolveAssignedCourseStudents(course, dto.studentLogins());
         applyDto(presentationAssessment, dto);
         presentationAssessment.setStudents(students);
         return presentationAssessmentRepository.save(presentationAssessment);
@@ -104,7 +88,7 @@ public class PresentationAssessmentService {
         if (!dto.id().equals(assessmentId)) {
             throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
         }
-        Set<User> students = dto.studentLogins() != null ? findCourseStudentsByLogins(course, dto.studentLogins()) : null;
+        Set<User> students = dto.studentLogins() != null ? resolveAssignedCourseStudents(course, dto.studentLogins()) : null;
         PresentationAssessment presentationAssessment = findByIdAndCourseIdElseThrow(course.getId(), assessmentId);
         applyDto(presentationAssessment, dto);
         if (students != null) {
@@ -178,58 +162,12 @@ public class PresentationAssessmentService {
         }
         instance.setPresentationDate(dto.presentationDate());
         instance.setResultPoints(dto.resultPoints());
-        instance.setStudents(findCourseStudentsByLogins(course, dto.studentLogins()));
+        instance.setStudents(resolveAssignedCourseStudents(course, dto.studentLogins()));
         instance.setLanguage(dto.language());
         instance.setMode(dto.mode());
         instance.setLocation(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.IN_PERSON ? dto.location() : null);
         instance.setMeetingLink(dto.mode() == de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentMode.ONLINE ? dto.meetingLink() : null);
         instance.setRemark(dto.remark());
-    }
-
-    /**
-     * Find all students assigned to a presentation assessment.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @return the assigned students
-     */
-    public Set<User> findStudents(long courseId, long assessmentId) {
-        findByIdAndCourseIdElseThrow(courseId, assessmentId);
-        return presentationAssessmentRepository.findStudentsForPresentationAssessment(assessmentId, courseId);
-    }
-
-    /**
-     * Add a course student to a presentation assessment.
-     *
-     * @param course       the owning course
-     * @param assessmentId the presentation assessment id
-     * @param studentLogin the login of the student to add
-     */
-    public void addStudent(Course course, long assessmentId, String studentLogin) {
-        PresentationAssessment presentationAssessment = findWithStudentsByIdAndCourseIdElseThrow(course.getId(), assessmentId);
-        Set<User> students = findCourseStudentsByLogins(course, List.of(studentLogin));
-        if (students.isEmpty()) {
-            throw new BadRequestAlertException("The user is not a student in the course", PresentationAssessment.ENTITY_NAME, "studentNotInCourse");
-        }
-        presentationAssessment.getStudents().add(students.iterator().next());
-        presentationAssessmentRepository.save(presentationAssessment);
-    }
-
-    /**
-     * Remove a student from a presentation assessment.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @param studentLogin the login of the student to remove
-     */
-    public void removeStudent(long courseId, long assessmentId, String studentLogin) {
-        PresentationAssessment presentationAssessment = findWithStudentsByIdAndCourseIdElseThrow(courseId, assessmentId);
-        presentationAssessment.getStudents().removeIf(student -> studentLogin.equals(student.getLogin()));
-        presentationAssessmentRepository.save(presentationAssessment);
-    }
-
-    private PresentationAssessment findWithStudentsByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
-        return presentationAssessmentRepository.findWithStudentsByIdAndCourseIdElseThrow(assessmentId, courseId);
     }
 
     private void applyDto(PresentationAssessment presentationAssessment, PresentationAssessmentDTO dto) {
@@ -256,7 +194,7 @@ public class PresentationAssessmentService {
         return exercise;
     }
 
-    private Set<User> findCourseStudentsByLogins(Course course, List<String> studentLogins) {
+    private Set<User> resolveAssignedCourseStudents(Course course, List<String> studentLogins) {
         if (studentLogins == null || studentLogins.isEmpty()) {
             return new HashSet<>();
         }
@@ -268,7 +206,7 @@ public class PresentationAssessmentService {
             }
             uniqueLogins.add(login.trim());
         }
-        Set<User> students = courseAccessService.findCourseStudentsByLogins(course, uniqueLogins);
+        Set<User> students = new HashSet<>(userRepository.findAllByCourseIdAndRoleAndLoginIn(course.getId(), CourseRole.STUDENT, uniqueLogins));
         Set<String> foundLogins = students.stream().map(User::getLogin).collect(Collectors.toSet());
         if (!foundLogins.containsAll(uniqueLogins)) {
             throw new BadRequestAlertException("At least one user is not a student in the course", PresentationAssessment.ENTITY_NAME, "studentNotInCourse");

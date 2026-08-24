@@ -66,34 +66,25 @@
                         </div>
                     }
 
-                    @let data = sidebarDataInternal();
-                    @if (data.pinnedData?.length) {
+                    @if (sidebarDataInternal().pinnedData?.length) {
                         <div class="mt-2 border-top border-bottom py-2">
-                            @for (sidebarItem of data.pinnedData; track sidebarItem.trackId ?? sidebarItem.id) {
-                                <div jhiSidebarCard [size]="sidebarItem.size" [itemSelected]="itemSelected()" [sidebarType]="data.sidebarType" [sidebarItem]="sidebarItem"></div>
+                            @for (sidebarItem of sidebarDataInternal().pinnedData; track sidebarItem.trackId ?? sidebarItem.id) {
+                                <div
+                                    jhiSidebarCard
+                                    [size]="sidebarItem.size"
+                                    [itemSelected]="itemSelected()"
+                                    [sidebarType]="sidebarDataInternal().sidebarType"
+                                    [sidebarItem]="sidebarItem"
+                                ></div>
                             }
                         </div>
                     }
 
-                    @if (data.groupByCategory && data.groupedData) {
-                        <div class="scrollable-item-content my-2">
-                            <jhi-sidebar-accordion
-                                [searchValue]="searchValue()"
-                                [groupedData]="data.groupedData"
-                                [sidebarType]="data.sidebarType"
-                                [storageId]="data.storageId ?? ''"
-                                [routeParams]="routeParams()"
-                                [courseId]="courseId()"
-                                [itemSelected]="itemSelected()"
-                                [showLeadingIcon]="data.showAccordionLeadingIcon ?? false"
-                                [channelTypeIcon]="channelTypeIcon()"
-                                [sidebarItemAlwaysShow]="sidebarItemAlwaysShow()"
-                                [collapseState]="collapseState()"
-                                (onUpdateSidebar)="onUpdateSidebar.emit()"
-                                [isFilterActive]="isFilterActive()"
-                            />
-                        </div>
-                    } @else if (!data.ungroupedData || !(data.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length) {
+                    @if (
+                        !sidebarDataInternal().groupByCategory &&
+                        (!sidebarDataInternal()?.ungroupedData ||
+                            !(sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems')?.length)
+                    ) {
                         <div
                             [jhiTranslate]="
                                 (sidebarDataBeforeFiltering()?.ungroupedData?.length ?? 0) > 0 && sidebarDataInternal().ungroupedData?.length === 0
@@ -109,20 +100,39 @@
                                 'no-header-bar-height': sidebarDataInternal()?.sidebarType === 'exercise' || sidebarDataInternal()?.sidebarType === 'conversation',
                             }"
                         >
-                            @for (
-                                sidebarItem of data.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems';
-                                track sidebarItem.trackId ?? sidebarItem.id;
-                                let last = $last
-                            ) {
-                                <div [class]="{ 'mb-2': !last }">
-                                    <div
-                                        jhiSidebarCard
-                                        [size]="sidebarItem.size"
-                                        [itemSelected]="itemSelected()"
-                                        [sidebarType]="data.sidebarType"
-                                        [sidebarItem]="sidebarItem"
-                                    ></div>
-                                </div>
+                            @let data = sidebarDataInternal();
+                            @if (data?.groupByCategory && data.groupedData) {
+                                <jhi-sidebar-accordion
+                                    [searchValue]="searchValue()"
+                                    [groupedData]="data.groupedData"
+                                    [sidebarType]="data.sidebarType"
+                                    [storageId]="data.storageId ?? ''"
+                                    [routeParams]="routeParams()"
+                                    [courseId]="courseId()"
+                                    [itemSelected]="itemSelected()"
+                                    [showLeadingIcon]="data.showAccordionLeadingIcon ?? false"
+                                    [channelTypeIcon]="channelTypeIcon()"
+                                    [sidebarItemAlwaysShow]="sidebarItemAlwaysShow()"
+                                    [collapseState]="collapseState()"
+                                    (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                    [isFilterActive]="isFilterActive()"
+                                />
+                            } @else {
+                                @for (
+                                    sidebarItem of sidebarDataInternal()?.ungroupedData | searchFilter: ['title', 'type'] : searchValue() : 'groupedItems';
+                                    track sidebarItem.trackId ?? sidebarItem.id;
+                                    let last = $last
+                                ) {
+                                    <div [class]="{ 'mb-2': !last }">
+                                        <div
+                                            jhiSidebarCard
+                                            [size]="sidebarItem.size"
+                                            [itemSelected]="itemSelected()"
+                                            [sidebarType]="sidebarDataInternal().sidebarType"
+                                            [sidebarItem]="sidebarItem"
+                                        ></div>
+                                    </div>
+                                }
                             }
                         </div>
                     }

@@ -44,6 +44,7 @@ export class PresentationAssessmentFormDialogComponent {
     readonly courseId = input.required<number>();
     readonly presentationAssessment = input<PresentationAssessment>();
     readonly exercises = input<Exercise[]>([]);
+    readonly isSaving = input(false);
     readonly saved = output<PresentationAssessmentFormDialogResult>();
     readonly cancelled = output<void>();
     readonly deleteRequested = output<PresentationAssessment>();
@@ -72,6 +73,7 @@ export class PresentationAssessmentFormDialogComponent {
                 exercise: exercises.find((exercise) => exercise.id === presentationAssessment?.exerciseId),
             });
         });
+        effect(() => (this.isSaving() ? this.editForm.disable({ emitEvent: false }) : this.editForm.enable({ emitEvent: false })));
     }
 
     filterExercises(event: TumUiAutoCompleteSearchEvent): void {
@@ -80,7 +82,7 @@ export class PresentationAssessmentFormDialogComponent {
     }
 
     save(): void {
-        if (this.editForm.invalid) {
+        if (this.isSaving() || this.editForm.invalid) {
             this.editForm.markAllAsTouched();
             return;
         }

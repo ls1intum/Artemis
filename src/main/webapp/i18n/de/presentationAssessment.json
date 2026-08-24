@@ -14,6 +14,11 @@
             "maxPoints": "Max. Punkte",
             "resultPoints": "Ergebnis",
             "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximalen Punkte nicht überschreiten.",
+            "validation": {
+                "numberRequired": "Bitte gib eine Zahl ein.",
+                "maxPointsMin": "Max. Punkte müssen mindestens 0,01 betragen.",
+                "resultPointsMin": "Das Ergebnis muss mindestens 0 betragen."
+            },
             "presentationDate": "Präsentationstermin",
             "presentationTime": "Uhrzeit",
             "picture": "Bild",
@@ -64,6 +69,7 @@
                 "typeNameToConfirm": "Bitte gib den Titel der Präsentationsbewertung zur Bestätigung ein."
             },
             "students": {
+                "newPresentation": "Neue Präsentation",
                 "removeQuestion": "Soll der Benutzer mit Login <strong>{{ title }}</strong> wirklich aus dieser Präsentation entfernt werden?"
             }
         }

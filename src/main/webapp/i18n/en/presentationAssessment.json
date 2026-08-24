@@ -14,6 +14,11 @@
             "maxPoints": "Max. points",
             "resultPoints": "Result",
             "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
+            "validation": {
+                "numberRequired": "Please enter a number.",
+                "maxPointsMin": "Max. points must be at least 0.01.",
+                "resultPointsMin": "Result must be at least 0."
+            },
             "presentationDate": "Presentation date",
             "presentationTime": "Time",
             "picture": "Picture",
@@ -64,6 +69,7 @@
                 "typeNameToConfirm": "Please type in the title of the presentation assessment to confirm."
             },
             "students": {
+                "newPresentation": "New presentation",
                 "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation?"
             }
         }

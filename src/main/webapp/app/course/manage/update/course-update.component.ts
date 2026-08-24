@@ -121,7 +121,7 @@ export class CourseUpdateComponent implements OnInit {
     // while the template (and specs) keep reading/writing `course` and `course.X` unchanged. After deep
     // mutations performed outside a synchronous template event handler (e.g. in a subscribe/promise),
     // call commitCourse() to rebuild the reference so the signal fires.
-    private readonly _course = signal<Course>(undefined!);
+    private readonly _course = signal<Course>(undefined!, { equal: () => false });
     get course(): Course {
         return this._course();
     }
@@ -129,7 +129,10 @@ export class CourseUpdateComponent implements OnInit {
         this._course.set(value);
     }
     private commitCourse(): void {
-        this._course.update((course) => Object.assign(new Course(), course));
+        // No copy: `_course` is declared with `equal: () => false`, so re-setting the same reference emits. Copying the
+        // course here would detach the nested associations (organizations, exercises, …) that are two-way bound into
+        // child components, and it would do so on every keystroke in a date field.
+        this._course.set(this._course());
     }
     readonly isSaving = signal<boolean>(undefined!);
     courseImageUploadFile?: File;
@@ -143,8 +146,20 @@ export class CourseUpdateComponent implements OnInit {
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
 
-    communicationEnabled = true;
-    messagingEnabled = true;
+    private readonly communicationEnabledSignal = signal(true);
+    private readonly messagingEnabledSignal = signal(true);
+    get communicationEnabled(): boolean {
+        return this.communicationEnabledSignal();
+    }
+    set communicationEnabled(value: boolean) {
+        this.communicationEnabledSignal.set(value);
+    }
+    get messagingEnabled(): boolean {
+        return this.messagingEnabledSignal();
+    }
+    set messagingEnabled(value: boolean) {
+        this.messagingEnabledSignal.set(value);
+    }
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);

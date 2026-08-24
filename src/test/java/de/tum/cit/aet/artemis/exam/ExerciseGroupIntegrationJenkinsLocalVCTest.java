@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -29,6 +27,7 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.dto.ExamExerciseGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseForExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupCreateDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDTO;
@@ -288,8 +287,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
     void testDeleteExerciseGroup_asInstructor() throws Exception {
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise1));
-
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1));
+            WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1);
         }
         WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise1);
 
@@ -594,5 +592,66 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         assertThat(persistedGroups.get(0).getExercises()).extracting(Exercise::getId).containsExactly(exerciseC1.getId());
         assertThat(persistedGroups.get(1).getExercises()).extracting(Exercise::getId).containsExactly(exerciseA1.getId());
         assertThat(persistedGroups.get(2).getExercises()).extracting(Exercise::getId).containsExactly(exerciseB1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testMoveExerciseToGroup_asEditor() throws Exception {
+        // The factory adds the group to exam1, which the save below cascades; the returned instance is not needed.
+        ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
+        examRepository.save(exam1);
+        ExerciseGroup savedTargetGroup = examRepository.findWithExerciseGroupsById(exam1.getId()).orElseThrow().getExerciseGroups().stream()
+                .filter(group -> "target".equals(group.getTitle())).findFirst().orElseThrow();
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + textExercise1.getId() + "/exercise-group",
+                new ExamExerciseGroupAssignmentDTO(savedTargetGroup.getId()), HttpStatus.OK);
+
+        TextExercise moved = textExerciseRepository.findById(textExercise1.getId()).orElseThrow();
+        assertThat(moved.getExerciseGroup().getId()).isEqualTo(savedTargetGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testMoveExerciseToGroup_targetGroupFromOtherExam() throws Exception {
+        ExerciseGroup otherExamGroup = exam2.getExerciseGroups().getFirst();
+
+        // The exam-scoped access check (shared with every exam endpoint) rejects a cross-exam target group with 409, not 400.
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + textExercise1.getId() + "/exercise-group",
+                new ExamExerciseGroupAssignmentDTO(otherExamGroup.getId()), HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testMoveExerciseToGroup_exerciseFromOtherExam() throws Exception {
+        // The target group is a legitimate exam1 group, so the access check passes and the exercise-side guard decides.
+        ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
+        examRepository.save(exam1);
+        ExerciseGroup savedTargetGroup = examRepository.findWithExerciseGroupsById(exam1.getId()).orElseThrow().getExerciseGroups().stream()
+                .filter(group -> "target".equals(group.getTitle())).findFirst().orElseThrow();
+
+        ExerciseGroup otherExamGroup = exam2.getExerciseGroups().getFirst();
+        TextExercise foreignExercise = textExerciseUtilService.createTextExerciseForExam(otherExamGroup);
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + foreignExercise.getId() + "/exercise-group",
+                new ExamExerciseGroupAssignmentDTO(savedTargetGroup.getId()), HttpStatus.BAD_REQUEST);
+
+        TextExercise unchanged = textExerciseRepository.findById(foreignExercise.getId()).orElseThrow();
+        assertThat(unchanged.getExerciseGroup().getId()).isEqualTo(otherExamGroup.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testMoveExerciseToGroup_blockedOnceStudentExamsGenerated() throws Exception {
+        ExamFactory.generateExerciseGroupWithTitle(true, exam1, "target");
+        examRepository.save(exam1);
+        ExerciseGroup savedTargetGroup = examRepository.findWithExerciseGroupsById(exam1.getId()).orElseThrow().getExerciseGroups().stream()
+                .filter(group -> "target".equals(group.getTitle())).findFirst().orElseThrow();
+        examUtilService.addStudentExam(exam1);
+
+        request.put("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises/" + textExercise1.getId() + "/exercise-group",
+                new ExamExerciseGroupAssignmentDTO(savedTargetGroup.getId()), HttpStatus.CONFLICT);
+
+        TextExercise unchanged = textExerciseRepository.findById(textExercise1.getId()).orElseThrow();
+        assertThat(unchanged.getExerciseGroup().getId()).isEqualTo(exerciseGroup1.getId());
     }
 }

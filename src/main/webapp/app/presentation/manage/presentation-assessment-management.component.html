@@ -319,6 +319,7 @@
                 [courseId]="courseId()"
                 [presentationAssessment]="dialogPresentationAssessment()"
                 [exercises]="exercises()"
+                [isSaving]="isSaving()"
                 (saved)="handlePresentationDialogSave($event)"
                 (deleteRequested)="handlePresentationDialogDelete($event)"
                 (cancelled)="handlePresentationDialogCancel()"
@@ -339,6 +340,7 @@
                 [presentationAssessment]="presentationAssessment"
                 [instance]="dialogInstance()"
                 [initialAssignedStudents]="dialogAssignedStudents()"
+                [isSaving]="isSaving()"
                 (saved)="handleInstanceDialogSave($event)"
                 (cancelled)="handleInstanceDialogCancel()"
             />

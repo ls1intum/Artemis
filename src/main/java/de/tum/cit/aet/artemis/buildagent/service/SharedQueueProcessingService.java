@@ -42,9 +42,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.listener.QueueItemListener;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
@@ -259,7 +259,7 @@ public class SharedQueueProcessingService {
         distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
             if (!isInitialConnection) {
                 // This is a reconnection - reset the initialized flag so listeners are re-registered
-                log.info("Hazelcast client reconnected to cluster. Re-initializing SharedQueueProcessingService listeners.");
+                log.info("Reconnected to the distributed data provider. Re-initializing SharedQueueProcessingService listeners.");
                 initialized.set(false);
                 // Also cancel existing scheduled future if it's still running, as a new one will be created
                 cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
@@ -282,7 +282,8 @@ public class SharedQueueProcessingService {
         // If already connected, tryInitialize was called by the listener above.
         // If not connected yet, schedule periodic retries as a fallback.
         if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
-            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+            log.info("Not connected to the distributed data provider yet. Scheduling periodic initialization retries every {} seconds.",
+                    CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
 
             connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
                 if (tryInitialize()) {
@@ -310,7 +311,7 @@ public class SharedQueueProcessingService {
         }
 
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Cannot initialize SharedQueueProcessingService: not connected to Hazelcast cluster yet");
+            log.debug("Cannot initialize SharedQueueProcessingService: not connected to the distributed data provider yet");
             return false;
         }
 
@@ -322,7 +323,7 @@ public class SharedQueueProcessingService {
             // Cancel existing scheduled task if present (for idempotency on partial failure retry)
             cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
 
-            log.info("Adding item listener to Hazelcast distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
+            log.info("Adding item listener to the distributed build job queue for build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
             this.listenerId = this.distributedDataAccessService.getDistributedBuildJobQueue().addItemListener(new QueuedBuildJobItemListener());
 
             /*
@@ -424,7 +425,7 @@ public class SharedQueueProcessingService {
     public void updateBuildAgentInformation() {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Not connected to Hazelcast cluster yet. Skipping build agent information update.");
+            log.debug("Not connected to the distributed data provider yet. Skipping build agent information update.");
             return;
         }
 
@@ -483,16 +484,32 @@ public class SharedQueueProcessingService {
                     // 2. Container startup failed but job wasn't cleaned up
                     // 3. Job is still starting up (image pull, repo clone in progress)
 
+                    // A job that is pulling its Docker image has no container yet by definition, and a pull can legitimately take longer than the grace period below.
+                    // The pull is bounded by its own timeout (artemis.continuous-integration.image-pull-timeout-seconds), so it does not need this watchdog as a backstop.
+                    if (buildAgentDockerService.isImagePullInProgress(jobId)) {
+                        log.debug("Job {} is currently pulling its Docker image, skipping stale detection", jobId);
+                        staleJobDetectionCounts.remove(jobId);
+                        continue;
+                    }
+
                     // Check job age - don't consider jobs stale during startup grace period
                     // This allows time for Docker image pulls and repository cloning
                     BuildJobQueueItem job = distributedDataAccessService.getDistributedProcessingJobs().get(jobId);
-                    if (job != null && job.jobTimingInfo() != null && job.jobTimingInfo().buildStartDate() != null) {
-                        long jobAgeSeconds = Duration.between(job.jobTimingInfo().buildStartDate(), ZonedDateTime.now()).getSeconds();
-                        if (jobAgeSeconds < STALE_DETECTION_MIN_JOB_AGE_SECONDS) {
-                            // Job is still in startup grace period - skip stale detection
-                            log.debug("Job {} is {} seconds old (< {} min grace period), skipping stale detection", jobId, jobAgeSeconds, STALE_DETECTION_MIN_JOB_AGE_SECONDS / 60);
-                            continue;
-                        }
+                    ZonedDateTime buildStartDate = job != null && job.jobTimingInfo() != null ? job.jobTimingInfo().buildStartDate() : null;
+                    if (buildStartDate == null) {
+                        // We cannot tell how old the job is, so we cannot tell whether it is still starting up. Skipping is the safe choice: a genuinely stuck job without
+                        // a container is still caught by the orphan cross-check below, whereas counting it as stale here cancels jobs that just started. This happens when
+                        // another agent force-cancelled and requeued the job while this agent was picking it up, which removes it from the distributed processing map.
+                        // Reset the counter as well, so that earlier detections cannot add up with later ones and cancel the job the moment its entry reappears.
+                        log.debug("Job {} has no known build start date, skipping stale detection", jobId);
+                        staleJobDetectionCounts.remove(jobId);
+                        continue;
+                    }
+                    long jobAgeSeconds = Duration.between(buildStartDate, ZonedDateTime.now()).getSeconds();
+                    if (jobAgeSeconds < STALE_DETECTION_MIN_JOB_AGE_SECONDS) {
+                        // Job is still in startup grace period - skip stale detection
+                        log.debug("Job {} is {} seconds old (< {} min grace period), skipping stale detection", jobId, jobAgeSeconds, STALE_DETECTION_MIN_JOB_AGE_SECONDS / 60);
+                        continue;
                     }
 
                     int consecutiveCount = staleJobDetectionCounts.merge(jobId, 1, Integer::sum);
@@ -568,7 +585,7 @@ public class SharedQueueProcessingService {
     private void checkAvailabilityAndProcessNextBuild() {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Not connected to Hazelcast cluster yet. Skipping build job processing.");
+            log.debug("Not connected to the distributed data provider yet. Skipping build job processing.");
             return;
         }
 
@@ -686,85 +703,33 @@ public class SharedQueueProcessingService {
      * cleanup) should be used for client-mode agent cleanup if needed.
      */
     private void removeOfflineNodes() {
-        Set<String> memberAddresses = distributedDataAccessService.getClusterMemberAddresses();
+        Set<String> liveNodeIdentifiers = distributedDataAccessService.getClusterMemberAddresses();
+        boolean agentsAppearInLiveList = distributedDataAccessService.buildAgentsAppearInClusterMemberList();
         var buildAgentMap = distributedDataAccessService.getBuildAgentInformationMap();
 
-        log.debug("removeOfflineNodes: cluster member addresses = {}, build agent map keys = {}", memberAddresses, buildAgentMap.keySet());
+        log.debug("removeOfflineNodes: live node identifiers = {}, agents appear in live list = {}, build agent map keys = {}", liveNodeIdentifiers, agentsAppearInLiveList,
+                buildAgentMap.keySet());
 
         // Iterate over entries to access both the key (short name) and the stored member address
         for (var entry : buildAgentMap.entrySet()) {
             String agentKey = entry.getKey();
+            // Entries without agent details cannot be matched against the live node set, and other readers filter them
+            // out too, so skip rather than dereference.
+            if (entry.getValue() == null || entry.getValue().buildAgent() == null) {
+                continue;
+            }
             String storedMemberAddress = entry.getValue().buildAgent().memberAddress();
-            boolean isClusterMember = isClusterMemberAddress(storedMemberAddress, memberAddresses);
-            boolean isInMemberSet = memberAddresses.contains(storedMemberAddress);
 
-            log.debug("removeOfflineNodes: checking agent '{}' with address '{}': isClusterMemberAddress={}, isInMemberSet={}", agentKey, storedMemberAddress, isClusterMember,
-                    isInMemberSet);
-
-            // Only clean up agents whose stored address matches the exact format of current cluster members
-            // AND is not in the current cluster member set (i.e., the member went offline).
-            // Client-mode agents have ephemeral port addresses that won't match cluster member addresses,
-            // so they are safely ignored by this cleanup logic.
-            if (isClusterMember && !isInMemberSet) {
-                log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (was cluster member but is now offline)", agentKey, storedMemberAddress);
+            if (OfflineBuildAgentDetector.isOffline(storedMemberAddress, liveNodeIdentifiers, agentsAppearInLiveList)) {
+                log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (node is no longer alive)", agentKey, storedMemberAddress);
+                // Removing the agent entry is the whole cleanup: it raises the map removal event that
+                // SharedQueueManagementService.handleOrphanedJobsForRemovedAgent listens for, and that handler takes each of
+                // the node's processing jobs out of the map atomically and re-queues it, so exactly one core node retries it.
+                // Deleting those jobs here as well would race that handler and, when it won, drop the job instead of
+                // retrying it - the build would simply never come back.
                 removeBuildAgentInformationForNode(agentKey, storedMemberAddress);
-                removeProcessingJobsForNode(storedMemberAddress);
             }
         }
-    }
-
-    /**
-     * Checks if the given address appears to be a cluster member address.
-     * <p>
-     * For Hazelcast: Cluster members use configured ports (typically 5701, 5702, etc.), while clients
-     * use ephemeral ports assigned by the OS. We check by comparing ports.
-     * <p>
-     * For Redisson: Addresses are simple client names (e.g., "artemis-node") without ports.
-     * We check if the address is directly contained in the member addresses set.
-     *
-     * @param address         the address to check
-     * @param memberAddresses the current set of cluster member addresses
-     * @return true if the address appears to be a cluster member address
-     */
-    private boolean isClusterMemberAddress(String address, Set<String> memberAddresses) {
-        if (address == null || memberAddresses == null || memberAddresses.isEmpty()) {
-            return false;
-        }
-
-        // First, check if the address is directly in the member addresses set (Redisson-style plain names)
-        if (memberAddresses.contains(address)) {
-            return true;
-        }
-
-        // For Hazelcast-style addresses with [host]:port format
-        if (!address.contains("]:")) {
-            return false;
-        }
-        // Extract port from the address (format: [host]:port)
-        String addressPort = extractPort(address);
-        if (addressPort == null) {
-            return false;
-        }
-        // Check if any cluster member uses the same port - this indicates it's a cluster member address
-        // Clients use random ephemeral ports, so they won't match cluster member ports
-        return memberAddresses.stream().map(this::extractPort).filter(Objects::nonNull).anyMatch(addressPort::equals);
-    }
-
-    /**
-     * Extracts the port from an address in [host]:port format.
-     *
-     * @param address the address string
-     * @return the port string, or null if extraction fails
-     */
-    private String extractPort(String address) {
-        if (address == null) {
-            return null;
-        }
-        int lastColon = address.lastIndexOf(':');
-        if (lastColon >= 0 && lastColon < address.length() - 1) {
-            return address.substring(lastColon + 1);
-        }
-        return null;
     }
 
     /**
@@ -776,22 +741,6 @@ public class SharedQueueProcessingService {
     private void removeBuildAgentInformationForNode(String agentKey, String memberAddress) {
         log.debug("Cleaning up build agent information for offline node: {} (address: {})", agentKey, memberAddress);
         distributedDataAccessService.getDistributedBuildAgentInformation().remove(agentKey);
-    }
-
-    /**
-     * Removes all processing jobs that were assigned to an offline node.
-     * <p>
-     * These jobs were being processed when the node went offline and need to be cleaned up.
-     * Note: The jobs are not re-queued here as they may have been partially processed.
-     *
-     * @param memberAddress the Hazelcast member address of the offline node
-     */
-    private void removeProcessingJobsForNode(String memberAddress) {
-        List<String> jobsToRemove = distributedDataAccessService.getProcessingJobIdsForAgent(memberAddress);
-        log.debug("Removing {} processing jobs for offline node: {}", jobsToRemove.size(), memberAddress);
-        for (String jobId : jobsToRemove) {
-            distributedDataAccessService.getDistributedProcessingJobs().remove(jobId);
-        }
     }
 
     /**

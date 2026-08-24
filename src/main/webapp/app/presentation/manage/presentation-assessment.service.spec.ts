@@ -101,22 +101,4 @@ describe('PresentationAssessmentService', () => {
         const req = httpMock.expectOne({ method: 'GET', url: `api/course/courses/${courseId}/students` });
         req.flush([{ id: 1, login: 'student1' }]);
     });
-
-    it('should add a student to a presentation assessment', () => {
-        service.addStudent(courseId, 1, 'student1').subscribe((response) => {
-            expect(response.ok).toBe(true);
-        });
-
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/1/students/student1` });
-        req.flush(null);
-    });
-
-    it('should remove a student from a presentation assessment', () => {
-        service.removeStudent(courseId, 1, 'student1').subscribe((response) => {
-            expect(response.ok).toBe(true);
-        });
-
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/1/students/student1` });
-        req.flush(null);
-    });
 });

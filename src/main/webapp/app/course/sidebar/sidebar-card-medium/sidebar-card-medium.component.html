@@ -7,10 +7,6 @@
     >
         <jhi-sidebar-card-item [groupKey]="groupKey()" [sidebarType]="sidebarType()" [sidebarItem]="sidebarItem()" />
     </div>
-} @else if (sidebarItem().sectionLabel) {
-    <div class="sidebar-section-label px-1 pt-3 pb-1 text-uppercase text-muted small fw-semibold">
-        {{ sidebarItem().title }}
-    </div>
 } @else {
     <div class="item-border rounded-3 col-12">
         <div

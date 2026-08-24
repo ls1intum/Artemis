@@ -17,6 +17,9 @@ overrides:
   # Kept on the 1.x line (docs' express 4 stack requires ^1).
   body-parser: '1.20.6'
   brace-expansion: '5.0.9'
+  # CVE-2026-73088 and CVE-2026-73089, both fixed in 4.28.7. Reached through @babel/core's
+  # helper-compilation-targets, whose range allows this. Build-time tooling only, never served.
+  browserslist: '4.28.8'
   # Kept on the 3.x line (consumers require ^3).
   fast-uri: '3.1.5'
   follow-redirects: '1.16.0'
@@ -26,11 +29,12 @@ overrides:
   js-yaml: '4.3.1'
   launch-editor: '2.14.1'
   minimatch: '10.2.6'
-  # Reached via postcss, whose range allows the patched 3.3.17.
-  nanoid: '3.3.17'
-  postcss: '8.5.25'
+  # Reached via postcss, whose range allows the patched 3.3.18
+  # (GHSA: custom generators can loop indefinitely when size is zero).
+  nanoid: '3.3.18'
+  postcss: '8.5.26'
   qs: '6.15.3'
-  serialize-javascript: '7.0.7'
+  serialize-javascript: '7.1.0'
   shell-quote: '1.10.0'
   # Kept on the 3.x line (docs' SVG toolchain requires ^3).
   svgo: '3.3.4'
@@ -48,3 +52,4 @@ allowBuilds:
   core-js: true
   core-js-pure: true
   esbuild: true
+

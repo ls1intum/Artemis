@@ -123,21 +123,6 @@ public class CourseAccessService {
     }
 
     /**
-     * Finds users with the given logins that have the student role in the course.
-     *
-     * @param course the course in whose students users should be searched
-     * @param logins the logins to search for
-     * @return the matching course students
-     */
-    public Set<User> findCourseStudentsByLogins(Course course, Set<String> logins) {
-        if (logins == null || logins.isEmpty()) {
-            return Set.of();
-        }
-        return userCourseRoleRepository.findUsersByCourse_IdAndRole(course.getId(), CourseRole.STUDENT).stream().filter(user -> logins.contains(user.getLogin()))
-                .collect(Collectors.toSet());
-    }
-
-    /**
      * Add multiple users to the course with the role derived from the given role string.
      * The passed list of UserDTOs must include at least one unique user identifier (i.e. registration number OR email OR login).
      *

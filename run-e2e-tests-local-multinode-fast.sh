@@ -16,22 +16,27 @@ set -e
 # Stack layout (host network):
 #   - node-1 (core, scheduling)              http :8080  hazelcast :5701  ssh :7921
 #   - node-2 (core, buildagent)              http :8081  hazelcast :5702  ssh :7922
-#   - node-3 (buildagent only, hz client)    http :8082
+#   - node-3 (buildagent only)               http :8082
 #   - postgres   container                  127.0.0.1:5432
 #   - jhipster-registry (Eureka) container          :8761
 #   - activemq-broker container                     :61613
+#   - redis container (--middleware redis)  127.0.0.1:6379
 #   - nginx LB container                            :443 (HTTPS), :54321 (HTTP)
 #
 # Usage:
 #   ./run-e2e-tests-local-multinode-fast.sh [options]
 #
 # Options:
-#   --stop              Tear everything down (host JVMs + infra containers)
-#   --filter <pattern>  Run only tests matching the pattern (e.g., "Quiz")
-#   --skip-build        Reuse the existing WAR in build/libs (do not rebuild)
-#   --skip-up           Reuse already-running infra containers and host JVMs
-#   --debug             Tee server logs to stdout (normally only in log files)
-#   --help              Show this help message
+#   --stop                 Tear everything down (host JVMs + infra containers)
+#   --filter <pattern>     Run only tests matching the pattern (e.g., "Quiz")
+#   --middleware <name>    Distributed data backend: hazelcast (default) or redis.
+#                            Both are driven through the DistributedDataProvider
+#                            abstraction, so the same tests must pass on either.
+#                            With redis no Hazelcast instance is created at all.
+#   --skip-build           Reuse the existing WAR in build/libs (do not rebuild)
+#   --skip-up              Reuse already-running infra containers and host JVMs
+#   --debug                Tee server logs to stdout (normally only in log files)
+#   --help                 Show this help message
 # =============================================================================
 
 # Colors
@@ -47,6 +52,9 @@ SKIP_BUILD=false
 SKIP_UP=false
 DEBUG=false
 TEST_FILTER=""
+# Hazelcast stays the default: it is what production runs today. Redis is the supported alternative and has to pass the
+# same suite, which is the whole point of the DistributedDataProvider abstraction.
+MIDDLEWARE="hazelcast"
 PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
 export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
@@ -57,6 +65,18 @@ while [[ $# -gt 0 ]]; do
         --skip-build) SKIP_BUILD=true; shift ;;
         --skip-up) SKIP_UP=true; shift ;;
         --debug) DEBUG=true; shift ;;
+        --middleware)
+            if [[ -z "$2" ]]; then
+                echo -e "${RED}ERROR: --middleware requires an argument (hazelcast or redis)${NC}"
+                exit 1
+            fi
+            MIDDLEWARE="$(echo "$2" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$MIDDLEWARE" != "hazelcast" && "$MIDDLEWARE" != "redis" ]]; then
+                echo -e "${RED}ERROR: unknown middleware '$2'. Supported: hazelcast, redis${NC}"
+                exit 1
+            fi
+            shift 2
+            ;;
         --filter)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
                 echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
@@ -66,7 +86,7 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -36 "$0" | tail -32; exit 0 ;;
+        --help) head -40 "$0" | tail -36; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -74,6 +94,10 @@ done
 cd "$(dirname "$0")"
 LOCAL_DIR=".e2e-local-multinode-fast"
 COMPOSE_FILE="docker/playwright-E2E-tests-multi-node-fast.yml"
+# Always merged in so that `--stop` tears the Redis container down as well, whichever middleware the run used. Compose
+# only starts the services named on `up`, so defining `redis` here does not start it for a Hazelcast run.
+REDIS_COMPOSE_FILE="docker/redis.yml"
+COMPOSE_ARGS=(--env-file .env -f "$COMPOSE_FILE" -f "$REDIS_COMPOSE_FILE")
 
 # Per-node port allocation. Indexes match node1/node2/node3 below.
 HTTP_PORTS=(8080 8081 8082)
@@ -95,13 +119,36 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
-# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh:92-117.
+# How long to wait for a killed process to release its listening socket before giving up.
+# Validated rather than trusted: a non-numeric value would otherwise blow up the integer comparison below with a
+# bash arithmetic error, in a pre-flight step whose whole job is to get out of the developer's way.
+PORT_RELEASE_TIMEOUT="${PORT_RELEASE_TIMEOUT:-30}"
+if ! [[ "$PORT_RELEASE_TIMEOUT" =~ ^[0-9]+$ ]]; then
+    echo "Ignoring PORT_RELEASE_TIMEOUT='${PORT_RELEASE_TIMEOUT}': expected a non-negative integer number of seconds. Using 30."
+    PORT_RELEASE_TIMEOUT=30
+fi
+
+# Free a port if a leftover process holds it. Mirrors run-e2e-tests-local-fast.sh.
 check_port_available() {
     local port=$1
     local service_name=$2
     local listeners
-    listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+    # `+c 0` asks for the untruncated command name. Without it lsof caps COMMAND at nine characters, so
+    # `com.docker.backend` arrives as `com.docke`, the Docker check below never matches, and the guard kills
+    # the very process it exists to protect.
+    listeners=$(lsof +c 0 -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
     if [ -n "$listeners" ]; then
+        # A port published by a container is held by Docker's own forwarder, not by a leftover JVM. Killing
+        # that process takes Docker Desktop down with it, which then fails this run at the next compose call
+        # with a misleading "cannot connect to the Docker daemon". Refuse instead, and say what to stop.
+        local docker_holder
+        docker_holder=$(echo "$listeners" | awk 'NR>1 {print $1}' | grep -iE '^(com\.docker|docker|vpnkit)' | head -1)
+        if [ -n "$docker_holder" ]; then
+            echo -e "${RED}Port ${port} (${service_name}) is published by a container (held by '${docker_holder}').${NC}"
+            echo -e "${RED}Refusing to kill it: that would stop Docker Desktop. Tear the container stack down first, e.g.${NC}"
+            echo -e "${RED}  ./run-e2e-tests-local-multinode.sh --stop${NC}"
+            exit 1
+        fi
         echo -e "${YELLOW}Port ${port} (${service_name}) is in use — killing existing process...${NC}"
         local pids
         pids=$(echo "$listeners" | awk 'NR>1 {print $2}' | sort -u)
@@ -109,14 +156,31 @@ check_port_available() {
             echo "  Killing PID $pid..."
             kill_tree "$pid"
         done
-        sleep 2
-        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        # Poll for the port to be released instead of sleeping a fixed 2s and checking once. A JVM
+        # shutting down can hold its listening socket noticeably longer than that, and the single
+        # check then aborts the whole run over a port that frees a moment later.
+        #
+        # Shaped so the check always happens at least once and always happens *after* the last sleep: a
+        # pre-kill `lsof` result must never be what decides the error, otherwise PORT_RELEASE_TIMEOUT=0
+        # skips the loop entirely and a port released during the final second is still reported as busy.
+        local waited=0
+        while true; do
+            listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+            if [ -z "$listeners" ]; then
+                break
+            fi
+            if [ "$waited" -ge "$PORT_RELEASE_TIMEOUT" ]; then
+                break
+            fi
+            sleep 1
+            waited=$((waited + 1))
+        done
         if [ -n "$listeners" ]; then
-            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes.${NC}"
+            echo -e "${RED}ERROR: Port ${port} is still in use ${PORT_RELEASE_TIMEOUT}s after killing processes.${NC}"
             echo "$listeners"
             exit 1
         fi
-        echo -e "${GREEN}Port ${port} is now free.${NC}"
+        echo -e "${GREEN}Port ${port} is now free (released after ${waited}s).${NC}"
     fi
 }
 
@@ -138,7 +202,7 @@ if [ "$STOP" = true ]; then
         check_port_available "$port" "leftover process"
     done
     echo "Stopping infra containers..."
-    docker compose --env-file .env -f "$COMPOSE_FILE" down -v 2>/dev/null || true
+    docker compose "${COMPOSE_ARGS[@]}" down -v 2>/dev/null || true
     rm -rf "$LOCAL_DIR"
     echo -e "${GREEN}All services stopped.${NC}"
     exit 0
@@ -183,11 +247,49 @@ fi
 
 mkdir -p "$LOCAL_DIR"
 
-# Pre-clear ports we will claim. --skip-up still benefits from this (orphan from a prior crash).
-for port in "${ALL_PORTS[@]}"; do
-    check_port_available "$port" "Artemis host JVM"
-done
+# Pre-clear ports we will claim, so a leftover process from an earlier crash cannot block the launch.
+#
+# With --skip-up the running nodes are exactly what we intend to reuse, so killing whatever holds their
+# ports would defeat the flag: the pre-clear tore the stack down, and Step 4 then "reused" the PID it had
+# just killed and aborted the whole run when that process finished dying. Under --skip-up a node port is
+# therefore only cleared when its node does not answer /management/health/readiness, i.e. when it is a crashed
+# leftover rather than the stack we were asked to keep.
+node_port_is_healthy() {
+    # Bounded on purpose: a wedged JVM can accept the connection and never answer, and an unbounded curl here would
+    # hang the pre-flight instead of deciding that this stack cannot be reused.
+    curl -sf --connect-timeout 2 --max-time 5 "http://localhost:$1/management/health/readiness" >/dev/null 2>&1
+}
+
+# All or nothing: the running nodes own their Hazelcast and management ports as well, so a healthy stack
+# has to be kept whole. If any node is missing, everything is cleared and all three are relaunched.
+REUSE_RUNNING_NODES=false
+if [ "$SKIP_UP" = true ]; then
+    REUSE_RUNNING_NODES=true
+    for port in "${HTTP_PORTS[@]}"; do
+        node_port_is_healthy "$port" || REUSE_RUNNING_NODES=false
+    done
+fi
+
+if [ "$REUSE_RUNNING_NODES" = true ]; then
+    echo -e "${GREEN}All three nodes answer /management/health/readiness — keeping the running stack (--skip-up).${NC}"
+else
+    for port in "${ALL_PORTS[@]}"; do
+        check_port_available "$port" "Artemis host JVM"
+    done
+fi
 echo -e "${GREEN}Prerequisites OK${NC}"
+
+# =============================================================================
+# Middleware selection
+# =============================================================================
+# The distributed data backend is chosen by a single Artemis property, read by every node from
+# docker/artemis/config/middleware-<name>.env. Everything else about the stack is identical, so a Redis run and a
+# Hazelcast run differ only in that file plus, for Redis, one extra container.
+MIDDLEWARE_SERVICES=()
+if [ "$MIDDLEWARE" = "redis" ]; then
+    MIDDLEWARE_SERVICES=(redis)
+fi
+echo -e "${BLUE}Distributed data middleware: ${MIDDLEWARE}${NC}"
 
 # =============================================================================
 # Step 1: Build the WAR (unless --skip-build)
@@ -225,10 +327,11 @@ if [ "$SKIP_BUILD" = false ]; then
     set -e
     if [ "$CLIENT_RC" -ne 0 ] || [ "$SERVER_RC" -ne 0 ]; then
         echo -e "${RED}Build failed (client rc=$CLIENT_RC, server rc=$SERVER_RC).${NC}"
-        for tag in "client" "server"; do
-            log_var="${tag^^}_LOG"
-            echo -e "${RED}--- last 50 lines of ${tag} log ---${NC}"
-            tail -n 50 "${!log_var}" 2>/dev/null || true
+        # Indirect expansion by name, without `${tag^^}`: macOS still ships bash 3.2, where that is a syntax
+        # error, and the failure replaced the build output with "bad substitution" exactly when it was needed.
+        for pair in "client:$CLIENT_LOG" "server:$SERVER_LOG"; do
+            echo -e "${RED}--- last 50 lines of ${pair%%:*} log ---${NC}"
+            tail -n 50 "${pair#*:}" 2>/dev/null || true
         done
         exit 1
     fi
@@ -298,8 +401,14 @@ echo -e "${GREEN}Using WAR: $WAR_FILE${NC}"
 # =============================================================================
 if [ "$SKIP_UP" = false ]; then
     echo ""
-    echo -e "${BLUE}Step 2: Starting infra containers (postgres, jhipster-registry, activemq-broker)...${NC}"
-    docker compose --env-file .env -f "$COMPOSE_FILE" up -d postgres jhipster-registry activemq-broker
+    echo -e "${BLUE}Step 2: Starting infra containers (postgres, activemq-broker, and the registry only on Hazelcast)...${NC}"
+    # The JHipster registry exists to locate Hazelcast members, so a Redis stack does not start it at all. Running it
+    # anyway would hide the very thing worth proving here: that a Redis deployment needs no service registry.
+    INFRA_SERVICES=(postgres activemq-broker)
+    if [ "$MIDDLEWARE" != "redis" ]; then
+        INFRA_SERVICES+=(jhipster-registry)
+    fi
+    docker compose "${COMPOSE_ARGS[@]}" up -d "${INFRA_SERVICES[@]}" "${MIDDLEWARE_SERVICES[@]}"
 
     echo "Waiting for Postgres..."
     TIMEOUT=120; ELAPSED=0
@@ -309,13 +418,17 @@ if [ "$SKIP_UP" = false ]; then
     done
     echo -e "${GREEN}Postgres ready (${ELAPSED}s)${NC}"
 
-    echo "Waiting for Eureka registry..."
-    TIMEOUT=180; ELAPSED=0
-    until curl -sf http://localhost:8761/actuator/health >/dev/null 2>&1; do
-        [ $ELAPSED -ge $TIMEOUT ] && { echo -e "${RED}Eureka not ready after ${TIMEOUT}s${NC}"; exit 1; }
-        sleep 2; ELAPSED=$((ELAPSED + 2))
-    done
-    echo -e "${GREEN}Eureka ready (${ELAPSED}s)${NC}"
+    if [ "$MIDDLEWARE" = "redis" ]; then
+        echo -e "${GREEN}No Eureka registry on Redis — nothing reads it once Hazelcast is out of the picture.${NC}"
+    else
+        echo "Waiting for Eureka registry..."
+        TIMEOUT=180; ELAPSED=0
+        until curl -sf http://localhost:8761/actuator/health >/dev/null 2>&1; do
+            [ $ELAPSED -ge $TIMEOUT ] && { echo -e "${RED}Eureka not ready after ${TIMEOUT}s${NC}"; exit 1; }
+            sleep 2; ELAPSED=$((ELAPSED + 2))
+        done
+        echo -e "${GREEN}Eureka ready (${ELAPSED}s)${NC}"
+    fi
 else
     echo ""
     echo -e "${YELLOW}Step 2: Skipping infra (--skip-up). Assuming postgres/eureka/activemq are running.${NC}"
@@ -365,14 +478,28 @@ mkdir -p \
 # =============================================================================
 # Step 4: Launch 3 Artemis JVMs
 # =============================================================================
+# Admin credentials of the stack, used by the cluster preflight login below and by Playwright. They mirror
+# docker/artemis/config/prod-multinode-fast.env, which cannot use the published `artemis_admin` password because the prod
+# profile refuses to start on it.
+export ADMIN_USERNAME="artemis_admin"
+export ADMIN_PASSWORD="local-e2e-admin-not-a-deployment-credential"
+
+# A JWT signing key committed to the repository would be one anyone can use to forge a token, so it is generated per run.
+# Exported here rather than inside launch_node, which runs in a subshell per node: all three nodes have to sign with the
+# same key, or a token minted on one node is rejected by the next.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
+
 launch_node() {
     local n=$1
     local http_port=${HTTP_PORTS[$((n - 1))]}
     local log_file="$LOCAL_DIR/server-${n}.log"
     local pid_file="$LOCAL_DIR/server-${n}.pid"
 
-    if [ "$SKIP_UP" = true ] && [ -f "$pid_file" ] && kill -0 "$(cat "$pid_file")" 2>/dev/null; then
-        echo "node-${n} already running (PID $(cat "$pid_file")), reusing."
+    # Reuse a node only when it actually serves requests. A live PID is not enough: a JVM that is shutting
+    # down still passes `kill -0` for several seconds, and reusing it means waiting on a health endpoint
+    # that will never come up again. Anything else gets relaunched, after clearing the port it may hold.
+    if [ "$REUSE_RUNNING_NODES" = true ] && node_port_is_healthy "$http_port"; then
+        echo "node-${n} already serving on :${http_port}, reusing."
         return
     fi
 
@@ -382,8 +509,17 @@ launch_node() {
         set -a
         # shellcheck disable=SC1091
         source docker/artemis/config/prod-multinode-fast.env
-        # shellcheck disable=SC1091
+        # shellcheck disable=SC1090,SC1091
         source "docker/artemis/config/node${n}-fast.env"
+        # Last, so the selected backend wins over anything the profile files set.
+        # shellcheck disable=SC1090,SC1091
+        source "docker/artemis/config/middleware-${MIDDLEWARE}.env"
+        if [ "$MIDDLEWARE" = "redis" ]; then
+            # The host JVMs reach the container through its published port. The client name is this node's identity for
+            # the Redis provider, so it has to differ per node or the build agent cleanup sees one node instead of three.
+            export SPRING_DATA_REDIS_HOST="localhost"
+            export SPRING_DATA_REDIS_CLIENTNAME="artemis-node-${n}"
+        fi
         set +a
         export ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI="unix://$DOCKER_SOCK"
         eval "$ARM_OVERRIDES"
@@ -424,7 +560,7 @@ launch_node() {
 # against the same database (PSQLException: duplicate key value violates unique constraint
 # "artemis_version_pkey"). The Docker multi-node compose avoids this with
 # `depends_on: artemis-app-node-1: condition: service_healthy`. We mirror that here by
-# launching each node only after the previous one is reachable on /management/health.
+# launching each node only after the previous one is reachable on /management/health/readiness.
 # =============================================================================
 wait_for_node() {
     local n=$1
@@ -433,9 +569,14 @@ wait_for_node() {
     local log_file="$LOCAL_DIR/server-${n}.log"
     local pid; pid=$(cat "$pid_file")
 
-    echo "Waiting for node-${n} on http://localhost:${port}/management/health ..."
+    # Readiness rather than the aggregate health: the aggregate turns DOWN (and the endpoint answers 503, which
+    # `curl -sf` treats as a failure) whenever an external integration cannot be reached from a developer machine —
+    # the push-notification relay is enough on its own. The node then serves requests perfectly well while the gate
+    # waits out its full budget and aborts the run. Readiness covers what this wait is actually about: the node
+    # accepting traffic.
+    echo "Waiting for node-${n} on http://localhost:${port}/management/health/readiness ..."
     local TIMEOUT=420 ELAPSED=0
-    until curl -sf "http://localhost:${port}/management/health" >/dev/null 2>&1; do
+    until curl -sf "http://localhost:${port}/management/health/readiness" >/dev/null 2>&1; do
         if ! kill -0 "$pid" 2>/dev/null; then
             echo -e "${RED}ERROR: node-${n} (PID $pid) died. Last 20 lines of $log_file:${NC}"
             tail -20 "$log_file"
@@ -476,22 +617,29 @@ for n in 1 2 3; do
     # Ensure the just-started node is visible in the Eureka registry before launching the next one.
     # Without this, node-N+1 forms a solo Hazelcast cluster because its initial registry fetch did
     # not yet include node-N (cache lag), and Hazelcast does not auto-merge two existing clusters.
-    wait_for_eureka_registration "Artemis:${n}"
+    #
+    # None of that applies on Redis: no node registers with Eureka there (RedisDiscoveryEnvironmentPostProcessor
+    # turns discovery off everywhere), because the registry only ever existed to locate Hazelcast members. Nodes
+    # find each other through the distributed node registry, which Step 4b waits for instead.
+    if [ "$MIDDLEWARE" = "redis" ]; then
+        echo "node-${n} does not register with Eureka on Redis (discovery is off; the cluster forms through Redis) — skipping."
+    else
+        wait_for_eureka_registration "Artemis:${n}"
+    fi
 done
 
 # =============================================================================
-# Step 4b: Wait for Hazelcast split-brain merge
+# Step 4b: Wait for every core node to appear in the cluster
 # =============================================================================
-# When 3 host JVMs come up sequentially they each form a solo Hazelcast cluster (TcpIpConfig is
-# empty at HazelcastInstance creation; peers are added afterwards by HazelcastClusterManager
-# from Eureka). Hazelcast's split-brain MERGE task is what actually consolidates the solo
-# clusters into one. It is configured at MERGE_FIRST_RUN_DELAY=30s + MERGE_NEXT_RUN_DELAY=30s
-# in HazelcastConfiguration.configureSplitBrainProtection(). The slow runner happens to wait
-# this long because Docker image+container startup takes longer than 60s; we need to wait it
-# out explicitly. Poll node-1's cluster size via the admin API and wait until it reaches the
-# expected count, with a generous timeout.
+# The admin endpoint reads the distributed node registry, which is provider-neutral, so this wait works for either
+# middleware. It matters most for Hazelcast: when 3 host JVMs come up sequentially they each form a solo cluster
+# (TcpIpConfig is empty at HazelcastInstance creation; peers are added afterwards by HazelcastClusterManager from
+# Eureka), and Hazelcast's split-brain MERGE task is what consolidates them. That task is configured at
+# MERGE_FIRST_RUN_DELAY=30s + MERGE_NEXT_RUN_DELAY=30s in HazelcastConfiguration.configureSplitBrainProtection(). The
+# slow runner happens to wait this long because Docker image+container startup takes longer than 60s; we need to wait it
+# out explicitly. On Redis the nodes are visible after one heartbeat interval and this returns almost immediately.
 echo ""
-echo -e "${BLUE}Step 4b: Waiting for Hazelcast split-brain merge (cluster size = ${EXPECTED_CLUSTER_NODE_COUNT:-2})...${NC}"
+echo -e "${BLUE}Step 4b: Waiting for all core nodes to register (expected ${EXPECTED_CLUSTER_NODE_COUNT:-2})...${NC}"
 EXPECTED_CLUSTER=${EXPECTED_CLUSTER_NODE_COUNT:-2}
 TIMEOUT=180; ELAPSED=0
 COOKIE=$(mktemp)
@@ -500,7 +648,7 @@ trap 'rm -f "$COOKIE"' EXIT
 # Login via node-1 directly (HTTP, no nginx required for this preflight check).
 curl -s -c "$COOKIE" -X POST 'http://localhost:8080/api/core/public/authenticate' \
     -H 'Content-Type: application/json' \
-    -d '{"username":"artemis_admin","password":"artemis_admin","rememberMe":true}' \
+    -d "{\"username\":\"$ADMIN_USERNAME\",\"password\":\"$ADMIN_PASSWORD\",\"rememberMe\":true}" \
     -o /dev/null
 
 while true; do
@@ -521,7 +669,7 @@ done
 if [ "$SKIP_UP" = false ]; then
     echo ""
     echo -e "${BLUE}Step 5: Starting nginx LB...${NC}"
-    docker compose --env-file .env -f "$COMPOSE_FILE" up -d nginx
+    docker compose "${COMPOSE_ARGS[@]}" up -d nginx
 
     echo "Waiting for nginx to be healthy..."
     TIMEOUT=60; ELAPSED=0
@@ -549,13 +697,6 @@ echo -e "${BLUE}Step 6: Running Playwright tests...${NC}"
 export BASE_URL="https://localhost"
 export PW_BROWSER_HOST_RESOLVER_RULES="MAP localhost 127.0.0.1"
 export NODE_TLS_REJECT_UNAUTHORIZED=0  # nginx self-signed cert
-export ADMIN_USERNAME="artemis_admin"
-export ADMIN_PASSWORD="artemis_admin"
-export ALLOW_GROUP_CUSTOMIZATION="true"
-export STUDENT_GROUP_NAME="students"
-export TUTOR_GROUP_NAME="tutors"
-export EDITOR_GROUP_NAME="editors"
-export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
 export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-4}}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
@@ -564,9 +705,15 @@ export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-180}"
 export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-180000}"
 export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-120000}"
 export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-120000}"
-# Activate the @multi-node project and tell HazelcastCluster.spec.ts what topology to expect.
+# Activate the @multi-node project and tell ClusterFormation.spec.ts what topology to expect. The provider decides which
+# node-identity shape the spec may assert: Hazelcast publishes `[host]:port`, Redis publishes a client name without a port.
 export EXPECTED_CLUSTER_NODE_COUNT="2"
-export EXPECTED_MIN_BUILD_AGENTS="1"
+# node-2 and node-3 both run a build agent, each with its own short name (see node2-fast.env / node3-fast.env).
+export EXPECTED_MIN_BUILD_AGENTS="2"
+export DISTRIBUTED_DATA_PROVIDER="$MIDDLEWARE"
+# Direct per-core-node URLs. The @multi-node specs that assert cross-node behaviour need to address one specific
+# node rather than whichever the load balancer picks, which is the whole point of those assertions.
+export MULTI_NODE_URLS="http://localhost:${HTTP_PORTS[0]},http://localhost:${HTTP_PORTS[1]}"
 
 cd src/test/playwright
 pnpm run playwright:setup-local 2>/dev/null

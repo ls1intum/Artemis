@@ -86,6 +86,14 @@ public class BuildJobManagementService {
      */
     private static final java.time.Duration CLUSTER_CONNECTION_RETRY_INTERVAL = java.time.Duration.ofSeconds(5);
 
+    /**
+     * How long a single wait slice for the build result lasts. The build timeout is enforced in slices of this length so
+     * that slices spent pulling the Docker image can be excluded from the build budget, see
+     * {@link #awaitBuildResult(Future, String, int)}. Short enough to report a timeout promptly, long enough to keep the
+     * polling overhead negligible over a multi-minute build.
+     */
+    private static final long BUILD_TIMEOUT_POLL_INTERVAL_MILLIS = 250;
+
     private final BuildJobExecutionService buildJobExecutionService;
 
     private final BuildAgentConfiguration buildAgentConfiguration;
@@ -97,6 +105,8 @@ public class BuildJobManagementService {
     private final BuildLogsMap buildLogsMap;
 
     private final TaskScheduler taskScheduler;
+
+    private final BuildAgentDockerService buildAgentDockerService;
 
     /**
      * Scheduled future for retrying cluster connection and initialization.
@@ -179,13 +189,15 @@ public class BuildJobManagementService {
     private final Set<String> cancelledBuildJobs = new ConcurrentSkipListSet<>();
 
     public BuildJobManagementService(DistributedDataAccessService distributedDataAccessService, BuildJobExecutionService buildJobExecutionService,
-            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler) {
+            BuildAgentConfiguration buildAgentConfiguration, BuildJobContainerService buildJobContainerService, BuildLogsMap buildLogsMap, TaskScheduler taskScheduler,
+            BuildAgentDockerService buildAgentDockerService) {
         this.buildJobExecutionService = buildJobExecutionService;
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.buildJobContainerService = buildJobContainerService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildLogsMap = buildLogsMap;
         this.taskScheduler = taskScheduler;
+        this.buildAgentDockerService = buildAgentDockerService;
     }
 
     /**
@@ -210,7 +222,7 @@ public class BuildJobManagementService {
         distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
             if (!isInitialConnection) {
                 // This is a reconnection - reset the initialized flag so listeners are re-registered
-                log.info("Hazelcast client reconnected to cluster. Re-initializing BuildJobManagementService listeners.");
+                log.info("Reconnected to the distributed data provider. Re-initializing BuildJobManagementService listeners.");
                 initialized.set(false);
             }
             boolean initSucceeded = tryInitialize();
@@ -223,7 +235,8 @@ public class BuildJobManagementService {
         // If already connected, tryInitialize was called by the listener above.
         // If not connected yet, schedule periodic retries as a fallback.
         if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
-            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+            log.info("Not connected to the distributed data provider yet. Scheduling periodic initialization retries every {} seconds.",
+                    CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
             scheduleConnectionRetryIfNeeded();
         }
     }
@@ -265,7 +278,7 @@ public class BuildJobManagementService {
         }
 
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Cannot initialize BuildJobManagementService: not connected to Hazelcast cluster yet");
+            log.debug("Cannot initialize BuildJobManagementService: not connected to the distributed data provider yet");
             return false;
         }
 
@@ -357,7 +370,7 @@ public class BuildJobManagementService {
 
         CompletableFuture<BuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
+                return awaitBuildResult(future, buildJobItem.id(), buildJobTimeoutSeconds);
             }
             catch (Exception ex) {
                 if (DockerUtil.isDockerNotAvailable(ex)) {
@@ -393,6 +406,49 @@ public class BuildJobManagementService {
             runningFutures.remove(buildJobItem.id());
             runningFuturesWrapper.remove(buildJobItem.id());
         }));
+    }
+
+    /**
+     * Waits for the build result, without letting the time spent pulling the Docker image consume the build timeout.
+     * <p>
+     * Pulling the image is the first step of {@link BuildJobExecutionService#runBuildJob}, so it runs inside the window
+     * guarded by the build timeout. A cold pull of a large image can easily take longer than
+     * {@code artemis.continuous-integration.build-timeout-seconds.max} (240 seconds by default), which would cancel the
+     * job and report it as a build timeout even though the build itself never started. The pull has its own, much longer
+     * budget ({@code artemis.continuous-integration.image-pull-timeout-seconds}) and must therefore be excluded here.
+     * <p>
+     * Rather than starting the timer after image preparation, the wait is sliced: only slices during which no pull is in
+     * progress count against the build budget. That keeps the accounting correct for images that are already present
+     * locally (no pull, so the full budget applies from the start) as well as for pulls that finish mid-build.
+     *
+     * Package-private for testing.
+     *
+     * @param future                 the future of the running build job
+     * @param buildJobId             the ID of the build job, used to check whether its image pull is still running
+     * @param buildJobTimeoutSeconds the build budget in seconds, excluding any time spent pulling the image
+     * @return the build result
+     * @throws TimeoutException if the build itself, not counting image pulls, exceeded the build budget
+     */
+    BuildResult awaitBuildResult(Future<BuildResult> future, String buildJobId, int buildJobTimeoutSeconds) throws Exception {
+        final long budgetNanos = TimeUnit.SECONDS.toNanos(buildJobTimeoutSeconds);
+        long consumedNanos = 0;
+
+        while (true) {
+            final long sliceStartNanos = System.nanoTime();
+            try {
+                return future.get(BUILD_TIMEOUT_POLL_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+            }
+            catch (TimeoutException timeout) {
+                if (buildAgentDockerService.isImagePullInProgress(buildJobId)) {
+                    // The pull is bounded by the image pull timeout, so this slice does not count against the build budget.
+                    continue;
+                }
+                consumedNanos += System.nanoTime() - sliceStartNanos;
+                if (consumedNanos >= budgetNanos) {
+                    throw timeout;
+                }
+            }
+        }
     }
 
     private void logTimedOutBuildJob(BuildJobQueueItem buildJobItem, int buildJobTimeoutSeconds) {

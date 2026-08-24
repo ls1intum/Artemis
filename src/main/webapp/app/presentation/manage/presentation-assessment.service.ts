@@ -4,6 +4,7 @@ import { Observable, map } from 'rxjs';
 
 import { User } from 'app/account/user/user.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { PresentationAssessment, PresentationAssessmentInstance } from 'app/presentation/shared/entities/presentation-assessment.model';
 
 type EntityResponseType = HttpResponse<PresentationAssessment>;
@@ -73,20 +74,6 @@ export class PresentationAssessmentService {
         return this.http.get<User[]>(`api/course/courses/${courseId}/students`, { observe: 'response' });
     }
 
-    addStudent(courseId: number, presentationAssessmentId: number, studentLogin: string): Observable<HttpResponse<void>> {
-        return this.http.post<void>(
-            `api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`,
-            {},
-            { observe: 'response' },
-        );
-    }
-
-    removeStudent(courseId: number, presentationAssessmentId: number, studentLogin: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`api/presentation/courses/${courseId}/presentation-assessments/${presentationAssessmentId}/students/${studentLogin}`, {
-            observe: 'response',
-        });
-    }
-
     private convertDateFromClient(presentationAssessment: PresentationAssessment): PresentationAssessmentRest {
         const copy: PresentationAssessmentRest = {
             id: presentationAssessment.id,
@@ -119,7 +106,7 @@ export class PresentationAssessmentService {
     }
 
     private convertInstanceDateFromClient(instance: PresentationAssessmentInstance): PresentationAssessmentInstanceRest {
-        return { ...instance, presentationDate: convertDateFromClient(instance.presentationDate) };
+        return cloneWith(instance, { presentationDate: convertDateFromClient(instance.presentationDate) });
     }
 
     private convertInstanceResponseFromServer(res: HttpResponse<PresentationAssessmentInstance>): HttpResponse<PresentationAssessmentInstance> {

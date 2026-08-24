@@ -93,8 +93,6 @@ export interface SidebarCardElement {
     routerLink?: string;
     /** Prevents route navigation while preserving the sidebar selection event. */
     disableNavigation?: boolean;
-    /** Renders this item as a non-interactive section heading. */
-    sectionLabel?: boolean;
     /**
      * Set for Exercises
      */

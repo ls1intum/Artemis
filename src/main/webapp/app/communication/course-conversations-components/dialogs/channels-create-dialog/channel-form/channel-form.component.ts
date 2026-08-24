@@ -6,6 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SelectButton } from 'primeng/selectbutton';
 import { TranslateService } from '@ngx-translate/core';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export interface ChannelFormData {
     name?: string;
@@ -94,7 +95,7 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     }
 
     submitForm() {
-        const channelFormData: ChannelFormData = { ...this.form.value };
+        const channelFormData: ChannelFormData = deepClone(this.form.value);
         this.formSubmitted.emit(channelFormData);
     }
 

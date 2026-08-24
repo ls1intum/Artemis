@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,6 +27,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -89,7 +91,9 @@ public class DockerClientTestService {
         when(pullImageCmd.withPlatform(anyString())).thenReturn(pullImageCmd);
         BuildAgentDockerService.MyPullImageResultCallback callback1 = mock(BuildAgentDockerService.MyPullImageResultCallback.class);
         when(pullImageCmd.exec(any(BuildAgentDockerService.MyPullImageResultCallback.class))).thenReturn(callback1);
-        when(callback1.awaitCompletion()).thenReturn(null);
+        // The production code waits in slices on the callback's own completion signal, so this has to report that the pull finished. Without the stub Mockito returns
+        // false, which the production code correctly interprets as a pull that never completes and aborts once the stall timeout elapses.
+        when(callback1.awaitFinished(anyLong(), any(TimeUnit.class))).thenReturn(true);
 
         String dummyContainerId = "1234567890";
 

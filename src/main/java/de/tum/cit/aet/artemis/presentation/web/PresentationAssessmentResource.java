@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessmentInstance
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentInstanceDTO;
 import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
+import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.presentation.service.PresentationAssessmentService;
 
 /**
@@ -50,10 +51,14 @@ public class PresentationAssessmentResource {
 
     private final PresentationAssessmentService presentationAssessmentService;
 
+    private final PresentationAssessmentRepository presentationAssessmentRepository;
+
     private final CourseRepository courseRepository;
 
-    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, CourseRepository courseRepository) {
+    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, PresentationAssessmentRepository presentationAssessmentRepository,
+            CourseRepository courseRepository) {
         this.presentationAssessmentService = presentationAssessmentService;
+        this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.courseRepository = courseRepository;
     }
 
@@ -68,7 +73,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<List<PresentationAssessmentDTO>> getPresentationAssessments(@PathVariable long courseId) {
         log.debug("REST request to get presentation assessments for course {}", courseId);
         findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        List<PresentationAssessmentDTO> presentationAssessments = presentationAssessmentService.findAllByCourseId(courseId).stream().map(PresentationAssessmentDTO::of).toList();
+        List<PresentationAssessmentDTO> presentationAssessments = presentationAssessmentRepository.findAllByCourseId(courseId).stream().map(PresentationAssessmentDTO::of).toList();
         return ResponseEntity.ok(presentationAssessments);
     }
 
@@ -84,7 +89,7 @@ public class PresentationAssessmentResource {
     public ResponseEntity<PresentationAssessmentDTO> getPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get presentation assessment {} for course {}", assessmentId, courseId);
         findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.findByIdAndCourseIdElseThrow(courseId, assessmentId)));
+        return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId)));
     }
 
     /**
@@ -179,41 +184,9 @@ public class PresentationAssessmentResource {
     public ResponseEntity<List<PresentationAssessmentStudentDTO>> getPresentationAssessmentStudents(@PathVariable long courseId, @PathVariable long assessmentId) {
         log.debug("REST request to get students for presentation assessment {} in course {}", assessmentId, courseId);
         findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        return ResponseEntity.ok(presentationAssessmentService.findStudents(courseId, assessmentId).stream().map(PresentationAssessmentStudentDTO::of).toList());
-    }
-
-    /**
-     * POST /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : add a student to a presentation assessment.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @param studentLogin the login of the student to add
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin}")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> addStudentToPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
-        log.debug("REST request to add student {} to presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
-        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        presentationAssessmentService.addStudent(course, assessmentId, studentLogin);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * DELETE /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin} : remove a student from a presentation assessment.
-     *
-     * @param courseId     the course id
-     * @param assessmentId the presentation assessment id
-     * @param studentLogin the login of the student to remove
-     * @return the ResponseEntity with status 204 (No Content)
-     */
-    @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students/{studentLogin}")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> removeStudentFromPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId, @PathVariable String studentLogin) {
-        log.debug("REST request to remove student {} from presentation assessment {} in course {}", studentLogin, assessmentId, courseId);
-        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
-        presentationAssessmentService.removeStudent(courseId, assessmentId, studentLogin);
-        return ResponseEntity.noContent().build();
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        return ResponseEntity
+                .ok(presentationAssessmentRepository.findStudentsForPresentationAssessment(assessmentId, courseId).stream().map(PresentationAssessmentStudentDTO::of).toList());
     }
 
     private Course findCourseAndCheckPresentationAssessmentsEnabled(long courseId) {
