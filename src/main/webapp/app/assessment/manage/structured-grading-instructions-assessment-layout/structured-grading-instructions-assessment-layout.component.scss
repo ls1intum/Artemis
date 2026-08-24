@@ -1,4 +1,4 @@
-/* jhiMarkdown wraps its output in a <p>; drop the trailing margin so single lines stay compact. */
-.sgi-item__markdown ::ng-deep p:last-child {
-    margin-bottom: 0;
+/* jhiMarkdown wraps its output in a <p>; zero margins so grid rows stay baseline-aligned. */
+.sgi-item__markdown ::ng-deep p {
+    margin: 0;
 }

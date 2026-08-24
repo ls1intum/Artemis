@@ -140,11 +140,9 @@
     }
 
     &__label {
-        font-size: 0.6875rem;
+        font-size: 1rem;
         font-weight: 700;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        color: var(--secondary);
+        color: var(--body-color);
     }
 
     /* No user-resize handle: a dragged-open textarea would keep the code editor's line widget that tall. */
@@ -166,6 +164,7 @@
         margin: 0;
         min-width: 0;
         font-size: 0.875rem;
+        font-weight: 400;
         color: var(--secondary);
         white-space: pre-wrap;
     }
@@ -174,7 +173,9 @@
     &__instruction-feedback {
         margin: 0;
         min-width: 0;
-        color: var(--body-color);
+        font-size: 0.875rem;
+        font-weight: 800;
+        color: var(--secondary);
         white-space: pre-wrap;
     }
 

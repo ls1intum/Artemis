@@ -112,21 +112,17 @@
 
         <!-- Tutor-facing guidance of the linked instruction: says when this score applies. -->
         @if (feedback().gradingInstruction?.instructionDescription; as instructionDescription) {
-            <div class="flex min-w-0 flex-col gap-1">
-                <span class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
-                <p class="text-muted-color m-0 min-w-0 text-sm whitespace-pre-wrap">{{ instructionDescription }}</p>
+            <div class="flex min-w-0 flex-col gap-0.5">
+                <span class="text-base font-bold" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
+                <p class="text-muted-color m-0 min-w-0 text-sm font-normal whitespace-pre-wrap">{{ instructionDescription }}</p>
             </div>
             <hr class="m-0 border-0 border-t border-[var(--border-color)]" />
         }
 
-        <div class="flex min-w-0 flex-col gap-1">
-            <label
-                class="text-muted-color text-[0.6875rem] font-bold tracking-[0.05em] uppercase"
-                [attr.for]="textareaId"
-                jhiTranslate="artemisApp.assessment.detail.feedback"
-            ></label>
+        <div class="flex min-w-0 flex-col gap-0.5">
+            <label class="text-base font-bold" [attr.for]="textareaId" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
             @if (feedback().gradingInstruction?.feedback; as instructionFeedback) {
-                <p class="m-0 min-w-0 whitespace-pre-wrap">{{ instructionFeedback }}</p>
+                <p class="text-muted-color m-0 min-w-0 text-sm font-normal whitespace-pre-wrap">{{ instructionFeedback }}</p>
             }
             <textarea
                 [id]="textareaId"

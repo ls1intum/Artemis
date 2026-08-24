@@ -58,7 +58,7 @@
                             <div class="flex min-w-0 items-center gap-2">
                                 <tum-ui-tag class="shrink-0" [severity]="item.pointsSeverity" [value]="item.pointsLabel" />
                                 @if (instruction.gradingScale) {
-                                    <span [id]="item.scaleElementId" class="min-w-0 text-sm font-semibold [overflow-wrap:anywhere]">{{ instruction.gradingScale }}</span>
+                                    <span [id]="item.scaleElementId" class="min-w-0 text-lg font-bold [overflow-wrap:anywhere]">{{ instruction.gradingScale }}</span>
                                 }
                             </div>
                             <div class="relative flex shrink-0 items-center gap-2 whitespace-nowrap">
@@ -114,13 +114,17 @@
                                 }
                             </div>
                         </div>
-                        <!-- Tutor notes on when this scale level applies (muted), then the student-facing feedback. -->
-                        <div
-                            [id]="item.descriptionElementId"
-                            class="sgi-item__markdown text-muted-color markdown-preview text-sm"
-                            [jhiMarkdown]="instruction!.instructionDescription!"
-                        ></div>
-                        <div class="sgi-item__markdown markdown-preview" [jhiMarkdown]="instruction!.feedback!"></div>
+                        <!-- Shared two-column grid so Instruction/Feedback bodies share one left edge. -->
+                        <div class="grid min-w-0 grid-cols-[max-content_minmax(0,1fr)] items-baseline gap-x-2 gap-y-1">
+                            <span class="text-sm font-bold" jhiTranslate="artemisApp.assessment.detail.criteria"></span>
+                            <div
+                                [id]="item.descriptionElementId"
+                                class="sgi-item__markdown text-muted-color markdown-preview min-w-0 text-sm font-normal"
+                                [jhiMarkdown]="instruction!.instructionDescription!"
+                            ></div>
+                            <span class="text-sm font-bold" jhiTranslate="artemisApp.assessment.detail.feedback"></span>
+                            <div class="sgi-item__markdown text-muted-color markdown-preview min-w-0 text-sm font-normal" [jhiMarkdown]="instruction!.feedback!"></div>
+                        </div>
                     </div>
                 }
             </div>
