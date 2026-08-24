@@ -107,29 +107,33 @@ public class User extends AbstractAuditingEntity implements Participant {
      * Whether this account may authenticate. Every authentication path enforces it: the internal, SAML2, OIDC and passkey
      * providers, and both git paths (HTTPS via {@code LocalVCServletService} and SSH via {@code GitPublickeyAuthenticatorService}).
      * <p>
-     * <b>An account is only ever created unactivated when its own owner is expected to activate it.</b> That requires two
-     * things at once, and both are checked in {@link de.tum.cit.aet.artemis.account.service.user.UserCreationService}:
-     * <ol>
-     * <li>the account is <b>internal</b> ({@link #isInternal()}) - an externally managed account authenticates against the
-     * external identity provider, so Artemis has no activation step to offer it, and</li>
-     * <li>self-registration is <b>enabled</b> on this instance ({@code artemis.user-management.registration.enabled}) - the
-     * {@link #activationKey} is redeemable only through {@code GET /activate}, and both that endpoint and the mail that
-     * carries the key are gated behind that property.</li>
-     * </ol>
+     * <b>An account is only ever created unactivated when its own owner is expected to activate it</b>, which requires the
+     * account to be <b>internal</b> ({@link #isInternal()}). That is what
+     * {@link de.tum.cit.aet.artemis.account.service.user.UserCreationService#createUser} checks. An externally managed
+     * account authenticates against the external identity provider, so Artemis has no activation step to offer it: the
+     * recovery key is redeemable only through {@code GET /activate}, which never sends an external account there.
      * Creating an external account unactivated therefore produces an account that <em>nothing</em> can ever activate. This
      * really happened: the student import created LDAP users unactivated, and they lost repository access as soon as git
      * authentication began enforcing this flag.
      * <p>
+     * Being internal is necessary but not by itself sufficient for the key to be redeemable: {@code GET /activate} and the
+     * mail carrying the key are both gated behind {@code artemis.user-management.registration.enabled}, so on an instance
+     * with self-registration disabled even an internal account has no way to redeem one. Creation is deliberately
+     * <em>not</em> narrowed to match, because the LTI launch also creates an internal account through the factory. Whether
+     * that account still has its one-time password owed to it is recorded by {@code UserLti.initialized} rather than by
+     * this flag.
+     * <p>
      * Only three kinds of writes set this to {@code false}, and only the first is the activation workflow:
      * <ol>
-     * <li><b>awaiting self-activation</b> - {@code UserCreationService.createUser} and {@code UserService.registerUser},
-     * both under the two conditions above. Paired with a non-null {@link #activationKey}.</li>
+     * <li><b>awaiting activation</b> - {@code UserCreationService.createUser} for an internal account, and
+     * {@code UserService.registerUser}, whose accounts are always internal. Paired with a recovery key.</li>
      * <li><b>deliberate deactivation</b> - {@code UserCreationService.deactivateUser} and the admin edit form. Applies to
-     * any account regardless of type, and never sets an activation key.</li>
+     * any account regardless of type, and never issues a recovery key.</li>
      * <li><b>soft deletion</b> - {@code UserService.anonymizeUser}, alongside {@link #deleted}.</li>
      * </ol>
-     * The presence of an {@link #activationKey} consequently distinguishes (1) from (2), which is what made it possible to
-     * repair the affected rows without touching accounts an admin had deactivated on purpose.
+     * The presence of a recovery key consequently distinguishes (1) from (2), which is what made it possible to repair the
+     * affected rows without touching accounts an admin had deactivated on purpose. The keys live in
+     * {@code user_recovery_key}; {@link #activationKey} is the deprecated column they were read from before.
      */
     @NonNull
     @Column(nullable = false)

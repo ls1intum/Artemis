@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
@@ -90,6 +91,9 @@ public class UserTestService {
 
     @Autowired
     private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
 
     // Optional: the repository only exists where LTI is enabled, and this helper is shared with test classes that run without it.
     @Autowired(required = false)
@@ -619,6 +623,8 @@ public class UserTestService {
         repoUser.setActivated(false);
         markCreatedByLtiLaunch(repoUser);
         userTestRepository.save(repoUser);
+        // Seeded so that the clearing below is actually asserted: the factory issues this key for every internal account.
+        userRecoveryKeyService.storeActivationKey(repoUser.getId(), "some-key");
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
@@ -630,6 +636,11 @@ public class UserTestService {
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+        // The key the factory generated for the internal account is unreachable state once the account is activated, and
+        // an activated account carrying one would break the invariant the data repair for wrongly unactivated accounts
+        // relies on. Read through the service, since the keys live in user_recovery_key - asserting on the deprecated
+        // User column would pass without testing anything.
+        assertThat(userRecoveryKeyService.findActivationKey(currentUser.getId())).as("activating through the LTI initialization clears the activation key").isNull();
     }
 
     // Test

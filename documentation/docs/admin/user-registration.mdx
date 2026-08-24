@@ -103,16 +103,18 @@ other provider refused it. That gap is now closed, so an account in this state c
 :::note
 `GET /activate` and the mail carrying the key are both gated behind
 `artemis.user-management.registration.enabled`, so on an instance with self-registration disabled even an
-internal account has no way to redeem a key. Narrowing account creation to match is a separate change: the
-LTI launch is the only path that creates an internal account through this factory, and it reads `activated`
-as its own record of whether the password dialog is still owed.
+internal account has no way to redeem a key. Account creation is deliberately **not** narrowed to match, and
+checks only whether the account is internal: the LTI launch is the other path that creates an internal
+account through this factory. Whether it still owes that account the password dialog is recorded by
+`UserLti.initialized` rather than by `activated`, and the account is activated when the dialog is shown, so it
+never needs the key either.
 :::
 
 Consequently there are exactly three reasons for `activated = false`:
 
 | Reason | Set by | Activation key |
 |---|---|---|
-| Awaiting self-activation | `UserCreationService.createUser`, `UserService.registerUser` — internal accounts with registration enabled | Present |
+| Awaiting activation | `UserCreationService.createUser` for an internal account, `UserService.registerUser` (always internal) | Present |
 | Deliberately deactivated | `UserCreationService.deactivateUser`, admin edit form — any account type | Absent |
 | Soft-deleted | `UserService.anonymizeUser`, together with `is_deleted` | Absent |
 
@@ -123,7 +125,9 @@ that carry a key never re-enables an account somebody deactivated deliberately.
 ### Activation and cleanup
 
 A self-registered account is mailed a link containing its activation key. Redeeming it through
-`GET /activate` sets `activated = true` and clears the key.
+`GET /activate` sets `activated = true` and clears the key. Every other write that activates an account
+clears it too — the administrative activate action, and the LTI launch handing over the generated password —
+so an activated account never carries one.
 
 An account that is not activated within `registration.cleanup-time-minutes` (default 60) is
 **deleted**. The removal is scheduled when the account is registered and cancelled when it is
@@ -229,7 +233,8 @@ not terminate at this nginx configuration.
 
 | Endpoint | nginx zone | Application limit |
 |---|---|---|
-| `POST /authenticate`, `/saml2`, `/login/webauthn` | `loginlimit`, 30 r/m | `AUTHENTICATION`, 30 rpm |
+| `POST /authenticate`, `/login/webauthn` | `loginlimit`, 30 r/m | `AUTHENTICATION`, 30 rpm |
+| `POST /saml2` | `loginlimit`, 30 r/m | none — the SAML2 callback exchanges an already established assertion |
 | `GET /login-options` | `loginoptionslimit`, 30 r/m | `LOGIN_OPTIONS`, 30 rpm |
 | `/register`, `/activate`, `/account/reset-password/*` | `accountrecoverylimit`, 5 r/m | `ACCOUNT_MANAGEMENT`, 5 rpm |
 | git credential handshake (`/info/refs`) | `gitauthlimit`, 60 r/m | `AUTHENTICATION`, 30 rpm |
@@ -239,7 +244,8 @@ Application-level limits can be overridden per type under `artemis.rate-limiting
 `artemis.rate-limiting.enabled` is `true`.
 
 If you run your own reverse proxy instead of the shipped nginx configuration, mirror the zones above;
-otherwise only the application-level limits apply.
+otherwise only the application-level limits apply — and the SAML2 callback, which has none of its own, is
+then unbounded.
 
 ## Audit log
 
@@ -252,9 +258,11 @@ records. The entries relevant to account state:
 | `DEACTIVATE_USER` | An account is deactivated, through either the deactivate action or the admin edit form | The acting administrator | `user=<login>` |
 | `ADMIN_CHANGE_USER_PASSWORD` | An administrator sets a user's password | The acting administrator | Which credential types were revoked |
 
-Browse them under **Server Administration → Audits** in the admin UI, or through
-`GET /api/admin/audits`. Retention is configured separately for login records and for deliberate actions
-like the above; see [Cleanup Service](cleanup-service.mdx).
+All three are classified as security events, so they are written to `security_audit_event` and appear under
+the **Security** tab of **Server Administration → Audits** in the admin UI, or through `GET /api/admin/audits`.
+`DEACTIVATE_USER` in particular is the only audit record of a wholesale credential revocation, since the
+revocation itself writes none. Retention is configured separately per log; see
+[Cleanup Service](cleanup-service.mdx).
 
 ## Troubleshooting
 
