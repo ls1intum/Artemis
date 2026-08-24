@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -10,29 +10,19 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { PageTitleView, SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { ExamManagementNavigationSidebarComponent } from 'app/exam/manage/exam-management/exam-management-navigation-sidebar/exam-management-navigation-sidebar.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { NgTemplateOutlet } from '@angular/common';
-import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
-    imports: [
-        ExamManagementNavigationSidebarComponent,
-        CourseSidebarToggleButtonComponent,
-        RouterOutlet,
-        NgTemplateOutlet,
-        CourseTitleBarTitleComponent,
-        DocumentationButtonComponent,
-        RouterLink,
-        TranslateDirective,
-    ],
+    imports: [ExamManagementNavigationSidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, NgTemplateOutlet, TranslateDirective],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, PageTitleView {
     private route = inject(ActivatedRoute);

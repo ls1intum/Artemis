@@ -7,21 +7,19 @@
 <ng-template titleBarActions>
     @if (exam()?.course?.isAtLeastInstructor) {
         @if (canHaveBonus()) {
-            <a tumUiButton severity="primary" size="small" [routerLink]="getExamRoutesByIdentifier('bonus')" id="bonus-button">
+            <a tumUiButton severity="secondary" size="small" [routerLink]="getExamRoutesByIdentifier('bonus')" id="bonus-button">
                 <fa-icon [icon]="faAward" />
-                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.bonus"></span>
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.bonus"></span>
             </a>
         }
         <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-            <a tumUiButton severity="primary" size="small" [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" id="plagiarism-cases-button">
+            <a tumUiButton severity="secondary" size="small" [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" id="plagiarism-cases-button">
                 <fa-icon [icon]="faHeartBroken" />
-                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
             </a>
         </jhi-feature-overlay>
         @if (exam() && isExamOver() && exam()?.course) {
-            <div class="d-inline">
-                <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
-            </div>
+            <jhi-course-exam-archive-button class="flex items-center gap-2" [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
         }
         <button
             tumUiButton
@@ -38,7 +36,7 @@
             [dialogError]="dialogError$"
         >
             <fa-icon [icon]="faUndo" />
-            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="entity.action.reset"></span>
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.reset"></span>
         </button>
         <button
             id="exam-delete"
@@ -57,7 +55,7 @@
             [dialogError]="dialogError$"
         >
             <fa-icon [icon]="faTrash" />
-            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
+            <span class="title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
         </button>
     }
 </ng-template>
