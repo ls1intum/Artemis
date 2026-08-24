@@ -248,13 +248,41 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDate() {
-        if (exam.isTestExam()) {
-            if (this.startedDate == null) {
+        return individualEndDate(exam, startedDate, workingTime);
+    }
+
+    /**
+     * Returns the individual exam end date for the given exam, start date and working time, without needing a
+     * {@link StudentExam} instance. Callers that only read a projection of those three values (rather than loading the
+     * whole student exam) share this computation so it cannot drift from {@link #getIndividualEndDate()}.
+     *
+     * @param exam        the exam the student exam belongs to
+     * @param startedDate the date the student started the exam, only relevant for test exams
+     * @param workingTime the working time of the student exam in seconds
+     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for test exams with undefined startedDate
+     */
+    public static ZonedDateTime individualEndDate(Exam exam, ZonedDateTime startedDate, int workingTime) {
+        return individualEndDate(exam.isTestExam(), exam.getStartDate(), startedDate, workingTime);
+    }
+
+    /**
+     * Scalar form of {@link #individualEndDate(Exam, ZonedDateTime, int)} for callers that read the exam as a
+     * projection rather than loading the entity.
+     *
+     * @param testExam      whether the exam is a test exam
+     * @param examStartDate the start date of the exam
+     * @param startedDate   the date the student started the exam, only relevant for test exams
+     * @param workingTime   the working time of the student exam in seconds
+     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for test exams with undefined startedDate
+     */
+    public static ZonedDateTime individualEndDate(boolean testExam, ZonedDateTime examStartDate, ZonedDateTime startedDate, int workingTime) {
+        if (testExam) {
+            if (startedDate == null) {
                 return null;
             }
-            return this.startedDate.plusSeconds(workingTime);
+            return startedDate.plusSeconds(workingTime);
         }
-        return exam.getStartDate().plusSeconds(workingTime);
+        return examStartDate.plusSeconds(workingTime);
     }
 
     /**
@@ -264,14 +292,42 @@ public class StudentExam extends AbstractAuditingEntity {
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDateWithGracePeriod() {
-        int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
-        if (exam.isTestExam()) {
-            if (this.startedDate == null) {
+        return individualEndDateWithGracePeriod(exam, startedDate, workingTime);
+    }
+
+    /**
+     * Returns the individual exam end date including the exam's grace period, without needing a {@link StudentExam}
+     * instance. See {@link #individualEndDate(Exam, ZonedDateTime, int)} for why this is static.
+     *
+     * @param exam        the exam the student exam belongs to
+     * @param startedDate the date the student started the exam, only relevant for test exams
+     * @param workingTime the working time of the student exam in seconds
+     * @return the ZonedDateTime that marks the exam end for this student including the grace period, or null for test exams with undefined startedDate
+     */
+    public static ZonedDateTime individualEndDateWithGracePeriod(Exam exam, ZonedDateTime startedDate, int workingTime) {
+        return individualEndDateWithGracePeriod(exam.isTestExam(), exam.getStartDate(), exam.getGracePeriod(), startedDate, workingTime);
+    }
+
+    /**
+     * Scalar form of {@link #individualEndDateWithGracePeriod(Exam, ZonedDateTime, int)} for callers that read the exam
+     * as a projection rather than loading the entity.
+     *
+     * @param testExam      whether the exam is a test exam
+     * @param examStartDate the start date of the exam
+     * @param gracePeriod   the grace period of the exam in seconds, may be null
+     * @param startedDate   the date the student started the exam, only relevant for test exams
+     * @param workingTime   the working time of the student exam in seconds
+     * @return the ZonedDateTime that marks the exam end for this student including the grace period, or null for test exams with undefined startedDate
+     */
+    public static ZonedDateTime individualEndDateWithGracePeriod(boolean testExam, ZonedDateTime examStartDate, Integer gracePeriod, ZonedDateTime startedDate, int workingTime) {
+        int gracePeriodInSeconds = Objects.requireNonNullElse(gracePeriod, 0);
+        if (testExam) {
+            if (startedDate == null) {
                 return null;
             }
-            return this.startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
+            return startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
         }
-        return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
+        return examStartDate.plusSeconds(workingTime + gracePeriodInSeconds);
     }
 
     /**

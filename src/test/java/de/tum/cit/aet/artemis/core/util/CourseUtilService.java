@@ -1208,7 +1208,7 @@ public class CourseUtilService {
                     StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student" + j);
                     ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
                     var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
-                    modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user);
+                    modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user, null);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
                         Result result = participationUtilService.generateResultWithScore(submission, currentUser, 3.0);

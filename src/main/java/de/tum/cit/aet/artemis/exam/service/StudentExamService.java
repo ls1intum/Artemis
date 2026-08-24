@@ -358,9 +358,11 @@ public class StudentExamService {
     }
 
     private void saveSubmissionVersion(User currentUser, Submission submissionFromClient) {
-        // versioning of submission
+        // Versioning of the submission, off the request thread. A version is a full copy of the submission content and
+        // nothing in this request reads it back, so making the student wait for that write buys nothing. It was the
+        // slowest statement in the submit path.
         try {
-            submissionVersionService.saveVersionForIndividual(submissionFromClient, currentUser);
+            submissionVersionService.saveVersionForIndividualAsync(submissionFromClient, currentUser);
         }
         catch (Exception ex) {
             log.error("Submission version could not be saved", ex);

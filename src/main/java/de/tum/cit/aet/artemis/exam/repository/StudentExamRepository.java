@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -60,7 +62,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExam> findWithExercisesById(@Param("studentExamId") Long studentExamId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "studentParticipations" })
+    // exercises.exerciseGroup and its exam are eager @ManyToOne associations, so without them here Hibernate issues one
+    // secondary select per exercise of the student exam
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.exerciseGroup", "exercises.exerciseGroup.exam", "studentParticipations" })
     Optional<StudentExam> findWithExercisesAndStudentParticipationsById(Long studentExamId);
 
     @Query("""
@@ -83,6 +87,40 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 AND se.user.id = :userId
             """)
     Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("isTestRun") boolean isTestRun);
+
+    /**
+     * Reads only what the submission gate needs about a student exam, and lets the database answer whether the given
+     * exercise belongs to it. Replaces loading the student exam with its whole (polymorphic) exercise collection on a
+     * path that runs on every autosave.
+     * <p>
+     * Returns one row per matching student exam, newest first, so a test exam with several attempts can be resolved by
+     * taking the first element. An empty result means the user has no student exam for this exam at all, which the
+     * caller distinguishes from "the exercise is not part of the student exam".
+     *
+     * @param userId     the id of the student
+     * @param examId     the id of the exam
+     * @param exerciseId the id of the exercise the student wants to submit for
+     * @param isTestRun  whether test-run student exams should be considered
+     * @return the submission gate projections, newest first
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO(
+                se.id,
+                se.submitted,
+                se.submissionDate,
+                se.workingTime,
+                se.startedDate,
+                se.createdDate,
+                (SELECT COUNT(e.id) FROM se.exercises e WHERE e.id = :exerciseId)
+            )
+            FROM StudentExam se
+            WHERE se.testRun = :isTestRun
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+            ORDER BY se.createdDate DESC
+            """)
+    List<StudentExamSubmissionGateDTO> findSubmissionGatesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("exerciseId") long exerciseId,
+            @Param("isTestRun") boolean isTestRun);
 
     @Query("""
             SELECT DISTINCT se
@@ -231,6 +269,24 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             	AND se.user.id = :userId
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+
+    /**
+     * Reads only the two values needed to compute a student's individual exam end date, rather than loading the whole
+     * student exam. Pair with {@link de.tum.cit.aet.artemis.exam.domain.StudentExam#individualEndDate} and the exam the
+     * caller already holds.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the student
+     * @return the working time and started date of the student exam, if one exists
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamWorkingTimeDTO(se.workingTime, se.startedDate)
+            FROM StudentExam se
+            WHERE se.testRun = FALSE
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+            """)
+    Optional<StudentExamWorkingTimeDTO> findWorkingTimeByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
     Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
 
@@ -453,18 +509,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         save(targetAttempt);
         return 1;
     }
-
-    @Query("""
-            SELECT DISTINCT se
-            FROM StudentExam se
-                LEFT JOIN FETCH se.exercises exercises
-            WHERE se.exam.id = :examId
-                AND se.user.id = :userId
-                AND se.submitted = FALSE
-                AND se.testRun = FALSE
-                AND se.exam.testExam = TRUE
-            """)
-    List<StudentExam> findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
 
     @Modifying
     @Transactional // ok because of modifying query
