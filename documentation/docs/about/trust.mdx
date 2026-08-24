@@ -1,0 +1,226 @@
+---
+id: trust
+title: Trust and Transparency
+sidebar_label: Trust and Transparency
+description: Central entry point for security, privacy, accessibility, AI data processing, supply chain, and support questions, with a clear split between platform capabilities and operator responsibilities.
+---
+
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Trust and Transparency
+
+Artemis is used for learning, assessment, and examinations, it can be connected to AI services, and it
+processes educational data about identifiable people. This page is the entry point for the questions
+that institutional decision makers, data protection officers, and IT departments ask before adopting
+it. It links to the authoritative source for each topic rather than restating it.
+
+<Callout variant={CalloutVariant.warning}>
+    Artemis is software, not a service. Every Artemis instance is deployed and operated by an
+    institution, and that institution is the controller of the data in it. Statements on this page
+    describe what Artemis provides and what it leaves to the operator. They are not a compliance
+    certification for any particular deployment.
+</Callout>
+
+## Platform capabilities and operator responsibilities
+
+| Topic | What Artemis provides | What the operating institution decides or is responsible for |
+| --- | --- | --- |
+| Deployment | A self-hostable server and client, container images, and multi-node operation | Where it runs, network topology, firewalling, TLS termination, and certificates |
+| Authentication | LDAP, SAML2, OIDC, internal accounts, and passkeys (WebAuthn/FIDO2) | Which mechanism is enabled, password and token lifetimes, and whether strong authentication is enforced for administrators |
+| Authorization | Course-scoped role-based access control and a system-wide administrator role | Who receives privileged roles, and whether administrator accounts are separated from personal accounts |
+| Personal data | Role- and context-scoped access to personal and assessment data, student data export, and configurable data cleanup | The legal basis for processing, retention periods, the privacy statement shown to users, and data subject requests |
+| AI features | Optional, configuration-gated integrations with documented boundaries | Whether AI features are enabled at all, which model provider is used, and whether models are self-hosted |
+| Availability | A stateless architecture that supports horizontal scaling | Backups, restore procedures, monitoring, alerting, and capacity planning |
+| Updates | A minor release every two weeks, bugfix releases as needed, backports to older releases on request, automatic database migrations, and dependency vulnerability monitoring | When to upgrade, and applying releases promptly enough to receive security fixes |
+
+## Security
+
+The [security policy](https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md) is the
+authoritative document. It covers the supported authentication mechanisms, the role model and
+privileged access, token and session handling, transport and infrastructure security, supply chain
+protection, incident response, and the standards Artemis aligns with.
+
+Operational hardening is documented in the administrator guide:
+
+- [Security configuration](/admin/production-setup/security) covers secrets, startup validation that
+  refuses published default credentials in production, and configuration hygiene.
+- [Access rights](/admin/access-rights) documents every role, including the difference between
+  administrators and super administrators.
+
+## Reporting a vulnerability
+
+Report suspected vulnerabilities privately to the address in the
+[security policy](https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md), which also documents
+S/MIME encrypted reporting. Please do not open a public issue for a suspected vulnerability.
+
+## Privacy and data protection
+
+Artemis is designed to support GDPR-compliant institutional deployments. It applies data minimization
+in its own development process, scopes access to personal data by role and course, and provides the
+mechanisms an operator needs to meet its obligations. Whether a specific deployment is compliant
+depends on how it is configured and operated, and that assessment belongs to the operating
+institution.
+
+What Artemis provides:
+
+- **Self-hosting.** Artemis runs entirely on infrastructure the institution controls.
+- **A configurable privacy statement and imprint.** See [legal documents](/admin/production-setup/legal-documents).
+- **Data export for students.** Users can request an export of their own data; see
+  [data exports](/student/tools-reference/exports).
+- **Configurable data cleanup.** See the [cleanup service](/admin/cleanup-service).
+- **Data economy as a review criterion.** The pull request checklist requires authors to confirm that
+  they followed the principle of data economy for database and REST calls, and reviewers check it.
+- **Telemetry that can be switched off.** Artemis reports a small set of instance data at startup;
+  `telemetry.enabled` disables it entirely, and `telemetry.sendAdminDetails` excludes the
+  administrator's name and contact address. See [telemetry](/admin/telemetry) for the exact fields.
+
+Data flows depend on which integrations an institution enables. External authentication providers,
+AI services, plagiarism detection, and video sources each add their own flow, and each is optional.
+
+## AI transparency and data processing
+
+Artemis separates capabilities it implements itself from external services it integrates with, and
+documents both boundaries explicitly.
+
+- [Artemis Intelligence](/admin/artemis-intelligence) is the maintained map of every AI-enabled
+  subsystem, who owns it, and where the Artemis boundary lies.
+- The [AI pipeline catalog](/developer/ai-pipelines) documents the Artemis control plane in detail.
+- [Hyperion setup](/admin/hyperion) and [Spring AI](/developer/spring-ai) document how model providers
+  are configured for Artemis-native AI features.
+
+Points that matter for an adoption decision:
+
+- AI features are **optional** and gated by configuration. An institution can run Artemis without any
+  of them.
+- **Each institution chooses its own model provider.** The provider is Artemis configuration, not a
+  property of the platform, so administrators are free to point Artemis at whichever service their
+  institution has an agreement with.
+- **Institutions can keep AI processing inside their own infrastructure** by running open-source models
+  themselves and configuring Artemis against them. If a hosted provider is configured instead, data is
+  processed by that provider under the institution's own agreement with it.
+- Automated feedback and generated content are **suggestions**. Instructors and tutors remain
+  responsible for assessment decisions.
+
+## Accessibility
+
+Artemis aims to be usable by everyone.
+
+### The target
+
+**Artemis works toward WCAG 2.2 Level AA for the web client.**
+
+That target is chosen to line up with what the institutions running Artemis are themselves obliged to
+meet. Most of them are public bodies, and their obligations derive from the EU Web Accessibility
+Directive and the European Accessibility Act, implemented through the harmonized standard
+[EN 301 549](https://www.etsi.org/deliver/etsi_en/301500_301599/301549/) (in Germany, through
+[BITV 2.0](https://www.gesetze-im-internet.de/bitv_2_0/)). EN 301 549 references
+[WCAG 2.1 Level AA](https://www.w3.org/TR/WCAG21/) for web content.
+[WCAG 2.2](https://www.w3.org/TR/WCAG22/) is the current W3C Recommendation and the successor to 2.1, so
+targeting 2.2 Level AA covers what operators need today and anticipates the next revision of the
+standard.
+
+### What that means in practice
+
+- The [AET UI/UX guidelines](https://ls1intum.github.io/ui-ux-guidelines/) and the
+  [client development guidelines](/developer/guidelines/client-development) cover semantic markup,
+  keyboard operability, visible focus, accessible names, and color contrast through theming tokens.
+- Contrast is expressed through theming variables rather than hard-coded colors, so both the light and
+  the dark theme are checked together.
+- A Lighthouse runner is part of the repository tooling (`pnpm run lighthouse`) and is used to check
+  pages during development.
+- The pull request checklist requires authors of user-facing changes to confirm that they followed the
+  AET UI/UX guidelines and the theming guidelines, and reviewers check that.
+
+### Auditing it yourself
+
+Automated checks catch roughly a third of the WCAG success criteria, so they are a floor rather than a
+verdict. A useful audit of an Artemis deployment combines:
+
+```bash
+pnpm run lighthouse              # mobile profile, includes the accessibility category
+pnpm run lighthouse -- --desktop # desktop profile
+```
+
+with the parts a tool cannot judge:
+
+- a **keyboard-only** pass through the flows that matter to you, in particular exam participation and
+  assessment, checking that focus is always visible and never trapped
+- a **screen reader** pass over the same flows
+- **200% zoom and 320 px reflow**, which is where dense assessment views tend to break
+- **contrast in both the light and the dark theme**, since Artemis ships both
+
+### What this is not
+
+Artemis is **not** certified against WCAG. There is no accessibility conformance statement, no VPAT, and
+no third-party audit for the project, and the platform does not yet fully meet the target it works
+toward. The [platform comparison](/compare) reports accessibility accordingly.
+
+An institution's own legal obligation attaches to the deployment it operates, not to the upstream
+project. Institutions with a formal accessibility obligation should evaluate their own deployment and,
+where their law requires one, publish their own accessibility statement. Gaps found during such an
+evaluation are welcome as [GitHub issues](https://github.com/ls1intum/Artemis/issues/new/choose).
+
+## Software supply chain
+
+- **The number of third-party dependencies is deliberately kept small.** New dependencies are reviewed
+  before they are introduced, and existing ones are removed whenever the functionality can reasonably be
+  covered without them. Fewer dependencies is the control that scales.
+- Dependency families that must move in lockstep are guarded by a build check, because such a mismatch
+  produces a runtime error rather than a build failure.
+- **Administrators can review the known vulnerabilities of their own running instance** in the admin
+  area, and a scheduled weekly scan against the OSV database emails a summary to the configured
+  administrator address. This is the layer that reflects what an operator is actually running.
+- Upstream, GitHub Dependabot alerts and a Mend scan watch the repository; the Mend check fails a pull
+  request that introduces a vulnerable dependency, and Renovate proposes updates continuously.
+- Server and client code are analyzed statically with CodeQL, both alongside pull requests and on a
+  schedule for the `develop` and `main` branches.
+- Release-eligible builds include a **Software Bill of Materials (SBOM)** for both server and client,
+  downloadable from the admin area and attached to every GitHub release.
+- **Releases and container images are signed.** Each release carries `SHA256SUMS`, both CycloneDX
+  SBOMs, and a Sigstore-backed build provenance attestation; container images carry a provenance
+  attestation in the registry and a cosign signature, both bound to the image digest. The
+  [security policy](https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md) has the verification
+  commands.
+
+See [builds and dependencies](/developer/builds-and-dependencies) for how the build and dependency
+tooling works.
+
+## Releases and support
+
+[Release and support policy](./releases) documents versioning, cadence, which versions receive security
+fixes, and what an upgrade involves. Summary: a minor release every two weeks, bugfix releases whenever
+they are necessary, the latest release is the supported one, and there is no LTS release, but fixes are
+backported to an older release on request. The [roadmap](./roadmap) shows what is being explored,
+planned, and built.
+
+## Open-source development
+
+Artemis is more than published source code. [Open-source development](/developer/open-source)
+describes the engineering process, and [project governance](./governance) documents who reviews and
+approves changes and which automated gates every change has to pass.
+
+The source, the issue tracker, the pull requests, the reviews, the CI configuration, and this
+documentation are all public.
+
+## Governance
+
+[Project governance](./governance) documents the roles, the path from feature request to release, the
+review and approval layers, and the quality gates. There is no separate Artemis legal entity; see
+[About Artemis](/about#who-develops-artemis).
+
+## Scale and performance
+
+Artemis is used for courses and online exams with more than 2,000 students, and its stateless
+architecture is designed to scale horizontally. The
+[benchmarking tool](/admin/benchmarking-tool) simulates exam participation at scale against a real
+deployment, and documents what to record so that a result is reproducible and comparable. Institutions
+sizing their own infrastructure should run it against their own topology rather than rely on someone
+else's number.
+
+## Related pages
+
+- [Security policy](https://github.com/ls1intum/Artemis/blob/develop/SECURITY.md)
+- [Code of Conduct](https://github.com/ls1intum/Artemis/blob/develop/CODE_OF_CONDUCT.md)
+- [Administrator guide](/admin/intro)
+- [Platform comparison](/compare)
