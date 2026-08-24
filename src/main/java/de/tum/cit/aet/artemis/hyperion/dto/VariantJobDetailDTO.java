@@ -30,6 +30,7 @@ public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, List<S
      * @param summary collapsed panel header text
      * @param detail  expanded panel body (markdown/plain text; already truncated server-side)
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StepOutputDTO(String summary, String detail) implements Serializable {
     }
 

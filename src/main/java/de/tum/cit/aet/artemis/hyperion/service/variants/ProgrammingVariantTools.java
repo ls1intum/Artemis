@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
  * The programming-exercise toolset for one agent round. One instance is created per round by
- * {@link ProgrammingVariantAdapters#createTools}; it is NOT a Spring bean — it carries per-round state
+ * {@link ProgrammingVariantAdapterService#createTools}; it is NOT a Spring bean — it carries per-round state
  * (checked-out repositories, the touched-test-repo flag).
  *
  * All tools operate ONLY on the variant's repositories (never the source). Diff-style edits of existing files
@@ -723,7 +723,7 @@ class ProgrammingVariantTools implements VariantToolset {
             String normalized = normalizeTestIdReferences(problemStatement);
             boolean repaired = !normalized.equals(problemStatement);
             ProgrammingExercise persisted = programmingExerciseRepository.findByIdElseThrow(exercise.getId());
-            persisted.setProblemStatement(ProgrammingVariantAdapters.stripPlantUmlCodeFences(normalized));
+            persisted.setProblemStatement(ProgrammingVariantAdapterService.stripPlantUmlCodeFences(normalized));
             programmingExerciseRepository.save(persisted);
             // Keep the task/test-case mapping in sync, exactly like the regular problem-statement update endpoint.
             programmingExerciseTaskService.updateTasksFromProblemStatement(persisted);

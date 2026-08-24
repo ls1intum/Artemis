@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultState;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
@@ -39,7 +39,7 @@ class VariantBuildVerificationServiceJointWaitTest {
 
     private static final long TEMPLATE_PARTICIPATION_ID = 20L;
 
-    private ResultRepository resultRepository;
+    private ResultTestRepository resultRepository;
 
     private VariantBuildVerificationService service;
 
@@ -51,7 +51,7 @@ class VariantBuildVerificationServiceJointWaitTest {
         TemplateProgrammingExerciseParticipationRepository templateRepository = mock(TemplateProgrammingExerciseParticipationRepository.class);
         SolutionProgrammingExerciseParticipationRepository solutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         ProgrammingSubmissionRepository submissionRepository = mock(ProgrammingSubmissionRepository.class);
-        resultRepository = mock(ResultRepository.class);
+        resultRepository = mock(ResultTestRepository.class);
 
         exercise = mock(ProgrammingExercise.class);
         when(exercise.getId()).thenReturn(42L);

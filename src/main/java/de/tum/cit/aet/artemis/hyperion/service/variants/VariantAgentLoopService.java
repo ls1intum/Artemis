@@ -5,8 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -35,9 +34,9 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class VariantAgentLoopRunner {
+public class VariantAgentLoopService {
 
-    private static final Logger log = LoggerFactory.getLogger(VariantAgentLoopRunner.class);
+    private static final Logger log = LoggerFactory.getLogger(VariantAgentLoopService.class);
 
     /** Pipeline id for token-usage traces of TRANSFORMING/REPAIRING rounds. */
     static final String TRANSFORM_PIPELINE_ID = "exercise-variant-transform";
@@ -58,7 +57,7 @@ public class VariantAgentLoopRunner {
     @Nullable
     private final ChatClient chatClient;
 
-    public VariantAgentLoopRunner(HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository,
+    public VariantAgentLoopService(HyperionPromptTemplateService templateService, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository,
             @Nullable ChatClient chatClient) {
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;

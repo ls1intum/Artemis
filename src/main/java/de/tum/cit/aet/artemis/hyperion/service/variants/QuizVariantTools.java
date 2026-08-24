@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 /**
  * The quiz-exercise toolset for one agent round. One instance is created per round by
- * {@link QuizVariantAdapters#createTools}; it is NOT a Spring bean.
+ * {@link QuizVariantAdapterService#createTools}; it is NOT a Spring bean.
  *
  * Questions are exchanged as the domain's own polymorphic JSON (the same format the quiz editor REST API
  * uses, discriminated by {@code "type": "multiple-choice" | "drag-and-drop" | "short-answer"}), so edits are

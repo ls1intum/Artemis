@@ -19,14 +19,14 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
- * Unit tests for {@link ProgrammingVariantAdapters#awaitConsistencyTask}: it is called from a {@code finally}
+ * Unit tests for {@link ProgrammingVariantAdapterService#awaitConsistencyTask}: it is called from a {@code finally}
  * block around Gate 1/2 in {@code verify()}, so it must NEVER itself throw — regardless of the future's outcome
  * — or it would suppress whatever Gate 1/2 exception is already propagating. Covers the regression this was
  * added to fix: the consistency check used to have no timeout at all, so a hung future (or one still running
  * because Gate 1 threw before ever joining it) would block the whole VERIFYING call — and, via the
  * try-with-resources' implicit {@code ExecutorService.close()}, the enclosing method — indefinitely.
  */
-class ProgrammingVariantAdaptersAwaitConsistencyTaskTest {
+class ProgrammingVariantAdapterServiceAwaitConsistencyTaskTest {
 
     private final ProgrammingExercise exercise = mock(ProgrammingExercise.class);
 
@@ -34,7 +34,7 @@ class ProgrammingVariantAdaptersAwaitConsistencyTaskTest {
     void shouldCompleteSilentlyWhenTheFutureFinishesInTime() {
         Future<?> future = mock(Future.class);
 
-        assertThatCode(() -> ProgrammingVariantAdapters.awaitConsistencyTask(future, exercise)).doesNotThrowAnyException();
+        assertThatCode(() -> ProgrammingVariantAdapterService.awaitConsistencyTask(future, exercise)).doesNotThrowAnyException();
     }
 
     @Test
@@ -42,7 +42,7 @@ class ProgrammingVariantAdaptersAwaitConsistencyTaskTest {
         Future<?> future = mock(Future.class);
         when(future.get(anyLong(), any(TimeUnit.class))).thenThrow(new TimeoutException());
 
-        assertThatCode(() -> ProgrammingVariantAdapters.awaitConsistencyTask(future, exercise)).doesNotThrowAnyException();
+        assertThatCode(() -> ProgrammingVariantAdapterService.awaitConsistencyTask(future, exercise)).doesNotThrowAnyException();
 
         verify(future, times(1)).cancel(true);
     }
@@ -52,7 +52,7 @@ class ProgrammingVariantAdaptersAwaitConsistencyTaskTest {
         Future<?> future = mock(Future.class);
         when(future.get(anyLong(), any(TimeUnit.class))).thenThrow(new ExecutionException(new RuntimeException("boom")));
 
-        assertThatCode(() -> ProgrammingVariantAdapters.awaitConsistencyTask(future, exercise)).doesNotThrowAnyException();
+        assertThatCode(() -> ProgrammingVariantAdapterService.awaitConsistencyTask(future, exercise)).doesNotThrowAnyException();
 
         verify(future, never()).cancel(true);
     }
@@ -63,7 +63,7 @@ class ProgrammingVariantAdaptersAwaitConsistencyTaskTest {
         when(future.get(anyLong(), any(TimeUnit.class))).thenThrow(new InterruptedException());
 
         try {
-            assertThatCode(() -> ProgrammingVariantAdapters.awaitConsistencyTask(future, exercise)).doesNotThrowAnyException();
+            assertThatCode(() -> ProgrammingVariantAdapterService.awaitConsistencyTask(future, exercise)).doesNotThrowAnyException();
             if (!Thread.interrupted()) {
                 throw new AssertionError("Expected the interrupt flag to be set after an InterruptedException");
             }

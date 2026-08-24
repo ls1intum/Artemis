@@ -23,11 +23,11 @@ public class ExerciseVariantTaskService {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVariantTaskService.class);
 
-    private final ExerciseVariantGenerationPipeline pipeline;
+    private final ExerciseVariantGenerationPipelineService pipeline;
 
     private final ExerciseVariantJobService jobService;
 
-    public ExerciseVariantTaskService(ExerciseVariantGenerationPipeline pipeline, ExerciseVariantJobService jobService) {
+    public ExerciseVariantTaskService(ExerciseVariantGenerationPipelineService pipeline, ExerciseVariantJobService jobService) {
         this.pipeline = pipeline;
         this.jobService = jobService;
     }

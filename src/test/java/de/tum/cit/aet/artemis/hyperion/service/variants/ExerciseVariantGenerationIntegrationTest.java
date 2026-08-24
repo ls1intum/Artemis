@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -97,7 +97,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
             """.formatted(PLANNED_TITLE);
 
     @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
     private ExamTestRepository examRepository;

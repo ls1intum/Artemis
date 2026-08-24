@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  * forces a post-import failure and asserts the just-imported exercise gets deleted instead of leaked, and that
  * nothing gets deleted when provisioning succeeds normally.
  */
-class ProgrammingVariantAdaptersProvisionCleanupTest {
+class ProgrammingVariantAdapterServiceProvisionCleanupTest {
 
     private ProgrammingExerciseImportService programmingExerciseImportService;
 
@@ -52,7 +52,7 @@ class ProgrammingVariantAdaptersProvisionCleanupTest {
 
     private ExerciseDeletionService exerciseDeletionService;
 
-    private ProgrammingVariantAdapters adapters;
+    private ProgrammingVariantAdapterService adapters;
 
     private ProgrammingExercise imported;
 
@@ -71,7 +71,7 @@ class ProgrammingVariantAdaptersProvisionCleanupTest {
         exerciseDeletionService = mock(ExerciseDeletionService.class);
         ProgrammingExerciseValidationService programmingExerciseValidationService = mock(ProgrammingExerciseValidationService.class);
 
-        adapters = new ProgrammingVariantAdapters(mock(HyperionProgrammingExerciseContextRendererService.class), programmingExerciseImportService,
+        adapters = new ProgrammingVariantAdapterService(mock(HyperionProgrammingExerciseContextRendererService.class), programmingExerciseImportService,
                 programmingExerciseValidationService, programmingExerciseRepository, programmingExerciseTaskRepository, programmingExerciseTaskService,
                 mock(ProgrammingExerciseTestCaseRepository.class), mock(UserRepository.class), mock(GitService.class), mock(RepositoryService.class),
                 mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), mock(VariantBuildVerificationService.class),

@@ -10,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -33,15 +32,15 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 
 /**
  * Drives one variant job through the explicit phase state machine.
- * Type-agnostic: everything type-specific is resolved via {@link VariantTypeRegistry} into the five
+ * Type-agnostic: everything type-specific is resolved via {@link VariantTypeRegistryService} into the five
  * capability adapters.
  */
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class ExerciseVariantGenerationPipeline {
+public class ExerciseVariantGenerationPipelineService {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseVariantGenerationPipeline.class);
+    private static final Logger log = LoggerFactory.getLogger(ExerciseVariantGenerationPipelineService.class);
 
     /**
      * Verify-iteration budget: 1 initial transform + up to (N-1) repair rounds. Builds now only run in
@@ -95,9 +94,9 @@ public class ExerciseVariantGenerationPipeline {
         }
     }
 
-    private final VariantTypeRegistry typeRegistry;
+    private final VariantTypeRegistryService typeRegistry;
 
-    private final VariantAgentLoopRunner agentLoopRunner;
+    private final VariantAgentLoopService agentLoopRunner;
 
     private final ExerciseVariantJobService jobService;
 
@@ -114,7 +113,7 @@ public class ExerciseVariantGenerationPipeline {
     @Nullable
     private final ChatClient chatClient;
 
-    public ExerciseVariantGenerationPipeline(VariantTypeRegistry typeRegistry, VariantAgentLoopRunner agentLoopRunner, ExerciseVariantJobService jobService,
+    public ExerciseVariantGenerationPipelineService(VariantTypeRegistryService typeRegistry, VariantAgentLoopService agentLoopRunner, ExerciseVariantJobService jobService,
             HyperionPromptTemplateService templateService, ExerciseRepository exerciseRepository, ExerciseDeletionService exerciseDeletionService,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, @Nullable ChatClient chatClient) {
         this.typeRegistry = typeRegistry;
@@ -218,7 +217,7 @@ public class ExerciseVariantGenerationPipeline {
      */
     private VerificationReport transformAndVerify(VariantJob job, VariantTypeAdapters adapters, Exercise variant, ChangePlan plan) {
         String jobId = job.getJobId();
-        VariantAgentLoopRunner.AgentBudgets budgets = new VariantAgentLoopRunner.AgentBudgets(MAX_VERIFY_ATTEMPTS, TOKEN_BUDGET);
+        VariantAgentLoopService.AgentBudgets budgets = new VariantAgentLoopService.AgentBudgets(MAX_VERIFY_ATTEMPTS, TOKEN_BUDGET);
         String transformTemplate = transformPromptTemplate(job);
         VerificationReport report = null;
         // Stuck-repair-loop detection (see computeEscalationNote): the most recent rounds' finding signatures, a
@@ -238,7 +237,7 @@ public class ExerciseVariantGenerationPipeline {
             // closed-loop repair signal.
             VerificationReport repairFeedback = report;
             String repairEscalationNote = escalationNote;
-            VariantAgentLoopRunner.AgentResult agentResult = runPhase(agentPhase,
+            VariantAgentLoopService.AgentResult agentResult = runPhase(agentPhase,
                     () -> agentLoopRunner.runLoop(plan, toolset, budgets, job, repairFeedback, repairEscalationNote, transformTemplate));
             tokensUsed += agentResult.tokensUsed();
             jobService.addTokensUsed(jobId, agentResult.tokensUsed());

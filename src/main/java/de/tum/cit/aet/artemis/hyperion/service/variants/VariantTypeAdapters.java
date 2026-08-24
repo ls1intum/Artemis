@@ -5,7 +5,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
  * Bundle of the five capability adapters one exercise type contributes. Implementations are Spring beans;
- * {@link VariantTypeRegistry} resolves the bundle for the source exercise's type via the standard Spring idiom
+ * {@link VariantTypeRegistryService} resolves the bundle for the source exercise's type via the standard Spring idiom
  * (inject {@code List<VariantTypeAdapters>}, pick by {@code supports(...)}).
  *
  * Adding a new exercise type (modeling/text/file-upload) = implementing this interface with thin wrappers around
@@ -15,13 +15,13 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 public interface VariantTypeAdapters extends VariantContextRenderer, ExerciseProvisioner, VariantToolsetFactory, VariantVerifier, VariantFinalizer {
 
     /**
-     * @return the exercise type this bundle supports (used by {@link VariantTypeRegistry#resolve})
+     * @return the exercise type this bundle supports (used by {@link VariantTypeRegistryService#resolve})
      */
     ExerciseType supportedExerciseType();
 
     /**
      * Refines {@link #supportedExerciseType()} for the individual exercise: a type may be supported in general
-     * while a particular exercise of that type is not (see {@code QuizVariantAdapters} for drag-and-drop quizzes).
+     * while a particular exercise of that type is not (see {@code QuizVariantAdapterService} for drag-and-drop quizzes).
      * The client hides the generation button for unsupported exercises; the REST boundary rejects them.
      *
      * @param exercise the source exercise, already known to be of {@link #supportedExerciseType()}

@@ -5,8 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.annotation.Nullable;
-
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -44,9 +43,9 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class QuizVariantAdapters implements VariantTypeAdapters {
+public class QuizVariantAdapterService implements VariantTypeAdapters {
 
-    private static final Logger log = LoggerFactory.getLogger(QuizVariantAdapters.class);
+    private static final Logger log = LoggerFactory.getLogger(QuizVariantAdapterService.class);
 
     /** Pipeline id for token-usage traces of the critique soft gate. */
     private static final String CRITIQUE_PIPELINE_ID = "exercise-variant-critique";
@@ -72,7 +71,7 @@ public class QuizVariantAdapters implements VariantTypeAdapters {
     @Nullable
     private final ChatClient chatClient;
 
-    public QuizVariantAdapters(QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseService quizExerciseService,
+    public QuizVariantAdapterService(QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseService quizExerciseService,
             VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, @Nullable ChatClient chatClient) {
         this.quizExerciseRepository = quizExerciseRepository;

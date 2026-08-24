@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
  * Unit tests for the small pure pieces of the variants module.
  * No Spring context — the registry is plain construction + {@code init()}.
  */
-class VariantTypeRegistryTest {
+class VariantTypeRegistryServiceTest {
 
     private VariantTypeAdapters bundleFor(ExerciseType type) {
         return bundleFor(type, true);
@@ -47,7 +47,7 @@ class VariantTypeRegistryTest {
     void shouldResolveTheMatchingBundle() {
         VariantTypeAdapters programming = bundleFor(ExerciseType.PROGRAMMING);
         VariantTypeAdapters quiz = bundleFor(ExerciseType.QUIZ);
-        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(programming, quiz));
+        VariantTypeRegistryService registry = new VariantTypeRegistryService(List.of(programming, quiz));
         registry.init();
 
         assertThat(registry.isSupported(ExerciseType.PROGRAMMING)).isTrue();
@@ -60,7 +60,7 @@ class VariantTypeRegistryTest {
     @Test
     void shouldLetTheBundleRejectAnIndividualExerciseOfASupportedType() {
         // A quiz with drag-and-drop questions: the type has a bundle, but this exercise is out of scope.
-        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.PROGRAMMING), bundleFor(ExerciseType.QUIZ, false)));
+        VariantTypeRegistryService registry = new VariantTypeRegistryService(List.of(bundleFor(ExerciseType.PROGRAMMING), bundleFor(ExerciseType.QUIZ, false)));
         registry.init();
 
         assertThat(registry.isSupported(ExerciseType.QUIZ)).isTrue();
@@ -70,7 +70,7 @@ class VariantTypeRegistryTest {
 
     @Test
     void shouldNotSupportExercisesOfATypeWithoutABundle() {
-        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.PROGRAMMING)));
+        VariantTypeRegistryService registry = new VariantTypeRegistryService(List.of(bundleFor(ExerciseType.PROGRAMMING)));
         registry.init();
 
         assertThat(registry.isSupported(exerciseOfType(ExerciseType.TEXT))).isFalse();
@@ -78,7 +78,7 @@ class VariantTypeRegistryTest {
 
     @Test
     void shouldRejectUnsupportedTypes() {
-        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.PROGRAMMING)));
+        VariantTypeRegistryService registry = new VariantTypeRegistryService(List.of(bundleFor(ExerciseType.PROGRAMMING)));
         registry.init();
 
         assertThatThrownBy(() -> registry.resolve(ExerciseType.TEXT)).isInstanceOf(BadRequestAlertException.class);
@@ -86,7 +86,7 @@ class VariantTypeRegistryTest {
 
     @Test
     void shouldFailFastOnDuplicateBundlesForOneType() {
-        VariantTypeRegistry registry = new VariantTypeRegistry(List.of(bundleFor(ExerciseType.QUIZ), bundleFor(ExerciseType.QUIZ)));
+        VariantTypeRegistryService registry = new VariantTypeRegistryService(List.of(bundleFor(ExerciseType.QUIZ), bundleFor(ExerciseType.QUIZ)));
 
         assertThatThrownBy(registry::init).isInstanceOf(IllegalStateException.class).hasMessageContaining("Duplicate");
     }

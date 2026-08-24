@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 /**
@@ -17,6 +18,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  */
 @Configuration
 @Conditional(HyperionEnabled.class)
+@Lazy
 public class HyperionVariantAsyncConfiguration {
 
     /**

@@ -33,12 +33,12 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 import de.tum.cit.aet.artemis.hyperion.service.variants.ExerciseVariantJobService;
 import de.tum.cit.aet.artemis.hyperion.service.variants.ExerciseVariantTaskService;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
-import de.tum.cit.aet.artemis.hyperion.service.variants.VariantTypeRegistry;
+import de.tum.cit.aet.artemis.hyperion.service.variants.VariantTypeRegistryService;
 
 /**
  * REST controller for AI exercise-variant generation — ONE endpoint set for all exercise types;
  * the exercise type is read from the source exercise server-side and the
- * {@link VariantTypeRegistry} resolves the adapters.
+ * {@link VariantTypeRegistryService} resolves the adapters.
  */
 @Conditional(HyperionEnabled.class)
 @Lazy
@@ -58,10 +58,10 @@ public class HyperionExerciseVariantResource {
 
     private final ExerciseVariantTaskService taskService;
 
-    private final VariantTypeRegistry typeRegistry;
+    private final VariantTypeRegistryService typeRegistry;
 
     public HyperionExerciseVariantResource(UserRepository userRepository, ExerciseRepository exerciseRepository, ExerciseVariantJobService jobService,
-            ExerciseVariantTaskService taskService, VariantTypeRegistry typeRegistry) {
+            ExerciseVariantTaskService taskService, VariantTypeRegistryService typeRegistry) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.jobService = jobService;

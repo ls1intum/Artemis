@@ -16,35 +16,35 @@ import org.junit.jupiter.api.Test;
  * silently unlinked from grading rather than rejected anywhere — observed on a run that shipped six invented ids
  * while every verification gate reported green.
  */
-class ProgrammingVariantAdaptersUnresolvableTestIdTest {
+class ProgrammingVariantAdapterServiceUnresolvableTestIdTest {
 
     private static final List<Long> VALID_IDS = List.of(2595L, 2596L);
 
     @Test
     void shouldKeepAReferenceToARealTestCase() {
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds("[task][A](<testid>2595</testid>)", VALID_IDS)).isEqualTo("[task][A](<testid>2595</testid>)");
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds("[task][A](<testid>2595</testid>)", VALID_IDS)).isEqualTo("[task][A](<testid>2595</testid>)");
     }
 
     @Test
     void shouldDropAnInventedIdAndLeaveTheTaskTextIntact() {
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds("[task][B](<testid>1800</testid>)", VALID_IDS)).isEqualTo("[task][B]()");
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds("[task][B](<testid>1800</testid>)", VALID_IDS)).isEqualTo("[task][B]()");
     }
 
     @Test
     void shouldDropOnlyTheInventedIdInAMixedMarker() {
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds("[task][C](<testid>1800</testid>,<testid>2595</testid>)", VALID_IDS))
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds("[task][C](<testid>1800</testid>,<testid>2595</testid>)", VALID_IDS))
                 .isEqualTo("[task][C](<testid>2595</testid>)");
     }
 
     @Test
     void shouldNotLeaveATrailingCommaWhenTheLastReferenceIsDropped() {
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds("[task][D](<testid>2595</testid>,<testid>1800</testid>)", VALID_IDS))
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds("[task][D](<testid>2595</testid>,<testid>1800</testid>)", VALID_IDS))
                 .isEqualTo("[task][D](<testid>2595</testid>)");
     }
 
     @Test
     void shouldCollapseSeparatorsWhenSeveralConsecutiveReferencesAreDropped() {
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds("[task][E](<testid>1800</testid>,<testid>1801</testid>,<testid>2596</testid>)", VALID_IDS))
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds("[task][E](<testid>1800</testid>,<testid>1801</testid>,<testid>2596</testid>)", VALID_IDS))
                 .isEqualTo("[task][E](<testid>2596</testid>)");
     }
 
@@ -53,23 +53,23 @@ class ProgrammingVariantAdaptersUnresolvableTestIdTest {
         // Plain names are resolved by name, not by id, so this method must not touch them at all — including
         // bracketed structural names, whose brackets must survive verbatim or the reference stops resolving.
         String statement = "[task][F](testBubbleSort,testClass[SortStrategy])";
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds(statement, VALID_IDS)).isEqualTo(statement);
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds(statement, VALID_IDS)).isEqualTo(statement);
     }
 
     @Test
     void shouldLeaveProseWithoutMarkersUntouched() {
         String statement = "In this exercise, implement two sorting algorithms.\n\n@startuml\nclass A\n@enduml";
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds(statement, VALID_IDS)).isEqualTo(statement);
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds(statement, VALID_IDS)).isEqualTo(statement);
     }
 
     @Test
     void shouldDropEveryReferenceWhenTheVariantHasNoTestCasesYet() {
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds("[task][G](<testid>1800</testid>)", Set.of())).isEqualTo("[task][G]()");
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds("[task][G](<testid>1800</testid>)", Set.of())).isEqualTo("[task][G]()");
     }
 
     @Test
     void shouldHandleNullAndBlankStatements() {
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds(null, VALID_IDS)).isNull();
-        assertThat(ProgrammingVariantAdapters.dropUnresolvableTestIds("  ", VALID_IDS)).isEqualTo("  ");
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds(null, VALID_IDS)).isNull();
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds("  ", VALID_IDS)).isEqualTo("  ");
     }
 }

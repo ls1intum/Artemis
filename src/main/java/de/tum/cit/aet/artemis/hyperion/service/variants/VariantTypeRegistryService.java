@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class VariantTypeRegistry {
+public class VariantTypeRegistryService {
 
     private static final String ENTITY_NAME = "exerciseVariantGeneration";
 
@@ -31,7 +31,7 @@ public class VariantTypeRegistry {
 
     private final Map<ExerciseType, VariantTypeAdapters> adaptersByType = new EnumMap<>(ExerciseType.class);
 
-    public VariantTypeRegistry(List<VariantTypeAdapters> adapterBundles) {
+    public VariantTypeRegistryService(List<VariantTypeAdapters> adapterBundles) {
         this.adapterBundles = adapterBundles;
     }
 

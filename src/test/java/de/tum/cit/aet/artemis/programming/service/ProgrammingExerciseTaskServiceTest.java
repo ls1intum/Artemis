@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 /**
  * Unit tests for {@link ProgrammingExerciseTaskService#replaceTestNamesWithIds} and
@@ -30,7 +30,7 @@ class ProgrammingExerciseTaskServiceTest {
 
     private static final long EXERCISE_ID = 42L;
 
-    private ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
     private ProgrammingExerciseTaskService taskService;
 
@@ -39,7 +39,7 @@ class ProgrammingExerciseTaskServiceTest {
     @BeforeEach
     void setUp() {
         ProgrammingExerciseTaskRepository taskRepository = mock(ProgrammingExerciseTaskRepository.class);
-        testCaseRepository = mock(ProgrammingExerciseTestCaseRepository.class);
+        testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         taskService = new ProgrammingExerciseTaskService(taskRepository, testCaseRepository);
 
         exercise = mock(ProgrammingExercise.class);

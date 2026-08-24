@@ -65,9 +65,9 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class ProgrammingVariantAdapters implements VariantTypeAdapters {
+public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
 
-    private static final Logger log = LoggerFactory.getLogger(ProgrammingVariantAdapters.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingVariantAdapterService.class);
 
     /** A resolved test reference as Artemis stores it: the tag plus its numeric id. */
     private static final Pattern TESTID_REFERENCE = Pattern.compile("<testid>(\\d+)</testid>");
@@ -119,13 +119,14 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
 
     private final String defaultBranch;
 
-    public ProgrammingVariantAdapters(HyperionProgrammingExerciseContextRendererService contextRendererService, ProgrammingExerciseImportService programmingExerciseImportService,
-            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, UserRepository userRepository, GitService gitService, RepositoryService repositoryService,
-            ContinuousIntegrationTriggerService continuousIntegrationTriggerService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            VariantBuildVerificationService buildVerificationService, HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService,
-            ExerciseVariantJobService jobService, ExerciseDeletionService exerciseDeletionService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+    public ProgrammingVariantAdapterService(HyperionProgrammingExerciseContextRendererService contextRendererService,
+            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseValidationService programmingExerciseValidationService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
+            UserRepository userRepository, GitService gitService, RepositoryService repositoryService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, VariantBuildVerificationService buildVerificationService,
+            HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService,
+            ExerciseDeletionService exerciseDeletionService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
         this.contextRendererService = contextRendererService;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -217,7 +218,7 @@ public class ProgrammingVariantAdapters implements VariantTypeAdapters {
             catch (Exception e) {
                 // importProgrammingExercise above already persisted the DB row + VCS repos + CI build plans. This
                 // method never returns on that path, so the pipeline's own null-variant cleanup
-                // (ExerciseVariantGenerationPipeline.cleanupProvisionedVariant) can never find this exercise to
+                // (ExerciseVariantGenerationPipelineService.cleanupProvisionedVariant) can never find this exercise to
                 // remove it — delete it here instead of leaking it forever.
                 try {
                     exerciseDeletionService.delete(imported.getId(), true);

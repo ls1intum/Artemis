@@ -2,8 +2,9 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import java.io.Serializable;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.Size;
+
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

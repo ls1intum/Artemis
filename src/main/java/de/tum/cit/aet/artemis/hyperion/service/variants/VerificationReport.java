@@ -87,7 +87,7 @@ public record VerificationReport(boolean passed, List<VerificationFinding> findi
 
     /**
      * The stable signatures of every finding in this report, for stuck-repair-loop detection across rounds (see
-     * {@code ExerciseVariantGenerationPipeline.transformAndVerify}).
+     * {@code ExerciseVariantGenerationPipelineService.transformAndVerify}).
      *
      * @return one signature per finding, empty when the report passed
      */
