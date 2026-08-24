@@ -21,8 +21,8 @@ import { FILTER_MENU_LISTBOX_ID, FilterMenuOption, filterOptionDomId } from '../
 export class GlobalSearchFilterMenuComponent {
     options = input.required<FilterMenuOption[]>();
     activeIndex = input<number>(0);
-    /** i18n key for the panel header, e.g. "Choose type" / "Filter by". */
-    headerKey = input<string>('global.search.chooseType');
+    /** i18n key for the panel header: the back control's destination, or "Add filter" when there is no way back. */
+    headerKey = input<string>('global.search.addFilter');
     /** True while choosing values to exclude (a negated operator is active): tints every row's glyph red. */
     exclude = input<boolean>(false);
     /** Whether to show a back button in the header (a step back to the previous picker level is available). */

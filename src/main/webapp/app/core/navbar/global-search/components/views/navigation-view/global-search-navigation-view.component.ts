@@ -6,8 +6,6 @@ import {
     faCalendarCheck,
     faCheckDouble,
     faComment,
-    faComments,
-    faCube,
     faFileLines,
     faFileUpload,
     faFont,
@@ -26,8 +24,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { AccountService } from 'app/core/auth/account.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
-import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { SearchResultItemComponent } from 'app/core/navbar/global-search/components/modal/search-result-item/search-result-item.component';
 import { Router } from '@angular/router';
@@ -47,15 +43,7 @@ export const LECTURE_SEARCH_ACTION_INDEX = 0;
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [
-        GlobalSearchActionItemComponent,
-        GlobalSearchIrisAnswerComponent,
-        FaIconComponent,
-        SearchableEntityItemComponent,
-        SearchResultItemComponent,
-        SkeletonModule,
-        ArtemisTranslatePipe,
-    ],
+    imports: [GlobalSearchActionItemComponent, GlobalSearchIrisAnswerComponent, FaIconComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -96,7 +84,6 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     // Emits when an action button is activated (click or Enter); the modal navigates to that view.
     readonly viewSelected = output<SearchView>();
-    readonly entityClick = output<SearchableEntity>();
 
     private readonly router = inject(Router);
     private readonly overlay = inject(SearchOverlayService);
@@ -150,83 +137,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faQuestion = faQuestion;
     protected readonly faCalendarCheck = faCalendarCheck;
 
-    // Searchable entities for initial view
-    protected searchableEntities: SearchableEntity[] = [
-        {
-            id: 'courses',
-            title: 'global.search.entities.coursesTitle',
-            description: 'global.search.entities.coursesDescription',
-            icon: faGraduationCap,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['course'],
-        },
-        {
-            id: 'exercises',
-            title: 'global.search.entities.exercisesTitle',
-            description: 'global.search.entities.exercisesDescription',
-            icon: faCube,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exercise'],
-        },
-        {
-            id: 'lectures',
-            title: 'global.search.entities.lecturesTitle',
-            description: 'global.search.entities.lecturesDescription',
-            icon: faBook,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['lecture', 'lecture_unit'],
-        },
-        {
-            id: 'communication',
-            title: 'global.search.entities.communicationTitle',
-            description: 'global.search.entities.communicationDescription',
-            icon: faComments,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['channel', 'post', 'answer_post'],
-        },
-        {
-            id: 'faqs',
-            title: 'global.search.entities.faqsTitle',
-            description: 'global.search.entities.faqsDescription',
-            icon: faQuestionCircle,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['faq'],
-        },
-        {
-            id: 'exams',
-            title: 'global.search.entities.examsTitle',
-            description: 'global.search.entities.examsDescription',
-            icon: faCalendarCheck,
-            type: 'filter',
-            enabled: true,
-            filterTags: ['exam'],
-        },
-    ];
-
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => {
-        const buttonCount = this.actionButtonCount();
-        if (this.showResults()) {
-            // When showing results, action buttons may be visible + results
-            return buttonCount + this.results().length;
-        } else {
-            // When showing entities, count action buttons + entities
-            return buttonCount + this.searchableEntities.length;
-        }
-    });
+    readonly itemCount = computed(() => this.actionButtonCount() + this.results().length);
 
     protected readonly SearchView = SearchView;
     protected readonly faFileLines = faFileLines;
     protected readonly faHashtag = faHashtag;
-
-    protected onEntityItemClick(entity: SearchableEntity) {
-        this.entityClick.emit(entity);
-    }
 
     protected getIconForType(type?: string, badge?: string): IconDefinition {
         if (type === 'exercise') {
@@ -391,22 +307,10 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         }
 
         // Handle items after action buttons
-        const itemIndex = idx - buttonCount;
-
-        if (this.showResults()) {
-            // When showing results
-            event.preventDefault();
-            const result = this.results()[itemIndex];
-            if (result) {
-                this.navigateToResult(result);
-            }
-        } else {
-            // When showing entities
-            event.preventDefault();
-            const entity = this.searchableEntities[itemIndex];
-            if (entity && entity.enabled) {
-                this.entityClick.emit(entity);
-            }
+        event.preventDefault();
+        const result = this.results()[idx - buttonCount];
+        if (result) {
+            this.navigateToResult(result);
         }
     }
 }

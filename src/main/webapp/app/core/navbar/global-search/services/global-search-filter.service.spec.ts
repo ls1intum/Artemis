@@ -56,24 +56,23 @@ describe('GlobalSearchFilterService', () => {
         });
     });
 
-    describe('operator + menu header', () => {
+    describe('operator + menu state', () => {
         it('parses the typed facet operator and opens the value menu', () => {
             service.searchQuery.set('type:');
             expect(service.operator()?.facet).toBe('type');
             expect(service.filterMenuOpen()).toBe(true);
-            expect(service.menuHeaderKey()).toBe('global.search.chooseType');
         });
 
-        it('uses an exclude header when the operator is negated', () => {
+        it('reads a negated operator as an exclusion', () => {
             service.searchQuery.set('-type:');
-            expect(service.menuHeaderKey()).toBe('global.search.chooseExcludeType');
+            expect(service.operator()?.negate).toBe(true);
             service.searchQuery.set('-course:');
-            expect(service.menuHeaderKey()).toBe('global.search.chooseExcludeCourse');
+            expect(service.operator()).toEqual(expect.objectContaining({ facet: 'course', negate: true }));
         });
 
-        it('shows the "add filter" header for the guided picker (no operator)', () => {
+        it('opens the menu for the guided picker even with no operator', () => {
             service.filterPickerOpen.set(true);
-            expect(service.menuHeaderKey()).toBe('global.search.addFilter');
+            expect(service.operator()).toBeUndefined();
             expect(service.filterMenuOpen()).toBe(true);
         });
 
@@ -89,18 +88,6 @@ describe('GlobalSearchFilterService', () => {
             service.searchQuery.set('linear regression');
             expect(service.operator()).toBeUndefined();
             expect(service.searchText()).toBe('linear regression');
-        });
-    });
-
-    describe('addFilter', () => {
-        it('commits a type token for a known tag set', () => {
-            service.addFilter(['exercise']);
-            expect(applyTokens).toHaveBeenCalledWith([{ facet: 'type', value: 'exercise' }]);
-        });
-
-        it('does nothing for tags that match no facet', () => {
-            service.addFilter(['not-a-real-type' as never]);
-            expect(applyTokens).not.toHaveBeenCalled();
         });
     });
 
@@ -129,7 +116,7 @@ describe('GlobalSearchFilterService', () => {
 
             expect(service.searchQuery()).toBe('linear regression');
             expect(service.filterPickerOpen()).toBe(true);
-            expect(service.menuHeaderKey()).toBe('global.search.chooseExclude');
+            expect(service.excludeMode()).toBe(true);
             expect(service.menuOptions().map((option) => option.id)).toEqual(['-type', '-course']);
             expect(applyTokens).not.toHaveBeenCalled();
             expect(requestFocus).toHaveBeenCalled();
@@ -292,7 +279,7 @@ describe('GlobalSearchFilterService', () => {
 
             expect(service.operator()).toBeUndefined();
             expect(service.filterPickerOpen()).toBe(true);
-            expect(service.menuHeaderKey()).toBe('global.search.addFilter');
+            expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
         });
 
         it('stays open when requested again at the root: it is the home screen, not a toggle', () => {
@@ -341,7 +328,9 @@ describe('GlobalSearchFilterService', () => {
             expect(applyTokens).toHaveBeenCalled();
         });
 
-        it('cancels a directly typed operator and leaves the filter surface on Escape', () => {
+        it('steps a directly typed operator back to the filter root, not out of the menu', () => {
+            // The root picker is the home screen, so it is always a valid parent, even for an operator the
+            // user typed without ever opening the picker.
             service.searchQuery.set('type:');
             service.editingChip.set(2);
 
@@ -349,7 +338,8 @@ describe('GlobalSearchFilterService', () => {
 
             expect(service.searchQuery()).toBe('');
             expect(service.editingChip()).toBe(-1);
-            expect(exitFilterMenu).toHaveBeenCalled();
+            expect(service.filterPickerOpen()).toBe(true);
+            expect(exitFilterMenu).not.toHaveBeenCalled();
         });
 
         it('hands the exit to the host on Escape at the root picker rather than dropping the menu itself', () => {
@@ -369,16 +359,27 @@ describe('GlobalSearchFilterService', () => {
 
             expect(service.excludeMode()).toBe(false);
             expect(service.filterPickerOpen()).toBe(true);
-            expect(service.menuHeaderKey()).toBe('global.search.addFilter');
+            expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
             expect(exitFilterMenu).not.toHaveBeenCalled();
         });
 
-        it('keeps the search text when Escape leaves the filter surface', () => {
+        it('keeps the search text when Escape steps back out of a value menu', () => {
             service.searchQuery.set('linear regression type:');
 
             service.handleMenuKey(keydown('Escape'));
 
             expect(service.searchQuery()).toBe('linear regression');
+            expect(service.filterPickerOpen()).toBe(true);
+        });
+
+        it('leaves the filter surface only once there is no level left to step back to', () => {
+            service.filterPickerOpen.set(true);
+            service.searchQuery.set('linear regression');
+
+            service.handleMenuKey(keydown('Escape'));
+
+            expect(service.searchQuery()).toBe('linear regression');
+            expect(service.filterPickerOpen()).toBe(false);
             expect(exitFilterMenu).toHaveBeenCalled();
         });
     });
@@ -463,7 +464,8 @@ describe('GlobalSearchFilterService', () => {
             service.openFilterPicker();
 
             expect(service.searchQuery()).toBe('nsjkfncs type:candle');
-            expect(service.menuHeaderKey()).toBe('global.search.addFilter');
+            expect(service.deadEnd()).toBe(false);
+            expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
         });
     });
 

@@ -18,7 +18,6 @@ import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { GlobalSearchFilterMenuComponent } from './filter-menu/global-search-filter-menu.component';
 import { filterOptionDomId } from '../../models/search-menu.model';
-import { SearchEntityType, SearchableEntity } from '../../models/searchable-entity.model';
 import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
@@ -80,7 +79,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly searchText = this.filter.searchText;
     protected readonly deadEnd = this.filter.deadEnd;
     protected readonly deadEndMessage = this.filter.deadEndMessage;
-    protected readonly menuHeaderKey = this.filter.menuHeaderKey;
     protected readonly canGoBack = this.filter.canGoBack;
 
     // OS-aware label for the filter-picker shortcut shown on the Filter button (⌘F on Mac, Ctrl+F elsewhere).
@@ -118,13 +116,65 @@ export class GlobalSearchModalComponent implements OnDestroy {
      * i18n key for the footer's Escape hint. Escape steps back a level inside the filter menu, and also when
      * leaving the menu reveals the pane behind it; only at the home screen, with nothing behind, does it close.
      */
+    /**
+     * Where the filter menu's back control leads, or undefined when there is nowhere to go. One level deep it
+     * returns to the filter root; at the root it returns to the results behind the menu; on a fresh palette
+     * there is nothing behind it, so no back control is offered at all rather than one that does nothing.
+     */
+    protected readonly backDestination = computed<'results' | 'filters' | 'exclude' | undefined>(() => {
+        if (this.deadEnd()) {
+            // A dead end has no level behind it; it offers the literal search instead.
+            return undefined;
+        }
+        if (this.canGoBack()) {
+            // A negated value list was opened from the exclude chooser, not from the root, so it returns there.
+            return this.operator()?.negate ? 'exclude' : 'filters';
+        }
+        return this.filterMenuOpen() && this.hasPaneBehindFilterMenu() ? 'results' : undefined;
+    });
+    /**
+     * i18n key for the menu header. Whenever a back control is offered the header is that control and names its
+     * destination, so the chevron means one thing at every depth. Only the root of a fresh palette, which has no
+     * way back, falls through to naming the level instead.
+     */
+    protected readonly menuHeaderKey = computed(() => {
+        switch (this.backDestination()) {
+            case 'results':
+                return 'global.search.backToResults';
+            case 'filters':
+                return 'global.search.backToFilters';
+            case 'exclude':
+                return 'global.search.backToExcludeOptions';
+            default:
+                return 'global.search.addFilter';
+        }
+    });
+    /**
+     * Whether the Filter button has nothing left to do. It is a one-way control ("take me to filters"), so it is
+     * dead exactly when the menu is already showing at its root, whatever sits behind that. One level deep, in a
+     * value list or the exclude chooser, it still returns to the root, so it stays live there. It is dead in the
+     * lecture view too, which cannot carry filters, matching the shortcut being ignored there.
+     */
+    protected readonly filterTriggerDisabled = computed(
+        () => this.currentView() !== SearchView.Navigation || (this.filterMenuOpen() && !this.operator() && !this.filter.excludeMode()),
+    );
+    /** i18n key for the footer's Escape hint, worded to match the back control it mirrors. */
     protected readonly escapeHintKey = computed(() => {
         if (this.deadEnd()) {
             // Escape cannot mean "cancel" here: the operator is not a filter, so backing out of it would
             // delete text the user typed as a search term.
             return 'global.search.searchAnyway';
         }
-        return this.canGoBack() || (this.filterMenuOpen() && this.hasPaneBehindFilterMenu()) ? 'global.search.back' : 'global.search.toClose';
+        switch (this.backDestination()) {
+            case 'results':
+                return 'global.search.toResults';
+            case 'filters':
+                return 'global.search.toFilters';
+            case 'exclude':
+                return 'global.search.toExcludeOptions';
+            default:
+                return 'global.search.toClose';
+        }
     });
 
     ngOnDestroy(): void {
@@ -343,8 +393,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.filter.onOptionHovered(index);
     }
 
-    /** Steps one level back in the guided picker (from the menu header back button). */
+    /** Follows the menu's back control: one level up inside the picker, or out to the results behind it. */
     protected onFilterBack() {
+        if (this.backDestination() === 'results') {
+            this.filter.leaveFilterMenu();
+            this.focusInput();
+            return;
+        }
         this.filter.back();
     }
 
@@ -384,7 +439,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
      * Returns to the home screen once the search box is empty and no filter is left, so an emptied search lands on
      * the guided picker rather than on the navigation view's searchable-entity list. Called from the individual
      * gestures rather than from applyTokens on purpose: navigateTo(Lecture) strips the course filter through
-     * applyTokens, and the picker must not cover the lecture view.
+     * applyTokens, and the picker must not cover the lecture view; navigateTo calls this itself once the view has
+     * actually changed back.
      */
     private returnHomeIfEmpty() {
         if (this.currentView() === SearchView.Navigation && this.tokens().length === 0 && !this.searchQuery().trim()) {
@@ -395,24 +451,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected removeCourseFilter() {
         this.placeholderCache.clear();
         this.applyTokens(this.filter.tokensWithoutCourseFilter());
-    }
-
-    protected onEntityClick(entity: SearchableEntity) {
-        if (!entity.enabled) {
-            return;
-        }
-
-        if (entity.filterTags?.length) {
-            this.addFilter(entity.filterTags);
-        }
-
-        // Keep search input focused so user can start typing immediately
-        this.focusInput();
-    }
-
-    /** Adds (or toggles off) the `type` token matching the given tags (delegates to the filter store). */
-    protected addFilter(filterTypes: SearchEntityType[]) {
-        this.filter.addFilter(filterTypes);
     }
 
     /** Stable cache key for placeholder (empty-query) results, keyed by the active filter set. */
@@ -605,5 +643,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
         this.currentView.set(view);
         this.selectedIndex.set(-1);
+        // Coming back from the lecture view lands on the navigation view with whatever state was left behind.
+        // Entering that view strips the course filter, so an untyped search arrives back here with no query and
+        // no chips, which is exactly the empty state the guided picker replaced.
+        this.returnHomeIfEmpty();
     }
 }

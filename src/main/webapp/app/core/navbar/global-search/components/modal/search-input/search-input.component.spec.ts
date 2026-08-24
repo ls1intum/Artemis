@@ -199,4 +199,13 @@ describe('SearchInputComponent', () => {
 
         expect(fixture.nativeElement.querySelector('.op-value').classList).toContain('op-unknown');
     });
+
+    it('greys out the filter trigger when it has nowhere to take you', () => {
+        expect(fixture.nativeElement.querySelector('.filter-trigger').disabled).toBe(false);
+
+        fixture.componentRef.setInput('filterDisabled', true);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('.filter-trigger').disabled).toBe(true);
+    });
 });
