@@ -2,16 +2,6 @@
     <div class="col-11">
         @if (exam()) {
             <div>
-                <h2 id="exam-detail-title">
-                    @if (!exam().testExam) {
-                        <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                    }
-                    @if (exam().testExam) {
-                        <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                    }
-                    {{ exam().title }}
-                </h2>
-                <hr />
                 @if (exam().course?.isAtLeastInstructor) {
                     <div>
                         @if (canHaveBonus()) {

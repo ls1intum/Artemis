@@ -25,12 +25,19 @@
                             }
                             <jhi-documentation-button [type]="documentationType" />
                         </div>
-                        @if (examTitle()) {
+                        @if (currentExam()) {
                             <div class="vr bg-secondary"></div>
                         }
                     }
-                    @if (examTitle()) {
-                        <h5 class="mb-0">{{ examTitle() }}</h5>
+                    @if (currentExam()) {
+                        <h5 class="flex align-items-center gap-1 mb-0">
+                            @if (!currentExam()!.testExam) {
+                                <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
+                            } @else {
+                                <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
+                            }
+                            {{ currentExam()!.title }}
+                        </h5>
                     }
                 </div>
             </div>

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -17,6 +17,7 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { NgTemplateOutlet } from '@angular/common';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-exam-management',
@@ -30,6 +31,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
         CourseTitleBarTitleComponent,
         DocumentationButtonComponent,
         RouterLink,
+        TranslateDirective,
     ],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, PageTitleView {
@@ -55,7 +57,6 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
 
     // exam that is currently in view
     readonly currentExam = signal<Exam | undefined>(undefined);
-    readonly examTitle = computed(() => this.currentExam()?.title);
 
     toggleSidebar(): void {
         this.isCollapsed.update((state) => !state);
@@ -80,9 +81,9 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
         });
 
         this.routerSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-            this.updateExamTitle();
+            this.updateCurrentExam();
         });
-        this.updateExamTitle();
+        this.updateCurrentExam();
     }
 
     /**
@@ -95,7 +96,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
         this.routerSubscription?.unsubscribe();
     }
 
-    private updateExamTitle(): void {
+    private updateCurrentExam(): void {
         let child = this.route.snapshot;
         while (child.firstChild) {
             child = child.firstChild;
@@ -118,7 +119,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
         this.examManagementService.findAllExamsForCourse(this.course().id!).subscribe({
             next: (res: HttpResponse<Exam[]>) => {
                 this.exams.set(res.body!);
-                this.updateExamTitle();
+                this.updateCurrentExam();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
