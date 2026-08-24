@@ -232,7 +232,8 @@ not terminate at this nginx configuration.
 
 | Endpoint | nginx zone | Application limit |
 |---|---|---|
-| `POST /authenticate`, `/saml2`, `/login/webauthn` | `loginlimit`, 30 r/m | `AUTHENTICATION`, 30 rpm |
+| `POST /authenticate`, `/login/webauthn` | `loginlimit`, 30 r/m | `AUTHENTICATION`, 30 rpm |
+| `POST /saml2` | `loginlimit`, 30 r/m | none — the SAML2 callback exchanges an already established assertion |
 | `GET /login-options` | `loginoptionslimit`, 30 r/m | `LOGIN_OPTIONS`, 30 rpm |
 | `/register`, `/activate`, `/account/reset-password/*` | `accountrecoverylimit`, 5 r/m | `ACCOUNT_MANAGEMENT`, 5 rpm |
 | git credential handshake (`/info/refs`) | `gitauthlimit`, 60 r/m | `AUTHENTICATION`, 30 rpm |
@@ -242,7 +243,8 @@ Application-level limits can be overridden per type under `artemis.rate-limiting
 `artemis.rate-limiting.enabled` is `true`.
 
 If you run your own reverse proxy instead of the shipped nginx configuration, mirror the zones above;
-otherwise only the application-level limits apply.
+otherwise only the application-level limits apply — and the SAML2 callback, which has none of its own, is
+then unbounded.
 
 ## Audit log
 
