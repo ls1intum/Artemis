@@ -43,7 +43,7 @@
             <span class="spinner-border spinner-border-sm text-secondary me-2" role="status" [attr.aria-label]="'global.search.searching' | artemisTranslate"></span>
         }
         <!-- Guided filter picker trigger (also opened with Cmd/Ctrl+F). -->
-        <button type="button" class="filter-trigger" (click)="filterTrigger.emit()" [attr.aria-label]="'global.search.filter' | artemisTranslate">
+        <button type="button" class="filter-trigger" [disabled]="filterDisabled()" (click)="filterTrigger.emit()" [attr.aria-label]="'global.search.filter' | artemisTranslate">
             <fa-icon [icon]="faSliders" aria-hidden="true" />
             <span class="filter-trigger-label">{{ 'global.search.filter' | artemisTranslate }}</span>
             <span class="filter-trigger-kbd">{{ filterShortcutLabel() }}</span>

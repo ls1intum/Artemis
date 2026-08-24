@@ -9,12 +9,7 @@
     } @else {
         <div class="filter-menu-header">
             @if (showBack()) {
-                <button
-                    type="button"
-                    class="filter-menu-back"
-                    (click)="back.emit()"
-                    [attr.aria-label]="('global.search.back' | artemisTranslate) + ': ' + (headerKey() | artemisTranslate)"
-                >
+                <button type="button" class="filter-menu-back" (click)="back.emit()">
                     <fa-icon [icon]="faChevronLeft" aria-hidden="true" />
                     <span>{{ headerKey() | artemisTranslate }}</span>
                 </button>

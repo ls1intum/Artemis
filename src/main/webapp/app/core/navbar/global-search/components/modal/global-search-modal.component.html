@@ -24,11 +24,12 @@
         [menuVisible]="filterMenuOpen()"
         [activeOptionId]="activeOptionId()"
         [filterShortcutLabel]="filterShortcutLabel()"
+        [filterDisabled]="filterTriggerDisabled()"
         (searchInput)="onSearchInput($event)"
         (chipRemoved)="onChipRemoved($event)"
         (chipSelected)="onChipSelected($event)"
         (backspaceOnEmpty)="onBackspaceRemoveFilter()"
-        (filterTrigger)="toggleFilterMenu()"
+        (filterTrigger)="openFilterPicker()"
     />
     <!-- Results Area — also hosts the filter menu while a filter is being composed (no overlay dropdown). -->
     <div class="results-container">
@@ -39,7 +40,7 @@
                 [headerKey]="menuHeaderKey()"
                 [message]="deadEndMessage()"
                 [exclude]="operator()?.negate ?? false"
-                [showBack]="canGoBack()"
+                [showBack]="!!backDestination()"
                 (optionSelected)="onOptionSelected($event)"
                 (optionHovered)="onOptionHovered($event)"
                 (back)="onFilterBack()"
@@ -58,7 +59,6 @@
                             [searchError]="searchError()"
                             [activeFilters]="activeFilters()"
                             (viewSelected)="navigateTo($event)"
-                            (entityClick)="onEntityClick($event)"
                         />
                     }
                 }

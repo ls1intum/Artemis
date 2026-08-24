@@ -146,23 +146,14 @@ export class GlobalSearchFilterService {
         // simply not be visible to this user, and the flatter phrasing would be a small lie.
         return { key: op.facet === 'type' ? 'global.search.notAType' : 'global.search.notYourCourse', value: op.query.trim() };
     });
-    // i18n key for the menu header: "Filter by" for the picker, else "Choose type" / "Choose course".
-    readonly menuHeaderKey: Signal<string> = computed(() => {
-        const op = this.operator();
-        if (!op) {
-            return this.excludeMode() ? 'global.search.chooseExclude' : 'global.search.addFilter';
-        }
-        if (op.negate) {
-            return op.facet === 'course' ? 'global.search.chooseExcludeCourse' : 'global.search.chooseExcludeType';
-        }
-        return op.facet === 'course' ? 'global.search.chooseCourse' : 'global.search.chooseType';
-    });
-
     /**
-     * Whether the picker can step back a level: from a value menu to the level it was opened from, or from the
-     * exclude level to the root. A dead end has no level behind it, so it offers the literal search instead.
+     * Whether the menu can step back a level: from a value menu to the level it was opened from, or from the
+     * exclude level to the root. Deliberately not conditional on the picker having been opened: the root picker
+     * is the home screen, so it is always a valid place for a value menu to return to, including one the user
+     * typed by hand. Without that, Escape on a hand-typed operator with nothing behind it closed the whole
+     * palette mid-composition. A dead end has no level behind it, so it offers the literal search instead.
      */
-    readonly canGoBack: Signal<boolean> = computed(() => this.filterPickerOpen() && (!!this.operator() || this.excludeMode()) && !this.deadEnd());
+    readonly canGoBack: Signal<boolean> = computed(() => (!!this.operator() || this.excludeMode()) && !this.deadEnd());
 
     private sideEffects: FilterSideEffects = {
         applyTokens: () => {},
@@ -271,6 +262,22 @@ export class GlobalSearchFilterService {
         this.sideEffects.refreshSearch();
     }
 
+    /**
+     * Clears the way for a level change without destroying anything the user typed. A half-typed operator is
+     * text they can retype from the menu, so it goes; a value that matches nothing is not an operator at all,
+     * so it is kept and reinterpreted as literal search text rather than silently deleted.
+     */
+    private dropOperatorWithoutLosingText(): void {
+        if (this.deadEnd()) {
+            this.literalFrom.set(this.searchQuery());
+            this.sideEffects.refreshSearch();
+            return;
+        }
+        if (!this.literalAccepted()) {
+            this.searchQuery.set(stripOperator(this.searchQuery()));
+        }
+    }
+
     /** Appends an operator prefix to the input, keeping the search text in front of it. */
     private appendPrefix(prefix: string): void {
         this.literalFrom.set(undefined);
@@ -332,10 +339,8 @@ export class GlobalSearchFilterService {
      */
     openFilterPicker(): void {
         this.editingChip.set(-1);
-        if (!this.literalAccepted()) {
-            // A literal the user deliberately kept is text, not an operator, so it must survive this.
-            this.searchQuery.set(stripOperator(this.searchQuery()));
-        }
+        this.selectedChip.set(-1);
+        this.dropOperatorWithoutLosingText();
         this.excludeMode.set(false);
         this.filterPickerOpen.set(true);
         this.menuActiveIndex.set(0);
@@ -344,7 +349,7 @@ export class GlobalSearchFilterService {
 
     /** Closes the filter surface, dropping a half-typed operator but keeping the search text. */
     leaveFilterMenu(): void {
-        this.searchQuery.set(stripOperator(this.searchQuery()));
+        this.dropOperatorWithoutLosingText();
         this.filterPickerOpen.set(false);
         this.excludeMode.set(false);
         this.editingChip.set(-1);
@@ -376,17 +381,6 @@ export class GlobalSearchFilterService {
      */
     onBackspaceRemoveFilter(): void {
         // no-op by design (see doc comment)
-    }
-
-    /**
-     * Adds (or toggles off) the `type` token matching the given tags. Multi-select: clicking a card
-     * keeps prior chips. The FacetCatalog keeps parity with present-day results.
-     */
-    addFilter(filterTypes: SearchEntityType[]): void {
-        const facetValue = this.typeFacetForTags(filterTypes);
-        if (facetValue) {
-            this.sideEffects.applyTokens(addOrToggleToken(this.tokens(), { facet: 'type', value: facetValue }));
-        }
     }
 
     /** Returns the token set with every `course` token removed (used when a view cannot carry a course filter). */

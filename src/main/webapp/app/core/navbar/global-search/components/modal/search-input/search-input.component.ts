@@ -32,6 +32,8 @@ export class SearchInputComponent {
     activeOptionId = input<string | undefined>(undefined);
     /** OS-aware label for the filter-picker shortcut, e.g. "⌘F" on Mac / "Ctrl+F" elsewhere. */
     filterShortcutLabel = input<string>('⌘F');
+    /** True on the filter home screen, where the button has nowhere to take you and the shortcut is inert too. */
+    filterDisabled = input<boolean>(false);
 
     searchInput = output<string>();
     searchKeyDown = output<KeyboardEvent>();

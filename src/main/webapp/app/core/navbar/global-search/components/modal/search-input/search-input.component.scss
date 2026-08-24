@@ -167,10 +167,18 @@
     font-size: 0.85rem;
     cursor: pointer;
 
-    &:hover {
+    &:hover:not(:disabled) {
         background: var(--global-search-item-hover-bg);
         border-color: var(--bs-primary);
         color: var(--bs-body-color);
+    }
+
+    // Greyed out on the filter home screen: the filters it opens are already on screen, so there is nowhere
+    // for it to take you. Saying so with the standard disabled convention beats leaving a live-looking button
+    // that quietly does nothing.
+    &:disabled {
+        cursor: default;
+        opacity: 0.45;
     }
 }
 
