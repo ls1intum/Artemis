@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config.metric;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -17,9 +18,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hazelcast.cluster.Member;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.CacheStats;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.DatabaseMetrics;
@@ -32,15 +30,18 @@ import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.ProcessM
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.RequestCount;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.RequestStats;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.TimerSummary;
+import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
- * Periodically collects local metrics and stores them in a shared Hazelcast IMap
+ * Periodically collects local metrics and stores them in a shared distributed map
  * so that any node in the cluster can aggregate or display per-node metrics.
  * <p>
  * Each node pushes a snapshot every 15 seconds. Stale entries (from nodes that
- * left the cluster) are evicted automatically via the IMap TTL (60 seconds).
+ * left the cluster) are evicted automatically via the map's time-to-live (60 seconds).
  * <p>
- * Note: Uses HazelcastInstance directly (the DistributedDataProvider abstraction is
+ * Note: uses the DistributedDataProvider (the abstraction is
  * scoped to LocalCI/BuildAgent profiles). When migrating to Redis, replace the
  * {@link #getMap()}, {@link #getLocalNodeId()}, and {@link #getLocalNodeLabel()} methods.
  */
@@ -53,38 +54,43 @@ public class NodeMetricsCollector {
 
     private static final String MAP_NAME = "nodeMetrics";
 
+    private static final Duration NODE_METRICS_TIME_TO_LIVE = Duration.ofSeconds(60);
+
     private final ArtemisMetricsEndpoint metricsEndpoint;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
+
+    private final NodeRegistryService nodeRegistryService;
 
     private final ObjectMapper objectMapper;
 
-    public NodeMetricsCollector(ArtemisMetricsEndpoint metricsEndpoint, HazelcastInstance hazelcastInstance, ObjectMapper objectMapper) {
+    public NodeMetricsCollector(ArtemisMetricsEndpoint metricsEndpoint, DistributedDataProvider distributedDataProvider, NodeRegistryService nodeRegistryService,
+            ObjectMapper objectMapper) {
         this.metricsEndpoint = metricsEndpoint;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
+        this.nodeRegistryService = nodeRegistryService;
         this.objectMapper = objectMapper;
     }
 
     // --- Scheduled push ---
 
     /**
-     * Pushes the local node's metrics snapshot to a shared Hazelcast map so other nodes can read it.
+     * Pushes the local node's metrics snapshot to a shared distributed map so other nodes can read it.
      */
     @Scheduled(initialDelay = 5_000, fixedRate = 15_000)
     public void pushLocalMetrics() {
         try {
-            Member localMember = hazelcastInstance.getCluster().getLocalMember();
-            String nodeId = localMember.getUuid().toString();
-            String label = localMember.getAddress().getHost() + ":" + localMember.getAddress().getPort();
+            String nodeId = nodeRegistryService.getLocalNodeId();
+            String label = nodeId;
 
-            // Store as a Map in Hazelcast for cross-node serialization compatibility
+            // Store as a plain Map for cross-node serialization compatibility
             var snapshot = new NodeMetricsSnapshot(nodeId, label, Instant.now(), metricsEndpoint.allMetrics());
             @SuppressWarnings("unchecked")
             Map<String, Object> serialized = objectMapper.convertValue(snapshot, Map.class);
             getMap().put(nodeId, serialized);
         }
         catch (Exception e) {
-            log.warn("Failed to push local metrics to Hazelcast: {}", e.getMessage());
+            log.warn("Failed to push local metrics to the distributed map: {}", e.getMessage());
         }
     }
 
@@ -308,8 +314,10 @@ public class NodeMetricsCollector {
         }
     }
 
-    private IMap<String, Map<String, Object>> getMap() {
-        return hazelcastInstance.getMap(MAP_NAME);
+    private DistributedMap<String, Map<String, Object>> getMap() {
+        // Entries expire so that a node which left the cluster disappears on its own; the lifetime must comfortably
+        // exceed the 15s push interval.
+        return distributedDataProvider.getExpiringMap(MAP_NAME, NODE_METRICS_TIME_TO_LIVE);
     }
 
     public record NodeInfo(String nodeId, String label) {
