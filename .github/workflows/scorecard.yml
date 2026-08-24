@@ -1,0 +1,64 @@
+# OpenSSF Scorecard: an independent, automated assessment of the repository's security posture
+# (branch protection, review requirements, pinned dependencies, token permissions, CI tests,
+# vulnerability handling, and so on).
+#
+# It reports on practices Artemis already follows, which is the point: it turns them into an
+# externally computed, checkable number instead of a claim in a document. Findings land in the
+# code-scanning UI next to CodeQL, and `publish_results: true` feeds the badge in README.md.
+#
+# This is advisory. It never gates a pull request, and it does not run on pull requests at all:
+# the analysis needs repository-level metadata that a fork PR token cannot read.
+name: OpenSSF Scorecard
+
+on:
+  # The analysis reflects repository settings, not the diff, so a weekly run is enough.
+  schedule:
+    - cron: '31 5 * * 1'
+  push:
+    branches:
+      - develop
+  # Branch-protection findings change when protection rules change, not when code does.
+  branch_protection_rule:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    # Forks get their own `develop` pushes, where `publish_results` cannot exchange an OIDC token and
+    # there is no code-scanning target for the SARIF, so without this guard fork owners collect
+    # recurring red runs for a workflow that cannot work there.
+    if: github.repository_owner == 'ls1intum'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write  # upload the SARIF result to code scanning
+      id-token: write         # Sigstore OIDC, required to publish the result
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Run analysis
+        uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc  # v2.4.4
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # Publishing makes the result readable by api.securityscorecards.dev, which is what backs
+          # the README badge and lets anyone re-check the score without access to this repository.
+          publish_results: true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 5
+
+      - name: Upload to code scanning
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif

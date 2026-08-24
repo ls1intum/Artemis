@@ -1,0 +1,29 @@
+<tum-ui-dialog [(visible)]="visible" [header]="headerKey() | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="small">
+    <div class="flex flex-col gap-3">
+        <div>
+            <label class="font-semibold block mb-1" for="exam-group-edit-title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></label>
+            <input
+                id="exam-group-edit-title"
+                tumUiInput
+                class="w-full"
+                [attr.maxlength]="MAX_TITLE_LENGTH"
+                [ngModel]="draftTitle()"
+                (ngModelChange)="draftTitle.set($event)"
+                [tumUiInputInvalid]="!isTitleValid()"
+            />
+        </div>
+        <div class="flex items-center gap-2">
+            <tum-ui-checkbox inputId="exam-group-edit-mandatory" [ngModel]="draftIsMandatory()" (ngModelChange)="draftIsMandatory.set($event)" />
+            <label for="exam-group-edit-mandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"></label>
+        </div>
+    </div>
+
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" variant="text" (clicked)="onCancel()">
+            <span jhiTranslate="entity.action.cancel"></span>
+        </tum-ui-button>
+        <tum-ui-button id="save-group" [disabled]="!isTitleValid()" (clicked)="onSave()">
+            <span jhiTranslate="entity.action.save"></span>
+        </tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>
