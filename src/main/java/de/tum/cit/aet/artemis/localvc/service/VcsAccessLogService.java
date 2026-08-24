@@ -49,7 +49,7 @@ public class VcsAccessLogService {
      * @param commitHash              The latest commit hash
      * @param ipAddress               The ip address of the user accessing the repository
      */
-    @Async
+    @Async("vcsAccessLogExecutor")
     public void saveAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
             String commitHash, String ipAddress) {
         log.debug("Storing access operation for user {}", user);
@@ -65,7 +65,7 @@ public class VcsAccessLogService {
      * @param participation The participation to which the repository belongs to
      * @param commitHash    The newest commit hash which should get set for the access log entry
      */
-    @Async
+    @Async("vcsAccessLogExecutor")
     public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
         var vcsAccessLog = vcsAccessLogRepository.findNewestByParticipationId(participation.getId());
         if (vcsAccessLog.isPresent()) {
@@ -80,7 +80,7 @@ public class VcsAccessLogService {
      * @param localVCRepositoryUri The localVCRepositoryUri of the participation to which vcsAccessLog belongs to
      * @param repositoryActionType The repository action type to which the vcsAccessLog should get updated to
      */
-    @Async
+    @Async("vcsAccessLogExecutor")
     public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
         var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
         var vcsAccessLog = vcsAccessLogRepository.findNewestByRepositoryUri(repositoryURL);
@@ -95,7 +95,7 @@ public class VcsAccessLogService {
      *
      * @param vcsAccessLog The vcsAccessLog to save
      */
-    @Async
+    @Async("vcsAccessLogExecutor")
     public void saveVcsAccesslog(VcsAccessLog vcsAccessLog) {
         vcsAccessLogRepository.save(vcsAccessLog);
     }

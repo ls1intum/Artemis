@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityEventService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
@@ -95,8 +96,11 @@ public class PublicAccountResource {
 
     private final LoginOptionsService loginOptionsService;
 
+    private final AccountSecurityEventService accountSecurityEventService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
-            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService) {
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
+            AccountSecurityEventService accountSecurityEventService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -104,6 +108,7 @@ public class PublicAccountResource {
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.tokenProvider = tokenProvider;
         this.loginOptionsService = loginOptionsService;
+        this.accountSecurityEventService = accountSecurityEventService;
     }
 
     /**
@@ -138,11 +143,17 @@ public class PublicAccountResource {
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
         mailService.sendActivationEmail(MailRecipientDTO.from(user));
+        // No separate notification: the activation mail already goes to the address that was registered.
+        accountSecurityEventService.recordAccountRegistered(user);
         return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
     }
 
     /**
      * {@code GET /activate} : activate the registered user.
+     * <p>
+     * The only way an activation key is ever redeemed, and gated behind the self-registration feature just like the mail that
+     * carries the key. That is why an unactivated account is only ever meaningful for an internal account on an instance with
+     * registration enabled - see {@link User#activated}.
      *
      * @param key the activation key.
      * @return ResponseEntity with status 200 (OK)
@@ -150,6 +161,7 @@ public class PublicAccountResource {
      */
     @GetMapping("activate")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> activateAccount(@RequestParam("key") String key) {
         if (accountService.isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -235,6 +247,12 @@ public class PublicAccountResource {
      * <p>
      * This endpoint is public and is used during the first step of the identifier-first login flow
      * to determine if the user should enter their local password or redirect to an external identity provider.
+     * <p>
+     * Being unauthenticated, it is bounded on two layers: {@link RateLimitType#LOGIN_OPTIONS} here, and a matching nginx zone
+     * keyed on the real TCP peer, which this limiter cannot see. It has its own bucket rather than sharing
+     * {@link RateLimitType#AUTHENTICATION}, because the client calls it once immediately before authenticating and sharing
+     * would halve the budget a real user has for logging in. See {@link LoginOptionsService} for why the answer is derived
+     * from local account state only.
      *
      * @param usernameOrEmail the login or email address entered by the user
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link LoginOptionsDTO}
@@ -242,7 +260,7 @@ public class PublicAccountResource {
      */
     @GetMapping("login-options")
     @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
+    @LimitRequestsPerMinute(type = RateLimitType.LOGIN_OPTIONS)
     public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
         // checked here rather than with @Size, because this class is not annotated with @Validated and constraints on method parameters are only enforced when it is
         if (usernameOrEmail != null && usernameOrEmail.length() > MAX_LOGIN_IDENTIFIER_LENGTH) {
@@ -285,20 +303,28 @@ public class PublicAccountResource {
         if (!users.isEmpty()) {
             List<User> internalUsers = users.stream().filter(User::isInternal).toList();
             if (internalUsers.isEmpty()) {
+                accountSecurityEventService.recordPasswordResetRequestRejected("external-user");
                 throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
             }
             else if (internalUsers.size() >= 2) {
+                accountSecurityEventService.recordPasswordResetRequestRejected("identifier-not-unique");
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
             var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
                 mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUser));
+                accountSecurityEventService.recordPasswordResetRequested(internalUser);
+            }
+            else {
+                // Not activated, so no reset key was issued and no mail was sent.
+                accountSecurityEventService.recordPasswordResetRequestRejected("account-not-activated");
             }
         }
         else {
             // Pretend the request has been successful to prevent checking which emails or usernames really exist
             // but log that an invalid attempt has been made
             log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
+            accountSecurityEventService.recordPasswordResetRequestRejected("unknown-identifier");
         }
         return ResponseEntity.ok().build();
     }
@@ -328,6 +354,9 @@ public class PublicAccountResource {
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");
         }
+        // The completed reset is recorded and announced by UserService.completePasswordReset, through
+        // AccountSecurityNotificationService.passwordChanged with the RESET actor, which is also what carries the
+        // revocation summary. A second notice here would mean two audit rows and two near-identical emails per reset.
         return ResponseEntity.ok().build();
     }
 }

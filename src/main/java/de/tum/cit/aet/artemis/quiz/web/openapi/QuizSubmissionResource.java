@@ -27,7 +27,9 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -227,17 +229,27 @@ public class QuizSubmissionResource {
      * @param submissionDTO the quizSubmission payload to update (rich entity-shaped JSON sent by the exam client)
      * @return the ResponseEntity with status 200 and body the saved submission or the appropriate error code.
      */
+    // NOTE: deliberately @EnforceAtLeastStudent rather than @EnforceAtLeastStudentInExercise. The exercise-scoped
+    // annotation resolves the same course membership with its own EXISTS query, before the method body has loaded
+    // anything. This endpoint then loads the user again, with its course roles, for the checks further down. The
+    // exercise-scoped check is therefore made explicitly below, against the user that is loaded anyway, where it costs
+    // nothing. It runs before any state is read or written, and covers admins the same way the annotation did.
     @PutMapping("exercises/{exerciseId}/submissions/exam")
-    @EnforceAtLeastStudentInExercise
+    @EnforceAtLeastStudent
     public ResponseEntity<QuizSubmissionBeforeEvaluationDTO> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmissionFromLiveClientDTO submissionDTO) {
         long start = System.currentTimeMillis();
         log.debug("REST request to submit QuizSubmission for exam for exercise {}", exerciseId);
 
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
-        User user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the course-membership checks on this path (the authorization check
+        // right below, the submission allowance check and the detail filtering) resolve in memory instead of each
+        // issuing its own query. This is the autosave path, so it runs repeatedly per student per exercise.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, quizExercise, user);
 
         QuizSubmission quizSubmission = quizSubmissionService.buildSubmissionFromLiveClientDTO(submissionDTO, quizExercise);
 
+        StudentParticipation participationFromExamGate = null;
         if (quizExercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
@@ -252,11 +264,12 @@ public class QuizSubmissionResource {
                 quizSubmission.setId(null);
             }
 
-            // Prevent multiple submissions (currently only for exam submissions)
-            quizSubmission = (QuizSubmission) api.preventMultipleSubmissions(quizExercise, quizSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(quizExercise, quizSubmission, user);
         }
 
-        QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user);
+        QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user, participationFromExamGate);
         long end = System.currentTimeMillis();
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(QuizSubmissionBeforeEvaluationDTO.of(updatedQuizSubmission));
