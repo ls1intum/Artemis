@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -44,6 +45,26 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 @Lazy
 @Repository
 public interface SubmissionRepository extends ArtemisJpaRepository<Submission, Long> {
+
+    /**
+     * Reads who a submission belongs to, without loading the submission entity.
+     * <p>
+     * Returns a row whenever the submission exists, so an empty result means "no such submission". Both fields are null
+     * when the submission has no student participation, which mirrors the previous entity-based check skipping the
+     * ownership comparison in that case.
+     *
+     * @param submissionId the id of the submission
+     * @return the owning student login and team short name, if the submission exists
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO(student.login, team.shortName)
+            FROM Submission submission
+                LEFT JOIN StudentParticipation participation ON participation.id = submission.participation.id
+                LEFT JOIN participation.student student
+                LEFT JOIN participation.team team
+            WHERE submission.id = :submissionId
+            """)
+    Optional<SubmissionOwnerDTO> findOwnerBySubmissionId(@Param("submissionId") long submissionId);
 
     /**
      * Count the number of submissions for a given set of exercises.
