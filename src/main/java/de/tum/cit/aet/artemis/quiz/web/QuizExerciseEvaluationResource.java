@@ -114,7 +114,7 @@ public class QuizExerciseEvaluationResource {
     public ResponseEntity<Void> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") @Valid QuizExerciseReEvaluateDTO quizExercise,
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
-        QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
+        QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndBatchesElseThrow(quizExerciseId);
 
         if (originalQuizExercise.isExamExercise()) {
             ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
