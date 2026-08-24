@@ -79,10 +79,10 @@ describe('ProgrammingExerciseInstructionSsrContentComponent', () => {
         });
 
         it('hands the document to the element byte for byte', () => {
-            // The regression this exists for: bound as `[attr.srcdoc]`, Angular's sanitizer treats the value as an
-            // HTML security context and reduces a full document to a few characters, dropping the `<meta>` policy
-            // and the nonced script. Every string-level assertion still passed, and the isolation was simply gone.
-            // Only an assertion against the element itself catches that.
+            // Bound as `[attr.srcdoc]`, Angular's sanitizer treats the value as an HTML security context and reduces
+            // a full document to a few characters, dropping the `<meta>` policy and the nonced script. Every
+            // string-level assertion still passes while the isolation is gone, so only an assertion against the
+            // element itself catches it.
             const document_ =
                 '<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'"></head><body><p>x</p><script nonce="abc">window.x=1;</script></body></html>';
             fixture.componentRef.setInput('srcdoc', document_);

@@ -33,9 +33,8 @@
  * whatever the frame is placed on. That is a panel surface in both hosts - the split panel on the exercise details
  * page and the card body in the code editor - and not the page backdrop, so the value is $module-bg / $card-bg
  * (both $neutral-dark in themes/_dark-variables.scss, the app-wide dark surface token) rather than $body-bg. The
- * previous #1e1e1e matched neither: it sat between the two and was neutral grey where the theme is a cool slate,
- * which drew the frame as a visibly different rectangle inside its panel. The var() is named after the token it
- * stands for and is kept for consumers that embed the fragment in a document of their own, where it can be set. */
+ * var() is named after the token it stands for and is kept for consumers that embed the fragment in a document of
+ * their own, where it can be set. */
 body.artemis-ssr-body--dark {
     background: var(--module-bg, #16191d);
     color: var(--body-color, #e0e0e0);

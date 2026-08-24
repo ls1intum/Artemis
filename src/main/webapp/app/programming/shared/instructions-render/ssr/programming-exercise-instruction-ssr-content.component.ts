@@ -16,20 +16,14 @@ const MAX_FRAME_HEIGHT_PX = 50_000;
 /**
  * Holds the server-rendered problem statement inside a sandboxed iframe, and owns the conversation with it.
  *
- * The frame is the point of the design. Its `sandbox` carries `allow-scripts` and nothing else: no
- * `allow-same-origin`, so the document inside has an opaque origin and can reach no cookie, no storage, no
- * parent DOM and no authenticated API response; no `allow-popups`, `allow-forms`, `allow-modals`,
- * `allow-downloads` or `allow-top-navigation`. Together with the per-frame CSP that
- * `problem-statement-frame.util.ts` writes into the document, a bypass of the server safelist and of DOMPurify
- * stops being a session compromise and becomes a defaced pane.
- *
- * `allow-scripts` is present because one script has to run in there: the frame cannot report its own height,
- * resolve a click to a task, or hand a link to the parent without one. That script is the only element in the
- * document carrying the CSP nonce, so nothing an attacker smuggles in can execute alongside it.
+ * The frame's `sandbox` carries `allow-scripts` and nothing else (see `problem-statement-frame-policy.ts` for
+ * what that buys and why), so the document inside has an opaque origin. Together with the per-frame CSP that
+ * `problem-statement-frame.util.ts` writes into it, a bypass of the server safelist and of DOMPurify is a
+ * defaced pane rather than a session compromise.
  *
  * All chrome (spinner, banners, step wizard) stays in the parent component. The frame is a separate document
- * and none of the application's styles reach into it, which is exactly why the server ships the statement's
- * stylesheet with it.
+ * and none of the application's styles reach into it, which is why the server ships the statement's stylesheet
+ * with it.
  */
 @Component({
     selector: 'jhi-programming-exercise-instruction-ssr-content',

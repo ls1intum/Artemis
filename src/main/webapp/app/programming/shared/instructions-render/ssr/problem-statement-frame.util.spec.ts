@@ -169,9 +169,9 @@ describe('problem statement frame assembly', () => {
 
         it('denies a template, whose children no later pass can reach', () => {
             // A template's children live in a separate document fragment, so `rewriteSameOriginImages` walks past
-            // them: neither `querySelectorAll('*')` nor `querySelectorAll('img')` descends into `content`. Measured
-            // in all three engines the markup survived, and Firefox went on to fetch the image. Denying the element
-            // is the only place this can be closed, which is why it is asserted rather than assumed.
+            // them: neither `querySelectorAll('*')` nor `querySelectorAll('img')` descends into `content`. The markup
+            // survives in all three engines and Firefox fetches the image, so denying the element is the only place
+            // this can be closed.
             const frame = frameOf('<template><img src="/api/core/files/markdown/x.png"><img src="https://img.example.org/a.png"></template>');
 
             expect(frame.querySelector('template')).toBeNull();

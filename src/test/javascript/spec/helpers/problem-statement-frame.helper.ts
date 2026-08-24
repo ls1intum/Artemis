@@ -61,7 +61,6 @@ export function runFrameScript(bodyHtml: string): FrameHarness {
         ResizeObserver: undefined,
     };
 
-    // The point of this helper is to execute the shipped script verbatim rather than a re-implementation of it.
     new Function(...Object.keys(scope), FRAME_SCRIPT.replace(GENERATION_PLACEHOLDER, FRAME_TEST_GENERATION))(...Object.values(scope));
 
     const deliver = (data: unknown, source: unknown) => {

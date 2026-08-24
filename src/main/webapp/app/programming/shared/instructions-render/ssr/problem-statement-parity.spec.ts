@@ -1027,10 +1027,9 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         // would fail on it, and recorded as a test rather than as a README note so that closing it on either side turns
         // this red instead of leaving a stale prohibition behind. Aligning the two is a follow-up.
         //
-        // This half only pins the legacy pipeline. The server half is `shouldRenderStrikethroughAsDel` in
-        // ProblemStatementRenderingIntegrationTest, and it has to stay: while only this assertion existed, the server
-        // emitted no strikethrough markup at all (<del> was missing from the jsoup safelist and was stripped), and a
-        // divergence recorded from one side alone could not tell that apart from the divergence described here.
+        // This half only pins the legacy pipeline, and both halves are needed: on its own it cannot tell "the server
+        // emits <del>" from "the server emits nothing at all", which is what a dropped safelist entry looks like. The
+        // server half is `shouldRenderStrikethroughAsDel` in ProblemStatementRenderingIntegrationTest.
         expect(htmlForMarkdown('~~gone~~')).toContain('<s>gone</s>');
         expect(htmlForMarkdown('~~gone~~')).not.toContain('<del>gone</del>');
     });

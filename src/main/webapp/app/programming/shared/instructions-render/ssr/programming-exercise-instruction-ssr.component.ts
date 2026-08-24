@@ -353,11 +353,11 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
     }
 
     /**
-     * Switches the chrome to "no answer yet": the indicator matching what is on screen, and no leftover error. The two
-     * callers reach it for different reasons: `startHydration` because a hydration (and the render that follows it) is
-     * on its way, and `requestRender` because the exercise input is still undefined, where nothing is in flight at all
-     * and the component is waiting for its host. Every transition that ends up here has stopped showing an answer for
-     * whatever the error described, so a spinner next to a stale failure banner is a state the user must never see.
+     * Switches the chrome to "no answer yet": the indicator matching what is on screen, and no leftover error.
+     * `startHydration` reaches it because a hydration and the render behind it are on their way, `requestRender`
+     * because the exercise input is still undefined and the component is waiting for its host. In both cases the
+     * error no longer describes anything on screen, so it goes: a spinner beside a stale failure banner is a state
+     * the reader must never see.
      */
     private enterPendingState(): void {
         const hasContent = this.frameSrcdoc() !== undefined;

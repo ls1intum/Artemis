@@ -4,10 +4,8 @@
 
 /*
  * The statement lives in a sandboxed iframe, which is a separate document: none of this application's styles
- * reach into it, and the highlight.js palette that used to live in this file has moved to the server's own
- * problem-statement stylesheet, which already ships with the document and already knows dark from light.
- *
- * Only the box itself is styled here.
+ * reach into it. Everything the statement itself needs, the highlight.js palette included, ships with the
+ * document in the server's own problem-statement stylesheet. Only the box is styled here.
  */
 .artemis-statement-frame {
     display: block;

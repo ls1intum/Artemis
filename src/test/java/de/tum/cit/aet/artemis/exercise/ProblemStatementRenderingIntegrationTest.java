@@ -87,9 +87,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         // The GFM extension emits <del>, which jsoup's relaxed safelist does not carry by default. Without the tag on
-        // the safelist the element was stripped and only its text survived, so the strikethrough vanished without a
-        // trace instead of merely differing from the legacy pipeline's <s>. Asserting on the text alone would not have
-        // caught that, hence the explicit tag.
+        // the safelist the element is stripped and only its text survives, so the strikethrough disappears entirely
+        // rather than merely differing from the legacy pipeline's <s>. Asserting on the text alone would not see it.
         assertThat(result.html()).contains("<del>gone</del>");
     }
 
@@ -165,9 +164,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        // The dialog shows one row per test however often the task names it, so a repeated reference used to add
-        // nothing but bytes: with the longest message the request DTO permits, this shape produced a response
-        // thousands of times the size of the request.
+        // The dialog shows one row per test however often the task names it, so a repeated reference must not repeat
+        // the payload: with the longest message the request DTO permits, one entry per reference would blow this
+        // request up into a response thousands of times its size.
         assertThat(StringUtils.countOccurrencesOf(result.html(), "Array index out of bounds")).isEqualTo(1);
         assertThat(result.html()).contains("data-feedback");
     }
@@ -205,8 +204,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldLeaveUnclosedDiagramMarkersAsWritten() throws Exception {
-        // No `@enduml` follows, so nothing is a diagram and every marker stays in the prose. Asserted because the
-        // scan that establishes this used to run once per marker over the whole remaining input.
+        // No `@enduml` follows, so nothing is a diagram and every marker stays in the prose. Asserted at this size
+        // because establishing it must not cost a scan of the remaining input per marker.
         String markdown = "@startuml\n".repeat(2000);
         var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, false, null);
 
@@ -765,13 +764,11 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRenderPathologicalMarkdownQuickly() throws Exception {
-        // The markdown patterns used to backtrack quadratically on a long single line: 100 KB took between eight and
-        // twenty-eight seconds depending on how many dollar signs it held, and an unclosed $$ raised a StackOverflowError.
-        // The request size limit is 100 KB, so these are the worst inputs the endpoint accepts.
-        // Each of these hit a different part: the first four the inline-formula check, the fifth the display-math body, the
-        // two alternating ones the display-math body again (one dollar sign per repetition used to recurse) together with
-        // the placeholder substitution, which cost a pass over the document per formula, and the last two the task syntax,
-        // whose list previously recursed once per comma and once per parenthesis pair.
+        // A long single line is where the markdown patterns are most easily made to backtrack quadratically or to
+        // recurse per repetition, which costs tens of seconds of CPU or ends in a StackOverflowError. The request size
+        // limit is 100 KB, so these are the worst inputs the endpoint accepts, and each targets a different part: the
+        // first four the inline-formula check, the fifth the display-math body, the two alternating ones the
+        // display-math body together with the placeholder substitution, and the last two the task syntax.
         String[] pathological = { "a".repeat(90_000), "a".repeat(90_000) + "$$", "a".repeat(45_000) + "$$" + "b".repeat(45_000), "$".repeat(90_000), "$$" + "a".repeat(90_000),
                 "$$" + "a$".repeat(30_000), "$$" + "a$".repeat(30_000) + "$$", "[task][n](" + "a,".repeat(20_000), "[task][n](" + "a(),".repeat(20_000) };
 
@@ -791,9 +788,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRenderADisplayFormulaThatEscapesManyDollarSigns() throws Exception {
-        // A legitimate formula, not crafted input: the body escapes a dollar sign per term. The display-math pattern
-        // recursed once per escaped dollar, so a few thousand of them ended the request with a StackOverflowError rather
-        // than a rendered formula.
+        // A legitimate formula, not crafted input: the body escapes a dollar sign per term. A display-math pattern
+        // recursing once per escaped dollar would end a few thousand terms in a StackOverflowError.
         String formula = "a$".repeat(5_000) + "b";
         var body = new ProblemStatementRenderRequestDTO("$$" + formula + "$$", null, null, "en", false, false, false, null);
 
@@ -833,8 +829,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotShipKatexWhenTheCallerAsksForNoJavaScript() throws Exception {
-        // KaTeX is JavaScript, so includeJs=false has to exclude it too. Before, the scripts were emitted whenever the
-        // statement contained math, whatever the caller asked for.
+        // KaTeX is JavaScript, so includeJs=false has to exclude it too, however much math the statement contains.
         var body = new ProblemStatementRenderRequestDTO("Display:\n$$\\int_0^1 x\\,dx$$", null, null, "en", false, false, true, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
@@ -848,8 +843,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldKeepTheFormulaSourceVisibleWithoutJavaScript() throws Exception {
-        // Without a script nothing replaces the placeholder, so its own text is all the reader gets. An empty span showed
-        // nothing at all; the source is at least readable.
+        // Without a script nothing replaces the placeholder, so its own text is all the reader gets. The source is at
+        // least readable, where an empty span would show nothing at all.
         var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$ today", null, null, "en", false, false, false, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
@@ -876,7 +871,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         // The rendered document is loaded in a WebView that does not authenticate for the asset requests, so this path has
         // to stay outside the security rules.
         //
-        // Only that is asserted here, not that the file exists: KaTeX now comes from the client's own copy, which the
+        // Only that is asserted here, not that the file exists: KaTeX comes from the client's own copy, which the
         // Angular build copies out of node_modules, and server tests run with the client build skipped. So 404 ("not built
         // in this run") is an acceptable outcome while 401 or 403 ("behind authentication") is not.
         int status = request.performMvcRequest(get("/assets/katex/katex.min.css")).andReturn().getResponse().getStatus();
@@ -1337,12 +1332,11 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(lightResult.html()).contains("body.artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
         assertThat(darkResult.html()).contains("body.artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
 
-        // Dark-mode CSS keeps a body rule for the backdrop color, but the old layout properties
-        // have moved to the base rule in embedded.css. The literal is the assertion that matters: custom properties do
-        // not cross into the sandboxed frame, so the variable never resolves there and this fallback is what actually
-        // paints. It has to stay equal to $module-bg / $card-bg ($neutral-dark in themes/_dark-variables.scss), the
-        // surface the frame is placed on in both hosts, otherwise the frame draws a differently coloured rectangle
-        // inside its panel.
+        // Dark mode keeps a body rule of its own for the backdrop colour only; the layout lives in the base rule in
+        // embedded.css. The literal is the assertion that matters: custom properties do not cross into the sandboxed
+        // frame, so the variable never resolves there and this fallback is what actually paints. It has to stay equal
+        // to $module-bg / $card-bg ($neutral-dark in themes/_dark-variables.scss), the surface the frame is placed on
+        // in both hosts, otherwise the frame draws a differently coloured rectangle inside its panel.
         assertThat(darkResult.html()).contains("body.artemis-ssr-body--dark {").contains("background: var(--module-bg, #16191d);");
     }
 
@@ -1421,18 +1415,11 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        // f0d658433ea3ce51e37b7e76c21dc7739d18dd56c168ecb1cc35dcd40cc00634 is the content hash this exact request
-        // produced under renderer version "1.0.0" (captured before the bump to "1.1.0" that added this test, and
-        // still distinct under "1.3.0", which moved the feedback payload onto the container; "1.4.0" added the
-        // highlight.js palette to the embedded stylesheet, which the sandboxed frame needs because no application
-        // stylesheet reaches into it; "1.5.0" made the diagram placeholder unforgeable and bounded the size a
-        // formula may ask for in the interactive script; "1.6.0" put <del> on the safelist so that
-        // strikethrough survives sanitization). The
-        // renderer version is folded into the content hash precisely so that a stale client-cached rendering does
-        // not survive a semantic change to the renderer; this pins that a version bump actually changes the hash
-        // for byte-for-byte identical input, rather than only changing the reported version string. If this
-        // assertion ever fails because the version was bumped again, that is expected: replace the pinned hash
-        // with the new value captured under the previous version.
+        // The pinned hash is what this exact request produced under renderer version "1.0.0". The renderer version is
+        // folded into the content hash so that a stale client-cached rendering does not survive a semantic change to
+        // the renderer, and this pins that a version bump really changes the hash for byte-for-byte identical input
+        // rather than only the reported version string. A failure here means the hash was pinned against the current
+        // version: capture the value the current version produces and pin that instead.
         assertThat(result.contentHash()).isNotEqualTo("f0d658433ea3ce51e37b7e76c21dc7739d18dd56c168ecb1cc35dcd40cc00634");
     }
 
@@ -1609,7 +1596,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldExpandAForgedAlertIconOnlyToOneOfTheFixedIcons() throws Exception {
-        // The alert icon marker is forgeable in the same way the diagram marker was, and unlike that one it is left
+        // The alert icon marker is forgeable in the same way the diagram marker is, and unlike that one it is left
         // that way on purpose. This pins the two properties that make the exception safe, so that a later change to
         // either is caught here rather than reasoned about again: the marker can only select one of five fixed,
         // server-owned octicons, and it consumes no bounded resource. An author who writes the marker gets exactly

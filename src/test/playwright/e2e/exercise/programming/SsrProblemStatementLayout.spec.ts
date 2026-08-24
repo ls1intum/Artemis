@@ -100,12 +100,11 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
     });
 
     test('toggle ON: the frame restates the application typography', async ({ login, page, exerciseAPIRequests }) => {
-        // Read inside the frame, because that is the only place the defect was visible. The frame is a separate
-        // document with an opaque origin: no application stylesheet and no theme variable reaches it, so every size
-        // has to be restated in embedded.css. When it declared none, headings fell back to the browser defaults and
-        // the statement rendered at a visibly different scale from the rest of the page. No server-side assertion can
-        // see that, and the parity gate renders with includeCss=false and diffs markup, so the computed values are
-        // the only real guard.
+        // Read inside the frame, which is the only place this is visible. The frame is a separate document with an
+        // opaque origin: no application stylesheet and no theme variable reaches it, so every size has to be restated
+        // in embedded.css, and a missing declaration falls back to the browser default and renders the statement at a
+        // visibly different scale from the rest of the page. No server-side assertion can see that, and the parity
+        // gate renders with includeCss=false and diffs markup, so the computed values are the only guard.
         await login(admin);
         const headingExercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
@@ -155,10 +154,9 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
     });
 
     test('toggle ON: the statement is isolated in a sandboxed frame', async ({ login, page }) => {
-        // Asserted against the frame the application actually built, not one the test assembled. That distinction
-        // is the point: bound as `[attr.srcdoc]`, Angular's sanitizer silently reduced the document to a few
-        // characters, dropping the policy and the script, while every unit assertion about the string still
-        // passed. Only reading the element back catches a regression of that shape.
+        // Asserted against the frame the application actually built, not one the test assembled. Bound as
+        // `[attr.srcdoc]`, Angular's sanitizer reduces the document to a few characters and drops the policy and the
+        // script, while every unit assertion about the string still passes. Only reading the element back sees it.
         await login(admin);
         await setSsrToggle(page, true);
 

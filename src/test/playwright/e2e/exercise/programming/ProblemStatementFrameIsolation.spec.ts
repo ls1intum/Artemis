@@ -7,11 +7,10 @@ import { contentSecurityPolicy, FRAME_SANDBOX } from 'app/programming/shared/ins
  *
  * These assertions cannot live in Vitest: jsdom implements neither iframe sandboxing nor CSP, so it would report
  * every one of them as passing whatever the code did. They also cannot live in a Chromium-only project, because
- * the guarantees genuinely differ between engines. The measurement that made this file necessary: with the frame
- * CSP removed, WebKit sends the `SameSite=Lax` JWT cookie on requests issued from a sandboxed opaque-origin
- * frame, while Chromium and Firefox send none. The CSP is therefore load-bearing rather than defence in depth,
- * and a future change that relaxes it would be invisible to a Chromium-only suite while silently handing Safari
- * users a blind CSRF channel.
+ * the guarantees genuinely differ between engines: with the frame CSP removed, WebKit sends the `SameSite=Lax` JWT
+ * cookie on requests issued from a sandboxed opaque-origin frame, while Chromium and Firefox send none. The CSP is
+ * load-bearing rather than defence in depth, and a change relaxing it would be invisible to a Chromium-only suite
+ * while handing Safari users a blind CSRF channel.
  *
  * The frame is built here from the same exported policy and sandbox the application uses, so relaxing either in
  * production code fails these tests rather than quietly passing them.

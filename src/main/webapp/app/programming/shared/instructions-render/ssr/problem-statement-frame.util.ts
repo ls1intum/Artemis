@@ -10,33 +10,30 @@ import { contentSecurityPolicy } from 'app/programming/shared/instructions-rende
  *
  * The frame is what makes a sanitizer bypass harmless: it has an opaque origin, so the markup inside it reaches
  * no cookie, no storage, no parent DOM and no authenticated API response, and it carries a CSP of its own whose
- * nonce only the trusted frame script has. Every function in this file exists to make sure that nothing which
- * survives into that frame is either sensitive or able to phone home.
+ * nonce only the trusted frame script has.
  *
  * The order below is fixed and pinned by specs, because each step assumes the previous one:
  *
  *   extract fragment -> DOMPurify -> strip sensitive attributes -> block URL references
  *   -> rewrite same-origin images -> KaTeX -> highlight.js -> serialize
  *
- * KaTeX and highlight.js run last and in the parent rather than inside the frame. Both are pure string
- * producers (`renderToString`, `highlight().value`), so they need no live document, and keeping them here
- * means the frame needs no library and no second script.
+ * KaTeX and highlight.js run in the parent rather than inside the frame. Both are pure string producers
+ * (`renderToString`, `highlight().value`), so they need no live document, and keeping them here means the frame
+ * needs no library and no second script.
  *
- * The three `innerHTML` assignments below are marked for the static analysers, and the reason is stronger than
- * the usual "the value is trusted": every one of them writes into a `DOMParser` document, which is inert. It is
- * attached to nothing, so no script in it can run and no resource in it is fetched, and the markup only ever
- * leaves as a string that goes into the sandboxed frame. The values are KaTeX's own output and highlight.js'
- * output over text read back from `textContent`, both of which escape what they emit.
+ * The three `innerHTML` assignments below write into a `DOMParser` document, which is attached to nothing: no
+ * script in it runs and no resource in it is fetched, and the markup leaves only as the string that goes into
+ * the sandboxed frame. The values are KaTeX's own output and highlight.js' output over text read back from
+ * `textContent`, both of which escape what they emit.
  */
 
 /** The `data-*` attributes the server writes that carry information about the viewer rather than the statement. */
 const SENSITIVE_ATTRIBUTES = ['data-feedback', 'data-result'];
 
 /**
- * SVG presentation attributes that accept a `url(...)` reference, mirroring
- * `SvgSanitizer.URL_BEARING_ATTRIBUTES`. These are not cosmetic: an external reference in them issues a real
- * network request. Measured in the sandboxed frame with its CSP active, `fill`, `stroke`, `clip-path` and
- * `mask` all fetched in Chromium, and `mask` fetched in Firefox and WebKit too.
+ * SVG presentation attributes that accept a `url(...)` reference, mirroring `SvgSanitizer.URL_BEARING_ATTRIBUTES`.
+ * An external reference in them issues a real network request: inside the frame with its CSP active, `fill`,
+ * `stroke`, `clip-path` and `mask` fetch in Chromium, and `mask` fetches in Firefox and WebKit as well.
  */
 const URL_BEARING_SVG_ATTRIBUTES = ['fill', 'stroke', 'filter', 'clip-path', 'mask', 'marker-start', 'marker-mid', 'marker-end'];
 
@@ -45,18 +42,16 @@ const URL_BEARING_SVG_ATTRIBUTES = ['fill', 'stroke', 'filter', 'clip-path', 'ma
  *
  * The first group is what `SvgSanitizer` denies outright, forbidden here again in case the server safelist is
  * bypassed. `feimage` joins them for the same reason it is guarded there: an `feImage` inside a filter fetches its
- * `href`, verified in all three engines, and it is not obvious from reading the element that it does.
+ * `href` in all three engines, which is not obvious from reading the element.
  *
  * The second group cannot be produced by the renderer at all: jsoup's `Safelist.relaxed()` permits none of them.
  * They are listed because each one is a fetch or a submission that the image rewriting below would not catch, and
  * forbidding an element the server can never emit costs nothing.
  *
- * `template` is in that second group for a reason the others do not share, and it is the one element here that a
- * later pass genuinely cannot cover. Its children live in a separate document fragment, so neither
- * `querySelectorAll('*')` nor `querySelectorAll('img')` in `rewriteSameOriginImages` ever reaches them: a
- * `<template><img src="https://…"></template>` walks straight through the URL rewriting untouched. Measured in all
- * three engines, the markup survives in every one of them and Firefox goes on to fetch the image. Denying the
- * element is what closes that, because there is no way to reach inside it from the passes that follow.
+ * `template` is the one element here that no later pass can cover. Its children live in a separate document
+ * fragment, so neither `querySelectorAll('*')` nor `querySelectorAll('img')` in `rewriteSameOriginImages` reaches
+ * them: a `<template><img src="https://…"></template>` walks through the URL rewriting untouched in all three
+ * engines, and Firefox goes on to fetch the image. Denying the element is the only way to close that.
  */
 const DENIED_ELEMENTS = [
     'script',
@@ -85,8 +80,7 @@ const DENIED_ELEMENTS = [
  * Attributes that make the browser fetch or submit to their value.
  *
  * Enumerated because `img[src]` is not the only one: `<video poster>`, `<input type=image src>`, `<form action>`
- * and SVG `href` all issue a request, and all of them were observed surviving into the frame before the element
- * list above was widened. This pass is the backstop for anything that still gets through.
+ * and SVG `href` all issue a request. This pass is the backstop for anything the element list above lets through.
  */
 const URL_BEARING_ATTRIBUTES = ['src', 'srcset', 'href', 'xlink:href', 'poster', 'data', 'action', 'formaction'];
 
@@ -99,10 +93,9 @@ const DANGEROUS_CSS = /expression\s*\(|@import|-moz-binding/i;
 /**
  * CSS functions that fetch an image without ever writing `url(`.
  *
- * `image-set("https://…" 1x)` takes a bare string as its source, and it really is fetched: verified in Chromium,
- * Firefox and WebKit, in every one of them. A rule that only scans for `url(` therefore misses it completely,
- * which is why these are rejected by name rather than by their argument. None of them appears in PlantUML output
- * or in any legitimate statement CSS, so rejecting the whole declaration costs nothing.
+ * `image-set("https://…" 1x)` takes a bare string as its source and is fetched in all three engines, so a rule
+ * that only scans for `url(` misses it. These are rejected by name instead. None of them appears in PlantUML
+ * output or in any legitimate statement CSS, so rejecting the whole declaration costs nothing.
  */
 const IMAGE_FUNCTIONS = /(^|[^a-z-])(-webkit-)?(image-set|cross-fade|image|element|paint)\s*\(/i;
 
@@ -219,10 +212,8 @@ export function sanitizeFragment(fragmentHtml: string): string {
  * container's `data-result` (score, points, commit hash, submission date, assessment type).
  *
  * None of it is needed here: this client renders with `includeJs: false` and opens the Angular feedback dialog
- * from the `Result` it already holds. It is stripped rather than left in place because the frame is where a
- * bypass would be able to observe it, and observable data is the only thing worth exfiltrating.
- *
- * The server keeps emitting all of it; the standalone consumer's `interactive.js` reads it.
+ * from the `Result` it already holds. Stripping it keeps it out of reach of a sanitizer bypass inside the frame.
+ * The server keeps emitting all of it, because the standalone consumer's `interactive.js` reads it.
  */
 export function stripSensitiveAttributes(root: Element): void {
     for (const attribute of SENSITIVE_ATTRIBUTES) {
@@ -395,8 +386,8 @@ function extractTasks(fragment: Element): SsrTask[] {
  */
 export function assembleFrameDocument(serverDocument: string, locale: string, unavailableLabel: string): AssembledFrame {
     const parsed = new DOMParser().parseFromString(serverDocument, 'text/html');
-    // The endpoint still appends KaTeX scripts even with includeJs=false, and none of the server's scripts are
-    // wanted here: KaTeX has already run in this file, and the trusted frame script is added below.
+    // The frame script added below is the only script the frame may carry. `includeJs: false` already keeps the
+    // server from emitting any, so this only guards against a document that arrived with one anyway.
     parsed.querySelectorAll('script').forEach((script) => script.remove());
 
     const fragment = parsed.querySelector('.artemis-problem-statement');
@@ -450,10 +441,9 @@ export function assembleFrameDocument(serverDocument: string, locale: string, un
     // The policy is the first element in the head, before any stylesheet or script, because a policy only
     // governs what the parser sees after it.
     //
-    // The document is built as a string rather than through the DOM because `srcdoc` is a string by definition,
-    // so the "HTML in a template literal with interpolated variables" shape is unavoidable here. Every hole in it
-    // is already closed: `escapeAttribute` for the attribute values, DOMPurify output for the fragment, the
-    // server's own document-level stylesheets for `styles`, and hex tokens from `randomToken`.
+    // Built as a string because `srcdoc` is one by definition. Every interpolation is closed: `escapeAttribute`
+    // for the attribute values, DOMPurify output for the fragment, the server's own document-level stylesheets
+    // for `styles`, and hex tokens from `randomToken`.
     const srcdoc =
         // nosemgrep -- interpolations are escaped attribute values; see the note above
         `<!DOCTYPE html><html lang="${escapeAttribute(locale)}"><head><meta charset="UTF-8">` +

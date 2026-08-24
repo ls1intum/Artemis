@@ -52,9 +52,9 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
     // server against, and not a simplified copy: a looser `[^)]*(?:\([^()]*\)[^)]*)*` group mis-parses a reference
     // that is exactly "name()". The greedy `[^)]*` swallows up to the first ')' before the nested-parens alternative
     // ever gets a chance to run, truncating the capture to "name(" and leaving the real closing ')' as stray text.
-    // The server's own TASK_PATTERN (ProblemStatementRenderingService) has since been rewritten as a bounded, unrolled
-    // loop to keep a pathological task list from overflowing the matcher's stack. It accepts a superset of the grammar
-    // below, so every task this harness extracts is still one the server renders as a task.
+    // The server's own TASK_PATTERN (ProblemStatementRenderingService) is a bounded, unrolled loop that keeps a
+    // pathological task list from overflowing the matcher's stack. It accepts a superset of the grammar below, so
+    // every task this harness extracts is one the server renders as a task.
     private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[([^\\[\\]]+)]\\(((?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
 
     private static final Pattern TASK_STATUS_PATTERN = Pattern.compile("data-test-status=\"([^\"]+)\"");
@@ -131,8 +131,8 @@ class ProblemStatementRenderingParityTest extends AbstractSpringIntegrationIndep
      * <p>
      * PlantUML measures its layout through AWT font metrics, so the same source renders to different geometry
      * depending on which fonts the machine has: the runner produces {@code viewBox="0 0 170 60"} where macOS produces
-     * {@code 165}, down to different glyph path data. Pinning those bytes made the fixture a record of the machine it
-     * was generated on rather than of the renderer, and the gate could not pass on both.
+     * {@code 165}, down to different glyph path data. Pinning those bytes would make the fixture a record of the
+     * machine that generated it rather than of the renderer, and no single fixture could pass on both.
      * <p>
      * The colours survive because they are the part of the diagram this feature actually drives: they come from
      * {@code testsColor(...)} resolution against the test outcomes, which happens on the PlantUML *source* before

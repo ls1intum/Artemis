@@ -101,9 +101,9 @@ public class ProblemStatementRenderingService {
 
     /**
      * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
-     * {@code node_modules} by the Angular build. The server used to pull a second copy as a webjar, which meant shipping
-     * two versions of the same library - and the webjar's generated POM carried an npm version range, which Gradle cannot
-     * resolve without asking the repository for a version list on every build.
+     * {@code node_modules} by the Angular build. There is deliberately no server-side webjar: it would ship a second
+     * version of the same library, and its generated POM carries an npm version range that Gradle cannot resolve
+     * without asking the repository for a version list on every build.
      */
     private static final String KATEX_BASE_PATH = "/assets/katex";
 
@@ -141,19 +141,16 @@ public class ProblemStatementRenderingService {
     /**
      * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)}.
      * <p>
-     * The test list is written as an unrolled loop - a run of non-parenthesis characters, then any number of parenthesised
-     * groups each followed by another such run. The earlier shape repeated a group once per comma
-     * ({@code (?:,[^(),]+...)*}), and Java's matcher recurses per repetition, so an unclosed task with twenty thousand
-     * commas raised a {@link StackOverflowError}. Commas are now absorbed by the character class, which does not recurse,
-     * and the parenthesised groups that remain are bounded to a hundred, because Java recurses per repetition however the
-     * loop is written: twenty thousand {@code ()} pairs overflowed the stack even in the unrolled form. A task list with
-     * more than a hundred parenthesised entries is not real content, and beyond the bound the task simply does not match
-     * and is rendered as written.
+     * A test identifier is typically a {@code <testid>123</testid>} value and may carry one level of parenthesised
+     * suffix (for example {@code testClass(Vehicle)}). The list is therefore written as an unrolled loop: a run of
+     * non-parenthesis characters, then any number of parenthesised groups each followed by another such run. Commas
+     * are absorbed by the character class rather than driving a repetition, because Java's matcher recurses per
+     * repetition and an unclosed task with twenty thousand commas would overflow the stack. For the same reason the
+     * parenthesised groups are bounded to a hundred. A task list with more than a hundred parenthesised entries is
+     * not real content, and beyond the bound the task does not match and is rendered as written.
      * <p>
-     * It accepts a slightly wider list than before, for instance one with empty entries; the caller already discards
-     * entries that are not test identifiers. Original note: test identifiers
-     * are typically {@code <testid>123</testid>} values. Each identifier may carry one level of
-     * parenthesized suffix (e.g. {@code testClass(Vehicle)}).
+     * The list is matched loosely, so empty entries are accepted; the caller discards everything that is not a test
+     * identifier.
      * <p>
      * Named groups: {@code name} (task display name), {@code tests} (comma-separated test identifiers).
      */
@@ -316,8 +313,8 @@ public class ProblemStatementRenderingService {
         }
 
         // Gated by includeJs like every other script: KaTeX is JavaScript, so a caller asking for a document without
-        // JavaScript has to get one. Without these scripts the formulas stay as their source text, which the placeholder
-        // now carries, rather than rendering as nothing.
+        // JavaScript has to get one. Without these scripts the formulas display as the source text the placeholder
+        // carries rather than as nothing.
         if (includeJs && !mathFormulas.isEmpty()) {
             html += "<script src=\"" + HtmlEscaper.escapeAttribute(serverUrl) + KATEX_BASE_PATH + "/katex.min.js\"></script>";
             if (KATEX_AUTO_RENDER_JS != null) {
@@ -349,10 +346,10 @@ public class ProblemStatementRenderingService {
             }
             int endMarker = markdown.indexOf(PLANTUML_END, start + PLANTUML_START.length());
             if (endMarker < 0) {
-                // No closing marker after this opening one, so no complete diagram can follow it either. Leaving the
-                // rest untouched is what the previous regex produced as well, but it reached that answer by scanning
-                // to the end of the input once per opening marker: 9000 unclosed `@startuml` lines within the
-                // 100 000-character request limit cost 2.4 seconds of CPU. This scan is linear.
+                // No closing marker after this opening one, so no complete diagram can follow it either, and the rest
+                // is left untouched. Bailing out here keeps the scan linear: searching to the end of the input once
+                // per opening marker costs 2.4 seconds of CPU for 9000 unclosed `@startuml` lines, which fit well
+                // within the 100 000-character request limit.
                 break;
             }
             int end = endMarker + PLANTUML_END.length();
@@ -741,10 +738,9 @@ public class ProblemStatementRenderingService {
      * stripping) skip their contents.
      * <p>
      * The spans come from CommonMark itself rather than from a regex. A regex has to enumerate the syntaxes it knows,
-     * and the ones it forgets silently become expandable: a {@code [task]} inside a tilde fence, an indented block, or
-     * a multi-backtick inline span used to be rewritten into generated markup even though the reader authored it to be
-     * displayed. Asking the parser removes that class of gap, since it recognizes exactly what it will later render as
-     * code.
+     * and the ones it forgets silently become expandable: a {@code [task]} inside a tilde fence, an indented block or a
+     * multi-backtick inline span would be rewritten into generated markup even though the author wrote it to be
+     * displayed. The parser recognizes exactly what it will later render as code, which removes that class of gap.
      */
     private static String maskCodeBlocks(String markdown, List<String> codeBlocks) {
         List<int[]> ranges = new ArrayList<>();
@@ -800,10 +796,8 @@ public class ProblemStatementRenderingService {
 
     private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
-        // Strikethrough. The GFM extension renders `~~text~~` as <del>, which jsoup's relaxed safelist does not carry,
-        // so without this the tag was dropped and the text rendered unmarked: the emphasis disappeared silently rather
-        // than diverging from the legacy pipeline's <s>. Nothing covered it, because the parity corpus deliberately
-        // excludes `~~` and the divergence is asserted against the legacy renderer only.
+        // The GFM strikethrough extension renders `~~text~~` as <del>, which jsoup's relaxed safelist does not carry.
+        // Without this the tag is dropped and the text renders unmarked instead of struck through.
         safelist.addTags("del");
         safelist.addAttributes("div", "class", "data-diagram-id", "data-result", "data-feedback");
         safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode",

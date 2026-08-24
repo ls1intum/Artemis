@@ -9,21 +9,15 @@ import { ProgrammingExerciseInstructionSsrComponent, SsrLiveUpdates } from 'app/
 
 /**
  * Renders a programming exercise problem statement, choosing between the server-side renderer and the legacy
- * client-side pipeline based on the SsrProblemStatement feature toggle. Turning the toggle off returns every host to
- * the legacy renderer, with one deliberate exception: which result websocket topic that renderer subscribes to on
- * staff-facing views. `personalParticipation` is derived from `liveUpdates` in the template (see below) rather than
- * passed per host, so the detail overview list and the repository view (template / solution repositories, and a tutor
- * looking at a student's repository) now subscribe to the exercise-wide topic instead of the viewer's personal one.
- * Both previously passed `true`, and a personal topic can never carry results for a template, solution or another
- * student's participation, so that subscription could not deliver the live updates it promised. Every other host ends
- * up with the value it passed before, or has no participation to subscribe for at all.
- *
- * All six read-only hosts (course overview, code editor, repository view, assessment instructions, assessment
- * dashboard, detail overview list) bind this single component instead of picking a renderer themselves.
+ * client-side pipeline based on the SsrProblemStatement feature toggle. All six read-only hosts (course overview,
+ * code editor, repository view, assessment instructions, assessment dashboard, detail overview list) bind this
+ * single component instead of picking a renderer themselves.
  *
  * `liveUpdates` is the only mode input: the legacy child's `personalParticipation` is derived from it in the
  * template rather than accepted as a second, independently-bindable input. Two independent inputs would let a host
- * pass a mode and a personal flag that disagree, which is exactly the drift this component exists to remove.
+ * pass a mode and a personal flag that disagree, which is the drift this component exists to remove. Staff-facing
+ * views therefore subscribe to the exercise-wide result topic: a personal topic carries no results for a template,
+ * a solution or another student's participation, so it could not deliver the live updates it promises.
  */
 @Component({
     selector: 'jhi-problem-statement-renderer',
@@ -44,15 +38,11 @@ export class ProblemStatementRendererComponent {
 
     readonly onNoInstructionsAvailable = output<void>();
 
-    // getFeatureToggleActive already returns Observable<boolean> for a single feature.
-    // What actually prevents a flash of the SSR renderer on a fresh page load is the blocking APP_INITIALIZER in
-    // app.config.ts, which awaits ProfileService.loadProfileInfo() (and, inside it, initializeFeatureToggles(...)
-    // with the real server-provided feature list) before Angular bootstraps any component. By the time this
-    // component's constructor subscribes below, the underlying BehaviorSubject already holds the real toggle state,
-    // not defaultActiveFeatureState's "every feature active" default, so this Observable's first (synchronous)
-    // emission is already correct, and `initialValue: false` below is never actually observed in production.
-    // It stays as a defensive fail-closed default (prefer the legacy renderer) in case that guarantee ever breaks,
-    // and it keeps `ssrEnabled` typed as `boolean` instead of `boolean | undefined`.
+    // No flash of the wrong renderer on a fresh page load: the blocking APP_INITIALIZER in app.config.ts awaits
+    // ProfileService.loadProfileInfo(), and with it initializeFeatureToggles(...), before Angular bootstraps any
+    // component, so the BehaviorSubject behind this Observable already holds the server-provided toggle state when
+    // this subscription is made. `initialValue: false` is therefore never observed in production; it is a
+    // fail-closed default (prefer the legacy renderer) and keeps `ssrEnabled` typed as `boolean`.
     readonly ssrEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.SsrProblemStatement), { initialValue: false });
 
     /**

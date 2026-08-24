@@ -48,8 +48,8 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
 
     const exercise = { id: 42, problemStatement: '[task][A](<testid>1</testid>)' } as ProgrammingExercise;
 
-    // The server still appends KaTeX scripts even with includeJs=false, and they sit inside the rendered fragment,
-    // so the script below is deliberately part of `.artemis-problem-statement` and must be stripped.
+    // The script below sits inside `.artemis-problem-statement` on purpose: a script reaching the client within the
+    // rendered fragment must never survive into the frame, whatever put it there.
     const renderResponse = (status = 'success', extra = '', notExecutedCount = '0') => ({
         html: `<!DOCTYPE html><html><head><style>.artemis-task{color:red}</style></head><body><div class="artemis-problem-statement">${taskSpan('A', '1', status, notExecutedCount)}${extra}<script>window.x=1</script></div></body></html>`,
         contentHash: status + extra + notExecutedCount,
@@ -101,11 +101,10 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
     /**
      * The task indices the component currently declares interactive to its frame.
      *
-     * Interactivity is no longer an attribute this document can read: it is a message the parent sends to the
-     * frame, and the frame applies. Asking for it here means replaying the transport — announce the frame as
-     * ready, capture what the component answers with — which is exactly what happens in a browser, minus the
-     * frame itself. The frame's half of the contract is covered separately, against the real script, in
-     * `problem-statement-frame.helper.ts`.
+     * Interactivity is not an attribute this document can read: it is a message the parent sends to the frame, and
+     * the frame applies. Asking for it here means replaying that transport (announce the frame as ready, capture
+     * what the component answers with), which is what happens in a browser minus the frame itself. The frame's half
+     * of the contract is covered against the real script in `problem-statement-frame.helper.ts`.
      */
     const interactiveTaskIndices = (): number[] => {
         const frameWindow = frameElement().contentWindow!;
@@ -203,8 +202,8 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(comp.frameSrcdoc()).toContain('artemis-task');
         const scripts = [...frameDocument().querySelectorAll('script')];
 
-        // Exactly one script survives into the frame, and it is ours: the server's KaTeX scripts are removed, and
-        // the nonce is what stops anything an attacker smuggles in from executing beside it.
+        // Exactly one script survives into the frame, and it is ours: the nonce is what stops anything an attacker
+        // smuggles in from executing beside it.
         expect(scripts).toHaveLength(1);
         expect(scripts[0].getAttribute('nonce')).toMatch(/^[0-9a-f]{32}$/);
         expect(frameDocument().querySelector('.artemis-task')).toBeTruthy();
@@ -224,7 +223,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         const emitted = vi.fn();
         comp.onNoInstructionsAvailable.subscribe(emitted);
         // Several hosts bind a field that is undefined on the first render pass (`signal<ProgrammingExercise>(undefined!)`),
-        // which `input.required` does not prevent. Dereferencing it threw a TypeError inside an effect.
+        // which `input.required` does not prevent, so dereferencing it would throw a TypeError inside an effect.
         fixture.componentRef.setInput('exercise', undefined);
         fixture.componentRef.setInput('participation', { id: 7 });
         fixture.componentRef.setInput('liveUpdates', 'personal');

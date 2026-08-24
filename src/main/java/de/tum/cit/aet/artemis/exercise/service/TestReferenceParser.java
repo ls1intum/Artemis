@@ -15,8 +15,8 @@ import org.jspecify.annotations.Nullable;
  * brackets (e.g. {@code testInsert(InsertMock, 1)}). This grammar is shared by the problem-statement renderer and
  * {@code ProgrammingExerciseTaskService}; it must stay in sync with the client-side task extension.
  * <p>
- * Empty references are dropped everywhere, including a trailing one (e.g. {@code "testA,"} returns {@code ["testA"]}).
- * This is a deliberate tightening of the previous behavior, approved to ensure reference counts remain accurate.
+ * Empty references are dropped everywhere, including a trailing one (e.g. {@code "testA,"} returns {@code ["testA"]}),
+ * so that a task's reference count is the number of tests it actually names.
  */
 public final class TestReferenceParser {
 
