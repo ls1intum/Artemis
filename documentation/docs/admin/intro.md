@@ -18,4 +18,4 @@ This documentation covers:
 
 Begin with the **[Security Configuration](./production-setup/security.mdx)** section to ensure your deployment follows secure setup practices.
 
-If you are planning a deployment rather than operating one, **[Scaling Artemis](./scaling.mdx)** answers how many servers an installation needs, how much CPU and memory each one needs, and which component to add capacity to when the platform is slow.
+If you are planning a deployment rather than operating one, start with **[Scaling Artemis](./scaling.mdx)**. It covers how many servers an installation needs and how much CPU and memory each one needs, and it explains which component to add capacity to when the platform is slow.

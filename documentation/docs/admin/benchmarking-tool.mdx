@@ -170,8 +170,9 @@ in under half a second.
 
 ### On hardware you would not expect
 
-Three Artemis servers, one database, one file server and three build agents. **Every one of them a
-virtual machine with 4 CPUs and 3.8 GB of memory**, each individually weaker than a typical laptop.
+Three Artemis core nodes, three build agents, one database and one file server, plus the load balancer
+and the supporting services behind them: eleven machines in total. **Every one of them a virtual machine
+with 4 CPUs and about 3.8 GB of memory**, each individually weaker than a typical laptop.
 
 This is the sustainability point, and it is a budget point too. Artemis does not need a data centre to
 run a large exam. Fewer machines, less power, less hardware to buy and replace.
@@ -248,7 +249,7 @@ pushes code to their own git repository, and hands the exam in, with no pause be
 | Virtual machines | 11 | 11 |
 | CPUs in total | 44 | 44 |
 | Memory in total | 41.5 GB | 41.5 GB |
-| Artemis servers | 3 | 3 |
+| Artemis core nodes | 3 | 3 |
 | Build agent machines | 3 | 3 |
 | Concurrent builds | 6 | 9 |
 | Database | MySQL, own machine | MySQL, own machine |
@@ -278,8 +279,8 @@ from having eleven of them rather than from any machine being large.
 
 | Machine | staging1 | staging2 |
 | --- | --- | --- |
-| Busiest Artemis server | 87% CPU | 77% CPU |
-| Other two Artemis servers | 66%, 60% | 42%, 43% |
+| Busiest Artemis core node | 87% CPU | 77% CPU |
+| Other two core nodes | 66%, 60% | 42%, 43% |
 | Database | 47% CPU | 47% CPU |
 | Repository storage | 11% CPU | 12% CPU |
 | Coordination service | not measured separately | 10% CPU |
@@ -288,21 +289,23 @@ from having eleven of them rather than from any machine being large.
 
 ### Reading the results
 
-**Both clusters had room left.** The busiest Artemis server finished at 87% and 77%, and everything
-behind it was far quieter: the database at under half, the storage holding every student repository
-around a tenth, the network at a few percent. Neither run was driven to failure, so both are floors
-rather than ceilings.
+**Both clusters had room left.** The busiest core node finished at 87% in one cluster and 77% in the
+other, and everything behind it was far quieter: the database below half, the storage holding every
+student repository around a tenth, the network at a few percent. Neither run was pushed until it failed,
+so both results are lower limits: Artemis handled at least this much, and how much more it would have
+handled is unknown.
 
 **The supporting services are not where capacity goes.** This is the most transferable result on the
-page. Storage, coordination and the proxy together never exceeded 12% on either cluster, while the
-Artemis servers approached saturation. Capacity planning should follow that asymmetry.
+page. Storage, coordination and the proxy never exceeded 12% on either cluster, while the core nodes
+came close to their limit. Capacity planning should follow that imbalance.
 
 **staging2 was faster on almost every action**, and the difference is large: submitting an exercise
 took 0.31 s against 0.75 s, and downloading a repository 0.98 s against 2.04 s. Two things differ
-between the clusters, so the credit cannot be assigned cleanly: staging2 coordinates through Redis
-rather than Hazelcast, and it was running a newer Artemis version. What can be said is that the
-coordination layer was never the constraint on either cluster, since Redis peaked at 10% CPU and 44 MB
-of memory with no evicted keys while handling 2,500 commands per second.
+between the clusters, so it is not possible to say which of them caused the improvement: staging2
+coordinates through Redis rather than Hazelcast, and it was running a newer Artemis version. What can be
+said is that the coordination layer was never the constraint on either cluster: Redis peaked at 10% CPU
+and 44 MB of memory while handling 2,500 commands per second, and never had to discard data to stay
+within its memory limit.
 
 **Pushing code was the one action that got slower**, and that result is not yet clean: during the
 staging2 run a number of pushes failed server-side and were not retried, so both the 4.27 s figure and
@@ -314,7 +317,7 @@ Treat the push row as provisional.
 Both cluster runs above had every student use a repository access token, which is what Artemis hands out
 through the Code button and what most students use. This matters more than it sounds: an earlier run with every
 student typing a password instead was markedly slower, because verifying a password is deliberately
-expensive and it dominated everything else on the Artemis servers. That comparison is an unverified
+expensive and it dominated everything else on the core nodes. That comparison is an unverified
 observation rather than a result from the reference run above — it predates these runs, and the metric,
 workload and Artemis version behind the roughly 58% figure quoted at the time were not recorded
 alongside it, so it should not be cited as a benchmark. If you benchmark your own deployment, record
@@ -322,7 +325,7 @@ the authentication mix alongside the result, or two numbers will not be comparab
 
 ### What a single small machine can do
 
-Not every installation is a cluster, so it is worth knowing where the floor is. The measurements below
+Not every installation is a cluster, so it is worth knowing what the smallest sensible one can do. The measurements below
 come from one virtual machine with **4 CPUs and 3.8 GB of memory** running everything at once: Artemis,
 the build agent, PostgreSQL and the reverse proxy. Unlike the cluster runs above, the authentication mix
 of these three runs was not recorded, so read the repository column on its own rather than against the
@@ -345,10 +348,10 @@ load generator's host rather than on Artemis. Remember also that the simulation 
 it gives students no thinking time at all, so a real cohort of the same size is a lighter load than
 this. An institution running a course rather than a faculty can start here.
 
-Beyond that the machine runs out. At 200 students response times roughly double again, and memory is
-what binds rather than processor: the machine is already using swap at 50 students and has exhausted it
-by 200. Adding memory helps this configuration more than adding cores would, and splitting the
-database onto its own machine helps more than either.
+Beyond that the machine runs out. At 200 students response times roughly double again, and it is memory
+that runs out rather than processor: the machine is already using swap at 50 students and has exhausted it
+by 200. Adding memory helps this configuration more than adding cores would, and giving the database a
+machine of its own helps more than either.
 
 ## Sizing an installation from these results
 

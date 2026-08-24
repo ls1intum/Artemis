@@ -13,14 +13,23 @@ import deploymentSingleMulti from "./assets/scaling/deployment_single_multi.png"
 
 # Scaling Artemis
 
-This page answers the sizing questions that come up before an installation exists, and again before the
-first large exam: **how many servers**, **how much CPU and memory** each one needs, **what hardware a
-given number of students requires**, and **which component to add capacity to** when the platform feels
-slow. It is the reference for capacity planning and hardware requirements in an Artemis deployment.
+This is the reference for capacity planning and hardware requirements in an Artemis deployment. It
+answers the four questions that come up before an installation exists, and again before the first large
+exam:
 
-Everything here is either measured or explicitly labelled as an extrapolation. The measurements come
-from [benchmark runs](/admin/benchmarking-tool#measured-results) against real deployments; this page
-carries the conclusions and links to the numbers rather than reproducing them.
+- **How many servers** does the installation need?
+- **How much CPU and memory** does each of them need?
+- **What hardware** does a given number of students require?
+- **Which component** should get more capacity when the platform feels slow?
+
+One term is used throughout. A **node** is one machine, physical or virtual, that runs the Artemis
+application. A deployment can consist of a single node, or of several nodes that share one database and
+serve users together. Other pages in this documentation also call such a machine an Artemis server; it
+means the same thing.
+
+Everything here is either measured or marked as an estimate. The measurements come from
+[benchmark runs](/admin/benchmarking-tool#measured-results) against real deployments. This page carries
+the conclusions and links to the numbers rather than repeating them.
 
 ---
 
@@ -28,22 +37,22 @@ carries the conclusions and links to the numbers rather than reproducing them.
 
 | If you are running | Deployment shape | Set it up with |
 | --- | --- | --- |
-| A single course, or an evaluation | One machine running everything | [Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup) |
+| A single course, or a pilot installation | One machine running everything | [Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup) |
 | A department with several courses at once | One Artemis node, database and build agents on their own machines | [Production Setup](/admin/production-setup/) |
 | A faculty, or exams that matter | Several Artemis nodes behind a load balancer | [Multiple Artemis Instances](/admin/production-setup/multiple-artemis-instances) |
 
-The dividing line is not really the number of students, it is whether **exams** are conducted on the
-installation. An exam removes every option to retry later: every student arrives in the same minute and
-starts submitting at once. A single machine that comfortably serves a course all semester can still be
-the wrong choice for one exam morning, because it has no headroom to absorb that peak and no redundancy
-if it fails during it.
+What decides the row is not really the number of students. It is whether **exams** are held on the
+installation. During an exam every student arrives in the same minute and starts submitting at once, and
+there is no option to retry later. A single machine that comfortably serves a course all semester can
+still be the wrong choice for one exam morning: it has no spare capacity to absorb that peak, and no
+second machine to take over if it fails while the exam is running.
 
 <Callout variant={CalloutVariant.tip}>
 
   Whichever shape you choose, we recommend the
   [Artemis Ansible Collection](https://github.com/ls1intum/artemis-ansible-collection) for production
-  installations. It encodes the topology described below with working defaults, which is a faster route
-  to a correct cluster than assembling one by hand.
+  installations. It builds the deployment shapes described below with working defaults, which is faster
+  and less error-prone than assembling a cluster by hand.
 
 </Callout>
 
@@ -51,29 +60,32 @@ if it fails during it.
 
 ## The two kinds of node
 
-Artemis has two node types, and they scale different things. Treating them as one pool is the most
-common sizing mistake, because it leads to buying the wrong hardware for the problem you actually have.
+Artemis has two kinds of node, and adding more of each solves a different problem. Treating the two as
+interchangeable is the most common sizing mistake, because it leads to buying the wrong hardware for the problem you
+actually have.
 
 **Artemis core nodes carry simultaneous users.** Every student who is logged in, opening an exam,
-submitting an answer or pushing code is served by a core node. These are what run out during a peak: in
-every measured cluster run they were the busiest machines by a wide margin, while everything behind them
-stayed under half loaded. Add core nodes, or give them more memory, when the peak is what hurts.
+submitting an answer or pushing code is served by a core node. Core nodes are the first machines to
+reach their limit during a peak: in every measured cluster run they were the busiest by a wide margin,
+while every other machine stayed below half its capacity. Add core nodes, or give the existing ones more
+memory, when the peak is the problem.
 Configuration: [Core nodes](/admin/production-setup/multiple-artemis-instances#core-nodes).
 
 **Build agent nodes decide how long students wait for feedback.** They do not affect whether the exam
-works, only how quickly a student sees the result of a push. A slowly draining queue is visible and
-annoying, but it degrades gracefully: students carry on working and results arrive later. Build agents
-run the same application with a much smaller profile set, need no access to the shared file system, and
-can be added and removed while the cluster is running. Configuration:
+works, only how quickly a student sees the result of a push. A long build queue is noticeable and
+annoying, but nothing breaks: students carry on working and their results arrive later. Build agents run
+the same Artemis application with most of its features switched off, need no access to the shared file
+system, and can be added and removed while the cluster is running. Configuration:
 [Build Agents](/admin/production-setup/multiple-artemis-instances#build-agents), or
 [Jenkins build agents](/admin/jenkins-localvc#build-agents) if you run Jenkins instead of the
 Integrated Code Lifecycle.
 
-That separation is a budget lever, and a legitimate one. An institution can reasonably decide to spend on
-core nodes so that two thousand students all submit smoothly, and to run a modest number of build agents
-so that feedback during the exam arrives in minutes rather than seconds. The reverse, plenty of build
-agents behind too few core nodes, buys nothing: students cannot reach the exam to generate builds in
-the first place.
+That separation is a **budget lever**: the one place where a limited budget can be steered without
+putting the exam itself at risk. An institution can reasonably decide to spend on core nodes, so that two
+thousand students all submit smoothly, and to run only a modest number of build agents, so that feedback
+during the exam arrives in minutes rather than seconds. Spending the other way round achieves nothing:
+many build agents behind too few core nodes gain you no capacity, because students cannot reach the exam
+to produce builds in the first place.
 
 ---
 
@@ -85,35 +97,39 @@ the first place.
   size={ImageSize.large}
 />
 
-A single machine is simpler to run, and it avoids needing shared storage, a service registry and a
-coordination layer at all. It is a reasonable choice for a course, and it has been measured: see
-[what has been measured](#what-has-been-measured) below.
+A single machine is simpler to run, because it needs none of the extra parts a cluster does: no shared
+storage, no service registry and no coordination layer. It is a reasonable choice for a course, and it
+has been measured: see [what has been measured](#what-has-been-measured) below.
 
 At the same total cost, several small core nodes usually beat one large one:
 
 - **They fail independently.** Losing one node of three during an exam costs a third of the capacity,
   not all of it.
-- **They can be added without downtime.** A new node joins a running cluster by itself, through the
-  [discovery service](/admin/production-setup/multiple-artemis-instances#discovery-service) when
-  coordination runs on Hazelcast, or without any registry when it runs on
-  [Redis](/developer/guidelines/distributed-data#redis-needs-no-service-registry). Nothing needs
-  reconfiguring on the nodes that are already running.
-- **Load really does spread.** In both measured cluster runs the traffic distributed across all three
-  core nodes, with the busiest one ahead of the others but not carrying them.
+- **They can be added without downtime.** A new node joins a running cluster on its own. With Hazelcast
+  it finds the other nodes through the
+  [service registry](/admin/production-setup/multiple-artemis-instances#discovery-service), which the
+  setup pages also call the discovery service; with
+  [Redis](/developer/guidelines/distributed-data#redis-needs-no-service-registry) no registry is needed at
+  all. Either way, nothing has to be reconfigured on the nodes that are already running.
+- **Load really does spread.** In both measured cluster runs the traffic reached all three core nodes.
+  One of them was busier than the other two, but the other two were carrying a substantial share of the
+  work rather than sitting idle.
 
-What the cluster shape costs is the parts that exist only because there is more than one node: shared
-[file storage](/admin/production-setup/multiple-artemis-instances#file-system) for repositories, a
-[coordination layer](/admin/production-setup/multiple-artemis-instances#database-cache) so that caches,
-scheduling and WebSockets stay consistent across nodes, and a load balancer in front. None of them
-turned out to be expensive in practice: see [what not to spend on](#what-not-to-spend-on).
+What a cluster costs in return are three parts that exist only because there is more than one node:
+shared [file storage](/admin/production-setup/multiple-artemis-instances#file-system) for the
+repositories, a
+[coordination layer](/admin/production-setup/multiple-artemis-instances#database-cache) that keeps caches,
+scheduled tasks and WebSocket connections consistent across the nodes, and a load balancer in front of
+them all. None of these turned out to be expensive in practice: see
+[what not to spend on](#what-not-to-spend-on).
 
 ---
 
 ## A starting point for sizing
 
 The figures below are a **rough starting point, not a validated model**. They are extrapolated from
-measurements on two clusters of identical shape, which is not enough variety to fit a curve to. Treat
-them as the configuration to benchmark first, then measure your own peak and adjust.
+two clusters that had exactly the same shape, which is far too little variety to derive a reliable
+formula from. Treat them as the configuration to try first, then measure your own peak and adjust.
 
 | Role | Suggested unit | Rule of thumb |
 | --- | --- | --- |
@@ -127,58 +143,74 @@ Worked example, for 1,000 students taking a programming exam at once: two core n
 agents if feedback has to arrive during the exam, or three to four if students can wait until
 afterwards. That difference of six or seven machines is the budget lever described above.
 
+<Callout variant={CalloutVariant.info}>
+
+  **These units assume that each machine does one job.** The rule of one core node per 500 users holds
+  when that node does nothing else. The single machine in
+  [what has been measured](#what-has-been-measured) below had the same 4 CPUs, but Artemis, the database,
+  the build agent and the reverse proxy all shared them, and it reached its limit at a far smaller number
+  of students. Hardware that is shared between several roles does not go as far as this table suggests.
+
+</Callout>
+
 Two adjustments worth making to the units:
 
-- **Memory before CPUs on core nodes.** At 4 CPUs and 3.8 GB the measured nodes were tight on memory
-  well before they were tight on processor, and they swapped under load. 4 GB is the practical minimum,
-  and more memory helps more than extra cores would.
-- **Size the database by data, not by students.** It stayed under half loaded at 2,000 students on both
-  clusters. What it needs is enough memory to hold the working set, because a database that pages its
-  cache to disk is slower than a smaller cache that fits.
+- **Memory before CPUs on core nodes.** At 4 CPUs and 3.8 GB the measured nodes ran short of memory long
+  before they ran short of processor, and they started swapping to disk under load. 4 GB is the practical
+  minimum, and more memory helps more than extra cores would.
+- **Size the database by data, not by students.** It stayed below half its capacity at 2,000 students on
+  both clusters. What it needs is enough memory to keep the frequently read part of the data in its
+  cache, because a database that has to fetch that data from disk again on every request is much slower.
 
-If you run several concurrent build jobs per build agent, budget at least 2 CPUs and 2 GB of memory per
-concurrent job on that machine rather than raising the concurrency on a node that cannot feed it.
+A build agent can run several build jobs at the same time. Budget at least 2 CPUs and 2 GB of memory for
+each concurrent job on that machine, and do not raise the number of concurrent jobs beyond what the
+machine's own CPUs and memory can support.
 
 ---
 
 ## What has been measured
 
 Two clusters and one single machine have been benchmarked with the
-[Artemis Benchmarking Tool](/admin/benchmarking-tool), which participates in an exam on behalf of a
-configurable number of students. The table gives the shape of each result. The
-[full breakdown](/admin/benchmarking-tool#measured-results) has the per-action timings and the
-per-machine utilisation.
+[Artemis Benchmarking Tool](/admin/benchmarking-tool), which takes part in a real exam on behalf of a
+chosen number of simulated students. The table summarises each run. The
+[full results](/admin/benchmarking-tool#measured-results) give the timing of every individual action and
+the load on every machine.
 
 | Deployment | Hardware | Students | Average response | Failed requests | What ran out first |
 | --- | --- | --- | --- | --- | --- |
 | Cluster, Hazelcast | 11 VMs, 44 CPUs, 41.5 GB | 2,000 | 0.45 s | **0** | Core nodes, busiest at 87% CPU |
 | Cluster, Redis | 11 VMs, 44 CPUs, 41.5 GB | 2,000 | 0.30 s | **0** | Core nodes, busiest at 77% CPU |
-| Everything on one machine | 1 VM, 4 CPUs, 3.8 GB | 100 | 0.65 s | **0** | Memory (the machine was already swapping) |
+| Everything on one machine | 1 VM, 4 CPUs, 3.8 GB | 100 | 0.65 s | **0** | Memory (the machine was already swapping to disk) |
 
-Three conclusions carry over to a different installation:
+Each cluster ran three core nodes and three build agents; the remaining machines held the database, the
+repository storage and the supporting services.
 
-**Neither cluster was driven to failure.** The busiest core node finished at 87% and 77% CPU, with
-everything behind it far quieter. Both rows are floors rather than ceilings: 2,000 is the largest run
-measured, not the largest Artemis handled.
+Three conclusions apply beyond these particular runs:
 
-**Every machine in those clusters was small.** Four CPUs and about 3.8 GB of memory each, individually
-weaker than a typical laptop. The capacity came from having eleven of them, not from any one being
-large. Artemis does not need a data centre to run a large exam, which is a procurement and power argument
-as much as a technical one.
+**Neither cluster was pushed until it failed.** The busiest core node ended the run at 87% CPU in one
+cluster and at 77% in the other, and every machine behind it was far quieter. Both rows are therefore
+lower limits rather than upper ones: 2,000 students is the largest run that was measured, not the largest
+that Artemis can handle.
 
-**A student count means nothing without the hardware beside it.** The same platform served 2,000 students
-at 0.45 s on eleven machines, and bound at around 100 on one small machine where Artemis, the build agent,
-PostgreSQL and the reverse proxy all competed for 4 CPUs. Quote the two numbers together, or neither is
-informative.
+**Every machine in those clusters was small.** Four CPUs and about 3.8 GB of memory each, which makes
+every one of them weaker than a typical laptop. The capacity came from having eleven of them, not from
+any single machine being large. Artemis does not need a data centre to run a large exam, which is an
+argument about electricity and procurement as much as a technical one.
+
+**A student count means nothing without the hardware beside it.** The same software served 2,000 students
+at 0.45 s on eleven machines, and reached its limit at around 100 students on one small machine where
+Artemis, the build agent, PostgreSQL and the reverse proxy all shared 4 CPUs. Always state the two
+numbers together: on its own, neither of them says anything.
 
 <Callout variant={CalloutVariant.warning}>
 
-  **A simulated student is harder work than a real one.** The benchmark gives students no thinking time
-  at all: the next action starts the instant the previous one returns, compressing an exam of an hour or
-  more into a few minutes. A real cohort of the same size is a considerably lighter load. The tool also
-  caps client concurrency at ten threads per CPU of the machine running it, so a configured student count
-  is not automatically a verified count of simultaneous users. Read these numbers as a load setting rather
-  than as a headcount. See
+  **A simulated student is harder work than a real one.** The benchmark gives its students no thinking
+  time at all: the next action starts the instant the previous one finishes, so an exam that would take a
+  real student an hour or more is compressed into a few minutes. A real group of the same size therefore
+  puts considerably less load on the system. There is a second reason not to read these counts as people.
+  The tool can only run ten simulated students at a time per CPU of the machine it runs on. A run
+  configured for 200 students therefore did not necessarily have 200 of them active at the same moment.
+  Treat the student count as a load setting, not as a number of people. See
   [A simulated student is not a real student](/admin/benchmarking-tool#a-simulated-student-is-not-a-real-student)
   for what that does to the numbers.
 
@@ -193,12 +225,12 @@ adding capacity everywhere. The middle column is what to check before spending m
 
 | Symptom | Check first | Action |
 | --- | --- | --- |
-| Pages and submissions slow at the peak, everything behind the core nodes is quiet | Core node CPU and free memory | Add a core node, or give the existing ones more memory |
+| Pages and submissions are slow at the peak, while the database and the storage stay quiet | Core node CPU and free memory | Add a core node, or give the existing ones more memory |
 | Build results arrive late, but the exam itself stays responsive | Build queue length in the [Build Agent View](/admin/production-setup/multiple-artemis-instances#build-agents) | Add build agent nodes, or raise the concurrent build count where the hardware allows |
 | Everything is slow and the core nodes are swapping | Free memory on the core nodes | Memory, not cores |
 | Clone and push are slow while REST requests are fine | Reverse proxy timeouts and rate limits, then repository storage | [Repository download of large courses fails](/admin/troubleshooting#repository-download-of-large-courses-fails) and [Rate Limiting](/admin/production-setup/security#rate-limiting) |
 | Login is slow while everything else holds up | The identity provider and the database connection pool | Scale or fix the identity provider; see the note on authentication below |
-| The database is the busiest machine in the deployment | Database CPU and how much of the working set fits in memory | Memory for the working set rather than more cores; on a single machine, move the database off it |
+| The database is the busiest machine in the deployment | Database CPU, and how much of the frequently read data fits in its cache | More memory before more cores; on a single machine, give the database a machine of its own |
 
 <Callout variant={CalloutVariant.info}>
 
@@ -217,45 +249,45 @@ adding capacity everywhere. The middle column is what to check before spending m
 ## Everything else in the deployment
 
 Outside the core nodes and the build agents, capacity planning is mostly a matter of giving each
-component one machine and knowing what would actually make it grow.
+component one machine and knowing what would actually increase its load.
 
 | Component | Grows with | Measured load at 2,000 students | Where to configure |
 | --- | --- | --- | --- |
 | Database | The dataset, not the user count | Under half of one machine | [Database Tips](/admin/database-tips) |
 | Repository storage | Total repository volume | ~11% of one machine | [File system](/admin/production-setup/multiple-artemis-instances#file-system) |
-| Coordination (Hazelcast or Redis) | Number of nodes, not users | ~10% CPU, 44 MB, no evictions (Redis; Hazelcast not measured separately) | [Database cache](/admin/production-setup/multiple-artemis-instances#database-cache), [Distributed Data](/developer/guidelines/distributed-data) |
+| Coordination (Hazelcast or Redis) | Number of nodes, not users | ~10% CPU and 44 MB of memory (measured on Redis; Hazelcast was not measured separately) | [Database cache](/admin/production-setup/multiple-artemis-instances#database-cache), [Distributed Data](/developer/guidelines/distributed-data) |
 | Load balancer / reverse proxy | Request and git traffic | 8-11% of one machine | [nginx configuration](/admin/production-setup/multiple-artemis-instances#nginx-configuration), [configuration templates](/admin/production-setup/additional-tips#nginx-configuration-templates) |
 | Service registry (Hazelcast only) | Number of nodes | Negligible | [Discovery service](/admin/production-setup/multiple-artemis-instances#discovery-service) |
-| Global search | Indexed content and the embedding strategy | Not part of the exam benchmark | [Global Search & Weaviate](/admin/global-search-weaviate) |
-| Iris, Hyperion, Athena | LLM and inference capacity, sized independently of Artemis | Not part of the exam benchmark | [Artemis Intelligence](/admin/artemis-intelligence), [Extensions Setup](/admin/extensions-setup) |
+| Global search | How much content is indexed, and the embedding strategy chosen | Not part of the exam benchmark | [Global Search & Weaviate](/admin/global-search-weaviate) |
+| Iris, Hyperion, Athena | The AI models they call, which are sized separately from Artemis | Not part of the exam benchmark | [Artemis Intelligence](/admin/artemis-intelligence), [Extensions Setup](/admin/extensions-setup) |
 
 Two notes that matter more than the table:
 
-**On a single machine, the database is the first thing to move out.** It is the one configuration where
-splitting a component onto its own machine helps more than any amount of additional memory or CPU on the
-original.
+**On a single machine, the database is the first thing to move out.** Giving the database a machine of
+its own helps more than adding any amount of memory or CPU to the machine that runs everything else.
 
-**Some growth can be deleted rather than bought.** A large part of what a long-lived installation
-accumulates, including old repository clones, build plans and results from finished courses, is not
-capacity you have to size for. The [Cleanup Service](/admin/cleanup-service) and the
-[automatic nightly cleanup](/admin/production-setup/additional-tips#automatic-cleanup) exist for this, and
-running them is cheaper than sizing around the data they would have removed.
+**Some growth can be deleted instead of bought.** Much of what a long-lived installation accumulates,
+such as old repository clones, build plans and results from finished courses, does not have to be planned
+for at all. The [Cleanup Service](/admin/cleanup-service) and the
+[automatic nightly cleanup](/admin/production-setup/additional-tips#automatic-cleanup) remove it, which is
+cheaper than buying storage for data that nobody needs.
 
 ---
 
 ## What not to spend on
 
-The supporting services were never close to a limit in any measurement: repository storage around a tenth
-of one machine, the coordination service a tenth, the reverse proxy under an eighth, and the busiest
-network link under 5% of its capacity. Give them a machine each and move on. Additional capacity there
-does not buy performance, and the measurements are unambiguous about that.
+The supporting services never came close to a limit in any measurement: the repository storage used about
+11% of one machine, the coordination service about 10%, the reverse proxy between 8% and 11%, and the
+busiest network link stayed below 5% of its capacity. Give each of them one machine and spend your
+attention elsewhere. Extra capacity here does not make anything faster, and the measurements are
+unambiguous about that.
 
 Two more places where money does not help:
 
-- **Cores on a core node that is short of memory.** The measured nodes ran out of memory well before they
-  ran out of processor, and swapped under load.
-- **Build agents behind too few core nodes.** Feedback latency is not the constraint if students cannot
-  reach the exam.
+- **Extra cores on a core node that is short of memory.** The measured nodes ran out of memory long
+  before they ran out of processor, and started swapping to disk under load.
+- **Extra build agents behind too few core nodes.** How quickly feedback arrives does not matter if
+  students cannot reach the exam in the first place.
 
 ---
 
@@ -263,24 +295,30 @@ Two more places where money does not help:
 
 Two habits are worth more than any sizing table.
 
-**Watch the deployment, not the averages.** The `/management/health` endpoint reports the state of the
-Artemis instance and its dependencies, the Build Agent View in the server administration shows which build
-agents are connected and what they are working on, and per-machine CPU and memory are what actually name
-the bottleneck. An average response time tells you that something
-is wrong; a saturated resource tells you what to buy.
+**Watch the individual machines, not only the average response time.** Three things are worth having in
+front of you:
+
+- The `/management/health` endpoint, which reports the state of an Artemis instance and of the services
+  it depends on.
+- The Build Agent View in the server administration, which shows which build agents are connected and
+  what they are working on.
+- The CPU and memory of each machine, which is what actually identifies the bottleneck.
+
+An average response time tells you that something is wrong. A machine at 100% tells you what to buy.
 
 **Benchmark before the exam, not after it.** The
-[Artemis Benchmarking Tool](/admin/benchmarking-tool) simulates exam participation at scale against a
-real deployment, which is the only way to find out where a specific installation degrades without doing
-it in front of students. [Running a comparable scale test](/admin/benchmarking-tool#running-a-comparable-scale-test)
-describes what to record so that a result keeps its meaning after the hardware or the release changes,
-and results contributed by other institutions are welcome.
+[Artemis Benchmarking Tool](/admin/benchmarking-tool) runs a complete exam against a real deployment on
+behalf of hundreds or thousands of simulated students. It is the only way to find out where your own
+installation slows down without discovering it during a real exam.
+[Running a comparable scale test](/admin/benchmarking-tool#running-a-comparable-scale-test) describes what
+to record, so that a result still means something after the hardware or the Artemis version changes.
+Results from other institutions are very welcome.
 
 ---
 
 ## Related documentation
 
-**Setting up the topology**
+**Setting up the deployment**
 
 - [Multiple Artemis Instances](/admin/production-setup/multiple-artemis-instances) documents core nodes,
   build agents, coordination, WebSockets, the shared file system and nginx
