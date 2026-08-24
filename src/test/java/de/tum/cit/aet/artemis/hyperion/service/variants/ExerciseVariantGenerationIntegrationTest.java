@@ -56,6 +56,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -86,6 +88,10 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     private static final String PLANNED_TITLE = "Cargo Bay Inventory Quiz";
 
     private static final String REWRITTEN_QUESTION_TITLE = "Cargo bay manifest check";
+
+    private static final double TAMPERED_POINTS = 99;
+
+    private static final ScoringType TAMPERED_SCORING_TYPE = ScoringType.PROPORTIONAL_WITHOUT_PENALTY;
 
     private static final String PLAN_JSON = """
             {
@@ -228,6 +234,29 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     }
 
     /**
+     * A round that re-titles question 0 like the happy path but ALSO rewrites its grading metadata. The prompt and
+     * the plan both declare points and scoring type invariant, so the tool must restore them from the source.
+     */
+    private String applyGradingTamperEdit(List<ToolCallback> tools) {
+        try {
+            String questionsJson = callTool(tools, "getQuestions", objectMapper.createObjectNode().toString());
+            ArrayNode questions = (ArrayNode) objectMapper.readTree(questionsJson);
+            ObjectNode question = (ObjectNode) questions.get(0);
+            question.put("title", REWRITTEN_QUESTION_TITLE);
+            question.put("points", TAMPERED_POINTS);
+            question.put("scoringType", TAMPERED_SCORING_TYPE.name());
+            ObjectNode updateArguments = objectMapper.createObjectNode().put("index", 0).put("questionJson", question.toString());
+            toolTranscript.add("updateQuestion: " + callTool(tools, "updateQuestion", updateArguments.toString()));
+            callTool(tools, "finish", objectMapper.createObjectNode().put("summary", "Re-themed question 0 to the cargo bay domain").toString());
+            return "done";
+        }
+        catch (Exception e) {
+            toolTranscript.add("agent scripting failed: " + e);
+            return "agent scripting failed: " + e.getMessage();
+        }
+    }
+
+    /**
      * The canned happy-path agent round: read the questions through the real getQuestions tool, re-title
      * question 0, write it back through the real updateQuestion tool, and finish.
      */
@@ -351,6 +380,33 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
 
         // Terminal jobs can no longer be cancelled.
         request.delete("/api/hyperion/variant-jobs/" + jobId, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldNotLetTheAgentChangeQuestionPointsOrScoringType() throws Exception {
+        QuizQuestion sourceQuestion = quizExerciseRepository.findByIdWithQuestionsElseThrow(sourceQuiz.getId()).getQuizQuestions().getFirst();
+        double sourcePoints = sourceQuestion.getPoints();
+        ScoringType sourceScoringType = sourceQuestion.getScoringType();
+        // The scripted round only proves anything if it really asks for different values.
+        assertThat(sourcePoints).isNotEqualTo(TAMPERED_POINTS);
+        assertThat(sourceScoringType).isNotEqualTo(TAMPERED_SCORING_TYPE);
+
+        scriptChatModel(PLAN_JSON, this::applyGradingTamperEdit, List.of());
+
+        String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.COMPLETED);
+        QuizExercise variant = quizExerciseRepository.findByIdWithQuestionsElseThrow(job.getVariantExerciseId());
+        QuizQuestion variantQuestion = variant.getQuizQuestions().getFirst();
+        // The content change was applied ...
+        assertThat(variantQuestion.getTitle()).isEqualTo(REWRITTEN_QUESTION_TITLE);
+        // ... while the grading metadata is the source's, not what the model sent. Otherwise QuizExerciseService.save
+        // would recompute the quiz maximum from the tampered points and the variant would grade differently.
+        assertThat(variantQuestion.getPoints()).isEqualTo(sourcePoints);
+        assertThat(variantQuestion.getScoringType()).isEqualTo(sourceScoringType);
+        assertThat(variant.getMaxPoints()).isEqualTo(sourceQuiz.getMaxPoints());
     }
 
     @Test

@@ -68,6 +68,31 @@ class ProgrammingVariantAdapterServiceUnresolvableTestIdTest {
     }
 
     @Test
+    void shouldNotRewriteCodeSamplesWhenAReferenceIsDropped() {
+        // The separator tidy-up must stay inside the task markers: a problem statement also carries code, where
+        // a trailing comma or a double comma is content the instructor wrote, not an artefact of the removal.
+        String statement = """
+                [task][H](<testid>1800</testid>,<testid>2595</testid>)
+
+                Call it like `foo(a, )` and note that `[1,,3]` is intentional.""";
+        String expected = """
+                [task][H](<testid>2595</testid>)
+
+                Call it like `foo(a, )` and note that `[1,,3]` is intentional.""";
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds(statement, VALID_IDS)).isEqualTo(expected);
+    }
+
+    @Test
+    void shouldReturnTheStatementUnchangedWhenNothingIsDropped() {
+        // Nothing was removed, so there is no dangling separator to tidy and the statement must come back verbatim.
+        String statement = """
+                [task][I](<testid>2595</testid>)
+
+                Edge case: `bar(x, )` and `[4,,6]`.""";
+        assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds(statement, VALID_IDS)).isEqualTo(statement);
+    }
+
+    @Test
     void shouldHandleNullAndBlankStatements() {
         assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds(null, VALID_IDS)).isNull();
         assertThat(ProgrammingVariantAdapterService.dropUnresolvableTestIds("  ", VALID_IDS)).isEqualTo("  ");

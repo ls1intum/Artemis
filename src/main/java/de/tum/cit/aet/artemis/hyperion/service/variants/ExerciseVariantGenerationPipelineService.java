@@ -178,7 +178,7 @@ public class ExerciseVariantGenerationPipelineService {
                 report.findings().forEach(finding -> warnings.add(finding.gate() + ": " + summarizeFindingForWarning(finding.message())));
             }
             try {
-                adapters.finalizeVariant(variant, job);
+                warnings.addAll(adapters.finalizeVariant(variant, job));
             }
             catch (Exception e) {
                 // From FINALIZING on, the generated variant is never discarded (the job is
@@ -207,6 +207,17 @@ public class ExerciseVariantGenerationPipelineService {
             String instructorSummary = generateFailureSummary(job, failure.getMessage());
             jobService.fail(jobId, failure.getMessage(), instructorSummary);
             log.warn("Variant generation job {} failed: {}", jobId, failure.getMessage(), failure.getCause());
+        }
+        catch (Exception unexpected) {
+            // Not every statement between PROVISIONING and the terminal transition sits inside runPhase: the
+            // jobService bookkeeping calls (recordVariantExerciseId, recordStepOutput, updatePhase, complete) do
+            // not, so a job-store failure escapes both typed catches. Without this block it would reach
+            // ExerciseVariantTaskService, which marks the job FAILED but never deletes the exercise — leaving the
+            // clone, its repositories and its build plans behind as orphans. No failure summary here: that is an
+            // extra LLM call on a path we already know is broken.
+            cleanupProvisionedVariant(variant, jobId);
+            jobService.fail(jobId, "Unexpected error: " + unexpected.getMessage(), null);
+            log.error("Variant generation job {} failed unexpectedly (exercise {})", jobId, job.getSourceExerciseId(), unexpected);
         }
     }
 

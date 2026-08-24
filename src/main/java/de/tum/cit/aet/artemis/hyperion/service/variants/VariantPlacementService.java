@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import java.util.List;
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -58,15 +60,17 @@ public class VariantPlacementService {
      * @param variant          the persisted variant exercise
      * @param sourceExerciseId the id of the exercise the variant was generated from
      * @param request          the wizard request carrying the placement choice
+     * @return instructor-facing warnings for placement steps that could not be carried out (currently only a
+     *         NEW_GROUP source that turned out to be ineligible), empty when the placement was applied in full
      */
-    public void place(Exercise variant, Long sourceExerciseId, VariantGenerationRequestDTO request) {
+    public List<String> place(Exercise variant, Long sourceExerciseId, VariantGenerationRequestDTO request) {
         VariantPlacementDTO placement = request.placement();
         if (variant.isExamExercise()) {
             // Placed at provisioning time via the source's exam exercise group; course variant groups do not apply.
-            return;
+            return List.of();
         }
         if (placement == null || placement.type() == null) {
-            return;
+            return List.of();
         }
         switch (placement.type()) {
             case STANDALONE, SAME_EXAM_GROUP -> {
@@ -89,37 +93,48 @@ public class VariantPlacementService {
                 ExerciseVariantGroup group = exerciseVariantGroupService.createGroup(course.getId(), placement.newGroup().toEntity());
                 // The wizard presents NEW_GROUP as "group the variant WITH its source": pull the source in first
                 // (so a date the wizard left empty is adopted from the source, not the clone), then the variant.
-                assignSourceToNewGroup(sourceExerciseId, group, course);
+                String sourceSkipReason = assignSourceToNewGroup(sourceExerciseId, group, course);
                 exerciseVariantGroupService.assignToGroup(variant, group);
                 log.debug("Placed variant exercise {} into new variant group {}", variant.getId(), group.getId());
+                if (sourceSkipReason != null) {
+                    // The wizard promised "group the variant with its original". The variant is in the new group,
+                    // the source is not — reporting COMPLETED here would be a false success, so surface it.
+                    return List.of("FINALIZING: the variant was placed in the new group, but its source exercise was not added — " + sourceSkipReason);
+                }
             }
         }
+        return List.of();
     }
 
     /**
      * Pulls the source exercise into the group freshly created for its variants — that is the wizard's NEW_GROUP
-     * promise. Sources a group cannot legally contain are skipped with a warning instead of failing the job (the
-     * variant's own placement, the actual job outcome, still happens): exam exercises, sources that moved to
-     * another group mid-job, and non-individual quizzes (rejected by the assignment service).
+     * promise. Sources a group cannot legally contain are skipped instead of failing the job (the variant's own
+     * placement, the actual job outcome, still happens): exam exercises, sources that moved to another group
+     * mid-job, and non-individual quizzes (rejected by the assignment service). Eligibility is re-checked here
+     * rather than only at the REST boundary because the source can change while generation runs.
+     *
+     * @return null when the source was added, otherwise the instructor-facing reason it was skipped
      */
-    private void assignSourceToNewGroup(Long sourceExerciseId, ExerciseVariantGroup group, Course course) {
+    @Nullable
+    private String assignSourceToNewGroup(Long sourceExerciseId, ExerciseVariantGroup group, Course course) {
         Exercise source = exerciseRepository.findByIdElseThrow(sourceExerciseId);
         Course sourceCourse = source.getCourseViaExerciseGroupOrCourseMember();
         if (source.isExamExercise() || sourceCourse == null || !Objects.equals(course.getId(), sourceCourse.getId())) {
             log.warn("Not adding source exercise {} to new variant group {}: not a course exercise of course {}", sourceExerciseId, group.getId(), course.getId());
-            return;
+            return "it is not an exercise of this course";
         }
         if (source.getExerciseVariantGroup() != null) {
             log.warn("Not adding source exercise {} to new variant group {}: it already belongs to group {}", sourceExerciseId, group.getId(),
                     source.getExerciseVariantGroup().getId());
-            return;
+            return "it already belongs to another variant group";
         }
         if (source instanceof QuizExercise quizExercise && quizExercise.getQuizMode() != QuizMode.INDIVIDUAL) {
             log.warn("Not adding source quiz {} to new variant group {}: only individual-mode quizzes can join a group", sourceExerciseId, group.getId());
-            return;
+            return "only individual-mode quizzes can join a variant group";
         }
         exerciseVariantGroupService.assignToGroup(source, group);
         log.debug("Added source exercise {} to new variant group {}", sourceExerciseId, group.getId());
+        return null;
     }
 
     private Course requireCourse(Exercise variant) {

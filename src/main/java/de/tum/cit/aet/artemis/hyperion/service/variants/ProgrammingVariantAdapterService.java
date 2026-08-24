@@ -72,6 +72,13 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
     /** A resolved test reference as Artemis stores it: the tag plus its numeric id. */
     private static final Pattern TESTID_REFERENCE = Pattern.compile("<testid>(\\d+)</testid>");
 
+    /**
+     * A task marker with its reference list, e.g. {@code [task][Implement BubbleSort](<testid>15</testid>)}.
+     * Mirrors {@code ProgrammingExerciseTaskService.TASK_PATTERN}, but only far enough to delimit the region a
+     * dropped reference can leave a dangling separator in — see {@link #dropUnresolvableTestIds}.
+     */
+    private static final Pattern TASK_MARKER = Pattern.compile("\\[task]\\[[^\\[\\]]*]\\([^()]*\\)");
+
     /** Suffix-retry budget for short-name/project-key collisions. */
     private static final int MAX_NAME_ATTEMPTS = 300;
 
@@ -349,7 +356,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
     }
 
     @Override
-    public void finalizeVariant(Exercise variant, VariantJob job) {
+    public List<String> finalizeVariant(Exercise variant, VariantJob job) {
         // Final task→test wiring (deterministic, no LLM): tests ADDED during transformation only exist as
         // test-case rows once their first build result was processed, so the provision-time sync could not
         // resolve them yet — re-run the sync on the final statement. Also covers rounds that changed tests but
@@ -357,7 +364,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(variant.getId());
         programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
         // What remains is the shared placement logic.
-        variantPlacementService.place(variant, job.getSourceExerciseId(), job.getRequest());
+        return variantPlacementService.place(variant, job.getSourceExerciseId(), job.getRequest());
     }
 
     /**
@@ -460,13 +467,26 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         Set<String> valid = validTestIds.stream().map(String::valueOf).collect(Collectors.toSet());
         Matcher matcher = TESTID_REFERENCE.matcher(problemStatement);
         StringBuilder result = new StringBuilder();
+        boolean dropped = false;
         while (matcher.find()) {
+            boolean keep = valid.contains(matcher.group(1));
+            dropped |= !keep;
             // Drop the reference AND a comma that would otherwise be left dangling beside it.
-            matcher.appendReplacement(result, valid.contains(matcher.group(1)) ? Matcher.quoteReplacement(matcher.group()) : "");
+            matcher.appendReplacement(result, keep ? Matcher.quoteReplacement(matcher.group()) : "");
         }
         matcher.appendTail(result);
-        // Tidy the separators the removals leave behind: ",,", a leading or trailing comma inside "(...)".
-        return result.toString().replaceAll(",{2,}", ",").replaceAll("\\(\\s*,", "(").replaceAll(",\\s*\\)", ")");
+        if (!dropped) {
+            return problemStatement;
+        }
+        // Tidy the separators a removal leaves behind, but ONLY inside the task markers themselves. A problem
+        // statement also carries code samples, where "foo(a, )" and "[1,,3]" are content the instructor wrote,
+        // not artefacts of this method — rewriting those would corrupt the exercise text.
+        return TASK_MARKER.matcher(result.toString()).replaceAll(match -> Matcher.quoteReplacement(tidySeparators(match.group())));
+    }
+
+    /** Collapses ",,", "( ," and ", )" inside a single task marker's reference list. */
+    private static String tidySeparators(String taskMarker) {
+        return taskMarker.replaceAll(",{2,}", ",").replaceAll("\\(\\s*,", "(").replaceAll(",\\s*\\)", ")");
     }
 
     /** PascalCases the alphanumeric words of the title into a valid exercise short name (starts with a letter, ≥3 chars). */

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import java.util.List;
+
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
@@ -19,6 +21,8 @@ public interface VariantFinalizer {
      * @param variant the verified (or draft-with-warnings) variant
      * @param job     the running job — carries the wizard request (placement choice) and the source exercise id
      *                    (a NEW_GROUP placement pulls the source into the created group as well)
+     * @return instructor-facing warnings for placement steps that could not be carried out, empty when the
+     *         placement was applied in full. A non-empty result downgrades the job to DRAFT_WITH_WARNINGS.
      */
-    void finalizeVariant(Exercise variant, VariantJob job);
+    List<String> finalizeVariant(Exercise variant, VariantJob job);
 }

@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -76,7 +78,8 @@ public class HyperionExerciseVariantResource {
      *
      * @param exerciseId the source exercise id
      * @param request    the wizard request (intents by field presence, placement)
-     * @return 200 with the created job id; 400 on missing intent / unsupported type / invalid placement
+     * @return 200 with the created job id; 400 on missing intent / unsupported type / invalid placement;
+     *         503 when the bounded variant executor is saturated
      */
     @PostMapping("exercises/{exerciseId}/generate-variant")
     @EnforceAtLeastEditorInExercise
@@ -86,7 +89,18 @@ public class HyperionExerciseVariantResource {
         validateRequest(exercise, request);
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         VariantJob job = jobService.startJob(user, exercise, request);
-        taskService.runJobAsync(job);
+        try {
+            taskService.runJobAsync(job);
+        }
+        catch (TaskRejectedException rejected) {
+            // The variant pool is deliberately bounded, so submission can be refused once it is saturated. The
+            // job record already exists at this point: fail it here, otherwise it sits in the tray as ANALYZING
+            // until staleness reconciliation picks it up minutes later. Nothing was provisioned yet, so there is
+            // no clone to clean up.
+            log.warn("Variant generation job [{}] for exercise [{}] was rejected by the executor", job.getJobId(), exerciseId, rejected);
+            jobService.fail(job.getJobId(), "The variant generation queue is full. Please try again in a few minutes.");
+            throw new ServiceUnavailableAlertException("Too many variant generation jobs are already running", ENTITY_NAME, "variantQueueFull");
+        }
         log.info("Started variant generation job [{}] for exercise [{}]", job.getJobId(), exerciseId);
         return ResponseEntity.ok(new VariantJobStartDTO(job.getJobId()));
     }

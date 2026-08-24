@@ -53,7 +53,10 @@ public class ExerciseVariantTaskService {
             log.error("Variant generation job {} failed for exercise {}", job.getJobId(), job.getSourceExerciseId(), ex);
             boolean alreadyTerminal = jobService.getJob(job.getJobId(), job.getInitiatorLogin()).map(current -> current.getPhase().isTerminal()).orElse(true);
             if (!alreadyTerminal) {
-                jobService.fail(job.getJobId(), "Unhandled error: " + ex.getMessage());
+                // This path deletes nothing — it also catches Errors the pipeline's own terminal catch cannot
+                // handle — so the provisioned exercise may well still exist. Keep its id so the tray can still
+                // link to it instead of orphaning it silently.
+                jobService.failKeepingVariantExerciseId(job.getJobId(), "Unhandled error: " + ex.getMessage());
             }
         }
         finally {

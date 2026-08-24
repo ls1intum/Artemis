@@ -346,6 +346,18 @@ public class ExerciseVariantJobService {
     }
 
     /**
+     * Terminal transition to FAILED that keeps the variant exercise id. For callers that did NOT delete the
+     * provisioned clone: clearing the id would drop the only pointer the tray has to an exercise that still
+     * exists, orphaning it together with its repositories and build plans.
+     *
+     * @param jobId  the job id
+     * @param detail failure description including the phase
+     */
+    public void failKeepingVariantExerciseId(String jobId, String detail) {
+        fail(jobId, detail, null, false);
+    }
+
+    /**
      * Terminal transition to FAILED with an optional AI-generated instructor summary (state of the exercise
      * plus next steps). Also clears the variant exercise id — the hard-failure policy deletes the provisioned
      * clone before failing, so a deep link would point at a deleted exercise.
@@ -355,12 +367,18 @@ public class ExerciseVariantJobService {
      * @param instructorSummary AI-generated next-steps summary, or null when unavailable
      */
     public void fail(String jobId, String detail, String instructorSummary) {
+        fail(jobId, detail, instructorSummary, true);
+    }
+
+    private void fail(String jobId, String detail, String instructorSummary, boolean clearVariantExerciseId) {
         VariantJob job = mutate(jobId, mutableJob -> {
             mutableJob.setFailedInPhase(mutableJob.getPhase());
             mutableJob.setFailureDetail(detail);
             mutableJob.setInstructorSummary(instructorSummary);
             mutableJob.setPhase(VariantJobPhase.FAILED);
-            mutableJob.setVariantExerciseId(null); // clone was deleted by the hard-failure cleanup — no deep link
+            if (clearVariantExerciseId) {
+                mutableJob.setVariantExerciseId(null); // clone was deleted by the hard-failure cleanup — no deep link
+            }
             mutableJob.setFinishedAt(Instant.now());
         });
         logTelemetrySummary(job);

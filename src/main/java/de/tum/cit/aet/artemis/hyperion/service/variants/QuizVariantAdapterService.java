@@ -271,8 +271,8 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
     }
 
     @Override
-    public void finalizeVariant(Exercise variant, VariantJob job) {
+    public List<String> finalizeVariant(Exercise variant, VariantJob job) {
         // Same shared placement logic as programming.
-        variantPlacementService.place(variant, job.getSourceExerciseId(), job.getRequest());
+        return variantPlacementService.place(variant, job.getSourceExerciseId(), job.getRequest());
     }
 }

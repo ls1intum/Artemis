@@ -240,6 +240,12 @@ class QuizVariantTools implements VariantToolset {
         // create a second statistic for the same question. The save path reconciles the statistic's
         // counters with the (possibly changed) options/spots, same as the quiz editor's update flow.
         updated.setQuizQuestionStatistic(existing.getQuizQuestionStatistic());
+        // Grading metadata is invariant across a variant: the plan and the prompt both declare it, but a
+        // replacement that changes points or scoring type still deserializes and still passes isValid(), and
+        // QuizExerciseService.save recomputes the quiz maximum from the question points. Restore both from the
+        // source question rather than trusting the model to have left them alone.
+        updated.setPoints(existing.getPoints());
+        updated.setScoringType(existing.getScoringType());
         if (!updated.isValid()) {
             return "the updated question is not valid (check: non-empty title/text, at least one correct multiple-choice option, "
                     + "consistent drag-and-drop/short-answer mappings, valid scoring type). Fix the question and try again.";
