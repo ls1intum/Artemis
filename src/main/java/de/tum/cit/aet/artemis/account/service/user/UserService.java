@@ -461,6 +461,10 @@ public class UserService {
      * Searches the (optional) LDAP service for a user with the given unique user identifier (e.g. login, email, registration number) and supplier function
      * and returns a new Artemis user.
      * Note: this method should only be used if the user does not yet exist in the database
+     * <p>
+     * The account is created externally managed and activated: it authenticates against the directory, so Artemis has no
+     * activation step to offer it. Creating it unactivated instead used to leave imported students unable to use their
+     * repositories - see {@link User#activated}.
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
      * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByLogin(email)"
@@ -721,16 +725,16 @@ public class UserService {
     }
 
     /**
-     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * Resolves a student from any combination of registration number, login and email, for the course member, exam and admin
+     * user imports. Looks in the Artemis database first, because the user is most probably already using Artemis, and only
+     * then in the configured LDAP - from which a missing account is created.
      * <p>
-     * Steps:
+     * The whole database is searched before the directory is consulted at all, and within each of the two the identifiers are
+     * tried in the order <b>login, email, registration number</b>, stopping at the first match. Blank identifiers are skipped,
+     * and all three being blank returns empty immediately.
      * <p>
-     * 1) we use the registration number and try to find the student in the Artemis user database
-     * 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
-     * management system
-     * 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
-     * 4) if we still cannot find the user, we try again using the email
+     * An account created from the directory here is created activated, like one created on first login - see
+     * {@link User#activated}.
      *
      * @param registrationNumber the registration number of the user
      * @param login              the login of the user

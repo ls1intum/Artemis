@@ -104,6 +104,37 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(length = 100)
     private String email;
 
+    /**
+     * Whether this account may authenticate. Every authentication path enforces it: the internal, SAML2, OIDC and passkey
+     * providers, and both git paths (HTTPS via {@code LocalVCServletService} and SSH via {@code GitPublickeyAuthenticatorService}).
+     * <p>
+     * <b>An account is only ever created unactivated when its own owner is expected to activate it</b>, which requires the
+     * account to be <b>internal</b> ({@link #isInternal()}). That is what
+     * {@link de.tum.cit.aet.artemis.account.service.user.UserCreationService#createUser} checks. An externally managed
+     * account authenticates against the external identity provider, so Artemis has no activation step to offer it: the
+     * {@link #activationKey} is redeemable only through {@code GET /activate}, which never sends an external account there.
+     * Creating an external account unactivated therefore produces an account that <em>nothing</em> can ever activate. This
+     * really happened: the student import created LDAP users unactivated, and they lost repository access as soon as git
+     * authentication began enforcing this flag.
+     * <p>
+     * Being internal is necessary but not by itself sufficient for the key to be redeemable: {@code GET /activate} and the
+     * mail carrying the key are both gated behind {@code artemis.user-management.registration.enabled}, so on an instance
+     * with self-registration disabled even an internal account has no way to redeem one. Creation is deliberately
+     * <em>not</em> narrowed to match, because the LTI launch also creates an internal account through the factory and reads
+     * this flag as its own record of whether it still owes the account holder the generated password.
+     * <p>
+     * Only three kinds of writes set this to {@code false}, and only the first is the activation workflow:
+     * <ol>
+     * <li><b>awaiting activation</b> - {@code UserCreationService.createUser} for an internal account, and
+     * {@code UserService.registerUser}, whose accounts are always internal. Paired with a non-null
+     * {@link #activationKey}.</li>
+     * <li><b>deliberate deactivation</b> - {@code UserCreationService.deactivateUser} and the admin edit form. Applies to
+     * any account regardless of type, and never sets an activation key.</li>
+     * <li><b>soft deletion</b> - {@code UserService.anonymizeUser}, alongside {@link #deleted}.</li>
+     * </ol>
+     * The presence of an {@link #activationKey} consequently distinguishes (1) from (2), which is what made it possible to
+     * repair the affected rows without touching accounts an admin had deactivated on purpose.
+     */
     @NonNull
     @Column(nullable = false)
     private boolean activated = false;
@@ -136,6 +167,15 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "image_url", length = 256)
     private String imageUrl;
 
+    /**
+     * One-time key a user redeems through {@code GET /activate} to activate their own account. Only ever set on an
+     * <b>internal</b> account, and only together with {@code activated = false} - see {@link #activated} for why an
+     * externally managed account must never be given one, and for how the key's presence tells an account awaiting
+     * activation apart from one an admin deactivated.
+     * <p>
+     * Cleared by every write that activates the account, so the two fields stay consistent: {@code activateUser} for the
+     * activation workflow and the administrative action, and {@code setRandomPasswordAndReturn} for the LTI launch.
+     */
     @Size(max = 20)
     @Column(name = "activation_key", length = 20)
     @JsonIgnore

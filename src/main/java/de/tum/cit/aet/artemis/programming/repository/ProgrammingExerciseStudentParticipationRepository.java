@@ -91,6 +91,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
     }
 
+    // exercise and student are eager @ManyToOne associations, so without fetching them here Hibernate issues a secondary
+    // select for each. Git authorization resolves a participation by repository uri on every git request and then reads
+    // both, so those two selects would repeat on every fetch and every push.
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "exercise.course", "student" })
     Optional<ProgrammingExerciseStudentParticipation> findByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
