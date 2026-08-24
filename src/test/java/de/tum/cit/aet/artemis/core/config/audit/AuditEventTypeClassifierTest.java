@@ -30,6 +30,15 @@ class AuditEventTypeClassifierTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = { Constants.ACTIVATE_USER, Constants.DEACTIVATE_USER })
+    void accountStateChangesBelongToTheSecurityLog(String eventType) {
+        // Deactivating an account deletes its passkeys, SSH keys and every VCS access token, and the revocation writes no
+        // event of its own - so DEACTIVATE_USER is the only audit record of that. Falling through to the APPLICATION
+        // default would hide it from the Security tab, which is where an investigation into account access looks.
+        assertThat(AuditEventTypeClassifier.classify(eventType)).isEqualTo(AuditLogType.SECURITY);
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { Constants.DELETE_EXERCISE, Constants.EDIT_EXERCISE, Constants.DELETE_COURSE, Constants.RESET_COURSE, Constants.DELETE_EXAM, Constants.UPDATE_EXAM,
             Constants.RESET_EXAM, Constants.ADD_USER_TO_EXAM, Constants.REMOVE_USER_FROM_EXAM, Constants.ENROLL_IN_COURSE, Constants.UNENROLL_FROM_COURSE,
             Constants.DELETE_PARTICIPATION, Constants.DELETE_TEAM, Constants.IMPORT_TEAMS, Constants.RESET_GRADING, Constants.PREPARE_EXERCISE_START })

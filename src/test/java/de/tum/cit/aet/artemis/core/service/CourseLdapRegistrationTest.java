@@ -80,6 +80,13 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
 
         var failures = request.postListWithResponseBody("/api/course/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class, HttpStatus.OK);
         assertThat(failures).containsExactly(dto2);
+
+        // A user imported from the LDAP is created activated. An externally managed account never receives an activation mail and cannot
+        // redeem an activation key, while git authentication rejects unactivated accounts - so importing a student used to hand them a
+        // repository they were unable to clone or push to.
+        var importedUser = userRepository.findOneByLogin(userName).orElseThrow();
+        assertThat(importedUser.getActivated()).as("imported LDAP user is activated").isTrue();
+        assertThat(importedUser.getActivationKey()).as("imported LDAP user gets no activation key").isNull();
     }
 
     @Test
