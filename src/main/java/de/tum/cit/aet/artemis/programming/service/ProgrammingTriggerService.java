@@ -169,10 +169,14 @@ public class ProgrammingTriggerService {
         for (var participationsOfExercise : participationsByExerciseId.values()) {
             // A participation without a submission is not triggered at all, so an exercise where nobody submitted must
             // not pay for the shared data either: resolving it reads the test repository and the build statistics.
-            if (participationsOfExercise.stream().noneMatch(participation -> participation.findLatestSubmission().isPresent())) {
+            List<ProgrammingExerciseStudentParticipation> triggerable = participationsOfExercise.stream().filter(participation -> participation.findLatestSubmission().isPresent())
+                    .toList();
+            if (triggerable.isEmpty()) {
                 continue;
             }
-            SharedBuildTriggerData sharedData = prepareSharedTriggerData(participationsOfExercise, loadedExercise);
+            // Worth doing even for a single participation: one load of the exercise with its build config and auxiliary
+            // repositories costs less than the separate lookups the trigger would otherwise make for each of them.
+            SharedBuildTriggerData sharedData = prepareSharedTriggerData(triggerable, loadedExercise);
             for (var participation : participationsOfExercise) {
                 // Execute requests in batches when using an external build system.
                 if (index > 0 && index % externalSystemRequestBatchSize == 0) {

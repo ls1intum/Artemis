@@ -67,6 +67,11 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
         sharedQueueProcessingService.init();
     }
 
+    /**
+     * Resolving the shared inputs pays off even for a single participation, which is what the individual due date
+     * schedule triggers: one load of the exercise with its build config and auxiliary repositories costs less than the
+     * separate lookups the trigger would otherwise make. Measured, this case went from five queries to four.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggeringOneParticipationResolvesThePerExerciseWorkOnce() throws Exception {
