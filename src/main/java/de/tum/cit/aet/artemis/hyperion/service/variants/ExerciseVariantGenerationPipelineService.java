@@ -215,6 +215,14 @@ public class ExerciseVariantGenerationPipelineService {
             // ExerciseVariantTaskService, which marks the job FAILED but never deletes the exercise — leaving the
             // clone, its repositories and its build plans behind as orphans. No failure summary here: that is an
             // extra LLM call on a path we already know is broken.
+            if (jobService.getJob(jobId, job.getInitiatorLogin()).map(current -> current.getPhase().isTerminal()).orElse(true)) {
+                // The job already reached a terminal phase, so the throw came from AFTER that transition
+                // (telemetry logging, the websocket publish). The variant is generated and the record says so —
+                // deleting it here would discard verified work over a failed notification.
+                log.error("Variant generation job {} raised an error after it had already finished (exercise {}); keeping the variant", jobId, job.getSourceExerciseId(),
+                        unexpected);
+                return;
+            }
             cleanupProvisionedVariant(variant, jobId);
             jobService.fail(jobId, "Unexpected error: " + unexpected.getMessage(), null);
             log.error("Variant generation job {} failed unexpectedly (exercise {})", jobId, job.getSourceExerciseId(), unexpected);

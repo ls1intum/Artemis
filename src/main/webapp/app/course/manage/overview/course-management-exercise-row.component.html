@@ -171,6 +171,7 @@
                         type="button"
                         class="btn btn-warning me-1 mb-1"
                         [ngbTooltip]="'artemisApp.exerciseManagement.action.createVariantWithAi' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.exerciseManagement.action.createVariantWithAi' | artemisTranslate"
                         (click)="aiVariantModalVisible.set(true)"
                     >
                         <fa-icon [icon]="faRobot" />

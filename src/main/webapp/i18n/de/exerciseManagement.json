@@ -7,7 +7,7 @@
             "action": {
                 "import": "Importieren",
                 "export": "Exportieren",
-                "createVariantWithAi": "Variante erstellen"
+                "createVariantWithAi": "Variante mit KI erstellen"
             },
             "error": {
                 "onlyIndividualQuiz": "Nur Quizze im Einzelmodus können einer Aufgabengruppe hinzugefügt werden."

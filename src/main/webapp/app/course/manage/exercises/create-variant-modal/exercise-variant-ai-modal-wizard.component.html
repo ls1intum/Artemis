@@ -170,8 +170,9 @@
             }
             @if (changeDomain()) {
                 <div class="field-group">
-                    <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.domain' | artemisTranslate }}</p>
+                    <label class="field-group__label" for="wiz-domain">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.domain' | artemisTranslate }}</label>
                     <input
+                        id="wiz-domain"
                         tumUiInput
                         class="w-full"
                         [ngModel]="domainText()"
@@ -206,8 +207,9 @@
             }
             @if (changeCustom()) {
                 <div class="field-group">
-                    <p class="field-group__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.custom' | artemisTranslate }}</p>
+                    <label class="field-group__label" for="wiz-custom">{{ 'artemisApp.exerciseVariantGeneration.wizard.configure.custom' | artemisTranslate }}</label>
                     <textarea
+                        id="wiz-custom"
                         tumUiTextarea
                         rows="4"
                         class="w-full"
@@ -272,9 +274,12 @@
                                 <div class="new-group-settings" (click)="$event.stopPropagation()">
                                     <div class="flex flex-wrap gap-2 items-end mt-2">
                                         <div class="grow" style="min-width: 120px">
-                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.groupTitle' | artemisTranslate }}</div>
+                                            <label class="new-group-settings__label" for="wiz-group-title">{{
+                                                'artemisApp.exerciseVariantGeneration.wizard.placement.groupTitle' | artemisTranslate
+                                            }}</label>
                                             <input
                                                 type="text"
+                                                id="wiz-group-title"
                                                 [ngModel]="newGroupTitle()"
                                                 (ngModelChange)="newGroupTitle.set($event)"
                                                 tumUiInput
@@ -283,9 +288,12 @@
                                             />
                                         </div>
                                         <div>
-                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.maxPoints' | artemisTranslate }}</div>
+                                            <label class="new-group-settings__label" for="wiz-group-max-points">{{
+                                                'artemisApp.exerciseVariantGeneration.wizard.placement.maxPoints' | artemisTranslate
+                                            }}</label>
                                             <input
                                                 type="number"
+                                                id="wiz-group-max-points"
                                                 [ngModel]="newGroupMaxPoints()"
                                                 (ngModelChange)="newGroupMaxPoints.set($event !== '' ? +$event : undefined)"
                                                 tumUiInput
@@ -296,9 +304,12 @@
                                     </div>
                                     <div class="flex flex-wrap gap-2 mt-2">
                                         <div>
-                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.release' | artemisTranslate }}</div>
+                                            <label class="new-group-settings__label" for="wiz-group-release">{{
+                                                'artemisApp.exerciseVariantGeneration.wizard.placement.release' | artemisTranslate
+                                            }}</label>
                                             <input
                                                 type="datetime-local"
+                                                id="wiz-group-release"
                                                 [ngModel]="newGroupReleaseDate()"
                                                 (ngModelChange)="newGroupReleaseDate.set($event)"
                                                 tumUiInput
@@ -307,9 +318,12 @@
                                             />
                                         </div>
                                         <div>
-                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.start' | artemisTranslate }}</div>
+                                            <label class="new-group-settings__label" for="wiz-group-start">{{
+                                                'artemisApp.exerciseVariantGeneration.wizard.placement.start' | artemisTranslate
+                                            }}</label>
                                             <input
                                                 type="datetime-local"
+                                                id="wiz-group-start"
                                                 [ngModel]="newGroupStartDate()"
                                                 (ngModelChange)="newGroupStartDate.set($event)"
                                                 tumUiInput
@@ -318,9 +332,12 @@
                                             />
                                         </div>
                                         <div>
-                                            <div class="new-group-settings__label">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.due' | artemisTranslate }}</div>
+                                            <label class="new-group-settings__label" for="wiz-group-due">{{
+                                                'artemisApp.exerciseVariantGeneration.wizard.placement.due' | artemisTranslate
+                                            }}</label>
                                             <input
                                                 type="datetime-local"
+                                                id="wiz-group-due"
                                                 [ngModel]="newGroupDueDate()"
                                                 (ngModelChange)="newGroupDueDate.set($event)"
                                                 tumUiInput
@@ -329,11 +346,12 @@
                                             />
                                         </div>
                                         <div>
-                                            <div class="new-group-settings__label">
+                                            <label class="new-group-settings__label" for="wiz-group-assessment-due">
                                                 {{ 'artemisApp.exerciseVariantGeneration.wizard.placement.assessmentDue' | artemisTranslate }}
-                                            </div>
+                                            </label>
                                             <input
                                                 type="datetime-local"
+                                                id="wiz-group-assessment-due"
                                                 [ngModel]="newGroupAssessmentDueDate()"
                                                 (ngModelChange)="newGroupAssessmentDueDate.set($event)"
                                                 tumUiInput

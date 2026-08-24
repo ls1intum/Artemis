@@ -492,7 +492,18 @@ public class ExerciseVariantJobService {
         }
     }
 
+    /**
+     * Notifies the initiator about a job transition. Best effort by design: every caller publishes AFTER it has
+     * already written the new phase, so letting a delivery failure propagate would let a lost notification undo
+     * persisted state (the pipeline's terminal catch would treat it as a failed job). The client falls back to
+     * polling the job endpoints, so a dropped event costs freshness, not correctness.
+     */
     private void publish(VariantJob job, VariantGenerationEventDTO event) {
-        websocketService.send(job.getInitiatorLogin(), TOPIC_SUFFIX_PREFIX + job.getJobId(), event);
+        try {
+            websocketService.send(job.getInitiatorLogin(), TOPIC_SUFFIX_PREFIX + job.getJobId(), event);
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not publish the {} event of variant job {}", event.type(), job.getJobId(), e);
+        }
     }
 }

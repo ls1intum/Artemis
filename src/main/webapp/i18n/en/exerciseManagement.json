@@ -7,7 +7,7 @@
             "action": {
                 "import": "Import",
                 "export": "Export",
-                "createVariantWithAi": "Create Variant"
+                "createVariantWithAi": "Create Variant with AI"
             },
             "error": {
                 "onlyIndividualQuiz": "Only individual-mode quizzes can be added to an exercise group."

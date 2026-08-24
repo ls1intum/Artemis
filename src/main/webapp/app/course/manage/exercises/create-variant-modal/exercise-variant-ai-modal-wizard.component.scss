@@ -276,6 +276,8 @@
 
 .field-group {
     &__label {
+        // A <label for> rather than a <p>, so the control has an accessible name; labels are inline by default.
+        display: block;
         font-size: 0.8rem;
         font-weight: 600;
         color: var(--secondary);
@@ -565,6 +567,8 @@
 
 .new-group-settings {
     &__label {
+        // A <label for> rather than a <div>, so the control has an accessible name; labels are inline by default.
+        display: block;
         font-size: 0.7rem;
         color: var(--p-text-muted-color);
         margin-bottom: 0.2rem;

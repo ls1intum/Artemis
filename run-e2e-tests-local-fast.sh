@@ -386,7 +386,14 @@ if [ "$SKIP_SERVER" = false ]; then
         if [ "$MOCK_READY" = true ]; then
             echo -e "${GREEN}Mock LLM is listening (PID $MOCK_LLM_PID).${NC}"
         else
-            echo -e "${RED}WARNING: mock LLM did not become ready; Hyperion tests may skip/fail.${NC}"
+            # Continuing would enable Hyperion and point Spring AI at a dead port, so the variant suite would
+            # fail later with connection errors that say nothing about the real cause.
+            echo -e "${RED}ERROR: mock LLM did not become ready; aborting instead of running Hyperion against a dead endpoint.${NC}"
+            if kill -0 "$MOCK_LLM_PID" 2>/dev/null; then
+                kill_tree "$MOCK_LLM_PID"
+            fi
+            rm -f "$LOCAL_DIR/hyperion-mock-llm.pid"
+            exit 1
         fi
         export ARTEMIS_HYPERION_ENABLED="true"
         export SPRING_AI_OPENAI_BASE_URL="http://localhost:${HYPERION_MOCK_LLM_PORT}/v1"
