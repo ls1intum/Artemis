@@ -12,8 +12,9 @@
         <!-- right side: header bar and child route content -->
         <div class="flex flex-col flex-1 overflow-hidden">
             <!-- Dynamic Exam Header -->
-            <div class="exam-management-header module-bg p-2 rounded-md title-bar-actions-wrapper">
-                <div class="flex gap-2 align-items-center">
+            <div class="exam-management-header module-bg p-2 rounded-md">
+                <div class="flex flex-1 gap-2 align-items-center w-full">
+                    <!-- Exam management title with collapse button -->
                     @if (isCollapsed()) {
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
                         <!-- Exams page title -->
@@ -29,6 +30,7 @@
                             <div class="vr bg-secondary"></div>
                         }
                     }
+                    <!-- Current exam title -->
                     @if (currentExam()) {
                         <h5 class="flex align-items-center gap-1 mb-0">
                             @if (!currentExam()!.testExam) {
@@ -39,25 +41,30 @@
                             {{ currentExam()!.title }}
                         </h5>
                     }
+                    <!-- Inject page specific data -->
+                    @if (courseTitleBarService.titleTemplate() || courseTitleBarService.actionsTemplate()) {
+                        @if (courseTitleBarService.titleTemplate()) {
+                            <div class="vr bg-secondary"></div>
+                        }
+                        <div class="flex flex-1 justify-between gap-3 items-center title-bar-actions-wrapper">
+                            <!-- Inject title template -->
+                            <div>
+                                @if (courseTitleBarService.titleTemplate()) {
+                                    <ng-container *ngTemplateOutlet="courseTitleBarService.titleTemplate()!" />
+                                }
+                            </div>
+                            <!-- Inject actions template -->
+                            <div class="flex gap-2">
+                                @if (courseTitleBarService.actionsTemplate()) {
+                                    <ng-container *ngTemplateOutlet="courseTitleBarService.actionsTemplate()!" />
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
             <!-- child route content -->
             <div class="module-bg rounded-md scrollable-content p-3 flex-1">
-                <!-- inject course title bar, for example in case of exercise group -->
-                @if (courseTitleBarService.titleTemplate() || courseTitleBarService.actionsTemplate()) {
-                    <div class="flex justify-between items-center mb-3 title-bar-actions-wrapper">
-                        <div>
-                            @if (courseTitleBarService.titleTemplate()) {
-                                <ng-container *ngTemplateOutlet="courseTitleBarService.titleTemplate()!" />
-                            }
-                        </div>
-                        <div class="flex gap-2">
-                            @if (courseTitleBarService.actionsTemplate()) {
-                                <ng-container *ngTemplateOutlet="courseTitleBarService.actionsTemplate()!" />
-                            }
-                        </div>
-                    </div>
-                }
                 <!-- page content -->
                 <router-outlet />
             </div>
