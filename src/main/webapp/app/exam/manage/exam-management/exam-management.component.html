@@ -14,21 +14,9 @@
             <!-- Dynamic Exam Header -->
             <div class="exam-management-header module-bg p-2 rounded-md">
                 <div class="flex flex-1 gap-2 align-items-center w-full">
-                    <!-- Exam management title with collapse button -->
+                    <!-- Sidebar collapse button to reopen it -->
                     @if (isCollapsed()) {
                         <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
-                        <!-- Exams page title -->
-                        <div class="flex items-center">
-                            @if (pageTitle()) {
-                                <a [routerLink]="['/course-management', course().id, 'exams']" class="text-decoration-none text-body">
-                                    <jhi-course-title-bar-title [title]="pageTitle()" />
-                                </a>
-                            }
-                            <jhi-documentation-button [type]="documentationType" />
-                        </div>
-                        @if (currentExam()) {
-                            <div class="vr bg-secondary"></div>
-                        }
                     }
                     <!-- Current exam title -->
                     @if (currentExam()) {
