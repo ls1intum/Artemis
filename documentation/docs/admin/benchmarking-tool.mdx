@@ -273,11 +273,17 @@ from having eleven of them rather than from any machine being large.
 | Submit an exercise | 0.75 s | **0.31 s** |
 | Hand in the exam | 0.29 s | **0.23 s** |
 | Download a code repository | 2.04 s | **0.98 s** |
-| Push code | 3.11 s | 4.27 s |
+| Push code | 3.11 s | **about 2 s** |
 | Everything else | 0.27 s | **0.13 s** |
 | **Average across all actions** | **0.45 s** | **0.30 s** |
 | Requests handled | 72,024 | 70,197 |
 | Time to work through the exam | 3 minutes | 2.5 minutes |
+
+The staging2 push figure comes from a repeat run, reported approximately. In the first staging2 run a
+number of pushes failed server-side and were not retried, which produced a misleading 4.27 s; the repeat
+completed every push in about two seconds with none failing. The remaining staging2 figures in this table
+are from the first run, so the 0.30 s average still includes those slow pushes and is, if anything,
+slightly pessimistic.
 
 ### Where the load landed
 
@@ -311,10 +317,11 @@ said is that the coordination layer was never the constraint on either cluster: 
 and 44 MB of memory while handling 2,500 commands per second, and never had to discard data to stay
 within its memory limit.
 
-**Pushing code was the one action that got slower**, and that result is not yet clean: during the
-staging2 run a number of pushes failed server-side and were not retried, so both the 4.27 s figure and
-the lower push count reflect a fault rather than a capacity limit. It is being investigated separately.
-Treat the push row as provisional.
+**Pushing code looked slower on staging2 at first, and that turned out to be a fault rather than a
+limit.** The initial 4.27 s came from a run in which a number of pushes failed server-side and were not
+retried, which also explains the lower request count. A repeat run completed every push in about two
+seconds with none failing. With that corrected, opening the exam is the only action on which staging2
+was slower than staging1, by 0.06 s.
 
 ### How the students authenticated
 
