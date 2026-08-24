@@ -23,6 +23,21 @@ public enum RateLimitType {
     AUTHENTICATION(30),
 
     /**
+     * Rate limit for the unauthenticated login-options lookup that drives the identifier-first login form.
+     * <p>
+     * Kept in its own bucket rather than sharing {@link #AUTHENTICATION}: the client calls this once per login attempt,
+     * immediately before authenticating, so sharing a bucket would halve the budget a real user has for logging in, and
+     * git authentication would draw down the same allowance again.
+     * <p>
+     * The endpoint answers whether an identifier belongs to an internal account, so the budget is deliberately no larger
+     * than the login budget it precedes. It stays at 30 rather than dropping to {@link #ACCOUNT_MANAGEMENT} levels because
+     * a whole campus network can share one source address behind NAT, and this call sits in front of every single login.
+     * <p>
+     * Default: 30 requests per minute per client.
+     */
+    LOGIN_OPTIONS(30),
+
+    /**
      * Rate limit for the stateless problem-statement rendering endpoint.
      * The endpoint does PlantUML rendering and HTML sanitization, which are comparatively expensive,
      * so the rate limit exists to bound abuse from authenticated clients.

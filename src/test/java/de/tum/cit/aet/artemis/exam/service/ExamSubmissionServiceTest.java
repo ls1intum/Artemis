@@ -182,8 +182,11 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
         Submission existingSubmission = ParticipationFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
         existingSubmission = participationUtilService.addSubmission(participation, existingSubmission);
         Submission receivedSubmission = ParticipationFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
-        receivedSubmission = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
+        // The submission is modified in place; what comes back is the participation the caller may reuse for its save.
+        StudentParticipation resolvedParticipation = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
         assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());
+        assertThat(resolvedParticipation).isNotNull();
+        assertThat(resolvedParticipation.getId()).isEqualTo(participation.getId());
     }
 
 }
