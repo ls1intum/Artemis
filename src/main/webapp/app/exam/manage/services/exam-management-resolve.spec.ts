@@ -1,4 +1,4 @@
-import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
+import { ExamResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
@@ -7,7 +7,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -89,55 +88,6 @@ describe('Exam Resolve', () => {
         expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(2);
         expect(receivedExam).toEqual({ id: 1 });
-    });
-});
-
-describe('Exam Group Resolve', () => {
-    let resolve: ExerciseGroupResolve;
-    let exerciseGroupService: ExerciseGroupService;
-
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [ExerciseGroupResolve, MockProvider(ExerciseGroupService)],
-        });
-
-        resolve = TestBed.inject(ExerciseGroupResolve);
-        exerciseGroupService = TestBed.inject(ExerciseGroupService);
-    });
-
-    afterEach(() => vi.restoreAllMocks());
-
-    it('should fetch the exercise group if courseId, examId and exerciseGroupId are given', async () => {
-        const findSpy = vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
-        const examObservable = resolve.resolve({
-            params: {
-                courseId: 1,
-                examId: 2,
-                exerciseGroupId: 3,
-            },
-        } as any as ActivatedRouteSnapshot);
-
-        let receivedExamGroup = undefined;
-        examObservable.subscribe((exam) => (receivedExamGroup = exam));
-        await Promise.resolve();
-
-        expect(findSpy).toHaveBeenCalledOnce();
-        expect(findSpy).toHaveBeenCalledWith(1, 2, 3);
-        expect(receivedExamGroup).toEqual({ id: 1 });
-    });
-
-    it('should create a new exam group if courseId, examId and/or examGroupId are not given', async () => {
-        const findSpy = vi.spyOn(exerciseGroupService, 'find');
-        const examObservable = resolve.resolve({
-            params: {},
-        } as any as ActivatedRouteSnapshot);
-
-        let receivedExamGroup = undefined;
-        examObservable.subscribe((exam) => (receivedExamGroup = exam));
-        await Promise.resolve();
-
-        expect(findSpy).not.toHaveBeenCalled();
-        expect(receivedExamGroup).toEqual({ isMandatory: true });
     });
 });
 
