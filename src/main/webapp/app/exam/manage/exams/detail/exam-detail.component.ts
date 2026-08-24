@@ -27,6 +27,9 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -40,6 +43,9 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
         ExamChecklistComponent,
         DetailOverviewListComponent,
         FeatureOverlayComponent,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
+        TumUiButtonDirective,
     ],
     providers: [ArtemisDurationFromSecondsPipe],
 })

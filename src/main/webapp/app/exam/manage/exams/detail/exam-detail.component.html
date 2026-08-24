@@ -1,58 +1,71 @@
+<div *titleBarTitle class="flex items-center">
+    <h5 class="mb-0">
+        <span jhiTranslate="artemisApp.exam.details"></span>
+    </h5>
+</div>
+
+<ng-template titleBarActions>
+    @if (exam()?.course?.isAtLeastInstructor) {
+        @if (canHaveBonus()) {
+            <a tumUiButton severity="primary" size="small" [routerLink]="getExamRoutesByIdentifier('bonus')" id="bonus-button">
+                <fa-icon [icon]="faAward" />
+                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.bonus"></span>
+            </a>
+        }
+        <jhi-feature-overlay [enabled]="plagiarismEnabled()">
+            <a tumUiButton severity="primary" size="small" [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" id="plagiarism-cases-button">
+                <fa-icon [icon]="faHeartBroken" />
+                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
+            </a>
+        </jhi-feature-overlay>
+        @if (exam() && isExamOver() && exam()?.course) {
+            <div class="d-inline">
+                <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
+            </div>
+        }
+        <button
+            tumUiButton
+            severity="danger"
+            size="small"
+            jhiDeleteButton
+            [renderButtonStyle]="false"
+            [actionType]="resetType"
+            [buttonSize]="buttonSize"
+            [entityTitle]="exam()?.title || ''"
+            deleteQuestion="artemisApp.examManagement.reset.question"
+            deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
+            (delete)="resetExam()"
+            [dialogError]="dialogError$"
+        >
+            <fa-icon [icon]="faUndo" />
+            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="entity.action.reset"></span>
+        </button>
+        <button
+            id="exam-delete"
+            tumUiButton
+            severity="danger"
+            size="small"
+            jhiDeleteButton
+            [renderButtonStyle]="false"
+            [buttonSize]="buttonSize"
+            [entityTitle]="exam()?.title || ''"
+            entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
+            [fetchEntitySummary]="fetchExamDeletionSummary()"
+            deleteQuestion="artemisApp.examManagement.delete.question"
+            deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
+            (delete)="deleteExam(exam()!.id!)"
+            [dialogError]="dialogError$"
+        >
+            <fa-icon [icon]="faTrash" />
+            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
+        </button>
+    }
+</ng-template>
+
 <div class="row justify-content-center">
     <div class="col-11">
         @if (exam()) {
             <div>
-                @if (exam().course?.isAtLeastInstructor) {
-                    <div>
-                        @if (canHaveBonus()) {
-                            <a [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
-                                <fa-icon [icon]="faAward" />
-                                <span jhiTranslate="artemisApp.examManagement.bonus"></span>
-                            </a>
-                        }
-                        <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-                            <a [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" class="tab-item btn btn-info btn-md mt-1">
-                                <fa-icon [icon]="faHeartBroken" />
-                                <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
-                            </a>
-                        </jhi-feature-overlay>
-                        <button
-                            jhiDeleteButton
-                            [actionType]="resetType"
-                            [buttonSize]="buttonSize"
-                            [entityTitle]="exam().title || ''"
-                            deleteQuestion="artemisApp.examManagement.reset.question"
-                            deleteConfirmationText="artemisApp.examManagement.reset.typeNameToConfirm"
-                            (delete)="resetExam()"
-                            [dialogError]="dialogError$"
-                            class="btn mt-1"
-                            style="margin-right: 0 !important"
-                        >
-                            <fa-icon [icon]="faUndo" />
-                        </button>
-                        <button
-                            id="exam-delete"
-                            jhiDeleteButton
-                            [buttonSize]="buttonSize"
-                            [entityTitle]="exam().title || ''"
-                            entitySummaryTitle="artemisApp.examManagement.delete.summary.title"
-                            [fetchEntitySummary]="fetchExamDeletionSummary()"
-                            deleteQuestion="artemisApp.examManagement.delete.question"
-                            deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
-                            (delete)="deleteExam(exam().id!)"
-                            [dialogError]="dialogError$"
-                            class="btn mt-1"
-                        >
-                            <fa-icon [icon]="faTrash" />
-                        </button>
-                        @if (exam() && isExamOver() && exam().course) {
-                            <div class="d-inline">
-                                <jhi-course-exam-archive-button [archiveMode]="'Exam'" [exam]="exam()" [course]="exam().course" />
-                            </div>
-                        }
-                    </div>
-                }
-                <hr />
                 @if (exam()?.course?.isAtLeastInstructor) {
                     <div>
                         <jhi-exam-checklist [getExamRoutesByIdentifier]="getExamRoutesByIdentifier" [exam]="exam()" />
