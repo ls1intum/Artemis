@@ -19,6 +19,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.config.LdapEnabled;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
@@ -105,8 +106,15 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
         // update the user details from ldapUserDto (because they might have changed, e.g. when the user changes the name)
         if (optionalUser.isPresent()) {
-            // TODO: make sure the user is not deactivated in the meantime
-            return saveUserIfNeeded(optionalUser.get(), ldapUserDto);
+            // Checked after the LDAP credentials have been verified, so an unauthenticated caller cannot use the outcome to
+            // learn anything about an account. This provider was the only one that did not consult the flag, which is why an
+            // account left unactivated by the student import could sign in here while being refused everywhere else.
+            User existingUser = optionalUser.get();
+            if (!existingUser.getActivated() || existingUser.isDeleted()) {
+                log.warn("Login attempt for user {} whose account is deactivated or deleted", existingUser.getLogin());
+                throw new UserNotActivatedException("User " + existingUser.getLogin() + " was not activated");
+            }
+            return saveUserIfNeeded(existingUser, ldapUserDto);
         }
         else {
             // this handles the case that the user does not exist in the Artemis database yet (i.e. first time user login)
@@ -127,10 +135,8 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
 
         newUser.setAuthorities(authorityService.buildAuthorities(newUser));
 
-        if (!newUser.getActivated()) {
-            newUser.setActivated(true);
-            newUser.setActivationKey(null);
-        }
+        // No activation handling here: userCreationService.createUser already creates an external user activated, because such a user has
+        // no way to redeem an activation key. This used to re-activate the user to undo what the factory did unconditionally.
         log.info("New LDAP user {} created in Artemis", ldapUserDto.getLogin());
         return userCreationService.saveUser(newUser);
     }

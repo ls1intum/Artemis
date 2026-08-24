@@ -56,6 +56,12 @@ public class RateLimitingProperties {
     private Integer authenticationRequestsPerMinute;
 
     /**
+     * Requests per minute for the unauthenticated login-options lookup.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#LOGIN_OPTIONS}.
+     */
+    private Integer loginOptionsRequestsPerMinute;
+
+    /**
      * Requests per minute for the problem-statement rendering endpoint.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#PROBLEM_STATEMENT_RENDERING}.
      */
@@ -97,6 +103,14 @@ public class RateLimitingProperties {
 
     public void setAuthenticationRequestsPerMinute(Integer authenticationRequestsPerMinute) {
         this.authenticationRequestsPerMinute = authenticationRequestsPerMinute;
+    }
+
+    public Integer getLoginOptionsRequestsPerMinute() {
+        return loginOptionsRequestsPerMinute;
+    }
+
+    public void setLoginOptionsRequestsPerMinute(Integer loginOptionsRequestsPerMinute) {
+        this.loginOptionsRequestsPerMinute = loginOptionsRequestsPerMinute;
     }
 
     public Integer getProblemStatementRenderingRequestsPerMinute() {
