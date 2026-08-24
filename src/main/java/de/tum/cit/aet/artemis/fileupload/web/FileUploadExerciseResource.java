@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -492,9 +493,16 @@ public class FileUploadExerciseResource {
             }
         }
 
-        // For exam exercises: exerciseGroupId required (courseId is optional/informational)
-        if (existingExercise.isExamExercise() && !hasExerciseGroupId) {
-            throw new BadRequestAlertException("Exam exercise requires exerciseGroupId.", ENTITY_NAME, "exerciseGroupIdMissing");
+        // For exam exercises: exerciseGroupId required (courseId is optional/informational). The group itself cannot be
+        // changed here — reassignment goes through ExerciseGroupResource#moveExerciseToGroup, which enforces the
+        // student-exam safety check (moving an exercise after student exams were generated would desync their selections).
+        if (existingExercise.isExamExercise()) {
+            if (!hasExerciseGroupId) {
+                throw new BadRequestAlertException("Exam exercise requires exerciseGroupId.", ENTITY_NAME, "exerciseGroupIdMissing");
+            }
+            if (!Objects.equals(existingExercise.getExerciseGroup().getId(), dto.exerciseGroupId())) {
+                throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
+            }
         }
     }
 
