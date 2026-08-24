@@ -135,9 +135,6 @@
             <div class="markdown-preview border" data-testid="readonly-script" [innerHTML]="readonlyScriptHtml()"></div>
         } @else {
             <jhi-monaco-editor-fit-text data-testid="script-editor" [text]="phase().script" (textChange)="updateScript($event)" />
-            @if (shouldShowScriptValidationError()) {
-                <p-message severity="error" size="small" variant="simple">{{ 'artemisApp.programmingExercise.buildPhasesEditor.scriptRequired' | artemisTranslate }}</p-message>
-            }
         }
     </div>
 

@@ -329,10 +329,10 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
-     * Validates a list of build phases: it must contain at least one phase, every phase name must match the configured
-     * pattern, avoid the reserved names, and be unique case-insensitively, and every phase must carry a non-blank script.
-     * Shared by the full exercise update and the dedicated build plan editor so the same misconfiguration is rejected with
-     * the same error and key on both pages.
+     * Validates a list of build phases: it must contain at least one phase, and every phase name must match the configured
+     * pattern, avoid the reserved names, and be unique case-insensitively. The script is deliberately not validated, see
+     * the note at the end of this method. Shared by the full exercise update and the dedicated build plan editor so the
+     * same misconfiguration is rejected with the same error and key on both pages.
      *
      * @param phases the build phases to validate
      */
@@ -354,14 +354,12 @@ public class ProgrammingExerciseValidationService {
             if (!normalizedNames.add(normalizedName)) {
                 throw new BadRequestAlertException("Build phase names must be unique", "programmingExercise", "duplicateBuildPhaseNames");
             }
-
-            // BuildPhaseDTO is serialized with @JsonInclude(NON_EMPTY), so a blank script is dropped from the stored
-            // configuration; the client parser then rejects the whole plan on reopen. Reject it here instead of storing
-            // a phase that silently destroys the plan on the next read.
-            if (phase.script() == null || phase.script().isBlank()) {
-                throw new BadRequestAlertException("A build phase script must not be blank", "programmingExercise", "blankBuildPhaseScript");
-            }
         }
+        // A blank script is intentionally accepted here: rejecting it would also apply to the full exercise update, which
+        // re-validates the exercise's already-stored build phases on every save, and to importing a file whose build phases
+        // predate this check, both of which have no in-place way to fix the offending phase. A blank script is dropped on
+        // write by @JsonInclude(NON_EMPTY) on BuildPhaseDTO and defaulted back to '' on read by the client parser
+        // (isBuildPhase in build-plan-phases.model.ts), so it is harmless: a no-op phase, not a corrupted plan.
     }
 
     /**

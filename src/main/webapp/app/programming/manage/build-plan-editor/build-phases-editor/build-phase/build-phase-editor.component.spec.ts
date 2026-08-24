@@ -144,20 +144,6 @@ describe('BuildPhaseEditorComponent', () => {
             expect(phase.condition).toBe(initialPhase.condition);
             expect(phase.forceRun).toBe(initialPhase.forceRun);
         });
-
-        it.each(['', '   '])('should flag a blank script (%j) as invalid', (blankScript) => {
-            getScriptEditor().triggerEventHandler('textChange', blankScript);
-            fixture.detectChanges();
-
-            expect(component.shouldShowScriptValidationError()).toBe(true);
-        });
-
-        it('should not flag a non-blank script', () => {
-            getScriptEditor().triggerEventHandler('textChange', 'echo build');
-            fixture.detectChanges();
-
-            expect(component.shouldShowScriptValidationError()).toBe(false);
-        });
     });
 
     describe('updateCondition', () => {

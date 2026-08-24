@@ -15,6 +15,7 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -76,6 +77,7 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
 
         var dto = configurationWith(List.of(phase("compile"), phase("test")), 240);
+        final int versionsBeforeSave = exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId()).size();
 
         var response = request.putWithResponseBody(buildConfigEndpoint(), dto, UpdateProgrammingExerciseBuildConfigDTO.class, HttpStatus.OK);
 
@@ -101,8 +103,10 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
         // analogous to the build plan editor for external CI systems, the template and solution build is triggered
         verify(programmingTriggerService).triggerTemplateAndSolutionBuild(programmingExercise.getId());
-        // the change is recorded in the exercise version history, like the full update path
-        assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).isNotEmpty();
+        // the change is recorded in the exercise version history, like the full update path. Asserting the increment rather
+        // than a non-empty list is what makes this fail if the createExerciseVersion call is ever dropped: the assertion must
+        // not depend on the exercise setup happening to leave no version behind.
+        assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).hasSize(versionsBeforeSave + 1);
     }
 
     @Test
@@ -234,33 +238,22 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
     }
 
     @ParameterizedTest(name = "[{index}] script=\"{0}\"")
+    @NullSource
     @ValueSource(strings = { "", "   " })
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testRejectsBlankBuildPhaseScript(String blankScript) throws Exception {
-        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+    void testAcceptsBlankBuildPhaseScript(String blankScript) throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
 
-        // a blank script is dropped by the NON_EMPTY serialization and corrupts the plan on reopen, so it must be rejected
         var blankScriptPhase = new BuildPhaseDTO("compile", blankScript, null, false, List.of());
         var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(blankScriptPhase), DOCKER_IMAGE), 60, DOCKER_FLAGS);
-        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
+        request.put(buildConfigEndpoint(), dto, HttpStatus.OK);
 
-        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testRejectsNullBuildPhaseScript() throws Exception {
-        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
-
-        var nullScriptPhase = new BuildPhaseDTO("compile", null, null, false, List.of());
-        var dto = new UpdateBuildPlanConfigurationDTO(new BuildPlanPhasesDTO(List.of(nullScriptPhase), DOCKER_IMAGE), 60, DOCKER_FLAGS);
-        request.put(buildConfigEndpoint(), dto, HttpStatus.BAD_REQUEST);
-
-        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
-        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+        // NON_EMPTY only drops a null or zero-length script, so those two read back as null while a whitespace-only script
+        // survives verbatim. Either way the phase is stored and the plan stays readable, which is what this asserts.
+        String expectedScript = blankScript == null || blankScript.isEmpty() ? null : blankScript;
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration()).phases()).extracting(BuildPhaseDTO::name, BuildPhaseDTO::script)
+                .containsExactly(tuple("compile", expectedScript));
     }
 
     @Test
@@ -337,12 +330,16 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
         // only assert on calls made by the request itself, not by the exercise setup
         clearInvocations(instanceMessageSendService);
+        final int versionsBeforeSave = exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId()).size();
 
         // a plan without an after-due-date phase leaves the build and test date null (unchanged) and the feedback flag
         // untouched, so the exercise must not be rescheduled (scheduleOperations delegates to this send call)
         request.put(buildConfigEndpoint(), configurationWith(List.of(phase("compile"), phase("test")), 240), HttpStatus.OK);
 
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
+        // the build plan itself still changed, so the save is recorded in the version history even though the exercise did
+        // not have to be rescheduled; skipping the reschedule must not skip the version entry
+        assertThat(exerciseVersionRepository.findAllByExerciseId(programmingExercise.getId())).hasSize(versionsBeforeSave + 1);
     }
 
     @Test

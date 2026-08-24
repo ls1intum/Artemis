@@ -645,8 +645,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         ['duplicate phase names', [phases[0], { ...phases[0], name: 'Compile' }], 'some-image'],
         ['a reserved phase name', [{ ...phases[0], name: 'main' }], 'some-image'],
         ['an invalid phase name', [{ ...phases[0], name: 'compile phase' }], 'some-image'],
-        ['an empty phase script', [{ ...phases[0], script: '' }], 'some-image'],
-        ['a whitespace-only phase script', [{ ...phases[0], script: '   ' }], 'some-image'],
         ['no phases', [], 'some-image'],
     ];
 
@@ -660,5 +658,20 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         expect(comp.canSubmit()).toBe(false);
         expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['an empty phase script', ''],
+        ['a whitespace-only phase script', '   '],
+    ])('should submit with %s, because the server accepts it and the phase just does nothing', (_description, blankScript) => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.phases.set([{ ...phases[0], script: blankScript }]);
+        comp.dockerImage.set('some-image');
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
+
+        comp.submit();
+
+        expect(comp.canSubmit()).toBe(true);
+        expect(updateStub).toHaveBeenCalledOnce();
     });
 });
