@@ -33,16 +33,15 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -64,7 +63,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 /**
- * Integration tests for the variant-generation pipeline: real Spring context, real database, real Hazelcast
+ * Integration tests for the variant-generation pipeline: real Spring context, real database, real distributed data provider
  * job map, real quiz adapters/toolset — only the
  * {@code ChatModel} behind Hyperion's {@code ChatClient} is mocked (the established Hyperion test pattern,
  * see {@code HyperionQuizQuestionGenerationResourceTest}).
@@ -107,8 +106,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
     private ExerciseVariantJobService jobService;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider distributedDataProvider;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -595,7 +593,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         var initiator = userUtilService.getUserByLogin(EDITOR_LOGIN);
         VariantJob job = jobService.startJob(initiator, sourceQuiz, domainChangeRequest(standalonePlacement()));
         // Simulate the worker node vanishing: push the heartbeat past the staleness threshold directly on the map.
-        IMap<String, VariantJob> jobMap = hazelcastInstance.getMap(ExerciseVariantJobService.JOB_MAP_NAME);
+        DistributedMap<String, VariantJob> jobMap = distributedDataProvider.getExpiringMap(ExerciseVariantJobService.JOB_MAP_NAME, Duration.ofHours(24));
         VariantJob stored = jobMap.get(job.getJobId());
         stored.setLastHeartbeatAt(Instant.now().minus(Duration.ofHours(1)));
         jobMap.put(job.getJobId(), stored);

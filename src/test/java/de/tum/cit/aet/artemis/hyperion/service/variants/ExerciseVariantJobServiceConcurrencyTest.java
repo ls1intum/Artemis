@@ -9,14 +9,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
@@ -24,29 +21,23 @@ import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketServic
 
 /**
  * Regression test for a lost-update race: {@code heartbeat()} used to do its own independent get-modify-put on
- * the Hazelcast job map, completely bypassing {@code mutate()}'s locking — a heartbeat landing between
+ * the distributed job map, completely bypassing {@code mutate()}'s locking — a heartbeat landing between
  * {@code requestCancel()}'s read and write could silently revert the cancel flag back to false, since whichever
  * writer's {@code put()} landed last would overwrite the other's stale-copy change. Both now share one per-key
- * {@code IMap} lock, making the two mutually exclusive. Uses a real embedded Hazelcast instance (not a mock) —
- * a mocked {@code IMap} would not exercise real per-key locking semantics, and this bug only reproduces under
- * genuine concurrent access to the same distributed map entry.
+ * {@link de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap#lock} , making the two mutually
+ * exclusive. Uses a real {@link LocalDataProviderService} (not a mock) — a mocked map would not exercise real
+ * per-key locking semantics, and this bug only reproduces under genuine concurrent access to the same map entry.
+ * The race is between two threads in one JVM, so the in-process provider reproduces it exactly as a clustered
+ * backend would, without paying for an embedded cluster member.
  */
 class ExerciseVariantJobServiceConcurrencyTest {
-
-    private HazelcastInstance hazelcastInstance;
 
     private ExerciseVariantJobService jobService;
 
     @BeforeEach
     void setUp() {
-        hazelcastInstance = Hazelcast.newHazelcastInstance();
-        jobService = new ExerciseVariantJobService(hazelcastInstance, mock(HyperionWebsocketService.class));
+        jobService = new ExerciseVariantJobService(new LocalDataProviderService(), mock(HyperionWebsocketService.class));
         jobService.init();
-    }
-
-    @AfterEach
-    void tearDown() {
-        hazelcastInstance.shutdown();
     }
 
     @RepeatedTest(20)

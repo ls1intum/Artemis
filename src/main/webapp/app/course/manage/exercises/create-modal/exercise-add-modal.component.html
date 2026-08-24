@@ -19,7 +19,7 @@
 
     <!-- ── Create tab ── -->
     @if (activeTab() === 'create') {
-        <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.createHint"></p>
+        <p class="text-muted-color text-sm mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.createHint"></p>
         <div class="exercise-grid">
             @for (card of exerciseTypeCards(); track card.type) {
                 <button class="exercise-card" [attr.data-testid]="'create-' + card.type + '-exercise'" (click)="navigateToCreate(card)" type="button">
@@ -50,7 +50,7 @@
 
     <!-- ── Import tab ── -->
     @if (activeTab() === 'import') {
-        <p class="text-muted small mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
+        <p class="text-muted-color text-sm mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.importHint"></p>
         <div class="exercise-grid">
             @for (card of exerciseTypeCards(); track card.type) {
                 <button class="exercise-card" [attr.data-testid]="'import-' + card.type + '-exercise'" (click)="startImport(card.type)" type="button">

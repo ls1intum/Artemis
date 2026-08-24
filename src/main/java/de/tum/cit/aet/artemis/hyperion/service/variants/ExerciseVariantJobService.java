@@ -16,17 +16,14 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.config.MapConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationEventDTO;
@@ -34,7 +31,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService;
 
 /**
- * Hazelcast-backed job store for variant generation — mirrors {@code HyperionCodeGenerationJobService},
+ * Distributed job store for variant generation — mirrors {@code HyperionCodeGenerationJobService},
  * generalized: the job record is a rich {@link VariantJob} (phase, ChangePlan, step outputs) and finished
  * jobs are RETAINED under TTL for the navbar tray instead of being removed. There is deliberately NO
  * per-exercise dedup: instructors may generate several variants of the same exercise simultaneously; each
@@ -65,25 +62,24 @@ public class ExerciseVariantJobService {
     // capped 3-minute build waits) while staying far below the 24h TTL.
     private static final Duration STALE_THRESHOLD = Duration.ofMinutes(10);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final HyperionWebsocketService websocketService;
 
-    private IMap<String, VariantJob> jobMap;
+    private DistributedMap<String, VariantJob> jobMap;
 
-    public ExerciseVariantJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, HyperionWebsocketService websocketService) {
-        this.hazelcastInstance = hazelcastInstance;
+    public ExerciseVariantJobService(DistributedDataProvider distributedDataProvider, HyperionWebsocketService websocketService) {
+        this.distributedDataProvider = distributedDataProvider;
         this.websocketService = websocketService;
     }
 
     /**
-     * Initializes the Hazelcast-backed job map with its TTL.
+     * Initializes the job map. The entry lifetime is requested here rather than configured on the backend, because a
+     * map-level TTL is not expressible on every provider.
      */
     @PostConstruct
     public void init() {
-        MapConfig jobMapConfig = hazelcastInstance.getConfig().getMapConfig(JOB_MAP_NAME);
-        jobMapConfig.setTimeToLiveSeconds(JOB_TTL_SECONDS);
-        jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
+        jobMap = distributedDataProvider.getExpiringMap(JOB_MAP_NAME, Duration.ofSeconds(JOB_TTL_SECONDS));
     }
 
     /**
@@ -410,7 +406,7 @@ public class ExerciseVariantJobService {
      * so the long internal agent round (whose only other update is at its boundary) keeps the job from being
      * misjudged as stale. No-op once the job is terminal or gone.
      * <p>
-     * Goes through the same per-key {@link IMap#lock} as {@link #mutate}: a tool call fires this on nearly every
+     * Goes through the same per-key {@link DistributedMap#lock} as {@link #mutate}: a tool call fires this on nearly every
      * turn, so without the lock a heartbeat's get-modify-put could interleave with e.g. {@link #requestCancel}'s
      * — both read a stale pre-mutation copy, and whichever writes last silently discards the other's change
      * (observed live: a cancel request landing between a heartbeat's read and write got reverted back to
@@ -458,8 +454,8 @@ public class ExerciseVariantJobService {
 
     /**
      * The single read-modify-write path for every field mutation on a job record. Takes the same per-key
-     * {@link IMap#lock} {@link #heartbeat} does, so the two can never interleave (see its javadoc) — Hazelcast's
-     * per-key lock is distributed and reentrant, held only for the duration of this one get-mutate-put cycle.
+     * {@link DistributedMap#lock} {@link #heartbeat} does, so the two can never interleave (see its javadoc) — the
+     * provider's per-key lock is distributed and reentrant, held only for the duration of this one get-mutate-put cycle.
      */
     private VariantJob mutate(String jobId, Consumer<VariantJob> mutation) {
         jobMap.lock(jobId);
