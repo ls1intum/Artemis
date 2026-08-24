@@ -280,12 +280,16 @@ artemis:
     enabled: true
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
+    login-options-requests-per-minute: 30
 ```
 
 ### Where It Is Enforced
 
 - Registration
+- Account activation
 - Password reset (request reset link + actual password change)
+- Login options lookup (the identifier step of the login form, in its own bucket so that consuming it does not
+  reduce the number of logins a shared address can perform)
 - Username/password login
 - WebAuthn authentication
 - Git over SSH and HTTP operations

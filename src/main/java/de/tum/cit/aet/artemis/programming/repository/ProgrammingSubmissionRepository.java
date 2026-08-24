@@ -51,6 +51,19 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
         return findByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participationId, commitHash).stream().findFirst().orElse(null);
     }
 
+    /**
+     * Whether a submission for this participation and commit already exists.
+     * <p>
+     * Prefer this over loading the submission where only its existence matters: the loader above fetches the submission
+     * together with its participation, team and the team's students, which is a lot of rows to answer a yes or no on a
+     * path that runs on every push.
+     *
+     * @param participationId the id of the participation
+     * @param commitHash      the commit hash of the submission
+     * @return true if such a submission already exists
+     */
+    boolean existsByParticipationIdAndCommitHash(long participationId, String commitHash);
+
     @Query(value = """
             SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(ps.id, ps.submissionDate)
             FROM ProgrammingSubmission ps

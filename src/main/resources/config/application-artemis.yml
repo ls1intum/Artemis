@@ -88,6 +88,14 @@ artemis:
     enabled: false
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
+    login-options-requests-per-minute: 30
+    # Addresses exempt from every rate limit, as literal IPv4/IPv6 addresses or CIDR blocks. The limits
+    # are per client address, which protects against one abusive client but throttles a load generator
+    # almost immediately, since a benchmark drives thousands of logins from a single address. Leave
+    # empty unless you operate the address in question.
+    # exempt-addresses:
+    #   - 203.0.113.10
+    #   - 2001:db8::/64
   athena:
     url: http://localhost:5100
     secret: abcdef12345
