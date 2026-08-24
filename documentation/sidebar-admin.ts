@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
         'course-management',
         'access-rights',
         'artemis-intelligence',
+        'scaling',
         {
             type: 'category',
             label: 'Production Setup',
@@ -26,7 +27,6 @@ const sidebars: SidebarsConfig = {
         },
         'hyperion',
         'adaptive-learning',
-        'scaling',
         'user-registration',
         'jenkins-localvc',
         'saml2-login-registration',
