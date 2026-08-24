@@ -111,6 +111,19 @@
             "credits": "Credits",
             "feedback": "Feedback",
             "editText": "Als Text bearbeiten",
+            "assessmentCriteriaGeneration": {
+                "generate": "Bewertungskriterien generieren",
+                "generating": "Wird generiert…",
+                "success": "Bewertungskriterien wurden generiert.",
+                "disabledProblemStatement": "Füge vor der Generierung von Bewertungskriterien eine Aufgabenstellung hinzu.",
+                "disabledMaxPoints": "Lege vor der Generierung eine gültige maximale Punktzahl größer als null fest.",
+                "disabledBonusPoints": "Lege vor der Generierung von Bewertungskriterien eine endliche Bonuspunktzahl von null oder größer fest.",
+                "invalidSyntax": "Der Text der Bewertungsanweisungen konnte nicht verarbeitet werden. Korrigiere vor der Generierung die Syntax.",
+                "confirmationHeader": "Bewertungskriterien ersetzen?",
+                "confirmation": "Neue Bewertungskriterien ersetzen alle aktuell strukturierten Kriterien. Der allgemeine Text der Bewertungsanweisungen bleibt erhalten.",
+                "confirmationUsed": "Das Speichern dieser Änderungen kann eine Neubewertung vorhandener Bewertungen erfordern.",
+                "replaceAndGenerate": "Ersetzen und generieren"
+            },
             "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden.",
             "creditsHint": "Diese Zahl gibt die Punktzahl für diese Bewertungsanweisung an.",
             "gradingScaleHint": "Die Skala beschreibt das Leistungsniveau für die Anweisung. Einige Beispiele hierfür sind: ausgezeichnet, gut, durchschnittlich, schlecht.",
@@ -135,6 +148,7 @@
             "dates": "Termine",
             "dateNotSet": "Kein Datum gesetzt",
             "timelineDateOrderTooltip": "Dieses Datum muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
+            "timelineDateStrictOrderTooltip": "Dieses Datum muss nach allen vorhergehenden Daten liegen.",
             "timelineDateRequiredTooltip": "Dieses Datum ist erforderlich.",
             "timelineDateInvalidTooltip": "Das eingegebene Datum ist ungültig. Bitte das Format TT.MM.JJJJ HH:mm verwenden.",
             "timelineOtherRequiredDateTooltip": "{{ otherInputName }} muss gesetzt sein, bevor dieses Datum gesetzt werden kann.",
@@ -397,7 +411,10 @@
             },
             "isUsedForTutorial": "Tutor:in muss überprüfen",
             "action": "Aktion",
-            "exerciseAssessmentDashboard": "Bewertungs-Dashboard"
+            "exerciseAssessmentDashboard": "Bewertungs-Dashboard",
+            "applyInstruction": "Diese Bewertungsanweisung anwenden",
+            "applyInstructionHint": "Hake eine Bewertungsanweisung an, um sie zum Feedback hinzuzufügen, oder ziehe sie per Drag & Drop auf ein Feedback-Element",
+            "instructionAppliedToReferencedElement": "Bereits auf ein Feedback-Element angewendet. Entferne sie dort, um den Haken zu lösen."
         }
     }
 }

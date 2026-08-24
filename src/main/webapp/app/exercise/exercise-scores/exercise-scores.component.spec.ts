@@ -349,6 +349,21 @@ describe('Exercise Scores Component', () => {
             expect(participation.submissions).toHaveLength(0);
         });
 
+        it('should produce a plain submission without programming fields for a non-programming exercise', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.TEXT });
+            const dto: ParticipationScoreDTO = { ...sampleDto, participationId: 10, submissionId: 20, resultId: 30, buildFailed: true };
+
+            const participation = component.toParticipation(dto);
+
+            expect(participation.type).toBe(ParticipationType.STUDENT);
+            expect(participation.submissions).toHaveLength(1);
+            expect(participation.submissions![0].id).toBe(20);
+            expect(participation.submissions![0].results).toHaveLength(1);
+            // A text exercise must not pick up the programming-only fields, even when the DTO carries buildFailed.
+            expect(participation.submissions![0].submissionExerciseType).toBeUndefined();
+            expect('buildFailed' in participation.submissions![0]).toBe(false);
+        });
+
         it('should produce a programming submission with buildFailed: true when dto.buildFailed is true', () => {
             component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING });
             const dto: ParticipationScoreDTO = {

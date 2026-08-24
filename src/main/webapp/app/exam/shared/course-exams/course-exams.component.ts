@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit, effect, inject, signal } from '@angular/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
-import { Subscription, combineLatest, filter, interval, lastValueFrom } from 'rxjs';
+import { Subscription, combineLatest, distinctUntilChanged, filter, interval, lastValueFrom, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -10,13 +11,16 @@ import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.mode
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { cloneDeep } from 'lodash-es';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { ExamParticipationComponent } from 'app/exam/overview/exam-participation/exam-participation.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseOverviewService } from 'app/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/foundation/types/sidebar';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
+import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     real: { entityData: [] },
@@ -42,7 +46,7 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
     styleUrls: ['./course-exams.component.scss'],
     imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
-export class CourseExamsComponent implements OnInit, OnDestroy {
+export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {
     private route = inject(ActivatedRoute);
     private courseStorageService = inject(CourseStorageService);
     private serverDateService = inject(ArtemisServerDateService);
@@ -50,11 +54,14 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
     private router = inject(Router);
+    private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
+    private courseTabRefreshService = inject(CourseTabRefreshService);
+    private tabReselectionSubscription?: Subscription;
 
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
     private parentParamSubscription?: Subscription;
-    private courseUpdatesSubscription?: Subscription;
+    private examsSubscription?: Subscription;
     private studentExamTestExamInitialFetchSubscription?: Subscription;
     private studentExamTestExamUpdateSubscription?: Subscription;
     private examStartedSubscription?: Subscription;
@@ -63,8 +70,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     private studentExams?: StudentExamOrDTO[];
     studentExamsForRealExams = new Map<number, StudentExam>();
     public expandAttemptsMap = new Map<number, boolean>();
-    public realExamsOfCourse: Exam[] = [];
-    public testExamsOfCourse: Exam[] = [];
+    /** The exams of the course visible to the user, loaded by this tab rather than shipped with the course. */
+    readonly exams = signal<ExamForOverview[] | undefined>(undefined);
+    public realExamsOfCourse: ExamForOverview[] = [];
+    public testExamsOfCourse: ExamForOverview[] = [];
     studentExamState?: Subscription;
 
     // Icons
@@ -72,8 +81,8 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     faAngleDown = faAngleDown;
     faListAlt = faListAlt;
 
-    sortedRealExams?: Exam[];
-    sortedTestExams?: Exam[];
+    sortedRealExams?: ExamForOverview[];
+    sortedTestExams?: ExamForOverview[];
     testExamMap: Map<number, StudentExamOrDTO[]> = new Map();
     examSelected = signal(true);
     accordionExamGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
@@ -95,22 +104,9 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         this.isCollapsed.set(this.courseOverviewService.getSidebarCollapseStateFromStorage('exam'));
-        this.parentParamSubscription = this.route.parent?.params.subscribe((params) => {
-            this.courseId.set(Number(params.courseId));
-        });
-
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted.set(isStarted);
         });
-
-        this.course.set(this.courseStorageService.getCourse(this.courseId()));
-        this.prepareSidebarData();
-        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService
-            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(this.courseId())
-            .subscribe((response) => {
-                this.studentExams = response;
-                this.prepareSidebarData();
-            });
 
         this.studentExamTestExamUpdateSubscription = combineLatest([
             this.examParticipationService.shouldUpdateTestExamsObservable,
@@ -129,15 +125,85 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
                 this.examParticipationService.setShouldUpdateTestExams(false);
             });
 
-        const currentCourse = this.course();
-        if (currentCourse?.exams) {
-            // The Map is ued to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
-            this.expandAttemptsMap = new Map(currentCourse.exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id!, false]));
-            this.updateExams();
-        }
+        this.parentParamSubscription = this.route.parent?.params
+            .pipe(
+                map((params) => Number(params.courseId)),
+                distinctUntilChanged(),
+            )
+            .subscribe((courseId) => this.activateCourse(courseId));
 
-        // If no exam is selected navigate to the last selected or upcoming Exam
-        this.navigateToExam();
+        // Selecting the exams tab while already on it acts as a refresh
+        this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.route).subscribe(() => this.loadExams(this.courseId()));
+    }
+
+    /** Cancels all course-scoped work, clears rendered state, and loads the newly active course. */
+    private activateCourse(courseId: number): void {
+        this.examsSubscription?.unsubscribe();
+        this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
+        this.unsubscribeFromExamStateSubscription();
+
+        this.courseId.set(courseId);
+        this.course.set(this.courseStorageService.getCourse(courseId));
+        this.studentExams = undefined;
+        this.studentExamsForRealExams = new Map();
+        this.expandAttemptsMap = new Map();
+        this.exams.set(undefined);
+        this.realExamsOfCourse = [];
+        this.testExamsOfCourse = [];
+        this.sortedRealExams = undefined;
+        this.sortedTestExams = undefined;
+        this.testExamMap = new Map();
+        this.sidebarExams = [];
+        this.sidebarData.set(undefined);
+        this.accordionExamGroups = DEFAULT_UNIT_GROUPS;
+        this.examSelected.set(true);
+        this.pageTitle.set('');
+        this.withinWorkingTime = false;
+
+        this.loadExams(courseId);
+    }
+
+    /**
+     * Fetches the exams of the course without touching what is currently rendered.
+     *
+     * Separate from {@link activateCourse}, which clears the rendered state because it is switching to a different
+     * course. Re-selecting the exams tab is a refresh of the same course: the exam list stays on screen until the new
+     * one arrives, so the sidebar does not flash empty.
+     *
+     * @param courseId the course to load the exams of
+     */
+    private loadExams(courseId: number): void {
+        this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
+        this.studentExamTestExamInitialFetchSubscription = this.examParticipationService.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId).subscribe({
+            next: (response: StudentExamOrDTO[]) => {
+                this.studentExams = response;
+                this.prepareSidebarData();
+            },
+            error: () => {
+                // Render the exams without their test-exam attempts rather than letting the failure escape
+                this.studentExams = undefined;
+                this.prepareSidebarData();
+            },
+        });
+
+        this.examsSubscription?.unsubscribe();
+        this.examsSubscription = this.courseOverviewTabDataService.loadExamsIfNeeded(courseId).subscribe({
+            next: (exams) => {
+                this.exams.set(exams);
+                // The Map is used to store the boolean value, if the attempt-List for one Exam has been expanded or collapsed
+                this.expandAttemptsMap = new Map(exams.filter((exam) => exam.testExam && this.isVisible(exam)).map((exam) => [exam.id, false]));
+                this.updateExams();
+                // updateExams only refreshes the sidebar once its own async student-exam fetch resolves; render what we
+                // already have right away so the list is not empty until then
+                this.prepareSidebarData();
+                // If no exam is selected navigate to the last selected or upcoming Exam
+                this.navigateToExam();
+            },
+            error: () => {
+                this.exams.set([]);
+                this.navigateToExam();
+            },
+        });
     }
 
     navigateToExam() {
@@ -157,23 +223,33 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     private updateExams(): void {
-        const currentCourse = this.course();
-        if (currentCourse?.exams) {
-            // Loading the exams from the course
-            const exams = currentCourse.exams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
+        const loadedExams = this.exams();
+        if (loadedExams) {
+            const requestedCourseId = this.courseId();
+            const exams = loadedExams.filter((exam) => this.isVisible(exam)).sort((se1, se2) => this.sortExamsByStartDate(se1, se2));
             // add new exams to the attempt map
-            exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id!)).forEach((exam) => this.expandAttemptsMap.set(exam.id!, false));
+            exams.filter((exam) => exam.testExam && !this.expandAttemptsMap.has(exam.id)).forEach((exam) => this.expandAttemptsMap.set(exam.id, false));
 
             this.realExamsOfCourse = exams.filter((exam) => !exam.testExam);
             this.testExamsOfCourse = exams.filter((exam) => exam.testExam);
             // get student exams for real exams
-            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(this.courseId())).then((studentExams) => {
-                studentExams.forEach((exam) => {
-                    const studentExam = cloneDeep(exam) as StudentExam;
-                    this.studentExamsForRealExams.set(studentExam.id!, studentExam);
+            void lastValueFrom(this.examParticipationService.getRealExamSidebarData(requestedCourseId))
+                .then((studentExams) => {
+                    if (this.courseId() !== requestedCourseId) {
+                        return;
+                    }
+                    studentExams.forEach((exam) => {
+                        const studentExam = deepClone(exam) as StudentExam;
+                        this.studentExamsForRealExams.set(studentExam.id!, studentExam);
+                    });
+                    this.prepareSidebarData();
+                })
+                .catch(() => {
+                    // The exam list is already rendered; without their student exams the cards simply show no attempt state
+                    if (this.courseId() === requestedCourseId) {
+                        this.prepareSidebarData();
+                    }
                 });
-                this.prepareSidebarData();
-            });
         }
     }
 
@@ -181,11 +257,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
      * unsubscribe from all subscriptions
      */
     ngOnDestroy(): void {
+        this.tabReselectionSubscription?.unsubscribe();
+        this.examsSubscription?.unsubscribe();
         if (this.parentParamSubscription) {
             this.parentParamSubscription.unsubscribe();
-        }
-        if (this.courseUpdatesSubscription) {
-            this.courseUpdatesSubscription.unsubscribe();
         }
         this.studentExamTestExamInitialFetchSubscription?.unsubscribe();
         this.studentExamTestExamUpdateSubscription?.unsubscribe();
@@ -243,7 +318,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     groupExamsByRealOrTest(realExams: Exam[], testExams: Exam[]): AccordionGroups {
-        const groupedExamGroups = cloneDeep(DEFAULT_UNIT_GROUPS);
+        const groupedExamGroups = deepClone(DEFAULT_UNIT_GROUPS);
 
         for (const realExam of realExams) {
             const examCardItem = this.courseOverviewService.mapExamToSidebarCardElement(realExam, this.studentExamsForRealExams.get(realExam.id!));
@@ -293,19 +368,19 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        if (!this.course()?.exams) {
+        if (!this.exams()) {
             return;
         }
 
         this.sortedRealExams = this.realExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
         this.sortedTestExams = this.testExamsOfCourse.sort((a, b) => this.sortExamsByStartDate(a, b));
         for (const testExam of this.sortedTestExams) {
-            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExam.id!);
+            const orderedTestExamAttempts = this.getStudentExamForExamIdOrderedByIdReverse(testExam.id);
             orderedTestExamAttempts.forEach((attempt, index) => {
                 this.calculateIndividualWorkingTimeForTestExams(attempt, index === 0);
             });
             const submittedAttempts = orderedTestExamAttempts.filter((attempt) => attempt.submitted);
-            this.testExamMap.set(testExam.id!, submittedAttempts);
+            this.testExamMap.set(testExam.id, submittedAttempts);
         }
 
         const sidebarRealExams = this.courseOverviewService.mapExamsToSidebarCardElements(this.sortedRealExams, this.getAllStudentExamsForRealExams());

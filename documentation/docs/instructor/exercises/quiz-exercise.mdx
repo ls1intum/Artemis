@@ -24,6 +24,9 @@ import exportQuizButton from './assets/quiz/export-quiz-button.png';
 import exportQuizzesList from './assets/quiz/export-quizzes-list.png';
 import exportButton from './assets/quiz/export-button.png';
 import createDragAndDropQuizButton from './assets/quiz/create-drag-and-drop-quiz.png';
+import aiGenerationModal from './assets/quiz/ai-generation-modal.png';
+import aiRefinementPanel from './assets/quiz/ai-refinement-panel.png';
+import aiBulkRefinement from './assets/quiz/ai-bulk-refinement.png';
 
 # Quiz Exercise
 
@@ -45,32 +48,32 @@ The following sections describe the process of creating and managing quiz exerci
 
 <Image src={courseDashboard} alt="Course Dashboard" size={ImageSize.large} caption="Course Management Dashboard" />
 
-### Create Quiz Exercise
+## Create Quiz Exercise
 
 In the quiz exercises section, click on the <img src={createQuizButton} alt="Create Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} /> button to open the quiz creation form.
 
 <Image src={createAQuizForm} alt="Create a Quiz Form" size={ImageSize.large} caption="Quiz Creation Form" />
 
-#### Batch Mode
+### Batch Mode
 Controls how students can participate in the quiz
 - **Synchronized**: There is exactly one opportunity for all students to participate in the quiz
 - **Batched**: There are multiple opportunities for students to participate in the quiz by using a password
 - **Individual**: Students can participate in the quiz by themselves at any time while it is released
 
-#### Schedule Quiz Start
+### Schedule Quiz Start
 Establish the date and hour at which the quiz will be available for solving
 
 **Start of working time**: Set the time for the students to see the questions and start answering them. Students can start working on the quiz from this time until the duration ends
 
-#### Course Score Calculation
+### Course Score Calculation
 Should this exercise be included in the course score calculation?
 - **Yes**: the points will be included in the course score calculation
 - **No**: the points will not be included in the course score calculation
 - **Bonus**: the points will be considered as bonus points
 
-### Question Types
+## Question Types
 
-#### Add Multiple-Choice Question
+### Add Multiple-Choice Question
 
 This kind of question is composed of a problem statement with multiple options.
 
@@ -102,7 +105,38 @@ This kind of question is composed of a problem statement with multiple options.
 
 </Callout>
 
-#### Add Drag-and-Drop Question
+#### Generate Multiple-Choice Questions with AI
+
+<Callout variant={CalloutVariant.info}>
+
+  This feature requires the [Hyperion module](/admin/hyperion) to be enabled on the Artemis instance.
+
+</Callout>
+
+In the quiz editor, click **Generate with AI** to open the AI generation dialog. It generates Multiple-Choice questions (single-choice, multiple-choice, or true/false) that can be added to the quiz after review.
+
+<Image src={aiGenerationModal} alt="AI Quiz Generation Dialog" size={ImageSize.large} caption="AI Generation Dialog in Competency-Graph Mode" />
+
+To generate the questions, first choose a **generation mode**:
+- **Free topic**: Enter a topic in a free-text field to generate questions about it
+- **From competencies**: Select one or more course competencies instead of typing a topic. Generation draws directly on the selected competencies together with the lecture content and exercises already linked to them, so questions reflect the material that students are actually expected to learn. Link exercises and lectures to competencies to include them. This mode requires the Atlas module to be enabled, and it appears in the dialog only for courses that additionally have competencies configured.
+
+Then configure:
+- **Optional prompt**: Additional instructions, constraints, or expectations that take priority over the defaults
+- **Language**: English or German
+- **Number of questions**: 1–10
+- **Question type**: Restrict generation to specific question types
+- **Difficulty**: A slider from 0 (easy) to 100 (hard)
+
+Generated questions appear in a preview list and may include Markdown formatting (e.g. bold text, inline code, code blocks) as well as hints and explanations. Click **Add to quiz** to insert the selected questions into the quiz editor, where they can be edited like any other question, or refined with AI as described in [Refine Multiple-Choice Questions with AI](#refine-multiple-choice-questions-with-ai).
+
+<Callout variant={CalloutVariant.info}>
+
+  For the underlying architecture (prompt templates, competency-graph context assembly, output validation), see [Quiz Question Generation & Refinement](/developer/hyperion/quiz-generation) in the developer documentation.
+
+</Callout>
+
+### Add Drag-and-Drop Question
 
 This kind of question is composed of a problem statement, a background image, and drag and drop options.
 
@@ -126,7 +160,7 @@ This kind of question is composed of a problem statement, a background image, an
   - Image items: Can be uploaded from the PC files
 - **Preview View**: Enables the student view
 
-#### Add Apollon Drag-and-Drop Question
+### Add Apollon Drag-and-Drop Question
 
 In the quiz edit view click the button <img src={createDragAndDropQuizButton} alt="Create Drag and Drop Quiz" style={{display: 'inline', verticalAlign: 'middle', height: '2rem'}} />
 
@@ -152,7 +186,7 @@ After creating or opening an Apollon diagram, it can be edited in the edit view.
 
 <Image src={apollonEditor} alt="Apollon Editor" size={ImageSize.large} caption="Apollon Diagram Editor" />
 
-#### Add Short-Answer Question
+### Add Short-Answer Question
 
 This kind of question is composed of a statement and spots to fill them out by typing the answers.
 
@@ -171,7 +205,27 @@ This kind of question is composed of a statement and spots to fill them out by t
 - **Text View**: Enables the text editor to write and edit the question statement
 - **Visual View**: Enables the student view
 
-#### Add Existing Questions
+## Manage Quizzes
+
+### Refine Multiple-Choice Questions with AI
+
+<Callout variant={CalloutVariant.info}>
+
+  This feature requires the [Hyperion module](/admin/hyperion) to be enabled on the Artemis instance.
+
+</Callout>
+
+Existing Multiple-Choice questions (including AI-generated and manually created ones) can be refined with a natural-language instruction instead of being edited by hand. Questions can be refined individually or in bulk.
+
+**Per-question refinement**: Click the wand icon in a Multiple-Choice question's header to open an inline refinement panel, enter an instruction (e.g. "make this harder", "add a hint"), and submit. The question updates in place, and a "Changes made" card summarizes what the AI changed. The card includes a restore control that reverts the question to its state before the most recent refinement.
+
+<Image src={aiRefinementPanel} alt="Per-Question Refinement Panel" size={ImageSize.large} caption="Per-Question Refinement Panel with Changes Made Summary" />
+
+**Bulk refinement**: While editing a quiz that contains at least one Multiple-Choice question, a floating wand button applies a single shared instruction to every Multiple-Choice question in the quiz at once, for example, "translate all questions to German" to localize the entire quiz in one step.
+
+<Image src={aiBulkRefinement} alt="Bulk Refinement" size={ImageSize.large} caption="Quiz-wide bulk refinement: the floating action button (top) opens the shared-instruction input (bottom)." />
+
+### Add Existing Questions
 
 This option allows to import existing questions from other quiz exercises, courses, exams and files.
 
