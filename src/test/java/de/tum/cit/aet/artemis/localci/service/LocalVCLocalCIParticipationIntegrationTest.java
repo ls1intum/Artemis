@@ -197,6 +197,32 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractProgrammingInte
         assertThat(accessLogs.getFirst().authenticationMechanism()).isEqualTo(AuthenticationMechanism.BUILD_JOB_TOKEN.name());
     }
 
+    /**
+     * The amend-the-newest-entry lookups have to skip build agent rows.
+     * <p>
+     * A push writes its entry, queues the build, and only then fills in the commit hash on the newest entry of the
+     * participation; a clone does the same for its clone-or-pull label. The agent's own clone of that repository lands
+     * between the two, so without the exclusion the person's amendment would be written onto the agent's row - the
+     * agent would appear to have pushed the commit, and the person's row would keep no hash at all.
+     * <p>
+     * Executing both queries here is also what validates them: an invalid {@code @Query} is only rejected when it is
+     * first used, so one that no test calls would reach production intact.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNewestAccessLogLookupsSkipBuildAgentEntries() {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var user = userTestRepository.getUser();
+        var userEntry = vcsAccessLogRepository
+                .save(new VcsAccessLog(user, participation, "instructor", "instructorMail@mail.de", RepositoryActionType.PUSH, AuthenticationMechanism.PASSWORD, "", "10.0.0.1"));
+        // Saved after the person's entry, so it is the newest one and would win a lookup that did not exclude it
+        vcsAccessLogRepository.save(new VcsAccessLog(null, participation, "Build agent artemis-build-agent-1 (build job 42)", "", RepositoryActionType.PULL,
+                AuthenticationMechanism.BUILD_JOB_TOKEN, "", "10.0.0.5"));
+
+        assertThat(vcsAccessLogRepository.findNewestUserEntryByParticipationId(participation.getId())).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
+        assertThat(vcsAccessLogRepository.findNewestUserEntryByRepositoryUri(participation.getRepositoryUri())).get().extracting(VcsAccessLog::getId).isEqualTo(userEntry.getId());
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetVcsAccessLogOfTemplateParticipation() throws Exception {

@@ -299,7 +299,8 @@ public class BuildAgentAddressRegistryService {
         }
         loggedAddressObservability = observable;
         if (observable) {
-            log.info("Build agent clones are bound to the addresses their agent is observed to connect from.");
+            log.info("This node can observe where cluster clients connect from, so a build agent that connects as one may only clone from an address it is observed at. An agent "
+                    + "that shares a JVM with a core node opens no client connection and is therefore not bound to any address, which is the normal single node topology.");
         }
         else {
             log.warn("The configured distributed data provider cannot report the addresses its clients connect from, so build agent clones are not bound to an agent's own "

@@ -104,7 +104,7 @@ public class VcsAccessLogService {
      */
     @Async("vcsAccessLogExecutor")
     public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
-        var vcsAccessLog = vcsAccessLogRepository.findNewestByParticipationId(participation.getId());
+        var vcsAccessLog = vcsAccessLogRepository.findNewestUserEntryByParticipationId(participation.getId());
         if (vcsAccessLog.isPresent()) {
             vcsAccessLog.get().setCommitHash(commitHash);
             vcsAccessLogRepository.save(vcsAccessLog.get());
@@ -120,7 +120,7 @@ public class VcsAccessLogService {
     @Async("vcsAccessLogExecutor")
     public void updateRepositoryActionType(LocalVCRepositoryUri localVCRepositoryUri, RepositoryActionType repositoryActionType) {
         var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
-        var vcsAccessLog = vcsAccessLogRepository.findNewestByRepositoryUri(repositoryURL);
+        var vcsAccessLog = vcsAccessLogRepository.findNewestUserEntryByRepositoryUri(repositoryURL);
         if (vcsAccessLog.isPresent()) {
             vcsAccessLog.get().setRepositoryActionType(repositoryActionType);
             vcsAccessLogRepository.save(vcsAccessLog.get());
