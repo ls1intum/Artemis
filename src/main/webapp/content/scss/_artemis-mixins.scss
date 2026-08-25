@@ -83,9 +83,10 @@
     .p-togglebutton,
     .p-select,
     .p-multiselect,
-    /* Search fields are projected into these bars too (FAQ, both shells); PrimeNG sizes its inputs taller. */
+    /* Search fields are projected into these bars too (FAQ, both shells); both kits size their inputs taller. */
     .p-inputtext,
     .p-iconfield,
+    .tum-ui-input,
     .btn {
         height: var(--title-bar-content-height);
         min-height: var(--title-bar-content-height);
@@ -98,16 +99,6 @@
          * icon and its label — flex does not render whitespace-only text nodes — so the labels would touch their icons.
          */
         line-height: var(--title-bar-content-height);
-    }
-
-    /*
-     * A TUM UI text input carries its own vertical padding and would otherwise stand taller than the buttons beside
-     * it. A minimum rather than a fixed height, as `.page-top-bar` gives its `.form-control`, so a control that grows
-     * past one row still can.
-     */
-    .tum-ui-input {
-        min-height: var(--title-bar-content-height);
-        padding-block: 0;
     }
 
     /*
