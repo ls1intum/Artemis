@@ -101,6 +101,15 @@ public class BuildAgentAddressRegistryService {
     private volatile boolean addressObservationAvailable = false;
 
     /**
+     * What the last logged observability state was, so the transition is announced once instead of every 30 seconds.
+     * <p>
+     * Null until the first reconcile round has concluded either way. This is the only user-visible signal that the
+     * origin binding is not constraining anything on this installation - the per-request decision logs at debug, and a
+     * deployment that expected the binding to be active would otherwise have no way to tell it is not.
+     */
+    private volatile Boolean loggedAddressObservability = null;
+
+    /**
      * Serialises the refreshes triggered by a lookup miss, so that a request which does not perform the refresh waits
      * for the one in flight instead of deciding on the snapshot that refresh is about to replace.
      * <p>
@@ -204,10 +213,12 @@ public class BuildAgentAddressRegistryService {
             Optional<Map<String, Set<String>>> observedAddresses = distributedDataAccessService.getConnectedClientAddresses();
             if (observedAddresses.isEmpty()) {
                 log.debug("The middleware cannot report connected client addresses right now, keeping the previously registered ones");
+                logAddressObservability(false);
                 return ObservationOutcome.UNOBSERVABLE;
             }
             Map<String, Set<String>> observed = observedAddresses.get();
             addressObservationAvailable = true;
+            logAddressObservability(true);
 
             var registeredAddresses = distributedDataAccessService.getDistributedBuildAgentAddresses();
             ZonedDateTime observedAt = ZonedDateTime.now();
@@ -273,6 +284,27 @@ public class BuildAgentAddressRegistryService {
             // and the next run retries. Failing here must not stop builds.
             log.error("Could not refresh the registered build agent addresses", e);
             return ObservationOutcome.FAILED;
+        }
+    }
+
+    /**
+     * Announces whether this node can observe where build agents connect from, once per change rather than once per
+     * round.
+     *
+     * @param observable whether the middleware answered the query for connected client addresses
+     */
+    private void logAddressObservability(boolean observable) {
+        if (loggedAddressObservability != null && loggedAddressObservability == observable) {
+            return;
+        }
+        loggedAddressObservability = observable;
+        if (observable) {
+            log.info("Build agent clones are bound to the addresses their agent is observed to connect from.");
+        }
+        else {
+            log.warn("The configured distributed data provider cannot report the addresses its clients connect from, so build agent clones are not bound to an agent's own "
+                    + "address on this node. The build agent networks and the per-build-job scoping still apply. An agent that shares a JVM with a core node opens no client "
+                    + "connection at all and is likewise unbound, which is expected on a single node installation.");
         }
     }
 

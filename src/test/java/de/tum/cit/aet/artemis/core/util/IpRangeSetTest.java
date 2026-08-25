@@ -58,7 +58,9 @@ class IpRangeSetTest {
      * @param malformed a value that must be refused
      */
     @ParameterizedTest
-    @ValueSource(strings = { "nonsense", "10.0.0.0/-1", "10.0.0.0/8/16", "10.0.0.0/33", "2001:db8::/129", "300.1.2.3", "10.0.0.0/", "/8", "10.0.0.256" })
+    // A blank entry is in the list because the parser reads it as the loopback address rather than rejecting it, so
+    // accepting it would silently trust 127.0.0.1 - a trailing comma in an environment variable is enough to produce one
+    @ValueSource(strings = { "nonsense", "10.0.0.0/-1", "10.0.0.0/8/16", "10.0.0.0/33", "2001:db8::/129", "300.1.2.3", "10.0.0.0/", "/8", "10.0.0.256", "", "   " })
     void shouldRefuseAMalformedRangeAtParseTime(String malformed) {
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> IpRangeSet.parse(List.of(malformed), PROPERTY)).withMessageContaining(malformed)
                 .withMessageContaining(PROPERTY);

@@ -140,8 +140,11 @@ artemis:
     Several agents on one host share a source address, which is normal behind NAT and fully supported. The allowlist
     bounds hosts, not individual agents.
 
-    If your middleware cannot report client connection addresses, Artemis logs this at startup and skips the address
-    binding rather than refusing every build. The allowlist and the build job scoping still apply.
+    The address binding applies to an agent that has a cluster connection of its own to observe. An agent sharing a
+    JVM with a core node opens none, and neither does one whose middleware client name is not its
+    `build-agent.short-name` — under Redis that name is the node identity, so the two normally differ. Those agents are
+    left unbound rather than refused, as is every agent when the middleware cannot report client addresses at all.
+    Artemis says which of the two it is in the log, once, and the allowlist and the build job scoping apply either way.
 </Callout>
 
 #### SSH behind a load balancer

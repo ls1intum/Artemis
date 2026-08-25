@@ -329,4 +329,25 @@ class BuildJobCloneTokenAuthenticationTest {
 
         verify(buildAgentAddressRegistryService, never()).isRegisteredAddressOfAgent(any(), any());
     }
+
+    /**
+     * The cheapest gate of all, and the one that keeps this method off the hot path of ordinary traffic. A student's
+     * password or {@code vcpat-} access token is not a clone token and can be recognised as such with a string
+     * comparison, so it must not cost a distributed lookup - every human git fetch in the installation carries one and
+     * reaches this method before anything else.
+     * <p>
+     * Turning the prefix into a gate is safe because every token is minted with it. It is checked here rather than
+     * assumed, since dropping it from {@code generateCloneToken} would otherwise reject every clone in the installation
+     * with nothing pointing at the cause.
+     */
+    @Test
+    void shouldRejectACredentialWithoutTheTokenPrefixBeforeAnyDistributedLookup() {
+        assertThat(new BuildJobCloneTokenService().generateCloneToken()).as("the prefix is load bearing: it is what lets a non-token credential be rejected locally")
+                .startsWith(BuildJobCloneTokenService.CLONE_TOKEN_PREFIX);
+
+        assertThat(authenticate(request(AGENT_NAME, "vcpat-a-users-access-token", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
+
+        verify(buildAgentInformationMap, never()).get(any());
+        verify(distributedDataAccessService, never()).getProcessingJobsForAgentByName(any());
+    }
 }

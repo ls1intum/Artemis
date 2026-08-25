@@ -54,6 +54,13 @@ public final class IpRangeSet {
             return EMPTY;
         }
         List<IPAddress> parsed = configuredRanges.stream().map(range -> {
+            if (range == null || range.isBlank()) {
+                // The parser reads an empty string as the loopback address rather than rejecting it, so a stray entry -
+                // a trailing comma in an environment variable is the easy way to get one - would silently add 127.0.0.1
+                // to the set. On a trusted-proxy or proxy-protocol list that quietly grants the local host the right to
+                // name an arbitrary client, which is the opposite of what an operator writing an empty value intends.
+                throw new IllegalStateException(malformedRangeMessage(String.valueOf(range), propertyName));
+            }
             IPAddressString candidate = new IPAddressString(range.trim());
             try {
                 candidate.validate();
