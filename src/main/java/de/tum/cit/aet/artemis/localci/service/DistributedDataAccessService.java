@@ -435,14 +435,6 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * @param agentName the build agent name (short name) to retrieve job IDs for
-     * @return a list of the processing job IDs on a specific build agent by name
-     */
-    public List<String> getProcessingJobIdsForAgentByName(String agentName) {
-        return getProcessingJobsForAgentByName(agentName).stream().map(BuildJobQueueItem::id).toList();
-    }
-
-    /**
      * @param memberAddress the build agent member address to retrieve job IDs for
      * @return a list of the processing job IDs on a specific build agent by member address
      */

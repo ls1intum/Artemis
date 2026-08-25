@@ -52,6 +52,20 @@ public class LoggingAspect {
     }
 
     /**
+     * Pointcut excluding the services whose arguments or return values are live credentials.
+     * <p>
+     * {@link #logAround} prints every argument and every return value, so a service that takes or produces a secret
+     * would write it into the log of every node running the development profile, from where it spreads to log
+     * aggregation and support bundles. {@code BuildJobCloneTokenService} both mints a build job's clone token and
+     * receives the presented one for comparison; the token is deliberately masked in
+     * {@code BuildJobQueueItem.toString()} for the same reason, and this closes the other way out.
+     */
+    @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService)")
+    public void notACredentialHandlingBean() {
+        // Method is empty as this is just a Pointcut, the implementations are in the advices.
+    }
+
+    /**
      * Advice that logs methods throwing exceptions.
      *
      * @param joinPoint join point for advice.
@@ -92,7 +106,7 @@ public class LoggingAspect {
      * @return result.
      * @throws Throwable throws {@link IllegalArgumentException}.
      */
-    @Around("applicationPackagePointcut() && springBeanPointcut()")
+    @Around("applicationPackagePointcut() && springBeanPointcut() && notACredentialHandlingBean()")
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
         if (log.isDebugEnabled()) {
             log.debug("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(), joinPoint.getSignature().getName(),

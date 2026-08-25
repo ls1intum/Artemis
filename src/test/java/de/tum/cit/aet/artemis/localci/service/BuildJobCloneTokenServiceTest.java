@@ -8,13 +8,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.core.config.LoggingAspect;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -132,5 +136,31 @@ class BuildJobCloneTokenServiceTest {
         BuildJobQueueItem job = buildJob(repositoryInfo(uri("student1"), "not-a-uri", null), "bjct-x");
 
         assertThat(service.coversRepository(job, new LocalVCRepositoryUri(uri("student1")))).isTrue();
+    }
+
+    /**
+     * {@link LoggingAspect} prints every argument and every return value of every {@code @Service} in the application
+     * packages, so under the development profile it would write a live clone token into the log twice per build job:
+     * once as the result of {@link BuildJobCloneTokenService#generateCloneToken()} and once as the presented
+     * credential passed to {@link BuildJobCloneTokenService#tokenMatches}.
+     * <p>
+     * That is the same exit the masked {@code BuildJobQueueItem.toString()} closes, reached by a different route, and
+     * nothing at either end makes the connection visible - which is why the aspect's own pointcut is evaluated here
+     * rather than assumed. The expression is read from the advice rather than restated, so a change to it is what this
+     * test sees.
+     */
+    @Test
+    void shouldBeExcludedFromTheArgumentLoggingAspect() throws NoSuchMethodException {
+        String expression = LoggingAspect.class.getMethod("logAround", ProceedingJoinPoint.class).getAnnotation(Around.class).value();
+        AspectJExpressionPointcut pointcut = new AspectJExpressionPointcut();
+        pointcut.setPointcutDeclarationScope(LoggingAspect.class);
+        pointcut.setExpression(expression);
+
+        assertThat(pointcut.matches(BuildJobCloneTokenService.class.getMethod("generateCloneToken"), BuildJobCloneTokenService.class))
+                .as("a freshly minted clone token must not be logged as the return value of the method that mints it").isFalse();
+        assertThat(pointcut.matches(BuildJobCloneTokenService.class.getMethod("tokenMatches", BuildJobQueueItem.class, String.class), BuildJobCloneTokenService.class))
+                .as("the presented clone token must not be logged as an argument of the comparison").isFalse();
+        assertThat(pointcut.matches(DistributedDataAccessService.class.getMethod("getProcessingJobs"), DistributedDataAccessService.class))
+                .as("the exclusion has to be specific to this service, or it would silently switch off logging for the whole module").isTrue();
     }
 }
