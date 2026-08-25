@@ -23,7 +23,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkConfiguration;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
@@ -49,10 +51,18 @@ class BuildAgentAddressRegistryServiceTest {
      */
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
+    /**
+     * The agents this cluster knows about, by short name. The middleware reports connections by <em>its</em> client
+     * name, which is the agent short name under Hazelcast and the node identity under Redis, so nothing is registered
+     * for a client that matches no agent here.
+     */
+    private Map<String, BuildAgentInformation> registeredAgents;
+
     @BeforeEach
     void setUp() {
         distributedDataAccessService = mock(DistributedDataAccessService.class);
         registeredAddresses = new HashMap<>();
+        registeredAgents = new HashMap<>();
 
         @SuppressWarnings("unchecked")
         DistributedMap<String, BuildAgentAddressInfo> map = mock(DistributedMap.class);
@@ -65,6 +75,8 @@ class BuildAgentAddressRegistryServiceTest {
 
         @SuppressWarnings("unchecked")
         DistributedMap<String, BuildAgentInformation> agentInformationMap = mock(DistributedMap.class);
+        when(agentInformationMap.get(any())).thenAnswer(invocation -> registeredAgents.get(invocation.getArgument(0)));
+        when(agentInformationMap.values()).thenAnswer(_ -> List.copyOf(registeredAgents.values()));
         buildAgentInformation = agentInformationMap;
 
         when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
@@ -72,6 +84,32 @@ class BuildAgentAddressRegistryServiceTest {
         when(distributedDataAccessService.getProcessingJobsForAgentByName(any())).thenReturn(List.of());
         when(distributedDataAccessService.getDistributedBuildAgentAddresses()).thenReturn(map);
         when(distributedDataAccessService.getBuildAgentAddressMap()).thenAnswer(_ -> Map.copyOf(registeredAddresses));
+    }
+
+    /**
+     * Stubs what the middleware reports and registers each observed client as a build agent of that name, which is the
+     * Hazelcast shape: an agent's Hazelcast client name is its own short name.
+     *
+     * @param observedByClientName the middleware's client name to the addresses it is observed at
+     */
+    private void observe(Map<String, Set<String>> observedByClientName) {
+        observedByClientName.keySet().forEach(this::registerAgent);
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(observedByClientName));
+    }
+
+    /**
+     * Registers a build agent whose middleware client name differs from its short name, which is the Redis shape: the
+     * client name is the node identity, and the agent publishes it as its member address.
+     *
+     * @param agentName     the build agent short name
+     * @param memberAddress the middleware identity the agent reports for itself
+     */
+    private void registerAgentWithMemberAddress(String agentName, String memberAddress) {
+        registeredAgents.put(agentName, new BuildAgentInformation(new BuildAgentDTO(agentName, memberAddress, agentName), 1, 0, List.of(), BuildAgentStatus.IDLE, null, null, 0));
+    }
+
+    private void registerAgent(String agentName) {
+        registerAgentWithMemberAddress(agentName, "[127.0.0.1]:5701");
     }
 
     private BuildAgentAddressRegistryService createService(List<String> allowedRanges) {
@@ -82,7 +120,7 @@ class BuildAgentAddressRegistryServiceTest {
 
     @Test
     void shouldRegisterTheAddressAnAgentConnectsFrom() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.9"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.9")));
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
@@ -97,7 +135,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldAllowSeveralAgentsBehindOneAddress() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
@@ -112,7 +150,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldAcceptEveryObservedAddressOfAnAgent() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5", "10.0.0.6"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5", "10.0.0.6")));
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
@@ -123,11 +161,12 @@ class BuildAgentAddressRegistryServiceTest {
 
     @Test
     void shouldRemoveAnAgentThatDisconnected() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.6"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5"), "agent-2", Set.of("10.0.0.6")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
+        registeredAgents.remove("agent-2");
         service.refreshRegisteredAddresses();
 
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isTrue();
@@ -136,7 +175,7 @@ class BuildAgentAddressRegistryServiceTest {
 
     @Test
     void shouldMarkAnAgentOutsideTheAllowlist() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("203.0.113.9"))));
+        observe(Map.of("agent-1", Set.of("203.0.113.9")));
         BuildAgentAddressRegistryService service = createService(List.of("10.0.0.0/8"));
 
         service.refreshRegisteredAddresses();
@@ -147,7 +186,7 @@ class BuildAgentAddressRegistryServiceTest {
 
     @Test
     void shouldKeepAnAgentInsideTheAllowlist() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of("10.0.0.0/8"));
 
         service.refreshRegisteredAddresses();
@@ -179,7 +218,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldNotConstrainAnAgentThatOpensNoClientConnection() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        observe(Map.of());
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
@@ -193,7 +232,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldStillConstrainAnObservedAgentWhileAnotherIsUnobservable() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("observed-agent", Set.of("10.0.0.5"))));
+        observe(Map.of("observed-agent", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
 
         service.refreshRegisteredAddresses();
@@ -205,7 +244,7 @@ class BuildAgentAddressRegistryServiceTest {
 
     @Test
     void shouldNotWipeTheRegistryWhenTheProviderTemporarilyReportsNothing() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
@@ -232,7 +271,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldKeepTheRegistryWhenTheProviderStopsBeingAbleToAnswer() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
@@ -256,13 +295,12 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldDenyADisconnectedAgentThatIsStillRegistered() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
         // The agent is gone from the observed connections, but its registration has not been cleaned up yet.
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
-        when(buildAgentInformation.get("agent-1")).thenReturn(mock(BuildAgentInformation.class));
+        observe(Map.of());
         service.refreshRegisteredAddresses();
 
         assertThat(registeredAddresses).as("the entry must survive as a tombstone rather than be deleted").containsKey("agent-1");
@@ -277,11 +315,12 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldDropTheEntryOnceTheAgentIsFullyGone() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        observe(Map.of());
+        registeredAgents.clear();
         service.refreshRegisteredAddresses();
 
         assertThat(registeredAddresses).isEmpty();
@@ -294,7 +333,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldMatchAnIpv4MappedIpv6AddressAgainstItsIpv4Form() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("::ffff:10.0.0.5"), "agent-2", Set.of("10.0.0.9"))));
+        observe(Map.of("agent-1", Set.of("::ffff:10.0.0.5"), "agent-2", Set.of("10.0.0.9")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
@@ -305,11 +344,13 @@ class BuildAgentAddressRegistryServiceTest {
 
     @Test
     void shouldClearTheRegistryWhenTheProviderReportsNoClients() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        // Deregistered as well, so nothing is left that could still authenticate and warrant a denying tombstone
+        observe(Map.of());
+        registeredAgents.clear();
         service.refreshRegisteredAddresses();
 
         assertThat(registeredAddresses).isEmpty();
@@ -321,7 +362,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldMatchTheSameAddressInAnotherNotation() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("0:0:0:0:0:0:0:1"))));
+        observe(Map.of("agent-1", Set.of("0:0:0:0:0:0:0:1")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
@@ -335,12 +376,12 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldRefreshOnceBeforeRefusingAnUnknownAddress() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
         // The agent reconnected from elsewhere without this node having reconciled yet.
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.9"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.9")));
 
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.9")).as("the miss must trigger a refresh rather than refuse a build of a live agent").isTrue();
     }
@@ -351,7 +392,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldRefuseMissingOrUnusableArguments() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
@@ -368,7 +409,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldNotExemptAnAgentObservedOutsideTheAllowlistFromOriginBinding() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("203.0.113.9"))));
+        observe(Map.of("agent-1", Set.of("203.0.113.9")));
         BuildAgentAddressRegistryService service = createService(List.of("10.0.0.0/8"));
 
         service.refreshRegisteredAddresses();
@@ -388,7 +429,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldRefuseAMissWhenNothingCouldBeObserved() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
@@ -406,7 +447,7 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldKeepEnforcingTheLastGoodSnapshotWhenTheProviderStopsAnswering() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
 
@@ -445,13 +486,13 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldNotExemptAnAgentThatAppearedAfterTheLastReconcile() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        observe(Map.of());
         BuildAgentAddressRegistryService service = createService(List.of());
         service.refreshRegisteredAddresses();
         assertThat(registeredAddresses).as("nothing is connected yet").isEmpty();
 
         // The agent connects and publishes itself; no callback tells this node, and the scheduled reconcile is not due.
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("agent-1", Set.of("10.0.0.5"))));
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
 
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.99")).as("the decision must reconcile rather than reuse an observation taken before the agent connected")
                 .isFalse();
@@ -472,6 +513,7 @@ class BuildAgentAddressRegistryServiceTest {
         CountDownLatch providerEntered = new CountDownLatch(1);
         CountDownLatch releaseProvider = new CountDownLatch(1);
         AtomicInteger providerCalls = new AtomicInteger();
+        registerAgent("agent-1");
         when(distributedDataAccessService.getConnectedClientAddresses()).thenAnswer(_ -> {
             if (providerCalls.incrementAndGet() == 1) {
                 providerEntered.countDown();
@@ -507,11 +549,80 @@ class BuildAgentAddressRegistryServiceTest {
      */
     @Test
     void shouldSubscribeToConnectionAndDisconnectionEvents() {
-        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+        observe(Map.of());
 
         createService(List.of()).registerListeners();
 
         verify(distributedDataAccessService).addConnectionStateListener(any());
         verify(distributedDataAccessService).addClientDisconnectionListener(any());
     }
+
+    /**
+     * The Redis shape. Redis has no member/client split, so a node's client name is its node identity and cannot also
+     * be the build agent short name on a node that is both core node and build agent - under the multi-node stacks the
+     * two read {@code artemis-node-2} and {@code artemis-build-agent-2}. The agent publishes that identity as its
+     * member address, which is what ties the two together.
+     * <p>
+     * Without this the registry would hold nothing on every Redis installation, every agent would fall through to the
+     * not-observable exemption, and the origin binding would be silently inert on a supported backend.
+     */
+    @Test
+    void shouldRegisterAnAgentWhoseMiddlewareClientNameIsItsNodeIdentity() {
+        registerAgentWithMemberAddress("artemis-build-agent-2", "artemis-node-2");
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("artemis-node-2", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("artemis-build-agent-2", "10.0.0.5")).as("the agent is bound to where its node's Redis client connects from").isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("artemis-build-agent-2", "10.0.0.6")).isFalse();
+    }
+
+    /**
+     * A client that is no build agent - another core node's own connection, which under Redis looks exactly like an
+     * agent's - must not become an entry. It would only be a row in the admin view for something that never clones.
+     */
+    @Test
+    void shouldIgnoreAConnectedClientThatIsNotABuildAgent() {
+        when(distributedDataAccessService.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of("artemis-node-1", Set.of("10.0.0.5"))));
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(registeredAddresses).isEmpty();
+    }
+
+    /**
+     * The automatic rate limit exemption. A build agent drives far more git traffic from one address than any person
+     * does, so a per-address limit sized for people would throttle it; registering happens when the agent connects, so
+     * the exemption follows the agents instead of being a list an operator has to maintain.
+     */
+    @Test
+    void shouldRecogniseARegisteredAddressWithoutNamingTheAgent() {
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredBuildAgentAddress("10.0.0.5")).isTrue();
+        assertThat(service.isRegisteredBuildAgentAddress("::ffff:10.0.0.5")).as("the two sides are formatted independently, so the mapped form has to match too").isTrue();
+        assertThat(service.isRegisteredBuildAgentAddress("10.0.0.6")).isFalse();
+        assertThat(service.isRegisteredBuildAgentAddress(null)).isFalse();
+    }
+
+    /**
+     * A disconnected agent keeps a denying tombstone with no addresses, and that must not keep its former address
+     * exempt: the exemption exists for the traffic of a live agent.
+     */
+    @Test
+    void shouldStopRecognisingTheAddressOfADisconnectedAgent() {
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        observe(Map.of());
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredBuildAgentAddress("10.0.0.5")).isFalse();
+    }
+
 }

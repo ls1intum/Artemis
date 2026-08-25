@@ -13,6 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -216,7 +217,7 @@ public class BuildAgentAddressRegistryService {
                 logAddressObservability(false);
                 return ObservationOutcome.UNOBSERVABLE;
             }
-            Map<String, Set<String>> observed = observedAddresses.get();
+            Map<String, Set<String>> observed = toBuildAgentNames(observedAddresses.get());
             addressObservationAvailable = true;
             logAddressObservability(true);
 
@@ -307,6 +308,68 @@ public class BuildAgentAddressRegistryService {
                     + "address on this node. The build agent networks and the per-build-job scoping still apply. An agent that shares a JVM with a core node opens no client "
                     + "connection at all and is likewise unbound, which is expected on a single node installation.");
         }
+    }
+
+    /**
+     * Translates the middleware's view of who is connected into build agent short names, dropping every client that is
+     * not a build agent.
+     * <p>
+     * The two providers name the same agent differently, and getting this wrong is silent: the registry would simply
+     * never hold an entry for any agent, every agent would take the not-observable exemption, and the origin binding
+     * would be off with nothing saying so.
+     * <ul>
+     * <li><b>Hazelcast</b> names a client by its instance name, which the agent sets to its own short name, so the
+     * observed key already is the short name.</li>
+     * <li><b>Redis</b> has no member/client split. A node's client name is its node identity, which is unique per node
+     * and therefore cannot be the agent short name on a node that is both core node and build agent. The agent
+     * publishes that identity as its {@code memberAddress}, so it is what maps the two together.</li>
+     * </ul>
+     * A client matching no build agent is left out rather than registered under its own name: it is another core node,
+     * and an entry for it would only be a row in the admin view for something that never clones.
+     * <p>
+     * The {@code memberAddress} side is self-reported, so a cluster member could claim another agent's identity and
+     * inherit its observed addresses. That is the boundary this registry already documents - such a member can read
+     * every build job's clone token straight out of the queue - and it is the cluster password and the configured
+     * build agent networks that keep non-members out.
+     *
+     * @param observedByClientName the middleware's client name to the addresses it is observed at
+     * @return the same addresses keyed by build agent short name, without the clients that are not build agents
+     */
+    private Map<String, Set<String>> toBuildAgentNames(Map<String, Set<String>> observedByClientName) {
+        var buildAgents = distributedDataAccessService.getDistributedBuildAgentInformation();
+        Map<String, Set<String>> observedByAgentName = new HashMap<>();
+        Map<String, String> agentNameByMemberAddress = null;
+
+        for (var entry : observedByClientName.entrySet()) {
+            String clientName = entry.getKey();
+            if (buildAgents.get(clientName) != null) {
+                // Hazelcast: the client name is the agent short name
+                observedByAgentName.merge(clientName, new HashSet<>(entry.getValue()), (existing, added) -> {
+                    existing.addAll(added);
+                    return existing;
+                });
+                continue;
+            }
+            if (agentNameByMemberAddress == null) {
+                // Built once per round and only when a client did not resolve directly, so the Hazelcast path never
+                // pays for it
+                agentNameByMemberAddress = new HashMap<>();
+                for (var agent : buildAgents.values()) {
+                    if (agent != null && agent.buildAgent() != null && agent.buildAgent().memberAddress() != null) {
+                        agentNameByMemberAddress.put(agent.buildAgent().memberAddress(), agent.buildAgent().name());
+                    }
+                }
+            }
+            String agentName = agentNameByMemberAddress.get(clientName);
+            if (agentName != null) {
+                // Redis: the client name is the node identity the agent published as its member address
+                observedByAgentName.merge(agentName, new HashSet<>(entry.getValue()), (existing, added) -> {
+                    existing.addAll(added);
+                    return existing;
+                });
+            }
+        }
+        return observedByAgentName;
     }
 
     private void logAllowlistOutcome(String agentName, Set<String> addresses, boolean withinAllowlist) {
@@ -502,6 +565,37 @@ public class BuildAgentAddressRegistryService {
         // those needs a conversion that neither string equality nor IPAddress.equals performs, which is why this goes
         // through IpAddresses rather than comparing parsed values directly.
         return addresses.stream().anyMatch(address -> IpAddresses.sameHost(address, ipAddress));
+    }
+
+    /**
+     * Checks whether an address belongs to some build agent this cluster has observed connecting from it.
+     * <p>
+     * This is the automatic counterpart of listing an address in {@code artemis.rate-limiting.exempt-addresses}: build
+     * agents drive far more git traffic from one address than any person does - several concurrent jobs, each cloning
+     * an assignment, test, solution and auxiliary repository - so a per-address limit sized for people would throttle
+     * them, and the operator would have to maintain a static list of agent addresses by hand and keep it correct as
+     * agents move. Registering happens when the agent connects, so the exemption follows the agents by itself.
+     * <p>
+     * Deliberately answered from the local snapshot with no reconcile: this decides whether to <em>skip</em> a rate
+     * limit, so a miss costs a limited request rather than a refused one, and it must stay cheap enough to run ahead of
+     * the limiter it guards.
+     * <p>
+     * Unlike {@link #isRegisteredAddressOfAgent} this does not ask <b>which</b> agent, because it grants nothing: it
+     * decides only whether to count a request against a quota. Authorization always names the agent.
+     *
+     * @param ipAddress the address a request came from, resolved without trusting client-set headers
+     * @return whether any build agent is currently registered at that address
+     */
+    public boolean isRegisteredBuildAgentAddress(@Nullable String ipAddress) {
+        if (ipAddress == null) {
+            return false;
+        }
+        for (Set<String> addresses : addressesByAgentName.values()) {
+            if (addresses.contains(ipAddress) || addresses.stream().anyMatch(address -> IpAddresses.sameHost(address, ipAddress))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

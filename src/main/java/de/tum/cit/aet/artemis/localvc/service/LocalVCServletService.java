@@ -308,10 +308,19 @@ public class LocalVCServletService {
             return;
         }
 
-        // If it is a fetch request, we check if it is the build agent that is fetching the repository. Build agents that
-        // authenticate with an ssh key never present this credential pair, so the shortcut is closed for them entirely:
-        // an unused way in that grants repository-wide read is worth strictly less than the attack surface it carries.
-        if (repositoryAction == RepositoryActionType.READ && !useSshForBuildAgent) {
+        // If it is a fetch request, we check if it is the build agent that is fetching the repository. Two conditions
+        // close this shortcut entirely rather than narrowing it, because what it grants - repository-wide read, ahead
+        // of the rate limit, the authorization checks and the access log - is worth strictly less than the attack
+        // surface it carries wherever something else can do the job.
+        //
+        // Local CI is one of them: every build job there carries a token scoped to its own repositories, so no Artemis
+        // build agent has any use for a shared credential. LocalVCBuildAgentCredentialsValidator already refuses to
+        // start such a node with one configured; this makes the shortcut unreachable rather than merely unconfigured,
+        // so a credential that arrives by some other route still opens nothing. What remains is a local VC node
+        // without local CI, whose client is Jenkins - not an Artemis build agent, and with neither key nor build job.
+        //
+        // The other is ssh: build agents that authenticate with a key never present this pair.
+        if (repositoryAction == RepositoryActionType.READ && !useSshForBuildAgent && distributedDataAccessService.isEmpty()) {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             // A blank configured credential must never match: this shortcut returns ahead of the rate limit, the
             // repository authorization checks and the access log, so an empty configured password would hand
@@ -569,17 +578,21 @@ public class LocalVCServletService {
             // O(1) local or single-key work; getProcessingJobsForAgentByName below reads the whole distributed
             // processing job map and deserializes every entry to filter it. A caller inside the build agent networks
             // who knows a registered agent name passes both cheap gates with any password at all, so without this the
-            // scan is reachable in a loop by a caller that ordinary authentication would already be throttling. The
-            // limit is per source address and deliberately far above real agent traffic; see BUILD_AGENT_CLONE_TOKEN.
+            // scan is reachable in a loop by a caller that ordinary authentication would already be throttling.
+            //
+            // Two things keep the limit off legitimate agents, so it can be sized for guessing rather than for build
+            // throughput. An address some agent is registered at skips it entirely, which follows the agents around
+            // without an operator maintaining a list. And a check that succeeds spends nothing: only a decline does,
+            // below. That covers the agents with no registration to go by - one sharing a JVM with a core node has no
+            // observable connection - whose clone rate is otherwise the highest of all.
             //
             // Over the limit falls through rather than rejecting, matching the contract documented above: this method
             // never rejects a request, it only declines to treat it as a build agent clone. The request then meets the
             // ordinary authentication rate limiter and user authentication, which is what should be answering a caller
             // behaving like this anyway.
-            try {
-                rateLimitService.enforcePerMinute(new IPAddressString(peerIpAddress).getAddress(), RateLimitType.BUILD_AGENT_CLONE_TOKEN);
-            }
-            catch (RateLimitExceededException exception) {
+            IPAddress peerAddress = new IPAddressString(peerIpAddress).getAddress();
+            boolean registeredAgentAddress = buildAgentAddressRegistryService.get().isRegisteredBuildAgentAddress(peerIpAddress);
+            if (!registeredAgentAddress && !rateLimitService.hasRemainingBudget(peerAddress, RateLimitType.BUILD_AGENT_CLONE_TOKEN)) {
                 log.warn("Rate limiting the build agent clone token check for agent {} from {}; falling through to user authentication", agentName, peerIpAddress);
                 return false;
             }
@@ -587,6 +600,7 @@ public class LocalVCServletService {
             var processingJobs = distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName);
             if (processingJobs.isEmpty()) {
                 // A registered agent running nothing, so no token can match
+                spendCloneTokenBudget(registeredAgentAddress, peerAddress);
                 return false;
             }
 
@@ -603,6 +617,7 @@ public class LocalVCServletService {
                 // The one case that looks like credential guessing against a live agent, so it must not be the one case
                 // that leaves no trace.
                 log.warn("Build agent {} from {} presented a credential matching none of its {} running build jobs", agentName, peerIpAddress, processingJobs.size());
+                spendCloneTokenBudget(registeredAgentAddress, peerAddress);
                 return false;
             }
 
@@ -618,12 +633,14 @@ public class LocalVCServletService {
                 // Also the signal for a misconfigured proxy, where the token is right but the address the request
                 // appears to come from is not the agent's.
                 log.warn("Rejecting a build agent clone claiming to be agent {} from {}, which is not an address that agent is connected from", agentName, peerIpAddress);
+                spendCloneTokenBudget(registeredAgentAddress, peerAddress);
                 return false;
             }
 
             if (!tokenService.coversRepository(matchingBuildJob, localVCRepositoryUri)) {
                 log.warn("Build agent {} presented the token of build job {} for repository {}, which is not one of that job's repositories {}", agentName, matchingBuildJob.id(),
                         localVCRepositoryUri, tokenService.getRepositoryIdentities(matchingBuildJob));
+                spendCloneTokenBudget(registeredAgentAddress, peerAddress);
                 return false;
             }
             // Tells the pre-upload hook that this request is a build agent clone, so that it does not relabel
@@ -642,6 +659,23 @@ public class LocalVCServletService {
             // so a malformed header or an unparsable repository path is still handled by the normal path below.
             log.debug("Could not authenticate the request as a build agent clone", e);
             return false;
+        }
+    }
+
+    /**
+     * Charges one attempt against a caller's clone-token budget, for a check that reached the distributed scan and then
+     * declined.
+     * <p>
+     * Only declines are charged. A build agent whose checks succeed therefore never approaches the limit however many
+     * repositories it clones, which is what lets the limit be sized like any other guessing bound instead of having to
+     * clear the busiest plausible agent - the sizing that made an earlier default an order of magnitude too permissive.
+     *
+     * @param registeredAgentAddress whether this address is already exempt because some agent is registered at it
+     * @param peerAddress            the resolved client address, may be null if it could not be parsed
+     */
+    private void spendCloneTokenBudget(boolean registeredAgentAddress, @Nullable IPAddress peerAddress) {
+        if (!registeredAgentAddress) {
+            rateLimitService.consumePerMinute(peerAddress, RateLimitType.BUILD_AGENT_CLONE_TOKEN);
         }
     }
 

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -33,7 +32,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkConfiguration;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
-import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
@@ -94,6 +92,8 @@ class BuildJobCloneTokenAuthenticationTest {
 
         // Permissive by default: a void mock does nothing, so every other test in this class runs as if under the limit.
         rateLimitService = mock(RateLimitService.class);
+        // The default for a caller with budget left; the tests that care set it to false explicitly
+        when(rateLimitService.hasRemainingBudget(any(), any())).thenReturn(true);
         localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, rateLimitService, null,
                 Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()), policyAllowingEverything());
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
@@ -209,9 +209,9 @@ class BuildJobCloneTokenAuthenticationTest {
     @Test
     void shouldNotReadTheProcessingJobsOnceTheSourceIsOverTheLimit() {
         when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
-        doThrow(new RateLimitExceededException(60)).when(rateLimitService).enforcePerMinute(any(), eq(RateLimitType.BUILD_AGENT_CLONE_TOKEN));
+        when(rateLimitService.hasRemainingBudget(any(), eq(RateLimitType.BUILD_AGENT_CLONE_TOKEN))).thenReturn(false);
 
-        assertThat(authenticate(request(AGENT_NAME, "arbitrary-password", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
+        assertThat(authenticate(request(AGENT_NAME, "bjct-arbitrary-password", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
         // Even the correct token gets no fast path while over the limit; it falls through to user authentication.
         assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
 
@@ -219,14 +219,59 @@ class BuildJobCloneTokenAuthenticationTest {
     }
 
     /**
-     * The limit must be consumed per source address, and only past the cheap gates, so ordinary non-agent traffic
-     * cannot exhaust the agents' budget.
+     * The limit must be spent per source address, and only past the cheap gates, so ordinary non-agent traffic cannot
+     * exhaust the agents' budget.
      */
     @Test
-    void shouldNotConsumeTheLimitForAUsernameThatIsNotABuildAgent() {
+    void shouldNotSpendTheLimitForAUsernameThatIsNotABuildAgent() {
         assertThat(authenticate(request("not-an-agent", "whatever", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
 
-        verify(rateLimitService, never()).enforcePerMinute(any(), any());
+        verify(rateLimitService, never()).consumePerMinute(any(), any());
+    }
+
+    /**
+     * A check that succeeds must cost nothing. Build agents clone several repositories per job and run jobs
+     * concurrently, so charging every successful check would force the limit to be sized for the busiest plausible
+     * agent instead of for guessing - which is how an earlier default ended up an order of magnitude too permissive.
+     */
+    @Test
+    void shouldNotSpendTheLimitOnASuccessfulCheck() {
+        when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
+
+        assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isTrue();
+
+        verify(rateLimitService, never()).consumePerMinute(any(), any());
+    }
+
+    /**
+     * The counterpart: a credential that reached the scan and matched nothing is exactly what the limit exists to
+     * bound, so that attempt is charged.
+     */
+    @Test
+    void shouldSpendTheLimitOnACheckThatReachedTheScanAndDeclined() {
+        when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
+
+        assertThat(authenticate(request(AGENT_NAME, "bjct-not-the-token", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
+
+        verify(rateLimitService).consumePerMinute(any(), eq(RateLimitType.BUILD_AGENT_CLONE_TOKEN));
+    }
+
+    /**
+     * An address some build agent is registered at skips the limiter altogether. That is the automatic form of listing
+     * an agent in {@code artemis.rate-limiting.exempt-addresses}: it follows the agents as they connect instead of
+     * being a list an operator has to keep correct.
+     */
+    @Test
+    void shouldNotLimitAnAddressABuildAgentIsRegisteredAt() {
+        when(buildAgentAddressRegistryService.isRegisteredBuildAgentAddress(AGENT_ADDRESS)).thenReturn(true);
+        when(rateLimitService.hasRemainingBudget(any(), any())).thenReturn(false);
+        when(distributedDataAccessService.getProcessingJobsForAgentByName(AGENT_NAME)).thenReturn(List.of(buildJob(CLONE_TOKEN, assignmentRepositoryUri)));
+
+        assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS)))
+                .as("an exhausted budget must not stop a " + "registered agent, whose address is exempt").isTrue();
+
+        assertThat(authenticate(request(AGENT_NAME, "bjct-not-the-token", "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();
+        verify(rateLimitService, never()).consumePerMinute(any(), any());
     }
 
     @Test

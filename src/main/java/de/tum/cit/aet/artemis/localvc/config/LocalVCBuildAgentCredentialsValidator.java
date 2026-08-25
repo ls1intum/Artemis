@@ -53,38 +53,45 @@ public class LocalVCBuildAgentCredentialsValidator {
     }
 
     /**
-     * Rejects a node that has no way to authenticate build agents, and otherwise records which mechanisms it accepts.
+     * Rejects a node whose build agent authentication is either impossible or a shared secret it no longer needs, and
+     * otherwise records which mechanism it accepts.
      * <p>
      * The logged line matters because a core node configured for ssh rejects an agent that still clones over https, and
      * in a multi node setup the two settings live in separate files. That failure surfaces as an authentication error
      * saying nothing about the cause, so having each node state what it accepts makes the disagreement visible.
      *
-     * @throws IllegalStateException if this node has no local CI, ssh is disabled and the build-agent git credentials
-     *                                   are not both configured, leaving nothing that could authenticate a client
+     * @throws IllegalStateException if this node runs local CI and still configures the shared credential pair, or if
+     *                                   it runs no local CI, has ssh disabled and the pair is not both configured,
+     *                                   leaving nothing that could authenticate a client
      */
     @PostConstruct
     public void validateBuildAgentCredentials() {
+        boolean anyCredentialConfigured = StringUtils.hasText(environment.getProperty(BUILD_AGENT_GIT_USERNAME_PROPERTY))
+                || StringUtils.hasText(environment.getProperty(BUILD_AGENT_GIT_PASSWORD_PROPERTY));
         boolean credentialPairConfigured = StringUtils.hasText(environment.getProperty(BUILD_AGENT_GIT_USERNAME_PROPERTY))
                 && StringUtils.hasText(environment.getProperty(BUILD_AGENT_GIT_PASSWORD_PROPERTY));
+        boolean localCiActive = environment.matchesProfiles(PROFILE_LOCALCI);
+
+        // Checked before the ssh branch below, because the objection is to the credential existing at all rather than
+        // to it being reachable. With ssh the pair is not offered to build agents, but it stays a valid Basic
+        // credential on this node, and leaving one configured is what makes it a shared secret worth stealing.
+        if (localCiActive && anyCredentialConfigured) {
+            throw new IllegalStateException("This node runs local CI and must not configure a shared build-agent git credential. Clear " + BUILD_AGENT_GIT_USERNAME_PROPERTY
+                    + " and " + BUILD_AGENT_GIT_PASSWORD_PROPERTY
+                    + ". Build agents authenticate per build job here: over https with the job's clone token, which covers its assignment, test, solution and auxiliary "
+                    + "repositories and stops working when the job ends, or with an ssh key by setting " + BUILD_AGENT_USE_SSH_PROPERTY_NAME
+                    + " to true, which is preferred. One static secret held by every agent and every core node opens every repository in the installation, so it is refused "
+                    + "here rather than deprecated. It remains available on a node without local CI, which is the Jenkins with LocalVC setup.");
+        }
 
         if (environment.getProperty(BUILD_AGENT_USE_SSH_PROPERTY_NAME, Boolean.class, false)) {
-            log.info("Build agents authenticate with an ssh key ({}=true), scoped to the repositories of the build jobs they are running. This node no longer grants the "
-                    + "build-agent git username and password read access to every repository.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+            log.info("Build agents authenticate with an ssh key ({}=true), scoped to the repositories of the build jobs they are running.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
             return;
         }
 
-        if (environment.matchesProfiles(PROFILE_LOCALCI)) {
-            // Local CI issues a clone token per build job, so build agents can always authenticate here regardless of
-            // the credential pair. A blank pair is the desirable state and must not stop the node from starting.
-            if (credentialPairConfigured) {
-                log.info(
-                        "Build agents authenticate with the per-build-job clone token. The configured {} and {} are also still accepted, which is deprecated: clear both unless "
-                                + "a client that is not an Artemis build agent, such as Jenkins, clones from this node.",
-                        BUILD_AGENT_GIT_USERNAME_PROPERTY, BUILD_AGENT_GIT_PASSWORD_PROPERTY);
-            }
-            else {
-                log.info("Build agents authenticate with the per-build-job clone token, and no shared build-agent git credentials are configured.");
-            }
+        if (localCiActive) {
+            log.info("Build agents authenticate with the per-build-job clone token, which covers that job's assignment, test, solution and auxiliary repositories and nothing "
+                    + "else. No shared build-agent git credential is configured, and configuring one is refused on a local CI node.");
             return;
         }
 
@@ -95,7 +102,7 @@ public class LocalVCBuildAgentCredentialsValidator {
                     + "authenticate with an ssh key instead.");
         }
 
-        log.info("Build agents authenticate with the configured git username and password, which is deprecated. Set {}=true on the build agents and on every core node to use "
-                + "ssh keys instead.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+        log.info("Build agents authenticate with the configured git username and password, which is deprecated and only supported because this node runs no local CI. Set {}=true "
+                + "on the build agents and on every core node to use ssh keys instead.", BUILD_AGENT_USE_SSH_PROPERTY_NAME);
     }
 }
