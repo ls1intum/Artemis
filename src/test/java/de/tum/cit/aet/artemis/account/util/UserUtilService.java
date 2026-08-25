@@ -745,9 +745,10 @@ public class UserUtilService {
         if (user.getId() == null) {
             return;
         }
-        // Only when nothing is recorded yet. A helper that re-saves an existing account must not overwrite a decision the
-        // test set on purpose, and the create helpers all funnel through here.
-        if (userAiPreferenceService.findDecision(user.getId()) == null) {
+        // Only when the account has no preference row at all. Checking the decision instead would re-seed an account whose
+        // decision a test cleared on purpose: clearAiSelectionDecision leaves the row behind when it still holds a Memiris
+        // choice, and a null decision then looks exactly like never having decided.
+        if (!userAiPreferenceService.hasPreferenceRow(user.getId())) {
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
         }
     }

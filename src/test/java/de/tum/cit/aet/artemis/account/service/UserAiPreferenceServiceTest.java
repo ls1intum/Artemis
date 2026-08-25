@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.UserAiPreference;
 import de.tum.cit.aet.artemis.account.repository.UserAiPreferenceRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -198,6 +199,36 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
      * The batch lookup is the reason this cluster could be extracted at all: assembling a post with its answers reads one
      * decision per answer author, and doing that one query at a time would have been an N+1 on an Iris request path.
      */
+    @Nested
+    class ConcurrentFirstWrite {
+
+        /**
+         * A row keyed on the user id means two first writes for the same account both find nothing and both insert. The
+         * loser used to surface a primary-key violation on a request that did nothing wrong; it reloads and re-applies
+         * instead. Simulated by inserting the row behind the service's back between its read and its save.
+         */
+        @Test
+        void recordingADecisionSurvivesARowCreatedConcurrently() {
+            userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
+
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, ZonedDateTime.now());
+
+            assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(AiSelectionDecision.LOCAL_AI);
+            assertThat(userAiPreferenceRepository.findAllByUserIdIn(Set.of(user.getId()))).hasSize(1);
+        }
+
+        @Test
+        void aClearedDecisionIsStillDistinguishableFromNoRow() {
+            userAiPreferenceService.setMemirisEnabled(user.getId(), false);
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+            userAiPreferenceService.clearDecision(user.getId());
+
+            // The row survives because it still carries the Memiris choice, so "no decision" and "no row" differ here.
+            assertThat(userAiPreferenceService.findDecision(user.getId())).isNull();
+            assertThat(userAiPreferenceService.hasPreferenceRow(user.getId())).isTrue();
+        }
+    }
+
     @Nested
     class BatchLookup {
 

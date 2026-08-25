@@ -167,9 +167,10 @@ therefore indistinguishable from one that had never been initialised, and `PUT a
 activated it again and handed out a working password. Reaching that endpoint needs only an authenticated
 session, and one issued before the deactivation keeps working.
 
-With a separate marker, initialisation happens exactly once per account: the marker is claimed in a single
+With a separate marker, initialisation happens at most once per account: the marker is claimed in a single
 conditional statement, so a second — or concurrent — call finds nothing to claim, and a deactivated account
-was initialised earlier and so carries the marker already.
+was initialised earlier and so carries the marker already. It can also happen zero times, which is the point:
+an account deactivated before it ever completed a launch is refused rather than handed a password.
 
 :::note
 The launch itself does not check account state. With `artemis.lti.trust-external-lti-systems` enabled, a

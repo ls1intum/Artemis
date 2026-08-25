@@ -7,11 +7,13 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.UserAiPreference;
@@ -81,6 +83,18 @@ public class UserAiPreferenceService {
     }
 
     /**
+     * Whether the account has a preference row at all, which is not the same as having decided: {@link #clearDecision}
+     * leaves the row behind when it still carries a Memiris choice. Callers that need to tell "never recorded anything"
+     * from "decision cleared" have to ask this rather than compare the decision against null.
+     *
+     * @param userId the account
+     * @return true if a row exists
+     */
+    public boolean hasPreferenceRow(long userId) {
+        return userAiPreferenceRepository.findByUserId(userId).isPresent();
+    }
+
+    /**
      * Whether Memiris may remember anything about the account. An account with no row has it enabled, which is what the
      * column default meant.
      *
@@ -126,10 +140,10 @@ public class UserAiPreferenceService {
      * @param when     when it chose
      */
     public void recordDecision(long userId, AiSelectionDecision decision, ZonedDateTime when) {
-        UserAiPreference preference = findOrCreate(userId);
-        preference.setSelectionDecision(decision);
-        preference.setSelectionDecisionDate(when);
-        userAiPreferenceRepository.save(preference);
+        saveHandlingConcurrentInsert(userId, preference -> {
+            preference.setSelectionDecision(decision);
+            preference.setSelectionDecisionDate(when);
+        });
     }
 
     /**
@@ -139,9 +153,7 @@ public class UserAiPreferenceService {
      * @param memirisEnabled whether Memiris may remember anything
      */
     public void setMemirisEnabled(long userId, boolean memirisEnabled) {
-        UserAiPreference preference = findOrCreate(userId);
-        preference.setMemirisEnabled(memirisEnabled);
-        userAiPreferenceRepository.save(preference);
+        saveHandlingConcurrentInsert(userId, preference -> preference.setMemirisEnabled(memirisEnabled));
     }
 
     /**
@@ -163,8 +175,26 @@ public class UserAiPreferenceService {
         });
     }
 
-    private UserAiPreference findOrCreate(long userId) {
-        return userAiPreferenceRepository.findByUserId(userId).orElseGet(() -> new UserAiPreference(userId));
+    /**
+     * Saves a row that may have been created concurrently.
+     * <p>
+     * These rows are keyed on the user id, so two first writes for the same account both find nothing and both insert.
+     * The loser gets a primary-key violation, which would surface as an error on a request that did nothing wrong. It
+     * reloads instead and applies the change to the row the winner created.
+     *
+     * @param userId   the account
+     * @param mutation the change to apply
+     */
+    private void saveHandlingConcurrentInsert(long userId, Consumer<UserAiPreference> mutation) {
+        UserAiPreference row = userAiPreferenceRepository.findByUserId(userId).orElseGet(() -> new UserAiPreference(userId));
+        mutation.accept(row);
+        try {
+            userAiPreferenceRepository.save(row);
+        }
+        catch (DataIntegrityViolationException concurrentInsert) {
+            UserAiPreference created = userAiPreferenceRepository.findByUserId(userId).orElseThrow(() -> concurrentInsert);
+            mutation.accept(created);
+            userAiPreferenceRepository.save(created);
+        }
     }
-
 }

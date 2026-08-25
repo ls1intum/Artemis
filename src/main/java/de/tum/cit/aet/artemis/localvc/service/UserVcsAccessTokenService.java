@@ -5,10 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.programming.domain.UserVCSAccessToken;
@@ -84,10 +86,10 @@ public class UserVcsAccessTokenService {
      * @param expiryDate when the token stops being usable
      */
     public void store(long userId, String token, ZonedDateTime expiryDate) {
-        UserVCSAccessToken stored = userVcsAccessTokenRepository.findByUserId(userId).orElseGet(() -> new UserVCSAccessToken(userId, null, null));
-        stored.setToken(token);
-        stored.setExpiryDate(expiryDate);
-        userVcsAccessTokenRepository.save(stored);
+        saveHandlingConcurrentInsert(userId, stored -> {
+            stored.setToken(token);
+            stored.setExpiryDate(expiryDate);
+        });
     }
 
     /**
@@ -109,5 +111,28 @@ public class UserVcsAccessTokenService {
      */
     public List<Long> findUserIdsWithTokenExpiringBetween(ZonedDateTime from, ZonedDateTime to) {
         return userVcsAccessTokenRepository.findUserIdsWithTokenExpiringBetween(from, to);
+    }
+
+    /**
+     * Saves a row that may have been created concurrently.
+     * <p>
+     * These rows are keyed on the user id, so two first writes for the same account both find nothing and both insert.
+     * The loser gets a primary-key violation, which would surface as an error on a request that did nothing wrong. It
+     * reloads instead and applies the change to the row the winner created.
+     *
+     * @param userId   the account
+     * @param mutation the change to apply
+     */
+    private void saveHandlingConcurrentInsert(long userId, Consumer<UserVCSAccessToken> mutation) {
+        UserVCSAccessToken row = userVcsAccessTokenRepository.findByUserId(userId).orElseGet(() -> new UserVCSAccessToken(userId, null, null));
+        mutation.accept(row);
+        try {
+            userVcsAccessTokenRepository.save(row);
+        }
+        catch (DataIntegrityViolationException concurrentInsert) {
+            UserVCSAccessToken created = userVcsAccessTokenRepository.findByUserId(userId).orElseThrow(() -> concurrentInsert);
+            mutation.accept(created);
+            userVcsAccessTokenRepository.save(created);
+        }
     }
 }

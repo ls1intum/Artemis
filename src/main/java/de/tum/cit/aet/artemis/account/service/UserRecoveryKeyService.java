@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -62,9 +63,7 @@ public class UserRecoveryKeyService {
      * @param activationKey the key to store
      */
     public void storeActivationKey(long userId, String activationKey) {
-        UserRecoveryKey row = userRecoveryKeyRepository.findByUserId(userId).orElseGet(() -> new UserRecoveryKey(userId));
-        row.setActivationKey(activationKey);
-        userRecoveryKeyRepository.save(row);
+        saveHandlingConcurrentInsert(userId, row -> row.setActivationKey(activationKey));
     }
 
     /**
@@ -75,10 +74,10 @@ public class UserRecoveryKeyService {
      * @param resetDate when the key was issued, which is what bounds its validity
      */
     public void storeResetKey(long userId, String resetKey, Instant resetDate) {
-        UserRecoveryKey row = userRecoveryKeyRepository.findByUserId(userId).orElseGet(() -> new UserRecoveryKey(userId));
-        row.setResetKey(resetKey);
-        row.setResetDate(resetDate);
-        userRecoveryKeyRepository.save(row);
+        saveHandlingConcurrentInsert(userId, row -> {
+            row.setResetKey(resetKey);
+            row.setResetDate(resetDate);
+        });
     }
 
     /**
@@ -151,5 +150,28 @@ public class UserRecoveryKeyService {
                 userRecoveryKeyRepository.save(row);
             }
         });
+    }
+
+    /**
+     * Saves a row that may have been created concurrently.
+     * <p>
+     * These rows are keyed on the user id, so two first writes for the same account both find nothing and both insert.
+     * The loser gets a primary-key violation, which would surface as an error on a request that did nothing wrong. It
+     * reloads instead and applies the change to the row the winner created.
+     *
+     * @param userId   the account
+     * @param mutation the change to apply
+     */
+    private void saveHandlingConcurrentInsert(long userId, Consumer<UserRecoveryKey> mutation) {
+        UserRecoveryKey row = userRecoveryKeyRepository.findByUserId(userId).orElseGet(() -> new UserRecoveryKey(userId));
+        mutation.accept(row);
+        try {
+            userRecoveryKeyRepository.save(row);
+        }
+        catch (DataIntegrityViolationException concurrentInsert) {
+            UserRecoveryKey created = userRecoveryKeyRepository.findByUserId(userId).orElseThrow(() -> concurrentInsert);
+            mutation.accept(created);
+            userRecoveryKeyRepository.save(created);
+        }
     }
 }
