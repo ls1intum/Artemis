@@ -64,7 +64,10 @@ public record CourseCreateDTO(
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides. Creating a course is
         // admin-only, so the same admin-gated settings the update form exposes are accepted here; without them, enabling
         // the pipeline on the create form would be silently dropped and only take effect after a second (edit) save.
-        boolean autoOrchestratorEnabled, @Min(1) Integer debounceWindowSecondsOverride, @Min(1) Integer maxDailyOrchestrationOverride) {
+        // The strict deserializer matches CourseUpdateDTO: @Min(1) alone would not reject a fractional value, because the
+        // default Integer deserializer truncates it (10.5 -> 10) before bean validation runs.
+        boolean autoOrchestratorEnabled, @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
+        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
 
     /**
      * Creates a new Course entity from this DTO.

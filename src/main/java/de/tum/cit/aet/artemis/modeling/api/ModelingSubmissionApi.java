@@ -52,7 +52,9 @@ public class ModelingSubmissionApi extends AbstractModelingApi {
      * @return the saved modeling submission
      */
     public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user) {
-        return modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user);
+        // The team websocket is the caller here and never goes through the exam submission gate, so the participation
+        // is resolved from the user inside the service.
+        return modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user, null);
     }
 
     /**

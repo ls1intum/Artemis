@@ -3880,20 +3880,43 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     @Nested
     class ChangedAndUnchangedSubmissionsIntegrationTest {
 
-        // find User With Groups And Authorities + find Student Exam ById With Exercises + find Exam Session By Student Exam Id
-        // + update Student Exam + find Student Participations By Student Exam With Submissions Result
-        // TODO: Hibernate 7 increased base query count from 5 to 6 - investigate remaining extra query in a follow-up
-        private final int BASE_QUERY_COUNT = 6;
+        // the bare hand-in: read the student exam with its exercises, mark it submitted, and read the participations with
+        // their submissions to compare the last-second changes. The separate identity read is gone, because the student
+        // exam already carries its owner.
+        private final int BASE_QUERY_COUNT = 5;
 
-        // The submit path rebuilds the quiz submission from the slim SubmitStudentExamDTO via
-        // QuizSubmissionService.buildSubmissionFromLiveClientDTO (reusing the #12832 quiz live-save mapper). That mapper
-        // re-resolves the client-supplied answer ids against the quiz exercise, so the submit reconstruction loads the
-        // quiz exercise WITH its questions (and their eager nested options/items/spots). This cost is incurred ONLY when
-        // the quiz submission actually carries answers: an empty/absent answer set has nothing to re-resolve, so the
-        // reconstruction skips the load entirely and builds an empty submission from the id alone (see
-        // StudentExamSubmitMapper#buildQuizSubmission). Hence it appears in the changed-answers test but not the
-        // unchanged one, whose conduction quiz submission has no answers.
-        private final int QUIZ_RECONSTRUCTION_QUERY_COUNT = 9;
+        // Measured baselines for the endpoints the exam simulation drives. They are upper bounds, so a new query fails
+        // the build; lower them whenever a change removes one, and never raise one without saying in the PR what it
+        // bought.
+        //
+        // NOTE on the submission endpoints: the submission-version write is @Async in production but its executor is a
+        // SyncTaskExecutor under the test profile (see AsyncConfiguration#submissionVersionExecutor), so its INSERT is
+        // counted here even though a real student never waits for it.
+
+        // exam start: user with course roles, student exam with exercises, mark started, submission policies, quiz
+        // questions, participations with latest submission and result, submitted answers, exam session insert + count
+        private final int CONDUCTION_QUERY_COUNT = 8;
+
+        // starting an exercise whose participation was already generated: exercise, user, student-exam working time
+        // projection, existing participation, and the terminal save
+        private final int START_PARTICIPATION_QUERY_COUNT = 7;
+
+        // text autosave: result-exists probe, user with course roles, exercise, submission-gate projection, exam,
+        // participations (twice, see below), scalar ownership check, participation state update, submission update,
+        // plus the four statements of the submission-version write that only run on this thread under test
+        private final int TEXT_AUTOSAVE_QUERY_COUNT = 14;
+
+        private final int MODELING_AUTOSAVE_QUERY_COUNT = 14;
+
+        // the quiz path additionally loads the quiz exercise with its question tree to re-resolve the submitted answers,
+        // and its submission save stays a merge because it cascades to the submitted answers. It must NOT contain an
+        // update of quiz_question: a student's submission may never write a shared question row (see
+        // QuizQuestionContent#haveEqualPersistedForm), and this count is what keeps that write from coming back.
+        private final int QUIZ_SUBMISSION_QUERY_COUNT = 17;
+
+        // exam summary: user with course roles, student exam with its exercises' groups, exam, quiz questions,
+        // participations with latest submission and result, submitted answers
+        private final int SUMMARY_QUERY_COUNT = 9;
 
         private TextExercise textExercise;
 
@@ -3965,6 +3988,66 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testConductionQueryCount() throws Exception {
+            // Guards the exam-start endpoint against new queries and against N+1 regressions: this exam has several
+            // exercises including a quiz, so a per-exercise or per-submission query would show up here as growth. The
+            // user is loaded with its course roles, so the instructor check in the participation filter costs nothing.
+            assertThatDb(
+                    () -> request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/conduction",
+                            HttpStatus.OK, StudentExam.class))
+                    .hasBeenCalledAtMostTimes(CONDUCTION_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStartParticipationQueryCount() throws Exception {
+            // The exam participations were prepared up front, so this is the hot "participation already exists" path the
+            // client hits on every (re)entry into an exercise.
+            assertThatDb(() -> request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, Participation.class, HttpStatus.CREATED))
+                    .hasBeenCalledAtMostTimes(START_PARTICIPATION_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testTextSubmissionAutosaveQueryCount() throws Exception {
+            textSubmission.setText("A changed answer that has to be persisted");
+            assertThatDb(() -> {
+                request.put("/api/text/exercises/" + textExercise.getId() + "/text-submissions", toRequestDTO(textSubmission), HttpStatus.OK);
+                return null;
+            }).hasBeenCalledAtMostTimes(TEXT_AUTOSAVE_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testModelingSubmissionAutosaveQueryCount() throws Exception {
+            changeModelingSubmission("A changed model", "A changed explanation");
+            assertThatDb(() -> {
+                request.put("/api/modeling/exercises/" + modeExercise.getId() + "/modeling-submissions", modeSubmission, HttpStatus.OK);
+                return null;
+            }).hasBeenCalledAtMostTimes(MODELING_AUTOSAVE_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testQuizSubmissionQueryCount() throws Exception {
+            getChangedAnswerOptions(List.of(0, 1));
+            assertThatDb(() -> {
+                request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
+                return null;
+            }).hasBeenCalledAtMostTimes(QUIZ_SUBMISSION_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testSummaryQueryCount() throws Exception {
+            request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction, StudentExam.class,
+                    HttpStatus.OK);
+            assertThatDb(() -> request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary",
+                    HttpStatus.OK, StudentExam.class)).hasBeenCalledAtMostTimes(SUMMARY_QUERY_COUNT);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testUnchangedSubmissionsDoNotChangeQueryCount() throws Exception {
             // The conduction quiz submission carries no answers, so the reconstruction skips the quiz question-tree load
             // (FIX 5) and no content actually changes, so nothing is persisted: the hand-in stays at the bare skeleton
@@ -3997,15 +4080,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
 
             request.put("/api/quiz/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
 
-            // Additional cost of actually persisting the changed quiz submission (loadQuizSubmissionsSubmittedAnswers +
-            // save), on top of the DTO reconstruction load (QUIZ_RECONSTRUCTION_QUERY_COUNT). The reconstruction load
-            // warms the quiz questions into the session, so this incremental save cost is 8 (previously 10 when the
-            // client posted the fully-hydrated answers and no reconstruction load happened).
-            final int quizSaveQueryCount = 8;
+            // Persisting the changed quiz, text and modeling submissions on top of the bare hand-in: the quiz question
+            // tree for the DTO reconstruction, the submitted answers, and the writes themselves.
+            final int changedSubmissionsQueryCount = 7;
 
             // When
             assertThatDb(() -> request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/submit", studentExamForConduction,
-                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + QUIZ_RECONSTRUCTION_QUERY_COUNT + quizSaveQueryCount);
+                    StudentExam.class, HttpStatus.OK)).hasBeenCalledAtMostTimes(BASE_QUERY_COUNT + changedSubmissionsQueryCount);
             StudentExam submittedExam = request.get(
                     "/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExamForConduction.getId() + "/summary", HttpStatus.OK,
                     StudentExam.class);
