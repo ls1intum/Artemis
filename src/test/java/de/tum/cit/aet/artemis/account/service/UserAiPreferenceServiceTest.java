@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -267,8 +269,8 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
 
             assertThat(userAiPreferenceService.findDecisions(List.of())).isEmpty();
-            assertThat(userAiPreferenceService.findDecisions(java.util.Arrays.asList(user.getId(), null, user.getId())))
-                    .containsExactlyEntriesOf(java.util.Map.of(user.getId(), AiSelectionDecision.CLOUD_AI));
+            assertThat(userAiPreferenceService.findDecisions(Arrays.asList(user.getId(), null, user.getId())))
+                    .containsExactlyEntriesOf(Map.of(user.getId(), AiSelectionDecision.CLOUD_AI));
         }
 
         @Test

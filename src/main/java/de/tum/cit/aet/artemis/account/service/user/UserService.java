@@ -226,10 +226,11 @@ public class UserService {
             }
             // needs to be mutable --> new HashSet<>(Set.of(...))
             internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-            saveUser(internalAdmin);
-            // Stamped after the save: a freshly created admin has no id before it, and the timestamp is keyed on the id.
+            User savedInternalAdmin = saveUser(internalAdmin);
+            // Stamped after the save, and from what the save returned: the timestamp is keyed on the id, and reading it
+            // back off the argument would depend on whether the save persisted or merged.
             if (internalAdminPasswordChanged) {
-                userActivityService.recordCredentialsChanged(internalAdmin.getId(), Instant.now());
+                userActivityService.recordCredentialsChanged(savedInternalAdmin.getId(), Instant.now());
             }
         }
         else {
