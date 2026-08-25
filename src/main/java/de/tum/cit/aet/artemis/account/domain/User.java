@@ -221,7 +221,12 @@ public class User extends AbstractAuditingEntity implements Participant {
      * When the account's credentials last changed - a completed password reset, a password change, or a deactivation.
      * A session issued before this point is not extended any further, so those events end long-lived sessions within one
      * rotation interval instead of leaving them to run to their full lifetime.
+     * <p>
+     * Server-internal, like the credential fields above: {@code User} itself is serialised by the course membership
+     * endpoints, so without {@code @JsonIgnore} this would tell every instructor and tutor when each of their course
+     * members last changed their password.
      */
+    @JsonIgnore
     @Column(name = "credentials_changed_date")
     private ZonedDateTime credentialsChangedDate = null;
 
