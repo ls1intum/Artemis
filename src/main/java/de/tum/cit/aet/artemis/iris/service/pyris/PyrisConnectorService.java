@@ -412,20 +412,22 @@ public class PyrisConnectorService {
      * Executes the Course Memory ingestion webhook. Pyris responds with {@code 202 Accepted} and runs
      * the ingestion asynchronously. Ingestion is best-effort: a failure (e.g. {@code 400} when the
      * requested variant/models are unavailable) is logged and swallowed so it never breaks the calling
-     * communication request.
+     * communication request. The outcome is returned rather than thrown, because the caller has already
+     * announced the run over the websocket and has to close it out itself — no Pyris status callback
+     * follows a dispatch that never reached Pyris.
      *
      * @param executionDTO the DTO sent as the request body
+     * @return {@code true} if Pyris accepted the request, {@code false} if the dispatch failed
      */
-    public void executeCourseMemoryIngestionWebhook(PyrisWebhookCourseMemoryIngestionExecutionDTO executionDTO) {
+    public boolean executeCourseMemoryIngestionWebhook(PyrisWebhookCourseMemoryIngestionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/course-memory/ingest";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
-        }
-        catch (HttpStatusCodeException e) {
-            log.error("Failed to send course memory ingestion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+            return true;
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send course memory ingestion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+            return false;
         }
     }
 
@@ -435,17 +437,17 @@ public class PyrisConnectorService {
      * best-effort so a Pyris outage never breaks the calling communication request.
      *
      * @param executionDTO the DTO sent as the request body
+     * @return {@code true} if Pyris accepted the request, {@code false} if the dispatch failed
      */
-    public void executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO executionDTO) {
+    public boolean executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO executionDTO) {
         var endpoint = "/api/v1/webhooks/course-memory/delete";
         try {
             restTemplate.postForEntity(pyrisUrl + endpoint, executionDTO, Void.class);
-        }
-        catch (HttpStatusCodeException e) {
-            log.error("Failed to send course memory deletion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+            return true;
         }
         catch (RestClientException | IllegalArgumentException e) {
             log.error("Failed to send course memory deletion for thread {} to Pyris: {}", executionDTO.postId(), e.getMessage());
+            return false;
         }
     }
 

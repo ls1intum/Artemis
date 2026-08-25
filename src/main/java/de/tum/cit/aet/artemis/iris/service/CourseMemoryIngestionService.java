@@ -152,7 +152,8 @@ public class CourseMemoryIngestionService {
      * <p>
      * Iris-authored answers still awaiting verification are invisible to students and are excluded
      * from the thread; a verified Iris answer keeps the thread memory-worthy even once every
-     * {@code resolvesPost} flag is gone, so Trigger A's entry survives an unrelated un-marking.
+     * {@code resolvesPost} flag is gone, and the entry is then rebuilt from it under Trigger A's
+     * provenance rather than left holding whatever the retracted staff answer had written.
      *
      * @param post             the thread's root post
      * @param triggeringAnswer the answer whose flag changed, or {@code null} when it was deleted
@@ -176,10 +177,13 @@ public class CourseMemoryIngestionService {
 
         AnswerPost resolvingAnswer = anchor.get();
         if (isBotAuthored(resolvingAnswer) && answerPostRepository.hasHumanVerifier(resolvingAnswer.getId())) {
-            // Verification (Trigger A) owns Iris answers a tutor approved in the dashboard. Re-ingesting one
-            // here would re-derive the answer by LLM extraction and silently discard the tutor's verbatim
-            // edit, which Trigger A passes as existingAnswer.
-            log.info("Skipping course memory resolution ingestion for tutor-verified Iris answer {} (owned by verification trigger)", resolvingAnswer.getId());
+            // Verification (Trigger A) owns Iris answers a tutor approved in the dashboard, so this must not
+            // fall through to the LLM extraction below — it would re-derive the answer and silently discard
+            // the tutor's verbatim edit. Re-dispatching on Trigger A's terms rather than returning, because
+            // the entry is keyed on the thread and may currently hold what a *different* answer put there:
+            // a resolving staff answer that has since been un-marked or deleted. Leaving it untouched would
+            // keep serving retracted text, and would ignore an edit to the verified answer itself.
+            reingestVerifiedIrisAnswer(fullPost, resolvingAnswer, marker, course);
             return;
         }
 
@@ -196,6 +200,26 @@ public class CourseMemoryIngestionService {
         String verifiedBy = tutorEndorsed && marker != null ? marker.getLogin() : null;
         String verifiedAt = tutorEndorsed ? ZonedDateTime.now().toInstant().toString() : null;
         ingest(fullPost, resolvingAnswer, course, marker, source, verifiedBy, verifiedAt, null);
+    }
+
+    /**
+     * Re-dispatches a thread whose surviving anchor is a dashboard-verified Iris answer, under the
+     * provenance Trigger A would have given it.
+     * <p>
+     * An edit after creation is the tutor's correction, so the current content is passed verbatim as
+     * {@code existingAnswer} exactly as {@link #ingestVerifiedAnswer} does for an edited draft; the
+     * verifier and verification timestamp are the answer's own, not the user who happened to trigger
+     * this run by touching some other message in the thread.
+     */
+    private void reingestVerifiedIrisAnswer(Post fullPost, AnswerPost verifiedAnswer, @Nullable User actor, Course course) {
+        boolean corrected = verifiedAnswer.getUpdatedDate() != null;
+        var source = corrected ? PyrisCourseMemorySource.IRIS_CORRECTED : PyrisCourseMemorySource.IRIS_AUTO;
+        String existingAnswer = corrected ? verifiedAnswer.getContent() : null;
+        String verifiedBy = answerPostRepository.findVerifierLoginById(verifiedAnswer.getId()).orElse(null);
+        String verifiedAt = verifiedAnswer.getVerifiedAt() != null ? verifiedAnswer.getVerifiedAt().toInstant().toString() : null;
+
+        log.info("Restoring course memory of thread {} from tutor-verified Iris answer {} (source={})", fullPost.getId(), verifiedAnswer.getId(), source);
+        ingest(fullPost, verifiedAnswer, course, actor, source, verifiedBy, verifiedAt, existingAnswer);
     }
 
     /**
@@ -234,11 +258,11 @@ public class CourseMemoryIngestionService {
      * changed; when it was deleted or un-marked, falls back to the most recent answer that still
      * resolves the thread, then to the most recent tutor-verified Iris answer (Trigger A's entry).
      * <p>
-     * The last fallback exists to <em>preserve</em> Trigger A's entry, not to ingest: it makes
-     * {@link #handleResolutionChange} skip instead of delete when a thread's last {@code resolvesPost}
-     * flag disappears but a tutor-approved Iris answer still stands. It is therefore restricted to
-     * dashboard-verified answers — an Iris answer published automatically was never signed off on, so
-     * once nothing resolves the thread any more there is nothing left to keep.
+     * The last fallback exists to <em>restore</em> Trigger A's entry rather than delete it: when a
+     * thread's last {@code resolvesPost} flag disappears but a tutor-approved Iris answer still stands,
+     * {@link #handleResolutionChange} re-ingests from that answer instead of dropping the thread. It is
+     * therefore restricted to dashboard-verified answers — an Iris answer published automatically was
+     * never signed off on, so once nothing resolves the thread any more there is nothing left to keep.
      */
     private Optional<AnswerPost> selectAnchor(List<AnswerPost> answers, @Nullable AnswerPost triggeringAnswer) {
         if (triggeringAnswer != null && Boolean.TRUE.equals(triggeringAnswer.doesResolvePost())
@@ -268,7 +292,8 @@ public class CourseMemoryIngestionService {
 
         log.info("Deleting course memory for thread {} in course {}", postId, course.getId());
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), postId));
-        pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forThread(settings, course.getId(), postId));
+        boolean dispatched = pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forThread(settings, course.getId(), postId));
+        notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.DELETE, course, postId);
     }
 
     /**
@@ -295,7 +320,9 @@ public class CourseMemoryIngestionService {
 
         log.info("Deleting all course memory entries of channel {} in course {}", conversationId, course.getId());
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), conversationId));
-        pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forConversation(settings, course.getId(), conversationId));
+        boolean dispatched = pyrisConnectorService
+                .executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forConversation(settings, course.getId(), conversationId));
+        notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.DELETE, course, conversationId);
     }
 
     /**
@@ -340,7 +367,20 @@ public class CourseMemoryIngestionService {
 
         log.info("Ingesting course memory for thread {} (source={}, anchor={}) in course {}", postId, source, messageId, course.getId());
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.INGEST, course.getId(), postId));
-        pyrisConnectorService.executeCourseMemoryIngestionWebhook(executionDTO);
+        boolean dispatched = pyrisConnectorService.executeCourseMemoryIngestionWebhook(executionDTO);
+        notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.INGEST, course, postId);
+    }
+
+    /**
+     * Closes out a run the dispatch never started. {@code TRIGGERED} has already been pushed at this
+     * point, and a request that never reached Pyris produces no status callback — without this the
+     * client would show the run as still in progress for good.
+     */
+    private void notifyIfDispatchFailed(boolean dispatched, @Nullable String actorLogin, CourseMemoryOperation operation, Course course, String postId) {
+        if (dispatched) {
+            return;
+        }
+        notifyActor(actorLogin, IrisCourseMemoryStatusDTO.failed(operation, course.getId(), postId, "Could not reach Pyris"));
     }
 
     /**

@@ -234,4 +234,21 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
                 AND answerPost.verifiedBy IS NOT NULL
             """)
     boolean hasHumanVerifier(@Param("answerPostId") long answerPostId);
+
+    /**
+     * Returns the login of the user recorded as the verifier of the given {@link AnswerPost}.
+     * <p>
+     * Queried rather than navigated from the entity because {@code verifiedBy} is lazy and is not part of
+     * the eager thread fetch, so reading it off a detached answer would fail outside a transaction.
+     *
+     * @param answerPostId the ID of the {@link AnswerPost} to look up
+     * @return the verifier's login, or empty if none is recorded or the answer post does not exist
+     */
+    @Query("""
+            SELECT answerPost.verifiedBy.login
+            FROM AnswerPost answerPost
+            WHERE answerPost.id = :answerPostId
+                AND answerPost.verifiedBy IS NOT NULL
+            """)
+    Optional<String> findVerifierLoginById(@Param("answerPostId") long answerPostId);
 }

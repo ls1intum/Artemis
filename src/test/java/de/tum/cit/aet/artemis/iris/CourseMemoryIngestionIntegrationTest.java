@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -10,6 +11,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -426,10 +430,17 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         saveAnswer(post, tutor, "Read the task description carefully.", true, true);
         AnswerPost chatter = saveAnswer(post, tutor, "Good luck everyone.", true, false);
 
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set, ExpectedCount.max(1));
+
         // The edited answer neither resolves the thread nor is a verified Iris answer, so no entry was
-        // built from it and nothing should be dispatched — a stray request would fail the mock server.
+        // built from it and nothing should be dispatched.
         userUtilService.changeUser(tutor.getLogin());
         answerMessageService.updateAnswerMessage(course.getId(), chatter.getId(), new UpdatePostingDTO(chatter.getId(), "Good luck to everyone.", null, false));
+
+        // Asserted on the captured request rather than left to the mock server: updateAnswerMessage logs
+        // and swallows webhook failures, so an unexpected dispatch would never surface as a test failure.
+        assertThat(captured.get()).isNull();
     }
 
     @Test
@@ -457,12 +468,50 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         Post post = createQuestion("Still unanswered?");
         saveAnswer(post, tutor, "Looking into it.", true, false);
 
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set, ExpectedCount.max(1));
+
         // Nothing resolves the thread, so it has no entry to refresh — no webhook expected.
         userUtilService.changeUser(student.getLogin());
         conversationMessagingService.updateMessage(course.getId(), post.getId(), new UpdatePostingDTO(post.getId(), "Still unanswered, sorry for the bump.", null, false));
+
+        // updateMessage swallows webhook failures too, so the absence of a dispatch has to be asserted.
+        assertThat(captured.get()).isNull();
     }
 
     // --- A channel that stops being an eligible source must take its entries with it ---
+
+    @Test
+    void togglingPrivacyOfACourseWideChannel_keepsItsEntries() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
+
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + channel.getId() + "/toggle-privacy", HttpStatus.OK,
+                new LinkedMultiValueMap<>());
+
+        // Eligibility is isPublic OR isCourseWide, so a course-wide channel stays readable by the whole
+        // course whatever this flag says — retracting its entries here would drop valid memory.
+        assertThat(conversationRepository.findById(channel.getId())).get().asInstanceOf(type(Channel.class)).extracting(Channel::getIsPublic).isEqualTo(false);
+        assertThat(captured.get()).isNull();
+    }
+
+    @Test
+    void togglingPrivacyOfAPlainPublicChannel_deletesItsEntries() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        Channel publicChannel = conversationUtilService.createPublicChannel(course, "public-for-privacy-toggle");
+
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
+
+        request.postWithoutResponseBody("/api/communication/courses/" + course.getId() + "/channels/" + publicChannel.getId() + "/toggle-privacy", HttpStatus.OK,
+                new LinkedMultiValueMap<>());
+
+        // Nothing else keeps this one readable, so everything mined from it while it was public has to go.
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.conversationId()).isEqualTo(String.valueOf(publicChannel.getId()));
+    }
 
     @Test
     void channelNoLongerEligible_deletesEveryEntryOfThatChannel() {
@@ -644,25 +693,65 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void resolutionChanged_verifiedIrisAnswerSurvivesUnmarking_isNotDeleted() {
         Post post = createQuestion("What does CI stand for?");
-        saveDashboardVerifiedIrisAnswer(post, "Continuous Integration.", false);
+        AnswerPost irisAnswer = saveDashboardVerifiedIrisAnswer(post, "Continuous Integration.", false);
         AnswerPost humanAnswer = saveAnswer(post, student, "Also see the glossary.", true, false);
 
-        // A tutor-verified Iris answer keeps the thread memory-worthy, so Trigger A's entry must not be
-        // retracted just because an unrelated answer was un-marked. Dashboard-verified anchors belong to
-        // the verification trigger, so nothing is sent at all here.
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
+        // A tutor-verified Iris answer keeps the thread memory-worthy, so the entry must not be retracted
+        // just because an unrelated answer was un-marked.
         courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, humanAnswer.getId()), student, course);
+
+        // Rebuilt from the Iris answer rather than left as it stood: the entry is keyed on the thread, so
+        // it may hold what a since-retracted staff answer wrote.
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.IRIS_AUTO);
+        assertThat(dto.messageId()).isEqualTo(String.valueOf(irisAnswer.getId()));
     }
 
     @Test
-    void resolutionChanged_dashboardVerifiedIrisAnswer_isSkipped() {
+    void resolutionChanged_dashboardVerifiedIrisAnswer_isReingestedUnderVerificationProvenance() {
         Post post = createQuestion("What is a merge conflict?");
         AnswerPost answer = saveDashboardVerifiedIrisAnswer(post, "It happens when two branches change the same lines.", true);
         AnswerPost managed = reloadManagedAnswer(post, answer.getId());
 
-        // Trigger A owns this answer. Re-ingesting it here would re-derive the answer by extraction and
-        // discard the tutor's verbatim edit, so no webhook is expected — a request would fail the
-        // MockRestServiceServer.
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
         courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, tutor, course);
+
+        // Trigger A owns this answer, so the run keeps its provenance and its verifier instead of being
+        // relabelled after whoever triggered this pass — but it still has to be dispatched, or a stale
+        // entry written by another answer would survive untouched.
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.IRIS_AUTO);
+        assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
+        assertThat(dto.existingAnswer()).isNull();
+    }
+
+    @Test
+    void resolutionChanged_editedVerifiedIrisAnswer_isReingestedAsCorrectedWithTheEditVerbatim() {
+        Post post = createQuestion("When is the exam?");
+        AnswerPost answer = saveDashboardVerifiedIrisAnswer(post, "Some time in March.", true);
+        // The tutor corrected the draft, which is what an update after creation means for a bot answer.
+        answer.setContent("On 14 March, 10:00, in MW 2001.");
+        answer.setUpdatedDate(ZonedDateTime.now());
+        answerPostRepository.save(answer);
+
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+
+        // The corrected text travels as existingAnswer so extraction cannot paraphrase the tutor's wording
+        // away, exactly as Trigger A passes it.
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.IRIS_CORRECTED);
+        assertThat(dto.existingAnswer()).isEqualTo("On 14 March, 10:00, in MW 2001.");
     }
 
     @Test
@@ -777,9 +866,11 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     void skippedIngestion_pushesNothing() {
         // The whole reason TRIGGERED is server-pushed: a client-side toast would announce an ingestion
         // in each of these cases, none of which dispatch anything.
-        Post botPost = createQuestion("Bot-authored resolving answer?");
-        AnswerPost botAnswer = saveDashboardVerifiedIrisAnswer(botPost, "Owned by the verification trigger.", true);
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(botPost), reloadManagedAnswer(botPost, botAnswer.getId()), tutor, course);
+        tutor.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        User optedOutTutor = userTestRepository.save(tutor);
+        Post optedOutPost = createQuestion("Answered by someone who opted out?");
+        AnswerPost optedOutAnswer = saveAnswer(optedOutPost, optedOutTutor, "Not ingested.", true, true);
+        courseMemoryIngestionService.handleResolutionChange(reloadPost(optedOutPost), reloadManagedAnswer(optedOutPost, optedOutAnswer.getId()), optedOutTutor, course);
 
         Channel privateChannel = conversationUtilService.createPublicChannel(course, "private-for-status");
         privateChannel.setIsPublic(false);
