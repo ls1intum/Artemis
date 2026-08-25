@@ -196,10 +196,19 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         exampleResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         exampleResult.setExerciseId(modelingExercise.getId());
         exampleResult.setExampleResult(true);
+        Feedback feedback = new Feedback();
+        feedback.setCredits(2.0);
+        feedback.setText("element:1");
+        feedback.setDetailText("Good relation");
+        feedback.setType(FeedbackType.MANUAL);
+        feedback.setResult(exampleResult);
+        exampleResult.addFeedback(feedback);
         exampleResult = resultRepository.save(exampleResult);
 
+        // Every ingredient exactly as the page loads it: the (migrated) exercise detail, the example-submission
+        // GET the page reads its submission from, and the (migrated) example-assessment wire shape.
         String exerciseDetailJson = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, String.class);
-        // The result exactly as the page loads it: the migrated example-assessment endpoint's wire shape.
+        String exampleSubmissionJson = request.get("/api/assessment/example-submissions/" + created.getId(), HttpStatus.OK, String.class);
         String exampleAssessmentJson = request.get(
                 "/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + created.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
                 String.class);
@@ -209,9 +218,13 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         body.put("id", created.getId());
         body.put("usedForTutorial", false);
         body.set("exercise", mapper.readTree(exerciseDetailJson));
-        // The submission the page holds, with the result attached the way setLatestSubmissionResult does: the
-        // echoed example-assessment payload, its own submission reference deleted by the client.
-        ObjectNode submissionNode = (ObjectNode) mapper.valueToTree(created.getSubmission());
+        // The submission node the page holds: the example-submission GET's nested submission, mutated the way the
+        // component mutates it before saving (model edit + explanation + example flag), with the loaded example
+        // assessment attached via setLatestSubmissionResult and its own submission reference deleted.
+        ObjectNode submissionNode = (ObjectNode) mapper.readTree(exampleSubmissionJson).get("submission");
+        submissionNode.put("model", validModel);
+        submissionNode.put("explanationText", "updated explanation");
+        submissionNode.put("exampleSubmission", true);
         ObjectNode resultNode = (ObjectNode) mapper.readTree(exampleAssessmentJson);
         resultNode.remove("submission");
         submissionNode.set("results", mapper.createArrayNode().add(resultNode));
@@ -219,8 +232,14 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         request.putWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", body, ExampleSubmission.class, HttpStatus.OK);
 
-        Result reloaded = resultRepository.findById(exampleResult.getId()).orElseThrow();
+        // Reload through a fresh lookup and assert the columns the cascade merge wrote back: the FK that broke
+        // (exerciseId) and the feedbacks that were on the wire. (assessor/assessmentNote/longFeedbackText are NOT
+        // fetched by the example-assessment query, were never on the wire in the entity era either, and their
+        // merge behavior is pre-existing - deliberately not pinned here.)
+        Result reloaded = resultRepository.findDistinctWithFeedbackBySubmissionId(created.getSubmission().getId()).orElseThrow();
         assertThat(reloaded.getExerciseId()).isEqualTo(modelingExercise.getId());
+        assertThat(reloaded.getFeedbacks()).hasSize(1);
+        assertThat(reloaded.getFeedbacks().iterator().next().getDetailText()).isEqualTo("Good relation");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
