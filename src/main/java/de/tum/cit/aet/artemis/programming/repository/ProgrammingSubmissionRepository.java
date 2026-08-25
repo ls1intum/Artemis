@@ -22,6 +22,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationCommitHashDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
 
 /**
@@ -74,6 +75,45 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
+
+    /**
+     * Returns what is needed to decide which submission of the participation a build result belongs to.
+     * <p>
+     * Deliberately a projection rather than the submissions themselves. A submission eagerly resolves its
+     * participation, the participation its exercise, and the exercise its course, so loading every submission of a
+     * participation in order to compare commit hashes made the database ship the problem statement, the grading
+     * instructions and the course's code of conduct once per push the student ever made. See
+     * {@link ProgrammingSubmissionCommitHashDTO}.
+     *
+     * @param participationId the participation whose submissions should be considered
+     * @return the commit hash of every submission of the participation, with what is needed to order them
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO(s.id, s.type, s.commitHash, s.submissionDate)
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id = :participationId
+            """)
+    List<ProgrammingSubmissionCommitHashDTO> findCommitHashesByParticipationId(@Param("participationId") long participationId);
+
+    /**
+     * Returns the distinct commit hashes of the manual submissions of the participation that already have a result.
+     * <p>
+     * This is what a submission policy counts. Counting it by loading every submission with its results was expensive
+     * for the same reason as above, and the count needs nothing but the hashes. Selecting them distinct keeps the
+     * previous behaviour exactly, including that submissions without a commit hash collapse into a single value.
+     *
+     * @param participationId the participation whose submissions should be counted
+     * @return the distinct commit hashes of the participation's manual submissions that have a result
+     */
+    @Query("""
+            SELECT DISTINCT s.commitHash
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id = :participationId
+                AND s.type = de.tum.cit.aet.artemis.exercise.domain.SubmissionType.MANUAL
+                AND EXISTS (SELECT r.id
+                            FROM s.results r)
+            """)
+    List<String> findDistinctManualCommitHashesWithResultByParticipationId(@Param("participationId") long participationId);
 
     /**
      * Finds the first programming submission by participation ID, including its results, ordered by submission date in descending order. To avoid in-memory paging by retrieving
@@ -178,14 +218,6 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             WHERE r.id = :resultId
             """)
     Optional<ProgrammingSubmission> findByResultId(@Param("resultId") long resultId);
-
-    @Query("""
-            SELECT DISTINCT s
-            FROM ProgrammingSubmission s
-                LEFT JOIN FETCH s.results r
-            WHERE s.participation.id = :participationId
-            """)
-    List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") long participationId);
 
     /**
      * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and
