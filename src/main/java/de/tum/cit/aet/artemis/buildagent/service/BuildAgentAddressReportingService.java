@@ -91,7 +91,10 @@ public class BuildAgentAddressReportingService {
      * registry reads the union, so the two agree and the extra entry costs nothing; where they disagree - a load
      * balancer on the git path but not on the cluster path - having both is what keeps the agent authorized.
      */
-    @Scheduled(initialDelay = 5_000, fixedDelay = REPORT_INTERVAL_MS)
+    // The first attempt waits longer than the rest. An agent sharing a JVM with the core node it is configured against
+    // is asking itself, and at five seconds the web server is reliably not accepting yet - a guaranteed failure and a
+    // warning on every single startup, which is how a log stops being read.
+    @Scheduled(initialDelay = 30_000, fixedDelay = REPORT_INTERVAL_MS)
     public void reportObservedAddress() {
         if (!distributedDataAccessService.isConnectedToCluster()) {
             return;
@@ -101,6 +104,9 @@ public class BuildAgentAddressReportingService {
             if (address == null || address.isBlank()) {
                 return;
             }
+            // withinAllowlist is left true because an agent cannot evaluate the core nodes' allowlist and must not
+            // appear to have judged itself. The core nodes recompute it from the addresses before showing it, and the
+            // allowlist is enforced against the address of the request itself regardless of anything stored here.
             distributedDataAccessService.getDistributedBuildAgentReportedAddresses().put(buildAgentShortName,
                     new BuildAgentAddressInfo(buildAgentShortName, Set.of(address), ZonedDateTime.now(), true));
             log.debug("Reported {} as the address core nodes see build agent {} at", address, buildAgentShortName);
