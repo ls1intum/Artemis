@@ -37,6 +37,12 @@ import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/ma
 const UNSCHEDULED = Number.MAX_SAFE_INTEGER;
 /** Sorts groups whose utilization cannot be computed ahead of every measurable one. */
 const UNKNOWN_UTILIZATION = -1;
+/**
+ * Stands in for the campus of an online group, which has none. Deliberately untranslated: it only orders and
+ * matches the campus column, so it must not change under the reader's language. The cell renders the translated
+ * label instead, and both supported languages spell it the same way.
+ */
+const ONLINE_INSTEAD_OF_CAMPUS = 'Online';
 
 const SORTABLE_FIELDS = ['title', 'tutor', 'utilization', 'registrations', 'room', 'campus', 'schedule'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
@@ -69,7 +75,8 @@ function scheduleSortKey(schedule?: TutorialGroupSchedule): number {
 function toRow(group: TutorialGroup): TutorialGroupRow {
     const tutor = group.teachingAssistantName ?? '';
     const room = group.tutorialGroupSchedule?.location ?? '';
-    const campus = group.campus ?? '';
+    // An online group has no campus to name, so the mode takes the column's place rather than leaving it blank.
+    const campus = group.campus?.trim() || (group.isOnline ? ONLINE_INSTEAD_OF_CAMPUS : '');
     return {
         group,
         title: group.title ?? '',
@@ -142,6 +149,7 @@ export class TutorialGroupsManagementComponent {
     private readonly tutorColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('tutorColumn');
     private readonly utilizationColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('utilizationColumn');
     private readonly registrationsColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('registrationsColumn');
+    private readonly campusColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('campusColumn');
     private readonly scheduleColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('scheduleColumn');
 
     protected readonly columns = computed<ColumnDef<TutorialGroupRow>[]>(() => [
@@ -164,7 +172,7 @@ export class TutorialGroupsManagementComponent {
             templateRef: this.registrationsColumn(),
         },
         { field: 'room', headerKey: 'artemisApp.entities.tutorialGroup.room', sort: true, width: '150px', hideBelow: 'xl' },
-        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '130px', hideBelow: 'lg' },
+        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '130px', hideBelow: 'lg', templateRef: this.campusColumn() },
         { field: 'schedule', headerKey: 'artemisApp.entities.tutorialGroup.schedule', sort: true, width: '200px', templateRef: this.scheduleColumn() },
     ]);
 

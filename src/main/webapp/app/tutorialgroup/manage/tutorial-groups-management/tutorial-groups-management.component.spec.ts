@@ -202,6 +202,28 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(fridayRow[5]).toBe('Garching');
     });
 
+    // The example helper defaults the campus, so an absent one has to be cleared after construction.
+    function groupWithoutCampus(isOnline: boolean): TutorialGroup {
+        const group = generateExampleTutorialGroup({ id: 3, title: 'Group', isOnline });
+        group.campus = undefined;
+        return group;
+    }
+
+    it('should name the mode in the campus column for an online group that has no campus', async () => {
+        await setUp([groupWithoutCampus(true)]);
+        expect(renderedRows()[0][5]).toBe('artemisApp.generic.online');
+    });
+
+    it('should keep the campus in the campus column when an online group has one', async () => {
+        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Group', isOnline: true, campus: 'Garching' })]);
+        expect(renderedRows()[0][5]).toBe('Garching');
+    });
+
+    it('should leave the campus column blank for an offline group without a campus', async () => {
+        await setUp([groupWithoutCampus(false)]);
+        expect(renderedRows()[0][5]).toBe('');
+    });
+
     it('should label the tutor column with "you" for the groups the current user tutors', async () => {
         await setUp([generateExampleTutorialGroup({ id: 3, title: 'Own', isUserTutor: true })]);
         expect(renderedRows()[0][1]).toBe('global.generic.you');

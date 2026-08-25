@@ -106,6 +106,15 @@
     <span>{{ params.data.registrations }} / {{ params.data.group.capacity ?? '–' }}</span>
 </ng-template>
 
+<ng-template #campusColumn let-params>
+    @if (params.data.group.campus) {
+        <span>{{ params.data.group.campus }}</span>
+    } @else if (params.data.group.isOnline) {
+        <!-- An online group has no campus, so name the mode rather than leaving the cell blank. -->
+        <span jhiTranslate="artemisApp.generic.online"></span>
+    }
+</ng-template>
+
 <ng-template #scheduleColumn let-params>
     @let schedule = params.data.group.tutorialGroupSchedule;
     @if (schedule) {
