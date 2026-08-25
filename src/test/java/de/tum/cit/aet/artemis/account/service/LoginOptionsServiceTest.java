@@ -2,9 +2,7 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -21,21 +19,16 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 
 /**
  * Unit tests for LoginOptionsService.
- * Verifies that the service correctly determines login options based on DB status and LDAP fallback.
+ * Verifies that the service correctly determines login options from the local account state alone.
  */
 @ExtendWith(MockitoExtension.class)
 class LoginOptionsServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private LdapUserService ldapUserService;
 
     private LoginOptionsService loginOptionsService;
 
@@ -48,7 +41,7 @@ class LoginOptionsServiceTest {
      */
     @BeforeEach
     void setUp() {
-        loginOptionsService = new LoginOptionsService(userRepository, Optional.of(ldapUserService));
+        loginOptionsService = new LoginOptionsService(userRepository);
 
         ReflectionTestUtils.setField(loginOptionsService, "oidcEnabled", true);
         ReflectionTestUtils.setField(loginOptionsService, "samlEnabled", false);
@@ -83,7 +76,6 @@ class LoginOptionsServiceTest {
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
         verify(userRepository).isInternalUserByLogin(login);
-        verifyNoInteractions(ldapUserService);
     }
 
     /**
@@ -99,7 +91,6 @@ class LoginOptionsServiceTest {
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
         verify(userRepository).isInternalUserByEmailIgnoreCase(email);
-        verifyNoInteractions(ldapUserService);
     }
 
     /**
@@ -151,83 +142,57 @@ class LoginOptionsServiceTest {
     }
 
     /**
-     * Verifies that a new user (not in DB) who is found in LDAP by login is directed to OIDC.
+     * Verifies that an identifier this instance has never seen is routed to the external provider, which is where a
+     * first-time user gets provisioned.
      */
     @Test
-    void testGetLoginOptions_UserNotInDb_FoundInLdap_ByLogin_ReturnsOidc() {
+    void testGetLoginOptions_UserNotInDb_ByLogin_ReturnsOidc() {
         String login = "new_student";
         when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.empty());
-
-        LdapUserDto mockLdapUser = mock(LdapUserDto.class);
-        when(ldapUserService.findByLogin(login)).thenReturn(Optional.of(mockLdapUser));
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
 
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
         assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
         verify(userRepository).isInternalUserByLogin(login);
-        verify(ldapUserService).findByLogin(login);
     }
 
     /**
-     * Verifies that a new user (not in DB) who is found in LDAP by email is directed to OIDC.
+     * Same as above for an email identifier.
      */
     @Test
-    void testGetLoginOptions_UserNotInDb_FoundInLdap_ByEmail_ReturnsOidc() {
+    void testGetLoginOptions_UserNotInDb_ByEmail_ReturnsOidc() {
         String email = "new_student@tum.de";
         when(userRepository.isInternalUserByEmailIgnoreCase(email)).thenReturn(Optional.empty());
-
-        LdapUserDto mockLdapUser = mock(LdapUserDto.class);
-        when(ldapUserService.findByAnyEmail(email)).thenReturn(Optional.of(mockLdapUser));
 
         LoginOptionsDTO result = loginOptionsService.getLoginOptions(email);
 
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
         assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
         verify(userRepository).isInternalUserByEmailIgnoreCase(email);
-        verify(ldapUserService).findByAnyEmail(email);
     }
 
     /**
-     * Verifies that a user not found in the local DB and not found in LDAP falls back to PASSWORD.
+     * The response must not tell an unauthenticated caller whether an identifier is known to this instance. An account
+     * that exists as an externally managed user and an identifier that exists nowhere therefore answer identically, so
+     * the endpoint cannot be used to sort identifiers into "known" and "unknown".
      */
     @Test
-    void testGetLoginOptions_UserNotInDb_AndNotInLdap_ReturnsPassword() {
-        String login = "unknown_user";
-        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.empty());
-        when(ldapUserService.findByLogin(login)).thenReturn(Optional.empty());
+    void testGetLoginOptions_UnknownIdentifierIsIndistinguishableFromExternalUser() {
+        when(userRepository.isInternalUserByLogin("known_external_user")).thenReturn(Optional.of(false));
+        when(userRepository.isInternalUserByLogin("identifier_that_exists_nowhere")).thenReturn(Optional.empty());
 
-        LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
+        LoginOptionsDTO known = loginOptionsService.getLoginOptions("known_external_user");
+        LoginOptionsDTO unknown = loginOptionsService.getLoginOptions("identifier_that_exists_nowhere");
 
-        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
-        assertThat(result.idpName()).isNull();
+        assertThat(unknown).isEqualTo(known);
     }
 
     /**
-     * Verifies that if LDAP service is missing but OIDC is enabled, new users are routed to OIDC for JIT provisioning.
+     * Verifies that with no external provider configured, an unknown identifier falls back to PASSWORD.
      */
     @Test
-    void testGetLoginOptions_UserNotInDb_LdapServiceMissing_OidcEnabled_ReturnsOidc() {
-        loginOptionsService = new LoginOptionsService(userRepository, Optional.empty());
-        ReflectionTestUtils.setField(loginOptionsService, "oidcEnabled", true);
-        ReflectionTestUtils.setField(loginOptionsService, "oidcDisplayName", OIDC_LABEL);
-
-        String login = "new_student";
-        when(userRepository.isInternalUserByLogin(login)).thenReturn(Optional.empty());
-
-        LoginOptionsDTO result = loginOptionsService.getLoginOptions(login);
-
-        assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.OIDC);
-        assertThat(result.idpName()).isEqualTo(OIDC_LABEL);
-        verifyNoInteractions(ldapUserService);
-    }
-
-    /**
-     * Verifies that if both LDAP service and OIDC/SAML providers are disabled, we fall back to PASSWORD.
-     */
-    @Test
-    void testGetLoginOptions_UserNotInDb_LdapServiceMissing_SSODisabled_ReturnsPassword() {
-        loginOptionsService = new LoginOptionsService(userRepository, Optional.empty());
+    void testGetLoginOptions_UserNotInDb_SSODisabled_ReturnsPassword() {
         ReflectionTestUtils.setField(loginOptionsService, "oidcEnabled", false);
         ReflectionTestUtils.setField(loginOptionsService, "samlEnabled", false);
 
@@ -238,7 +203,6 @@ class LoginOptionsServiceTest {
 
         assertThat(result.loginMethod()).isEqualTo(LoginOptionsDTO.LoginMethod.PASSWORD);
         assertThat(result.idpName()).isNull();
-        verifyNoInteractions(ldapUserService);
     }
 
     /**

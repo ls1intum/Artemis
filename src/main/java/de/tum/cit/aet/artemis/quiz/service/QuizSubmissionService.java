@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 
 import jakarta.ws.rs.BadRequestException;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -396,14 +397,19 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     /**
      * Set the participation of the quiz submission and then save the quiz submission to the database
      *
-     * @param quizExercise   the QuizExercise of the participation of which the given quizSubmission belongs to
-     * @param quizSubmission the QuizSubmission to be saved
-     * @param user           the User of the participation of which the given quizSubmission belongs to
+     * @param quizExercise              the QuizExercise of the participation of which the given quizSubmission belongs to
+     * @param quizSubmission            the QuizSubmission to be saved
+     * @param user                      the User of the participation of which the given quizSubmission belongs to
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return saved QuizSubmission
      */
     @Override
-    protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
-        quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
+    protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user, @Nullable StudentParticipation participationFromExamGate) {
+        // For exam submissions the participation was already resolved (and its ownership implicitly established) by the
+        // exam submission gate a few frames up, which handed it to the caller. Looking it up again would repeat the same
+        // row read on every quiz save.
+        quizSubmission.setParticipation(participationFromExamGate != null ? participationFromExamGate : this.getParticipation(quizExercise, quizSubmission, user));
         var savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
         savedQuizSubmission.filterForStudentsDuringQuiz();
         return savedQuizSubmission;

@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -48,7 +47,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
@@ -56,9 +54,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.dto.PendingProgrammingSubmissionDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionInfoDTO;
-import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -84,7 +82,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+    private final AsyncBuildTriggerService asyncBuildTriggerService;
 
     private final GitService gitService;
 
@@ -94,17 +92,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
+            AsyncBuildTriggerService asyncBuildTriggerService, ParticipationService participationService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, GitService gitService, FeedbackService feedbackService, Optional<AthenaApi> athenaApi,
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
-            CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            ParticipationAuthorizationCheckService participationAuthCheckService) {
+            ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ComplaintRepository complaintRepository, ParticipationAuthorizationCheckService participationAuthCheckService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.asyncBuildTriggerService = asyncBuildTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.gitService = gitService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -114,16 +111,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
     /**
      * This method gets called if a new commit was pushed to the VCS
      *
-     * @param participation The Participation, where the push happened
-     * @param commit        the commit that was pushed
-     * @param user          the user who pushed the commit, used for logging and access control
+     * @param participation     The Participation, where the push happened
+     * @param commit            the commit that was pushed
+     * @param user              the user who pushed the commit, used for logging and access control
+     * @param triggeredByPushTo the type of repository that was pushed to, so the trigger can reuse the pushed commit hash
      * @return the ProgrammingSubmission for the last commitHash
      * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
      * @throws IllegalStateException    if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
      * @throws VersionControlException  if the commit belongs to the wrong branch (i.e. not the default branch for the participation).
      */
-    public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Commit commit, User user)
+    public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Commit commit, User user, RepositoryType triggeredByPushTo)
             throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date
         var existingSubmissionCount = participation.getSubmissions().size();
@@ -156,22 +154,16 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
         }
 
-        try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.commitHash(), null);
-        }
-        catch (ContinuousIntegrationException ex) {
-            // intentionally fail silently here
-            log.debug("Continuous integration trigger failed for participation {} with commitHash {}: {}", participation.getId(), commit.commitHash(), ex.getMessage());
-        }
+        // Queue the build off this thread. Under exam load the queueing step was effectively the entire latency of a git
+        // push, and nothing in the push response depends on the build job existing yet.
+        asyncBuildTriggerService.triggerBuild(participation, commit.commitHash(), triggeredByPushTo);
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository
-                .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), commit.commitHash());
-        if (programmingSubmission != null) {
+        if (programmingSubmissionRepository.existsByParticipationIdAndCommitHash(participation.getId(), commit.commitHash())) {
             throw new IllegalStateException("Submission for participation id " + participation.getId() + " and commitHash " + commit.commitHash() + " already exists!");
         }
 
-        programmingSubmission = new ProgrammingSubmission();
+        ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setCommitHash(commit.commitHash());
         log.info("Create new programmingSubmission with commitHash: {} for participation: {}", commit.commitHash(), participation.getId());
 

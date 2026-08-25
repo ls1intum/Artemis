@@ -1033,7 +1033,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         // The plain (withExerciseGroups=false) response is served as ExamDTO and must not trigger an eager fan-out.
         ExamDTO returnedExam = assertThatDb(() -> request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, ExamDTO.class))
-                .hasBeenCalledAtMostTimes(10);
+                .hasBeenCalledAtMostTimes(8);
         assertThat(returnedExam.id()).isEqualTo(exam1.getId());
         assertThat(returnedExam.course()).isNotNull();
         assertThat(returnedExam.course().id()).isEqualTo(course1.getId());
@@ -1078,7 +1078,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         ExamWithExerciseGroupsDTO returnedExam = assertThatDb(
                 () -> request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, ExamWithExerciseGroupsDTO.class))
-                .hasBeenCalledAtMostTimes(40);
+                .hasBeenCalledAtMostTimes(24);
 
         // Transient set by setExamProperties on the detailed path.
         assertThat(returnedExam.numberOfExamUsers()).isNotNull();
@@ -1342,7 +1342,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     void testGetCurrentAndUpcomingExams() throws Exception {
         // One query for the exams (the course is fetch-joined). Without the join, each row triggers a secondary
         // select for its course, so this guards the data-economy fix rather than just the response shape.
-        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(3);
+        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(1);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
         for (int i = 0; i < exams.size(); i++) {
             UpcomingExamDTO exam = exams.get(i);

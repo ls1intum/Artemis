@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,11 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setMaxPoolSize(taskExecutionProperties.getPool().getMaxSize());
         executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
         executor.setThreadNamePrefix(taskExecutionProperties.getThreadNamePrefix());
+        // Run the task on the submitting thread when the pool and its queue are both full, rather than throwing
+        // TaskRejectedException at whoever called the @Async method. Most callers of the shared executor are request
+        // threads that treat the submission as fire and forget, so a rejection surfaces as a failed request and a lost
+        // task. Being as slow as a synchronous call is the right worst case; losing the work is not.
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
@@ -105,6 +111,130 @@ public class AsyncConfiguration implements AsyncConfigurer {
         executor.setMaxPoolSize(4);
         executor.setQueueCapacity(taskExecutionProperties.getPool().getQueueCapacity());
         executor.setThreadNamePrefix("exercise-versioning-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Executor for the few background jobs that are long running and heavy rather than small and frequent: archiving a
+     * course, archiving an exam, and splitting a lecture attachment into slides.
+     * <p>
+     * These share nothing with the rest of the {@code @Async} work except the annotation. An archive zips every
+     * submission of a course, including programming repositories, and a slide split holds a PDF in memory. On the
+     * shared pool they were bounded by its core size of two, and nothing else bounds them: any instructor of a finished
+     * course can start an archive, and there is no guard against several running at once. Widening the shared pool for
+     * the many small tasks would therefore also have let these fan out, which is a memory and disk profile nobody asked
+     * for and nobody measured.
+     * <p>
+     * Two threads keeps them where they were. The queue is long enough that the rejection handler is unreachable in
+     * practice, which matters because the caller is a request thread that returns immediately and must not be made to
+     * run an archive itself.
+     *
+     * @return a dedicated pool for long running background jobs
+     */
+    @Bean("longRunningJobExecutor")
+    public Executor longRunningJobExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(2);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("long-running-job-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Executor for the version control access log writes (see {@code VcsAccessLogService}).
+     * <p>
+     * These run on their own pool because of how the writes are reached. A git push submits the log write from the
+     * request thread, so a rejection is thrown at the push, not at the logging: benchmarking a 2000 student exam
+     * produced 399 failed pushes this way, each one a student's commit lost to a rejected bookkeeping task. Access
+     * logging must never be able to do that, so saturation runs the task on the calling thread instead of rejecting it.
+     * <p>
+     * Neither may it drop one. A git operation writes its log entry in two steps: {@code /info/refs} creates the entry,
+     * and the data transfer request that follows updates it, locating it as the newest entry for that repository. A
+     * dropped create therefore does not merely lose a record, it points the update at the previous operation's entry and
+     * overwrites that one with this operation's commit hash. Discarding is the wrong answer for a sequence whose later
+     * steps depend on the earlier ones having happened.
+     * <p>
+     * Single threaded for the same reason: with one worker the queue drains in submission order, so the create is
+     * always applied before the update that depends on it. The work is a handful of small inserts per git operation, far
+     * below what one thread sustains, and the bounded queue in front of it is the buffer for a burst.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single threaded pool that
+     *         falls back to the caller when saturated
+     */
+    @Bean("vcsAccessLogExecutor")
+    public Executor vcsAccessLogExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("vcs-access-log-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Executor for writing submission versions (see {@code SubmissionVersionService}).
+     * <p>
+     * A version is a full copy of the submission content, several kilobytes of {@code longtext}, and nothing in the
+     * request reads it back. Writing it on the request thread put the slowest statement in the submit path directly in
+     * front of the student, so it moves off the request and the student sees the submission acknowledged sooner.
+     * <p>
+     * Unlike the access log executor, saturation here runs the task on the calling thread rather than discarding it. A
+     * submission version is the student's own work, so the worst acceptable outcome is being as slow as before, never
+     * losing it. The queue is bounded so that a backlog cannot grow without limit before that fallback engages.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated pool that falls back to the
+     *         caller when saturated
+     */
+    @Bean("submissionVersionExecutor")
+    public Executor submissionVersionExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(8);
+        executor.setQueueCapacity(500);
+        executor.setThreadNamePrefix("submission-version-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
+     * Executor for queueing a continuous integration build after a push (see {@code AsyncBuildTriggerService}).
+     * <p>
+     * Queueing a build is not part of what a git push has to wait for: the push has already written its objects, and
+     * nothing in the response depends on the build job existing. It was measured as effectively the whole latency of a
+     * push under exam load, so it runs here instead of on the request thread.
+     * <p>
+     * Saturation runs the task on the calling thread rather than discarding it. A dropped build means a student's commit
+     * is never graded, so the worst acceptable outcome is being as slow as before.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor}, so tests that push and then assert on the resulting
+     * build job stay deterministic.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated pool that falls back to the
+     *         caller when saturated
+     */
+    @Bean("buildTriggerExecutor")
+    public Executor buildTriggerExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        // Deliberately small. Queueing a build competes with request handling for database connections and processor
+        // time, and a pool wide enough to absorb an exam's worth of pushes at once starves the endpoints students are
+        // waiting on. Kept narrow, the caller-runs fallback pushes the work back onto the git thread that produced it,
+        // which is where the natural backpressure was before this became asynchronous.
+        executor.setCorePoolSize(2);
+        executor.setMaxPoolSize(4);
+        executor.setQueueCapacity(2000);
+        executor.setThreadNamePrefix("build-trigger-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
