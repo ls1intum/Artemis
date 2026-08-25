@@ -97,11 +97,38 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
-            assertThat(queryCourseProperties(weaviateService, course.getId())).as("course indexed in Weaviate").isNotNull();
+            var properties = queryCourseProperties(weaviateService, course.getId());
+            assertThat(properties).as("course indexed in Weaviate").isNotNull();
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row written").isPresent()
                     .hasValueSatisfying(state -> assertThat(state.getContentHash()).startsWith(SearchableEntityContentHasher.CURRENT_VERSION_PREFIX)
                             .hasSize(SearchableEntityContentHasher.CURRENT_VERSION_PREFIX.length() + 64));
+            // The row carries the same hash as the ledger. This is what lets a reconcile pass compare what the
+            // index actually holds against what we believe we wrote, rather than trusting the ledger alone.
+            String ledgerHash = syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId()).orElseThrow().getContentHash();
+            assertThat(properties.get(SearchableEntitySchema.Properties.CONTENT_HASH)).as("indexed row stamped with the ledger's content hash").isEqualTo(ledgerHash);
             assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).as("outbox row removed after confirmed write").isFalse();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpsert_repeatedForUnchangedEntityKeepsTheSameContentHash() {
+        // The operational stamps the write path adds (the outbox write id, and the stored copy of the hash itself)
+        // must not feed the hash. If they did, every write would produce a new hash and a reconcile pass would see
+        // permanent drift on entities that never changed.
+        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
+        await().atMost(Duration.ofSeconds(30))
+                .untilAsserted(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("first write recorded").isPresent());
+        String firstHash = syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId()).orElseThrow().getContentHash();
+
+        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
+
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).as("second write dispatched").isFalse();
+            assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).isPresent()
+                    .hasValueSatisfying(state -> assertThat(state.getContentHash()).as("hash unchanged for an unchanged entity").isEqualTo(firstHash));
+            assertThat(queryCourseProperties(weaviateService, course.getId()).get(SearchableEntitySchema.Properties.CONTENT_HASH)).as("row stamp unchanged too")
+                    .isEqualTo(firstHash);
         });
     }
 

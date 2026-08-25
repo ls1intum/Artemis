@@ -509,10 +509,15 @@ public class SearchableEntityWeaviateService {
      * Re-derives the entity and either upserts its current property map (returning the written content hash) or,
      * when it no longer exists or is no longer indexable, converges to a delete (returning {@link Optional#empty()}).
      * <p>
-     * The written row is stamped with {@link SearchableEntitySchema.Properties#SOURCE_SEQ} equal to this entry's
-     * outbox id, so a later bulk delete can fence it (see {@link #writtenBefore}). The stamp is intentionally
-     * excluded from the content hash, which is computed over the re-derived property map only, so the sync ledger
-     * keeps detecting content drift rather than flapping on every write.
+     * The written row carries two operational stamps that the re-derived property map does not:
+     * {@link SearchableEntitySchema.Properties#SOURCE_SEQ}, equal to this entry's outbox id, so a later bulk delete
+     * can fence it (see {@link #writtenBefore}); and {@link SearchableEntitySchema.Properties#CONTENT_HASH}, the
+     * same hash recorded in the sync ledger, so a reconcile pass can compare what the index actually holds against
+     * what we believe we wrote instead of trusting the ledger alone.
+     * <p>
+     * Both stamps are added to a copy and are therefore excluded from the hash itself, which is computed over the
+     * re-derived map only. Including them would make the hash either self-referential or different on every write,
+     * and the ledger would flap instead of detecting real content drift.
      */
     private Optional<String> applyUpsert(WeaviateOutboxEntry entry) {
         Optional<Map<String, Object>> desired = resolver.resolve(entry.getEntityType(), entry.getEntityId());
@@ -521,6 +526,7 @@ public class SearchableEntityWeaviateService {
             String contentHash = contentHasher.hash(properties);
             Map<String, Object> propertiesToWrite = new HashMap<>(properties);
             propertiesToWrite.put(SearchableEntitySchema.Properties.SOURCE_SEQ, entry.getId());
+            propertiesToWrite.put(SearchableEntitySchema.Properties.CONTENT_HASH, contentHash);
             upsertRow(entry.getEntityType(), entry.getEntityId(), propertiesToWrite);
             return Optional.of(contentHash);
         }
