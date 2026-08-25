@@ -149,14 +149,14 @@ export class TutorialGroupsManagementComponent {
     private readonly scheduleColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('scheduleColumn');
 
     protected readonly columns = computed<ColumnDef<TutorialGroupRow>[]>(() => [
-        { field: 'title', headerKey: 'artemisApp.entities.tutorialGroup.title', sort: true, width: '180px', templateRef: this.titleColumn() },
-        { field: 'tutor', headerKey: 'artemisApp.entities.tutorialGroup.teachingAssistant', sort: true, width: '180px', templateRef: this.tutorColumn() },
+        { field: 'title', headerKey: 'artemisApp.entities.tutorialGroup.title', sort: true, width: '11rem', templateRef: this.titleColumn() },
+        { field: 'tutor', headerKey: 'artemisApp.entities.tutorialGroup.teachingAssistant', sort: true, width: '11rem', templateRef: this.tutorColumn() },
         {
             field: 'utilization',
             headerKey: 'artemisApp.entities.tutorialGroup.utilization',
             headerTooltip: 'artemisApp.entities.tutorialGroup.utilizationHelp',
             sort: true,
-            width: '160px',
+            width: '10rem',
             hideBelow: 'md',
             templateRef: this.utilizationColumn(),
         },
@@ -164,12 +164,12 @@ export class TutorialGroupsManagementComponent {
             field: 'registrations',
             headerKey: 'artemisApp.entities.tutorialGroup.registrationsWithCapacity',
             sort: true,
-            width: '120px',
+            width: '8rem',
             templateRef: this.registrationsColumn(),
         },
-        { field: 'room', headerKey: 'artemisApp.entities.tutorialGroup.room', sort: true, width: '150px', hideBelow: 'xl' },
-        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '130px', hideBelow: 'lg' },
-        { field: 'schedule', headerKey: 'artemisApp.entities.tutorialGroup.schedule', sort: true, width: '200px', templateRef: this.scheduleColumn() },
+        { field: 'room', headerKey: 'artemisApp.entities.tutorialGroup.room', sort: true, width: '10rem', hideBelow: 'xl' },
+        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '8rem', hideBelow: 'lg' },
+        { field: 'schedule', headerKey: 'artemisApp.entities.tutorialGroup.schedule', sort: true, width: '13rem', templateRef: this.scheduleColumn() },
     ]);
 
     /**
