@@ -9,6 +9,7 @@ const { MockApollonEditor } = vi.hoisted(() => {
         _options: any;
         _subscriptions = new Map<number, (model: any) => void>();
         _assessmentSelectionSubscriptions = new Map<number, (selections: string[]) => void>();
+        _selectionChangeSubscriptions = new Map<number, (selectedElementIds: string[]) => void>();
         _regionElements = new Map<string, HTMLElement>();
         _subscriptionCounter = 0;
 
@@ -24,9 +25,17 @@ const { MockApollonEditor } = vi.hoisted(() => {
             return id;
         });
 
+        // Reports the ids of the selected *elements*, which is what feedback references point at.
+        subscribeToSelectionChange = vi.fn((callback: (selectedElementIds: string[]) => void) => {
+            const id = ++this._subscriptionCounter;
+            this._selectionChangeSubscriptions.set(id, callback);
+            return id;
+        });
+
         unsubscribe = vi.fn((id: number) => {
             this._subscriptions.delete(id);
             this._assessmentSelectionSubscriptions.delete(id);
+            this._selectionChangeSubscriptions.delete(id);
         });
 
         destroy = vi.fn();
@@ -515,13 +524,36 @@ describe('ModelingAssessmentComponent', () => {
 
         expect(editor.setReadonly).toHaveBeenCalledWith(true);
         // Selection is only reported while read-only, so the flip has to bring that subscription with it.
-        expect(editor.subscribeToAssessmentSelection).toHaveBeenCalled();
+        expect(editor.subscribeToSelectionChange).toHaveBeenCalled();
 
         fixture.componentRef.setInput('readOnly', false);
         fixture.detectChanges();
 
         expect(editor.setReadonly).toHaveBeenLastCalledWith(false);
         expect(editor.unsubscribe).toHaveBeenCalled();
+    });
+
+    // Regression: the canvas reported the ids of the *assessments*, but every consumer matches the emitted ids against
+    // `Feedback.referenceId` — the id of the *element* the feedback references. Selecting an element therefore marked
+    // nothing in the feedback list, which made the selection ring on a read-only canvas look purely decorative.
+    it('should report the ids of the selected elements, not of their assessments', async () => {
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const editor = comp['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        const emitted: string[][] = [];
+        comp.selectedElementIdsChanged.subscribe((ids: string[]) => emitted.push(ids));
+
+        expect(editor.subscribeToSelectionChange).toHaveBeenCalledOnce();
+        expect(editor.subscribeToAssessmentSelection).not.toHaveBeenCalled();
+
+        // Drive the element-selection channel the way Apollon does.
+        for (const callback of editor._selectionChangeSubscriptions.values()) {
+            callback([PACKAGE_ID]);
+        }
+
+        expect(emitted).toEqual([[PACKAGE_ID]]);
     });
 
     /** Installs a jsdom-friendly Fullscreen API and returns a restore function. */

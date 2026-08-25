@@ -267,10 +267,18 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.synchronizeAssessmentSelectionSubscription(this.apollonEditor, this.readOnly());
     }
 
-    /** Selection is only reported while the canvas is read-only; a flip has to add or drop that subscription with it. */
+    /**
+     * Selection is only reported while the canvas is read-only; a flip has to add or drop that subscription with it.
+     *
+     * Deliberately `subscribeToSelectionChange` and not `subscribeToAssessmentSelection`: the two report different
+     * identifiers. The latter reports the ids of the *assessments*, while consumers of `selectedElementIdsChanged`
+     * match the emitted ids against `Feedback.referenceId`, which is the id of the *element* the feedback references
+     * (the `<type>:<elementId>` reference). Subscribing to the assessment ids meant the comparison never matched and
+     * selecting an element on the canvas marked nothing in the feedback list.
+     */
     private synchronizeAssessmentSelectionSubscription(editor: ApollonEditor, readOnly: boolean): void {
         if (readOnly && this.assessmentSelectionSubscription === undefined) {
-            this.assessmentSelectionSubscription = editor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
+            this.assessmentSelectionSubscription = editor.subscribeToSelectionChange((selections) => this.selectedElementIdsChanged.emit(selections));
         } else if (!readOnly && this.assessmentSelectionSubscription !== undefined) {
             editor.unsubscribe(this.assessmentSelectionSubscription);
             this.assessmentSelectionSubscription = undefined;
