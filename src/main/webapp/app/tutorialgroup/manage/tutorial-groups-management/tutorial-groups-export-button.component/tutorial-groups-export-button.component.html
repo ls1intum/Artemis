@@ -1,7 +1,17 @@
-<button tumUiButton size="small" severity="secondary" variant="outlined" type="button" id="exportDialogButton" (click)="openExportDialog($event)">
+<button
+    tumUiButton
+    size="small"
+    severity="secondary"
+    variant="outlined"
+    type="button"
+    id="exportDialogButton"
+    [tumUiTooltip]="'artemisApp.tutorialGroupExportDialog.buttonHeader' | artemisTranslate"
+    (click)="openExportDialog($event)"
+>
     <fa-icon [icon]="faFileExport" />
-    <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
-    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.tutorialGroupExportDialog.buttonHeader"></span>
+    <!-- Short label so the action row fits on one line; the tooltip carries the full wording.
+         sr-only below md keeps the label in the accessibility tree so the icon-only button stays named. -->
+    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.export"></span>
 </button>
 
 <p-dialog

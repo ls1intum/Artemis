@@ -77,11 +77,14 @@ describe('TutorialGroupUtilizationIndicatorComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.entities.tutorialGroup.averageAttendance');
     });
 
-    it('should render nothing when no attendance was recorded', () => {
+    it('should draw an empty rail labelled as unknown when no attendance was recorded', () => {
         tutorialGroup.averageAttendance = undefined;
         render(tutorialGroup);
 
         expect(component.utilization()).toBeUndefined();
-        expect(fixture.nativeElement.textContent.trim()).toBe('');
+        // An empty rail rather than a blank cell, so the column still reads as a column.
+        expect(progressBar()?.value()).toBe(0);
+        expect(progressBar()?.ariaLabel()).toBe('artemisApp.entities.tutorialGroup.noAttendanceRecorded');
+        expect(fixture.nativeElement.textContent).toContain('–');
     });
 });

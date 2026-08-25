@@ -1,7 +1,17 @@
-<button tumUiButton size="small" severity="secondary" variant="outlined" type="button" id="importDialogButton" (click)="openTutorialGroupImportDialog($event)">
+<button
+    tumUiButton
+    size="small"
+    severity="secondary"
+    variant="outlined"
+    type="button"
+    id="importDialogButton"
+    [tumUiTooltip]="'artemisApp.tutorialGroupImportDialog.importButton' | artemisTranslate"
+    (click)="openTutorialGroupImportDialog($event)"
+>
     <fa-icon [icon]="faFileImport" />
-    <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
-    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.tutorialGroupImportDialog.importButton"></span>
+    <!-- Short label so the action row fits on one line; the tooltip carries the full wording.
+         sr-only below md keeps the label in the accessibility tree so the icon-only button stays named. -->
+    <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.import"></span>
 </button>
 
 <jhi-tutorial-groups-import-dialog #importDialog [courseId]="courseId()" (importCompleted)="onImportCompleted()" />

@@ -5,6 +5,7 @@
                 <input
                     #searchInput
                     tumUiInput
+                    tumUiInputSize="small"
                     type="search"
                     class="w-full"
                     data-testid="tutorial-groups-search"
@@ -46,9 +47,15 @@
             <jhi-tutorial-groups-export-button [courseId]="currentCourse.id!" (exportFinished)="loadTutorialGroups()" />
         }
         @if (isAtLeastEditor()) {
-            <a tumUiButton size="small" data-testid="create-tutorial-group-btn" [routerLink]="['/course-management', currentCourse.id, 'tutorial-groups', 'create']">
+            <a
+                tumUiButton
+                size="small"
+                data-testid="create-tutorial-group-btn"
+                [tumUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate"
+                [routerLink]="['/course-management', currentCourse.id, 'tutorial-groups', 'create']"
+            >
                 <fa-icon [icon]="faPlus" />
-                <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton"></span>
+                <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.create"></span>
             </a>
         }
     </div>

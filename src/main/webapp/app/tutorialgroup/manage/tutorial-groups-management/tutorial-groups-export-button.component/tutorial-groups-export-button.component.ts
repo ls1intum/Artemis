@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumUiButtonDirective, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupExportData } from 'app/openapi/model/tutorial-group-export-data';
@@ -15,7 +15,7 @@ import { map } from 'rxjs/operators';
     selector: 'jhi-tutorial-groups-export-button',
     templateUrl: './tutorial-groups-export-button.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TranslateDirective, FormsModule, DialogModule, FaIconComponent, TumUiButtonDirective, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FormsModule, DialogModule, FaIconComponent, TumUiButtonDirective, TumUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class TutorialGroupsExportButtonComponent {
     private tutorialGroupApiService = inject(TutorialGroupApi);
