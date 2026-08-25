@@ -80,17 +80,6 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     Optional<ProgrammingSubmission> findProgrammingSubmissionWithResultsById(long programmingSubmissionId);
 
     /**
-     * Records whether the build of a submission failed.
-     * <p>
-     * Deliberately a modifying query. This is one boolean on a row that already exists, and it used to be written by
-     * saving the whole submission, which for a detached submission means a select of the submission together with its
-     * participation, exercise and course, because those are eager associations. That select carried the exercise's
-     * problem statement and the course's code of conduct for every build.
-     *
-     * @param submissionId the submission whose build outcome should be recorded
-     * @param buildFailed  whether the build failed
-     */
-    /**
      * Returns what the grading code reads off the submission a build result belongs to, together with its newest result.
      * <p>
      * Deliberately a projection rather than the submission itself: a submission eagerly resolves its participation, that
@@ -113,6 +102,17 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     Optional<BuildResultSubmissionDTO> findBuildResultSubmissionById(@Param("submissionId") long submissionId);
 
+    /**
+     * Records whether the build of a submission failed.
+     * <p>
+     * Deliberately a modifying query. This is one boolean on a row that already exists, and it used to be written by
+     * saving the whole submission, which for a detached submission means a select of the submission together with its
+     * participation, exercise and course, because those are eager associations. That select carried the exercise's
+     * problem statement and the course's code of conduct for every build.
+     *
+     * @param submissionId the submission whose build outcome should be recorded
+     * @param buildFailed  whether the build failed
+     */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""

@@ -68,20 +68,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
 
     /**
-     * Sets the flag that marks the exercise as having changed test cases, but only when it does not already hold that
-     * value.
-     * <p>
-     * Deliberately a modifying query. The flag is a single boolean, and reading the exercise in order to change it
-     * meant fetching the whole exercise together with the course it eagerly brings along, then merging all of it back,
-     * which is two wide statements for one column. Guarding on the current value inside the statement also means the
-     * previous value does not have to be read: the affected row count answers whether anything changed. A null in the
-     * column counts as false, which is how {@link ProgrammingExercise#getTestCasesChanged()} reads it.
-     *
-     * @param exerciseId       the exercise whose flag should be set
-     * @param testCasesChanged the value to set the flag to
-     * @return 1 if the flag was changed, 0 if it already held that value or no such exercise exists
-     */
-    /**
      * Returns the values of the exercise's submission policy, without the exercise the policy points back at.
      * <p>
      * Deliberately a projection. The policy's back reference to its exercise is an eager inverse one-to-one, so loading
@@ -109,6 +95,20 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<SubmissionPolicyValuesDTO> findSubmissionPolicyValuesByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Sets the flag that marks the exercise as having changed test cases, but only when it does not already hold that
+     * value.
+     * <p>
+     * Deliberately a modifying query. The flag is a single boolean, and reading the exercise in order to change it
+     * meant fetching the whole exercise together with the course it eagerly brings along, then merging all of it back,
+     * which is two wide statements for one column. Guarding on the current value inside the statement also means the
+     * previous value does not have to be read: the affected row count answers whether anything changed. A null in the
+     * column counts as false, which is how {@link ProgrammingExercise#getTestCasesChanged()} reads it.
+     *
+     * @param exerciseId       the exercise whose flag should be set
+     * @param testCasesChanged the value to set the flag to
+     * @return 1 if the flag was changed, 0 if it already held that value or no such exercise exists
+     */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""

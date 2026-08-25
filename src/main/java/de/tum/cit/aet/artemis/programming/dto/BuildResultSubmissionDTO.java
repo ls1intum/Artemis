@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
 import org.jspecify.annotations.Nullable;
 
@@ -66,13 +65,5 @@ public record BuildResultSubmissionDTO(long submissionId, boolean buildFailed, @
             submission.addResult(latestResult);
         }
         return submission;
-    }
-
-    /**
-     * @param other another projection of the same kind
-     * @return true if both describe the same submission
-     */
-    public boolean isSameSubmissionAs(@Nullable BuildResultSubmissionDTO other) {
-        return other != null && Objects.equals(submissionId, other.submissionId());
     }
 }

@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -26,7 +25,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -86,6 +84,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     private Set<SubmissionVersion> versions = new HashSet<>();
 
     /**
+     * Orders results by their id, putting a result that was not saved yet at the end: it has just been created, so it
+     * is the newest one. Without the null handling every lookup here would throw for an in-memory result.
+     */
+    private static final Comparator<Result> BY_ID = Comparator.comparing(Result::getId, Comparator.nullsLast(Comparator.naturalOrder()));
+
+    /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
      * <p>
      * Deliberately unordered. This used to be an ordered list whose position carried the correction round, which meant
@@ -129,7 +133,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
+        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(Objects::nonNull).max(BY_ID).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -173,16 +177,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         }
         // The lowest id among the matches, so that the answer does not depend on the iteration order of an unordered
         // set. There should only ever be one result per round, and picking the earliest is what the ordered list did.
-        return filterNonAutomaticResults().stream().filter(result -> Objects.equals(result.getCorrectionRound(), correctionRound)).min(Comparator.comparing(Result::getId))
-                .orElse(null);
-    }
-
-    /**
-     * @return an unmodifiable list or all non-automatic results
-     */
-    @NonNull
-    private List<Result> filterNonAutomaticResults() {
-        return results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).toList();
+        return getManualResults().stream().filter(result -> Objects.equals(result.getCorrectionRound(), correctionRound)).min(BY_ID).orElse(null);
     }
 
     /**
@@ -270,7 +265,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         if (results == null || results.isEmpty()) {
             return null;
         }
-        return results.stream().filter(Objects::nonNull).min(Comparator.comparing(Result::getId)).orElse(null);
+        return results.stream().filter(Objects::nonNull).min(BY_ID).orElse(null);
     }
 
     /**
@@ -286,7 +281,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         if (results == null) {
             return null;
         }
-        return getManualResults().stream().min(Comparator.comparing(Result::getId)).orElse(null);
+        return getManualResults().stream().min(BY_ID).orElse(null);
     }
 
     /**
@@ -305,15 +300,9 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         if (results == null) {
             return null;
         }
-        return getManualResults().stream().max(Comparator.comparing(Result::getId)).orElse(null);
+        return getManualResults().stream().max(BY_ID).orElse(null);
     }
 
-    /**
-     * Add a result to the list.
-     * NOTE: You must make sure to correctly persist the result in the database!
-     *
-     * @param result the {@link Result} which should be added
-     */
     /**
      * Adds a result to this submission and, if it is a correction-round result that does not have a round yet, assigns
      * the next one.
