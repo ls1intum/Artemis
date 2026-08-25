@@ -200,6 +200,12 @@ public final class Constants {
 
     public static final String CLEANUP_COURSE = "CLEANUP_COURSE";
 
+    /** An administrator switched an account off, so it can no longer authenticate anywhere. */
+    public static final String DEACTIVATE_USER = "DEACTIVATE_USER";
+
+    /** An account was activated, either by an administrator or by the account holder redeeming their activation key. */
+    public static final String ACTIVATE_USER = "ACTIVATE_USER";
+
     public static final String DELETE_ALL_IRIS_SESSIONS = "DELETE_ALL_IRIS_SESSIONS";
 
     public static final String DELETE_IRIS_SESSION = "DELETE_IRIS_SESSION";
@@ -297,9 +303,9 @@ public final class Constants {
 
     public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
 
-    public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
+    public static final String PLAGIARISM_CACHE_PREFIX = "plagiarism-";
 
-    public static final String HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = HAZELCAST_PLAGIARISM_PREFIX + "active-plagiarism-checks-per-course-cache";
+    public static final String ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = PLAGIARISM_CACHE_PREFIX + "active-plagiarism-checks-per-course-cache";
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
