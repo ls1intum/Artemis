@@ -200,10 +200,16 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         return snapshot.complete() ? snapshot.clientNames() : Set.of();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Redis reports the address it accepted each connection from in {@code CLIENT LIST}. Empty when that query failed or, in Redis Cluster mode, covered only part of the
+     * deployment: the caller concludes from a name's absence that the client disconnected, so a partial answer would clear the addresses of every agent attached to a node that
+     * did not answer. That must stay distinguishable from a complete answer that found no clients.
+     */
     @Override
     public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
-        // Redis reports the address it accepted each connection from in CLIENT LIST. Empty when that query failed,
-        // which must stay distinguishable from a successful query that found no clients.
         return redisClientListResolver.getClientAddressesByName();
     }
 

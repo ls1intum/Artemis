@@ -541,10 +541,18 @@ public class LocalVCServletService {
                 return false;
             }
 
-            // Cheapest possible gate first, and deliberately so. This method runs for every read request that carries
+            // Cheapest possible gates first, and deliberately so. This method runs for every read request that carries
             // any Basic header, ahead of the rate limiter, so anything expensive here is reachable by an unauthenticated
-            // caller in a loop. A single-key lookup rejects a username that is not a build agent at all; only past this
-            // point may the more expensive whole-map reads below run.
+            // caller in a loop - and on the ordinary student clone it is pure overhead that must stay off the hot path.
+            //
+            // The prefix is a purely local check and rejects every credential that is not a clone token at all: a
+            // password, a vcpat- access token, an ssh key request. Every token this installation mints carries it, so
+            // nothing that could match is turned away, and the prefix is not a secret - it exists to make a credential
+            // recognisable in a log. Only past it is a single-key lookup performed to reject a username that is not a
+            // build agent, and only past that may the whole-map reads below run.
+            if (!presentedToken.startsWith(BuildJobCloneTokenService.CLONE_TOKEN_PREFIX)) {
+                return false;
+            }
             if (distributedDataAccessService.get().getDistributedBuildAgentInformation().get(agentName) == null) {
                 return false;
             }
