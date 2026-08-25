@@ -38,11 +38,12 @@ const UNSCHEDULED = Number.MAX_SAFE_INTEGER;
 /** Sorts groups whose utilization cannot be computed ahead of every measurable one. */
 const UNKNOWN_UTILIZATION = -1;
 /**
- * Stands in for the campus of an online group, which has none. Deliberately untranslated: it only orders and
- * matches the campus column, so it must not change under the reader's language. The cell renders the translated
- * label instead, and both supported languages spell it the same way.
+ * Stand in for the campus of a group that names none, which its mode describes better than a blank cell does.
+ * Deliberately untranslated: these only order and match the campus column, so they must not change under the
+ * reader's language. The cell renders the translated label instead, and both supported languages spell the two
+ * words the same way.
  */
-const ONLINE_INSTEAD_OF_CAMPUS = 'Online';
+const MODE_INSTEAD_OF_CAMPUS = { online: 'Online', offline: 'Offline' } as const;
 
 const SORTABLE_FIELDS = ['title', 'tutor', 'utilization', 'registrations', 'room', 'campus', 'schedule'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
@@ -75,8 +76,9 @@ function scheduleSortKey(schedule?: TutorialGroupSchedule): number {
 function toRow(group: TutorialGroup): TutorialGroupRow {
     const tutor = group.teachingAssistantName ?? '';
     const room = group.tutorialGroupSchedule?.location ?? '';
-    // An online group has no campus to name, so the mode takes the column's place rather than leaving it blank.
-    const campus = group.campus?.trim() || (group.isOnline ? ONLINE_INSTEAD_OF_CAMPUS : '');
+    // A group that names no campus falls back to its mode, which says more than a blank cell. `isOnline` is
+    // non-null on the server and defaults to false, so anything but an explicit true reads as offline.
+    const campus = group.campus?.trim() || (group.isOnline ? MODE_INSTEAD_OF_CAMPUS.online : MODE_INSTEAD_OF_CAMPUS.offline);
     return {
         group,
         title: group.title ?? '',

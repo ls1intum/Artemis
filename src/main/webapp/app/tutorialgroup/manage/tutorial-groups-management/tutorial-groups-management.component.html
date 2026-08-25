@@ -109,9 +109,9 @@
 <ng-template #campusColumn let-params>
     @if (params.data.group.campus) {
         <span>{{ params.data.group.campus }}</span>
-    } @else if (params.data.group.isOnline) {
-        <!-- An online group has no campus, so name the mode rather than leaving the cell blank. -->
-        <span jhiTranslate="artemisApp.generic.online"></span>
+    } @else {
+        <!-- No campus named, so fall back to the group's mode rather than leaving the cell blank. -->
+        <span jhiTranslate="{{ params.data.group.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline' }}"></span>
     }
 </ng-template>
 

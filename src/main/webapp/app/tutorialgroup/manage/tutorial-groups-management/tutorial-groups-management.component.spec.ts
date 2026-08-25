@@ -219,9 +219,14 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(renderedRows()[0][5]).toBe('Garching');
     });
 
-    it('should leave the campus column blank for an offline group without a campus', async () => {
+    it('should name the mode in the campus column for an offline group that has no campus', async () => {
         await setUp([groupWithoutCampus(false)]);
-        expect(renderedRows()[0][5]).toBe('');
+        expect(renderedRows()[0][5]).toBe('artemisApp.generic.offline');
+    });
+
+    it('should keep the campus in the campus column when an offline group has one', async () => {
+        await setUp([generateExampleTutorialGroup({ id: 3, title: 'Group', isOnline: false, campus: 'Garching' })]);
+        expect(renderedRows()[0][5]).toBe('Garching');
     });
 
     it('should label the tutor column with "you" for the groups the current user tutors', async () => {
