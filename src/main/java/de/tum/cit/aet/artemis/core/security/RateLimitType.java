@@ -56,13 +56,20 @@ public enum RateLimitType {
      * registered agent name - it is an identifier, shown in the admin UI - could otherwise force that read in a loop
      * with arbitrary passwords, unbounded. This limit bounds it.
      * <p>
-     * Deliberately generous: a single agent clones several repositories per build job and runs jobs concurrently, so
-     * the limit has to sit far above real agent traffic to avoid becoming the stall it exists to prevent. It is a
-     * ceiling on abuse, not a throttle on agents.
+     * Deliberately generous: exceeding it does not slow an agent down, it makes the check decline and the clone fail
+     * with an unauthorized response, so a limit set near real traffic would break builds rather than throttle them.
+     * It is a ceiling on abuse, not a throttle on agents.
      * <p>
-     * Default: 300 requests per minute per client.
+     * Sized from what one source address can legitimately produce. Every repository of a build job costs two requests,
+     * the handshake and the transfer, and an agent runs its configured number of jobs concurrently: eight concurrent
+     * jobs of four repositories on twenty second builds is already around 400 requests per minute from one agent. The
+     * key is the address, not the agent, and several agents behind one NAT gateway legitimately share it - which this
+     * feature explicitly supports - so the default has to clear a small group of busy agents rather than one.
+     * <p>
+     * Default: 1500 requests per minute per client. Rate limiting is off unless {@code artemis.rate-limiting.enabled}
+     * is set; where it is on, {@code artemis.rate-limiting.build-agent-clone-token-requests-per-minute} overrides this.
      */
-    BUILD_AGENT_CLONE_TOKEN(300),
+    BUILD_AGENT_CLONE_TOKEN(1500),
 
     /**
      * Rate limit for AI pipeline endpoints triggered by search-as-you-type interactions.
