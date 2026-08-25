@@ -591,16 +591,26 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     /**
-     * Build agent credentials should allow READ (fetch/clone) operations without going through normal user
-     * authentication, as long as the build agents of the installation authenticate that way.
+     * The shared credential shortcut is unreachable on a node that runs local CI, whatever is configured.
+     * <p>
+     * {@code LocalVCBuildAgentCredentialsValidator} already refuses to start such a node with a credential pair set, so
+     * this is the second half of the same guarantee: even a pair that arrives by some other route opens nothing. Every
+     * build job here carries a token covering its own assignment, test, solution and auxiliary repositories, so no
+     * Artemis build agent has a use for a credential that opens every repository in the installation.
+     * <p>
+     * The pair still works on a local VC node without local CI, which is the Jenkins with LocalVC setup; that case is
+     * covered by {@code LocalVCBuildAgentCredentialsValidatorTest} rather than here, because this test context runs
+     * local CI.
      */
     @Test
-    void testFetch_buildAgentCredentials_succeedsWhenBuildAgentsUseHttps() throws Throwable {
+    void testFetch_buildAgentCredentials_isRejectedWithLocalCi() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
 
-        // Build agent bypass only applies to READ — should succeed without normal user auth
         ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false,
-                () -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+                () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitUsername", "buildjob_user",
+                        () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitPassword", "buildjob_password",
+                                () -> assertThatExceptionOfType(LocalVCAuthException.class)
+                                        .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ)))));
     }
 
     /**
