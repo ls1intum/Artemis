@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 
 import org.jspecify.annotations.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -38,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * @param buildFailed         whether the build of the newest submission failed
  * @param exampleSubmission   whether the newest submission is an example submission
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ParticipationBuildTriggerDTO(long participationId, @Nullable String repositoryUri, @Nullable String buildPlanId, @Nullable String branch,
         @Nullable InitializationState initializationState, @Nullable ZonedDateTime individualDueDate, @Nullable Boolean testRun, @Nullable Long studentId,
         @Nullable String studentLogin, @Nullable Long teamId, long submissionId, @Nullable SubmissionType submissionType, @Nullable ZonedDateTime submissionDate,
