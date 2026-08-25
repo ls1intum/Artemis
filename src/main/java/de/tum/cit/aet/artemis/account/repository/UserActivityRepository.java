@@ -66,6 +66,43 @@ public interface UserActivityRepository extends ArtemisJpaRepository<UserActivit
     int recordDeletionWarning(@Param("login") String login, @Param("date") Instant date);
 
     /**
+     * Records that the account's credentials changed, keyed on the account id since every caller already holds it.
+     *
+     * @param userId the account
+     * @param when   the moment the credentials changed
+     * @return the number of updated rows, 0 if the account has no row yet
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE UserActivity activity
+            SET activity.credentialsChangedDate = :when
+            WHERE activity.userId = :userId
+            """)
+    int recordCredentialsChanged(@Param("userId") long userId, @Param("when") Instant when);
+
+    /**
+     * Records that the account's credentials changed, creating the row first if it does not have one.
+     *
+     * @param userId the account
+     * @param when   the moment the credentials changed
+     */
+    default void recordCredentialsChangedCreatingRowIfMissing(long userId, Instant when) {
+        if (recordCredentialsChanged(userId, when) == 0) {
+            UserActivity row = findByUserId(userId).orElseGet(() -> new UserActivity(userId));
+            row.setCredentialsChangedDate(when);
+            try {
+                save(row);
+            }
+            catch (DataIntegrityViolationException concurrentInsert) {
+                if (recordCredentialsChanged(userId, when) == 0) {
+                    throw concurrentInsert;
+                }
+            }
+        }
+    }
+
+    /**
      * Clears the deletion warning of accounts that came back: enrolled in a course again, or logged in after being
      * warned.
      *

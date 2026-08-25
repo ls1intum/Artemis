@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 
 /**
  * Decides whether a passkey session may still be extended.
@@ -44,9 +45,12 @@ public class PasskeyTokenRenewalService {
 
     private final UserRepository userRepository;
 
-    public PasskeyTokenRenewalService(Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, UserRepository userRepository) {
+    private final UserActivityService userActivityService;
+
+    public PasskeyTokenRenewalService(Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, UserRepository userRepository, UserActivityService userActivityService) {
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.userRepository = userRepository;
+        this.userActivityService = userActivityService;
     }
 
     /**
@@ -72,8 +76,10 @@ public class PasskeyTokenRenewalService {
             return false;
         }
 
-        var credentialsChangedDate = user.get().getCredentialsChangedDate();
-        if (credentialsChangedDate != null && issuedAt.isBefore(credentialsChangedDate.toInstant())) {
+        // Read from user_activity rather than from the user row: this is the only caller that needs it, and as a column it
+        // was loaded with every user everywhere else.
+        var credentialsChangedDate = userActivityService.findCredentialsChangedDate(user.get().getId());
+        if (credentialsChangedDate != null && issuedAt.isBefore(credentialsChangedDate)) {
             log.info("Not extending a session of user {}: it was established before the credentials last changed", login);
             return false;
         }

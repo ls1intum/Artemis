@@ -10,7 +10,8 @@ import jakarta.persistence.Table;
 import org.jspecify.annotations.Nullable;
 
 /**
- * When an account was last used, and whether it has been warned that it is about to be deleted for inactivity.
+ * The account's lifecycle timestamps: when it was last used, whether it has been warned that it is about to be deleted
+ * for inactivity, and when its credentials last changed.
  * <p>
  * Unlike the other extracted clusters this one is not sparse - a last login is recorded for every account. It earns its
  * own table by keeping a write that happens on every single authentication off the wide user row.
@@ -32,6 +33,17 @@ public class UserActivity {
     @Nullable
     @Column(name = "deletion_warning_sent_date")
     private Instant deletionWarningSentDate;
+
+    /**
+     * When the account's credentials last changed - a password change, a completed reset, an administrative password
+     * change, or a deactivation. A session established before this moment is not extended any further.
+     * <p>
+     * Read in exactly one place, when deciding whether to extend a passkey session. As a column on the user row it was
+     * read as part of every user load instead.
+     */
+    @Nullable
+    @Column(name = "credentials_changed_date")
+    private Instant credentialsChangedDate;
 
     public UserActivity() {
         // needed by Hibernate
@@ -65,5 +77,14 @@ public class UserActivity {
 
     public void setDeletionWarningSentDate(@Nullable Instant deletionWarningSentDate) {
         this.deletionWarningSentDate = deletionWarningSentDate;
+    }
+
+    @Nullable
+    public Instant getCredentialsChangedDate() {
+        return credentialsChangedDate;
+    }
+
+    public void setCredentialsChangedDate(@Nullable Instant credentialsChangedDate) {
+        this.credentialsChangedDate = credentialsChangedDate;
     }
 }

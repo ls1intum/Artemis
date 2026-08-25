@@ -26,10 +26,12 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      # develop's 143 plus the account module's VCS access token and recovery key services, which are reached at startup
-      # through consumers that are already eager (LocalVCServletService and UserCreationService). They hold the columns
-      # that moved out of jhi_user; the class-level @Lazy on both cannot stop an eager consumer from needing them.
-      MAX_INSTANTIATED_BEANS: 145
+      # develop's 143 plus the three account-module services that hold the columns moved out of jhi_user - the VCS access
+      # token, the recovery keys and the activity timestamps. Each is reached at startup through a consumer that is
+      # already eager (LocalVCServletService, UserCreationService, UserService), and the class-level @Lazy they carry
+      # cannot stop a consumer whose own constructor needs them. Measured with the check's own command: 146 edges,
+      # longest chain 10.
+      MAX_INSTANTIATED_BEANS: 146
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

@@ -255,6 +255,16 @@ public class User extends AbstractAuditingEntity implements Participant {
      * endpoints, so without {@code @JsonIgnore} this would tell every instructor and tutor when each of their course
      * members last changed their password.
      */
+    /**
+     * No longer read or written by anything; the credential-change timestamp lives in {@code user_activity} with the
+     * account's other lifecycle timestamps. It was read as part of every user load here, for the benefit of the one
+     * caller that needs it.
+     * <p>
+     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
+     *
+     * @deprecated superseded by {@code user_activity.credentials_changed_date}
+     */
+    @Deprecated(forRemoval = true)
     @JsonIgnore
     @Column(name = "credentials_changed_date")
     private ZonedDateTime credentialsChangedDate = null;

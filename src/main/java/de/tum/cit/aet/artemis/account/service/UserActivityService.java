@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,28 @@ public class UserActivityService {
      */
     public void recordDeletionWarning(String login, Instant when) {
         userActivityRepository.recordDeletionWarningCreatingRowIfMissing(login, when);
+    }
+
+    /**
+     * Records that the account's credentials changed, so that sessions established before this moment are no longer
+     * extended.
+     *
+     * @param userId the account
+     * @param when   the moment the credentials changed
+     */
+    public void recordCredentialsChanged(long userId, Instant when) {
+        userActivityRepository.recordCredentialsChangedCreatingRowIfMissing(userId, when);
+    }
+
+    /**
+     * When the account's credentials last changed, or null if they never have.
+     *
+     * @param userId the account
+     * @return the timestamp, or null
+     */
+    @Nullable
+    public Instant findCredentialsChangedDate(long userId) {
+        return userActivityRepository.findByUserId(userId).map(UserActivity::getCredentialsChangedDate).orElse(null);
     }
 
     /**

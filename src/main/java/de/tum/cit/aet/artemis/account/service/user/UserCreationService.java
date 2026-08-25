@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -31,6 +30,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
@@ -60,9 +60,12 @@ public class UserCreationService {
 
     private final UserRecoveryKeyService userRecoveryKeyService;
 
+    private final UserActivityService userActivityService;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             OrganizationRepository organizationRepository, AccountCredentialRevocationService accountCredentialRevocationService,
-            AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository, UserRecoveryKeyService userRecoveryKeyService) {
+            AccountSecurityNotificationService accountSecurityNotificationService, AuditEventRepository auditEventRepository, UserRecoveryKeyService userRecoveryKeyService,
+            UserActivityService userActivityService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -71,6 +74,7 @@ public class UserCreationService {
         this.accountSecurityNotificationService = accountSecurityNotificationService;
         this.auditEventRepository = auditEventRepository;
         this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userActivityService = userActivityService;
     }
 
     /**
@@ -307,15 +311,18 @@ public class UserCreationService {
         // Bumping the changed date always stops an earlier session from being extended; revoking the other credentials on
         // top of that stays opt-in, because the admin form asks for it separately.
         boolean revokeCredentialsAfterPasswordChange = isPasswordBeingChanged && updatedUserDTO.isRevokeCredentials();
-        if (isBeingDeactivated || isPasswordBeingChanged) {
-            user.setCredentialsChangedDate(ZonedDateTime.now());
-        }
+        boolean credentialsChanged = isBeingDeactivated || isPasswordBeingChanged;
         user.setOrganizations(updatedUserDTO.getOrganizations());
         setUserAuthorities(updatedUserDTO, user);
 
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
+        if (credentialsChanged) {
+            // Stops sessions established before this change from being extended any further. Stamped after the save so it
+            // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.
+            userActivityService.recordCredentialsChanged(savedUser.getId(), Instant.now());
+        }
         // Same condition as the changed date above, so the notice cannot claim a change the account did not receive.
         boolean passwordChangedByAdministrator = isPasswordBeingChanged;
         boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
@@ -379,9 +386,9 @@ public class UserCreationService {
      */
     public void deactivateUser(User user) {
         user.setActivated(false);
-        // Stops sessions established before the deactivation from being extended any further.
-        user.setCredentialsChangedDate(ZonedDateTime.now());
         saveUser(user);
+        // Stops sessions established before the deactivation from being extended any further.
+        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
         // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
         // Done before the audit entry so that a failure while writing the entry cannot leave an account flagged as

@@ -16,7 +16,6 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +44,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
@@ -133,15 +133,18 @@ public class UserService {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
+    private final UserActivityService userActivityService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
             AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
             CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
-            GlobalNotificationSettingService globalNotificationSettingService, UserRecoveryKeyService userRecoveryKeyService) {
+            GlobalNotificationSettingService globalNotificationSettingService, UserRecoveryKeyService userRecoveryKeyService, UserActivityService userActivityService) {
         this.userCreationService = userCreationService;
         this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userActivityService = userActivityService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
@@ -217,13 +220,17 @@ public class UserService {
             // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
             // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
             // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
-            if (internalAdmin.getPassword() == null || !passwordService.checkPasswordMatch(internalAdminPassword, internalAdmin.getPassword())) {
+            boolean internalAdminPasswordChanged = internalAdmin.getPassword() == null || !passwordService.checkPasswordMatch(internalAdminPassword, internalAdmin.getPassword());
+            if (internalAdminPasswordChanged) {
                 internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
-                internalAdmin.setCredentialsChangedDate(ZonedDateTime.now());
             }
             // needs to be mutable --> new HashSet<>(Set.of(...))
             internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
             saveUser(internalAdmin);
+            // Stamped after the save: a freshly created admin has no id before it, and the timestamp is keyed on the id.
+            if (internalAdminPasswordChanged) {
+                userActivityService.recordCredentialsChanged(internalAdmin.getId(), Instant.now());
+            }
         }
         else {
             log.info("Create internal admin user {}", internalAdminUsername);
@@ -294,9 +301,9 @@ public class UserService {
                 .flatMap(row -> userRepository.findById(row.getUserId())).map(user -> {
                     user.setPassword(passwordService.hashPassword(newPassword));
                     userRecoveryKeyService.clearResetKey(user.getId());
-                    // Stops sessions established before the reset from being extended any further.
-                    user.setCredentialsChangedDate(ZonedDateTime.now());
                     saveUser(user);
+                    // Stops sessions established before the reset from being extended any further.
+                    userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
                     // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
                     // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
                     // exactly as they do when changing a password from inside the account - with the difference that a reset
@@ -598,8 +605,8 @@ public class UserService {
             }
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
-            user.setCredentialsChangedDate(ZonedDateTime.now());
             saveUser(user);
+            userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
             // What else is revoked is the user's decision: only they know whether the old password may have been seen by
             // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
             accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");
