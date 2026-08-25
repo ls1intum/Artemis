@@ -16,6 +16,12 @@ class HazelcastDistributedDataTest extends AbstractDistributedDataTest {
     private HazelcastDistributedDataProviderService distributedDataProvider;
 
     @Override
+    protected boolean clientsReachCoreNodesDirectly() {
+        // Hazelcast clients connect to the cluster members, which are the core nodes that serve git
+        return true;
+    }
+
+    @Override
     protected DistributedDataProvider getDistributedDataProvider() {
         return distributedDataProvider;
     }
