@@ -110,8 +110,8 @@ public class SearchableEntityDriftSweep {
                     removed++;
                     log.debug("[drift {}] {} {} is gone or no longer indexable", runId, state.getEntityType(), state.getEntityId());
                 }
-                case MATCHED -> {
-                    // Nothing to do: the row already reflects the entity.
+                case MATCHED, AWAITING_REPAIR -> {
+                    // Nothing to report: either the row is correct, or its repair is already queued.
                 }
             }
         }
@@ -146,28 +146,35 @@ public class SearchableEntityDriftSweep {
     /**
      * Compares one entity against what was last written for it, and records that it has now been looked at.
      * <p>
-     * A row is marked verified whatever the outcome, including when it drifted. The repair is queued and the
-     * dispatcher will refresh the ledger when it lands, so leaving the row at the front of the queue would only
-     * make the pass re-examine an entity it has already dealt with.
+     * The row is marked checked whatever the outcome, including when it turned out to be gone and when a repair
+     * for it is already waiting. Leaving it unmarked keeps it at the front of the queue, so every tick re-derives
+     * the same entity until the dispatcher catches up, spending the slice on work already in flight.
      */
     private CheckResult check(SearchableEntitySyncState state, ZonedDateTime checkedAt) {
         Optional<Map<String, Object>> desired = resolver.resolve(state.getEntityType(), state.getEntityId());
-        if (desired.isEmpty()) {
-            enqueueService.enqueueDelete(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT);
-            return CheckResult.GONE;
-        }
-
         state.setVerifiedAt(checkedAt);
         syncStateRepository.save(state);
 
+        if (desired.isEmpty()) {
+            return enqueueService.enqueueDelete(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT) ? CheckResult.GONE : CheckResult.AWAITING_REPAIR;
+        }
         if (contentHasher.hash(desired.get()).equals(state.getContentHash())) {
             return CheckResult.MATCHED;
         }
-        enqueueService.enqueueUpsert(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT);
-        return CheckResult.DRIFTED;
+        return enqueueService.enqueueUpsert(state.getEntityType(), state.getEntityId(), WeaviateOutboxOrigin.RECONCILE_DRIFT) ? CheckResult.DRIFTED : CheckResult.AWAITING_REPAIR;
     }
 
     private enum CheckResult {
-        MATCHED, DRIFTED, GONE
+        /** The row still reflects the entity. */
+        MATCHED,
+        /** The entity changed and a repair was queued. */
+        DRIFTED,
+        /** The entity is gone or no longer indexable, and a removal was queued. */
+        GONE,
+        /**
+         * A divergence, but a repair for this entity was already waiting. Counting it again would report the same
+         * problem once per tick until the dispatcher works through the queue.
+         */
+        AWAITING_REPAIR
     }
 }

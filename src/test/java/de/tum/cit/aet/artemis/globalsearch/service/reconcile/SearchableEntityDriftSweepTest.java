@@ -66,6 +66,8 @@ class SearchableEntityDriftSweepTest {
     @BeforeEach
     void setUp() {
         when(enqueueService.canEnqueue()).thenReturn(true);
+        when(enqueueService.enqueueUpsert(anyString(), anyLong(), any())).thenReturn(true);
+        when(enqueueService.enqueueDelete(anyString(), anyLong(), any())).thenReturn(true);
         when(idEnumerator.isTypeAvailable(anyString())).thenReturn(true);
         when(reconcileStateRepository.findByPass(ReconcilePass.DRIFT)).thenReturn(Optional.empty());
     }
@@ -132,6 +134,37 @@ class SearchableEntityDriftSweepTest {
 
         verifyNoInteractions(syncStateRepository);
         verifyNoInteractions(resolver);
+    }
+
+    @Test
+    void testAnEntityThatIsGoneIsStillMarkedChecked() {
+        // Otherwise it stays at the front of the queue and every tick re-derives it until the dispatcher applies
+        // the removal, spending the slice on work already in flight.
+        var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
+        ZonedDateTime verifiedBefore = state.getVerifiedAt();
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
+        when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.empty());
+
+        sweep.sweep();
+
+        assertThat(state.getVerifiedAt()).isAfter(verifiedBefore);
+        verify(syncStateRepository).save(state);
+    }
+
+    @Test
+    void testADivergenceWithARepairAlreadyQueuedIsNotCountedAgain() {
+        // The same problem would otherwise be reported once per tick until the dispatcher works through the queue.
+        var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
+        when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.of(Map.of("type", COURSE, "entity_id", 42L, "title", "Changed")));
+        when(enqueueService.enqueueUpsert(anyString(), anyLong(), any())).thenReturn(false);
+
+        sweep.sweep();
+
+        var captor = ArgumentCaptor.forClass(SearchableEntityReconcileState.class);
+        verify(reconcileStateRepository).save(captor.capture());
+        assertThat(captor.getValue().getEntitiesChecked()).as("the entity was still examined").isEqualTo(1);
+        assertThat(captor.getValue().getRepairsEnqueued()).as("but nothing new was queued for it").isZero();
     }
 
     @Test
