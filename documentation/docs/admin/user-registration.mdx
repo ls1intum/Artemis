@@ -106,8 +106,8 @@ other provider refused it. That gap is now closed, so an account in this state c
 internal account has no way to redeem a key. Account creation is deliberately **not** narrowed to match, and
 checks only whether the account is internal: the LTI launch is the other path that creates an internal
 account through this factory. The launch discards the key immediately, because it never sends the mail that
-carries one, and records separately whether the password dialog is still owed — see
-[LTI account provisioning](#lti-account-provisioning) below.
+carries one, and records whether it still owes that account the password dialog in `UserLti.initialized`
+rather than in `activated` — see [LTI account provisioning](#lti-account-provisioning) below.
 :::
 
 Consequently there are exactly three reasons for `activated = false`:
@@ -126,8 +126,8 @@ that carry a key never re-enables an account somebody deactivated deliberately.
 
 A self-registered account is mailed a link containing its activation key. Redeeming it through
 `GET /activate` sets `activated = true` and clears the key. Every other write that activates an account
-clears it too — the administrative activate action — and an LTI-provisioned account has its key discarded
-when the launch creates it, so an activated account never carries one.
+clears it too — the administrative activate action, and the LTI launch both when it creates the account and
+when it hands over the generated password — so an activated account never carries one.
 
 An account that is not activated within `registration.cleanup-time-minutes` (default 60) is
 **deleted**. The removal is scheduled when the account is registered and cancelled when it is
