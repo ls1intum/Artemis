@@ -28,6 +28,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
@@ -63,8 +64,9 @@ class WeaviateOutboxDispatcherTest {
 
     @BeforeEach
     void setUp() {
-        // Construct with the production default tuning values (batch size, base and max backoff seconds).
-        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, transactionManager, 100, 10, 300);
+        // Construct with the production default tuning values.
+        var outboxProperties = new WeaviateOutboxProperties(5, 100, 10, 300);
+        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, transactionManager, outboxProperties);
     }
 
     @Test

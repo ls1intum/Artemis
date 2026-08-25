@@ -9,7 +9,6 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -17,6 +16,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateMigrationProperties;
 
 /**
  * Runs pending Weaviate schema migrations once, in the background, on the scheduling node only.
@@ -47,7 +47,7 @@ public class WeaviateMigrationStartupService {
 
     /**
      * Delay before the first migration attempt, so it does not compete with application startup. The migration runs on a background thread, so this only affects when the one-off
-     * background work begins, not whether it blocks anything. Overridable via {@code artemis.weaviate.outbox.migration-initial-delay-seconds} (default 30).
+     * background work begins, not whether it blocks anything. Overridable via {@code artemis.weaviate.migration.initial-delay-seconds} (default 30).
      */
     private final long initialDelaySeconds;
 
@@ -56,25 +56,23 @@ public class WeaviateMigrationStartupService {
      * scheduling-node restart) lets the migration self-heal once the embedding service recovers. Re-running is safe because the migration is idempotent: target UUIDs are
      * deterministic and
      * the schema version is bumped only on full success, so a retry either re-applies the same writes or is a no-op once complete. Overridable via
-     * {@code artemis.weaviate.outbox.migration-max-attempts} (default 5).
+     * {@code artemis.weaviate.migration.max-attempts} (default 5).
      */
     private final int maxMigrationAttempts;
 
     /**
-     * Delay between failed migration attempts, overridable via {@code artemis.weaviate.outbox.migration-retry-delay-seconds} (default 120).
+     * Delay between failed migration attempts, overridable via {@code artemis.weaviate.migration.retry-delay-seconds} (default 120).
      */
     private final long retryDelaySeconds;
 
     public WeaviateMigrationStartupService(WeaviateMigrationService migrationService, WeaviateService weaviateService, @Qualifier("taskScheduler") TaskScheduler taskScheduler,
-            @Value("${artemis.weaviate.outbox.migration-initial-delay-seconds:30}") long initialDelaySeconds,
-            @Value("${artemis.weaviate.outbox.migration-max-attempts:5}") int maxMigrationAttempts,
-            @Value("${artemis.weaviate.outbox.migration-retry-delay-seconds:120}") long retryDelaySeconds) {
+            WeaviateMigrationProperties migrationProperties) {
         this.migrationService = migrationService;
         this.weaviateService = weaviateService;
         this.taskScheduler = taskScheduler;
-        this.initialDelaySeconds = initialDelaySeconds;
-        this.maxMigrationAttempts = maxMigrationAttempts;
-        this.retryDelaySeconds = retryDelaySeconds;
+        this.initialDelaySeconds = migrationProperties.initialDelaySeconds();
+        this.maxMigrationAttempts = migrationProperties.maxAttempts();
+        this.retryDelaySeconds = migrationProperties.retryDelaySeconds();
     }
 
     /**

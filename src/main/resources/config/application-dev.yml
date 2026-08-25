@@ -176,9 +176,10 @@ artemis:
         #     batch-size: 100                        # Outbox rows processed per drain batch
         #     base-backoff-seconds: 10               # First retry delay after a failed Weaviate write (doubles each attempt)
         #     max-backoff-seconds: 300               # Cap on the retry backoff
-        #     migration-initial-delay-seconds: 30    # Delay before the first schema-migration attempt after startup
-        #     migration-max-attempts: 5              # Bounded in-process retries for a failed schema migration
-        #     migration-retry-delay-seconds: 120     # Delay between schema-migration retries
+        # migration:
+        #     initial-delay-seconds: 30              # Delay before the first schema-migration attempt after startup
+        #     max-attempts: 5                        # Bounded in-process retries for a failed schema migration
+        #     retry-delay-seconds: 120               # Delay between schema-migration retries
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
