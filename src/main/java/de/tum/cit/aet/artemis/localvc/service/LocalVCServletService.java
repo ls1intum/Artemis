@@ -597,6 +597,12 @@ public class LocalVCServletService {
                 return false;
             }
 
+            // Parsed before the scan although it is only needed after it. This is local string work that can throw, and
+            // the catch at the end of this method returns without spending budget - deliberately, since a malformed
+            // request is not a guess at a credential. Doing it after the scan would make an unparsable path a way to
+            // run the scan for free, repeatedly.
+            LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
+
             var processingJobs = distributedDataAccessService.get().getProcessingJobsForAgentByName(agentName);
             if (processingJobs.isEmpty()) {
                 // A registered agent running nothing, so no token can match
@@ -604,7 +610,6 @@ public class LocalVCServletService {
                 return false;
             }
 
-            LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
             var tokenService = buildJobCloneTokenService.get();
             BuildJobQueueItem matchingBuildJob = null;
             for (BuildJobQueueItem buildJob : processingJobs) {

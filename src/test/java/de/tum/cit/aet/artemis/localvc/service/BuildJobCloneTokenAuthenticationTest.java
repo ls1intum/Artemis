@@ -376,6 +376,20 @@ class BuildJobCloneTokenAuthenticationTest {
     }
 
     /**
+     * A request whose repository path cannot be parsed must not reach the distributed scan.
+     * <p>
+     * The catch at the end of the method returns without spending budget, which is right - a malformed request is not a
+     * guess at a credential - but it means anything that can throw after the scan is a way to run the scan for free,
+     * repeatedly. Parsing the path is local work, so it happens before.
+     */
+    @Test
+    void shouldNotReadTheProcessingJobsForAnUnparsableRepositoryPath() {
+        assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/not-a-repository-path", AGENT_ADDRESS))).isFalse();
+
+        verify(distributedDataAccessService, never()).getProcessingJobsForAgentByName(any());
+    }
+
+    /**
      * The cheapest gate of all, and the one that keeps this method off the hot path of ordinary traffic. A student's
      * password or {@code vcpat-} access token is not a clone token and can be recognised as such with a string
      * comparison, so it must not cost a distributed lookup - every human git fetch in the installation carries one and
