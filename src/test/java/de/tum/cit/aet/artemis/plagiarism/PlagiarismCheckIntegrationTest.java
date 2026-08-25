@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -19,6 +20,9 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private PlagiarismUtilService plagiarismUtilService;
+
+    @Autowired
+    private PlagiarismCacheService plagiarismCacheService;
 
     private final int submissionsAmount = 5;
 
@@ -46,6 +50,27 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // then
         verifyPlagiarismResult(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testCheckPlagiarismIsRefusedWhileTheCourseIsAlreadyBeingChecked() throws Exception {
+        // given: a check is already running somewhere in the cluster for this course
+        var exerciseId = plagiarismUtilService.createTextExerciseAndSimilarSubmissions(TEST_PREFIX, TEXT_SUBMISSION, submissionsAmount);
+        var courseId = exerciseRepository.findByIdElseThrow(exerciseId).getCourseViaExerciseGroupOrCourseMember().getId();
+        assertThat(plagiarismCacheService.tryStartPlagiarismCheck(courseId)).as("the course should be free before the test claims it").isTrue();
+
+        try {
+            // when
+            var plagiarismOptions = plagiarismUtilService.getDefaultPlagiarismOptions();
+            request.get("/api/text/text-exercises/" + exerciseId + "/check-plagiarism", HttpStatus.BAD_REQUEST, PlagiarismResultDTO.class, plagiarismOptions);
+
+            // then: the refused request must leave the claim of the check that is still running alone
+            assertThat(plagiarismCacheService.tryStartPlagiarismCheck(courseId)).as("a refused check must not release the course it never claimed").isFalse();
+        }
+        finally {
+            plagiarismCacheService.finishPlagiarismCheck(courseId);
+        }
     }
 
     /***

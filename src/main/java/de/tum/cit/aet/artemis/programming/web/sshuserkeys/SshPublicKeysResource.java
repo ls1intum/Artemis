@@ -53,8 +53,8 @@ public class SshPublicKeysResource {
     @GetMapping("public-keys")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserSshPublicKeyDTO>> getSshPublicKeys() {
-        User user = userRepository.getUser();
-        List<UserSshPublicKeyDTO> keys = userSshPublicKeyService.getAllSshKeysForUser(user);
+        // The service only reads the id off the user, so the id-only lookup is enough.
+        List<UserSshPublicKeyDTO> keys = userSshPublicKeyService.getAllSshKeysForUser(userRepository.getUserIdElseThrow());
         return ResponseEntity.ok(keys);
     }
 

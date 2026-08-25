@@ -1,17 +1,72 @@
-# Open-Source
+# Open-Source Development
 
-We are dedicated to providing great software support for excellent teaching.
-To achieve that, we develop Artemis as [free and open-source](https://www.youtube.com/watch?v=EMi3PCW23yQ) software.
-The core ideas of free software always have been "use", "study", "share", and "improve".
+Artemis is [free and open-source](https://www.youtube.com/watch?v=EMi3PCW23yQ) software, published
+under the [MIT license](https://github.com/ls1intum/Artemis/blob/develop/LICENSE). Being open source
+here means more than a public repository: the requirements, the design, the reviews, the tests, and the
+release history are public too, and the same process applies to everyone who contributes.
 
-With Artemis, we embrace all of those aspects:
+The core ideas of free software always have been "use", "study", "share", and "improve". With Artemis,
+we embrace all of those aspects:
 
-* Artemis is **used** by over ten universities and thousands of students.
-* Artemis is part of active research and is constantly improved by students as part of university courses or
-  masters/bachelors theses.
-  **Studying** the Artemis source code helps our students to improve their software engineering skills
-  while working on a real, actively used product.
-* The foundation of learning and teaching is **sharing** knowledge.
-  Artemis is used to conduct courses at universities and, at the same time, used as an education research platform.
+* Artemis is **used** by universities and schools to run real courses and examinations. See
+  [Adoption](/about/adoption).
+* Artemis is part of active research and is constantly improved by students as part of university
+  courses or bachelor's and master's theses. **Studying** the Artemis source code helps our students
+  improve their software engineering skills while working on a real, actively used product.
+* The foundation of learning and teaching is **sharing** knowledge. Artemis is used to conduct courses
+  at universities and, at the same time, used as an education research platform. See
+  [Publications](/publications).
 * With more than [140 contributors](https://github.com/ls1intum/Artemis/graphs/contributors) and a
-  [regular release cycle](https://github.com/ls1intum/Artemis/releases), we are constantly **improving** Artemis.
+  [regular release cycle](/about/releases), we are constantly **improving** Artemis.
+
+## How a change is developed
+
+Artemis is a professionally maintained engineering project, not a code drop. Every change goes through
+the same steps, which are described in full in the [development process](development-process).
+
+| Step | What happens | Where it is documented |
+| --- | --- | --- |
+| Feature request | Anyone opens a GitHub issue describing the desired functionality, its rationale, and its risks | [Development process, step 1](development-process) |
+| Evaluation | Maintainers and the development team assess feasibility and impact | [Development process, step 2](development-process) |
+| Feature proposal | Larger changes get a written proposal appended to the issue from a template | [Feature proposal template](https://github.com/ls1intum/Artemis/blob/develop/.github/ISSUE_TEMPLATE/feature-proposal--developer-.md) |
+| Requirements engineering | Functional and non-functional requirements are stated explicitly | [Development process, step 3.2](development-process) |
+| Analysis | Analysis object model plus activity, state chart, and communication diagrams where they help | [Development process, step 3.3](development-process) |
+| System architecture | Subsystem decomposition, interfaces, persistent data management, and access control | [Development process, step 3.4](development-process), [System design](system-design) |
+| UI/UX design | Mockups against the Artemis design system and a described user flow | [Development process, step 3.5](development-process), [AET UI/UX guidelines](https://ls1intum.github.io/ui-ux-guidelines/) |
+| Implementation | Code on a conventionally named branch, following the coding and design guidelines | [Guidelines](/developer/guidelines/) |
+| Automated tests | Server tests (JUnit), client tests (Vitest), and end-to-end tests (Playwright), with per-module coverage thresholds | [Server tests](guidelines/server-tests), [Client tests](guidelines/client-tests), [E2E tests](e2e-testing-playwright) |
+| Manual verification | The change is deployed to a test server and tested with every affected user role, including exam mode where relevant | [Test servers](test-servers) |
+| Peer review | Reviewers test the change, check code quality, correctness, performance, and security, and record what they reviewed | [Reviewer guidelines](reviewer-guidelines) |
+| Feature-maintainer review | The maintainer responsible for the area approves it within their scope | [Project governance](/about/governance) |
+| Artemis-maintainer approval | Final review and merge into `develop` | [Project governance](/about/governance) |
+
+A pull request is only ready to merge once it has approvals from at least four reviewers, every
+checklist item in the pull request description is checked, and every review thread is resolved.
+
+## Quality gates
+
+Automated checks run on every pull request and are aggregated behind a single required status check:
+build, server and client tests with per-module coverage thresholds, code style and architecture rules,
+end-to-end tests, a documentation build that fails on broken links, translation key consistency between
+English and German, version consistency across the build files, and Spring startup behavior. CodeQL
+static analysis runs alongside as an advisory check.
+
+[Project governance](/about/governance) lists the gates in detail.
+
+## Contributing
+
+Contributions from outside the organization are welcome and follow the same process. Start with
+[CONTRIBUTING.md](https://github.com/ls1intum/Artemis/blob/develop/CONTRIBUTING.md) and the
+[setup guide](setup), and read the [Code of Conduct](https://github.com/ls1intum/Artemis/blob/develop/CODE_OF_CONDUCT.md).
+
+Contributors use their real name and an authentic profile picture. In a project used to run
+examinations, knowing who wrote and who approved a change is part of what makes the review process
+meaningful.
+
+## Related pages
+
+- [Project governance](/about/governance)
+- [Release and support policy](/about/releases)
+- [Trust and transparency](/about/trust)
+- [Development process](development-process)
+- [Reviewer guidelines](reviewer-guidelines)

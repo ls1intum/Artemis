@@ -607,6 +607,7 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
+        repoUser.setActivationKey("some-key");
         repoUser.setLtiCreated(true);
         userTestRepository.save(repoUser);
 
@@ -620,6 +621,10 @@ public class UserTestService {
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+        // The key the factory generated for the internal account is unreachable state once the account is activated, and
+        // an activated account carrying one would break the invariant the data repair for wrongly unactivated accounts
+        // relies on.
+        assertThat(currentUser.getActivationKey()).as("activating through the LTI initialization clears the activation key").isNull();
     }
 
     // Test
@@ -657,7 +662,9 @@ public class UserTestService {
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.getActivated()).isTrue();
+        // An account the LTI launch did not create is answered without being touched. It used to be activated here, which
+        // let it undo an administrator's deactivation.
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
@@ -677,7 +684,9 @@ public class UserTestService {
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.getActivated()).isTrue();
+        // Same for an externally managed account: it has no Artemis password to initialise, and only an administrator may
+        // reverse a deactivation.
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
         assertThat(currentUser.isInternal()).isFalse();
     }
 

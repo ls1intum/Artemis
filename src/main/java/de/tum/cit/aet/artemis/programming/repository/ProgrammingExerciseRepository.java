@@ -19,9 +19,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
@@ -48,8 +50,45 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Repository
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
-    Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationAndBuildConfigById(long exerciseId);
+
+    /**
+     * Loads a programming exercise with everything the build trigger reads off it.
+     * <p>
+     * The trigger otherwise resolves the build config and the auxiliary repositories with a query each, per push, for
+     * what are per-exercise values. Both of their loaders return the association when it is already initialized, so one
+     * load here removes both queries without introducing anything that has to be invalidated.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the exercise with its build config and auxiliary repositories
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "buildConfig", "auxiliaryRepositories" })
+    Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
+
+    /**
+     * Sets the flag that marks the exercise as having changed test cases, but only when it does not already hold that
+     * value.
+     * <p>
+     * Deliberately a modifying query. The flag is a single boolean, and reading the exercise in order to change it
+     * meant fetching the whole exercise together with the course it eagerly brings along, then merging all of it back,
+     * which is two wide statements for one column. Guarding on the current value inside the statement also means the
+     * previous value does not have to be read: the affected row count answers whether anything changed. A null in the
+     * column counts as false, which is how {@link ProgrammingExercise#getTestCasesChanged()} reads it.
+     *
+     * @param exerciseId       the exercise whose flag should be set
+     * @param testCasesChanged the value to set the flag to
+     * @return 1 if the flag was changed, 0 if it already held that value or no such exercise exists
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExercise exercise
+            SET exercise.testCasesChanged = :testCasesChanged
+            WHERE exercise.id = :exerciseId
+                AND COALESCE(exercise.testCasesChanged, FALSE) <> :testCasesChanged
+            """)
+    int updateTestCasesChanged(@Param("exerciseId") long exerciseId, @Param("testCasesChanged") boolean testCasesChanged);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
@@ -164,7 +203,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     List<ProgrammingExercise> findAllWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesByCourseId(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
+    // course is an eager @ManyToOne, so fetching it here saves the secondary select that git authorization would
+    // otherwise pay on every request when it reads the course for its role checks
+    @EntityGraph(type = LOAD, attributePaths = { "submissionPolicy", "course" })
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
 
     @EntityGraph(type = LOAD, attributePaths = "buildConfig")
@@ -848,15 +889,17 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
-     * Find a programming exercise by its id, including template participation.
+     * Find a programming exercise by its id, including its template participation and its build config. Prefer this over
+     * calling a template-participation loader and {@link #findBranchByExerciseId} in sequence: both read the same
+     * exercise, so one query answers what used to take two.
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NonNull
-    default ProgrammingExercise findByIdWithTemplateParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithTemplateParticipationById(programmingExerciseId), programmingExerciseId);
+    default ProgrammingExercise findByIdWithTemplateParticipationAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithTemplateParticipationAndBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 
     /**

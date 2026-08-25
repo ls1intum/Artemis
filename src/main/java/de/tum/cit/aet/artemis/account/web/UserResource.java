@@ -118,6 +118,11 @@ public class UserResource {
 
     /**
      * Initialises users that are flagged as such and are LTI users by setting a new password that gets returned
+     * <p>
+     * An account that is not an LTI-provisioned internal account is answered without being modified. This branch used to
+     * activate the caller instead, which meant any externally managed or non-LTI account could re-activate itself here
+     * after an administrator had deactivated it - the endpoint only requires an authenticated session, and one issued
+     * before the deactivation still works.
      *
      * @return The ResponseEntity with a status 200 (Ok) and either an empty password or the newly created password
      */
@@ -128,9 +133,8 @@ public class UserResource {
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
-        if ((ltiApi.isPresent() && !ltiApi.get().isLtiCreatedUser(user)) || !user.isInternal()) {
-            user.setActivated(true);
-            userRepository.save(user);
+        boolean isLtiProvisionedInternalUser = user.isInternal() && ltiApi.isPresent() && ltiApi.get().isLtiCreatedUser(user);
+        if (!isLtiProvisionedInternalUser) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
 

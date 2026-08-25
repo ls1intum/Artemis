@@ -13,6 +13,17 @@ artemis:
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
     use-external: true # enables ldap authentication
+    # A "remember me" session is silently extended while it stays in use, so an active user is not signed out every time
+    # the token expires. This is the one bound on how long that can go on: the session may never live longer than this
+    # after the original login, whatever the request pattern. An inactive session still ends when its current token
+    # expires, after token-validity-in-seconds-for-remember-me.
+    #
+    # Measured from the login rather than counted per extension on purpose. A rotation fires on the first request after
+    # less than half the validity remains, so counting extensions would make the maximum depend on when requests arrive,
+    # and would give the most active sessions the shortest lives.
+    #
+    # A passkey session has its own, longer bound: artemis.user-management.passkey.token-validity-in-seconds-for-passkey.
+    max-session-lifetime-in-seconds: 2592000 # 30 days, the lifetime a single non-rotating remember-me token used to have
     password-reset:
       links: # The password reset links for different languages
         en: '<link>'
@@ -88,6 +99,14 @@ artemis:
     enabled: false
     account-management-requests-per-minute: 5
     authentication-requests-per-minute: 30
+    login-options-requests-per-minute: 30
+    # Addresses exempt from every rate limit, as literal IPv4/IPv6 addresses or CIDR blocks. The limits
+    # are per client address, which protects against one abusive client but throttles a load generator
+    # almost immediately, since a benchmark drives thousands of logins from a single address. Leave
+    # empty unless you operate the address in question.
+    # exempt-addresses:
+    #   - 203.0.113.10
+    #   - 2001:db8::/64
   athena:
     url: http://localhost:5100
     secret: abcdef12345
