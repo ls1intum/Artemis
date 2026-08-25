@@ -35,6 +35,11 @@ public class SearchableEntitySyncState extends DomainObject {
     @Column(name = "synced_at", nullable = false)
     private ZonedDateTime syncedAt;
 
+    // When the row was last checked against the database, as opposed to last written. The drift pass takes the
+    // least recently verified rows, which is what lets it sweep continuously without a position of its own.
+    @Column(name = "verified_at", nullable = false)
+    private ZonedDateTime verifiedAt;
+
     public SearchableEntitySyncState() {
         // Default constructor for JPA
     }
@@ -44,6 +49,8 @@ public class SearchableEntitySyncState extends DomainObject {
         this.entityId = entityId;
         this.contentHash = contentHash;
         this.syncedAt = syncedAt;
+        // A confirmed write is also a verification: the content was known correct at that moment.
+        this.verifiedAt = syncedAt;
     }
 
     public String getEntityType() {
@@ -76,6 +83,14 @@ public class SearchableEntitySyncState extends DomainObject {
 
     public void setSyncedAt(ZonedDateTime syncedAt) {
         this.syncedAt = syncedAt;
+    }
+
+    public ZonedDateTime getVerifiedAt() {
+        return verifiedAt;
+    }
+
+    public void setVerifiedAt(ZonedDateTime verifiedAt) {
+        this.verifiedAt = verifiedAt;
     }
 
     @Override

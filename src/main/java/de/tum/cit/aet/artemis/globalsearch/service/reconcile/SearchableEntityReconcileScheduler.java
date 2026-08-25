@@ -37,9 +37,12 @@ public class SearchableEntityReconcileScheduler {
 
     private final SearchableEntityMissingSweep missingSweep;
 
-    public SearchableEntityReconcileScheduler(WeaviateReconcileProperties reconcileProperties, SearchableEntityMissingSweep missingSweep) {
+    private final SearchableEntityDriftSweep driftSweep;
+
+    public SearchableEntityReconcileScheduler(WeaviateReconcileProperties reconcileProperties, SearchableEntityMissingSweep missingSweep, SearchableEntityDriftSweep driftSweep) {
         this.reconcileProperties = reconcileProperties;
         this.missingSweep = missingSweep;
+        this.driftSweep = driftSweep;
     }
 
     /**
@@ -64,9 +67,7 @@ public class SearchableEntityReconcileScheduler {
      */
     @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-drift-time:0 */5 * * * *}")
     public void reconcileDrift() {
-        runPass(ReconcilePass.DRIFT, reconcileProperties.driftSweepEnabled(), () -> {
-            // The pass itself lands in a later change; scheduling, gating and isolation are in place now.
-        });
+        runPass(ReconcilePass.DRIFT, reconcileProperties.driftSweepEnabled(), driftSweep::sweep);
     }
 
     /**

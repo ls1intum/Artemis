@@ -254,6 +254,8 @@ public class WeaviateOutboxDispatcher {
             syncStateRepository.findByEntityTypeAndEntityId(entry.getEntityType(), entry.getEntityId()).ifPresentOrElse(state -> {
                 state.setContentHash(hash);
                 state.setSyncedAt(now);
+                // Writing the row is also a verification of it, so a busy entity is not re-checked for no reason.
+                state.setVerifiedAt(now);
                 syncStateRepository.save(state);
             }, () -> syncStateRepository.save(new SearchableEntitySyncState(entry.getEntityType(), entry.getEntityId(), hash, now)));
         }

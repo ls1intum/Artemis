@@ -50,6 +50,25 @@ public class SearchableEntityIdEnumerator {
     }
 
     /**
+     * Whether anything is known about a type at all, meaning the module owning it is present.
+     * <p>
+     * A pass must check this before reading a resolver result as meaningful. When a module is disabled, resolving
+     * any of its entities yields nothing, which is indistinguishable from the entity having been deleted. Acting on
+     * that would queue a delete for every indexed row of the type.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @return true if the module owning this type is present
+     */
+    public boolean isTypeAvailable(String entityType) {
+        return switch (entityType) {
+            case SearchableEntitySchema.TypeValues.LECTURE -> lectureRepositoryApi.isPresent();
+            case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> lectureUnitRepositoryApi.isPresent();
+            case SearchableEntitySchema.TypeValues.EXAM -> examRepositoryApi.isPresent();
+            default -> true;
+        };
+    }
+
+    /**
      * Reads the next page of ids that should be indexed for a type.
      *
      * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
