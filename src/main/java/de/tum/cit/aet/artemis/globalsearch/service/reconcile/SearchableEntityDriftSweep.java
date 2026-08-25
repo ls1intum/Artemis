@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.service.reconcile;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +15,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
+import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
+import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntityReconcileState;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityContentHasher;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
@@ -42,6 +46,8 @@ public class SearchableEntityDriftSweep {
 
     private final SearchableEntitySyncStateRepository syncStateRepository;
 
+    private final SearchableEntityReconcileStateRepository reconcileStateRepository;
+
     private final SearchableEntityResolver resolver;
 
     private final SearchableEntityContentHasher contentHasher;
@@ -52,9 +58,11 @@ public class SearchableEntityDriftSweep {
 
     private final WeaviateReconcileProperties reconcileProperties;
 
-    public SearchableEntityDriftSweep(SearchableEntitySyncStateRepository syncStateRepository, SearchableEntityResolver resolver, SearchableEntityContentHasher contentHasher,
-            SearchableEntityIdEnumerator idEnumerator, ReconcileEnqueueService enqueueService, WeaviateReconcileProperties reconcileProperties) {
+    public SearchableEntityDriftSweep(SearchableEntitySyncStateRepository syncStateRepository, SearchableEntityReconcileStateRepository reconcileStateRepository,
+            SearchableEntityResolver resolver, SearchableEntityContentHasher contentHasher, SearchableEntityIdEnumerator idEnumerator, ReconcileEnqueueService enqueueService,
+            WeaviateReconcileProperties reconcileProperties) {
         this.syncStateRepository = syncStateRepository;
+        this.reconcileStateRepository = reconcileStateRepository;
         this.resolver = resolver;
         this.contentHasher = contentHasher;
         this.idEnumerator = idEnumerator;
@@ -66,6 +74,7 @@ public class SearchableEntityDriftSweep {
      * Checks one slice of the least recently verified entities and queues a repair for any that no longer match.
      */
     public void sweep() {
+        String runId = ReconcileRunId.next();
         List<String> types = reconcileProperties.entityTypes();
         if (types.isEmpty() || !enqueueService.canEnqueue()) {
             return;
@@ -76,6 +85,12 @@ public class SearchableEntityDriftSweep {
             return;
         }
 
+        SearchableEntityReconcileState pass = reconcileStateRepository.findByPass(ReconcilePass.DRIFT).orElseGet(() -> new SearchableEntityReconcileState(ReconcilePass.DRIFT));
+        if (hasComeFullCircle(pass, candidates.getFirst())) {
+            logCycleSummary(runId, pass);
+            pass.startNewCycle();
+        }
+
         ZonedDateTime checkedAt = ZonedDateTime.now();
         long drifted = 0;
         long removed = 0;
@@ -83,21 +98,49 @@ public class SearchableEntityDriftSweep {
             if (!idEnumerator.isTypeAvailable(state.getEntityType())) {
                 // Resolving anything from a disabled module yields nothing, which here is indistinguishable from the
                 // entity having been deleted. Acting on it would queue a delete for every indexed row of the type.
-                log.debug("Skipping {} in the drift sweep: its module is disabled", state.getEntityType());
+                log.debug("[drift {}] skipping {} {}: its module is disabled", runId, state.getEntityType(), state.getEntityId());
                 continue;
             }
             switch (check(state, checkedAt)) {
-                case DRIFTED -> drifted++;
-                case GONE -> removed++;
+                case DRIFTED -> {
+                    drifted++;
+                    log.debug("[drift {}] {} {} no longer matches what was last written", runId, state.getEntityType(), state.getEntityId());
+                }
+                case GONE -> {
+                    removed++;
+                    log.debug("[drift {}] {} {} is gone or no longer indexable", runId, state.getEntityType(), state.getEntityId());
+                }
                 case MATCHED -> {
                     // Nothing to do: the row already reflects the entity.
                 }
             }
         }
 
+        pass.recordProgress(candidates.size(), drifted + removed, 0);
+        reconcileStateRepository.save(pass);
+
         if (drifted > 0 || removed > 0) {
-            log.info("Drift sweep checked {} entities: {} no longer matched the database, {} were gone or no longer indexable", candidates.size(), drifted, removed);
+            log.info("[drift {}] checked {} entities: {} no longer matched the database, {} were gone or no longer indexable", runId, candidates.size(), drifted, removed);
         }
+    }
+
+    /**
+     * Whether every managed entity has been checked since the current cycle began.
+     * <p>
+     * The pass has no position to compare against, so the corpus itself answers the question: the slice always
+     * starts with the entity checked longest ago, and once even that one was checked after the cycle started,
+     * nothing is left over from before it.
+     */
+    private boolean hasComeFullCircle(SearchableEntityReconcileState pass, SearchableEntitySyncState leastRecentlyVerified) {
+        ZonedDateTime cycleStartedAt = pass.getCycleStartedAt();
+        ZonedDateTime oldestCheck = leastRecentlyVerified.getVerifiedAt();
+        return cycleStartedAt != null && oldestCheck != null && oldestCheck.isAfter(cycleStartedAt);
+    }
+
+    private void logCycleSummary(String runId, SearchableEntityReconcileState pass) {
+        ZonedDateTime cycleStartedAt = pass.getCycleStartedAt();
+        String elapsed = cycleStartedAt == null ? "unknown" : Duration.between(cycleStartedAt, ZonedDateTime.now()).toString();
+        log.info("[drift {}] completed a cycle: {} entities checked, {} queued for repair, elapsed {}", runId, pass.getEntitiesChecked(), pass.getRepairsEnqueued(), elapsed);
     }
 
     /**

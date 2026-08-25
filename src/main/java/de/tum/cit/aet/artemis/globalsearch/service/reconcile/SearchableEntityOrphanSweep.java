@@ -78,6 +78,7 @@ public class SearchableEntityOrphanSweep {
      * Reads one bounded slice of the index, repairs what is wrong with it, and saves where it got to.
      */
     public void sweep() {
+        String runId = ReconcileRunId.next();
         if (reconcileProperties.entityTypes().isEmpty() || !enqueueService.canEnqueue()) {
             return;
         }
@@ -86,11 +87,11 @@ public class SearchableEntityOrphanSweep {
 
         var slice = indexScanService.scanFrom(state.getPositionCursor(), reconcileProperties.orphanPageSize(), reconcileProperties.orphanPagesPerTick());
         if (slice.rows().isEmpty()) {
-            finishCycle(state);
+            finishCycle(runId, state);
             return;
         }
 
-        Outcome outcome = repair(slice.rows());
+        Outcome outcome = repair(runId, slice.rows());
         if (outcome == null) {
             // The pass aborted. Leave the cursor where it was so the next tick re-reads the same slice rather than
             // stepping over whatever caused it.
@@ -99,14 +100,14 @@ public class SearchableEntityOrphanSweep {
 
         state.recordProgress(slice.rows().size(), outcome.repaired(), outcome.removed());
         if (slice.nextCursor() == null) {
-            finishCycle(state);
+            finishCycle(runId, state);
             return;
         }
         state.setPositionCursor(slice.nextCursor());
         reconcileStateRepository.save(state);
 
         if (outcome.repaired() > 0 || outcome.removed() > 0) {
-            log.info("Index sweep checked {} rows: {} disagreed with what was last written, {} had no entity behind them", slice.rows().size(), outcome.repaired(),
+            log.info("[index {}] checked {} rows: {} disagreed with what was last written, {} had no entity behind them", runId, slice.rows().size(), outcome.repaired(),
                     outcome.removed());
         }
     }
@@ -117,7 +118,7 @@ public class SearchableEntityOrphanSweep {
      *
      * @return what was queued, or {@code null} if the pass aborted and nothing should be recorded
      */
-    private Outcome repair(List<IndexedRow> rows) {
+    private Outcome repair(String runId, List<IndexedRow> rows) {
         Map<String, List<IndexedRow>> rowsByType = rows.stream().filter(row -> row.entityType() != null && row.entityId() != null)
                 .collect(Collectors.groupingBy(IndexedRow::entityType));
 
@@ -128,7 +129,7 @@ public class SearchableEntityOrphanSweep {
             if (!reconcileProperties.managesEntityType(entityType)) {
                 // Removing rows of a type no pass repairs would delete an orphaned post while nothing ever re-adds
                 // a missing one, which is worse than leaving the type alone entirely.
-                log.debug("Skipping {} rows in the index sweep: the type is not managed", entityType);
+                log.debug("[index {}] skipping {} rows: the type is not managed", runId, entityType);
                 continue;
             }
 
@@ -136,16 +137,16 @@ public class SearchableEntityOrphanSweep {
             Optional<Set<Long>> shouldBeIndexed = idEnumerator.indexableIdsAmong(entityType, candidates.stream().map(IndexedRow::entityId).toList());
             if (shouldBeIndexed.isEmpty()) {
                 // Nothing is known about this type, so every row of it would look orphaned.
-                log.debug("Skipping {} rows in the index sweep: its module is disabled", entityType);
+                log.debug("[index {}] skipping {} rows: its module is disabled", runId, entityType);
                 continue;
             }
 
             List<IndexedRow> orphans = candidates.stream().filter(row -> !shouldBeIndexed.get().contains(row.entityId())).toList();
-            if (abortsOnOrphanRatio(entityType, orphans.size(), candidates.size())) {
+            if (abortsOnOrphanRatio(runId, entityType, orphans.size(), candidates.size())) {
                 return null;
             }
 
-            removed += remove(entityType, orphans, removed);
+            removed += remove(runId, entityType, orphans, removed);
             repaired += repairDivergent(entityType, candidates, orphans);
         }
         return new Outcome(repaired, removed);
@@ -156,7 +157,7 @@ public class SearchableEntityOrphanSweep {
      * scan, or this pass is wrong far more often than it means the index really is that far out of step, and
      * deleting on that reading is unrecoverable.
      */
-    private boolean abortsOnOrphanRatio(String entityType, int orphanCount, int candidateCount) {
+    private boolean abortsOnOrphanRatio(String runId, String entityType, int orphanCount, int candidateCount) {
         if (candidateCount == 0 || orphanCount == 0) {
             return false;
         }
@@ -164,16 +165,16 @@ public class SearchableEntityOrphanSweep {
         if (ratio <= reconcileProperties.orphanAbortRatio()) {
             return false;
         }
-        log.error("Index sweep aborted: {} of {} scanned {} rows had no entity behind them, above the {} threshold. Nothing was removed.", orphanCount, candidateCount, entityType,
-                reconcileProperties.orphanAbortRatio());
+        log.error("[index {}] aborted: {} of {} scanned {} rows had no entity behind them, above the {} threshold. Nothing was removed.", runId, orphanCount, candidateCount,
+                entityType, reconcileProperties.orphanAbortRatio());
         return true;
     }
 
-    private long remove(String entityType, List<IndexedRow> orphans, long alreadyRemoved) {
+    private long remove(String runId, String entityType, List<IndexedRow> orphans, long alreadyRemoved) {
         long removed = 0;
         for (IndexedRow orphan : orphans) {
             if (alreadyRemoved + removed >= reconcileProperties.orphanDeleteCapPerTick()) {
-                log.warn("Index sweep stopped at its per-tick removal limit of {}; the rest is left for the next tick", reconcileProperties.orphanDeleteCapPerTick());
+                log.warn("[index {}] stopped at its per-tick removal limit of {}; the rest is left for the next tick", runId, reconcileProperties.orphanDeleteCapPerTick());
                 break;
             }
             if (enqueueService.enqueueDelete(entityType, orphan.entityId(), WeaviateOutboxOrigin.RECONCILE_ORPHAN)) {
@@ -214,10 +215,10 @@ public class SearchableEntityOrphanSweep {
         return repaired;
     }
 
-    private void finishCycle(SearchableEntityReconcileState state) {
+    private void finishCycle(String runId, SearchableEntityReconcileState state) {
         ZonedDateTime cycleStartedAt = state.getCycleStartedAt();
         String elapsed = cycleStartedAt == null ? "unknown" : Duration.between(cycleStartedAt, ZonedDateTime.now()).toString();
-        log.info("Index sweep completed a cycle: {} rows checked, {} rewritten, {} removed, elapsed {}", state.getEntitiesChecked(), state.getRepairsEnqueued(),
+        log.info("[index {}] completed a cycle: {} rows checked, {} rewritten, {} removed, elapsed {}", runId, state.getEntitiesChecked(), state.getRepairsEnqueued(),
                 state.getRowsRemoved(), elapsed);
         state.startNewCycle();
         reconcileStateRepository.save(state);

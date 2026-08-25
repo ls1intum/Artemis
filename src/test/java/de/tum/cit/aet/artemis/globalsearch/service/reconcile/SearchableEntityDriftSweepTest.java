@@ -18,12 +18,16 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
+import de.tum.cit.aet.artemis.globalsearch.domain.ReconcilePass;
+import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntityReconcileState;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
+import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityContentHasher;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityResolver;
@@ -48,8 +52,10 @@ class SearchableEntityDriftSweepTest {
 
     private final ReconcileEnqueueService enqueueService = mock(ReconcileEnqueueService.class);
 
-    private final SearchableEntityDriftSweep sweep = new SearchableEntityDriftSweep(syncStateRepository, resolver, contentHasher, idEnumerator, enqueueService,
-            new WeaviateReconcileProperties(true, true, true, List.of(COURSE, LECTURE), 500, 5000, 200, 1000, 5, 100, 0.25));
+    private final SearchableEntityReconcileStateRepository reconcileStateRepository = mock(SearchableEntityReconcileStateRepository.class);
+
+    private final SearchableEntityDriftSweep sweep = new SearchableEntityDriftSweep(syncStateRepository, reconcileStateRepository, resolver, contentHasher, idEnumerator,
+            enqueueService, new WeaviateReconcileProperties(true, true, true, List.of(COURSE, LECTURE), 500, 5000, 200, 1000, 5, 100, 0.25));
 
     private static SearchableEntitySyncState ledgerRow(String entityType, long entityId, String contentHash) {
         var state = new SearchableEntitySyncState(entityType, entityId, contentHash, ZonedDateTime.now().minusDays(7));
@@ -61,6 +67,7 @@ class SearchableEntityDriftSweepTest {
     void setUp() {
         when(enqueueService.canEnqueue()).thenReturn(true);
         when(idEnumerator.isTypeAvailable(anyString())).thenReturn(true);
+        when(reconcileStateRepository.findByPass(ReconcilePass.DRIFT)).thenReturn(Optional.empty());
     }
 
     @Test
@@ -125,6 +132,59 @@ class SearchableEntityDriftSweepTest {
 
         verifyNoInteractions(syncStateRepository);
         verifyNoInteractions(resolver);
+    }
+
+    @Test
+    void testProgressIsRecordedForThePass() {
+        var state = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(state));
+        when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.of(PROPERTIES));
+
+        sweep.sweep();
+
+        var captor = ArgumentCaptor.forClass(SearchableEntityReconcileState.class);
+        verify(reconcileStateRepository).save(captor.capture());
+        assertThat(captor.getValue().getEntitiesChecked()).isEqualTo(1);
+    }
+
+    @Test
+    void testACycleCompletesOnceEvenTheOldestEntityHasBeenCheckedSinceItBegan() {
+        // The pass has no position of its own, so the corpus answers the question: the slice always starts with the
+        // entity checked longest ago, and once even that one is newer than the cycle start, nothing is left over.
+        var pass = new SearchableEntityReconcileState(ReconcilePass.DRIFT);
+        pass.setCycleStartedAt(ZonedDateTime.now().minusDays(7));
+        pass.recordProgress(1_000, 4, 0);
+        when(reconcileStateRepository.findByPass(ReconcilePass.DRIFT)).thenReturn(Optional.of(pass));
+
+        var checkedYesterday = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
+        checkedYesterday.setVerifiedAt(ZonedDateTime.now().minusDays(1));
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(checkedYesterday));
+        when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.of(PROPERTIES));
+
+        sweep.sweep();
+
+        var captor = ArgumentCaptor.forClass(SearchableEntityReconcileState.class);
+        verify(reconcileStateRepository).save(captor.capture());
+        assertThat(captor.getValue().getEntitiesChecked()).as("a fresh cycle counts only what it has checked itself").isEqualTo(1);
+    }
+
+    @Test
+    void testACycleStaysOpenWhileEntitiesRemainUnchecked() {
+        var pass = new SearchableEntityReconcileState(ReconcilePass.DRIFT);
+        pass.setCycleStartedAt(ZonedDateTime.now().minusDays(7));
+        pass.recordProgress(1_000, 4, 0);
+        when(reconcileStateRepository.findByPass(ReconcilePass.DRIFT)).thenReturn(Optional.of(pass));
+
+        var checkedBeforeTheCycle = ledgerRow(COURSE, 42L, contentHasher.hash(PROPERTIES));
+        checkedBeforeTheCycle.setVerifiedAt(ZonedDateTime.now().minusDays(30));
+        when(syncStateRepository.findLeastRecentlyVerified(any(), any())).thenReturn(List.of(checkedBeforeTheCycle));
+        when(resolver.resolve(COURSE, 42L)).thenReturn(Optional.of(PROPERTIES));
+
+        sweep.sweep();
+
+        var captor = ArgumentCaptor.forClass(SearchableEntityReconcileState.class);
+        verify(reconcileStateRepository).save(captor.capture());
+        assertThat(captor.getValue().getEntitiesChecked()).as("the running cycle keeps its totals").isEqualTo(1_001);
     }
 
     @Test

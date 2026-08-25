@@ -63,6 +63,7 @@ public class SearchableEntityMissingSweep {
      * rather than something that grows with the size of the corpus.
      */
     public void sweep() {
+        String runId = ReconcileRunId.next();
         List<String> types = reconcileProperties.entityTypes();
         if (types.isEmpty()) {
             return;
@@ -81,15 +82,15 @@ public class SearchableEntityMissingSweep {
         if (page.isEmpty()) {
             // The module owning this type is disabled, so nothing is known about it. Skipping is the only safe
             // reading: concluding "nothing exists" here would queue a repair for every indexed row of this type.
-            log.debug("Skipping {} in the missing sweep: its module is disabled", currentType);
-            advanceToNextType(state, currentType, types);
+            log.debug("[missing {}] skipping {}: its module is disabled", runId, currentType);
+            advanceToNextType(runId, state, currentType, types);
             reconcileStateRepository.save(state);
             return;
         }
 
         List<Long> candidateIds = page.get();
         if (candidateIds.isEmpty()) {
-            advanceToNextType(state, currentType, types);
+            advanceToNextType(runId, state, currentType, types);
             reconcileStateRepository.save(state);
             return;
         }
@@ -107,8 +108,9 @@ public class SearchableEntityMissingSweep {
         state.recordProgress(candidateIds.size(), enqueued, 0);
         reconcileStateRepository.save(state);
 
+        log.debug("[missing {}] checked {} {} ids after {}, queued {}", runId, candidateIds.size(), currentType, afterId, enqueued);
         if (enqueued > 0) {
-            log.info("Missing sweep queued {} of {} {} entities that the index had no record of", enqueued, candidateIds.size(), currentType);
+            log.info("[missing {}] queued {} of {} {} entities the index had no record of", runId, enqueued, candidateIds.size(), currentType);
         }
     }
 
@@ -133,21 +135,21 @@ public class SearchableEntityMissingSweep {
     /**
      * Moves to the next configured type, or wraps around and starts a fresh cycle after the last one.
      */
-    private void advanceToNextType(SearchableEntityReconcileState state, String currentType, List<String> types) {
+    private void advanceToNextType(String runId, SearchableEntityReconcileState state, String currentType, List<String> types) {
         int nextIndex = types.indexOf(currentType) + 1;
         if (nextIndex < types.size()) {
             state.setPositionEntityType(types.get(nextIndex));
             state.setPositionEntityId(null);
             return;
         }
-        logCycleSummary(state);
+        logCycleSummary(runId, state);
         state.startNewCycle();
         state.setPositionEntityType(types.getFirst());
     }
 
-    private void logCycleSummary(SearchableEntityReconcileState state) {
+    private void logCycleSummary(String runId, SearchableEntityReconcileState state) {
         ZonedDateTime cycleStartedAt = state.getCycleStartedAt();
         String elapsed = cycleStartedAt == null ? "unknown" : Duration.between(cycleStartedAt, ZonedDateTime.now()).toString();
-        log.info("Missing sweep completed a cycle: {} entities checked, {} queued, elapsed {}", state.getEntitiesChecked(), state.getRepairsEnqueued(), elapsed);
+        log.info("[missing {}] completed a cycle: {} entities checked, {} queued, elapsed {}", runId, state.getEntitiesChecked(), state.getRepairsEnqueued(), elapsed);
     }
 }
