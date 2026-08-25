@@ -12,8 +12,10 @@
     z-index: 1;
 }
 
+/* Decorative, and it covers part of the field: let clicks through so tapping it focuses the input. */
 .tum-ui-search-field-icon {
     inset-inline-start: calc(var(--tumaet-ui-spacing) * 3);
+    pointer-events: none;
 }
 
 .tum-ui-search-field-clear {
