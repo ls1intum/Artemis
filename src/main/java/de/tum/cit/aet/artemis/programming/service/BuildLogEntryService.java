@@ -78,16 +78,17 @@ public class BuildLogEntryService {
      * @return the saved build logs
      */
     public List<BuildLogEntry> saveBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission) {
+        // Replaces the logs of a previous build of the same submission. This used to happen implicitly: the entries were
+        // saved without their submission, and saving the submission afterwards both attached them and removed the old
+        // ones through the collection's orphan removal. That save is what made every result fetch the whole submission
+        // together with its participation, exercise and course, so both steps are done directly here instead.
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(programmingSubmission.getId());
         return buildLogs.stream().map(buildLogEntry -> {
             // Truncate the log so that it fits into the database
             buildLogEntry.truncateLogToMaxLength();
-            // Cut association to parent object
-            buildLogEntry.setProgrammingSubmission(null);
-            // persist the BuildLogEntry object without an association to the parent object.
-            var updatedBuildLogEntry = buildLogEntryRepository.save(buildLogEntry);
-            // restore the association to the parent object
-            updatedBuildLogEntry.setProgrammingSubmission(programmingSubmission);
-            return updatedBuildLogEntry;
+            // The entry owns the foreign key, so setting the submission before saving writes it with the insert.
+            buildLogEntry.setProgrammingSubmission(programmingSubmission);
+            return buildLogEntryRepository.save(buildLogEntry);
         }).collect(Collectors.toCollection(ArrayList::new));
     }
 

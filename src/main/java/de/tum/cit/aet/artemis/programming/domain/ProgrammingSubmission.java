@@ -10,7 +10,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OrderBy;
 
 import org.jspecify.annotations.NonNull;
 
@@ -41,9 +41,16 @@ public class ProgrammingSubmission extends Submission {
     @Column(name = "build_failed")
     private boolean buildFailed;
 
-    // Only present if buildFailed == true.
+    /**
+     * Only present if buildFailed == true.
+     * <p>
+     * Ordered by the time the build produced them rather than by a position column. A position column has to be
+     * maintained by Hibernate, which means every write has to go through this collection and therefore through a save of
+     * the whole submission, and saving a submission selects it together with its participation, exercise and course
+     * because those are eager. The entries carry their own timestamp, so the order does not need to be stored.
+     */
     @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn(name = "build_log_entries_order")
+    @OrderBy("time")
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
