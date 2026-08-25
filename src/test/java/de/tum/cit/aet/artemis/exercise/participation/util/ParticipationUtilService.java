@@ -422,7 +422,7 @@ public class ParticipationUtilService {
     public Result addResultToSubmission(AssessmentType type, ZonedDateTime completionDate, Submission submission, boolean successful, boolean rated, double score) {
         Result result = new Result().submission(submission).successful(successful).rated(rated).score(score).assessmentType(type).completionDate(completionDate);
         result.setExerciseId(submission.getParticipation().getExercise().getId());
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -437,7 +437,7 @@ public class ParticipationUtilService {
         Result result = new Result().submission(submission).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         result.setExerciseId(submission.getParticipation().getExercise().getId());
         submission.addResult(result);
-        result = resultRepo.save(result);
+        result = resultRepo.save(withCorrectionRound(result));
         submissionRepository.save(submission);
         return result;
     }
@@ -456,7 +456,7 @@ public class ParticipationUtilService {
         Result result = new Result().submission(submission).assessmentType(assessmentType).completionDate(completionDate).feedbacks(feedbacks);
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setExerciseId(submission.getParticipation().getExercise().getId());
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -469,7 +469,7 @@ public class ParticipationUtilService {
         Result result = new Result().submission(submission).successful(true).score(100D).rated(true).completionDate(ZonedDateTime.now());
         result.setSubmission(submission);
         result.setExerciseId(participation.getExercise().getId());
-        result = resultRepo.save(result);
+        result = resultRepo.save(withCorrectionRound(result));
         submission.addResult(result);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
@@ -489,7 +489,7 @@ public class ParticipationUtilService {
         feedbacks.add(feedback1);
         feedbacks.add(feedback2);
         result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -510,7 +510,7 @@ public class ParticipationUtilService {
         ));
 
         result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -528,7 +528,7 @@ public class ParticipationUtilService {
         ));
 
         result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
     // @formatter:on
 
@@ -542,7 +542,7 @@ public class ParticipationUtilService {
     public Result addFeedbackToResult(Feedback feedback, Result result) {
         feedbackRepo.save(feedback);
         result.addFeedback(feedback);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -556,7 +556,7 @@ public class ParticipationUtilService {
         feedback.addAll(ParticipationFactory.generateFeedback());
         feedback = feedbackRepo.saveAll(feedback);
         result.addFeedbacks(feedback);
-        return resultRepo.save(result);
+        return resultRepo.save(withCorrectionRound(result));
     }
 
     /**
@@ -580,7 +580,7 @@ public class ParticipationUtilService {
         result.setAssessor(user);
         result.setSubmission(submission);
         result.setExerciseId(exerciseId);
-        result = resultRepo.save(result);
+        result = resultRepo.save(withCorrectionRound(result));
         submission.addResult(result);
         var savedSubmission = submissionRepository.save(submission);
         return submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
@@ -683,7 +683,7 @@ public class ParticipationUtilService {
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setRated(true);
-        result = resultRepo.save(result);
+        result = resultRepo.save(withCorrectionRound(result));
         return result;
     }
 
@@ -938,7 +938,7 @@ public class ParticipationUtilService {
         Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
         Result result = addResultToSubmission(studentParticipation, submissionWithParticipation);
         result.setExerciseId(exercise.getId());
-        resultRepo.save(result);
+        resultRepo.save(withCorrectionRound(result));
 
         assertThat(exercise.getGradingCriteria()).isNotNull();
         assertThat(exercise.getGradingCriteria()).allMatch(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions() != null);
@@ -1092,5 +1092,29 @@ public class ParticipationUtilService {
         catch (RuntimeException ignored) {
             // ignore non-LocalVC URIs
         }
+    }
+
+    /**
+     * Assigns the correction round the way production does, so that fixtures behave like the assessment lock: the n-th
+     * manual result of a submission belongs to round n. Automatic and Athena results are not correction rounds and keep
+     * a null round.
+     * <p>
+     * The count comes from the submission's results in memory, which is where the position of the result used to come
+     * from as well when Hibernate maintained the order column.
+     *
+     * @param result the result about to be saved
+     * @return the same result, with its correction round set when it is a manual one
+     */
+    private static Result withCorrectionRound(Result result) {
+        boolean manual = result.getAssessmentType() != null && !result.isAutomatic() && !result.isAthenaBased();
+        if (!manual || result.getCorrectionRound() != null || result.getSubmission() == null) {
+            return result;
+        }
+        var existing = result.getSubmission().getResults();
+        long manualResults = existing == null ? 0
+                : existing.stream().filter(other -> other != null && other != result && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())
+                        .count();
+        result.setCorrectionRound((int) manualResults);
+        return result;
     }
 }

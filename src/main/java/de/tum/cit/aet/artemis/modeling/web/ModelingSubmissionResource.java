@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
 import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -403,14 +404,14 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         Result latestResult = modelingSubmission.getLatestResult();
         if (latestResult != null && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA
                 && (latestResult.getCompletionDate() == null || latestResult.getAssessor() == null)) {
-            modelingSubmission.setResults(List.of());
+            modelingSubmission.setResults(Set.of());
         }
 
         if (!ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             // We want to have the preliminary feedback before the assessment due date too
             List<Result> athenaResults = modelingSubmission.getResults().stream().filter(result -> result != null && result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
                     .toList();
-            modelingSubmission.setResults(athenaResults);
+            modelingSubmission.setResults(new LinkedHashSet<>(athenaResults));
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -468,7 +469,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
             // Set filtered results back into the submission if any results remain after filtering
             if (!filteredResults.isEmpty()) {
-                submission.setResults(filteredResults);
+                // A LinkedHashSet because the results were just sorted for the client and that order has to survive.
+                submission.setResults(new LinkedHashSet<>(filteredResults));
                 return true; // Include submission as it has relevant results
             }
             return false;

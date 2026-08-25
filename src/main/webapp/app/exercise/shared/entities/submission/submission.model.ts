@@ -69,10 +69,10 @@ export function getLatestSubmissionResult(submission: Submission | undefined): R
  * @returns the results or undefined if submission or the result for the requested correctionRound is undefined
  */
 export function getSubmissionResultByCorrectionRound(submission: Submission | undefined, correctionRound: number): Result | undefined {
-    if (submission?.results && submission?.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA).length >= correctionRound) {
-        return submission.results.filter((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA)[correctionRound];
-    }
-    return undefined;
+    // Matched on the result's own correction round. This used to index into the results array, which only worked because
+    // the server padded the array with nulls for rounds the tutor had not assessed. Nothing has to line up positionally
+    // any more, so a missing round is simply a result that is not there.
+    return submission?.results?.find((result) => result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA && result?.correctionRound === correctionRound);
 }
 
 /**
@@ -112,9 +112,16 @@ export function setSubmissionResultByCorrectionRound(submission: Submission, res
     if (!submission || !result || !submission.results) {
         return;
     }
-    submission.results[correctionRound] = result;
+    result.correctionRound = correctionRound;
+    // Replace the result of that round if the submission already carries one, rather than writing to a fixed position.
+    const existingIndex = submission.results.findIndex((existing) => existing?.correctionRound === correctionRound);
+    if (existingIndex >= 0) {
+        submission.results[existingIndex] = result;
+    } else {
+        submission.results = [...submission.results, result];
+    }
 
-    if (submission.results.length === correctionRound + 1) {
+    if (correctionRound === Math.max(...submission.results.map((existing) => existing?.correctionRound ?? -1))) {
         submission.latestResult = result;
     }
 }

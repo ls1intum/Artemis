@@ -852,8 +852,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(submissions).hasSize(1);
         Submission returnedSubmission = submissions.getFirst();
         assertThat(returnedSubmission.getResults()).hasSize(1);
-        assertThat(returnedSubmission.getResults().getFirst().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
-        assertThat(returnedSubmission.getResults().getFirst().getAssessor()).isNull(); // Sensitive info filtered
+        assertThat(returnedSubmission.getFirstResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(returnedSubmission.getFirstResult().getAssessor()).isNull(); // Sensitive info filtered
     }
 
     @Test
@@ -882,9 +882,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(submissions).hasSize(1);
         Submission returnedSubmission = submissions.getFirst();
         assertThat(returnedSubmission.getResults()).hasSize(1);
-        assertThat(returnedSubmission.getResults().getFirst().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+        assertThat(returnedSubmission.getFirstResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
         // Sensitive information should be filtered
-        assertThat(returnedSubmission.getResults().getFirst().getAssessor()).isNull();
+        assertThat(returnedSubmission.getFirstResult().getAssessor()).isNull();
     }
 
     @Test
@@ -967,7 +967,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         Submission returnedSubmission = submissions.getFirst();
         assertThat(returnedSubmission.getResults()).hasSize(1);
         // Verify that the tutor can see the manual result
-        Result returnedResult = returnedSubmission.getResults().getFirst();
+        Result returnedResult = returnedSubmission.getFirstResult();
         assertThat(returnedResult.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertThat(returnedResult.getAssessor()).isNull();
     }

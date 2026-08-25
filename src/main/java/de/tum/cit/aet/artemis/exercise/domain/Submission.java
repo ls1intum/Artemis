@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -24,7 +23,6 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
@@ -90,10 +88,15 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
      */
+    /**
+     * Deliberately unordered. This used to be an ordered list whose position carried the correction round, which meant
+     * every write in this area had to load and re-save the whole submission so that Hibernate could renumber the order
+     * column. The correction round now lives on {@link Result#getCorrectionRound()}, and the newest result is the one
+     * with the highest id, so nothing needs the position any more.
+     */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn(name = "results_order")
     @JsonIgnoreProperties({ "submission", "participation" })
-    private List<Result> results = new ArrayList<>();
+    private Set<Result> results = new HashSet<>();
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
@@ -127,7 +130,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(List.of()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
+        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(Objects::nonNull).max(Comparator.comparing(Result::getId)).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -146,7 +149,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(List.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
                 .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
 
         if (latestResult != null) {
@@ -166,11 +169,10 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getResultForCorrectionRound(int correctionRound) {
-        List<Result> filteredResults = filterNonAutomaticResults();
-        if (correctionRound >= 0 && filteredResults.size() > correctionRound) {
-            return filteredResults.get(correctionRound);
+        if (correctionRound < 0) {
+            return null;
         }
-        return null;
+        return filterNonAutomaticResults().stream().filter(result -> Objects.equals(result.getCorrectionRound(), correctionRound)).findFirst().orElse(null);
     }
 
     /**
@@ -191,11 +193,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public boolean hasResultForCorrectionRound(int correctionRound) {
-        List<Result> withoutAutomaticResults = filterNonAutomaticResults();
-        if (withoutAutomaticResults.size() > correctionRound) {
-            return withoutAutomaticResults.get(correctionRound) != null;
-        }
-        return false;
+        return getResultForCorrectionRound(correctionRound) != null;
     }
 
     /**
@@ -204,7 +202,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public void removeAutomaticResults() {
-        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(ArrayList::new));
+        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(HashSet::new));
     }
 
     /**
@@ -219,22 +217,22 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public void removeNullResults() {
-        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
+        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
-    public List<Result> getResults() {
+    public Set<Result> getResults() {
         return results;
     }
 
     @JsonIgnore
-    public List<Result> getAutomaticResults() {
-        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getAutomaticResults() {
+        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(HashSet::new));
     }
 
     @JsonIgnore
-    public List<Result> getManualResults() {
-        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getManualResults() {
+        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(HashSet::new));
     }
 
     /**
@@ -243,8 +241,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * @return non athena automatic results excluding null results
      */
     @JsonIgnore
-    public List<Result> getNonAthenaResults() {
-        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(ArrayList::new));
+    public Set<Result> getNonAthenaResults() {
+        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(HashSet::new));
     }
 
     /**
@@ -267,10 +265,10 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        if (results != null && !results.isEmpty()) {
-            return results.getFirst();
+        if (results == null || results.isEmpty()) {
+            return null;
         }
-        return null;
+        return results.stream().filter(Objects::nonNull).min(Comparator.comparing(Result::getId)).orElse(null);
     }
 
     /**
@@ -281,10 +279,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstManualResult() {
-        // Guard on the manual results, not on all results: a submission can carry only automatic or Athena results, and
-        // getFirst() on the then empty manual list would throw instead of returning null as declared.
-        List<Result> manualResults = results == null ? List.of() : getManualResults();
-        return manualResults.isEmpty() ? null : manualResults.getFirst();
+        // The earliest manual result, which is the one of the first correction round. Guard on the manual results, not
+        // on all results: a submission can carry only automatic or Athena results and then there is none.
+        if (results == null) {
+            return null;
+        }
+        return getManualResults().stream().min(Comparator.comparing(Result::getId)).orElse(null);
     }
 
     /**
@@ -299,8 +299,11 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestManualResult() {
-        List<Result> manualResults = results == null ? List.of() : getManualResults();
-        return manualResults.isEmpty() ? null : manualResults.getLast();
+        // The most recent manual result, which is the one of the highest correction round.
+        if (results == null) {
+            return null;
+        }
+        return getManualResults().stream().max(Comparator.comparing(Result::getId)).orElse(null);
     }
 
     /**
@@ -309,8 +312,31 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      *
      * @param result the {@link Result} which should be added
      */
+    /**
+     * Adds a result to this submission and, if it is a correction-round result that does not have a round yet, assigns
+     * the next one.
+     * <p>
+     * This is where the round used to come from implicitly: the results were an ordered list and the position carried
+     * the round, so adding a result to the list decided which round it belonged to. The round now lives on the result,
+     * and this is the same moment, so the behaviour is unchanged for every caller that does not set it itself.
+     * {@code SubmissionService.lockSubmission} does set it, from the round the tutor asked for, and that takes
+     * precedence. Automatic and Athena results are not correction rounds and keep no round.
+     *
+     * @param result the result to add
+     */
     public void addResult(Result result) {
+        if (result != null && result.getCorrectionRound() == null && !result.isAutomatic() && !result.isAthenaBased()) {
+            result.setCorrectionRound(countCorrectionRoundResults(result));
+        }
         this.results.add(result);
+    }
+
+    /**
+     * @param resultToAdd the result that is about to be added, which must not count itself
+     * @return how many correction-round results this submission already holds
+     */
+    private int countCorrectionRoundResults(Result resultToAdd) {
+        return (int) results.stream().filter(other -> other != null && other != resultToAdd && !other.isAutomatic() && !other.isAthenaBased()).count();
     }
 
     /**
@@ -320,8 +346,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * @param results The list of {@link Result} which should replace the existing results of the submission
      */
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
-    public void setResults(List<Result> results) {
-        this.results = results;
+    public void setResults(Set<Result> results) {
+        this.results = results != null ? results : new HashSet<>();
     }
 
     public Participation getParticipation() {
@@ -398,9 +424,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     public void removeNotNeededResults(int correctionRound, Long resultId) {
         if (correctionRound == 0 && resultId == null && getResults().size() >= 2) {
-            var resultList = new ArrayList<Result>();
-            resultList.add(getFirstManualResult());
-            setResults(resultList);
+            var remainingResults = new HashSet<Result>();
+            var firstManualResult = getFirstManualResult();
+            if (firstManualResult != null) {
+                remainingResults.add(firstManualResult);
+            }
+            setResults(remainingResults);
         }
     }
 
