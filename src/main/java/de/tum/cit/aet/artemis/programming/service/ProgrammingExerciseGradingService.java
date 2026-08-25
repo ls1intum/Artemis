@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -657,7 +658,10 @@ public class ProgrammingExerciseGradingService {
         feedbackCreationService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
         if (applySubmissionPolicy) {
-            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exercise.getId()).getSubmissionPolicy();
+            // Only the policy's own values are read. Loading the exercise again to reach them, which is what this used
+            // to do, fetched the problem statement and the course's code of conduct a second time for every result.
+            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findSubmissionPolicyValuesByExerciseId(exercise.getId())
+                    .map(SubmissionPolicyValuesDTO::toDetachedPolicy).orElse(null);
             exercise.setSubmissionPolicy(submissionPolicy);
         }
 
