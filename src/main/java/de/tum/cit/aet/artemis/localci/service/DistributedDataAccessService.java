@@ -331,6 +331,15 @@ public class DistributedDataAccessService {
     }
 
     /**
+     * @return whether a client's connection to the middleware terminates on a core node, and therefore whether the
+     *         address it was observed at is also the address it reaches the git server from
+     * @see de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider#clientsConnectDirectlyToCoreNodes()
+     */
+    public boolean clientsConnectDirectlyToCoreNodes() {
+        return distributedDataProvider.clientsConnectDirectlyToCoreNodes();
+    }
+
+    /**
      * Retrieves the addresses each connected build agent is observed to connect from, as seen by the middleware.
      * <p>
      * This is the raw observation, not the registered snapshot: {@link BuildAgentAddressRegistryService} calls it to

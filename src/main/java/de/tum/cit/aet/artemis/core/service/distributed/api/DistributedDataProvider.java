@@ -198,6 +198,28 @@ public interface DistributedDataProvider {
     Optional<Map<String, Set<String>>> getConnectedClientAddresses();
 
     /**
+     * Whether a client's connection to this middleware terminates on an Artemis core node.
+     * <p>
+     * Decides whether the addresses from {@link #getConnectedClientAddresses()} may be used to authorize a git
+     * request, and the answer is a property of the topology rather than of the query:
+     * <ul>
+     * <li><b>Hazelcast</b> clients connect to the cluster members, which are the core nodes that also serve git. A
+     * build agent therefore reaches both over the same path, so the address the middleware observed is the address its
+     * clone will arrive from.</li>
+     * <li><b>Redis</b> is a separate service. An agent's connection to it says nothing about the route it takes to a
+     * core node, and the two genuinely differ: with Redis in a container and the nodes on the host, the middleware
+     * observes the docker bridge gateway while git sees loopback. Comparing them refuses every clone.</li>
+     * </ul>
+     * A provider answering {@code false} still reports connected clients and their addresses - both remain useful for
+     * liveness and for the admin overview - but the origin binding is skipped, exactly as it is where addresses cannot
+     * be observed at all. The build agent network allowlist and the per-build-job scoping are unaffected, and the
+     * allowlist is checked against the address of the request itself, so it keeps working on every backend.
+     *
+     * @return whether an observed client address is also the address that client reaches the git server from
+     */
+    boolean clientsConnectDirectlyToCoreNodes();
+
+    /**
      * Checks if the distributed data provider is connected and ready to use.
      * For cluster members, this is equivalent to isInstanceRunning().
      * For clients (e.g., build agents), this checks if the client has established

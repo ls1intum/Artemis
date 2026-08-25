@@ -419,6 +419,12 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
      * @return true if connected and ready, false otherwise
      */
     @Override
+    public boolean clientsConnectDirectlyToCoreNodes() {
+        // Hazelcast clients connect to the cluster members, which are the core nodes that also serve git
+        return true;
+    }
+
+    @Override
     public boolean isConnectedToCluster() {
         if (!isInstanceRunning()) {
             return false;

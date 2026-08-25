@@ -142,12 +142,16 @@ artemis:
     Several agents on one host share a source address, which is normal behind NAT and fully supported. The allowlist
     bounds hosts, not individual agents.
 
-    The address binding applies to an agent whose node has a middleware connection to observe, on either backend.
-    Hazelcast names a build agent client by its own short name; Redis has no member/client split, so a node's client
-    name is its node identity and Artemis maps it back through the member address the agent publishes. An agent whose
-    node opens no client connection at all — one sharing a JVM with a core node under Hazelcast — has no origin to
-    check and is left unbound rather than refused, as is every agent when the middleware cannot report client addresses.
-    Artemis says which of the two it is in the log, once, and the allowlist and the build job scoping apply either way.
+    **The address binding needs Hazelcast.** It compares where the middleware saw an agent connect with where its clone
+    arrives, and those are the same path only when the agent's middleware connection terminates on a core node.
+    Hazelcast clients connect to the cluster members, which are exactly those nodes. Redis is a separate service, so an
+    agent's connection to it says nothing about its route to a core node — with Redis in a container and the nodes on
+    the host, one side observes the docker bridge gateway and the other loopback. Artemis therefore skips the binding
+    on Redis rather than refusing every clone, and says so in the log at startup.
+
+    An agent that opens no client connection at all — one sharing a JVM with a core node under Hazelcast — is likewise
+    unbound. **`allowed-ranges` and the per-build-job scoping apply on every backend either way**, because both are
+    checked against the address of the request itself rather than against an observation.
 </Callout>
 
 #### SSH behind a load balancer

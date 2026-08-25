@@ -214,6 +214,13 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     }
 
     @Override
+    public boolean clientsConnectDirectlyToCoreNodes() {
+        // Clients connect to Redis, not to a core node, so where Redis accepted a connection from says nothing about
+        // the route that client takes to the git server
+        return false;
+    }
+
+    @Override
     public boolean isConnectedToCluster() {
         // For Redis, being running means being connected
         return isInstanceRunning();

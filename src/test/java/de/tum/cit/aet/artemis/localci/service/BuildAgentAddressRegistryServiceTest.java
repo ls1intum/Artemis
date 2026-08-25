@@ -80,6 +80,9 @@ class BuildAgentAddressRegistryServiceTest {
         buildAgentInformation = agentInformationMap;
 
         when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
+        // The Hazelcast shape, where a client connects to a core node and its observed address is therefore also the
+        // address its clone arrives from. shouldNotBindTheOriginWhenClientsConnectToTheMiddlewareInstead covers the other.
+        when(distributedDataAccessService.clientsConnectDirectlyToCoreNodes()).thenReturn(true);
         when(distributedDataAccessService.getDistributedBuildAgentInformation()).thenReturn(buildAgentInformation);
         when(distributedDataAccessService.getProcessingJobsForAgentByName(any())).thenReturn(List.of());
         when(distributedDataAccessService.getDistributedBuildAgentAddresses()).thenReturn(map);
@@ -623,6 +626,27 @@ class BuildAgentAddressRegistryServiceTest {
         service.refreshRegisteredAddresses();
 
         assertThat(service.isRegisteredBuildAgentAddress("10.0.0.5")).isFalse();
+    }
+
+    /**
+     * Redis is not a core node, so where it accepted a client connection from says nothing about the route that client
+     * takes to the git server - and the two really do differ: with Redis in a container and the nodes on the host, the
+     * middleware observes the docker bridge gateway while git sees loopback.
+     * <p>
+     * Enforcing that comparison refuses every clone, which is how this was found: a multi-node run on Redis produced
+     * 279 refusals and no successful build. So the addresses are still observed and still shown, but the binding is
+     * skipped exactly as it is where nothing can be observed at all.
+     */
+    @Test
+    void shouldNotBindTheOriginWhenClientsConnectToTheMiddlewareInsteadOfACoreNode() {
+        when(distributedDataAccessService.clientsConnectDirectlyToCoreNodes()).thenReturn(false);
+        observe(Map.of("agent-1", Set.of("172.21.0.1")));
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(registeredAddresses).as("nothing may be registered from an observation that cannot speak for the git path").isEmpty();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "127.0.0.1")).as("the agent clones from a different path and must not be refused for it").isTrue();
     }
 
 }

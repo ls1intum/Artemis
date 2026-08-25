@@ -161,6 +161,12 @@ public class LocalDataProviderService implements DistributedDataProvider {
     }
 
     @Override
+    public boolean clientsConnectDirectlyToCoreNodes() {
+        // Everything runs in one JVM, so there is no client connection at all to draw a conclusion from
+        return false;
+    }
+
+    @Override
     public boolean isConnectedToCluster() {
         // Local provider is always "connected" (it's a single-node in-memory implementation)
         return isInstanceRunning();

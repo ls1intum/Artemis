@@ -884,6 +884,25 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
                 .containsAll(addressesByClientName.keySet());
     }
 
+    /**
+     * Whether an observed client address may be used to authorize that client's git requests.
+     * <p>
+     * It may only when the client's connection to the middleware terminates on a core node, because then it is the same
+     * path the clone takes. Hazelcast clients connect to the cluster members, which are those nodes; Redis is a
+     * separate service, and the addresses genuinely differ - with Redis in a container and the nodes on the host, one
+     * side sees the docker bridge gateway and the other loopback. Enforcing that comparison refused every clone in a
+     * multi-node run, so the answer is asserted per backend rather than assumed.
+     */
+    @Test
+    void testClientAddressesAreOnlyUsableForAuthorizationWhereClientsReachCoreNodes() {
+        assertThat(getDistributedDataProvider().clientsConnectDirectlyToCoreNodes()).isEqualTo(clientsReachCoreNodesDirectly());
+    }
+
+    /**
+     * @return whether this backend's clients connect to a core node rather than to a separate middleware service
+     */
+    protected abstract boolean clientsReachCoreNodesDirectly();
+
     @Test
     void testMapLockIsMutuallyExclusive() throws InterruptedException {
         DistributedMap<String, String> map = getDistributedDataProvider().getMap("lockTestMap");

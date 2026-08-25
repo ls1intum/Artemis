@@ -208,6 +208,14 @@ public class BuildAgentAddressRegistryService {
         }
 
         try {
+            if (!distributedDataAccessService.clientsConnectDirectlyToCoreNodes()) {
+                // The middleware can say where a client connected from, but not where it will clone from: its clients
+                // connect to it rather than to a core node, so the two are different network paths and comparing them
+                // refuses every legitimate agent. Treated exactly like an unobservable origin, which it is.
+                logAddressObservability(false);
+                return ObservationOutcome.UNOBSERVABLE;
+            }
+
             // Empty means the middleware could not answer: an unsupported provider, or a query that failed or timed
             // out. Keep the previous snapshot in that case rather than concluding that every agent disconnected, which
             // would reject every clone in the cluster until the next successful round.
@@ -304,9 +312,10 @@ public class BuildAgentAddressRegistryService {
                     + "that shares a JVM with a core node opens no client connection and is therefore not bound to any address, which is the normal single node topology.");
         }
         else {
-            log.warn("The configured distributed data provider cannot report the addresses its clients connect from, so build agent clones are not bound to an agent's own "
-                    + "address on this node. The build agent networks and the per-build-job scoping still apply. An agent that shares a JVM with a core node opens no client "
-                    + "connection at all and is likewise unbound, which is expected on a single node installation.");
+            log.warn("Build agent clones are not bound to an agent's own address on this node: the distributed data provider either cannot report where its clients connect "
+                    + "from, or its clients connect to the middleware rather than to a core node, in which case the address it observed is not the one a clone arrives from. "
+                    + "The build agent networks and the per-build-job scoping still apply, and both are checked against the address of the request itself. An agent that "
+                    + "shares a JVM with a core node opens no client connection at all and is likewise unbound, which is expected on a single node installation.");
         }
     }
 
