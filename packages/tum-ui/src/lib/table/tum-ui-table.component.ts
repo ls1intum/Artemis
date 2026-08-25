@@ -132,11 +132,7 @@ export class TumUiTableComponent<T> {
         this.destroyRef.onDestroy(() => clearTimeout(this.searchTimer));
     }
 
-    /**
-     * Jump back to the first page and re-request data. Consumers that own filtering themselves (search rendered
-     * outside the table, `showSearch` off) call this when their filter changes, so the reader is not left on a
-     * page index that belonged to the previous result set.
-     */
+    /** Jump back to the first page and re-request. For consumers that own filtering themselves (`showSearch` off). */
     resetPage(): void {
         if (this.page() === 0) {
             return;

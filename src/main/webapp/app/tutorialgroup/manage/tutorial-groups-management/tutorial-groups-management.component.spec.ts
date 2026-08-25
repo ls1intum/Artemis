@@ -50,22 +50,13 @@ describe('TutorialGroupsManagementComponent', () => {
     // preventing leaked component instances and subscriptions across tests.
     let titleBarActionViews: EmbeddedViewRef<unknown>[] = [];
 
-    /**
-     * The search field and the Holidays / Import / Export / Create actions are projected into the shared course
-     * title bar via the `*titleBarActions` directive, so they are not part of the component's own DOM. This
-     * renders the registered actions template the same way `jhi-course-title-bar` would, allowing the projected
-     * controls to be queried.
-     */
+    /** Renders the `*titleBarActions` template as `jhi-course-title-bar` would, so its controls can be queried. */
     function renderTitleBarActions(): DebugElement {
         const actionsTemplate = TestBed.inject(CourseTitleBarService).actionsTemplate();
-        // The directive only registers a template once the course resolved; assert it explicitly so a missing
-        // template fails with a clear message instead of a cryptic null dereference.
         expect(actionsTemplate).toBeDefined();
         const view = actionsTemplate!.createEmbeddedView({});
         titleBarActionViews.push(view);
         view.detectChanges();
-        // The `*titleBarActions` directive sits directly on the actions wrapper `<div>`, so the embedded view's
-        // first root node is that element; its DebugElement.query traverses into the nested controls.
         return getDebugNode(view.rootNodes[0]) as DebugElement;
     }
 

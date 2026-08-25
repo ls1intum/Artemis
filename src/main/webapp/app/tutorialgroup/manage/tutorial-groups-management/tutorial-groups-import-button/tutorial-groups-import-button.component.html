@@ -9,8 +9,7 @@
     (click)="openTutorialGroupImportDialog($event)"
 >
     <fa-icon [icon]="faFileImport" />
-    <!-- Short label so the action row fits on one line; the tooltip carries the full wording.
-         sr-only below md keeps the label in the accessibility tree so the icon-only button stays named. -->
+    <!-- sr-only below md keeps the icon-only button named; the tooltip carries the full wording -->
     <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.import"></span>
 </button>
 

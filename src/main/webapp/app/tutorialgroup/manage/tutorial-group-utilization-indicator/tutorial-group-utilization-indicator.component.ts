@@ -15,10 +15,7 @@ export class TutorialGroupUtilizationIndicatorComponent {
 
     readonly utilization = computed(() => tutorialGroupUtilization(this.tutorialGroup()));
 
-    /**
-     * State of the bar across three bands: under-attended, middling, well attended. The percentage beside the bar
-     * stays in the body text color, so the bar alone carries the state and the number reads plainly either way.
-     */
+    /** The bar alone carries the state, across three bands; the percentage beside it stays in the body text color. */
     protected readonly severity = computed<TumUiProgressBarSeverity>(() => {
         const utilization = this.utilization() ?? 0;
         if (utilization < UNDER_ATTENDED_PERCENTAGE) {

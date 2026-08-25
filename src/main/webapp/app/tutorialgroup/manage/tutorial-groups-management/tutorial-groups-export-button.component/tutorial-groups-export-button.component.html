@@ -9,8 +9,7 @@
     (click)="openExportDialog($event)"
 >
     <fa-icon [icon]="faFileExport" />
-    <!-- Short label so the action row fits on one line; the tooltip carries the full wording.
-         sr-only below md keeps the label in the accessibility tree so the icon-only button stays named. -->
+    <!-- sr-only below md keeps the icon-only button named; the tooltip carries the full wording -->
     <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.export"></span>
 </button>
 
@@ -47,8 +46,7 @@
             </div>
         }
     </form>
-    <!-- `tumUiButton` projects its content, so the label goes on a child element: jhiTranslate writes the host's
-         innerHTML and would otherwise overwrite the projection Angular manages. -->
+    <!-- Label on a child element: jhiTranslate writes innerHTML and would overwrite tumUiButton's projection -->
     <ng-template #footer>
         <button tumUiButton size="small" severity="secondary" type="button" (click)="closeDialog()">
             <span jhiTranslate="artemisApp.tutorialGroupExportDialog.cancel"></span>

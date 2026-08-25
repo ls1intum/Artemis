@@ -79,7 +79,6 @@ describe('TutorialGroupUtilizationIndicatorComponent', () => {
         render(tutorialGroup);
 
         expect(component.utilization()).toBeUndefined();
-        // An empty rail rather than a blank cell, so the column still reads as a column.
         expect(progressBar()?.value()).toBe(0);
         expect(progressBar()?.ariaLabel()).toBe('artemisApp.entities.tutorialGroup.noAttendanceRecorded');
         expect(fixture.nativeElement.textContent).toContain('–');

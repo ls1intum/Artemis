@@ -17,8 +17,7 @@
     <!-- Without a capacity there is no ratio to draw, but the raw attendance is still worth showing. -->
     <span class="text-sm">{{ 'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: averageAttendance } }}</span>
 } @else {
-    <!-- An empty rail rather than a blank cell, so the column still reads as a column before the first session has
-         been attended. Labelled as unknown rather than announcing a utilization of zero. -->
+    <!-- An empty rail rather than a blank cell, labelled unknown rather than announcing a utilization of zero -->
     <div class="flex items-center gap-2" [tumUiTooltip]="'artemisApp.entities.tutorialGroup.noAttendanceRecorded' | artemisTranslate">
         <tum-ui-progress-bar
             class="w-16 shrink-0"

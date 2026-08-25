@@ -101,10 +101,9 @@
     }
 
     /*
-     * A TUM UI text input carries its own vertical padding and would otherwise stand a good deal taller than the
-     * buttons beside it, growing the bar. A minimum rather than a fixed height, for the same reason `.page-top-bar`
-     * gives its `.form-control` one: a control that legitimately grows past a single row must be free to, instead of
-     * overflowing the bar. The input centres its own value vertically, so no line-height is needed here.
+     * A TUM UI text input carries its own vertical padding and would otherwise stand taller than the buttons beside
+     * it. A minimum rather than a fixed height, as `.page-top-bar` gives its `.form-control`, so a control that grows
+     * past one row still can.
      */
     .tum-ui-input {
         min-height: var(--title-bar-content-height);

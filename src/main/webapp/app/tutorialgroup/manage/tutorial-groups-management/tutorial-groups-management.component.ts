@@ -43,10 +43,7 @@ const UNKNOWN_UTILIZATION = -1;
 const SORTABLE_FIELDS = ['title', 'tutor', 'utilization', 'registrations', 'room', 'campus', 'schedule'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
 
-/**
- * Flattened projection of a tutorial group. Every field is either rendered or sorted on, which keeps filtering,
- * sorting and paging plain data work instead of repeated entity traversal per change-detection pass.
- */
+/** Flattened projection of a tutorial group, so filtering, sorting and paging stay plain data work. */
 interface TutorialGroupRow extends Record<SortableField, string | number> {
     readonly group: TutorialGroup;
     readonly title: string;
@@ -172,16 +169,11 @@ export class TutorialGroupsManagementComponent {
         { field: 'schedule', headerKey: 'artemisApp.entities.tutorialGroup.schedule', sort: true, width: '13rem', templateRef: this.scheduleColumn() },
     ]);
 
-    /**
-     * Re-projects the rows whenever the catalogue changes, so the mode standing in for a missing campus follows
-     * the reader's language. Resolving it once here keeps the displayed, sorted and searched value the same string.
-     */
+    /** Re-projects the rows on a language change, so the mode standing in for a missing campus follows it. */
     private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange), { initialValue: undefined });
 
     private readonly rows = computed(() => {
         this.translationChanges();
-        // The server stores the mode as the boolean `isOnline`, defaulted to false, so there is no label to read
-        // off the payload; anything but an explicit true is offline.
         const online = this.translateService.instant('artemisApp.generic.online');
         const offline = this.translateService.instant('artemisApp.generic.offline');
         return this.tutorialGroups().map((group) => toRow(group, group.isOnline ? online : offline));

@@ -80,10 +80,6 @@ export class TutorialGroupsExportButtonComponent {
     exportCSV() {
         this.tutorialGroupApiService
             .exportTutorialGroupsToCSV(this.courseId(), this.selectedFields())
-            // The generated file-download endpoint returns HttpResponse<Blob> (openapi-generator-angular22), so the
-            // body has to be unwrapped. A response without one leaves nothing to download, which is a failed export:
-            // raising it here routes it through the same alert as a failed request instead of tearing down the
-            // download handler mid-way.
             .pipe(
                 map((response) => {
                     if (!response.body) {
