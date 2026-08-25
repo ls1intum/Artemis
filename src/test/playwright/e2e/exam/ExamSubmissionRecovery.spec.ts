@@ -20,19 +20,12 @@ import { POLLING_INTERVAL, RELOAD_RENDER_TIMEOUT } from '../../support/timeouts'
  * both restored in the UI and successfully re-sent to the server.
  */
 const course = { id: SEED_COURSES.examParticipation.id } as any;
-// Matcher for the quiz exam-save endpoint (PUT /api/quiz/exercises/{id}/submissions/exam), used to inject the failed
-// save below. A RegExp keeps the match unambiguous against the absolute request URL.
-const quizSaveUrl = /\/api\/quiz\/exercises\/\d+\/submissions\/exam/;
+// Chrome DevTools Fetch interception is used instead of Playwright routing below. Playwright routing disables the HTTP
+// cache for the page, which makes the production client reload unnecessarily expensive and can starve under parallel CI.
 
 // Ceiling for the post-reload re-send. Generous on purpose, and it costs nothing when things are fast: expect.poll
-// returns as soon as the re-send lands, which locally is about two seconds. The ceiling only matters on a loaded CI
-// runner, where the re-send is preceded by a full client re-bootstrap with Playwright's per-context HTTP cache
-// disabled - bundle and lazy chunks re-fetched, then the exam re-fetched, then the answer restored and sent. A 30s
-// ceiling (the RELOAD_RENDER_TIMEOUT default) was measurably too tight there: CI saw zero re-sends inside it while the
-// same code re-sent in ~2s locally. Measured: this test takes ~4s end to end against the local dev server and
-// ~113s in CI against the containerised production WAR, so the multiplier is sized for the slow environment
-// rather than the fast one - every previous budget here was sized to the happy path and kept expiring.
-// Paired with the test.setTimeout in the describe block below, which keeps the worst case inside the cap.
+// returns as soon as the re-send lands. The ceiling only matters on a loaded CI runner, where the re-send is preceded
+// by a full client bootstrap, exam fetch, and local-storage restoration.
 const RESEND_TIMEOUT = 4 * RELOAD_RENDER_TIMEOUT;
 
 // Everything in the test that is not the post-reload wait: participation start, navigation, ticking the answer, the
@@ -41,23 +34,14 @@ const RESEND_TIMEOUT = 4 * RELOAD_RENDER_TIMEOUT;
 const SETUP_AND_ASSERTION_ALLOWANCE = 120_000;
 
 test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, () => {
-    // Block the Angular service worker for this test. The production WAR registers ngsw-worker.js, which handles the
-    // quiz exam-save fetch; Playwright's page.route does NOT intercept service-worker-handled requests, so the 503
-    // outage we inject below was silently bypassed and the save reached the real server (200). Blocking the SW lets
-    // page.route intercept the save directly; the answer-restore-on-reload logic under test lives in the client
-    // (local storage), not the SW, so this does not change what the test verifies. serviceWorkers: 'block' is now
-    // also the global default in playwright.config.ts; this test keeps its own declaration because its route-based
-    // outage injection is correctness-critical, not merely flake mitigation.
+    // Block the Angular service worker so the request reaches the page network target intercepted below. The
+    // answer-restore-on-reload logic under test lives in the client (local storage), not the service worker.
+    // serviceWorkers: 'block' is also the global default in playwright.config.ts; this test keeps its own declaration
+    // because its outage injection is correctness-critical.
     test.use({ serviceWorkers: 'block' });
 
-    // The slow-tests project allows 90s per test, which this test cannot meet in CI: it was measured at ~113s there,
-    // because the setup (start participation, navigate, tick, forced failed save) runs before a reload that has to
-    // re-bootstrap the client with the HTTP cache disabled, re-fetch the exam and re-send the restored answer.
-    //
-    // Derived from RESEND_TIMEOUT rather than hard-coded, so the two cannot drift apart: RELOAD_RENDER_TIMEOUT is
-    // overridable via RELOAD_RENDER_TIMEOUT_MS, and a fixed cap here would silently become smaller than the wait it
-    // is supposed to contain. SETUP_AND_ASSERTION_ALLOWANCE covers everything outside that wait, generously - the
-    // measured setup is roughly 50s.
+    // The slow-tests project allows 90s per test. This test needs additional room because it deliberately performs a
+    // failed save and a full client reload before waiting for the automatic recovery save.
     test.setTimeout(RESEND_TIMEOUT + SETUP_AND_ASSERTION_ALLOWANCE);
 
     let exam: Exam;
@@ -76,30 +60,43 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         await examParticipation.startParticipation(studentTwo, course, exam);
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
 
-        // Simulate a failed save (as during an outage) BEFORE touching the answer: make the quiz exam save endpoint fail.
-        // Installing it before the first answer change guarantees no save can succeed first (e.g. a coincidental 30s
-        // autosave) and silently mark the answer synced, which would make the forced save below a no-op.
-        await page.route(quizSaveUrl, (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{}' }));
+        // Simulate a failed save (as during an outage) BEFORE touching the answer. CDP Fetch interception preserves the
+        // HTTP cache; Playwright's page.route disables it for the page and made the production reload stall under
+        // parallel CI load.
+        const cdpSession = await page.context().newCDPSession(page);
+        await cdpSession.send('Fetch.enable', {
+            patterns: [{ urlPattern: `*://*/api/quiz/exercises/${quizExercise.id}/submissions/exam`, requestStage: 'Request' }],
+        });
+        const failedSave = new Promise<void>((resolve, reject) => {
+            cdpSession.once('Fetch.requestPaused', async ({ requestId }) => {
+                try {
+                    await cdpSession.send('Fetch.fulfillRequest', {
+                        requestId,
+                        responseCode: 503,
+                        responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
+                        body: 'e30=',
+                    });
+                    resolve();
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        });
 
         // Tick an answer option; the exercise becomes unsynced.
         await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
         await expect(getExercise(page, quizExercise.id!).locator('#answer-option-0')).toHaveClass(/selected/);
 
-        // Force a save attempt and wait deterministically for the failed (503) save instead of a fixed timeout.
+        // Force a save attempt and wait deterministically until CDP has fulfilled it with 503.
         // The answer is written to local storage but the server submission stays empty.
-        const failedSave = page.waitForResponse((response) => response.url().includes(`/quiz/exercises/${quizExercise.id}/submissions/exam`) && response.status() === 503, {
-            timeout: 30000,
-        });
         await getExercise(page, quizExercise.id!).locator('#save-exam').click();
         await failedSave;
         // Record SUCCESSFUL re-sends, but only ones issued after the reload has committed.
         //
         // Both boundaries matter. The listener is attached before the outage is lifted so it cannot miss a re-send the
-        // client fires during its own start-up, which a waitForResponse registered after page.reload() would never
-        // see. But attaching it that early leaves a window between unroute() and reload() in which the existing
-        // page's autosave could fire a successful PUT: that would satisfy the poll below while proving nothing, since
-        // the reload would then restore an answer the server already had. Gating on the main-frame navigation closes
-        // that window - the reload is the next main-frame navigation after this point.
+        // client fires during its own start-up. Attaching it that early leaves a window between disabling interception
+        // and reload in which the existing page's autosave could fire a successful PUT. Gating on the main-frame
+        // navigation closes that window: the reload is the next main-frame navigation after this point.
         let reloadCommitted = false;
         page.on('framenavigated', (frame) => {
             if (frame === page.mainFrame()) {
@@ -117,7 +114,8 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         });
 
         // Stop failing saves so the post-reload re-send can succeed.
-        await page.unroute(quizSaveUrl);
+        await cdpSession.send('Fetch.disable');
+        await cdpSession.detach();
         await page.reload();
 
         // The client re-sends the restored answer by itself while starting up, so the only thing to do is wait for it.
