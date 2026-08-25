@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
@@ -40,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -125,13 +125,93 @@ public class ProgrammingTriggerService {
 
         // Let the instructor know that a build run was triggered.
         programmingMessagingService.notifyInstructorAboutStartedExerciseBuildRun(programmingExercise);
-        Set<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository.findWithLatestSubmissionByExerciseId(exerciseId);
-        triggerBuildForParticipations(participations, programmingExercise);
+        var triggerData = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(exerciseId);
+        triggerBuildForParticipationData(triggerData, programmingExercise);
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
         programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise, false);
         // Let the instructor know that the build run is finished.
         programmingMessagingService.notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
+    }
+
+    /**
+     * Triggers a build for every given participation of one exercise, pacing the batch the same way as the entity based
+     * path above.
+     * <p>
+     * This is the path an instructor's "build all" and the build-and-test-after-due-date schedule take. Its input is a
+     * projection rather than participation entities, so an exercise with a thousand participations costs one query for
+     * the trigger inputs instead of a thousand and two, and the database ships roughly a third of the bytes. See
+     * {@link ParticipationBuildTriggerDTO}.
+     *
+     * @param triggerData what a trigger reads off each participation of the exercise, newest submission included
+     * @param exercise    the exercise those participations belong to, loaded with its build config and auxiliary
+     *                        repositories
+     */
+    public void triggerBuildForParticipationData(List<ParticipationBuildTriggerDTO> triggerData, ProgrammingExercise exercise) {
+        if (triggerData.isEmpty()) {
+            return;
+        }
+        // Everything a trigger reads off the exercise rather than off the participation is resolved once for the batch:
+        // the build config, the auxiliary repositories, the build statistics and the head commit of the test
+        // repository are the same for every participation.
+        SharedBuildTriggerData sharedData = prepareSharedTriggerDataOrNone(exercise);
+        int index = 0;
+        for (var participationData : triggerData) {
+            var participation = participationFor(participationData, exercise);
+            if (participation == null) {
+                continue;
+            }
+            pauseBetweenBatches(index, participationData.participationId());
+            triggerBuild(participation, sharedData);
+            index++;
+        }
+    }
+
+    /**
+     * Returns the participation to hand to the trigger.
+     * <p>
+     * A participation that has to be resumed is written back to the database, so for those the real entity is loaded.
+     * Every other participation is only read from, and the projection already holds every field the trigger and the
+     * websocket notification look at, so it is turned into a detached participation instead of being loaded again. That
+     * object is never passed to a repository.
+     *
+     * @param participationData what a trigger reads off the participation
+     * @param exercise          the exercise of the participation, already loaded with its build config and auxiliary
+     *                              repositories
+     * @return the participation to trigger, or null if it has to be resumed but no longer exists
+     */
+    @Nullable
+    private ProgrammingExerciseStudentParticipation participationFor(ParticipationBuildTriggerDTO participationData, ProgrammingExercise exercise) {
+        if (participationData.needsResume()) {
+            var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsById(participationData.participationId()).orElse(null);
+            if (participation == null) {
+                log.warn("Not triggering participation {}: it no longer exists", participationData.participationId());
+                return null;
+            }
+            participation.setProgrammingExercise(exercise);
+            return participation;
+        }
+        return participationData.toDetachedParticipation(exercise);
+    }
+
+    /**
+     * Pauses before starting the next batch of requests to the external build system, so that triggering many
+     * participations does not fill the build queue in one go.
+     *
+     * @param index           how many participations of this batch were already triggered
+     * @param participationId the participation that is about to be triggered, for the log message on interruption
+     */
+    private void pauseBetweenBatches(int index, long participationId) {
+        if (index == 0 || index % externalSystemRequestBatchSize != 0) {
+            return;
+        }
+        try {
+            log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
+            Thread.sleep(externalSystemRequestBatchWaitingTime);
+        }
+        catch (InterruptedException ex) {
+            log.error("Exception encountered when pausing before executing successive build for participation {}", participationId, ex);
+        }
     }
 
     /**
@@ -182,15 +262,7 @@ public class ProgrammingTriggerService {
             // build that never happened.
             for (var participation : triggerable) {
                 // Execute requests in batches when using an external build system.
-                if (index > 0 && index % externalSystemRequestBatchSize == 0) {
-                    try {
-                        log.info("Sleep for {}s during triggerBuild", externalSystemRequestBatchWaitingTime / 1000);
-                        Thread.sleep(externalSystemRequestBatchWaitingTime);
-                    }
-                    catch (InterruptedException ex) {
-                        log.error("Exception encountered when pausing before executing successive build for participation {}", participation.getId(), ex);
-                    }
-                }
+                pauseBetweenBatches(index, participation.getId());
                 triggerBuild(participation, sharedData);
                 index++;
             }
@@ -229,6 +301,23 @@ public class ProgrammingTriggerService {
         catch (Exception e) {
             log.error("Could not resolve the shared build trigger inputs for exercise {}; each participation resolves them itself",
                     participationsOfExercise.getFirst().getExercise().getId(), e);
+            return SharedBuildTriggerData.NONE;
+        }
+    }
+
+    /**
+     * Resolves the shared inputs for an exercise the caller already loaded, falling back to resolving nothing if that
+     * fails, for the same reason as the overload above.
+     *
+     * @param exercise the exercise whose participations are about to be triggered
+     * @return the shared inputs, or {@link SharedBuildTriggerData#NONE} if they could not be resolved
+     */
+    private SharedBuildTriggerData prepareSharedTriggerDataOrNone(ProgrammingExercise exercise) {
+        try {
+            return continuousIntegrationTriggerService.map(triggerService -> triggerService.prepareSharedTriggerData(exercise)).orElse(SharedBuildTriggerData.NONE);
+        }
+        catch (Exception e) {
+            log.error("Could not resolve the shared build trigger inputs for exercise {}; each participation resolves them itself", exercise.getId(), e);
             return SharedBuildTriggerData.NONE;
         }
     }

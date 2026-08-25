@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
@@ -18,9 +21,10 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  * Guards the cost of triggering builds for many participations of one exercise, which is what an instructor's
  * "build all" and the build-and-test-after-due-date schedule do.
  * <p>
- * What matters here is not the total but the slope: everything a trigger reads off the exercise rather than off the
- * participation has to be resolved once for the batch, so the count must grow by the one insert each build job needs
- * and by nothing else. It used to grow by three, which is what made the call spike the node handling it.
+ * What matters here is not the total but the slope: neither reading the participations nor triggering them may grow
+ * with the number of participations beyond the one insert each build job needs. Both used to. Reading them cost a query
+ * per participation because their eager student association was resolved one at a time, and triggering them cost three
+ * because everything the trigger reads off the exercise was resolved per student.
  */
 class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
@@ -32,8 +36,21 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
      */
     private static final int PER_EXERCISE_QUERY_COUNT = 3;
 
+    /**
+     * Only the exercise's build statistics: the caller of the projection based path hands over an exercise it already
+     * loaded, so that load is not part of this measurement.
+     */
+    private static final int PER_EXERCISE_QUERY_COUNT_WITH_LOADED_EXERCISE = 1;
+
     /** The insert of the build job itself, which is the only unavoidable per-participation write. */
     private static final int PER_PARTICIPATION_QUERY_COUNT = 1;
+
+    /**
+     * Reading the trigger inputs of a whole exercise is a single projection query. It must stay one no matter how many
+     * participations the exercise has: fetching the participations as entities instead made Hibernate resolve their
+     * eager student association one participation at a time.
+     */
+    private static final int OPENING_QUERY_COUNT = 1;
 
     @Autowired
     private ProgrammingTriggerService programmingTriggerService;
@@ -68,6 +85,29 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     }
 
     /**
+     * The regression this pins is the one that dominated the call: the trigger inputs of every participation of the
+     * exercise come back in one query, so opening a "build all" does not cost a round trip per student.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void readingTheTriggerInputsOfAnExerciseIsOneQuery() throws Exception {
+        createParticipationsWithSubmissions(4);
+
+        var triggerData = assertThatDb(() -> programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(programmingExercise.getId()))
+                .hasBeenCalledAtMostTimes(OPENING_QUERY_COUNT);
+
+        // The projection has to be complete, otherwise the trigger would read null where it needs a value.
+        assertThat(triggerData).hasSize(4).allSatisfy(data -> {
+            assertThat(data.studentLogin()).isNotNull();
+            assertThat(data.repositoryUri()).isNotNull();
+            assertThat(data.buildPlanId()).isNotNull();
+            assertThat(data.commitHash()).isNotNull();
+            assertThat(data.submissionId()).isPositive();
+            assertThat(data.needsResume()).isFalse();
+        });
+    }
+
+    /**
      * Resolving the shared inputs pays off even for a single participation, which is what the individual due date
      * schedule triggers: one load of the exercise with its build config and auxiliary repositories costs less than the
      * separate lookups the trigger would otherwise make. Measured, this case went from five queries to four.
@@ -75,7 +115,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggeringOneParticipationResolvesThePerExerciseWorkOnce() throws Exception {
-        var participations = participationsWithSubmissions(1);
+        var participations = participationEntitiesWithSubmissions(1);
 
         assertThatDb(() -> {
             programmingTriggerService.triggerBuildForParticipations(participations);
@@ -87,7 +127,7 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggeringManyParticipationsOnlyAddsOneQueryEach() throws Exception {
         int participationCount = 4;
-        var participations = participationsWithSubmissions(participationCount);
+        var participations = participationEntitiesWithSubmissions(participationCount);
 
         // The point of the assertion: the per-exercise part does not multiply. Before the batch resolved the build
         // config, the auxiliary repositories and the build statistics once, this was three queries per participation.
@@ -97,7 +137,24 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
         }).hasBeenCalledAtMostTimes(PER_EXERCISE_QUERY_COUNT + participationCount * PER_PARTICIPATION_QUERY_COUNT);
     }
 
-    private List<ProgrammingExerciseStudentParticipation> participationsWithSubmissions(int count) throws Exception {
+    /**
+     * The path an instructor's "build all" takes. The projection holds everything the trigger reads, so no participation
+     * is loaded again and the only query per participation is the insert of its build job.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void triggeringFromTheProjectionOnlyAddsOneQueryEach() throws Exception {
+        int participationCount = 4;
+        List<ParticipationBuildTriggerDTO> triggerData = createParticipationsWithSubmissions(participationCount);
+        var exercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
+        assertThatDb(() -> {
+            programmingTriggerService.triggerBuildForParticipationData(triggerData, exercise);
+            return null;
+        }).hasBeenCalledAtMostTimes(PER_EXERCISE_QUERY_COUNT_WITH_LOADED_EXERCISE + participationCount * PER_PARTICIPATION_QUERY_COUNT);
+    }
+
+    private List<ParticipationBuildTriggerDTO> createParticipationsWithSubmissions(int count) throws Exception {
         userUtilService.addStudents(TEST_PREFIX, 1, count);
         for (int i = 1; i <= count; i++) {
             String login = TEST_PREFIX + "student" + i;
@@ -109,6 +166,11 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
             programmingExerciseUtilService.createProgrammingSubmission(participation, false);
         }
         // Read them back exactly the way the production trigger-all path does.
-        return new ArrayList<>(programmingExerciseStudentParticipationRepository.findWithLatestSubmissionByExerciseId(programmingExercise.getId()));
+        return programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(programmingExercise.getId());
+    }
+
+    private List<ProgrammingExerciseStudentParticipation> participationEntitiesWithSubmissions(int count) throws Exception {
+        createParticipationsWithSubmissions(count);
+        return new ArrayList<>(programmingExerciseStudentParticipationRepository.findWithSubmissionsAndTeamStudentsByExerciseId(programmingExercise.getId()));
     }
 }
