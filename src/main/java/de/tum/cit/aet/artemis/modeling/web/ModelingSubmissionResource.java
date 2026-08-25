@@ -137,22 +137,27 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @NonNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
-        final var user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the course-membership checks on this path (the submission
+        // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
+        // is the autosave path, so it runs repeatedly per student per exercise.
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
+        StudentParticipation participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
             // Apply further checks if it is an exam submission
             api.checkSubmissionAllowanceElseThrow(exercise, user);
 
-            // Prevent multiple submissions (currently only for exam submissions)
-            modelingSubmission = (ModelingSubmission) api.preventMultipleSubmissions(exercise, modelingSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(exercise, modelingSubmission, user);
         }
 
         // Check if the user is allowed to submit
         modelingSubmissionService.checkSubmissionAllowanceElseThrow(exercise, modelingSubmission, user);
 
-        modelingSubmission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user);
+        modelingSubmission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user, participationFromExamGate);
         modelingSubmissionService.hideDetails(modelingSubmission, user);
         long end = System.currentTimeMillis();
         log.info("save took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());

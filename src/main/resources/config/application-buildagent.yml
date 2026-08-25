@@ -55,8 +55,9 @@ artemis:
     repo-download-clone-path: ./repos-download
     version-control:
         url: http://localhost:8000 # Required for ssh access to localvc.
-        build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc.
-        build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. This config must be set for build agents and localvc. You can also use an ssh key
+        # Deprecated: prefer artemis.version-control.build-agent-use-ssh. Both credentials may be omitted entirely once it is true.
+        build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true. This config must be set for build agents and localvc.
+        build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true. This config must be set for build agents and localvc. You can also use an ssh key
     continuous-integration:
         docker-connection-uri: unix:///var/run/docker.sock
         specify-concurrent-builds: false # If true, you can specify the number of build that can run concurrently on this node (concurrent-build-size). If false, the number will be determined based on system resources.
@@ -98,6 +99,10 @@ artemis:
             max-cpu-count: 4 # The maximum number of CPU cores that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
             max-memory: 8096 # The maximum amount of memory that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
             max-memory-swap: 8096 # The maximum amount of memory swap that can be used by the build agent. If a higher value is specified, the build agent will be limited to this value. Value must be a positive integer. 0 means unlimited.
+        # Superseded by `artemis.distributed-data.provider`, which selects the backend for all distributed state and not
+        # just for Local CI. This key is still honoured as a fallback for one release. Deliberately left set here rather
+        # than migrated: defaulting the new key in this file would silently override a deployment that still selects
+        # Redis through this legacy key.
         data-store: Hazelcast # set Hazelcast, Redis, Local as data store for Local CI data
     git:
         name: Artemis

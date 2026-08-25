@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="#{email.notification.emailChanged.title}">Notification Title</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}" />
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
+
+    <p>
+        <!-- th:text rather than th:utext: the address is user-supplied, so it must be escaped, not rendered as markup -->
+        <span th:text="#{email.notification.emailChanged.text(${newEmail})}">
+            The e-mail address of your Artemis account was changed.
+        </span>
+    </p>
+
+    <p>
+        <span th:text="#{email.notification.emailChanged.actionRequired}">If you did not make this change, someone else may have access to your account. Password reset messages now go to the new address, so please contact support immediately</span>:
+
+        <a th:with="url=(@{|${baseUrl}/|})" th:href="${url}" th:text="${url}">Artemis</a>
+    </p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}" />
+</div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}" />
+
+</body>
+</html>

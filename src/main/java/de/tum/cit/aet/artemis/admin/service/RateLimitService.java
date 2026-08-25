@@ -26,7 +26,7 @@ import inet.ipaddr.IPAddressString;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.ConsumptionProbe;
-import io.github.bucket4j.grid.hazelcast.HazelcastProxyManager;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -36,7 +36,7 @@ public class RateLimitService {
     private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
 
     // Bucket4J proxy that connects rate-limit buckets to Hazelcast for cluster-wide synchronization
-    private final HazelcastProxyManager<String> proxyManager;
+    private final ProxyManager<String> proxyManager;
 
     private final Map<Integer, BucketConfiguration> perMinuteCfgCache = new ConcurrentHashMap<>();
 
@@ -44,7 +44,7 @@ public class RateLimitService {
 
     private final FeatureToggleService featureToggleService;
 
-    public RateLimitService(HazelcastProxyManager<String> proxyManager, RateLimitConfigurationService configurationService, FeatureToggleService featureToggleService) {
+    public RateLimitService(ProxyManager<String> proxyManager, RateLimitConfigurationService configurationService, FeatureToggleService featureToggleService) {
         this.proxyManager = proxyManager;
         this.configurationService = configurationService;
         this.featureToggleService = featureToggleService;
@@ -62,6 +62,15 @@ public class RateLimitService {
         // Skip rate limiting if disabled globally or disabled via feature toggle
         if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit)) {
             log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {}", clientId, rpmType.name());
+            return;
+        }
+
+        // An exempt address consumes no tokens at all, rather than getting a larger bucket: a load
+        // generator drives thousands of requests from one address, and any finite bucket would still
+        // throttle it partway through a run and quietly turn the measurement into a measurement of the
+        // limiter.
+        if (configurationService.isExempt(clientId)) {
+            log.debug("Client {} is exempt from rate limiting, skipping enforcement at {}", clientId, rpmType.name());
             return;
         }
 
