@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { TumUiSearchFieldComponent } from './tum-ui-search-field.component';
 
 const meta = {
-    title: 'Form/Search Field',
+    title: 'Forms/Search Field',
     component: TumUiSearchFieldComponent,
     args: {
         value: '',
