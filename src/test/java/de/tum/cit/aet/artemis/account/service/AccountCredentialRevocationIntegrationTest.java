@@ -403,6 +403,83 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         assertAllCredentialsRevoked();
     }
 
+    /**
+     * Deactivation cuts off every form of access, so the log has to say who did it and to whom. Asserted for both routes
+     * that write the flag, because they are separate code paths: the dedicated endpoint calls deactivateUser, while the
+     * admin edit form writes it inside updateUser.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAUserIsRecordedInTheAuditLog() {
+        securityAuditEventRepository.deleteAll();
+
+        userCreationService.deactivateUser(user);
+
+        assertAccountStateAudited(Constants.DEACTIVATE_USER);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAUserThroughTheAdminUpdateIsRecordedInTheAuditLog() {
+        securityAuditEventRepository.deleteAll();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(false);
+        update.setPassword(null);
+        userCreationService.updateUser(userWithAuthorities, update);
+
+        assertAccountStateAudited(Constants.DEACTIVATE_USER);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activatingAUserIsRecordedInTheAuditLog() {
+        userCreationService.deactivateUser(user);
+        securityAuditEventRepository.deleteAll();
+
+        userCreationService.activateUser(reloadUser());
+
+        assertAccountStateAudited(Constants.ACTIVATE_USER);
+    }
+
+    /**
+     * The admin edit form and the dedicated activate action both run for one activation through the resource, so the
+     * transition has to be recorded once rather than by each of them.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activatingThroughTheAdminUpdateIsRecordedExactlyOnce() {
+        userCreationService.deactivateUser(user);
+        securityAuditEventRepository.deleteAll();
+
+        // Mirrors AdminUserResource.updateUser, which follows an activating update with userService.activateUser.
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(true);
+        update.setPassword(null);
+        User updated = userCreationService.updateUser(userWithAuthorities, update);
+        userService.activateUser(updated);
+
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
+                .as("one activation produces one audit entry").hasSize(1);
+    }
+
+    /**
+     * Read through AuditEventService rather than the repository, because it loads {@code data} through an entity graph
+     * while the repository's findAll() leaves that collection lazy and unreadable outside a session. The log to read from
+     * is the security one: an account-state change is a change to what the account can authenticate with, and a
+     * deactivation is the only record of the credential revocation it performs (see
+     * {@code AuditEventConstants.SECURITY_EVENT_TYPES}).
+     */
+    private void assertAccountStateAudited(String expectedType) {
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+            assertThat(event.getType()).isEqualTo(expectedType);
+            assertThat(event.getPrincipal()).as("the administrator who performed it, not the affected account").isEqualTo("admin");
+            assertThat(event.getData()).containsEntry("user", user.getLogin());
+        });
+    }
+
     @Test
     void softDeletingAUserRevokesEverything() {
         // The pre-existing cleanup here deleted the SSH keys but left the personal VCS access token behind, so a

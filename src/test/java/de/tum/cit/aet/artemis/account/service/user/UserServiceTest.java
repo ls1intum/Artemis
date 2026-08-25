@@ -222,6 +222,34 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
     }
 
     @Test
+    void testCreateUser_externalUser_isActivatedWithoutActivationKey() {
+        String login = TEST_PREFIX + "ext_activated";
+        User user = userCreationService.createUser(login, null, "External", "User", "ext_activated@example.com", null, null, "en", false);
+
+        // An externally managed account never receives an activation mail and could never redeem a key, so it must not be
+        // left waiting for one.
+        assertThat(user.getActivated()).as("external user is created activated").isTrue();
+        assertThat(user.getActivationKey()).as("external user gets no activation key").isNull();
+
+        User reloadedUser = userRepository.findOneByLogin(login).orElseThrow();
+        assertThat(reloadedUser.getActivated()).as("persisted external user is activated").isTrue();
+        assertThat(reloadedUser.getActivationKey()).isNull();
+
+        userRepository.delete(reloadedUser);
+    }
+
+    @Test
+    void testCreateUser_internalUser_keepsAwaitingActivation() {
+        String login = TEST_PREFIX + "int_unactivated";
+        User user = userCreationService.createUser(login, "password123", "Internal", "User", "int_unactivated@example.com", null, null, "en", true);
+
+        assertThat(user.getActivated()).as("internal user still awaits activation").isFalse();
+        assertThat(user.getActivationKey()).as("internal user needs a key to activate with").isNotNull();
+
+        userRepository.delete(userRepository.findOneByLogin(login).orElseThrow());
+    }
+
+    @Test
     void testApplicationReady_noActionWhenInternalAdminNotConfigured() {
         // Setup: Clear internal admin configuration
         ReflectionTestUtils.setField(userService, "artemisInternalAdminUsername", Optional.empty());

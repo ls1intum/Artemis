@@ -94,7 +94,7 @@ class FileUtilUnitTest {
     void refusesToWriteThroughASymlinkPlantedAtTheDestination(@TempDir Path tempDir) throws Exception {
         Path insideDirectory = Files.createDirectories(tempDir.resolve("temp"));
         Path outsideTarget = tempDir.resolve("escaped.txt");
-        Files.writeString(outsideTarget, "original");
+        FileUtils.writeStringToFile(outsideTarget.toFile(), "original", StandardCharsets.UTF_8);
         Path plantedLink = insideDirectory.resolve("Temp_1_lecture.pdf");
         try {
             Files.createSymbolicLink(plantedLink, outsideTarget);
@@ -154,7 +154,7 @@ class FileUtilUnitTest {
     @Test
     void keepsAnExistingFileWhenTheOpenIsRefused(@TempDir Path tempDir) throws Exception {
         Path target = tempDir.resolve("existing.txt");
-        Files.writeString(target, "original");
+        FileUtils.writeStringToFile(target.toFile(), "original", StandardCharsets.UTF_8);
 
         try (InputStream inputStream = new ByteArrayInputStream("replacement".getBytes(StandardCharsets.UTF_8))) {
             assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(inputStream, target)).isInstanceOf(FileAlreadyExistsException.class);
@@ -166,7 +166,7 @@ class FileUtilUnitTest {
     @Test
     void refusesToOverwriteAnExistingFile(@TempDir Path tempDir) throws Exception {
         Path target = tempDir.resolve("file.txt");
-        Files.writeString(target, "original");
+        FileUtils.writeStringToFile(target.toFile(), "original", StandardCharsets.UTF_8);
 
         try (InputStream inputStream = new ByteArrayInputStream("replacement".getBytes(StandardCharsets.UTF_8))) {
             assertThatThrownBy(() -> FileUtil.writeNewFileElseThrow(inputStream, target)).isInstanceOf(FileAlreadyExistsException.class);
