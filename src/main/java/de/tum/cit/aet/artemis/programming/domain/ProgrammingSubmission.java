@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -52,7 +52,7 @@ public class ProgrammingSubmission extends Submission {
     @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("time")
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
-    private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+    private Set<BuildLogEntry> buildLogEntries = new LinkedHashSet<>();
 
     /**
      * There can be two reasons for the case that there is no programmingSubmission:
@@ -99,11 +99,11 @@ public class ProgrammingSubmission extends Submission {
         this.buildFailed = buildFailed;
     }
 
-    public List<BuildLogEntry> getBuildLogEntries() {
+    public Set<BuildLogEntry> getBuildLogEntries() {
         return buildLogEntries;
     }
 
-    public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
+    public void setBuildLogEntries(Set<BuildLogEntry> buildLogEntries) {
         this.buildLogEntries = buildLogEntries;
     }
 

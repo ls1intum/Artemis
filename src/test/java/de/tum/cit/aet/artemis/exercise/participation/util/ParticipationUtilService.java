@@ -1105,15 +1105,35 @@ public class ParticipationUtilService {
      * @param result the result about to be saved
      * @return the same result, with its correction round set when it is a manual one
      */
-    private static Result withCorrectionRound(Result result) {
+    /**
+     * Assigns the correction round a manual result would get if it were added through {@link Submission#addResult}, so
+     * that results created directly through the repository carry the same value as results created through the
+     * production code path.
+     * <p>
+     * The already existing results are read from the database rather than from {@code submission.getResults()}, because
+     * the submissions handed to these helpers usually come straight out of a repository and are detached, which makes
+     * their result collection unreadable.
+     *
+     * @param result the result about to be saved
+     * @return the same result, with the correction round set when it is a manual one
+     */
+    private Result withCorrectionRound(Result result) {
         boolean manual = result.getAssessmentType() != null && !result.isAutomatic() && !result.isAthenaBased();
-        if (!manual || result.getCorrectionRound() != null || result.getSubmission() == null) {
+        Submission submission = result.getSubmission();
+        if (!manual || result.getCorrectionRound() != null || submission == null) {
             return result;
         }
-        var existing = result.getSubmission().getResults();
-        long manualResults = existing == null ? 0
-                : existing.stream().filter(other -> other != null && other != result && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())
-                        .count();
+        Stream<Result> existing;
+        if (submission.getId() == null) {
+            // A submission that was never saved cannot have persisted results, and its collection is a plain one, so reading it is safe.
+            existing = submission.getResults().stream();
+        }
+        else {
+            existing = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).map(Submission::getResults).orElse(Set.of()).stream();
+        }
+        // Compared by reference on purpose: the result is not saved yet, so its id is still null and equals would never match.
+        long manualResults = existing.filter(other -> other != null && other != result && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())
+                .count();
         result.setCorrectionRound((int) manualResults);
         return result;
     }

@@ -189,7 +189,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         List<BuildLogEntry> logs = new ArrayList<>();
         logs.add(new BuildLogEntry(ZonedDateTime.now(), "compilation failed: cannot find symbol", submission));
-        submission.setBuildLogEntries(logs);
+        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(logs));
         submission = submissionRepository.saveAndFlush(submission);
 
         Result result = ParticipationFactory.generateResult(true, 0);

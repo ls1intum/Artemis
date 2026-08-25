@@ -19,6 +19,19 @@ export type BuildLogEntry = {
 type ParsedLogEntry = [string, string, string, string, string, string];
 
 /**
+ * Compares two build log entries by their timestamp. Entries whose timestamp cannot be parsed keep their relative
+ * order, because sorting is stable.
+ */
+function compareByTime(first: BuildLogEntry, second: BuildLogEntry): number {
+    const firstTime = Date.parse(first.time);
+    const secondTime = Date.parse(second.time);
+    if (Number.isNaN(firstTime) || Number.isNaN(secondTime)) {
+        return 0;
+    }
+    return firstTime - secondTime;
+}
+
+/**
  * Wrapper class for build log output.
  */
 export class BuildLogEntryArray extends Array<BuildLogEntry> {
@@ -28,6 +41,10 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
 
     /**
      * Factory method for creating an instance of the class. Prefer this method over the default constructor.
+     *
+     * The entries are sorted by their timestamp. The server already returns them in order, but that order relies on a
+     * mapping detail that is easy to lose somewhere on the way here, and build output is unreadable once the lines are
+     * shuffled, so the client does not depend on it.
      *
      * @param buildLogs BuildLogEntry[]
      */
@@ -43,7 +60,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
             }
             return cloneWith({ log, type: logType }, rest);
         });
-        return new BuildLogEntryArray(...mappedLogs);
+        return new BuildLogEntryArray(...mappedLogs.sort(compareByTime));
     }
 
     /**
