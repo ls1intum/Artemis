@@ -27,6 +27,18 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit, Long> {
 
     /**
+     * @param entityIds the ids to check
+     * @return the subset that is currently indexable
+     */
+    @Query("""
+            SELECT lectureUnit.id
+            FROM LectureUnit lectureUnit
+            WHERE lectureUnit.id IN :entityIds
+                AND TYPE(lectureUnit) IN (TextUnit, OnlineUnit, AttachmentVideoUnit)
+            """)
+    Set<Long> findIndexableUnitIds(@Param("entityIds") Collection<Long> entityIds);
+
+    /**
      * The concrete content subtypes are the indexable ones; exercise units are never indexed.
      *
      * @param afterId  the id the previous page stopped at

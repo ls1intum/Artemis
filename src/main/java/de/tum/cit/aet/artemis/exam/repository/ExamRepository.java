@@ -43,6 +43,17 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id IN :entityIds
+            """)
+    Set<Long> findExistingExamIds(@Param("entityIds") Collection<Long> entityIds);
+
     @Query("""
             SELECT exam.id
             FROM Exam exam

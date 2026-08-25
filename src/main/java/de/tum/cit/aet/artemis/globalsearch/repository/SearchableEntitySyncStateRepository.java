@@ -53,6 +53,16 @@ public interface SearchableEntitySyncStateRepository extends ArtemisJpaRepositor
     Set<Long> findSyncedEntityIds(@Param("entityType") String entityType, @Param("entityIds") Collection<Long> entityIds);
 
     /**
+     * Reads the ledger rows for a set of ids of one type, so a pass holding a page of index rows can compare them
+     * against what was last written in a single query.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityIds  the ids to look up
+     * @return the ledger rows that exist for those ids
+     */
+    List<SearchableEntitySyncState> findAllByEntityTypeAndEntityIdIn(String entityType, Collection<Long> entityIds);
+
+    /**
      * Reads the ledger rows that have gone longest without being checked against the database, restricted to the
      * types the reconcile passes manage.
      * <p>

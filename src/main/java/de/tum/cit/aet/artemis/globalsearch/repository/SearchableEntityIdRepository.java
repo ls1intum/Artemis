@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.globalsearch.repository;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -136,4 +138,86 @@ public interface SearchableEntityIdRepository extends ArtemisJpaRepository<Cours
             ORDER BY answerPost.id ASC
             """)
     List<Long> findIndexableAnswerPostIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
+    // The lookups below answer the reverse question: of these ids, which should be indexed right now? They repeat
+    // the conditions above deliberately, because a row is an orphan when its entity is gone OR when it has stopped
+    // being indexable, and both must be judged by the same rule the write path applies.
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT course.id
+            FROM Course course
+            WHERE course.id IN :entityIds
+            """)
+    Set<Long> findExistingCourseIds(@Param("entityIds") Collection<Long> entityIds);
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT exercise.id
+            FROM Exercise exercise
+            WHERE exercise.id IN :entityIds
+            """)
+    Set<Long> findExistingExerciseIds(@Param("entityIds") Collection<Long> entityIds);
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT faq.id
+            FROM Faq faq
+            WHERE faq.id IN :entityIds
+            """)
+    Set<Long> findExistingFaqIds(@Param("entityIds") Collection<Long> entityIds);
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that is currently indexable
+     */
+    @Query("""
+            SELECT channel.id
+            FROM Channel channel
+            WHERE channel.id IN :entityIds
+                AND channel.isArchived = FALSE
+                AND (channel.isCourseWide = TRUE OR channel.isPublic = TRUE)
+            """)
+    Set<Long> findIndexableChannelIds(@Param("entityIds") Collection<Long> entityIds);
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that is currently indexable
+     */
+    @Query("""
+            SELECT post.id
+            FROM Post post
+            WHERE post.id IN :entityIds
+                AND post.conversation.id IN (
+                    SELECT channel.id
+                    FROM Channel channel
+                    WHERE channel.isArchived = FALSE AND channel.isPublic = TRUE
+                )
+            """)
+    Set<Long> findIndexablePostIds(@Param("entityIds") Collection<Long> entityIds);
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that is currently indexable
+     */
+    @Query("""
+            SELECT answerPost.id
+            FROM AnswerPost answerPost
+            WHERE answerPost.id IN :entityIds
+                AND answerPost.post.conversation.id IN (
+                    SELECT channel.id
+                    FROM Channel channel
+                    WHERE channel.isArchived = FALSE AND channel.isPublic = TRUE
+                )
+            """)
+    Set<Long> findIndexableAnswerPostIds(@Param("entityIds") Collection<Long> entityIds);
 }

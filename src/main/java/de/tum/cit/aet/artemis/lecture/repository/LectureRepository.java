@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,6 +28,17 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 @Lazy
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
+
+    /**
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    @Query("""
+            SELECT lecture.id
+            FROM Lecture lecture
+            WHERE lecture.id IN :entityIds
+            """)
+    Set<Long> findExistingLectureIds(@Param("entityIds") Collection<Long> entityIds);
 
     @Query("""
             SELECT lecture.id

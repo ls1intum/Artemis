@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.globalsearch.service.reconcile;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -47,6 +49,36 @@ public class SearchableEntityIdEnumerator {
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.examRepositoryApi = examRepositoryApi;
+    }
+
+    /**
+     * Of the given ids, which ones should be indexed right now.
+     * <p>
+     * Answers both halves of what makes an index row an orphan: the entity being gone, and the entity still
+     * existing but having stopped being indexable, such as a channel that was archived. Both are judged by the same
+     * rule the write path applies, so a row this reports as absent is genuinely one that should not be there.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityIds  the ids to check
+     * @return the subset that should be indexed, or {@link Optional#empty()} if the module owning this type is
+     *         disabled and nothing can be concluded
+     */
+    public Optional<Set<Long>> indexableIdsAmong(String entityType, Collection<Long> entityIds) {
+        if (entityIds.isEmpty()) {
+            return Optional.of(Set.of());
+        }
+        return switch (entityType) {
+            case SearchableEntitySchema.TypeValues.COURSE -> Optional.of(idRepository.findExistingCourseIds(entityIds));
+            case SearchableEntitySchema.TypeValues.EXERCISE -> Optional.of(idRepository.findExistingExerciseIds(entityIds));
+            case SearchableEntitySchema.TypeValues.FAQ -> Optional.of(idRepository.findExistingFaqIds(entityIds));
+            case SearchableEntitySchema.TypeValues.CHANNEL -> Optional.of(idRepository.findIndexableChannelIds(entityIds));
+            case SearchableEntitySchema.TypeValues.POST -> Optional.of(idRepository.findIndexablePostIds(entityIds));
+            case SearchableEntitySchema.TypeValues.ANSWER_POST -> Optional.of(idRepository.findIndexableAnswerPostIds(entityIds));
+            case SearchableEntitySchema.TypeValues.LECTURE -> lectureRepositoryApi.map(api -> api.findExistingLectureIds(entityIds));
+            case SearchableEntitySchema.TypeValues.LECTURE_UNIT -> lectureUnitRepositoryApi.map(api -> api.findIndexableUnitIds(entityIds));
+            case SearchableEntitySchema.TypeValues.EXAM -> examRepositoryApi.map(api -> api.findExistingExamIds(entityIds));
+            default -> throw new IllegalStateException("Unknown searchable entity type for reconcile enumeration: " + entityType);
+        };
     }
 
     /**

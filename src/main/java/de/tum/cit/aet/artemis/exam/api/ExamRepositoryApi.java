@@ -36,6 +36,16 @@ public class ExamRepositoryApi extends AbstractExamApi {
     }
 
     /**
+     * Checks which of the given ids exists, for the pass that removes index rows with no backing entity.
+     *
+     * @param entityIds the ids to check
+     * @return the subset that exists
+     */
+    public Set<Long> findExistingExamIds(Collection<Long> entityIds) {
+        return examRepository.findExistingExamIds(entityIds);
+    }
+
+    /**
      * Walks the ids expected to be indexed, one page at a time, for the reconcile passes.
      *
      * @param afterId the id the previous page stopped at

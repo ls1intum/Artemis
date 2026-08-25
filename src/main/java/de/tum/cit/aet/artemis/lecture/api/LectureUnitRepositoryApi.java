@@ -48,6 +48,16 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
     }
 
     /**
+     * Checks which of the given ids is currently indexable, for the pass that removes index rows with no backing entity.
+     *
+     * @param entityIds the ids to check
+     * @return the subset that is currently indexable
+     */
+    public Set<Long> findIndexableUnitIds(Collection<Long> entityIds) {
+        return lectureUnitRepository.findIndexableUnitIds(entityIds);
+    }
+
+    /**
      * Walks the ids expected to be indexed, one page at a time, for the reconcile passes.
      *
      * @param afterId the id the previous page stopped at
