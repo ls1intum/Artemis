@@ -35,6 +35,12 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
 
     private static final String TEST_PREFIX = "useraipref";
 
+    // Fixed rather than wall-clock: the recorded moment is asserted in places, and a fixture that moves with the
+    // clock cannot be compared against.
+    private static final ZonedDateTime DECIDED_AT = ZonedDateTime.parse("2026-01-02T03:04:05Z");
+
+    private static final ZonedDateTime DECIDED_EARLIER = ZonedDateTime.parse("2026-01-01T03:04:05Z");
+
     @Autowired
     private UserAiPreferenceService userAiPreferenceService;
 
@@ -91,7 +97,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
 
         @Test
         void storesTheDecisionAndItsDate() {
-            ZonedDateTime when = ZonedDateTime.now().minusDays(1);
+            ZonedDateTime when = DECIDED_EARLIER;
 
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, when);
 
@@ -101,8 +107,8 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
 
         @Test
         void replacesAPreviousDecisionRatherThanAddingARow() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, DECIDED_AT);
 
             assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(AiSelectionDecision.LOCAL_AI);
             assertThat(userAiPreferenceRepository.findAll()).filteredOn(preference -> preference.getUserId() == user.getId()).hasSize(1);
@@ -110,7 +116,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
 
         @Test
         void leavesMemirisEnabledUntouched() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
 
             assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
         }
@@ -121,7 +127,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
 
         @Test
         void anAccountThatChoseAnLlmHasOptedIn() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, DECIDED_AT);
 
             assertThat(userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())).isTrue();
             assertThatNoException().isThrownBy(() -> userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId()));
@@ -133,7 +139,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
          */
         @Test
         void anAccountThatChoseNoAiHasNotOptedIn() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.NO_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.NO_AI, DECIDED_AT);
 
             assertThat(userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())).isFalse();
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId()))
@@ -155,7 +161,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
 
         @Test
         void isIndependentOfTheLlmDecision() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
             userAiPreferenceService.setMemirisEnabled(user.getId(), false);
 
             assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(AiSelectionDecision.CLOUD_AI);
@@ -172,7 +178,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
          */
         @Test
         void removesTheRowWhenNothingElseIsRecorded() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
 
             userAiPreferenceService.clearDecision(user.getId());
 
@@ -186,7 +192,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
          */
         @Test
         void keepsTheRowWhenMemirisIsTurnedOff() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
             userAiPreferenceService.setMemirisEnabled(user.getId(), false);
 
             userAiPreferenceService.clearDecision(user.getId());
@@ -213,7 +219,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
         void recordingADecisionOnAnExistingRowRecordsItOnce() {
             userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
 
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, DECIDED_AT);
 
             assertThat(userAiPreferenceService.findDecision(user.getId())).isEqualTo(AiSelectionDecision.LOCAL_AI);
             assertThat(userAiPreferenceRepository.findAllByUserIdIn(Set.of(user.getId()))).hasSize(1);
@@ -222,7 +228,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
         @Test
         void aClearedDecisionIsStillDistinguishableFromNoRow() {
             userAiPreferenceService.setMemirisEnabled(user.getId(), false);
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
             userAiPreferenceService.clearDecision(user.getId());
 
             // The row survives because it still carries the Memiris choice, so "no decision" and "no row" differ here.
@@ -238,7 +244,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
         void returnsOnlyTheAccountsThatRecordedADecision() {
             User decided = userUtilService.createAndSaveUser(TEST_PREFIX + "decided");
             User undecided = userUtilService.createAndSaveUser(TEST_PREFIX + "undecided");
-            userAiPreferenceService.recordDecision(decided.getId(), AiSelectionDecision.NO_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(decided.getId(), AiSelectionDecision.NO_AI, DECIDED_AT);
             userAiPreferenceService.clearDecision(undecided.getId());
 
             var decisions = userAiPreferenceService.findDecisions(List.of(decided.getId(), undecided.getId()));
@@ -250,8 +256,8 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
         void agreesWithTheSingleLookupForEveryAccount() {
             User cloud = userUtilService.createAndSaveUser(TEST_PREFIX + "cloud");
             User local = userUtilService.createAndSaveUser(TEST_PREFIX + "local");
-            userAiPreferenceService.recordDecision(cloud.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
-            userAiPreferenceService.recordDecision(local.getId(), AiSelectionDecision.LOCAL_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(cloud.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
+            userAiPreferenceService.recordDecision(local.getId(), AiSelectionDecision.LOCAL_AI, DECIDED_AT);
 
             var decisions = userAiPreferenceService.findDecisions(List.of(cloud.getId(), local.getId(), user.getId()));
 
@@ -266,7 +272,7 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
          */
         @Test
         void toleratesDuplicatesNullsAndAnEmptyInput() {
-            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now());
+            userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.CLOUD_AI, DECIDED_AT);
 
             assertThat(userAiPreferenceService.findDecisions(List.of())).isEmpty();
             assertThat(userAiPreferenceService.findDecisions(Arrays.asList(user.getId(), null, user.getId())))

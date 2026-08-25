@@ -30,6 +30,8 @@ class UserAiPreferenceServiceConcurrencyTest {
 
     private static final long USER_ID = 42L;
 
+    private static final ZonedDateTime DECISION_RECORDED_AT = ZonedDateTime.parse("2026-01-02T03:04:05Z");
+
     @Test
     void aDecisionIsReappliedToTheRowAnotherRequestInsertedFirst() {
         UserAiPreferenceRepository repository = mock(UserAiPreferenceRepository.class);
@@ -38,7 +40,7 @@ class UserAiPreferenceServiceConcurrencyTest {
         when(repository.findByUserId(USER_ID)).thenReturn(Optional.empty(), Optional.of(competingRow));
         when(repository.save(any(UserAiPreference.class))).thenThrow(new DataIntegrityViolationException("duplicate key")).thenAnswer(i -> i.getArgument(0));
 
-        ZonedDateTime when = ZonedDateTime.now();
+        ZonedDateTime when = DECISION_RECORDED_AT;
         new UserAiPreferenceService(repository).recordDecision(USER_ID, AiSelectionDecision.LOCAL_AI, when);
 
         ArgumentCaptor<UserAiPreference> saved = ArgumentCaptor.forClass(UserAiPreference.class);

@@ -59,6 +59,8 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
     private static final String TEST_PREFIX = "credentialrevocation";
 
+    private static final Instant RESET_ISSUED_AT = Instant.parse("2026-01-02T03:04:05Z");
+
     @Autowired
     private AccountCredentialRevocationService accountCredentialRevocationService;
 
@@ -223,7 +225,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1")
     void deactivatingAnAccountDropsItsOutstandingRecoveryKeys() {
         userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-1");
-        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-1", Instant.now());
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-1", RESET_ISSUED_AT);
 
         userCreationService.deactivateUser(user);
 
@@ -241,7 +243,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1")
     void anAdministrativePasswordChangeKeepsTheInvitationKeys() {
         userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-2");
-        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-2", Instant.now());
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-2", RESET_ISSUED_AT);
 
         accountCredentialRevocationService.revokeAllCredentials(user, "password changed by an administrator");
 
@@ -444,6 +446,8 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     }
 
     private void prepareResetKey() {
+        // Deliberately clock-relative, unlike the fixed dates elsewhere in this class: completePasswordReset only accepts a
+        // key issued within the last 24 hours, so a fixed date would expire and the reset would be refused.
         userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-" + user.getId(), Instant.now());
         userRepository.save(user);
     }
