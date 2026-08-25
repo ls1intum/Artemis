@@ -15,6 +15,6 @@ import org.springframework.context.annotation.Lazy;
 @Lazy
 @Configuration
 @Conditional(WeaviateEnabled.class)
-@EnableConfigurationProperties({ WeaviateOutboxProperties.class, WeaviateMigrationProperties.class })
+@EnableConfigurationProperties({ WeaviateOutboxProperties.class, WeaviateMigrationProperties.class, WeaviateReconcileProperties.class })
 public class WeaviatePropertiesConfiguration {
 }
