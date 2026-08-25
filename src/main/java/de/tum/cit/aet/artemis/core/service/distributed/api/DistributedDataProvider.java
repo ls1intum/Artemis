@@ -211,9 +211,10 @@ public interface DistributedDataProvider {
      * observes the docker bridge gateway while git sees loopback. Comparing them refuses every clone.</li>
      * </ul>
      * A provider answering {@code false} still reports connected clients and their addresses - both remain useful for
-     * liveness and for the admin overview - but the origin binding is skipped, exactly as it is where addresses cannot
-     * be observed at all. The build agent network allowlist and the per-build-job scoping are unaffected, and the
-     * allowlist is checked against the address of the request itself, so it keeps working on every backend.
+     * liveness and for the admin overview - but nothing observed here may authorize a git request. The origin binding
+     * is not lost on such a provider: {@code BuildAgentAddressReportingService} has each agent ask a core node over the
+     * git path which address it arrives from, so the binding is established by measurement on the right path instead.
+     * This flag decides only which of the two routes supplies it.
      *
      * @return whether an observed client address is also the address that client reaches the git server from
      */

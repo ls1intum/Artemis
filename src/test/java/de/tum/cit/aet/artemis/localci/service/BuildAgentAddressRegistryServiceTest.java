@@ -60,11 +60,18 @@ class BuildAgentAddressRegistryServiceTest {
      */
     private Map<String, BuildAgentInformation> registeredAgents;
 
+    /**
+     * What the agents report about themselves, which is how an origin is established where the middleware cannot
+     * observe one - under Redis, whose clients connect to Redis rather than to a core node.
+     */
+    private Map<String, BuildAgentAddressInfo> reportedAddresses;
+
     @BeforeEach
     void setUp() {
         distributedDataAccessService = mock(DistributedDataAccessService.class);
         registeredAddresses = new HashMap<>();
         registeredAgents = new HashMap<>();
+        reportedAddresses = new HashMap<>();
 
         @SuppressWarnings("unchecked")
         DistributedMap<String, BuildAgentAddressInfo> map = mock(DistributedMap.class);
@@ -89,6 +96,7 @@ class BuildAgentAddressRegistryServiceTest {
         when(distributedDataAccessService.getProcessingJobsForAgentByName(any())).thenReturn(List.of());
         when(distributedDataAccessService.getDistributedBuildAgentAddresses()).thenReturn(map);
         when(distributedDataAccessService.getBuildAgentAddressMap()).thenAnswer(_ -> Map.copyOf(registeredAddresses));
+        when(distributedDataAccessService.getBuildAgentReportedAddressMap()).thenAnswer(_ -> Map.copyOf(reportedAddresses));
     }
 
     /**
@@ -690,6 +698,78 @@ class BuildAgentAddressRegistryServiceTest {
 
         assertThat(registeredAddresses.get("agent-1").addresses()).isEmpty();
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isFalse();
+    }
+
+    /**
+     * Establishes the origin where the middleware cannot: the agent reports the address a core node measured for it,
+     * and is bound to that.
+     * <p>
+     * This is what gives Redis an origin binding at all. Its clients connect to Redis, not to a core node, so nothing
+     * observed there can speak for the git path - but the agent asked a core node directly, so its answer can.
+     */
+    @Test
+    void shouldBindAnAgentToTheAddressItReportsWhenNothingCanBeObserved() {
+        when(distributedDataAccessService.clientsConnectDirectlyToCoreNodes()).thenReturn(false);
+        registerAgent("agent-1");
+        reportedAddresses.put("agent-1", new BuildAgentAddressInfo("agent-1", Set.of("10.0.0.5"), ZonedDateTime.now(), true));
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("the reported address authorizes the agent").isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "203.0.113.9")).as("and every other address is refused, which is the whole point of the binding").isFalse();
+    }
+
+    /**
+     * An agent that has not reported yet has no origin to be held to, so it stays unconstrained rather than being
+     * refused - the same exemption an unobservable agent gets. Otherwise every agent would fail its first clones for
+     * the length of one reporting round.
+     */
+    @Test
+    void shouldNotConstrainAnAgentThatHasReportedNothing() {
+        when(distributedDataAccessService.clientsConnectDirectlyToCoreNodes()).thenReturn(false);
+        registerAgent("agent-1");
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "203.0.113.9")).isTrue();
+    }
+
+    /**
+     * Where both sources know something, the agent is bound to either. They disagree exactly when a gateway sits on one
+     * path and not the other, and the agent really does reach core nodes from both addresses.
+     */
+    @Test
+    void shouldBindAnAgentToBothObservedAndReportedAddresses() {
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
+        reportedAddresses.put("agent-1", new BuildAgentAddressInfo("agent-1", Set.of("192.168.1.7"), ZonedDateTime.now(), true));
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "192.168.1.7")).isTrue();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "203.0.113.9")).isFalse();
+    }
+
+    /**
+     * A reported entry keeps an agent bound even once it disconnects and its observed addresses are cleared: the
+     * tombstone denies, and the reported address must not quietly re-open what the tombstone closed for a different
+     * address.
+     */
+    @Test
+    void shouldStillRefuseAnAddressNeitherSourceKnows() {
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
+        reportedAddresses.put("agent-1", new BuildAgentAddressInfo("agent-1", Set.of("192.168.1.7"), ZonedDateTime.now(), true));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        observe(Map.of());
+        service.refreshRegisteredAddresses();
+
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).as("the observed address is gone with the connection").isFalse();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "192.168.1.7")).as("the reported one stands until it expires").isTrue();
     }
 
 }

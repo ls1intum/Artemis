@@ -228,8 +228,11 @@ public class BuildAgentAddressRegistryService {
             if (!distributedDataAccessService.clientsConnectDirectlyToCoreNodes()) {
                 // The middleware can say where a client connected from, but not where it will clone from: its clients
                 // connect to it rather than to a core node, so the two are different network paths and comparing them
-                // refuses every legitimate agent. Treated exactly like an unobservable origin, which it is.
+                // would refuse every legitimate agent. Nothing is observed here - but the agents report the address a
+                // core node measured for them, so the snapshot is still refreshed and an agent that has reported one is
+                // still bound to it. Only agents that have reported nothing are unconstrained.
                 logAddressObservability(false);
+                refreshLocalSnapshot();
                 return ObservationOutcome.UNOBSERVABLE;
             }
 
@@ -240,6 +243,10 @@ public class BuildAgentAddressRegistryService {
             if (observedAddresses.isEmpty()) {
                 log.debug("The middleware cannot report connected client addresses right now, keeping the previously registered ones");
                 logAddressObservability(false);
+                // Refreshed even so. Nothing is written, so the registered addresses of the last good round survive
+                // untouched, and any agent that has reported one meanwhile is picked up rather than waiting for the
+                // middleware to recover.
+                refreshLocalSnapshot();
                 return ObservationOutcome.UNOBSERVABLE;
             }
             Map<String, Set<String>> observed = toBuildAgentNames(observedAddresses.get());
@@ -431,13 +438,31 @@ public class BuildAgentAddressRegistryService {
      */
     private void refreshLocalSnapshot() {
         Map<String, Set<String>> snapshot = new HashMap<>();
-        for (var entry : distributedDataAccessService.getBuildAgentAddressMap().entrySet()) {
+        // The union of both sources. An agent is bound to every address either one knows about, which is what makes the
+        // two complementary rather than competing: where a core node can observe the agent it does, where it cannot the
+        // agent's own measurement stands in, and where both exist and disagree - a load balancer on the git path but
+        // not on the cluster path - the agent is authorized from either, which is correct because it really does reach
+        // core nodes from both.
+        addAddresses(snapshot, distributedDataAccessService.getBuildAgentAddressMap());
+        addAddresses(snapshot, distributedDataAccessService.getBuildAgentReportedAddressMap());
+        addressesByAgentName = Map.copyOf(snapshot);
+    }
+
+    /**
+     * Merges one source of addresses into the snapshot under construction.
+     *
+     * @param snapshot the snapshot being built
+     * @param source   agent short name to the addresses that source knows about
+     */
+    private static void addAddresses(Map<String, Set<String>> snapshot, Map<String, BuildAgentAddressInfo> source) {
+        for (var entry : source.entrySet()) {
             BuildAgentAddressInfo info = entry.getValue();
             if (info != null) {
-                snapshot.put(entry.getKey(), new HashSet<>(info.addresses()));
+                // An entry with no addresses is a tombstone for a disconnected agent and has to keep its key: presence
+                // with nothing in it denies, whereas absence would grant the not-observable exemption.
+                snapshot.computeIfAbsent(entry.getKey(), _ -> new HashSet<>()).addAll(info.addresses());
             }
         }
-        addressesByAgentName = Map.copyOf(snapshot);
     }
 
     /**

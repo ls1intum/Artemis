@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,13 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
 @Profile({ PROFILE_LOCALCI, PROFILE_BUILDAGENT })
 public class DistributedDataAccessService {
 
+    /**
+     * How long a build agent's self-reported address survives without being republished. Several times the reporting
+     * interval, so that a missed round - a restarting core node, a brief middleware hiccup - does not unregister a live
+     * agent and refuse its clones.
+     */
+    private static final Duration REPORTED_ADDRESS_TIME_TO_LIVE = Duration.ofMinutes(5);
+
     private final DistributedDataProvider distributedDataProvider;
 
     private DistributedQueue<BuildJobQueueItem> buildJobQueue;
@@ -48,6 +56,8 @@ public class DistributedDataAccessService {
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
 
     private DistributedMap<String, BuildAgentAddressInfo> buildAgentAddresses;
+
+    private DistributedMap<String, BuildAgentAddressInfo> buildAgentReportedAddresses;
 
     private DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo;
 
@@ -328,6 +338,35 @@ public class DistributedDataAccessService {
     public Map<String, BuildAgentAddressInfo> getBuildAgentAddressMap() {
         // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return getDistributedBuildAgentAddresses().getMapCopy();
+    }
+
+    /**
+     * The addresses build agents report for themselves, keyed by build agent short name.
+     * <p>
+     * Separate from {@link #getDistributedBuildAgentAddresses()}, which core nodes fill from what the middleware
+     * observed, because the two have different writers and must not overwrite each other: an agent owns its own entry
+     * here, and no core node ever writes to it. The origin check reads the union, so an agent is bound to every address
+     * either source knows about.
+     * <p>
+     * Entries expire. An agent republishes while it lives, so a crashed one stops being registered on its own, with no
+     * cleanup logic and no node needing to decide on another node's behalf whether an agent is gone - a decision no
+     * single node can make correctly, since the middleware answers "who is connected" per node.
+     *
+     * @return the distributed map of self-reported build agent addresses
+     */
+    public DistributedMap<String, BuildAgentAddressInfo> getDistributedBuildAgentReportedAddresses() {
+        if (this.buildAgentReportedAddresses == null) {
+            this.buildAgentReportedAddresses = this.distributedDataProvider.getExpiringMap("buildAgentReportedAddresses", REPORTED_ADDRESS_TIME_TO_LIVE);
+        }
+        return this.buildAgentReportedAddresses;
+    }
+
+    /**
+     * @return a copy of the self-reported build agent addresses, for reading
+     */
+    public Map<String, BuildAgentAddressInfo> getBuildAgentReportedAddressMap() {
+        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
+        return getDistributedBuildAgentReportedAddresses().getMapCopy();
     }
 
     /**

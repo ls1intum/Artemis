@@ -128,7 +128,20 @@ Both paths write a VCS access log entry naming the agent and the build job, reco
 
 #### Restricting where build agents may connect from
 
-Every build agent registers the address it connects to the cluster from. Core nodes observe that address on the agent's own cluster connection rather than taking the agent's word for it, and a clone is only served from an address the presenting agent is currently connected from.
+Every build agent is registered at the address it reaches the core nodes from, and a clone is only served from an address the presenting agent is registered at.
+
+<Callout variant={CalloutVariant.info}>
+    **The assumption this rests on:** an agent reaches the core nodes from one address, and that address is stable while
+    it is connected. It does not have to be the agent's own local address — NAT, a gateway or a load balancer in between
+    is fine, because what is registered is the address a core node measured, never one the agent inferred about itself.
+    A host cannot know how it appears on the far side of a NAT, which is why `BuildAgentDTO.memberAddress` is not used
+    for this: it is the agent's view of its own socket, and it is forgeable.
+
+    Where an agent legitimately reaches core nodes from more than one address — a multi-homed host routing the cluster
+    connection and the git connection over different interfaces — both are registered and both authorize it, provided
+    each has been measured. Under Hazelcast the cluster path is observed and the git path is reported by the agent, so
+    both are.
+</Callout>
 
 Optionally, bound which hosts may act as a build agent at all:
 
@@ -172,16 +185,23 @@ artemis:
     Several agents on one host share a source address, which is normal behind NAT and fully supported. The allowlist
     bounds hosts, not individual agents.
 
-    **The address binding needs Hazelcast.** It compares where the middleware saw an agent connect with where its clone
-    arrives, and those are the same path only when the agent's middleware connection terminates on a core node.
-    Hazelcast clients connect to the cluster members, which are exactly those nodes. Redis is a separate service, so an
-    agent's connection to it says nothing about its route to a core node — with Redis in a container and the nodes on
-    the host, one side observes the docker bridge gateway and the other loopback. Artemis therefore skips the binding
-    on Redis rather than refusing every clone, and says so in the log at startup.
+    **The binding works on both backends, by two routes.** It compares where an agent was seen with where its clone
+    arrives, so the two have to be measurements of the same network path.
 
-    An agent that opens no client connection at all — one sharing a JVM with a core node under Hazelcast — is likewise
-    unbound. **`allowed-ranges` and the per-build-job scoping apply on every backend either way**, because both are
-    checked against the address of the request itself rather than against an observation.
+    - **Hazelcast** clients connect to the cluster members, which are the nodes that serve git, so a core node observes
+      the agent's origin directly and no agent has to be trusted for it.
+    - **Redis** is a separate service: an agent's connection to it says nothing about its route to a core node. There
+      the agent measures its own origin instead, by asking a core node over the git base URL which address the request
+      arrived from — the same resolution the origin check itself performs. It republishes every minute, and the entry
+      expires if it stops, so a crashed agent unregisters itself.
+
+    Where both are available the agent is bound to either, which is what keeps it working when a gateway sits on the
+    git path but not the cluster path.
+
+    An agent that has neither — one that has not reported yet, or one sharing a JVM with a core node under Hazelcast
+    before it reports — is unconstrained rather than refused, because refusing an agent whose origin nothing has
+    established yet would fail its first clones. **`allowed-ranges` and the per-build-job scoping apply on every
+    backend regardless**, since both are checked against the address of the request itself.
 </Callout>
 
 #### SSH behind a load balancer
