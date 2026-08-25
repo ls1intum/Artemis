@@ -91,17 +91,23 @@ public class AuditEventConstants {
      * retained for years, because they are exactly what an investigation into account provenance (e.g. an exam dispute)
      * reconstructs a timeline from, and such investigations often start long after the fact.
      * <p>
-     * The four password and credential events are declared in {@link Constants} rather than here, because they are
-     * recorded by {@code AccountSecurityNotificationService} alongside the mail it sends and predate this taxonomy.
-     * They belong in this set for the same reason as the rest: each one replaces or destroys a credential, which is
-     * precisely what such an investigation asks about. Without them a password change would land in the application
+     * The password, credential and account-state events are declared in {@link Constants} rather than here, because they
+     * are recorded next to the operation they accompany - {@code AccountSecurityNotificationService} for the password and
+     * credential ones, {@code UserCreationService} for the account-state ones - and the password ones predate this
+     * taxonomy. They belong in this set for the same reason as the rest: each one replaces or destroys a credential, which
+     * is precisely what such an investigation asks about. Without them a password change would land in the application
      * log, where the admin view's security filter would not show it.
+     * <p>
+     * {@link Constants#DEACTIVATE_USER} in particular is the <em>only</em> audit record of a wholesale credential
+     * revocation: deactivating an account deletes its passkeys, SSH keys and every VCS access token, and
+     * {@code AccountCredentialRevocationService} writes no event of its own. {@link Constants#ACTIVATE_USER} is the
+     * counterpart that says when access was granted back.
      * <p>
      * See {@link #GENERAL_EVENT_TYPES} on the relationship to the type lists in {@code 20260803140000_changelog.xml}.
      */
     public static final Set<String> SECURITY_EVENT_TYPES = Set.of(PASSWORD_RESET_REQUESTED, PASSWORD_RESET_REQUEST_REJECTED, PASSWORD_RESET_COMPLETED, ACCOUNT_EMAIL_CHANGED,
             ACCOUNT_REGISTERED, SAML2_ACCOUNT_CREATE, AUTHENTICATION_SWITCH, Constants.CHANGE_OWN_PASSWORD, Constants.COMPLETE_PASSWORD_RESET, Constants.ADMIN_CHANGE_USER_PASSWORD,
-            Constants.REVOKE_OWN_CREDENTIALS);
+            Constants.REVOKE_OWN_CREDENTIALS, Constants.ACTIVATE_USER, Constants.DEACTIVATE_USER);
 
     /**
      * Utility class, should not be instantiated.

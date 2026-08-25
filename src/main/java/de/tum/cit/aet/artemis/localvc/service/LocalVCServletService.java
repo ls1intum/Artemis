@@ -138,11 +138,30 @@ public class LocalVCServletService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private Path localVCBasePath;
 
-    @Value("${artemis.version-control.build-agent-git-username}")
+    // Optional on purpose: an installation whose build agents authenticate with an ssh key never uses this credential
+    // pair, and then must not have to configure one. Every read of these fields is guarded by StringUtils.hasText, and
+    // LocalVCBuildAgentCredentialsValidator fails startup when the https case leaves them unset.
+    @Value("${artemis.version-control.build-agent-git-username:}")
     private String buildAgentGitUsername;
 
-    @Value("${artemis.version-control.build-agent-git-password}")
+    @Value("${artemis.version-control.build-agent-git-password:}")
     private String buildAgentGitPassword;
+
+    /**
+     * Whether the build agents of this installation clone over ssh, using the key pair they generate at startup and
+     * publish to the core nodes, rather than over https with {@code build-agent-git-username} and
+     * {@code build-agent-git-password}. The two mechanisms are alternatives, not a fallback chain: a build agent picks
+     * exactly one in {@code BuildJobGitService.authenticate}, so when ssh is configured, this node stops honouring the
+     * shortcut below rather than leaving a second repository-wide read path open that nothing uses. The credentials are
+     * still processed as ordinary Basic credentials afterwards, which grants only whatever the named account may access.
+     * <p>
+     * This closes the https door only. {@code GitPublickeyAuthenticatorService} keeps authenticating a registered build
+     * agent by its public key whatever this property says, deliberately: a key is per-agent and reaches this node only
+     * through an agent that has joined the cluster, so there is no shared secret to withdraw, and agents can be moved to
+     * ssh one at a time before the core nodes follow.
+     */
+    @Value("${artemis.version-control.build-agent-use-ssh:false}")
+    private boolean useSshForBuildAgent;
 
     public static final String BUILD_USER_NAME = "buildjob_user";
 
@@ -254,8 +273,10 @@ public class LocalVCServletService {
             throw new LocalVCAuthException("No authorization header provided", true);
         }
 
-        // If it is a fetch request, we check if it is the build agent that is fetching the repository.
-        if (repositoryAction == RepositoryActionType.READ) {
+        // If it is a fetch request, we check if it is the build agent that is fetching the repository. Build agents that
+        // authenticate with an ssh key never present this credential pair, so the shortcut is closed for them entirely:
+        // an unused way in that grants repository-wide read is worth strictly less than the attack surface it carries.
+        if (repositoryAction == RepositoryActionType.READ && !useSshForBuildAgent) {
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             // A blank configured credential must never match: this shortcut returns ahead of the rate limit, the
             // repository authorization checks and the access log, so an empty configured password would hand
