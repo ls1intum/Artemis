@@ -302,16 +302,6 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
-        // Only the deactivation is audited here. The admin edit form reaches that transition without going through
-        // deactivateUser, so it would otherwise go unrecorded. The opposite direction needs no entry here: the only caller,
-        // AdminUserResource.updateUser, follows an activating update with userService.activateUser, which audits it - doing
-        // it in both places recorded a single activation twice.
-        if (isBeingDeactivated) {
-            auditAccountStateChange(savedUser, Constants.DEACTIVATE_USER);
-            // Same reason as in deactivateUser. Deliberately not done for a plain administrative password change, which
-            // also revokes credentials but must leave an administrator-created account's invitation keys intact.
-            userRecoveryKeyService.clearAll(savedUser.getId());
-        }
         boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
         boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
         if (credentialsRevoked) {
@@ -324,6 +314,10 @@ public class UserCreationService {
         // AdminUserResource.updateUser, follows an activating update with userService.activateUser, which audits it - doing
         // it in both places recorded a single activation twice.
         if (isBeingDeactivated) {
+            // Same reason as in deactivateUser: an outstanding activation or reset key would be a way back into an account
+            // whose control has just been taken away. Deliberately not done for a plain administrative password change,
+            // which revokes credentials too but must leave an administrator-created account's invitation keys intact.
+            userRecoveryKeyService.clearAll(savedUser.getId());
             auditAccountStateChange(savedUser, Constants.DEACTIVATE_USER);
         }
         if (passwordChangedByAdministrator) {

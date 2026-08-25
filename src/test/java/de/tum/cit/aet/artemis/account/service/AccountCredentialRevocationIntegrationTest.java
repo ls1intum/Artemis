@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -471,11 +473,17 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         userCreationService.deactivateUser(user);
 
         assertAccountStateAudited(Constants.DEACTIVATE_USER);
+        assertThat(deactivationEvents()).as("one deactivation produces one audit entry").hasSize(1);
     }
 
+    /**
+     * Once, not once per thing the deactivation does. {@code updateUser} both revokes the credentials and audits, and an
+     * entry written on either side of the revocation reads the same in the log - so only counting catches the case where
+     * both happen.
+     */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void deactivatingAUserThroughTheAdminUpdateIsRecordedInTheAuditLog() {
+    void deactivatingAUserThroughTheAdminUpdateIsRecordedExactlyOnce() {
         securityAuditEventRepository.deleteAll();
 
         User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
@@ -485,6 +493,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         userCreationService.updateUser(userWithAuthorities, update);
 
         assertAccountStateAudited(Constants.DEACTIVATE_USER);
+        assertThat(deactivationEvents()).as("one deactivation produces one audit entry").hasSize(1);
     }
 
     @Test
@@ -518,6 +527,10 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
                 .as("one activation produces one audit entry").hasSize(1);
+    }
+
+    private List<AuditEvent> deactivationEvents() {
+        return auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.DEACTIVATE_USER.equals(event.getType())).toList();
     }
 
     /**
