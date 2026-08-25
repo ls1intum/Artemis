@@ -113,6 +113,43 @@ describe('SshUserSettingsComponent', () => {
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
+    it('should mark an expiry date in the past as invalid', () => {
+        comp.ngOnInit();
+        comp.displayedExpiryDate = dayjs().subtract(2, 'day');
+        comp.validateExpiryDate();
+        expect(comp.isExpiryDateValid()).toBe(false);
+    });
+
+    it('should mark a future expiry date as valid', () => {
+        comp.ngOnInit();
+        comp.displayedExpiryDate = dayjs().add(1, 'year');
+        comp.validateExpiryDate();
+        expect(comp.isExpiryDateValid()).toBe(true);
+    });
+
+    it('should mark an expiry date too far in the future as invalid', () => {
+        comp.ngOnInit();
+        comp.displayedExpiryDate = dayjs('9999-12-31');
+        comp.validateExpiryDate();
+        expect(comp.isExpiryDateValid()).toBe(false);
+    });
+
+    it('should show a specific error when the server rejects the expiry date', () => {
+        const httpError = new HttpErrorResponse({
+            error: { errorKey: 'sshKeyExpiryDateInPast' },
+            status: 400,
+        });
+        sshServiceMock.addNewSshPublicKey.mockReturnValue(throwError(() => httpError));
+        comp.ngOnInit();
+        comp.displayedSshKey = mockKey;
+        comp.displayedExpiryDate = dayjs().add(1, 'year');
+        comp.displayedKeyLabel = 'label';
+        comp.validateExpiryDate();
+        comp.saveSshKey();
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.userSettings.sshSettingsPage.sshKeyExpiryDateInPast');
+        expect(router.navigate).not.toHaveBeenCalled();
+    });
+
     it('should initialize key details view with key loaded', async () => {
         sshServiceMock.getSshPublicKey.mockReturnValue(of(mockedUserSshKeys));
         activatedRoute.setParameters({ keyId: 1 });

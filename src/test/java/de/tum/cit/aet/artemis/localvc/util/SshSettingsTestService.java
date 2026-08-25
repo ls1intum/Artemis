@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,6 +133,46 @@ public class SshSettingsTestService {
 
         request.delete(requestPrefix + "public-keys/3443", HttpStatus.FORBIDDEN);
         request.get(requestPrefix + "public-keys/43443", HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
+    }
+
+    // Test
+    public void failToAddSshPublicKeyWithPastExpiryDate() throws Exception {
+        User user = userTestRepository.getUser();
+
+        var keyWithPastExpiry = createNewValidSSHKey(user, sshKey1);
+        keyWithPastExpiry.setExpiryDate(ZonedDateTime.now().minusDays(2));
+
+        request.postAndExpectError(requestPrefix + "public-keys", keyWithPastExpiry, HttpStatus.BAD_REQUEST, "sshKeyExpiryDateInPast");
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+    }
+
+    // Test
+    public void failToAddSshPublicKeyWithExpiryDateTooFarInFuture() throws Exception {
+        User user = userTestRepository.getUser();
+
+        var keyWithTooFarExpiry = createNewValidSSHKey(user, sshKey1);
+        // Normalising this date (03:00 on the following day) exceeds the maximum value the database can store.
+        keyWithTooFarExpiry.setExpiryDate(ZonedDateTime.of(9999, 12, 31, 0, 0, 0, 0, ZoneOffset.UTC));
+
+        request.postAndExpectError(requestPrefix + "public-keys", keyWithTooFarExpiry, HttpStatus.BAD_REQUEST, "sshKeyExpiryDateTooFarInFuture");
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+    }
+
+    // Test
+    public void addSshPublicKeyWithFutureExpiryDate() throws Exception {
+        User user = userTestRepository.getUser();
+
+        var requestedExpiryDate = ZonedDateTime.now(ZoneOffset.UTC).plusYears(24);
+        var keyWithFutureExpiry = createNewValidSSHKey(user, sshKey1);
+        keyWithFutureExpiry.setExpiryDate(requestedExpiryDate);
+
+        request.postWithResponseBody(requestPrefix + "public-keys", keyWithFutureExpiry, String.class, HttpStatus.OK);
+
+        // The stored date is normalised to 03:00 on the day following the requested date.
+        var expectedExpiryDate = requestedExpiryDate.withHour(3).withMinute(0).withSecond(0).withNano(0).plusDays(1);
+        var storedUserKey = userSshPublicKeyRepository.findAllByUserId(user.getId()).getFirst();
+        assertThat(storedUserKey.getExpiryDate()).isNotNull();
+        assertThat(storedUserKey.getExpiryDate().toInstant()).isEqualTo(expectedExpiryDate.toInstant());
     }
 
     // Test
