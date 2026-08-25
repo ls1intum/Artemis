@@ -742,6 +742,38 @@ public class Course extends DomainObject {
         this.learningPathsEnabled = learningPathsEnabled;
     }
 
+    /**
+     * Flat accessor for the auto-orchestration kill switch stored on the {@link CourseConfiguration}, mirroring
+     * {@link #isGradeRelevant()}. Used by the course update flow to detect admin-only changes. This is null-safe with
+     * respect to the lazy association: it only reflects the flag when the configuration has been initialized.
+     *
+     * @return whether auto-orchestration is enabled for this course, {@code false} when the configuration is absent or not loaded
+     */
+    public boolean getAutoOrchestratorEnabled() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration != null && configuration.isAutoOrchestratorEnabled();
+    }
+
+    /**
+     * Flat accessor for the per-course debounce-window override stored on the {@link CourseConfiguration}.
+     *
+     * @return the override in seconds, or {@code null} when unset / not loaded (global default applies)
+     */
+    public Integer getDebounceWindowSecondsOverride() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration == null ? null : configuration.getDebounceWindowSecondsOverride();
+    }
+
+    /**
+     * Flat accessor for the per-course daily-cap override stored on the {@link CourseConfiguration}.
+     *
+     * @return the override, or {@code null} when unset / not loaded (global default applies)
+     */
+    public Integer getMaxDailyOrchestrationOverride() {
+        CourseConfiguration configuration = getCourseConfiguration();
+        return configuration == null ? null : configuration.getMaxDailyOrchestrationOverride();
+    }
+
     public Set<LearningPath> getLearningPaths() {
         return learningPaths;
     }
