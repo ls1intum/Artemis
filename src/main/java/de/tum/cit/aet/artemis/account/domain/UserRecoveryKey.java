@@ -96,7 +96,7 @@ public class UserRecoveryKey {
     }
 
     /**
-     * Whether nothing is outstanding any more, in which case the row can be removed rather than left as a row of nulls.
+     * Whether nothing is outstanding, in which case the row can be removed rather than left as a row of nulls.
      *
      * @return true if neither key nor reset date is set
      */

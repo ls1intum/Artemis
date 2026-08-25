@@ -86,8 +86,8 @@ class IrisChatSessionServiceTest extends AbstractIrisChatSessionTest {
     class CheckHasAccessTo {
 
         /**
-         * Restores the fixture's default decision before each test. The preference is now a persisted row shared by every
-         * test in this class, where it used to be a field on an in-memory user that no other test could see.
+         * Restores the fixture's default decision before each test. The preference is a persisted row shared by every test
+         * in this class, so a test that changes it would otherwise leak that change into the next one.
          */
         @BeforeEach
         void resetAiSelectionDecision() {

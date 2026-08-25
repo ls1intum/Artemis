@@ -15,9 +15,9 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 
 /**
- * Redaction depends on each answer author's LLM decision. Those decisions used to be a field on the already-loaded
- * author; now they live in {@code user_ai_preference} and are passed in as one map, loaded in a single query, because
- * reading them here would issue a query per answer post on an Iris request path.
+ * Redaction depends on each answer author's LLM decision. The decisions live in {@code user_ai_preference} and are passed
+ * in as one map, loaded in a single query, because reading them here would issue a query per answer post on an Iris
+ * request path.
  * <p>
  * These tests pin the mapping from that map to redaction, including the cases the map cannot answer: an author with no
  * recorded decision, and an answer with no author at all.

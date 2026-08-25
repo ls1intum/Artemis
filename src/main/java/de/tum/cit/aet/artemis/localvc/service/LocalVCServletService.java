@@ -525,8 +525,7 @@ public class LocalVCServletService {
             throw new LocalVCAuthException("Account is not active");
         }
 
-        // check user VCS access token. findUsableToken already excludes an expired one, so the expiry no longer has to be
-        // compared here.
+        // check user VCS access token. findUsableToken already excludes an expired one, so the expiry is not compared here.
         var personalToken = userVcsAccessTokenService.findUsableToken(user.getId());
         if (personalToken.isPresent() && secretMatches(personalToken.get().getToken(), passwordOrToken)) {
             return new AuthenticatedUser(user, AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
@@ -591,9 +590,8 @@ public class LocalVCServletService {
                     // Only the token itself is compared, so only the token is read.
                     var storedToken = participationVCSAccessTokenRepository.findTokenByUserIdAndParticipationId(user.getId(), participationId.get());
                     if (storedToken.isPresent() && secretMatches(storedToken.get(), providedToken)) {
-                        // The matched token is deliberately not copied onto the user. It used to be, which made the access log
-                        // resolve the mechanism as USER_VCS_ACCESS_TOKEN afterwards - resolveHTTPSAuthenticationMechanism runs
-                        // after this and compared the presented secret against the user's own token.
+                        // The matched token is deliberately not copied onto the user. Copying it would make this participation
+                        // token indistinguishable from the user's own one, and the access log would record the wrong mechanism.
                         return true;
                     }
                 }

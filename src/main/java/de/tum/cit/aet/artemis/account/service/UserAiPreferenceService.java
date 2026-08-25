@@ -119,9 +119,8 @@ public class UserAiPreferenceService {
     /**
      * Throws unless the account has opted into LLM usage.
      * <p>
-     * Replaces {@code User.hasOptedIntoLLMUsageElseThrow}, which read the decision straight off the entity. Once the
-     * decision moved to its own table that field was never populated, so the guard rejected everyone - the entity has no
-     * way to answer this question any more.
+     * The decision is read from the preference row, which is the only place that holds it: a guard that consults the user
+     * entity instead has nothing to read and would reject every account.
      *
      * @param userId the account
      * @throws AccessForbiddenException if the account has not opted in

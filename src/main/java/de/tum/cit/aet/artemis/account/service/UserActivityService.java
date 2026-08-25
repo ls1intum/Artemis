@@ -15,9 +15,8 @@ import de.tum.cit.aet.artemis.account.repository.UserActivityRepository;
 /**
  * Owns the activity timestamps of an account, which live in {@code user_activity} rather than on the user row.
  * <p>
- * Every existing account was given a row by the migration, so both writes here are normally a single statement that
- * resolves the account by login inside the query. Only an account created afterwards that has never logged in needs its
- * row created first, and only once.
+ * Both writes here are normally a single statement that resolves the account by login inside the query. Only an account
+ * that has no row yet needs one created first, which happens at most once per account.
  */
 @Profile(PROFILE_CORE)
 @Lazy

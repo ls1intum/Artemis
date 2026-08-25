@@ -115,9 +115,8 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     /**
-     * The decision selects which model may answer, so Pyris has to receive the one the account actually recorded. It is
-     * read from the preference row rather than from the already-loaded user, which no longer carries it - asserting on a
-     * decision other than the fixture default is what makes this test able to fail.
+     * The decision selects which model may answer, so Pyris has to receive the one the account actually recorded. Asserting
+     * on a decision other than the fixture default is what makes this test able to fail.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

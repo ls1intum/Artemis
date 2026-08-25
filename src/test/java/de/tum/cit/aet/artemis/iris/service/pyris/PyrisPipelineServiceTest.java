@@ -102,8 +102,8 @@ class PyrisPipelineServiceTest {
     }
 
     /**
-     * The decision reaches Pyris through the settings DTO and decides which model may answer, so it has to be read from
-     * the preference row rather than from the already-loaded user - the user entity no longer carries it.
+     * The decision reaches Pyris through the settings DTO and decides which model may answer, so the settings have to carry
+     * the decision the account actually recorded.
      */
     @Test
     void chatPipelineSettingsCarryTheRecordedDecision() {

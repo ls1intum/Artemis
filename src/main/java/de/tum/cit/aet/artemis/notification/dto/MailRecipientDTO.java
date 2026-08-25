@@ -26,8 +26,8 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
     }
 
     /**
-     * For the mails that need no recovery key, which is all of them except account activation and password reset. The
-     * keys live in {@code user_recovery_key} and are therefore no longer readable from the user.
+     * For the mails that need no recovery key, which is all of them except account activation and password reset. The keys
+     * live in {@code user_recovery_key}, so they cannot be read from the user.
      *
      * @param user the recipient
      * @return the recipient without any recovery key

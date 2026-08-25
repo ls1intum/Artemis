@@ -120,7 +120,7 @@ public class AccountCredentialRevocationService {
      */
     private void clearPersonalVcsAccessToken(User user) {
         // Deleting the row rather than nulling columns keeps "no row" the single representation of "no token", and needs no
-        // save of the user afterwards - the token no longer lives on the user row.
+        // save of the user afterwards, since the token lives in its own table.
         userVcsAccessTokenService.revoke(user.getId());
     }
 

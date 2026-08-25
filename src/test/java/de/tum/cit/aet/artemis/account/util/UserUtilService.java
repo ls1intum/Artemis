@@ -700,8 +700,8 @@ public class UserUtilService {
     }
 
     /**
-     * Records an account's LLM usage decision. The preference lives in {@code user_ai_preference}, keyed on the user id,
-     * so it cannot be set by mutating an unsaved user the way the former column allowed.
+     * Records an account's LLM usage decision. The preference lives in {@code user_ai_preference}, keyed on the user id, so
+     * the account has to be saved before it can be recorded.
      *
      * @param user     the account, which must already be saved
      * @param decision the decision to record, or null to record only a timestamp
@@ -735,9 +735,9 @@ public class UserUtilService {
     }
 
     /**
-     * Records the AI decision that UserFactory used to set directly on the generated user. It cannot be set before the
-     * save any more, because the preference is a row keyed on the user id, so it is applied here instead - the many Iris
-     * and Athena tests that rely on the fixture default therefore keep working unchanged.
+     * Records the fixture's default AI decision for a generated account. The preference is a row keyed on the user id, so
+     * it can only be recorded once the account is saved, which is why it is applied here rather than by UserFactory. The
+     * many Iris and Athena tests that rely on the fixture default depend on this.
      *
      * @param user a saved account
      */
@@ -754,8 +754,7 @@ public class UserUtilService {
     }
 
     /**
-     * Saves a generated account and records the fixture's default AI decision for it, which UserFactory used to set on the
-     * entity before the preference became a row keyed on the user id.
+     * Saves a generated account and records the fixture's default AI decision for it, which needs the saved account's id.
      *
      * @param user the generated account
      * @return the saved account
@@ -767,8 +766,8 @@ public class UserUtilService {
     }
 
     /**
-     * Removes an account's recorded LLM usage decision, which the fixture seeds by default. Needed by tests that assert
-     * the behaviour for an account that has not decided yet: clearing the former column in memory used to be enough.
+     * Removes an account's recorded LLM usage decision, which the fixture seeds by default. Needed by tests that assert the
+     * behaviour of an account that has not decided yet, since the decision is a persisted row rather than in-memory state.
      *
      * @param user the account, which must already be saved
      */

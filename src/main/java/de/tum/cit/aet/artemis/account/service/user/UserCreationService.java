@@ -121,14 +121,12 @@ public class UserCreationService {
         newUser.setImageUrl(imageUrl);
         newUser.setLangKey(langKey);
         // An externally managed account is created activated. The activation key is redeemable exclusively through GET /activate, so an
-        // account that authenticates against an external directory never receives one and could never redeem it; creating such an
-        // account unactivated left behind accounts that nothing could ever activate. That stayed invisible only while the LDAP provider
-        // did not check `activated`, until the git authentication paths started enforcing it and locked those users out of their
-        // repositories.
+        // account that authenticates against an external directory never receives one and could never redeem it; creating such an account
+        // unactivated would leave behind an account that nothing can ever activate, which the git authentication paths then refuse.
         //
-        // Internal accounts keep the existing behaviour. Narrowing this further - to internal accounts on an instance that actually has
-        // self-registration enabled - is a separate change: the LTI launch also creates an internal account here, and while it no longer
-        // reads `activated` (it records what it still owes in user_lti.initialized), it does rely on the account starting out inactive.
+        // Narrowing this further - to internal accounts on an instance that actually has self-registration enabled - is a separate change:
+        // the LTI launch also creates an internal account here, and although it decides initialisation on user_lti.initialized rather than
+        // on `activated`, it does rely on the account starting out inactive.
         if (isInternal) {
             newUser.setActivated(false);
         }

@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.account.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -17,8 +15,6 @@ import java.util.Set;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
@@ -35,7 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.BatchSize;
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.webauthn.api.Bytes;
 
@@ -50,7 +45,6 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
-import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
@@ -133,7 +127,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * </ol>
      * The presence of a recovery key consequently distinguishes (1) from (2), which is what made it possible to repair the
      * affected rows without touching accounts an admin had deactivated on purpose. The keys live in
-     * {@code user_recovery_key}; {@link #activationKey} is the deprecated column they were read from before.
+     * {@code user_recovery_key}.
      */
     @NonNull
     @Column(nullable = false)
@@ -143,28 +137,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "is_deleted", nullable = false)
     private boolean deleted = false; // default value
 
-    /**
-     * No longer read or written by anything; the activity timestamps live in {@code user_activity}.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_activity}
-     */
-    @Deprecated(forRemoval = true)
-    @Column(name = "last_login_date")
-    private Instant lastLoginDate;
-
-    /**
-     * No longer read or written by anything; the activity timestamps live in {@code user_activity}.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_activity}
-     */
-    @Deprecated(forRemoval = true)
-    @Column(name = "deletion_warning_sent_date")
-    private Instant deletionWarningSentDate;
-
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
     private String langKey;
@@ -172,44 +144,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Size(max = 256)
     @Column(name = "image_url", length = 256)
     private String imageUrl;
-
-    /**
-     * No longer read or written by anything; the recovery keys live in {@code user_recovery_key}, which documents the
-     * invariant this key carries.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_recovery_key}
-     */
-    @Deprecated(forRemoval = true)
-    @Size(max = 20)
-    @Column(name = "activation_key", length = 20)
-    @JsonIgnore
-    private String activationKey;
-
-    /**
-     * No longer read or written by anything; the recovery keys live in {@code user_recovery_key}.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_recovery_key}
-     */
-    @Deprecated(forRemoval = true)
-    @Size(max = 20)
-    @Column(name = "reset_key", length = 20)
-    @JsonIgnore
-    private String resetKey;
-
-    /**
-     * No longer read or written by anything; the recovery keys live in {@code user_recovery_key}.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_recovery_key}
-     */
-    @Deprecated(forRemoval = true)
-    @Column(name = "reset_date")
-    private Instant resetDate = null;
 
     @Column(name = "is_internal", nullable = false)
     private boolean internal = true;          // default value
@@ -221,32 +155,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     private boolean isTestUser = false;       // default value
 
     /**
-     * No longer read or written by anything. The personal VCS access token lives in {@code user_vcs_access_token}; use
-     * {@code UserVcsAccessTokenService}.
-     * <p>
-     * Kept mapped so that nodes still running the previous version keep working through a rolling deployment. The field
-     * and the column are dropped together by the follow-up that removes the column.
-     *
-     * @deprecated superseded by {@code user_vcs_access_token}
-     */
-    @Deprecated(forRemoval = true)
-    @Nullable
-    @JsonIgnore
-    @Column(name = "vcs_access_token")
-    private String vcsAccessToken = null;
-
-    /**
-     * The expiry date of the VCS access token, used to decide whether the token needs renewing.
-     *
-     * @deprecated superseded by {@code user_vcs_access_token}; see {@link #vcsAccessToken}
-     */
-    @Deprecated(forRemoval = true)
-    @Nullable
-    @JsonIgnore
-    @Column(name = "vcs_access_token_expiry_date")
-    private ZonedDateTime vcsAccessTokenExpiryDate = null;
-
-    /**
      * When the account's credentials last changed - a completed password reset, a password change, or a deactivation.
      * A session issued before this point is not extended any further, so those events end long-lived sessions within one
      * rotation interval instead of leaving them to run to their full lifetime.
@@ -255,35 +163,9 @@ public class User extends AbstractAuditingEntity implements Participant {
      * endpoints, so without {@code @JsonIgnore} this would tell every instructor and tutor when each of their course
      * members last changed their password.
      */
-    /**
-     * No longer read or written by anything; the credential-change timestamp lives in {@code user_activity} with the
-     * account's other lifecycle timestamps. It was read as part of every user load here, for the benefit of the one
-     * caller that needs it.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_activity.credentials_changed_date}
-     */
-    @Deprecated(forRemoval = true)
-    @JsonIgnore
-    @Column(name = "credentials_changed_date")
-    private ZonedDateTime credentialsChangedDate = null;
-
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @JsonIgnore
     private Set<UserCourseRole> courseRoles = new HashSet<>();
-
-    /**
-     * No longer read or written by anything. The launch marker lives in {@code user_lti}; the lti module owns it.
-     * <p>
-     * Kept mapped so that nodes still running the previous version keep working through a rolling deployment. The field
-     * and the column are dropped together by the follow-up that removes the column.
-     *
-     * @deprecated superseded by {@code user_lti}
-     */
-    @Deprecated(forRemoval = true)
-    @Column(name = "lti_created", nullable = false)
-    private boolean ltiCreated = false; // default value
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
@@ -323,43 +205,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
-
-    /**
-     * No longer read or written by anything; the AI preferences live in {@code user_ai_preference}.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_ai_preference}
-     */
-    @Nullable
-    @Enumerated(EnumType.STRING)
-    @Deprecated(forRemoval = true)
-    @Column(name = "ai_selection_decision")
-    private AiSelectionDecision aiSelectionDecision = null;
-
-    /**
-     * No longer read or written by anything; the AI preferences live in {@code user_ai_preference}.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_ai_preference}
-     */
-    @Nullable
-    @Deprecated(forRemoval = true)
-    @Column(name = "ai_selection_decision_date")
-    private ZonedDateTime aiSelectionDecisionDate = null;
-
-    /**
-     * No longer read or written by anything; the AI preferences live in {@code user_ai_preference}.
-     * <p>
-     * Kept mapped for a rolling deployment; dropped together with the column by the follow-up.
-     *
-     * @deprecated superseded by {@code user_ai_preference}
-     */
-    @NonNull
-    @Deprecated(forRemoval = true)
-    @Column(name = "memiris_enabled", nullable = false)
-    private boolean memirisEnabled = true;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "user", allowSetters = true)
@@ -463,30 +308,6 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.activated = activated;
     }
 
-    public String getActivationKey() {
-        return activationKey;
-    }
-
-    public void setActivationKey(String activationKey) {
-        this.activationKey = activationKey;
-    }
-
-    public String getResetKey() {
-        return resetKey;
-    }
-
-    public void setResetKey(String resetKey) {
-        this.resetKey = resetKey;
-    }
-
-    public Instant getResetDate() {
-        return resetDate;
-    }
-
-    public void setResetDate(Instant resetDate) {
-        this.resetDate = resetDate;
-    }
-
     public String getLangKey() {
         return langKey;
     }
@@ -574,14 +395,6 @@ public class User extends AbstractAuditingEntity implements Participant {
         return courseRolesByCourseIdTransient;
     }
 
-    public boolean isLtiCreated() {
-        return ltiCreated;
-    }
-
-    public void setLtiCreated(boolean ltiCreated) {
-        this.ltiCreated = ltiCreated;
-    }
-
     public Set<Authority> getAuthorities() {
         return authorities;
     }
@@ -647,7 +460,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Override
     public String toString() {
         return "User{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", email='" + email + '\'' + ", imageUrl='" + imageUrl
-                + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + ", activationKey='" + activationKey + '\'' + "}";
+                + '\'' + ", activated='" + activated + '\'' + ", langKey='" + langKey + '\'' + "}";
     }
 
     @JsonIgnore
@@ -684,51 +497,6 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.deleted = deleted;
     }
 
-    @JsonIgnore
-    public Instant getLastLoginDate() {
-        return lastLoginDate;
-    }
-
-    public void setLastLoginDate(Instant lastLoginDate) {
-        this.lastLoginDate = lastLoginDate;
-    }
-
-    @JsonIgnore
-    public Instant getDeletionWarningSentDate() {
-        return deletionWarningSentDate;
-    }
-
-    public void setDeletionWarningSentDate(Instant deletionWarningSentDate) {
-        this.deletionWarningSentDate = deletionWarningSentDate;
-    }
-
-    @Nullable
-    public String getVcsAccessToken() {
-        return vcsAccessToken;
-    }
-
-    @Nullable
-    public ZonedDateTime getCredentialsChangedDate() {
-        return credentialsChangedDate;
-    }
-
-    public void setCredentialsChangedDate(@Nullable ZonedDateTime credentialsChangedDate) {
-        this.credentialsChangedDate = credentialsChangedDate;
-    }
-
-    public void setVcsAccessToken(@Nullable String vcsAccessToken) {
-        this.vcsAccessToken = vcsAccessToken;
-    }
-
-    @Nullable
-    public ZonedDateTime getVcsAccessTokenExpiryDate() {
-        return vcsAccessTokenExpiryDate;
-    }
-
-    public void setVcsAccessTokenExpiryDate(@Nullable ZonedDateTime vcsAccessTokenExpiryDate) {
-        this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
-    }
-
     public Set<TutorialGroupRegistration> getTutorialGroupRegistrations() {
         return tutorialGroupRegistrations;
     }
@@ -743,23 +511,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
         this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
-    }
-
-    @Nullable
-    public ZonedDateTime getSelectedLLMUsageTimestamp() {
-        return aiSelectionDecisionDate;
-    }
-
-    public void setSelectedLLMUsageTimestamp(@Nullable ZonedDateTime aiSelectionDecisionDate) {
-        this.aiSelectionDecisionDate = aiSelectionDecisionDate;
-    }
-
-    public AiSelectionDecision getSelectedLLMUsage() {
-        return aiSelectionDecision;
-    }
-
-    public void setSelectedLLMUsage(@Nullable AiSelectionDecision aiSelectionDecision) {
-        this.aiSelectionDecision = aiSelectionDecision;
     }
 
     public LearnerProfile getLearnerProfile() {
@@ -783,11 +534,4 @@ public class User extends AbstractAuditingEntity implements Participant {
         return BytesConverter.longToBytes(this.getId());
     }
 
-    public boolean isMemirisEnabled() {
-        return memirisEnabled;
-    }
-
-    public void setMemirisEnabled(boolean memirisEnabled) {
-        this.memirisEnabled = memirisEnabled;
-    }
 }

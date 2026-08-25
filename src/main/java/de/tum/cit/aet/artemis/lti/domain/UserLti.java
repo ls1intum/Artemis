@@ -28,10 +28,10 @@ public class UserLti {
      * Whether the account has completed the initialisation that follows its first launch, in which it is given the
      * password it authenticates with afterwards.
      * <p>
-     * The launch used to read {@code jhi_user.activated} for this, which an administrator also uses to disable an
-     * account. The initialisation endpoint could therefore not tell an account that had never been initialised apart from
-     * one that had been deactivated, and activated the latter again. This marker separates the two meanings: it only ever
-     * goes from false to true, so initialisation happens once and a later deactivation cannot be undone through it.
+     * Kept separate from {@code jhi_user.activated}, which an administrator also uses to disable an account: a single flag
+     * cannot distinguish an account that has never been initialised from one that has been deactivated, and an
+     * initialisation endpoint deciding on it would activate the latter again. This marker only ever goes from false to
+     * true, so initialisation happens once and a later deactivation cannot be undone through it.
      */
     @Column(name = "initialized", nullable = false)
     private boolean initialized = false;

@@ -237,9 +237,8 @@ public class LtiService {
      * @return true if the user was created as part of an LTI launch
      */
     public boolean isLtiCreatedUser(User user) {
-        // Null-checked because the marker is now a row keyed on the user id: an account that has not been persisted cannot
-        // have one. Reading the former boolean column was safe for a transient user, so without this the extraction would
-        // turn a harmless call into a NullPointerException.
+        // Null-checked because the marker is a row keyed on the user id, so an account that has not been persisted cannot
+        // have one. Callers do pass transient users here, and looking one up by a null id would fail.
         return user.getId() != null && userLtiRepository.existsByUserIdAndCreatedByLaunchIsTrue(user.getId());
     }
 

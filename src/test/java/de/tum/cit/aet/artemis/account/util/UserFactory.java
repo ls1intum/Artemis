@@ -81,8 +81,8 @@ public class UserFactory {
         user.setActivated(true);
         user.setLangKey("en");
         user.setAuthorities(new HashSet<>());
-        // The AI decision is no longer a column on the user, so it cannot be seeded before the user has an id.
-        // UserUtilService records the default for generated users once they are saved.
+        // The AI decision is a row keyed on the user id, so it cannot be seeded before the user has one. UserUtilService
+        // records the default for generated users once they are saved.
         return user;
     }
 

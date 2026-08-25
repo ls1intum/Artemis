@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.IntSupplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,16 +90,7 @@ public interface UserActivityRepository extends ArtemisJpaRepository<UserActivit
      */
     default void recordCredentialsChangedCreatingRowIfMissing(long userId, Instant when) {
         if (recordCredentialsChanged(userId, when) == 0) {
-            UserActivity row = findByUserId(userId).orElseGet(() -> new UserActivity(userId));
-            row.setCredentialsChangedDate(when);
-            try {
-                save(row);
-            }
-            catch (DataIntegrityViolationException concurrentInsert) {
-                if (recordCredentialsChanged(userId, when) == 0) {
-                    throw concurrentInsert;
-                }
-            }
+            applyCreatingRowIfMissing(userId, row -> row.setCredentialsChangedDate(when), () -> recordCredentialsChanged(userId, when));
         }
     }
 
@@ -130,7 +122,7 @@ public interface UserActivityRepository extends ArtemisJpaRepository<UserActivit
      */
     default void recordLoginCreatingRowIfMissing(String login, Instant when) {
         if (recordLogin(login, when) == 0) {
-            createRowThen(login, row -> row.setLastLoginDate(when), () -> recordLogin(login, when));
+            applyCreatingRowIfMissing(login, row -> row.setLastLoginDate(when), () -> recordLogin(login, when));
         }
     }
 
@@ -142,34 +134,45 @@ public interface UserActivityRepository extends ArtemisJpaRepository<UserActivit
      */
     default void recordDeletionWarningCreatingRowIfMissing(String login, Instant when) {
         if (recordDeletionWarning(login, when) == 0) {
-            createRowThen(login, row -> row.setDeletionWarningSentDate(when), () -> recordDeletionWarning(login, when));
+            applyCreatingRowIfMissing(login, row -> row.setDeletionWarningSentDate(when), () -> recordDeletionWarning(login, when));
         }
     }
 
     /**
-     * Creates the row for an account that does not have one yet and applies the given change to it. Reached only by an
-     * account created after the migration, on the first write of either timestamp - the migration gave every account that
-     * existed at the time a row.
-     * <p>
-     * Two writes for such an account at the same moment both find no row and both try to insert one, so the loser gets a
-     * primary-key violation. It retries the plain update instead, which the winner has just made possible, rather than
-     * losing the timestamp to a race that can only happen on an account's very first write.
+     * Applies a change to the activity row of the account with the given login, creating the row if it has none.
      *
-     * @param login    the account
-     * @param mutation the change to apply to the new row
-     * @param retry    the single-statement update to fall back to if another writer created the row first
+     * @param login    the login of the account whose row is written
+     * @param mutation the change to apply to the row
+     * @param update   the single-statement update to retry if another writer creates the row first
      */
-    private void createRowThen(String login, Consumer<UserActivity> mutation, Runnable retry) {
-        findUserIdByLogin(login).ifPresentOrElse(userId -> {
-            UserActivity row = findByUserId(userId).orElseGet(() -> new UserActivity(userId));
-            mutation.accept(row);
-            try {
-                save(row);
+    private void applyCreatingRowIfMissing(String login, Consumer<UserActivity> mutation, IntSupplier update) {
+        findUserIdByLogin(login).ifPresentOrElse(userId -> applyCreatingRowIfMissing(userId, mutation, update),
+                () -> log.debug("No account with login {}, so no activity was recorded", login));
+    }
+
+    /**
+     * Applies a change to the account's activity row, creating the row if the account has none.
+     * <p>
+     * Reached only while an account has no row, so in practice only on the first write of one of its timestamps. Two such
+     * writes at the same moment both find no row and both try to insert one, so the loser gets a primary-key violation.
+     * It retries the single-statement update, which the winner has just made possible, rather than losing the timestamp
+     * to a race. A violation that leaves the update still matching nothing is not this race and reaches the caller.
+     *
+     * @param userId   the account whose row is written
+     * @param mutation the change to apply to the row
+     * @param update   the single-statement update to retry if another writer creates the row first
+     */
+    private void applyCreatingRowIfMissing(long userId, Consumer<UserActivity> mutation, IntSupplier update) {
+        UserActivity row = findByUserId(userId).orElseGet(() -> new UserActivity(userId));
+        mutation.accept(row);
+        try {
+            save(row);
+        }
+        catch (DataIntegrityViolationException concurrentInsert) {
+            if (update.getAsInt() == 0) {
+                throw concurrentInsert;
             }
-            catch (DataIntegrityViolationException concurrentInsert) {
-                retry.run();
-            }
-        }, () -> log.debug("No account with login {}, so no activity was recorded", login));
+        }
     }
 
     /**

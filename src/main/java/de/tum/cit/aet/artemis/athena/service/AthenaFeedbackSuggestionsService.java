@@ -186,8 +186,8 @@ public class AthenaFeedbackSuggestionsService {
             return null;
         }
 
-        // The id is checked as well: the decision is a row keyed on it, so an account that has not been persisted cannot
-        // have one - reading the former column was safe for a transient user.
+        // The id is checked as well: the decision is a row keyed on it, so an account that has not been persisted cannot have
+        // one, and looking one up by a null id would fail.
         var selection = Optional.ofNullable(user).map(User::getId).map(userAiPreferenceService::findDecision).orElse(null);
         if (selection == null || selection == AiSelectionDecision.NO_AI) {
             throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);

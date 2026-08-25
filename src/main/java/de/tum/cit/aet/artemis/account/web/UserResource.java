@@ -126,10 +126,10 @@ public class UserResource {
      * authenticates with afterwards. Every other account is answered without being modified.
      * <p>
      * Whether the initialisation is still outstanding is decided by the lti module's own marker, never by
-     * {@code activated}. Those are different questions that the flag used to answer with the same value: an account an
-     * administrator had deactivated was indistinguishable from one that had never been initialised, so this endpoint
-     * activated it again and handed out a working password. Only an authenticated session is needed to reach it, and a
-     * session issued before the deactivation keeps working, so that was a way for a disabled account to restore itself.
+     * {@code activated}. Those are two different questions, and the flag cannot tell them apart: an account an administrator
+     * deactivated looks exactly like one that has never been initialised. Deciding on the flag would therefore let this
+     * endpoint activate a deactivated account and hand it a working password - reaching it needs only an authenticated
+     * session, and a session issued before the deactivation keeps working, so a disabled account could restore itself.
      * <p>
      * The marker is claimed in one conditional statement, so exactly one request can proceed and a second call - or a
      * second concurrent call - returns no password.

@@ -25,9 +25,8 @@ public interface UserAiPreferenceRepository extends ArtemisJpaRepository<UserAiP
     /**
      * Loads the preferences of several accounts at once.
      * <p>
-     * Exists so that assembling a post with its answers does not query per author. Reading the decision used to be a
-     * field access on an already-loaded author, and turning that into a query per answer post would have been a
-     * regression rather than an improvement.
+     * Exists so that assembling a post with its answers resolves every author's decision in one query rather than one
+     * per author.
      *
      * @param userIds the accounts to load
      * @return the rows that exist; accounts without one are simply absent
