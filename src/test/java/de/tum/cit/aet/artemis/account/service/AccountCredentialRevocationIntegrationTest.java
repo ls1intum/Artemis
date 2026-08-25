@@ -23,9 +23,10 @@ import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
-import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.service.AuditEventService;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.audit.AuditLogType;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -62,7 +63,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     private UserService userService;
 
     @Autowired
-    private PersistenceAuditEventRepository persistenceAuditEventRepository;
+    private SecurityAuditEventRepository securityAuditEventRepository;
 
     @Autowired
     private AuditEventService auditEventService;
@@ -191,14 +192,14 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1")
     void revokingThroughTheEndpointIsRecordedForAdministrators() throws Exception {
         giveUserCredentials();
-        persistenceAuditEventRepository.deleteAll();
+        securityAuditEventRepository.deleteAll();
 
         request.postWithoutLocation("/api/account/revoke-credentials", new CredentialRevocationChoiceDTO(true, false, false), HttpStatus.OK, null);
 
         // The audit event is how an administrator reconstructs afterwards that the owner did this to their own account.
         // Only the type and the principal are asserted here: `data` is a lazy element collection that cannot be read
         // outside a session, and AccountSecurityNotificationServiceTest already pins its contents exactly.
-        assertThat(persistenceAuditEventRepository.findAll()).anySatisfy(event -> {
+        assertThat(securityAuditEventRepository.findAll()).anySatisfy(event -> {
             assertThat(event.getAuditEventType()).isEqualTo(Constants.REVOKE_OWN_CREDENTIALS);
             assertThat(event.getPrincipal()).isEqualTo(user.getLogin());
         });
@@ -402,6 +403,83 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         assertAllCredentialsRevoked();
     }
 
+    /**
+     * Deactivation cuts off every form of access, so the log has to say who did it and to whom. Asserted for both routes
+     * that write the flag, because they are separate code paths: the dedicated endpoint calls deactivateUser, while the
+     * admin edit form writes it inside updateUser.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAUserIsRecordedInTheAuditLog() {
+        securityAuditEventRepository.deleteAll();
+
+        userCreationService.deactivateUser(user);
+
+        assertAccountStateAudited(Constants.DEACTIVATE_USER);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAUserThroughTheAdminUpdateIsRecordedInTheAuditLog() {
+        securityAuditEventRepository.deleteAll();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(false);
+        update.setPassword(null);
+        userCreationService.updateUser(userWithAuthorities, update);
+
+        assertAccountStateAudited(Constants.DEACTIVATE_USER);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activatingAUserIsRecordedInTheAuditLog() {
+        userCreationService.deactivateUser(user);
+        securityAuditEventRepository.deleteAll();
+
+        userCreationService.activateUser(reloadUser());
+
+        assertAccountStateAudited(Constants.ACTIVATE_USER);
+    }
+
+    /**
+     * The admin edit form and the dedicated activate action both run for one activation through the resource, so the
+     * transition has to be recorded once rather than by each of them.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activatingThroughTheAdminUpdateIsRecordedExactlyOnce() {
+        userCreationService.deactivateUser(user);
+        securityAuditEventRepository.deleteAll();
+
+        // Mirrors AdminUserResource.updateUser, which follows an activating update with userService.activateUser.
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(true);
+        update.setPassword(null);
+        User updated = userCreationService.updateUser(userWithAuthorities, update);
+        userService.activateUser(updated);
+
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
+                .as("one activation produces one audit entry").hasSize(1);
+    }
+
+    /**
+     * Read through AuditEventService rather than the repository, because it loads {@code data} through an entity graph
+     * while the repository's findAll() leaves that collection lazy and unreadable outside a session. The log to read from
+     * is the security one: an account-state change is a change to what the account can authenticate with, and a
+     * deactivation is the only record of the credential revocation it performs (see
+     * {@code AuditEventConstants.SECURITY_EVENT_TYPES}).
+     */
+    private void assertAccountStateAudited(String expectedType) {
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+            assertThat(event.getType()).isEqualTo(expectedType);
+            assertThat(event.getPrincipal()).as("the administrator who performed it, not the affected account").isEqualTo("admin");
+            assertThat(event.getData()).containsEntry("user", user.getLogin());
+        });
+    }
+
     @Test
     void softDeletingAUserRevokesEverything() {
         // The pre-existing cleanup here deleted the SSH keys but left the personal VCS access token behind, so a
@@ -498,7 +576,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @Test
     void deactivatingWhileChangingThePasswordReportsThatEverythingWasRevoked() {
         giveUserCredentials();
-        persistenceAuditEventRepository.deleteAll();
+        securityAuditEventRepository.deleteAll();
 
         User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
         ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
@@ -511,8 +589,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         assertAllCredentialsRevoked();
         // Read through AuditEventService: it loads `data` through an entity graph, while findAll() leaves that collection
-        // lazy and unreadable outside a session.
-        assertThat(auditEventService.findAll(Pageable.unpaged())).anySatisfy(event -> {
+        // lazy and unreadable outside a session. The log to read from is the security one, because a password change is
+        // a credential change (see AuditEventConstants.SECURITY_EVENT_TYPES).
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
             assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
             assertThat(event.getData()).containsEntry("revokedPasskeys", "true").containsEntry("revokedSshKeys", "true").containsEntry("revokedVcsAccessTokens", "true");
         });

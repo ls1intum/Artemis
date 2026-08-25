@@ -111,6 +111,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
     private static final double BUILD_DURATION_SAFETY_FACTOR = 1.1;
 
+    /**
+     * Only report the stage breakdown of a build trigger when it took at least this long, so a healthy system stays quiet.
+     */
+    private static final long SLOW_TRIGGER_LOG_THRESHOLD_MILLIS = 200;
+
     public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, BuildPhasesTemplateService buildPhasesTemplateService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, GitService gitService,
             ExerciseDateService exerciseDateService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -185,6 +190,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         log.info("Triggering build for participation {} and commit hash {}", participation.getId(), commitHashToBuild);
 
+        long stageStart = System.nanoTime();
+
         // Commit hash related to the repository that will be tested
         String assignmentCommitHash;
 
@@ -212,6 +219,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             log.info("Skipping build for participation {} - commit hashes not available yet", participation.getId());
             return;
         }
+
+        long commitHashNanos = System.nanoTime() - stageStart;
+        stageStart = System.nanoTime();
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
 
@@ -248,11 +258,28 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
                 programmingExercise.getId(), retryCount, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null, cloneToken);
 
+        long buildJobDataNanos = System.nanoTime() - stageStart;
+        stageStart = System.nanoTime();
+
         // Save the build job before adding it to the queue to ensure it exists in the database.
         // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
         // leading to a failed update operation due to a missing record.
         buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
+
+        long persistNanos = System.nanoTime() - stageStart;
+        stageStart = System.nanoTime();
+
         distributedDataAccessService.getDistributedBuildJobQueue().add(buildJobQueueItem);
+
+        long enqueueNanos = System.nanoTime() - stageStart;
+        // Queueing a build was measured as effectively the whole latency of a git push under exam load, while each
+        // individual step is a few milliseconds when uncontended. Report the breakdown when a call is slow, so a
+        // regression can be attributed to a step rather than guessed at.
+        long totalMillis = (commitHashNanos + buildJobDataNanos + persistNanos + enqueueNanos) / 1_000_000;
+        if (totalMillis >= SLOW_TRIGGER_LOG_THRESHOLD_MILLIS) {
+            log.info("Slow build trigger for participation {}: {} ms total (commit hashes {} ms, build job data {} ms, persist {} ms, enqueue {} ms)", participation.getId(),
+                    totalMillis, commitHashNanos / 1_000_000, buildJobDataNanos / 1_000_000, persistNanos / 1_000_000, enqueueNanos / 1_000_000);
+        }
         log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
                 priority);
 
