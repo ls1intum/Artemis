@@ -7,7 +7,6 @@ import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumUiButtonDirective } from '@tumaet/ui-angular';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
@@ -23,7 +22,7 @@ export class TutorialGroupRowButtonsComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly isAtLeastInstructor = input(false);
-    readonly course = input.required<Course>();
+    readonly courseId = input.required<number>();
     readonly tutorialGroup = input.required<TutorialGroup>();
 
     readonly tutorialGroupDeleted = output<void>();
@@ -41,8 +40,12 @@ export class TutorialGroupRowButtonsComponent {
 
     /** Deletes the group and, on success, closes the delete dialog by clearing its error stream. */
     deleteTutorialGroup(): void {
+        const tutorialGroupId = this.tutorialGroup().id;
+        if (tutorialGroupId === undefined) {
+            return;
+        }
         this.tutorialGroupApiService
-            .deleteTutorialGroup(this.course().id!, this.tutorialGroup().id!)
+            .deleteTutorialGroup(this.courseId(), tutorialGroupId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {

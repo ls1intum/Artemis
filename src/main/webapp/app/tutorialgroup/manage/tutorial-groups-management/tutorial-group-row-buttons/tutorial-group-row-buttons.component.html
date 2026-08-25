@@ -8,7 +8,7 @@
             severity="secondary"
             variant="outlined"
             [id]="'registrations-' + group.id"
-            [routerLink]="['/course-management', course().id!, 'tutorial-groups', group.id, 'registrations']"
+            [routerLink]="['/course-management', courseId(), 'tutorial-groups', group.id, 'registrations']"
         >
             <fa-icon [icon]="faUsers" />
             <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
@@ -22,7 +22,7 @@
             severity="secondary"
             variant="outlined"
             [id]="'edit-' + group.id"
-            [routerLink]="['/course-management', course().id!, 'tutorial-groups', group.id, 'edit']"
+            [routerLink]="['/course-management', courseId(), 'tutorial-groups', group.id, 'edit']"
         >
             <fa-icon [icon]="faWrench" />
             <span class="sr-only md:not-sr-only" jhiTranslate="entity.action.edit"></span>

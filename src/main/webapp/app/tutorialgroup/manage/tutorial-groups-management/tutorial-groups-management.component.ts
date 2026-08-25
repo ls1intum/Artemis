@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, TrackByFunction, computed, inject, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { merge } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
+import { TranslateService } from '@ngx-translate/core';
 import { faGear, faMagnifyingGlass, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
@@ -37,13 +39,6 @@ import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/ma
 const UNSCHEDULED = Number.MAX_SAFE_INTEGER;
 /** Sorts groups whose utilization cannot be computed ahead of every measurable one. */
 const UNKNOWN_UTILIZATION = -1;
-/**
- * Stand in for the campus of a group that names none, which its mode describes better than a blank cell does.
- * Deliberately untranslated: these only order and match the campus column, so they must not change under the
- * reader's language. The cell renders the translated label instead, and both supported languages spell the two
- * words the same way.
- */
-const MODE_INSTEAD_OF_CAMPUS = { online: 'Online', offline: 'Offline' } as const;
 
 const SORTABLE_FIELDS = ['title', 'tutor', 'utilization', 'registrations', 'room', 'campus', 'schedule'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
@@ -73,12 +68,11 @@ function scheduleSortKey(schedule?: TutorialGroupSchedule): number {
     return schedule.dayOfWeek * 24 * 60 + (Number(hours) || 0) * 60 + (Number(minutes) || 0);
 }
 
-function toRow(group: TutorialGroup): TutorialGroupRow {
+function toRow(group: TutorialGroup, modeLabel: string): TutorialGroupRow {
     const tutor = group.teachingAssistantName ?? '';
     const room = group.tutorialGroupSchedule?.location ?? '';
-    // A group that names no campus falls back to its mode, which says more than a blank cell. `isOnline` is
-    // non-null on the server and defaults to false, so anything but an explicit true reads as offline.
-    const campus = group.campus?.trim() || (group.isOnline ? MODE_INSTEAD_OF_CAMPUS.online : MODE_INSTEAD_OF_CAMPUS.offline);
+    // A group that names no campus falls back to its mode, which says more than a blank cell would.
+    const campus = group.campus?.trim() || modeLabel;
     return {
         group,
         title: group.title ?? '',
@@ -133,6 +127,7 @@ export class TutorialGroupsManagementComponent {
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly translateService = inject(TranslateService);
 
     readonly course = signal<Course | undefined>(undefined);
     readonly courseId = computed(() => this.course()?.id);
@@ -151,7 +146,6 @@ export class TutorialGroupsManagementComponent {
     private readonly tutorColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('tutorColumn');
     private readonly utilizationColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('utilizationColumn');
     private readonly registrationsColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('registrationsColumn');
-    private readonly campusColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('campusColumn');
     private readonly scheduleColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('scheduleColumn');
 
     protected readonly columns = computed<ColumnDef<TutorialGroupRow>[]>(() => [
@@ -174,11 +168,24 @@ export class TutorialGroupsManagementComponent {
             templateRef: this.registrationsColumn(),
         },
         { field: 'room', headerKey: 'artemisApp.entities.tutorialGroup.room', sort: true, width: '150px', hideBelow: 'xl' },
-        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '130px', hideBelow: 'lg', templateRef: this.campusColumn() },
+        { field: 'campus', headerKey: 'artemisApp.entities.tutorialGroup.campus', sort: true, width: '130px', hideBelow: 'lg' },
         { field: 'schedule', headerKey: 'artemisApp.entities.tutorialGroup.schedule', sort: true, width: '200px', templateRef: this.scheduleColumn() },
     ]);
 
-    private readonly rows = computed(() => this.tutorialGroups().map(toRow));
+    /**
+     * Re-projects the rows whenever the catalogue changes, so the mode standing in for a missing campus follows
+     * the reader's language. Resolving it once here keeps the displayed, sorted and searched value the same string.
+     */
+    private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange), { initialValue: undefined });
+
+    private readonly rows = computed(() => {
+        this.translationChanges();
+        // The server stores the mode as the boolean `isOnline`, defaulted to false, so there is no label to read
+        // off the payload; anything but an explicit true is offline.
+        const online = this.translateService.instant('artemisApp.generic.online');
+        const offline = this.translateService.instant('artemisApp.generic.offline');
+        return this.tutorialGroups().map((group) => toRow(group, group.isOnline ? online : offline));
+    });
 
     private readonly filteredRows = computed(() => {
         const term = this.searchTerm().trim().toLowerCase();
@@ -210,7 +217,7 @@ export class TutorialGroupsManagementComponent {
     /** True once loading finished and the course has no tutorial groups at all, as opposed to none matching a search. */
     protected readonly hasNoTutorialGroups = computed(() => !this.isLoading() && this.tutorialGroups().length === 0);
 
-    protected readonly trackByRow: TrackByFunction<TutorialGroupRow> = (_, row) => row.group.id!;
+    protected readonly trackByRow: TrackByFunction<TutorialGroupRow> = (_, row) => row.group.id;
 
     protected readonly faPlus = faPlus;
     protected readonly faGear = faGear;

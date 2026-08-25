@@ -11,7 +11,7 @@
             [value]="utilizationPercentage"
             [ariaLabel]="'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate"
         />
-        <span class="text-sm" [style.color]="percentageColor()">{{ utilizationPercentage }}%</span>
+        <span class="text-sm">{{ utilizationPercentage }}%</span>
     </div>
 } @else if (averageAttendance !== undefined) {
     <!-- Without a capacity there is no ratio to draw, but the raw attendance is still worth showing. -->

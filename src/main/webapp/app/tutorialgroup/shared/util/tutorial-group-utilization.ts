@@ -1,6 +1,12 @@
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
-/** Utilization from which on a group counts as well attended and is rendered in the success color. */
+/** Multiplier turning a ratio into a percentage. */
+const PERCENTAGE_SCALE = 100;
+
+/** Utilization below which a group counts as under-attended. */
+export const UNDER_ATTENDED_PERCENTAGE = 25;
+
+/** Utilization from which on a group counts as well attended. */
 export const WELL_UTILIZED_PERCENTAGE = 50;
 
 /**
@@ -13,5 +19,5 @@ export function tutorialGroupUtilization(tutorialGroup: TutorialGroup): number |
     if (averageAttendance === undefined || !capacity) {
         return undefined;
     }
-    return Math.round((averageAttendance / capacity) * 100);
+    return Math.round((averageAttendance / capacity) * PERCENTAGE_SCALE);
 }

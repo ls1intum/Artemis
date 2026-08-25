@@ -47,19 +47,21 @@ describe('TutorialGroupUtilizationIndicatorComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('33%');
     });
 
-    it('should mark a group at or above half its capacity as well utilized', () => {
-        tutorialGroup.capacity = 18;
-        tutorialGroup.averageAttendance = 9;
-        render(tutorialGroup);
+    // Attendance out of a capacity of 100, so the percentage equals the attendance and the bands read directly.
+    it.each([
+        { attendance: 0, expected: 'danger' },
+        { attendance: 24, expected: 'danger' },
+        { attendance: 25, expected: 'warn' },
+        { attendance: 49, expected: 'warn' },
+        { attendance: 50, expected: 'success' },
+        { attendance: 100, expected: 'success' },
+    ])('should colour the bar $expected at $attendance% utilization', ({ attendance, expected }) => {
+        const group = generateExampleTutorialGroup({ id: attendance + 1 });
+        group.capacity = 100;
+        group.averageAttendance = attendance;
+        render(group);
 
-        expect(progressBar()?.severity()).toBe('success');
-
-        const belowHalf = generateExampleTutorialGroup({ id: 2 });
-        belowHalf.capacity = 18;
-        belowHalf.averageAttendance = 8;
-        render(belowHalf);
-
-        expect(progressBar()?.severity()).toBe('primary');
+        expect(progressBar()?.severity()).toBe(expected);
     });
 
     it('should fall back to the raw attendance when there is no capacity to divide by', () => {

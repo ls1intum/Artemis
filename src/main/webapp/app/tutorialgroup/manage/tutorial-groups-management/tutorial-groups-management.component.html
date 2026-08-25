@@ -1,4 +1,6 @@
-@if (course(); as currentCourse) {
+@let currentCourseId = courseId();
+
+@if (currentCourseId !== undefined) {
     <div *titleBarActions class="flex items-center gap-2">
         @if (!hasNoTutorialGroups()) {
             <tum-ui-icon-field class="w-40 lg:w-64" [icon]="faMagnifyingGlass">
@@ -24,7 +26,7 @@
                     variant="outlined"
                     data-testid="edit-configuration-btn"
                     [tumUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate"
-                    [routerLink]="['/course-management', currentCourse.id, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'edit']"
+                    [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'edit']"
                 >
                     <fa-icon [icon]="faGear" />
                     <span class="sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
@@ -36,15 +38,15 @@
                     variant="outlined"
                     data-testid="free-periods-btn"
                     [tumUiTooltip]="'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate"
-                    [routerLink]="['/course-management', currentCourse.id, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days']"
+                    [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days']"
                 >
                     <fa-icon [icon]="faUmbrellaBeach" />
                     <!-- sr-only below md keeps the label in the accessibility tree so the icon-only button stays named -->
                     <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons"></span>
                 </a>
             }
-            <jhi-tutorial-groups-import-button [courseId]="currentCourse.id!" (importFinished)="loadTutorialGroups()" />
-            <jhi-tutorial-groups-export-button [courseId]="currentCourse.id!" (exportFinished)="loadTutorialGroups()" />
+            <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
+            <jhi-tutorial-groups-export-button [courseId]="currentCourseId" (exportFinished)="loadTutorialGroups()" />
         }
         @if (isAtLeastEditor()) {
             <a
@@ -52,7 +54,7 @@
                 size="small"
                 data-testid="create-tutorial-group-btn"
                 [tumUiTooltip]="'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate"
-                [routerLink]="['/course-management', currentCourse.id, 'tutorial-groups', 'create']"
+                [routerLink]="['/course-management', currentCourseId, 'tutorial-groups', 'create']"
             >
                 <fa-icon [icon]="faPlus" />
                 <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.actions.create"></span>
@@ -65,7 +67,7 @@
             <!-- The message projects into an inline span, so the call to action lives beside it rather than inside. -->
             <tum-ui-message severity="info" data-testid="tutorial-groups-intro" [text]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate" />
             @if (isAtLeastInstructor()) {
-                <jhi-tutorial-groups-import-button [courseId]="currentCourse.id!" (importFinished)="loadTutorialGroups()" />
+                <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
             }
         </div>
     } @else {
@@ -84,6 +86,14 @@
             (dataRequest)="onDataRequest($event)"
         />
     }
+    <ng-template #rowActions let-row>
+        <jhi-tutorial-group-row-buttons
+            [courseId]="currentCourseId"
+            [isAtLeastInstructor]="isAtLeastInstructor()"
+            [tutorialGroup]="row.group"
+            (tutorialGroupDeleted)="loadTutorialGroups()"
+        />
+    </ng-template>
 }
 
 <ng-template #titleColumn let-params>
@@ -106,23 +116,10 @@
     <span>{{ params.data.registrations }} / {{ params.data.group.capacity ?? '–' }}</span>
 </ng-template>
 
-<ng-template #campusColumn let-params>
-    @if (params.data.group.campus) {
-        <span>{{ params.data.group.campus }}</span>
-    } @else {
-        <!-- No campus named, so fall back to the group's mode rather than leaving the cell blank. -->
-        <span jhiTranslate="{{ params.data.group.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline' }}"></span>
-    }
-</ng-template>
-
 <ng-template #scheduleColumn let-params>
     @let schedule = params.data.group.tutorialGroupSchedule;
     @if (schedule) {
         <!-- Only include the repetition frequency when it deviates from the default of once per week -->
         <span>{{ schedule | meetingPattern: schedule.repetitionFrequency !== 1 }}</span>
     }
-</ng-template>
-
-<ng-template #rowActions let-row>
-    <jhi-tutorial-group-row-buttons [course]="course()!" [isAtLeastInstructor]="isAtLeastInstructor()" [tutorialGroup]="row.group" (tutorialGroupDeleted)="loadTutorialGroups()" />
 </ng-template>
