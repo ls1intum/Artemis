@@ -37,11 +37,6 @@ describe('TutorialGroupUtilizationIndicatorComponent', () => {
         return fixture.debugElement.query(By.directive(TumUiProgressBarComponent))?.componentInstance;
     }
 
-    it('should create', () => {
-        render(tutorialGroup);
-        expect(component).toBeTruthy();
-    });
-
     it('should express the average attendance as a percentage of the capacity', () => {
         tutorialGroup.capacity = 18;
         tutorialGroup.averageAttendance = 6;
