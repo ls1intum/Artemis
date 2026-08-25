@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -175,6 +176,51 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         assertThat(updated.getId()).isEqualTo(created.getId());
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updated.getSubmission().getId(), validModel);
+    }
+
+    /**
+     * Once an example assessment exists, the edit page attaches the result it loaded from the (migrated, DTO-shaped)
+     * example-assessment endpoint to the submission before the save PUT. The echoed result must keep every column the
+     * server-side cascade merge writes back - {@code Result.exerciseId} is a primitive non-null FK column, so a wire
+     * shape without it merges {@code exercise_id = 0} and the save dies on the foreign-key constraint.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateExampleModelingSubmission_acceptsEchoedDtoShapedExampleAssessment() throws Exception {
+        exampleSubmission = participationUtilService.generateExampleSubmission(validModel, modelingExercise, true);
+        ExampleSubmission created = request.postWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", exampleSubmission,
+                ExampleSubmission.class, HttpStatus.OK);
+        // Example submissions have no participation, so build the example result directly (the fixture helpers
+        // derive exerciseId from the participation and would NPE).
+        Result exampleResult = new Result().submission(created.getSubmission()).assessmentType(AssessmentType.MANUAL).completionDate(ZonedDateTime.now()).score(50D).rated(true);
+        exampleResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        exampleResult.setExerciseId(modelingExercise.getId());
+        exampleResult.setExampleResult(true);
+        exampleResult = resultRepository.save(exampleResult);
+
+        String exerciseDetailJson = request.get("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK, String.class);
+        // The result exactly as the page loads it: the migrated example-assessment endpoint's wire shape.
+        String exampleAssessmentJson = request.get(
+                "/api/modeling/exercises/" + modelingExercise.getId() + "/modeling-submissions/" + created.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
+                String.class);
+
+        ObjectMapper mapper = request.getObjectMapper();
+        ObjectNode body = mapper.createObjectNode();
+        body.put("id", created.getId());
+        body.put("usedForTutorial", false);
+        body.set("exercise", mapper.readTree(exerciseDetailJson));
+        // The submission the page holds, with the result attached the way setLatestSubmissionResult does: the
+        // echoed example-assessment payload, its own submission reference deleted by the client.
+        ObjectNode submissionNode = (ObjectNode) mapper.valueToTree(created.getSubmission());
+        ObjectNode resultNode = (ObjectNode) mapper.readTree(exampleAssessmentJson);
+        resultNode.remove("submission");
+        submissionNode.set("results", mapper.createArrayNode().add(resultNode));
+        body.set("submission", submissionNode);
+
+        request.putWithResponseBody("/api/assessment/exercises/" + modelingExercise.getId() + "/example-submissions", body, ExampleSubmission.class, HttpStatus.OK);
+
+        Result reloaded = resultRepository.findById(exampleResult.getId()).orElseThrow();
+        assertThat(reloaded.getExerciseId()).isEqualTo(modelingExercise.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
