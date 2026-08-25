@@ -37,6 +37,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     });
 
     it('should update feedback and emit to parent', () => {
+        comp.currentFeedback().detailText = 'note';
         const onUpdateFeedbackSpy = vi.fn();
         comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
         comp.updateFeedback();
@@ -254,6 +255,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     it('should count feedback with one credit as positive', () => {
         const feedbackWithCredit = new Feedback();
         feedbackWithCredit.credits = 1;
+        feedbackWithCredit.detailText = 'note';
         fixture.componentRef.setInput('feedback', feedbackWithCredit);
 
         comp.updateFeedback();
@@ -391,6 +393,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     it('should keep the points input, tone, and save button in sync with currentFeedback', () => {
         const feedback = new Feedback();
         feedback.credits = 0;
+        feedback.detailText = 'note';
         fixture.componentRef.setInput('feedback', feedback);
         comp.editFeedback(codeLine);
         fixture.detectChanges();
@@ -411,7 +414,32 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect((fixture.nativeElement.querySelector('#feedback-save') as HTMLButtonElement).disabled).toBe(false);
     });
 
+    it('should disable save without text and allow zero points once text is present', () => {
+        const feedback = new Feedback();
+        feedback.credits = 0;
+        fixture.componentRef.setInput('feedback', feedback);
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        expect((fixture.nativeElement.querySelector('#feedback-save') as HTMLButtonElement).disabled).toBe(true);
+
+        const onUpdateFeedbackSpy = vi.fn();
+        comp.onUpdateFeedback.subscribe(onUpdateFeedbackSpy);
+        comp.updateFeedback();
+        expect(onUpdateFeedbackSpy).not.toHaveBeenCalled();
+
+        const textarea = fixture.nativeElement.querySelector('#feedback-textarea') as HTMLTextAreaElement;
+        textarea.value = 'needs a comment';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect((fixture.nativeElement.querySelector('#feedback-save') as HTMLButtonElement).disabled).toBe(false);
+
+        comp.updateFeedback();
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(expect.objectContaining({ credits: 0, detailText: 'needs a comment' }));
+    });
+
     it('should normalize typed points before saving', () => {
+        comp.currentFeedback().detailText = 'note';
         comp['updateCredits'](0.3);
         expect(comp.currentFeedback().credits).toBe(0.5);
 

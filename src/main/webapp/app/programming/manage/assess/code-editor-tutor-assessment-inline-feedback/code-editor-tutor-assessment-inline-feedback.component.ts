@@ -132,6 +132,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * Updates the current feedback and sets props and emits the feedback to parent component
      */
     updateFeedback() {
+        if (!this.canSave()) {
+            return;
+        }
         const feedback = deepClone(this.currentFeedback());
         feedback.credits = normalizedCredits(feedback.credits);
         feedback.type = this.MANUAL;
@@ -149,6 +152,14 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         // Align cancel snapshot with the saved card so a later edit/cancel pair is coherent if editFeedback is skipped.
         this.oldFeedback.set(deepClone(feedback));
         this.onUpdateFeedback.emit(feedback);
+    }
+
+    /**
+     * Save needs student-facing text (own comment and/or linked instruction feedback). Points may be zero.
+     * Plain method: the textarea mutates {@link currentFeedback} in place without a new signal identity.
+     */
+    protected canSave(): boolean {
+        return Feedback.hasContent(this.currentFeedback());
     }
 
     /**
