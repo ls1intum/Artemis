@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Allow a vcs_access_log row without a user, so that a build agent cloning a repository can be recorded.
+         Build agents authenticate with the token of the build job they are processing rather than as a person, and
+         until now their clones were not logged at all: the old build agent shortcut returned before the access log was
+         reached. The agent and build job are recorded in the name column instead.
+         Only user_id is relaxed; name and email stay NOT NULL and carry the agent's identity. -->
+    <changeSet id="20260816205933-1" author="krusche">
+        <dropNotNullConstraint tableName="vcs_access_log" columnName="user_id" columnDataType="bigint"/>
+    </changeSet>
+</databaseChangeLog>
