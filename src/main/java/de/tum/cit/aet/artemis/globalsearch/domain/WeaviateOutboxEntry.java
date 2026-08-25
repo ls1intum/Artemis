@@ -52,6 +52,13 @@ public class WeaviateOutboxEntry extends DomainObject {
     @Column(name = "params")
     private String params;
 
+    /**
+     * Which path enqueued this row. Diagnostic only: the dispatcher treats every origin identically.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "origin", nullable = false, length = 32)
+    private WeaviateOutboxOrigin origin = WeaviateOutboxOrigin.LIVE;
+
     @Column(name = "attempts", nullable = false)
     private int attempts = 0;
 
@@ -71,13 +78,15 @@ public class WeaviateOutboxEntry extends DomainObject {
      *
      * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
      * @param entityId   the database id of the entity
+     * @param origin     which path enqueued this row
      * @return the outbox entry, ready to save
      */
-    public static WeaviateOutboxEntry forUpsert(String entityType, Long entityId) {
+    public static WeaviateOutboxEntry forUpsert(String entityType, Long entityId, WeaviateOutboxOrigin origin) {
         WeaviateOutboxEntry entry = new WeaviateOutboxEntry();
         entry.operation = WeaviateOutboxOperation.UPSERT;
         entry.entityType = entityType;
         entry.entityId = entityId;
+        entry.origin = origin;
         entry.initTimestamps();
         return entry;
     }
@@ -87,13 +96,15 @@ public class WeaviateOutboxEntry extends DomainObject {
      *
      * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
      * @param entityId   the database id of the entity
+     * @param origin     which path enqueued this row
      * @return the outbox entry, ready to save
      */
-    public static WeaviateOutboxEntry forDeleteEntity(String entityType, long entityId) {
+    public static WeaviateOutboxEntry forDeleteEntity(String entityType, long entityId, WeaviateOutboxOrigin origin) {
         WeaviateOutboxEntry entry = new WeaviateOutboxEntry();
         entry.operation = WeaviateOutboxOperation.DELETE_ENTITY;
         entry.entityType = entityType;
         entry.entityId = entityId;
+        entry.origin = origin;
         entry.initTimestamps();
         return entry;
     }
@@ -103,12 +114,14 @@ public class WeaviateOutboxEntry extends DomainObject {
      *
      * @param operation the bulk delete variant
      * @param params    the serialized parameters (JSON)
+     * @param origin    which path enqueued this row; only the request path issues bulk deletes today
      * @return the outbox entry, ready to save
      */
-    public static WeaviateOutboxEntry forBulkDelete(WeaviateOutboxOperation operation, String params) {
+    public static WeaviateOutboxEntry forBulkDelete(WeaviateOutboxOperation operation, String params, WeaviateOutboxOrigin origin) {
         WeaviateOutboxEntry entry = new WeaviateOutboxEntry();
         entry.operation = operation;
         entry.params = params;
+        entry.origin = origin;
         entry.initTimestamps();
         return entry;
     }
@@ -125,6 +138,14 @@ public class WeaviateOutboxEntry extends DomainObject {
 
     public void setOperation(WeaviateOutboxOperation operation) {
         this.operation = operation;
+    }
+
+    public WeaviateOutboxOrigin getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(WeaviateOutboxOrigin origin) {
+        this.origin = origin;
     }
 
     public String getEntityType() {
@@ -187,7 +208,7 @@ public class WeaviateOutboxEntry extends DomainObject {
 
     @Override
     public String toString() {
-        return "WeaviateOutboxEntry{" + "id=" + getId() + ", operation=" + operation + ", entityType='" + entityType + '\'' + ", entityId=" + entityId + ", attempts=" + attempts
-                + ", nextAttemptAt=" + nextAttemptAt + '}';
+        return "WeaviateOutboxEntry{" + "id=" + getId() + ", operation=" + operation + ", origin=" + origin + ", entityType='" + entityType + '\'' + ", entityId=" + entityId
+                + ", attempts=" + attempts + ", nextAttemptAt=" + nextAttemptAt + '}';
     }
 }

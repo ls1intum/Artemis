@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
+import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.dto.WeaviateDateUtil;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ChannelSearchableEntityDTO;
@@ -199,7 +200,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert exercise without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE);
     }
 
     /**
@@ -218,7 +219,7 @@ public class SearchableEntityWeaviateService {
                 log.warn("Cannot upsert exercise without an ID for exam {}", examId);
                 continue;
             }
-            saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId());
+            saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE);
             enqueued++;
         }
         if (enqueued > 0) {
@@ -239,7 +240,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert lecture without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE, dto.lectureId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- LectureUnit sync -----
@@ -254,7 +255,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert lecture unit without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.LECTURE_UNIT, dto.lectureUnitId(), WeaviateOutboxOrigin.LIVE);
     }
 
     /**
@@ -280,7 +281,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert exam without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- FAQ sync -----
@@ -295,7 +296,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert faq without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.FAQ, dto.faqId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.FAQ, dto.faqId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- Channel sync -----
@@ -310,7 +311,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert channel without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.CHANNEL, dto.channelId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- Course sync -----
@@ -325,7 +326,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert course without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, dto.courseId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, dto.courseId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- Post sync -----
@@ -340,7 +341,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert post without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.POST, dto.postId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.POST, dto.postId(), WeaviateOutboxOrigin.LIVE);
     }
 
     // ----- Answer Post sync -----
@@ -355,7 +356,7 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert answer post without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId());
+        enqueueUpsert(SearchableEntitySchema.TypeValues.ANSWER_POST, dto.answerPostId(), WeaviateOutboxOrigin.LIVE);
     }
 
     /**
@@ -397,9 +398,7 @@ public class SearchableEntityWeaviateService {
      * @param entityId the entity id
      */
     public void deleteEntityAsync(String type, long entityId) {
-        outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(type, entityId));
-        log.debug("Enqueued delete for {} {}", type, entityId);
-        signalEnqueued();
+        enqueueDeleteEntity(type, entityId, WeaviateOutboxOrigin.LIVE);
     }
 
     /**
@@ -419,18 +418,45 @@ public class SearchableEntityWeaviateService {
      * identity; the dispatcher re-derives the current property map from the database when it applies the row.
      * Used both directly (single-entity upserts, followed by a signal) and in the exam-refresh loop.
      */
-    private void saveUpsert(String type, Long entityId) {
-        outboxRepository.save(WeaviateOutboxEntry.forUpsert(type, entityId));
+    private void saveUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
+        outboxRepository.save(WeaviateOutboxEntry.forUpsert(type, entityId, origin));
     }
 
-    private void enqueueUpsert(String type, Long entityId) {
-        saveUpsert(type, entityId);
-        log.debug("Enqueued upsert for {} {}", type, entityId);
+    /**
+     * Queues an upsert for any entity type, recording which path asked for it.
+     * <p>
+     * The typed {@code upsert*Async} methods above are the request path and pass {@link WeaviateOutboxOrigin#LIVE}.
+     * This generic form exists for a reconcile pass, which works over {@code (type, entityId)} pairs it read from
+     * the database or from the index and has no DTO in hand. The row carries identity only either way, so the
+     * dispatcher re-derives current state at apply time regardless of who enqueued it.
+     *
+     * @param type     the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId the database id of the entity
+     * @param origin   which path is asking
+     */
+    public void enqueueUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
+        saveUpsert(type, entityId, origin);
+        log.debug("Enqueued upsert for {} {} ({})", type, entityId, origin);
+        signalEnqueued();
+    }
+
+    /**
+     * Queues the removal of a single entity's row, recording which path asked for it. See
+     * {@link #enqueueUpsert(String, Long, WeaviateOutboxOrigin)} for why the generic form exists.
+     *
+     * @param type     the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityId the database id of the entity
+     * @param origin   which path is asking
+     */
+    public void enqueueDeleteEntity(String type, long entityId, WeaviateOutboxOrigin origin) {
+        outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(type, entityId, origin));
+        log.debug("Enqueued delete for {} {} ({})", type, entityId, origin);
         signalEnqueued();
     }
 
     private void enqueueBulkDelete(WeaviateOutboxOperation operation, Map<String, Object> params) {
-        outboxRepository.save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params)));
+        // Only the request path issues bulk deletes; a reconcile pass works entity by entity.
+        outboxRepository.save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE));
         log.debug("Enqueued {} with params {}", operation, params);
         signalEnqueued();
     }
