@@ -33,6 +33,7 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
+import { ExerciseSubmission } from 'app/exercise/shared/exercise-submission.interface';
 import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/modeling-assessment-panel.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -75,7 +76,7 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
         NgTemplateOutlet,
     ],
 })
-export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
@@ -206,6 +207,12 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     protected showComplaintSection(): boolean {
         return !!this.result() && !this.examMode() && !this.isFeedbackView();
     }
+
+    /**
+     * Mirrors {@link shouldShowLiveEditor} for the shell: once the canvas is the read-only assessment there is nothing
+     * to submit, and offering Submit would only resubmit unchanged work.
+     */
+    readonly canSubmitExercise = computed(() => this.shouldShowLiveEditor());
 
     protected shouldShowLiveEditor(): boolean {
         return (

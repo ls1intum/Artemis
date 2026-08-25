@@ -217,4 +217,27 @@ describe('ExerciseSplitPanelComponent', () => {
             expect(component.restartPractice()).toBe(false);
         });
     });
+    // Regression: the shell offered Submit as soon as a participation existed, so an assessed modeling submission —
+    // whose canvas is the read-only assessment, with no editor at all — still showed a Submit button that would only
+    // resubmit unchanged work. A surface that can go read-only now withdraws the action.
+    it('should withdraw submit while the routed participation surface is read-only', () => {
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
+        fixture.detectChanges();
+
+        // Nothing routed yet: unchanged behaviour, the shell decides on its own.
+        expect(component.canSubmit()).toBe(true);
+
+        const editable = signal(true);
+        component.onOutletActivate({ submitExercise: () => {}, canSubmitExercise: editable });
+        expect(component.canSubmit()).toBe(true);
+
+        editable.set(false);
+        expect(component.canSubmit()).toBe(false);
+
+        // A component that never goes read-only does not opt in, so it is unaffected.
+        component.onOutletDeactivate();
+        component.onOutletActivate({ submitExercise: () => {} });
+        expect(component.canSubmit()).toBe(true);
+    });
 });

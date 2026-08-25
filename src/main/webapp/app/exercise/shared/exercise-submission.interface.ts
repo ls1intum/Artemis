@@ -1,3 +1,5 @@
+import { Signal } from '@angular/core';
+
 /**
  * Common contract for exercise participation components rendered inside ExerciseSplitPanelComponent.
  * Implementing this interface lets the parent shell trigger submission without a static import
@@ -5,6 +7,16 @@
  */
 export interface ExerciseSubmission {
     submitExercise(): void;
+
+    /**
+     * Optional: whether the surface can be submitted right now.
+     *
+     * The shell offers Submit as soon as a participation exists, which is wrong wherever the surface has gone
+     * read-only — an assessed submission, for instance, where pressing Submit would resubmit unchanged work. A
+     * component that can become read-only exposes this so the shell stops offering an action that does nothing.
+     * A signal rather than a method, because the shell reads it from a computed.
+     */
+    readonly canSubmitExercise?: Signal<boolean>;
 }
 
 /**
