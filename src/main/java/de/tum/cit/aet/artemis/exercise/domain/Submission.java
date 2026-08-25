@@ -87,8 +87,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
-     */
-    /**
+     * <p>
      * Deliberately unordered. This used to be an ordered list whose position carried the correction round, which meant
      * every write in this area had to load and re-save the whole submission so that Hibernate could renumber the order
      * column. The correction round now lives on {@link Result#getCorrectionRound()}, and the newest result is the one
@@ -172,7 +171,10 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         if (correctionRound < 0) {
             return null;
         }
-        return filterNonAutomaticResults().stream().filter(result -> Objects.equals(result.getCorrectionRound(), correctionRound)).findFirst().orElse(null);
+        // The lowest id among the matches, so that the answer does not depend on the iteration order of an unordered
+        // set. There should only ever be one result per round, and picking the earliest is what the ordered list did.
+        return filterNonAutomaticResults().stream().filter(result -> Objects.equals(result.getCorrectionRound(), correctionRound)).min(Comparator.comparing(Result::getId))
+                .orElse(null);
     }
 
     /**
