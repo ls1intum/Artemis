@@ -80,7 +80,7 @@ public class VcsAccessLogService {
      *                           installation uses stays visible in the log rather than being inferred from its
      *                           configuration.
      */
-    @Async
+    @Async("vcsAccessLogExecutor")
     public void saveBuildAgentAccessLog(ProgrammingExerciseParticipation participation, String buildAgentName, String buildJobId, String commitHash, String ipAddress,
             AuthenticationMechanism mechanism) {
         log.debug("Storing access operation for build agent {} running build job {}", buildAgentName, buildJobId);

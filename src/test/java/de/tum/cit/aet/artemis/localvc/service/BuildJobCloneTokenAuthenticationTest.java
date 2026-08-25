@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
@@ -107,13 +108,13 @@ class BuildJobCloneTokenAuthenticationTest {
     }
 
     private static BuildAgentNetworkPolicy policyAllowingEverything() {
-        return new BuildAgentNetworkPolicy(new BuildAgentNetworkConfiguration());
+        return new BuildAgentNetworkPolicy(new BuildAgentNetworkConfiguration(), new MockEnvironment());
     }
 
     private static BuildAgentNetworkPolicy policyAllowingOnly(String range) {
         BuildAgentNetworkConfiguration configuration = new BuildAgentNetworkConfiguration();
         configuration.setAllowedRanges(List.of(range));
-        return new BuildAgentNetworkPolicy(configuration);
+        return new BuildAgentNetworkPolicy(configuration, new MockEnvironment());
     }
 
     private static String repositoryUriOf(String path) {

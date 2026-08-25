@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
@@ -118,7 +120,7 @@ class BuildAgentAddressRegistryServiceTest {
     private BuildAgentAddressRegistryService createService(List<String> allowedRanges) {
         BuildAgentNetworkConfiguration configuration = new BuildAgentNetworkConfiguration();
         configuration.setAllowedRanges(allowedRanges);
-        return new BuildAgentAddressRegistryService(distributedDataAccessService, new BuildAgentNetworkPolicy(configuration));
+        return new BuildAgentAddressRegistryService(distributedDataAccessService, new BuildAgentNetworkPolicy(configuration, new MockEnvironment()));
     }
 
     @Test
@@ -647,6 +649,47 @@ class BuildAgentAddressRegistryServiceTest {
 
         assertThat(registeredAddresses).as("nothing may be registered from an observation that cannot speak for the git path").isEmpty();
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "127.0.0.1")).as("the agent clones from a different path and must not be refused for it").isTrue();
+    }
+
+    /**
+     * The middleware answers "who is connected" per node: Hazelcast's {@code getConnectedClients()} returns the clients
+     * of the member it is asked. Every core node runs this reconcile against one shared map, so a node must not clear
+     * an agent it has simply never seen - the agent's client may be attached to other members, and clearing denies its
+     * clones on every node at once.
+     * <p>
+     * The case that makes this concrete is a core node joining an existing cluster: its first round sees no clients at
+     * all, and without the guard it would blank every agent in the installation.
+     */
+    @Test
+    void shouldNotClearAnAgentThisNodeHasNeverObserved() {
+        // A different node registered the agent; this one has never had its client attached
+        registerAgent("agent-1");
+        registeredAddresses.put("agent-1", new BuildAgentAddressInfo("agent-1", Set.of("10.0.0.5"), ZonedDateTime.now(), true));
+        observe(Map.of());
+        BuildAgentAddressRegistryService service = createService(List.of());
+
+        service.refreshRegisteredAddresses();
+
+        assertThat(registeredAddresses.get("agent-1").addresses()).as("an agent this node cannot see must keep the addresses the nodes that can see it registered")
+                .containsExactly("10.0.0.5");
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isTrue();
+    }
+
+    /**
+     * The counterpart: once this node <em>has</em> seen the agent, its disappearance is a real disconnection and the
+     * addresses have to stop authorizing clones.
+     */
+    @Test
+    void shouldClearAnAgentThisNodeObservedAndThenLost() {
+        observe(Map.of("agent-1", Set.of("10.0.0.5")));
+        BuildAgentAddressRegistryService service = createService(List.of());
+        service.refreshRegisteredAddresses();
+
+        observe(Map.of());
+        service.refreshRegisteredAddresses();
+
+        assertThat(registeredAddresses.get("agent-1").addresses()).isEmpty();
+        assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isFalse();
     }
 
 }

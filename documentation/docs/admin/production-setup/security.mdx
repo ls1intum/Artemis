@@ -16,10 +16,10 @@ artemis:
             username: "artemis-admin"
             password: "artemis-admin"
     version-control:
-        # Deprecated. Omit both unless Jenkins clones from this installation:
-        # build agents authenticate per build job, see "Build Agent Authentication" below.
-        build-agent-git-username: "buildagent_user"
-        build-agent-git-password: "buildagent_password"
+        # Only for Jenkins with LocalVC, i.e. a node WITHOUT local CI. A node running local CI refuses to start with
+        # either of these set; its build agents authenticate per build job. See "Build Agent Authentication" below.
+        # build-agent-git-username: "buildagent_user"
+        # build-agent-git-password: "buildagent_password"
 jhipster:
     security:
         authentication:
@@ -153,9 +153,15 @@ artemis:
     therefore the **union** of that regex and `trusted-proxies`.
 
     Two consequences. A reverse proxy on a private address is already handled, which is why HTTP git works behind the
-    shipped nginx without configuring `trusted-proxies` at all. But anything else able to reach Artemis from a private
-    address is equally believed, so narrow `server.tomcat.remoteip.internal-proxies` to your proxies if the private
-    network is not a space you fully control.
+    shipped nginx without configuring `trusted-proxies` at all. But **anything else able to reach Artemis from a private
+    address is equally believed** — it can send an `X-Forwarded-For` naming any address, and Tomcat will make that the
+    address Artemis sees. Both the allowlist above and the origin binding below then read the value the caller chose, so
+    on the default setting neither restricts a caller inside your private network.
+
+    **If you configure `allowed-ranges`, narrow `server.tomcat.remoteip.internal-proxies` to your own reverse proxies at
+    the same time.** Artemis logs a warning at startup when it sees the one without the other. This matters for the
+    origin binding too: without it, a clone token or an agent key that leaked off a build host is usable from any
+    private address rather than only from the agent's own.
 
     Conversely, if your proxy has a **public** address it matches neither list by default: `X-Forwarded-For` is ignored,
     every build agent appears to come from the proxy, and HTTPS clones are refused. List it in `trusted-proxies` (or in
@@ -225,21 +231,28 @@ A connection from a listed address must begin with a valid PROXY protocol header
 
 #### Moving build agents to SSH
 
-`artemis.version-control.build-agent-use-ssh` does different things on the two node roles. On a build agent it selects the mechanism the agent uses. On a core node it controls only whether the shared credential pair still grants repository-wide read. Core nodes always accept a registered build agent's public key, whatever the property says there, because a key is per-agent and only reaches a core node through an agent that has joined the cluster.
+`artemis.version-control.build-agent-use-ssh` does different things on the two node roles. On a build agent it selects the mechanism the agent uses. On a core node it decides whether the node offers SSH host keys for build agents at all. A core node always accepts a registered build agent's public key, whatever the property says there, because a key is per-agent and only reaches a core node through an agent that has joined the cluster — so agents can be moved one at a time while the core nodes still say `false`.
 
-That asymmetry decides the order in which you roll the change out:
-
-1. Set `build-agent-use-ssh: true` on the build agents, together with `ssh-template-clone-url` and `ssh-private-key-folder-path`, and restart them. They now clone by key, and the core nodes accept that immediately, so builds keep working while the core nodes are still on `false`. You can move agents one at a time.
+1. Set `build-agent-use-ssh: true` on the build agents, together with `ssh-template-clone-url` and `ssh-private-key-folder-path`, and restart them. Each generates its own key pair; the core nodes accept it immediately, so builds keep working.
 2. Once no agent clones over HTTPS any more, set the property on the core nodes and restart them.
 
 <Callout variant={CalloutVariant.warning}>
-    Do not do it in the other order. A core node with `build-agent-use-ssh: true` no longer grants the shared credential
-    pair repository-wide read, and `buildjob_user` is not a real account, so an agent that still relies on that pair
-    fails to clone from it. Agents that use build job clone tokens are unaffected either way.
+    **Upgrading a local CI installation to this release requires clearing the shared credential first, and that step is
+    not backwards compatible.** A core node running local CI refuses to start with `build-agent-git-username` or
+    `build-agent-git-password` set, and it no longer serves that credential to anybody — so a build agent still
+    configured to present it gets a 401, with no setting that restores the old behaviour.
 
-    Leave the credential pair configured when Jenkins is your CI backend. The [Jenkins with LocalVC](/admin/jenkins-localvc)
-    setup has Jenkins clone over HTTPS with it, and Jenkins is not an Artemis build agent, so it has neither a key nor a
-    build job to fall back to.
+    Upgrade in this order:
+
+    1. Move every build agent to SSH keys, or confirm they are on a version that sends the build job clone token
+       (this release and later). Both work against an old core node.
+    2. Clear the credential pair everywhere and upgrade the core nodes.
+
+    Build jobs queued by a core node that predates clone tokens carry none, so drain the queue across the upgrade
+    window if your agents are not on SSH.
+
+    None of this applies to [Jenkins with LocalVC](/admin/jenkins-localvc), which runs localvc without local CI: there
+    the credential pair stays, because Jenkins is not an Artemis build agent and has neither a key nor a build job.
 </Callout>
 
 ### Database Credentials

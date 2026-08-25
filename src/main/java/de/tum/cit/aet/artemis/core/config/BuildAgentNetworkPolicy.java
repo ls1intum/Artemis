@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.util.IpRangeSet;
 
@@ -45,13 +47,18 @@ public class BuildAgentNetworkPolicy {
 
     private static final String TRUSTED_PROXIES_PROPERTY = "artemis.continuous-integration.build-agent-network.trusted-proxies";
 
+    private static final String TOMCAT_INTERNAL_PROXIES_PROPERTY = "server.tomcat.remoteip.internal-proxies";
+
     private final IpRangeSet allowedRanges;
 
     private final IpRangeSet trustedProxies;
 
-    public BuildAgentNetworkPolicy(BuildAgentNetworkConfiguration configuration) {
+    private final Environment environment;
+
+    public BuildAgentNetworkPolicy(BuildAgentNetworkConfiguration configuration, Environment environment) {
         this.allowedRanges = IpRangeSet.parse(configuration.getAllowedRanges(), ALLOWED_RANGES_PROPERTY);
         this.trustedProxies = IpRangeSet.parse(configuration.getTrustedProxies(), TRUSTED_PROXIES_PROPERTY);
+        this.environment = environment;
     }
 
     /**
@@ -68,9 +75,31 @@ public class BuildAgentNetworkPolicy {
             log.info("Build agents may only clone from {}", allowedRanges);
         }
         if (!trustedProxies.isEmpty()) {
-            log.info("X-Forwarded-For is believed for HTTP git requests arriving from {}. Note that Tomcat's server.tomcat.remoteip.internal-proxies is applied first and "
-                    + "defaults to the private ranges, so the effective set is the union of the two.", trustedProxies);
+            log.info("X-Forwarded-For is believed for HTTP git requests arriving from {}. Note that Tomcat's {} is applied first and defaults to the private ranges, so the "
+                    + "effective set is the union of the two.", trustedProxies, TOMCAT_INTERNAL_PROXIES_PROPERTY);
         }
+        warnIfAllowlistRestsOnTheDefaultForwardedHeaderTrust();
+    }
+
+    /**
+     * Says so when the allowlist is configured but the header that can defeat it is still trusted from anywhere private.
+     * <p>
+     * Artemis runs with {@code server.forward-headers-strategy: native}, so Tomcat rewrites {@code getRemoteAddr()}
+     * from {@code X-Forwarded-For} for any peer matching {@code server.tomcat.remoteip.internal-proxies}, whose default
+     * is the private ranges plus loopback. A caller connecting from any of them can therefore name an arbitrary private
+     * address, and both this allowlist and the build agent origin binding read that address.
+     * <p>
+     * Only warned about when {@link #allowedRanges} is configured, because that is the operator who has expressed the
+     * intention this silently does not fulfil. Leaving the allowlist empty is a decision not to restrict, and needs no
+     * warning.
+     */
+    private void warnIfAllowlistRestsOnTheDefaultForwardedHeaderTrust() {
+        if (allowedRanges.isEmpty() || StringUtils.hasText(environment.getProperty(TOMCAT_INTERNAL_PROXIES_PROPERTY))) {
+            return;
+        }
+        log.warn("{} is configured, but {} is not set, so Tomcat believes X-Forwarded-For from every private address by default. A caller reaching this node from any private "
+                + "address can therefore present an arbitrary address and pass both this allowlist and the build agent origin check. Narrow that property to your own reverse "
+                + "proxies to make the restriction effective.", ALLOWED_RANGES_PROPERTY, TOMCAT_INTERNAL_PROXIES_PROPERTY);
     }
 
     /**

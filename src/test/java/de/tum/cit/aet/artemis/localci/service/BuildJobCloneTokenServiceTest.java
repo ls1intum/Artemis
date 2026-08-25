@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
+import de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService;
 import de.tum.cit.aet.artemis.core.config.LoggingAspect;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -160,7 +161,9 @@ class BuildJobCloneTokenServiceTest {
                 .as("a freshly minted clone token must not be logged as the return value of the method that mints it").isFalse();
         assertThat(pointcut.matches(BuildJobCloneTokenService.class.getMethod("tokenMatches", BuildJobQueueItem.class, String.class), BuildJobCloneTokenService.class))
                 .as("the presented clone token must not be logged as an argument of the comparison").isFalse();
+        assertThat(pointcut.matches(BuildJobGitService.class.getMethod("setCloneTokenForCurrentThread", String.class), BuildJobGitService.class))
+                .as("the agent binds the token to its thread once per build job, which would otherwise log it as an argument").isFalse();
         assertThat(pointcut.matches(DistributedDataAccessService.class.getMethod("getProcessingJobs"), DistributedDataAccessService.class))
-                .as("the exclusion has to be specific to this service, or it would silently switch off logging for the whole module").isTrue();
+                .as("the exclusion has to be specific to these services, or it would silently switch off logging for the whole module").isTrue();
     }
 }

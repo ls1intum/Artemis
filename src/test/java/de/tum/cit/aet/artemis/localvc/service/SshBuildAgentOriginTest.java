@@ -17,6 +17,7 @@ import org.apache.sshd.common.config.keys.PublicKeyEntry;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
@@ -76,7 +77,7 @@ class SshBuildAgentOriginTest {
         // No user owns this key, so authentication falls through to the build agent branch
         when(userSshPublicKeyRepository.findByKeyHash(any())).thenReturn(Optional.empty());
         return new GitPublickeyAuthenticatorService(mock(UserRepository.class), Optional.of(distributedDataAccessService), userSshPublicKeyRepository, mock(RateLimitService.class),
-                new BuildAgentNetworkPolicy(configuration), Optional.of(buildAgentAddressRegistryService));
+                new BuildAgentNetworkPolicy(configuration, new MockEnvironment()), Optional.of(buildAgentAddressRegistryService));
     }
 
     private ServerSession sessionFrom(String clientAddress) {
@@ -149,7 +150,7 @@ class SshBuildAgentOriginTest {
         var userSshPublicKeyRepository = mock(UserSshPublicKeyRepository.class);
         when(userSshPublicKeyRepository.findByKeyHash(any())).thenReturn(Optional.empty());
         var service = new GitPublickeyAuthenticatorService(mock(UserRepository.class), Optional.of(distributedDataAccessService), userSshPublicKeyRepository,
-                mock(RateLimitService.class), new BuildAgentNetworkPolicy(new BuildAgentNetworkConfiguration()), Optional.empty());
+                mock(RateLimitService.class), new BuildAgentNetworkPolicy(new BuildAgentNetworkConfiguration(), new MockEnvironment()), Optional.empty());
 
         assertThat(service.authenticate(AGENT_NAME, agentPublicKey, sessionFrom("203.0.113.9"))).isTrue();
     }

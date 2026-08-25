@@ -56,11 +56,17 @@ public class LoggingAspect {
      * <p>
      * {@link #logAround} prints every argument and every return value, so a service that takes or produces a secret
      * would write it into the log of every node running the development profile, from where it spreads to log
-     * aggregation and support bundles. {@code BuildJobCloneTokenService} both mints a build job's clone token and
-     * receives the presented one for comparison; the token is deliberately masked in
-     * {@code BuildJobQueueItem.toString()} for the same reason, and this closes the other way out.
+     * aggregation and support bundles. The token is deliberately masked in {@code BuildJobQueueItem.toString()} for the
+     * same reason; these exclusions close the other ways out, and both are needed:
+     * <ul>
+     * <li>{@code BuildJobCloneTokenService} mints a build job's clone token and receives the presented one to compare
+     * against, so it appears as both a return value and an argument.</li>
+     * <li>{@code BuildJobGitService} takes the token as the argument of {@code setCloneTokenForCurrentThread}, which
+     * runs once per build job on any node carrying both the core and buildagent profiles - the standard single node
+     * development setup, which is exactly where this aspect is active.</li>
+     * </ul>
      */
-    @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService)")
+    @Pointcut("!within(de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService) && !within(de.tum.cit.aet.artemis.buildagent.service.BuildJobGitService)")
     public void notACredentialHandlingBean() {
         // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }

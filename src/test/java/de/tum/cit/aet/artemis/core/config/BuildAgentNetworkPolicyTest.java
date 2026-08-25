@@ -9,6 +9,13 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.LoggerFactory;
+import org.springframework.mock.env.MockEnvironment;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 
 /**
  * Tests for {@link BuildAgentNetworkPolicy}.
@@ -23,7 +30,7 @@ class BuildAgentNetworkPolicyTest {
         BuildAgentNetworkConfiguration configuration = new BuildAgentNetworkConfiguration();
         configuration.setAllowedRanges(allowedRanges);
         configuration.setTrustedProxies(trustedProxies);
-        return new BuildAgentNetworkPolicy(configuration);
+        return new BuildAgentNetworkPolicy(configuration, new MockEnvironment());
     }
 
     @Test
@@ -121,4 +128,55 @@ class BuildAgentNetworkPolicyTest {
         assertThat(policyWith(List.of(), List.of()).isAllowlistConfigured()).isFalse();
         assertThat(policyWith(List.of("10.0.0.0/8"), List.of()).isAllowlistConfigured()).isTrue();
     }
+
+    /**
+     * The allowlist is read from an address Tomcat may have taken out of {@code X-Forwarded-For}: Artemis runs with
+     * {@code forward-headers-strategy: native}, and {@code server.tomcat.remoteip.internal-proxies} defaults to the
+     * private ranges, so a caller reaching the node from any private address can name whichever address it likes.
+     * <p>
+     * That leaves an operator who configured an allowlist believing in a restriction that is not effective, with
+     * nothing anywhere saying so. The startup warning is that signal, so it is pinned here - and it must stay quiet in
+     * the two cases that are not a mistake: no allowlist (a decision not to restrict) and a narrowed Tomcat property.
+     */
+    @Test
+    void shouldWarnWhenAnAllowlistRestsOnTheDefaultForwardedHeaderTrust() {
+        assertThat(startupLogOf(List.of("10.0.0.0/8"), new MockEnvironment())).anyMatch(message -> message.contains("server.tomcat.remoteip.internal-proxies"));
+    }
+
+    @Test
+    void shouldNotWarnWhenTheForwardedHeaderTrustIsNarrowed() {
+        MockEnvironment narrowed = new MockEnvironment().withProperty("server.tomcat.remoteip.internal-proxies", "10\\.0\\.0\\.1");
+
+        assertThat(startupLogOf(List.of("10.0.0.0/8"), narrowed)).noneMatch(message -> message.contains("server.tomcat.remoteip.internal-proxies is not set"));
+    }
+
+    @Test
+    void shouldNotWarnWithoutAnAllowlist() {
+        assertThat(startupLogOf(List.of(), new MockEnvironment())).noneMatch(message -> message.contains("server.tomcat.remoteip.internal-proxies is not set"));
+    }
+
+    /**
+     * @param allowedRanges the configured build agent networks
+     * @param environment   the environment the policy reads the Tomcat property from
+     * @return the warnings the policy emits while stating what it enforces
+     */
+    private static List<String> startupLogOf(List<String> allowedRanges, MockEnvironment environment) {
+        BuildAgentNetworkConfiguration configuration = new BuildAgentNetworkConfiguration();
+        configuration.setAllowedRanges(allowedRanges);
+        BuildAgentNetworkPolicy policy = new BuildAgentNetworkPolicy(configuration, environment);
+
+        var logger = (Logger) LoggerFactory.getLogger(BuildAgentNetworkPolicy.class);
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            policy.logConfiguredPolicy();
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+        return appender.list.stream().filter(event -> event.getLevel() == Level.WARN).map(ILoggingEvent::getFormattedMessage).toList();
+    }
+
 }

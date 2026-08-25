@@ -56,21 +56,25 @@ public final class HttpRequestUtils {
     /**
      * Resolves the address a request actually came from, believing forwarding headers only from a trusted proxy.
      * <p>
-     * Use this, not {@link #getIpStringFromRequest}, wherever the address decides an authorization outcome. That
-     * method returns the first {@code X-Forwarded-For} value whenever the header is present, and any client can set
-     * that header, so a caller could name whatever address an allowlist happens to permit. Here the TCP peer is the
-     * starting point, and the header is consulted only when that peer is a reverse proxy the installation operates.
+     * Prefer this over {@link #getIpStringFromRequest} wherever the address decides an authorization outcome. That
+     * method returns the first {@code X-Forwarded-For} value whenever the header is present, so a caller names whatever
+     * address it likes. Here the header is consulted only when {@link HttpServletRequest#getRemoteAddr()} is a reverse
+     * proxy the installation operates, and the list is then walked from the right, taking the last entry that did not
+     * come from a trusted proxy: entries further left were supplied by the client, because a proxy appends to the
+     * header rather than replacing it.
      * <p>
-     * The list is walked from the right, taking the last entry that did not come from a trusted proxy. Entries to the
-     * left of that one were supplied by the client and cannot be relied upon: a client may send an
-     * {@code X-Forwarded-For} of its own, and the proxy appends to it rather than replacing it.
+     * <b>This is a second filter, not the only one, and it cannot repair the first.</b> Artemis runs with
+     * {@code server.forward-headers-strategy: native}, so Tomcat's {@code RemoteIpValve} has already rewritten
+     * {@code getRemoteAddr()} from {@code X-Forwarded-For} before this method sees anything, for any peer matching
+     * {@code server.tomcat.remoteip.internal-proxies} - which defaults to the private ranges and loopback. The starting
+     * point is therefore not the TCP peer but Tomcat's conclusion about it, and a caller connecting <em>from</em> one
+     * of those ranges can put an arbitrary private address in that header and have it become the value returned here.
      * <p>
-     * <b>Note on the starting point.</b> Artemis runs with {@code server.forward-headers-strategy: native}, so Tomcat's
-     * {@code RemoteIpValve} has already replaced {@link HttpServletRequest#getRemoteAddr()} with an
-     * {@code X-Forwarded-For} derived value whenever the immediate peer matched {@code server.tomcat.remoteip.internal-proxies}
-     * (private ranges by default). This method is therefore the second, narrower filter rather than the only one: the
-     * effective set of addresses whose forwarding headers are believed is the union of that regex and
-     * {@code trustedProxies}. Narrow the Tomcat property alongside this one where the distinction matters.
+     * So the effective set of addresses whose forwarding headers are believed is the union of that regex and
+     * {@code trustedProxies}, and an origin check built on this value is only as strong as the narrower of the two. An
+     * installation that relies on the address for authorization has to narrow {@code server.tomcat.remoteip.internal-proxies}
+     * to its own proxies; {@link de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy} says so at startup when it
+     * sees an allowlist configured against the default.
      *
      * @param request        the HTTP request
      * @param isTrustedProxy tells whether an address is a reverse proxy this installation operates

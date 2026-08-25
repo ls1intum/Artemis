@@ -54,7 +54,9 @@ public enum RateLimitType {
      * network allowlist - reject anything that is not a plausible agent credential from an allowed network, but past
      * them it reads the whole distributed processing job map to find the presented token. A caller inside the build
      * agent networks who knows a registered agent name - it is an identifier, shown in the admin UI - could otherwise
-     * force that read in a loop with arbitrary passwords, unbounded. This limit bounds it.
+     * force that read in a loop with arbitrary passwords, unbounded. This limit bounds it <em>where rate limiting is
+     * switched on at all</em>: {@code artemis.rate-limiting.enabled} defaults to false, and on an installation that
+     * leaves it there the cheap gates above are the only bound on reaching the scan.
      * <p>
      * It is a bound on guessing, and sized like one, because two things keep it away from real agents. An address that
      * some build agent is registered at is exempt, which tracks the agents automatically rather than through a

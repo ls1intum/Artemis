@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -109,6 +110,22 @@ public class BuildAgentAddressRegistryService {
      * deployment that expected the binding to be active would otherwise have no way to tell it is not.
      */
     private volatile Boolean loggedAddressObservability = null;
+
+    /**
+     * The agents this node has itself observed connecting, at any point since it started.
+     * <p>
+     * Needed because the middleware answers "who is connected" <b>per node</b>: Hazelcast's
+     * {@code ClientService.getConnectedClients()} returns the clients of the member it is asked, not of the cluster. So
+     * an agent absent from this node's answer has two meanings - it disconnected, or it simply never attached to this
+     * particular member - and only the first may clear its addresses, because clearing them denies its clones on every
+     * node. A node that has just joined has seen nobody yet and would otherwise blank the whole registry on its first
+     * round.
+     * <p>
+     * Only ever added to. An agent that leaves and returns is re-observed, and the entry a node declines to clear stays
+     * at the addresses that node last saw, which is the safe direction: the agent remains bound to real addresses
+     * rather than becoming unbound.
+     */
+    private final Set<String> agentsObservedByThisNode = ConcurrentHashMap.newKeySet();
 
     /**
      * Serialises the refreshes triggered by a lookup miss, so that a request which does not perform the refresh waits
@@ -232,6 +249,8 @@ public class BuildAgentAddressRegistryService {
             var registeredAddresses = distributedDataAccessService.getDistributedBuildAgentAddresses();
             ZonedDateTime observedAt = ZonedDateTime.now();
 
+            agentsObservedByThisNode.addAll(observed.keySet());
+
             for (var entry : observed.entrySet()) {
                 String agentName = entry.getKey();
                 Set<String> addresses = Set.copyOf(entry.getValue());
@@ -266,6 +285,14 @@ public class BuildAgentAddressRegistryService {
                     continue;
                 }
                 if (canStillAuthenticate(registeredAgent)) {
+                    if (!agentsObservedByThisNode.contains(registeredAgent)) {
+                        // This node has never seen that agent, so its absence here says nothing: the agent's client may
+                        // simply be attached to other members. Clearing on that basis would deny its clones cluster
+                        // wide, and a node that has just joined would do it to every agent at once.
+                        log.debug("Build agent {} is not among this node's clients and never has been, so its registered addresses are left to the nodes that observe it",
+                                registeredAgent);
+                        continue;
+                    }
                     registeredAddresses.lock(registeredAgent);
                     try {
                         BuildAgentAddressInfo previous = registeredAddresses.get(registeredAgent);
