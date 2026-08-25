@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -95,7 +95,7 @@ public class ParticipationFilterService {
                     latestResult.filterSensitiveInformation();
                 }
             }
-            submission.setResults(new HashSet<>(results));
+            submission.setResults(new LinkedHashSet<>(results));
         }
         else {
             // A quiz that has not ended yet intentionally exposes neither its submission's answers nor its result (see
@@ -130,7 +130,7 @@ public class ParticipationFilterService {
                     sanitizedSubmission.setId(submission.getId());
                     sanitizedSubmission.setSubmitted(true);
                     sanitizedSubmission.setSubmissionDate(submission.getSubmissionDate());
-                    sanitizedSubmission.setResults(new HashSet<>());
+                    sanitizedSubmission.setResults(new LinkedHashSet<>());
                     return sanitizedSubmission;
                 });
     }
