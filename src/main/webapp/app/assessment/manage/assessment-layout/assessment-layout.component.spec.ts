@@ -4,7 +4,8 @@ import { By } from '@angular/platform-browser';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { Complaint } from 'app/assessment/shared/entities/complaint.model';
+import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -125,5 +126,29 @@ describe('AssessmentLayoutComponent', () => {
 
         component.setAssessmentNoteForResult(mockAssessmentNote);
         expect(component.result()!.assessmentNote).toBe(mockAssessmentNote);
+    });
+    describe('complaint section', () => {
+        const complaint = { id: 1, complaintType: ComplaintType.COMPLAINT } as Complaint;
+
+        it('should show the hint banner and the complaint form by default', () => {
+            fixture.componentRef.setInput('complaint', complaint);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).not.toBeNull();
+            expect(fixture.debugElement.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+        });
+
+        // The banner reads "scroll down to review the complaint" and the form it points at is appended below the
+        // assessment. A workspace that is sized to the viewport and does not scroll — the modeling assessment page —
+        // would clip that form out of reach and send the tutor scrolling somewhere they cannot go. Such a page opts
+        // out of both and places the form in its own scrollable pane instead; the two must never come apart.
+        it('should drop the hint banner together with the form when the page places the complaint itself', () => {
+            fixture.componentRef.setInput('complaint', complaint);
+            fixture.componentRef.setInput('showComplaintSection', false);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
+            expect(fixture.debugElement.query(By.directive(ComplaintsForTutorComponent))).toBeNull();
+        });
     });
 });

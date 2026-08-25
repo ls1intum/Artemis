@@ -49,6 +49,17 @@ export class AssessmentLayoutComponent {
      * one. Defaults to true so text, programming and file upload keep the layout they had.
      */
     readonly showAssessmentNote = input(true);
+
+    /**
+     * Whether this layout owns the complaint: the "scroll down to review the complaint" banner and the complaint form
+     * it points at, both of which sit below the assessment and are reached by scrolling the page.
+     *
+     * Defaults to true. Modeling passes false because its page does not scroll — it is sized to the viewport with
+     * `overflow: hidden`, so a complaint form appended after the workspace would be clipped and unreachable, and the
+     * banner would send the tutor scrolling somewhere they cannot go. It renders the form inside its own scrollable
+     * workspace details pane instead, next to the assessment note.
+     */
+    readonly showComplaintSection = input(true);
     readonly hasAssessmentDueDatePassed = input.required<boolean>();
     readonly isProgrammingExercise = input<boolean>(false); // remove once diff view activated for programming exercises
     readonly highlightDifferences = model(false);

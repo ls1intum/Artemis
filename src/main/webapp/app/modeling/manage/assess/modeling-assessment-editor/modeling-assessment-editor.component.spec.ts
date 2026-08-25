@@ -34,7 +34,8 @@ import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedbac
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import dayjs from 'dayjs/esm';
-import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
+import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ApollonEditor, UMLDiagramType } from '@tumaet/apollon';
@@ -164,6 +165,28 @@ describe('ModelingAssessmentEditorComponent', () => {
             ],
         } as unknown as ModelingSubmission;
     };
+
+    // Regression: this page is sized to the viewport with `overflow: hidden`, so the shared layout's complaint
+    // section — a "scroll down to review the complaint" banner plus the form it points at, both appended below the
+    // assessment — was clipped out of reach, and the banner pointed at a scroll the page cannot perform. The page
+    // opts out of the shared section and renders both inside its own scrollable "Feedback & notes" pane instead.
+    it('should place the complaint banner and form in its own scrollable pane rather than under the assessment', async () => {
+        vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>));
+
+        component.ngOnInit();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const layout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance as AssessmentLayoutComponent;
+        expect(layout.showComplaintSection()).toBe(false);
+
+        // Both halves stay together, inside the pane that actually scrolls.
+        const pane = fixture.debugElement.query(By.css('[assessmentWorkspaceDetails]'));
+        expect(pane).not.toBeNull();
+        expect(pane.query(By.directive(AssessmentComplaintAlertComponent))).not.toBeNull();
+        expect(pane.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+    });
 
     describe('ngOnInit tests', () => {
         it('ngOnInit', async () => {
