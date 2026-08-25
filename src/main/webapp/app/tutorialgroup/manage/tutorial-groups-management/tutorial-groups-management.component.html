@@ -3,19 +3,14 @@
 @if (currentCourseId !== undefined) {
     <div *titleBarActions class="flex items-center gap-2">
         @if (!hasNoTutorialGroups()) {
-            <tum-ui-icon-field class="w-40 lg:w-64" [icon]="faMagnifyingGlass">
-                <input
-                    #searchInput
-                    tumUiInput
-                    tumUiInputSize="small"
-                    type="search"
-                    class="w-full"
-                    data-testid="tutorial-groups-search"
-                    [placeholder]="'artemisApp.pages.tutorialGroupsManagement.searchPlaceholder' | artemisTranslate"
-                    [attr.aria-label]="'artemisApp.pages.tutorialGroupsManagement.searchPlaceholder' | artemisTranslate"
-                    (input)="onSearch(searchInput.value)"
-                />
-            </tum-ui-icon-field>
+            <tum-ui-search-field
+                class="w-40 lg:w-64"
+                size="small"
+                data-testid="tutorial-groups-search"
+                placeholder="artemisApp.pages.tutorialGroupsManagement.searchPlaceholder"
+                [value]="searchTerm()"
+                (valueChange)="onSearch($event)"
+            />
         }
         @if (isAtLeastInstructor()) {
             @if (configuration(); as tutorialGroupsConfiguration) {

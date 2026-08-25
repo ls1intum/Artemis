@@ -76,7 +76,7 @@ describe('TutorialGroupsManagementComponent', () => {
     }
 
     function search(term: string): void {
-        const input: HTMLInputElement = renderTitleBarActions().query(By.css('[data-testid="tutorial-groups-search"]')).nativeElement;
+        const input: HTMLInputElement = renderTitleBarActions().query(By.css('[data-testid="tutorial-groups-search"] input')).nativeElement;
         input.value = term;
         input.dispatchEvent(new Event('input'));
         fixture.detectChanges();

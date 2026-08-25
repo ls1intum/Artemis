@@ -26,6 +26,7 @@ export { TumUiProgressBarComponent, type TumUiProgressBarSeverity, type TumUiPro
 export { TumUiProgressSpinnerComponent } from './lib/progress-spinner/tum-ui-progress-spinner.component';
 export { TumUiRadioButtonComponent, type TumUiRadioButtonSelectEvent } from './lib/radio-button/tum-ui-radio-button.component';
 export { TumUiSelectButtonComponent, type TumUiSelectButtonOption, type TumUiSelectButtonSize } from './lib/select-button/tum-ui-select-button.component';
+export { TumUiSearchFieldComponent } from './lib/search-field/tum-ui-search-field.component';
 export { TumUiSelectComponent, type TumUiSelectSize } from './lib/select/tum-ui-select.component';
 export { TumUiTableSortableColumnComponent } from './lib/table-directive/tum-ui-table-sortable-column.component';
 export { TumUiTableVirtualScrollComponent } from './lib/table-directive/tum-ui-table-virtual-scroll.component';

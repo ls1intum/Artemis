@@ -5,15 +5,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faGear, faMagnifyingGlass, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     CellTemplateRef,
     ColumnDef,
     TumUiButtonDirective,
-    TumUiIconFieldComponent,
-    TumUiInputDirective,
     TumUiMessageComponent,
+    TumUiSearchFieldComponent,
     TumUiTableComponent,
     TumUiTableQueryEvent,
     TumUiTooltipDirective,
@@ -109,9 +108,8 @@ function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableFi
         CourseTitleBarActionsDirective,
         TumUiTableComponent,
         TumUiButtonDirective,
-        TumUiIconFieldComponent,
-        TumUiInputDirective,
         TumUiMessageComponent,
+        TumUiSearchFieldComponent,
         TumUiTooltipDirective,
         TutorialGroupsImportButtonComponent,
         TutorialGroupsExportButtonComponent,
@@ -214,7 +212,6 @@ export class TutorialGroupsManagementComponent {
     protected readonly faPlus = faPlus;
     protected readonly faGear = faGear;
     protected readonly faUmbrellaBeach = faUmbrellaBeach;
-    protected readonly faMagnifyingGlass = faMagnifyingGlass;
 
     constructor() {
         this.activatedRoute.data.pipe(takeUntilDestroyed()).subscribe(({ course }) => {
