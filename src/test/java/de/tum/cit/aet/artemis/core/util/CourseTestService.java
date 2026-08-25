@@ -3589,8 +3589,8 @@ public class CourseTestService {
                 course.getLanguage(), course.getDefaultProgrammingLanguage(), course.getMaxComplaints(), course.getMaxTeamComplaints(), course.getMaxComplaintTimeDays(),
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
-                course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(),
-                course.getCourseInformationSharingConfiguration(), course.isGradeRelevant());
+                course.getPresentationAssessmentsEnabled(), course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(),
+                course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(), course.isGradeRelevant());
     }
 
     public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {

@@ -14,12 +14,19 @@
             class="pointer rounded-3 col-12 px-1 py-2 border-start border-5 highlight-card bg-module hover-effect"
             [class.group-header]="isConnectedGroupHeader()"
             [ngClass]="{
+                'bg-selected border-selected': sidebarItem().active,
                 'border-success': sidebarItem()?.difficulty === DifficultyLevel.EASY,
                 'border-warning': sidebarItem()?.difficulty === DifficultyLevel.MEDIUM,
                 'border-danger': sidebarItem()?.difficulty === DifficultyLevel.HARD,
                 'border-module': !sidebarItem()?.difficulty,
             }"
-            [routerLink]="sidebarItem()?.targetComponentSubRoute ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id] : ['./', sidebarItem().id]"
+            [routerLink]="
+                sidebarItem().disableNavigation
+                    ? null
+                    : sidebarItem()?.targetComponentSubRoute
+                      ? ['./', sidebarItem().targetComponentSubRoute, sidebarItem().id]
+                      : ['./', sidebarItem().id]
+            "
             (click)="onNonExamCardClicked()"
             [routerLinkActive]="'bg-selected border-selected'"
         >

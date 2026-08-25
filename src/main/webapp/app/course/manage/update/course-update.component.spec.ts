@@ -84,6 +84,7 @@ describe('Course Management Update Component', () => {
         course.courseIconPath = 'api/core/files/testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
+        course.presentationAssessmentsEnabled = true;
 
         const route = {
             data: of({ course }),
@@ -250,6 +251,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
+            expect(comp.courseForm.get(['presentationAssessmentsEnabled'])?.value).toBe(course.presentationAssessmentsEnabled);
         });
     });
 
@@ -290,6 +292,7 @@ describe('Course Management Update Component', () => {
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
                 restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
+                presentationAssessmentsEnabled: new FormControl(entity.presentationAssessmentsEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -327,6 +330,7 @@ describe('Course Management Update Component', () => {
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
                 restrictedAthenaModulesAccess: new FormControl(entity.restrictedAthenaModulesAccess),
+                presentationAssessmentsEnabled: new FormControl(entity.presentationAssessmentsEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),

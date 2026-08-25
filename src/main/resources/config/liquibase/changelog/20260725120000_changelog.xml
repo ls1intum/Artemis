@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260725120000-1" author="artemis">
+        <addColumn tableName="presentation_assessment">
+            <column name="exercise_id" type="bigint"/>
+        </addColumn>
+
+        <addForeignKeyConstraint baseColumnNames="exercise_id"
+                                 baseTableName="presentation_assessment"
+                                 constraintName="fk_presentation_assessment_exercise_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="exercise"
+                                 onDelete="SET NULL"/>
+
+        <createIndex indexName="idx_presentation_assessment_exercise_id" tableName="presentation_assessment">
+            <column name="exercise_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260725120000-2" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="presentation_assessment_instance"/></not>
+        </preConditions>
+        <createTable tableName="presentation_assessment_instance">
+            <column name="id" type="bigint" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" primaryKeyName="pk_presentation_assessment_instance" nullable="false"/>
+            </column>
+            <column name="presentation_assessment_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="presentation_date" type="timestamp"/>
+            <column name="result_points" type="double"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260725120000-2a-drop-instance-student-fk" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="fk_presentation_instance_student_instance_id" foreignKeyTableName="presentation_assessment_instance_student"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="presentation_assessment_instance_student"
+                                  constraintName="fk_presentation_instance_student_instance_id"/>
+    </changeSet>
+
+    <changeSet id="20260725120000-2b-auto-increment" author="artemis">
+        <addAutoIncrement tableName="presentation_assessment_instance"
+                          columnName="id"
+                          columnDataType="bigint"/>
+    </changeSet>
+
+    <changeSet id="20260725120000-3" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyName="fk_presentation_instance_assessment_id" foreignKeyTableName="presentation_assessment_instance"/></not>
+        </preConditions>
+        <addForeignKeyConstraint baseColumnNames="presentation_assessment_id"
+                                 baseTableName="presentation_assessment_instance"
+                                 constraintName="fk_presentation_instance_assessment_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="presentation_assessment"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20260725120000-4" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists indexName="idx_presentation_instance_assessment_id" tableName="presentation_assessment_instance"/></not>
+        </preConditions>
+        <createIndex indexName="idx_presentation_instance_assessment_id" tableName="presentation_assessment_instance">
+            <column name="presentation_assessment_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260725120000-5" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="presentation_assessment_instance_student"/></not>
+        </preConditions>
+        <createTable tableName="presentation_assessment_instance_student">
+            <column name="presentation_assessment_instance_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="student_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260725120000-6" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><primaryKeyExists tableName="presentation_assessment_instance_student"/></not>
+        </preConditions>
+        <addPrimaryKey tableName="presentation_assessment_instance_student"
+                       columnNames="presentation_assessment_instance_id, student_id"
+                       constraintName="pk_presentation_instance_student"/>
+    </changeSet>
+
+    <changeSet id="20260725120000-7" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyName="fk_presentation_instance_student_instance_id" foreignKeyTableName="presentation_assessment_instance_student"/></not>
+        </preConditions>
+        <addForeignKeyConstraint baseColumnNames="presentation_assessment_instance_id"
+                                 baseTableName="presentation_assessment_instance_student"
+                                 constraintName="fk_presentation_instance_student_instance_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="presentation_assessment_instance"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20260725120000-8" author="artemis">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyName="fk_presentation_instance_student_student_id" foreignKeyTableName="presentation_assessment_instance_student"/></not>
+        </preConditions>
+        <addForeignKeyConstraint baseColumnNames="student_id"
+                                 baseTableName="presentation_assessment_instance_student"
+                                 constraintName="fk_presentation_instance_student_student_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20260725120000-9" author="artemis">
+        <sql>
+            INSERT INTO presentation_assessment_instance (presentation_assessment_id, presentation_date, result_points)
+            SELECT pa.id, pa.presentation_date, pa.result_points
+            FROM presentation_assessment pa
+            WHERE (pa.presentation_date IS NOT NULL
+               OR pa.result_points IS NOT NULL
+               OR EXISTS (SELECT 1 FROM presentation_assessment_student pas WHERE pas.presentation_assessment_id = pa.id))
+              AND NOT EXISTS (SELECT 1 FROM presentation_assessment_instance pai WHERE pai.presentation_assessment_id = pa.id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260725120000-10" author="artemis">
+        <sql>
+            INSERT INTO presentation_assessment_instance_student (presentation_assessment_instance_id, student_id)
+            SELECT pai.id, pas.student_id
+            FROM presentation_assessment_instance pai
+            JOIN presentation_assessment_student pas ON pas.presentation_assessment_id = pai.presentation_assessment_id
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM presentation_assessment_instance_student pais
+                WHERE pais.presentation_assessment_instance_id = pai.id AND pais.student_id = pas.student_id
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="20260725120000-11" author="artemis">
+        <addColumn tableName="presentation_assessment_instance">
+            <column name="language" type="varchar(10)"/>
+            <column name="presentation_mode" type="varchar(20)"/>
+            <column name="location" type="varchar(255)"/>
+            <column name="meeting_link" type="varchar(1000)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

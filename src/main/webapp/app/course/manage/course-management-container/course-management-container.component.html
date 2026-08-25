@@ -21,12 +21,8 @@
 
             <div class="layout-content">
                 @if (course()) {
-                    <!-- The communication page renders its title (and sidebar toggle) inside its own sidebar, mirroring the student view, so the container title bar is hidden there. -->
                     @if (!hasSidebar()) {
                         <jhi-course-title-bar [pageTitle]="pageTitle()">
-                            <!-- Only rendered on the settings page; its contents are all gated by isSettingsPage(). Skipping
-                                 the (otherwise empty) div on other pages avoids a phantom right-aligned flex item (margin-left:
-                                 auto) that would push projected title-bar actions away from the right edge. -->
                             @if (isSettingsPage()) {
                                 <div class="controls">
                                     @if (course()?.isAtLeastInstructor) {
@@ -83,8 +79,8 @@
                         class="course-body-container shell-divider-x"
                         id="course-body-container"
                         [ngClass]="{
-                            'module-bg rounded rounded-3 scrollable-content': !hasSidebar(),
-                            'p-3': !hasSidebar() && !removePadding(),
+                            'module-bg rounded rounded-3 scrollable-content': !hasSidebar() && !hasTransparentCourseBody(),
+                            'p-3': !hasSidebar() && !removePadding() && !hasTransparentCourseBody(),
                             'sidebar-body': hasSidebar(),
                         }"
                         cdkScrollable

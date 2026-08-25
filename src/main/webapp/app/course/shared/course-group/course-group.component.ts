@@ -66,11 +66,16 @@ export class CourseGroupComponent {
     readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
     readonly courseRoleSlug = input.required<CourseRoleSlug>();
     readonly exportFileName = input.required<string>();
+    readonly hiddenColumnFields = input<string[]>([]);
+    readonly profilePictureHeaderKey = input('artemisApp.course.courseGroup.profilePicture');
+    readonly paginated = input(true);
+    readonly isDisabled = input(false);
 
     readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));
     readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly removeUserFromGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly handleUsersSizeChange = input<(filteredUsersSize: number) => void>(() => {});
+    readonly removeUserQuestionKey = input('artemisApp.course.courseGroup.removeFromGroup.modalQuestion');
 
     readonly importFinish = output<void>();
 
@@ -78,20 +83,24 @@ export class CourseGroupComponent {
     readonly idCellTemplate = viewChild<CellTemplateRef<User>>('idCellTemplate');
     readonly profilePictureCellTemplate = viewChild<CellTemplateRef<User>>('profilePictureCellTemplate');
 
-    readonly tableOptions: TableViewOptions = {
+    readonly tableOptions = computed<TableViewOptions>(() => ({
         lazy: false,
+        paginated: this.paginated(),
         showSearch: false,
         striped: true,
-    };
+    }));
 
-    readonly columns = computed<ColumnDef<User>[]>(() => [
-        { field: 'id', headerKey: 'global.field.id', sort: true, width: '5rem', templateRef: this.idCellTemplate() },
-        { field: 'imageUrl', headerKey: 'artemisApp.course.courseGroup.profilePicture', width: '7rem', templateRef: this.profilePictureCellTemplate() },
-        { field: 'login', headerKey: 'artemisApp.course.courseGroup.login', sort: true, width: '12rem' },
-        { field: 'visibleRegistrationNumber', headerKey: 'artemisApp.course.courseGroup.registrationNumber', sort: true, width: '12rem' },
-        { field: 'name', headerKey: 'artemisApp.course.courseGroup.name', sort: true, width: '15rem' },
-        { field: 'email', headerKey: 'artemisApp.course.courseGroup.email', sort: true },
-    ]);
+    readonly columns = computed<ColumnDef<User>[]>(() => {
+        const hiddenFields = new Set(this.hiddenColumnFields());
+        return [
+            { field: 'id', headerKey: 'global.field.id', sort: true, width: '5rem', templateRef: this.idCellTemplate() },
+            { field: 'imageUrl', headerKey: this.profilePictureHeaderKey(), width: '7rem', templateRef: this.profilePictureCellTemplate() },
+            { field: 'login', headerKey: 'artemisApp.course.courseGroup.login', sort: true, width: '12rem' },
+            { field: 'visibleRegistrationNumber', headerKey: 'artemisApp.course.courseGroup.registrationNumber', sort: true, width: '12rem' },
+            { field: 'name', headerKey: 'artemisApp.course.courseGroup.name', sort: true, width: '15rem' },
+            { field: 'email', headerKey: 'artemisApp.course.courseGroup.email', sort: true },
+        ].filter((column) => !hiddenFields.has(column.field));
+    });
 
     protected readonly ActionType = ActionType;
 

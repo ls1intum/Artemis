@@ -1,0 +1,137 @@
+.presentation-view-toggle {
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: var(--p-border-radius-md);
+    background: var(--p-surface-100);
+}
+
+.presentation-workspace {
+    min-height: calc(100vh - 8rem);
+}
+
+.presentation-sidebar {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+.presentation-content {
+    min-width: 0;
+    flex: 1 1 0;
+    overflow: hidden;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: var(--p-border-radius-md);
+    background: var(--p-content-background);
+}
+
+.presentation-detail {
+    min-width: 0;
+}
+
+.presentation-detail-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+
+    &::after {
+        position: absolute;
+        right: 1rem;
+        bottom: 0;
+        left: 1rem;
+        border-bottom: 1px solid var(--p-content-border-color);
+        content: '';
+    }
+}
+
+.presentation-detail-title {
+    font-size: 1rem;
+}
+
+.presentation-summary {
+    min-height: 2.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--p-content-border-color);
+    color: var(--p-text-muted-color);
+    white-space: pre-wrap;
+}
+
+.presentation-grading-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.presentation-overall-toolbar {
+    padding: 0.5rem 1rem 0;
+}
+
+.student-search {
+    position: relative;
+    width: min(100%, 24rem);
+}
+
+.student-search-icon {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 0.75rem;
+    line-height: 1;
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.student-search-input {
+    padding-left: 2.25rem;
+}
+
+.presentation-detail-row > td {
+    padding: 1rem 1.5rem;
+    background: var(--p-surface-50);
+}
+
+.presentation-student-row-striped > td {
+    background: var(--p-surface-50);
+}
+
+.presentation-detail-row:not(.presentation-student-row-striped) > td {
+    background: var(--p-content-background);
+}
+
+.instance-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 2rem;
+}
+
+.student-avatar {
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    border-radius: var(--p-border-radius-md);
+    color: var(--p-primary-color);
+    background: var(--p-highlight-background);
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+@media (max-width: 48rem) {
+    .instance-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .presentation-detail-header,
+    .presentation-grading-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

@@ -1,0 +1,88 @@
+<form [formGroup]="editForm" (ngSubmit)="save()" class="instance-form">
+    <div class="instance-fields">
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-date">
+                <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
+                <span aria-hidden="true">*</span>
+            </label>
+            <jhi-date-time-picker
+                inputId="presentation-instance-date"
+                [hideLabelName]="true"
+                [requiredField]="true"
+                [pickerType]="DateTimePickerType.CALENDAR"
+                [shouldDisplayTimeZoneWarning]="false"
+                [error]="editForm.controls.presentationDate.touched && editForm.controls.presentationDate.invalid"
+                formControlName="presentationDate"
+                name="presentationDate"
+            />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-time" jhiTranslate="artemisApp.presentationAssessment.presentationTime"></label>
+            <jhi-date-time-picker
+                inputId="presentation-instance-time"
+                [hideLabelName]="true"
+                [pickerType]="DateTimePickerType.TIMER"
+                [shouldDisplayTimeZoneWarning]="false"
+                formControlName="presentationTime"
+                name="presentationTime"
+            />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-result" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
+            <tum-ui-input-number inputId="presentation-instance-result" [fluid]="true" [min]="0" [step]="0.5" [maxFractionDigits]="2" formControlName="resultPoints" />
+            @if (editForm.hasError('resultPointsExceedMaxPoints')) {
+                <tum-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span></tum-ui-message>
+            }
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-language" jhiTranslate="artemisApp.presentationAssessment.language"></label>
+            <tum-ui-select inputId="presentation-instance-language" [options]="languageOptions" optionLabel="label" optionValue="value" formControlName="language" />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="presentation-instance-mode" jhiTranslate="artemisApp.presentationAssessment.mode.label"></label>
+            <tum-ui-select inputId="presentation-instance-mode" [options]="modeOptions()" optionLabel="label" optionValue="value" formControlName="mode" />
+        </div>
+        @if (editForm.controls.mode.value === PresentationAssessmentMode.IN_PERSON) {
+            <div class="flex flex-col gap-2">
+                <label for="presentation-instance-location" jhiTranslate="artemisApp.presentationAssessment.location"></label>
+                <input id="presentation-instance-location" tumUiInput class="w-full" formControlName="location" />
+            </div>
+        } @else {
+            <div class="flex flex-col gap-2">
+                <label for="presentation-instance-link" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></label>
+                <input id="presentation-instance-link" tumUiInput class="w-full" type="url" formControlName="meetingLink" />
+            </div>
+        }
+    </div>
+
+    <div class="flex flex-col gap-2">
+        <label for="presentation-instance-remark" jhiTranslate="artemisApp.presentationAssessment.remark"></label>
+        <textarea id="presentation-instance-remark" tumUiTextarea class="w-full" rows="3" formControlName="remark"></textarea>
+    </div>
+
+    <jhi-course-group
+        [(allGroupUsers)]="assignedStudents"
+        [courseRoleSlug]="studentsCourseGroup"
+        [isLoadingAllGroupUsers]="false"
+        [isAdmin]="false"
+        [course]="presentationStudentCourse()"
+        [addUserToGroup]="addStudent"
+        [removeUserFromGroup]="removeStudent"
+        [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
+        [exportFileName]="'Presentation Instance Students'"
+        [userSearch]="studentSearch"
+        [hiddenColumnFields]="hiddenStudentColumnFields"
+        [paginated]="false"
+        profilePictureHeaderKey="artemisApp.presentationAssessment.picture"
+    >
+        <span><span jhiTranslate="artemisApp.course.students"></span> ({{ assignedStudents().length }})</span>
+    </jhi-course-group>
+    @if (assignedStudents().length === 0 && editForm.touched) {
+        <tum-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.instanceRequiresPresenter"></span></tum-ui-message>
+    }
+
+    <div class="flex justify-end gap-2">
+        <tum-ui-button severity="secondary" type="button" (clicked)="cancel()"><fa-icon [icon]="faBan" /><span jhiTranslate="entity.action.cancel"></span></tum-ui-button>
+        <tum-ui-button type="submit"><fa-icon [icon]="faSave" /><span jhiTranslate="entity.action.save"></span></tum-ui-button>
+    </div>
+</form>

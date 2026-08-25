@@ -188,6 +188,11 @@
                     "name": "Globale Suche",
                     "description": "Aktiviert eine einheitliche Suchoberfläche, die über Cmd+K/Strg+K erreichbar ist und es Nutzer:innen ermöglicht, schnell über Kurse, Aufgaben, Vorlesungen und andere Inhalte zu suchen.",
                     "disableWarning": "Nutzer:innen haben keinen Zugriff auf die globale Suchfunktion und müssen manuell durch die Oberfläche navigieren."
+                },
+                "PresentationAssessments": {
+                    "name": "Präsentationen",
+                    "description": "Ermöglicht Lehrenden, Präsentationen anzulegen und einzelne Präsentationsinstanzen zu bewerten.",
+                    "disableWarning": "Lehrende können nicht auf Präsentationsbewertungen zugreifen oder sie verwalten. Bestehende Präsentationsdaten bleiben gespeichert."
                 }
             }
         }

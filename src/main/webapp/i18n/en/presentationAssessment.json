@@ -1,0 +1,77 @@
+{
+    "artemisApp": {
+        "presentationAssessment": {
+            "home": {
+                "title": "Presentations",
+                "createLabel": "Create presentation",
+                "editLabel": "Edit presentation"
+            },
+            "created": "The presentation assessment was successfully created",
+            "updated": "The presentation assessment was successfully updated",
+            "deleted": "The presentation assessment {{ title }} was successfully deleted",
+            "title": "Title",
+            "description": "Description",
+            "maxPoints": "Max. points",
+            "resultPoints": "Result",
+            "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
+            "validation": {
+                "numberRequired": "Please enter a number.",
+                "maxPointsMin": "Max. points must be at least 0.01.",
+                "resultPointsMin": "Result must be at least 0."
+            },
+            "presentationDate": "Presentation date",
+            "presentationTime": "Time",
+            "picture": "Picture",
+            "presentation": "Presentation",
+            "presenter": "Presenter",
+            "score": "Score",
+            "overview": "Overview",
+            "grading": "Grading",
+            "byPresentation": "By presentation",
+            "byStudent": "By student",
+            "overallOverview": "Overall overview",
+            "standalone": "Standalone",
+            "linkedToExercise": "Linked to an exercise",
+            "enterGrade": "Enter grade",
+            "student": "Student",
+            "status": "Status",
+            "assessment": "Assessment",
+            "remark": "Remark",
+            "note": "Remark",
+            "assessed": "Assessed",
+            "pending": "Pending",
+            "searchStudent": "Search for a student",
+            "noMatchingStudents": "No students match your search.",
+            "exercise": "Linked exercise",
+            "linkedExercise": "Linked exercise:",
+            "noExercise": "No exercise",
+            "exerciseNotInCourse": "The linked exercise must belong to this course.",
+            "instanceRequiresPresenter": "Select at least one presenter.",
+            "language": "Language",
+            "location": "Location",
+            "meetingLink": "Meeting link",
+            "mode": {
+                "label": "Mode",
+                "online": "Online",
+                "inPerson": "In person"
+            },
+            "filter": {
+                "all": "All",
+                "future": "Future"
+            },
+            "instance": {
+                "createLabel": "Add presentation instance",
+                "editLabel": "Edit presentation instance"
+            },
+            "noExisting": "There are no presentation assessments for this course yet.",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the presentation assessment <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the title of the presentation assessment to confirm."
+            },
+            "students": {
+                "newPresentation": "New presentation",
+                "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation?"
+            }
+        }
+    }
+}

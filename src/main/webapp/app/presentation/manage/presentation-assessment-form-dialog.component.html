@@ -1,0 +1,62 @@
+<form [formGroup]="editForm" (ngSubmit)="save()" novalidate class="presentation-assessment-dialog-form">
+    <div class="presentation-assessment-form-grid">
+        <div class="presentation-assessment-field presentation-assessment-title-field">
+            <label for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
+            <input id="presentation-assessment-title" tumUiInput class="w-full" type="text" formControlName="title" />
+            @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
+                <tum-ui-message severity="error" data-testid="presentation-title-error">
+                    <span jhiTranslate="entity.validation.required"></span>
+                </tum-ui-message>
+            }
+        </div>
+
+        <div class="presentation-assessment-field">
+            <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
+            <tum-ui-input-number inputId="presentation-assessment-max-points" [fluid]="true" [min]="0.01" [step]="0.5" [maxFractionDigits]="2" formControlName="maxPoints" />
+            @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
+                <tum-ui-message severity="error" data-testid="presentation-max-points-error">
+                    <span jhiTranslate="entity.validation.min"></span>
+                </tum-ui-message>
+            }
+        </div>
+
+        <div class="presentation-assessment-field presentation-assessment-exercise-field">
+            <label for="presentation-assessment-exercise" jhiTranslate="artemisApp.presentationAssessment.exercise"></label>
+            <tum-ui-autocomplete
+                inputId="presentation-assessment-exercise"
+                class="w-full"
+                formControlName="exercise"
+                [suggestions]="filteredExercises()"
+                (searchRequested)="filterExercises($event)"
+                optionLabel="title"
+                [minLength]="0"
+                [completeOnFocus]="true"
+                placeholder="{{ 'artemisApp.presentationAssessment.noExercise' | artemisTranslate }}"
+            />
+        </div>
+
+        <div class="presentation-assessment-field presentation-assessment-description-field">
+            <label for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
+            <textarea id="presentation-assessment-description" tumUiTextarea class="w-full" rows="4" formControlName="description"></textarea>
+        </div>
+    </div>
+
+    <div class="presentation-assessment-actions">
+        @if (presentationAssessment()?.id) {
+            <tum-ui-button severity="danger" type="button" (clicked)="requestDelete()">
+                <fa-icon [icon]="faTrash" />
+                <span jhiTranslate="entity.action.delete"></span>
+            </tum-ui-button>
+        }
+        <div class="presentation-assessment-actions-main flex gap-2">
+            <tum-ui-button severity="secondary" type="button" (clicked)="cancel()">
+                <fa-icon [icon]="faBan" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </tum-ui-button>
+            <tum-ui-button type="submit">
+                <fa-icon [icon]="faSave" />
+                <span jhiTranslate="entity.action.save"></span>
+            </tum-ui-button>
+        </div>
+    </div>
+</form>

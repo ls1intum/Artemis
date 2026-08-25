@@ -523,6 +523,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     @Query("""
             SELECT e
             FROM Exercise e
+                LEFT JOIN FETCH e.course
                 LEFT JOIN FETCH e.exerciseGroup eg
                 LEFT JOIN FETCH eg.exam ex
                 LEFT JOIN FETCH ex.course
