@@ -377,7 +377,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * (only if this is a fresh submission, i.e. no assessments exist yet)
      */
     loadFeedbackSuggestions(): void {
-        if (this.assessments.length > 0) {
+        // Without a result there is nothing to attach a suggestion to. This happens for a correction round the tutor has
+        // not started yet, where the submission is opened before a result exists.
+        if (this.assessments.length > 0 || !this.result()) {
             return;
         }
         this.loadingFeedbackSuggestions.set(true);

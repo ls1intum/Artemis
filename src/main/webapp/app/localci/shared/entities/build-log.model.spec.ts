@@ -27,6 +27,19 @@ describe('BuildLogEntryArray', () => {
             expect(Array.from(buildLogEntries, (entry) => entry.log)).toEqual(['first', 'second', 'third']);
         });
 
+        it('should order the parseable entries around one that cannot be parsed', () => {
+            const buildLogs: BuildLogEntry[] = [
+                { time: '2026-08-25T10:00:02.000Z', log: 'late' },
+                { time: 'not a date', log: 'invalid' },
+                { time: '2026-08-25T10:00:00.000Z', log: 'early' },
+            ];
+
+            const buildLogEntries = BuildLogEntryArray.fromBuildLogs(buildLogs);
+
+            // The unparseable entry keeps its slot, the two around it are ordered.
+            expect(Array.from(buildLogEntries, (entry) => entry.log)).toEqual(['early', 'invalid', 'late']);
+        });
+
         it('should keep the given order when a timestamp cannot be parsed', () => {
             const buildLogs: BuildLogEntry[] = [
                 { time: 'not a date', log: 'first' },

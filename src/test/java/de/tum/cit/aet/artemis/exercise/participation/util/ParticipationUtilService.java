@@ -1117,6 +1117,10 @@ public class ParticipationUtilService {
      * @param result the result about to be saved
      * @return the same result, with the correction round set when it is a manual one
      */
+    private static boolean isSameRow(Result one, Result other) {
+        return one.getId() != null && one.getId().equals(other.getId());
+    }
+
     private Result withCorrectionRound(Result result) {
         boolean manual = result.getAssessmentType() != null && !result.isAutomatic() && !result.isAthenaBased();
         Submission submission = result.getSubmission();
@@ -1131,8 +1135,10 @@ public class ParticipationUtilService {
         else {
             existing = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).map(Submission::getResults).orElse(Set.of()).stream();
         }
-        // Compared by reference on purpose: the result is not saved yet, so its id is still null and equals would never match.
-        long manualResults = existing.filter(other -> other != null && other != result && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())
+        // Excluded by reference and by id: a result that is not saved yet has no id to match on, and a caller can also
+        // hand in a persisted result, which the query above returns as a different object for the same row.
+        long manualResults = existing.filter(
+                other -> other != null && other != result && !isSameRow(other, result) && other.getAssessmentType() != null && !other.isAutomatic() && !other.isAthenaBased())
                 .count();
         result.setCorrectionRound((int) manualResults);
         return result;

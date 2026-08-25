@@ -50,7 +50,7 @@ public class ProgrammingSubmission extends Submission {
      * because those are eager. The entries carry their own timestamp, so the order does not need to be stored.
      */
     @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("time")
+    @OrderBy("time, id")
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     private Set<BuildLogEntry> buildLogEntries = new LinkedHashSet<>();
 

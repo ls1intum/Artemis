@@ -58,7 +58,29 @@ export abstract class Submission implements BaseEntity {
  * @param submission
  */
 export function getLatestSubmissionResult(submission: Submission | undefined): Result | undefined {
-    return submission?.results?.last();
+    return getNewestResult(submission?.results);
+}
+
+/**
+ * The newest of the given results, which is the one with the highest id.
+ *
+ * Deliberately not the last element: the server holds a submission's results in a set, so their order in the response
+ * is not something the client can build on. A result without an id has just been created here and has not reached the
+ * server yet, which makes it the newest one.
+ *
+ * @param results the results to pick from, in any order
+ * @returns the newest result, or undefined if there is none
+ */
+export function getNewestResult(results: (Result | undefined)[] | undefined): Result | undefined {
+    return results?.reduce<Result | undefined>((newest, candidate) => {
+        if (!candidate) {
+            return newest;
+        }
+        if (!newest || candidate.id === undefined) {
+            return candidate;
+        }
+        return newest.id === undefined || newest.id > candidate.id ? newest : candidate;
+    }, undefined);
 }
 
 /**

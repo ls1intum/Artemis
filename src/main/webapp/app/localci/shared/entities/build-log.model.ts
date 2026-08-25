@@ -19,16 +19,31 @@ export type BuildLogEntry = {
 type ParsedLogEntry = [string, string, string, string, string, string];
 
 /**
- * Compares two build log entries by their timestamp. Entries whose timestamp cannot be parsed keep their relative
- * order, because sorting is stable.
+ * Orders build log entries by their timestamp, leaving every entry whose timestamp cannot be parsed at the position it
+ * came in at.
+ *
+ * The entries with a usable timestamp are sorted among themselves and written back into the slots they occupied, so an
+ * unparseable entry never moves and never separates two entries that do compare. Comparing straight through the
+ * unparseable ones instead would make the comparison intransitive, which leaves the result of a sort undefined.
+ *
+ * @param entries the entries to order, which are not modified
+ * @returns a new array holding the same entries in display order
  */
-function compareByTime(first: BuildLogEntry, second: BuildLogEntry): number {
-    const firstTime = Date.parse(first.time);
-    const secondTime = Date.parse(second.time);
-    if (Number.isNaN(firstTime) || Number.isNaN(secondTime)) {
-        return 0;
-    }
-    return firstTime - secondTime;
+function sortByTime(entries: BuildLogEntry[]): BuildLogEntry[] {
+    const sortable: { entry: BuildLogEntry; index: number; time: number }[] = [];
+    entries.forEach((entry, index) => {
+        const time = Date.parse(entry.time);
+        if (!Number.isNaN(time)) {
+            sortable.push({ entry, index, time });
+        }
+    });
+
+    const ordered = [...entries];
+    sortable
+        .map(({ entry, time }) => ({ entry, time }))
+        .sort((first, second) => first.time - second.time)
+        .forEach(({ entry }, position) => (ordered[sortable[position].index] = entry));
+    return ordered;
 }
 
 /**
@@ -60,7 +75,7 @@ export class BuildLogEntryArray extends Array<BuildLogEntry> {
             }
             return cloneWith({ log, type: logType }, rest);
         });
-        return new BuildLogEntryArray(...mappedLogs.sort(compareByTime));
+        return new BuildLogEntryArray(...sortByTime(mappedLogs));
     }
 
     /**

@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -22,6 +23,7 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import org.hibernate.annotations.ConcreteProxy;
@@ -92,14 +94,17 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
      * <p>
-     * Deliberately unordered. This used to be an ordered list whose position carried the correction round, which meant
-     * every write in this area had to load and re-save the whole submission so that Hibernate could renumber the order
-     * column. The correction round now lives on {@link Result#getCorrectionRound()}, and the newest result is the one
-     * with the highest id, so nothing needs the position any more.
+     * A set, not a list: this used to be an ordered list whose position carried the correction round, which meant every
+     * write in this area had to load and re-save the whole submission so that Hibernate could renumber the order
+     * column. The correction round now lives on {@link Result#getCorrectionRound()}, so nothing needs the position.
+     * <p>
+     * Ordered by id all the same. Nothing on the server depends on it, but the collection is serialized to the client,
+     * and a hash set would hand it the results in an order that can change between two requests for the same data.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id")
     @JsonIgnoreProperties({ "submission", "participation" })
-    private Set<Result> results = new HashSet<>();
+    private Set<Result> results = new LinkedHashSet<>();
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
@@ -153,7 +158,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getLatestCompletedResult() {
         Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
-                .max(Comparator.comparing(Result::getCompletionDate)).orElse(null);
+                .max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID)).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -199,7 +204,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public void removeAutomaticResults() {
-        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(HashSet::new));
+        this.results = this.results.stream().filter(result -> result == null || !(result.isAutomatic() || result.isAthenaBased()))
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
@@ -214,7 +220,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public void removeNullResults() {
-        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
+        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
@@ -224,12 +230,12 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @JsonIgnore
     public Set<Result> getAutomaticResults() {
-        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(HashSet::new));
+        return results.stream().filter(result -> result != null && (result.isAutomatic() || result.isAthenaBased())).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @JsonIgnore
     public Set<Result> getManualResults() {
-        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(HashSet::new));
+        return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaBased()).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
@@ -239,7 +245,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonIgnore
     public Set<Result> getNonAthenaResults() {
-        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(HashSet::new));
+        return results.stream().filter(result -> result != null && !result.isAthenaBased()).collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
@@ -338,7 +344,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @JsonProperty(value = "results", access = JsonProperty.Access.WRITE_ONLY)
     public void setResults(Set<Result> results) {
-        this.results = results != null ? results : new HashSet<>();
+        this.results = results != null ? results : new LinkedHashSet<>();
     }
 
     public Participation getParticipation() {
