@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionInfoDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamForOverviewDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSidebarDataDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentCountDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -45,6 +46,22 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Lazy
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
+
+    /**
+     * Reads only the dates that decide whether a submission is in time.
+     * <p>
+     * The submission gate runs on every autosave of every student and reads nothing from the exam but these three
+     * values, so loading the entity (and with it the course, through an eager association) is wasted work.
+     *
+     * @param examId the id of the exam
+     * @return the exam's start date, end date and grace period
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO(exam.startDate, exam.endDate, exam.gracePeriod, exam.testExam)
+            FROM Exam exam
+            WHERE exam.id = :examId
+            """)
+    Optional<ExamScheduleDTO> findScheduleById(@Param("examId") long examId);
 
     List<Exam> findByCourseId(long courseId);
 
