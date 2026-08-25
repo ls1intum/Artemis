@@ -11,7 +11,7 @@ describe('CourseIngestionDashboardService', () => {
     let service: CourseIngestionDashboardService;
     let httpMock: HttpTestingController;
 
-    const baseUrl = 'api/global-search/admin';
+    const baseUrl = 'api/global-search/ingestion-dashboard';
 
     const mockOverview: IndexOverview = {
         weaviateReachable: true,
