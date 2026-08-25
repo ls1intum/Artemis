@@ -598,9 +598,12 @@ You can make following adaptations to the `application-prod.yml`:
             default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     ```
 
-    Do **not** set `build-agent-git-username` or `build-agent-git-password` on these nodes. A node that runs local CI refuses to start with either of them configured: the pair is a static secret opening every repository that nothing here needs, since every build job carries its own token. The pair belongs only to a localvc node without local CI, which is [Jenkins with LocalVC](/admin/jenkins-localvc).
+    Build agents need no credential from you here. Choose in this order:
 
-    Preferably, also set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it. Set it on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working — and only afterwards on the localvc nodes.
+    1. **SSH keys, recommended.** Set `artemis.version-control.build-agent-use-ssh: true` together with `ssh-template-clone-url` and `ssh-private-key-folder-path`. Every agent then generates its own key pair at startup and publishes only the public key — nothing to distribute or rotate. Roll it out on the build agents first (localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working) and on the localvc nodes afterwards.
+    2. **Build job clone tokens**, used automatically over HTTPS while `build-agent-use-ssh` is `false`. This needs no configuration at all.
+
+    Do **not** set `build-agent-git-username` or `build-agent-git-password` on these nodes — a node that runs local CI **refuses to start** with either of them configured, whether or not the agents use SSH. The pair is a static secret opening every repository that nothing here needs, and it belongs only to a localvc node without local CI, which is [Jenkins with LocalVC](/admin/jenkins-localvc).
 
     Note that a multi-node setup terminates SSH on the load balancer, which hides the real client from the SSH server. Enable PROXY protocol in the nginx `stream` block and list the balancer in `artemis.version-control.ssh-proxy-protocol.trusted-sources` on every localvc node; the Docker Compose files in this repository already do both. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication) for this and for restricting which networks build agents may connect from.
 

@@ -10,14 +10,33 @@ artemis:
         # In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes.
         local-vcs-repo-path: ./local-vcs-repos
         url: http://localhost:8000
-        # Deliberately unset. A node that also runs local CI refuses to start when either of these is configured: build agents authenticate per build job there, with the
-        # job's clone token over https or with an ssh key, and one static secret shared by every agent and every core node opens every repository in the installation.
-        # Set them only on a localvc node without local CI, whose client is not an Artemis build agent and therefore has neither a key nor a build job - in practice
-        # Jenkins with LocalVC. See documentation/docs/admin/production-setup/security.mdx.
+        # ------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # How build agents authenticate when they clone from this node. Pick the first option that is possible for you;
+        # the first two need no secret from you at all, because the agents establish their own credentials.
+        #
+        #   1. SSH KEYS - recommended, configures itself.
+        #      Set build-agent-use-ssh: true below and on every build agent, plus ssh-template-clone-url and
+        #      ssh-private-key-folder-path on the agents. Each agent then generates its own key pair at startup, keeps
+        #      the private key on its own disk and publishes only the public key. Nothing to distribute or rotate.
+        #
+        #   2. BUILD JOB CLONE TOKENS - the automatic fallback over https, also configures itself.
+        #      Used whenever build-agent-use-ssh is false. REQUIRES NO CONFIGURATION AT ALL. A token is minted per build
+        #      job and is accepted only for that job's own assignment, test, solution and auxiliary repositories, and
+        #      only while the job runs. Use this where ssh is not practical, e.g. port 7921 is not reachable by agents.
+        #
+        #   3. A SHARED USERNAME AND PASSWORD - Jenkins only, and refused everywhere else.
+        #      build-agent-git-username / build-agent-git-password below are accepted ONLY on a localvc node that does
+        #      NOT run local CI, which in practice means Jenkins with LocalVC: Jenkins is not an Artemis build agent, so
+        #      it has neither a key nor a build job and nothing else to present. A node running local CI REFUSES TO
+        #      START with either of them set, because one static secret shared by every agent and every core node opens
+        #      every repository in the installation and nothing here needs it.
+        #
+        # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
+        # ------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # Deliberately unset - see option 3 above. Set these only for Jenkins with LocalVC, on a node without local CI.
         # build-agent-git-username:
         # build-agent-git-password:
-        # Recommended: if true, build agents generate a key pair at startup and use ssh to clone repositories from core nodes. Also set ssh-template-clone-url and ssh-private-key-folder-path for the build agents if true.
-        # A core node accepts a registered build agent's public key either way, so set this on the build agents first (builds keep working) and on the core nodes afterwards.
+        # Option 1. Set on the build agents first (they keep working, because a core node accepts a registered agent's public key whatever this node has), then here.
         build-agent-use-ssh: false
         ssh-proxy-protocol:
             # CIDR blocks of the reverse proxies that forward the git ssh port at the TCP level, e.g. an nginx stream block.
