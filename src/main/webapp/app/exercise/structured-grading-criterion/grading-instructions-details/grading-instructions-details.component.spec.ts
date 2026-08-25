@@ -199,7 +199,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
             expect(button.tagName).toBe('BUTTON');
             expect(button.getAttribute('aria-label')).toBe('artemisApp.exercise.addAssessmentInstruction');
-            expect(button.textContent?.trim()).toBe('');
+            expect(button.textContent?.trim()).toBe('artemisApp.exercise.addAssessmentInstruction');
         });
 
         it('should not persist the display-only grading instruction placeholder while generating', () => {
