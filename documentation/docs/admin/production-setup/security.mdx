@@ -16,6 +16,8 @@ artemis:
             username: "artemis-admin"
             password: "artemis-admin"
     version-control:
+        # Deprecated, and both may be omitted entirely when build-agent-use-ssh is true.
+        # Prefer SSH keys for build agents, see "Build Agent Authentication" below.
         build-agent-git-username: "buildagent_user"
         build-agent-git-password: "buildagent_password"
 jhipster:
@@ -49,6 +51,8 @@ jhipster:
 
 Under the `prod` profile, Artemis refuses to start when one of these properties still holds a value that is published in this repository: the JWT signing key, the internal admin password (this includes a password identical to the username), and the build-agent git password. The startup error names the property and how to supply a value.
 
+The build-agent git password is exempt when `artemis.version-control.build-agent-use-ssh` is `true`, because the core nodes then stop granting that credential pair read access to every repository, which is the access this check exists to protect. The pair is not rejected everywhere: it still runs through ordinary Basic authentication afterwards, where it opens exactly what the named account may access - nothing at all for `buildjob_user`, which is not an Artemis account. The check runs on every startup, so it applies again on the first start after the property goes back to `false`.
+
 The signing key is checked through both `jhipster.security.authentication.jwt.base64-secret` and the plain `jhipster.security.authentication.jwt.secret`, because either one can be the key that is actually used. It is also rejected when it is absent altogether, and when it decodes to fewer than 64 bytes, which is the minimum HS512 accepts. The comparison happens on the decoded key as well as on the configured spelling, so re-encoding a published value - different padding, an added line break - does not get past it. Generate a key with:
 
 ```bash
@@ -64,6 +68,41 @@ ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync w
 ```
 
 Artemis also pins the restrictive rendering profile of the diagram renderer at startup, in every profile. If `PLANTUML_SECURITY_PROFILE` is set explicitly, it has to name either `SANDBOX` or `ALLOWLIST`; any other value is rejected. Artemis passes its diagram theme as inline content, so no Artemis feature depends on the other profiles.
+
+### Build Agent Authentication
+
+Build agents clone repositories from the core nodes in one of two ways, selected by `artemis.version-control.build-agent-use-ssh`:
+
+- `false` (default, **deprecated**): the agents authenticate over HTTPS with `build-agent-git-username` and `build-agent-git-password`. A core node accepts that credential pair for read access to *every* repository, ahead of the rate limit, the repository authorization checks and the VCS access log. Treat it as a system-wide credential and give it the same care as the internal admin password.
+- `true` (**recommended**): each agent generates an SSH key pair at startup and publishes its public key to the core nodes, which authenticate agents by key. Core nodes then **stop honouring the build-agent shortcut**, so that credential pair no longer opens every repository. This also requires `ssh-template-clone-url` and `ssh-private-key-folder-path` on the agents.
+
+<Callout variant={CalloutVariant.warning}>
+    HTTPS authentication for build agents is deprecated. Configure new installations with
+    `artemis.version-control.build-agent-use-ssh: true`, and move existing ones over in the order given below.
+
+    One static secret, shared by every build agent and every core node and usually written into several configuration
+    files, opens every repository in the installation, and it does so ahead of the rate limit, the authorization checks
+    and the access log, which makes a leak both unlimited and invisible. An SSH key is per agent, is generated at
+    startup rather than configured, never leaves the agent that holds it, and reaches a core node only through an agent
+    that has joined the cluster.
+
+    The default stays `false` for now because SSH mode still needs `ssh-template-clone-url` and
+    `ssh-private-key-folder-path` to be set explicitly, and because Jenkins uses the same credential pair (see the
+    rollout note below).
+</Callout>
+
+The property does different things on the two node roles. On a build agent it selects the mechanism the agent uses. On a core node it controls only the build-agent shortcut over HTTPS: `true` stops that pair from granting repository-wide read. The pair is still processed as ordinary Basic credentials afterwards, which matters only if you pointed `build-agent-git-username` at a real Artemis account — that person then authenticates as themselves and gets exactly their own access, subject to the rate limit, the authorization checks and the access log. Core nodes always accept a registered build agent's public key, whatever the property says there, because a key is per-agent and only reaches a core node through a build agent that has joined the cluster — unlike the credential pair, it is not a shared secret worth switching off.
+
+That asymmetry decides the order in which you roll the change out:
+
+1. Set `build-agent-use-ssh: true` on the build agents, together with `ssh-template-clone-url` and `ssh-private-key-folder-path`, and restart them. They now clone by key, and the core nodes accept that immediately, so builds keep working while the core nodes are still on `false`. You can move agents one at a time.
+2. Once no agent clones over HTTPS any more, set the property on the core nodes and restart them. This is the step that closes the shortcut.
+
+<Callout variant={CalloutVariant.warning}>
+    Do not do it in the other order. A core node with `build-agent-use-ssh: true` no longer honours the build-agent shortcut, and `buildjob_user` is not a real account, so every agent still configured for HTTPS fails to clone from it — which is also what happens if you set the property on the core nodes while any agent is still on `false`.
+
+    Leave it at `false` when Jenkins is your CI backend. The [Jenkins with LocalVC](/admin/jenkins-localvc) setup has Jenkins clone over HTTPS with this same credential pair, and Jenkins is not an Artemis build agent, so it has no key to fall back to.
+</Callout>
 
 ### Database Credentials
 

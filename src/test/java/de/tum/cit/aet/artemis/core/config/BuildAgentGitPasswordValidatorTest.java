@@ -25,9 +25,14 @@ import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 class BuildAgentGitPasswordValidatorTest {
 
     private BuildAgentGitPasswordValidator createValidator(boolean productionProfileActive, String buildAgentGitPassword) {
+        return createValidator(productionProfileActive, buildAgentGitPassword, false);
+    }
+
+    private BuildAgentGitPasswordValidator createValidator(boolean productionProfileActive, String buildAgentGitPassword, boolean buildAgentsUseSsh) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.matchesProfiles(ArtemisConstants.SPRING_PROFILE_PRODUCTION)).thenReturn(productionProfileActive);
         when(mockEnvironment.getProperty(BuildAgentGitPasswordValidator.BUILD_AGENT_GIT_PASSWORD_PROPERTY)).thenReturn(buildAgentGitPassword);
+        when(mockEnvironment.getProperty(Constants.BUILD_AGENT_USE_SSH_PROPERTY_NAME, Boolean.class, false)).thenReturn(buildAgentsUseSsh);
         return new BuildAgentGitPasswordValidator(mockEnvironment);
     }
 
@@ -96,5 +101,30 @@ class BuildAgentGitPasswordValidatorTest {
         BuildAgentGitPasswordValidator validator = createValidator(false, "buildjob_password");
 
         assertThatCode(validator::validateBuildAgentGitPassword).doesNotThrowAnyException();
+    }
+
+    /**
+     * With ssh configured, {@code LocalVCServletService} rejects the credential pair outright, so this value opens
+     * nothing and refusing to start over it would only push operators to invent a password they never use.
+     *
+     * @param unusedPassword a value that would fail the check if the credential pair were still accepted
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "buildjob_password", "", " " })
+    void shouldTolerateAnUnusedPasswordWhenBuildAgentsAuthenticateWithSsh(String unusedPassword) {
+        BuildAgentGitPasswordValidator validator = createValidator(true, unusedPassword, true);
+
+        assertThatCode(validator::validateBuildAgentGitPassword).doesNotThrowAnyException();
+    }
+
+    /**
+     * The check has to re-arm by itself: it runs on every startup, so the one that follows setting the property back to
+     * false must reject the password that the ssh configuration made harmless.
+     */
+    @Test
+    void shouldRejectAShippedPasswordAgainOnceBuildAgentsStopUsingSsh() {
+        BuildAgentGitPasswordValidator validator = createValidator(true, "buildjob_password", false);
+
+        assertThatThrownBy(validator::validateBuildAgentGitPassword).isInstanceOf(InsecureDefaultCredentialException.class);
     }
 }
