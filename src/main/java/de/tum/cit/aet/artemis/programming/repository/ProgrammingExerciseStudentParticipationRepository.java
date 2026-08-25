@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -85,6 +86,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndStudentLogin(long exerciseId, String username);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
@@ -131,31 +135,73 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndTeamStudentsByExerciseId(long exerciseId);
 
-    @Query("""
-            SELECT DISTINCT participation
-            FROM ProgrammingExerciseStudentParticipation participation
-                JOIN FETCH participation.submissions s
-            WHERE participation.exercise.id = :exerciseId
-                AND s.id = (SELECT MAX(s2.id)
-                            FROM participation.submissions s2)
-            """)
-    Set<ProgrammingExerciseStudentParticipation> findWithLatestSubmissionByExerciseId(@Param("exerciseId") long exerciseId);
-
     /**
-     * Will return the participations matching the provided participation ids, but only if they belong to the given exercise.
+     * Returns what a build trigger reads off every participation of the exercise that has something to build.
+     * <p>
+     * Only the newest submission of each participation is considered, and a participation without any submission is
+     * left out entirely because triggering it is a no-op.
+     * <p>
+     * The projection is deliberate. Loading the participations as entities makes Hibernate resolve their eager student
+     * association with one query per participation, so an exercise with a thousand participations costs a thousand and
+     * two queries and ships a full user row, password hash included, for each of them. This is one query and holds only
+     * the columns the trigger looks at.
      *
-     * @param exerciseId       is used as a filter for the found participations.
-     * @param participationIds the participations to retrieve.
-     * @return filtered list of participations.
+     * @param exerciseId the exercise whose participations should be triggered
+     * @return the trigger inputs of every participation of the exercise that has a submission
      */
     @Query("""
-            SELECT participation
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO(
+                participation.id, participation.repositoryUri, participation.buildPlanId, participation.branch,
+                participation.initializationState, participation.individualDueDate, participation.testRun,
+                student.id, student.login, team.id,
+                submission.id, submission.type, submission.submissionDate, submission.commitHash,
+                submission.submitted, submission.buildFailed, submission.exampleSubmission)
             FROM ProgrammingExerciseStudentParticipation participation
-                LEFT JOIN FETCH participation.submissions
+                LEFT JOIN participation.student student
+                LEFT JOIN participation.team team
+                JOIN TREAT (participation.submissions AS ProgrammingSubmission) submission
+            WHERE participation.exercise.id = :exerciseId
+                AND submission.id = (SELECT MAX(s2.id)
+                                     FROM participation.submissions s2)
+            """)
+    List<ParticipationBuildTriggerDTO> findBuildTriggerDataByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Returns what a build trigger reads off the given participations, but only for those that belong to the given
+     * exercise and have something to build.
+     * <p>
+     * Only the newest submission of each participation is considered. The caller triggers a build for that one, so
+     * fetching every submission a student ever pushed in order to read the last one is a lot of rows for nothing: on
+     * the "trigger all failed builds" path that would be every push of every selected participation. Participations
+     * without any submission are left out because triggering them is a no-op.
+     * <p>
+     * Newest means the highest id, which is how the exercise-wide query above has always picked it. This path used to
+     * load every submission and pick the newest in memory, where {@link de.tum.cit.aet.artemis.exercise.domain.Submission}
+     * orders by submission date and falls back to the id. The two only disagree when a submission carries a date that
+     * is older than that of a submission inserted before it, which is why the id is the more direct answer to "the
+     * commit that was pushed last".
+     *
+     * @param exerciseId       is used as a filter for the found participations
+     * @param participationIds the participations to retrieve
+     * @return the trigger inputs of the requested participations that belong to the exercise and have a submission
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO(
+                participation.id, participation.repositoryUri, participation.buildPlanId, participation.branch,
+                participation.initializationState, participation.individualDueDate, participation.testRun,
+                student.id, student.login, team.id,
+                submission.id, submission.type, submission.submissionDate, submission.commitHash,
+                submission.submitted, submission.buildFailed, submission.exampleSubmission)
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN participation.student student
+                LEFT JOIN participation.team team
+                JOIN TREAT (participation.submissions AS ProgrammingSubmission) submission
             WHERE participation.exercise.id = :exerciseId
                 AND participation.id IN :participationIds
+                AND submission.id = (SELECT MAX(s2.id)
+                                     FROM participation.submissions s2)
             """)
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") long exerciseId,
+    List<ParticipationBuildTriggerDTO> findBuildTriggerDataByExerciseIdAndParticipationIds(@Param("exerciseId") long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 
     @Query("""
