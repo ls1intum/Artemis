@@ -863,7 +863,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                         var submittedAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, true);
                         var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
                         quizSubmission.addSubmittedAnswers(submittedAnswer);
-                        quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow());
+                        quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow(), null);
                     }
                 }
 
