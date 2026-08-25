@@ -203,12 +203,12 @@ class UserAiPreferenceServiceTest extends AbstractSpringIntegrationIndependentTe
     class ConcurrentFirstWrite {
 
         /**
-         * A row keyed on the user id means two first writes for the same account both find nothing and both insert. The
-         * loser used to surface a primary-key violation on a request that did nothing wrong; it reloads and re-applies
-         * instead. Simulated by inserting the row behind the service's back between its read and its save.
+         * Writing to a row another request created in the meantime still ends with the decision recorded once. This only
+         * covers the outcome; the recovery itself needs the insert to actually collide, which
+         * {@code UserAiPreferenceServiceConcurrencyTest} arranges.
          */
         @Test
-        void recordingADecisionSurvivesARowCreatedConcurrently() {
+        void recordingADecisionOnAnExistingRowRecordsItOnce() {
             userAiPreferenceRepository.save(new UserAiPreference(user.getId()));
 
             userAiPreferenceService.recordDecision(user.getId(), AiSelectionDecision.LOCAL_AI, ZonedDateTime.now());
