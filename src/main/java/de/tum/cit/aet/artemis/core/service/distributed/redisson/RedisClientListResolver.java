@@ -129,6 +129,7 @@ public class RedisClientListResolver {
                 log.error("Redis Cluster node {} did not return a client list, treating the client list as incomplete", clusterNode.getId());
                 return ClientListSnapshot.incomplete();
             }
+            // One client can hold connections to several cluster nodes, so the per-node address sets are merged rather than replaced.
             artemisClientAddresses(clients).forEach((clientName, addresses) -> addressesByClientName.computeIfAbsent(clientName, _ -> new HashSet<>()).addAll(addresses));
         }
         log.debug("Aggregated Redis client list across {} cluster nodes: {}", clusterNodes.size(), addressesByClientName.keySet());
