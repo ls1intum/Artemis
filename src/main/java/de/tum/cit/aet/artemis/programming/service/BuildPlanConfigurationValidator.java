@@ -97,10 +97,5 @@ public final class BuildPlanConfigurationValidator {
             }
 
         }
-        // A blank script is intentionally accepted: rejecting it would also apply to the full exercise update, which
-        // re-validates the exercise's already-stored build phases on every save, and to importing a file whose build phases
-        // predate this check, neither of which has an in-place way to fix the offending phase. A blank script is dropped on
-        // write by @JsonInclude(NON_EMPTY) on BuildPhaseDTO and defaulted back to '' on read by the client parser
-        // (isBuildPhase in build-plan-phases.model.ts), so it is harmless: a no-op phase, not a corrupted plan.
     }
 }

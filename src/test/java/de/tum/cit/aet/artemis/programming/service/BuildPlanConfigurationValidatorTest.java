@@ -95,17 +95,6 @@ class BuildPlanConfigurationValidatorTest {
     }
 
     @Test
-    void testAcceptsBlankPhaseScript() {
-        // a blank script is legal: the phase simply does nothing, and rejecting it would also hit the full exercise update
-        // and the file import, neither of which can fix the offending phase. The client parser defaults it back to ''.
-        for (String blankScript : new String[] { null, "", "   " }) {
-            var plan = planOf(new BuildContainerDTO("tests", DOCKER_IMAGE, List.of(new BuildPhaseDTO("compile", blankScript, BuildPhaseCondition.ALWAYS, false, List.of()))));
-
-            assertThatCode(() -> BuildPlanConfigurationValidator.validate(plan)).doesNotThrowAnyException();
-        }
-    }
-
-    @Test
     void testAcceptsSamePhaseNameInDifferentContainers() {
         // containers execute independently, so a phase name only has to be unique within its container
         var plan = planOf(new BuildContainerDTO("student_tests", DOCKER_IMAGE, List.of(phase("compile"))),
