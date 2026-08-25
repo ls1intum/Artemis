@@ -65,6 +65,15 @@ public class RateLimitService {
             return;
         }
 
+        // An exempt address consumes no tokens at all, rather than getting a larger bucket: a load
+        // generator drives thousands of requests from one address, and any finite bucket would still
+        // throttle it partway through a run and quietly turn the measurement into a measurement of the
+        // limiter.
+        if (configurationService.isExempt(clientId)) {
+            log.debug("Client {} is exempt from rate limiting, skipping enforcement at {}", clientId, rpmType.name());
+            return;
+        }
+
         Bucket bucket = getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType));
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {

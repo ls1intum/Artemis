@@ -16,6 +16,7 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -209,7 +210,13 @@ public class UserService {
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
-            internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+            // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
+            // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
+            // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
+            if (internalAdmin.getPassword() == null || !passwordService.checkPasswordMatch(internalAdminPassword, internalAdmin.getPassword())) {
+                internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+                internalAdmin.setCredentialsChangedDate(ZonedDateTime.now());
+            }
             // needs to be mutable --> new HashSet<>(Set.of(...))
             internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
             saveUser(internalAdmin);
@@ -283,6 +290,8 @@ public class UserService {
             user.setPassword(passwordService.hashPassword(newPassword));
             user.setResetKey(null);
             user.setResetDate(null);
+            // Stops sessions established before the reset from being extended any further.
+            user.setCredentialsChangedDate(ZonedDateTime.now());
             saveUser(user);
             // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
             // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
@@ -452,6 +461,10 @@ public class UserService {
      * Searches the (optional) LDAP service for a user with the given unique user identifier (e.g. login, email, registration number) and supplier function
      * and returns a new Artemis user.
      * Note: this method should only be used if the user does not yet exist in the database
+     * <p>
+     * The account is created externally managed and activated: it authenticates against the directory, so Artemis has no
+     * activation step to offer it. Creating it unactivated instead used to leave imported students unable to use their
+     * repositories - see {@link User#activated}.
      *
      * @param userIdentifier       the userIdentifier of the user (e.g. login, email, registration number)
      * @param userSupplierFunction the function that supplies the user, typically a call to ldapUserService, e.g. "() -> ldapUserService.orElseThrow().findByLogin(email)"
@@ -580,6 +593,7 @@ public class UserService {
             }
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
+            user.setCredentialsChangedDate(ZonedDateTime.now());
             saveUser(user);
             // What else is revoked is the user's decision: only they know whether the old password may have been seen by
             // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
@@ -711,16 +725,16 @@ public class UserService {
     }
 
     /**
-     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
-     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     * Resolves a student from any combination of registration number, login and email, for the course member, exam and admin
+     * user imports. Looks in the Artemis database first, because the user is most probably already using Artemis, and only
+     * then in the configured LDAP - from which a missing account is created.
      * <p>
-     * Steps:
+     * The whole database is searched before the directory is consulted at all, and within each of the two the identifiers are
+     * tried in the order <b>login, email, registration number</b>, stopping at the first match. Blank identifiers are skipped,
+     * and all three being blank returns empty immediately.
      * <p>
-     * 1) we use the registration number and try to find the student in the Artemis user database
-     * 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user
-     * management system
-     * 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
-     * 4) if we still cannot find the user, we try again using the email
+     * An account created from the directory here is created activated, like one created on first login - see
+     * {@link User#activated}.
      *
      * @param registrationNumber the registration number of the user
      * @param login              the login of the user

@@ -114,8 +114,8 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseForSearchDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
-import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.SubmittedAnswerTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 
 class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
@@ -164,7 +164,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
 
     @Autowired
-    private SubmittedAnswerRepository submittedAnswerRepository;
+    private SubmittedAnswerTestRepository submittedAnswerRepository;
 
     @Autowired
     private TeamRepository teamRepository;

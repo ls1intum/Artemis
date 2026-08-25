@@ -43,15 +43,21 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Run actionlint
-        # Pin the install script to a release tag, not `main` — it executes a downloaded
-        # binary. `-shellcheck=` disables integrated shellcheck, which flags pre-existing
-        # style issues in the legacy deploy workflows.
+        # The install script is pinned to a release tag AND to its SHA-256, because piping it
+        # straight into bash would execute whatever that URL returns. A tag can be moved; the
+        # checksum cannot, so verify before running. Bump both together when raising the version.
+        # `-shellcheck=` disables integrated shellcheck, which flags pre-existing style issues
+        # in the legacy deploy workflows.
         env:
           ACTIONLINT_VERSION: '1.7.12'
+          ACTIONLINT_INSTALLER_SHA256: '72fa3e45ac20f3c3a512d6747b4fcf719e21f890e8c43e78d48a41fdfb900c4e'
         run: |
-          bash <(curl --silent --location \
-            "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash") \
-            "${ACTIONLINT_VERSION}"
+          curl --silent --show-error --fail --location \
+            "https://raw.githubusercontent.com/rhysd/actionlint/v${ACTIONLINT_VERSION}/scripts/download-actionlint.bash" \
+            --output download-actionlint.bash
+          echo "${ACTIONLINT_INSTALLER_SHA256}  download-actionlint.bash" | sha256sum --check --strict
+          bash download-actionlint.bash "${ACTIONLINT_VERSION}"
+          rm download-actionlint.bash
           ./actionlint -color -shellcheck=
 
       - name: Check version pins are in sync
