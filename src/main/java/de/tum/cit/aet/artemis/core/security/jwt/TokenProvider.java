@@ -335,11 +335,6 @@ public class TokenProvider {
 
     /**
      * @param authToken the token to read
-     * @return the passkey this token was issued for, or {@code null} for tokens that are not passkey tokens and for
-     *         passkey tokens issued before the claim was introduced
-     */
-    /**
-     * @param authToken the token to read
      * @return whether the session was established with "remember me"
      */
     public boolean isRememberMeSession(String authToken) {
@@ -355,6 +350,11 @@ public class TokenProvider {
         return count != null ? count : 0;
     }
 
+    /**
+     * @param authToken the token to read
+     * @return the passkey this token was issued for, or {@code null} for tokens that are not passkey tokens and for
+     *         passkey tokens issued before the claim was introduced
+     */
     @Nullable
     public String getPasskeyCredentialId(String authToken) {
         return parseClaims(authToken).get(PASSKEY_CREDENTIAL_ID, String.class);

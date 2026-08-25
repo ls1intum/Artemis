@@ -13,6 +13,12 @@ artemis:
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
     use-external: true # enables ldap authentication
+    # A "remember me" session is silently extended while it stays in use, so an active user is not signed out when the
+    # token expires. Both bounds apply: the session is extended at most this many times, and never past
+    # max-session-lifetime-in-seconds after the original login. A passkey session is not counted against the extension
+    # limit - it keeps its own bound, artemis.user-management.passkey.token-validity-in-seconds-for-passkey.
+    max-session-extensions: 4
+    max-session-lifetime-in-seconds: 2592000 # 30 days, the lifetime a single non-rotating remember-me token used to have
     password-reset:
       links: # The password reset links for different languages
         en: '<link>'
