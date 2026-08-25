@@ -13,20 +13,16 @@ artemis:
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
     use-external: true # enables ldap authentication
-    # A "remember me" session is silently extended while it stays in use, so an active user is not signed out when the
-    # token expires. Both bounds apply: the session is extended at most this many times, and never past
-    # max-session-lifetime-in-seconds after the original login.
+    # A "remember me" session is silently extended while it stays in use, so an active user is not signed out every time
+    # the token expires. This is the one bound on how long that can go on: the session may never live longer than this
+    # after the original login, whatever the request pattern. An inactive session still ends when its current token
+    # expires, after token-validity-in-seconds-for-remember-me.
     #
-    # A rotation happens once less than half the validity remains, so an extension moves the end of the session out by
-    # half a window, not a whole one. A session therefore ends after
-    #   token-validity-in-seconds-for-remember-me * (1 + max-session-extensions / 2)
-    # which with the shipped 7.5-day validity and 6 extensions is exactly 30 days - the same maximum a single
-    # non-rotating 30-day token gave before, and the same value as the ceiling below, so the two agree rather than one
-    # silently overriding the other. Change one and the other needs recomputing.
+    # Measured from the login rather than counted per extension on purpose. A rotation fires on the first request after
+    # less than half the validity remains, so counting extensions would make the maximum depend on when requests arrive,
+    # and would give the most active sessions the shortest lives.
     #
-    # A passkey session is not counted against the extension limit; it keeps its own bound,
-    # artemis.user-management.passkey.token-validity-in-seconds-for-passkey.
-    max-session-extensions: 6
+    # A passkey session has its own, longer bound: artemis.user-management.passkey.token-validity-in-seconds-for-passkey.
     max-session-lifetime-in-seconds: 2592000 # 30 days, the lifetime a single non-rotating remember-me token used to have
     password-reset:
       links: # The password reset links for different languages

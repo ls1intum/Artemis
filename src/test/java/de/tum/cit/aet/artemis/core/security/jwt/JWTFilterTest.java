@@ -42,8 +42,6 @@ class JWTFilterTest {
 
     private static final long TOKEN_VALIDITY_IN_MILLISECONDS = 60000; // 60 seconds
 
-    private static final int MAX_SESSION_EXTENSIONS = 4;
-
     /** Generous next to the 60 second token validity, so only the tests that mean to hit the ceiling reach it. */
     private static final long MAX_SESSION_LIFETIME_IN_SECONDS = 3600;
 
@@ -80,7 +78,7 @@ class JWTFilterTest {
         when(passkeyTokenRenewalService.mayExtendPasskeySession(any())).thenReturn(true);
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
 
-        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_EXTENSIONS, MAX_SESSION_LIFETIME_IN_SECONDS);
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
@@ -237,28 +235,34 @@ class JWTFilterTest {
     }
 
     /**
-     * Builds a "remember me" password session token that a rotation is due for, already extended the given number of times.
+     * Builds a "remember me" password session token that a rotation is due for.
      */
-    private String createRotationDueRememberMeToken(int extensionCount) {
+    private String createRotationDueRememberMeToken() {
         var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         Date issuedAt = new Date(System.currentTimeMillis() - TOKEN_VALIDITY_IN_MILLISECONDS);
         Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
-        return tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true, extensionCount);
+        return tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true);
     }
 
     @Test
     void anActiveRememberMeSessionIsExtended() throws Exception {
         // Password sessions were never extended before, which is what makes shortening their validity acceptable: an active
         // user does not notice, and each extension is a checkpoint where the account is re-examined.
-        MockHttpServletResponse response = filterWithToken(createRotationDueRememberMeToken(0));
+        MockHttpServletResponse response = filterWithToken(createRotationDueRememberMeToken());
 
         assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNotNull();
     }
 
     @Test
-    void aRememberMeSessionIsNotExtendedBeyondTheCap() throws Exception {
-        // Bounds how long an active session can be kept alive without ever re-authenticating.
-        MockHttpServletResponse response = filterWithToken(createRotationDueRememberMeToken(MAX_SESSION_EXTENSIONS));
+    void aRememberMeSessionIsNotExtendedBeyondTheCeiling() throws Exception {
+        // The ceiling is the one bound on how long an active session can be kept alive without re-authenticating, and it
+        // is measured from the login, so it does not depend on when the rotating requests happen to arrive.
+        var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
+        Date issuedAt = new Date(System.currentTimeMillis() - Math.multiplyExact(MAX_SESSION_LIFETIME_IN_SECONDS, 1000));
+        Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
+        String tokenAtTheCeiling = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true);
+
+        MockHttpServletResponse response = filterWithToken(tokenAtTheCeiling);
 
         assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).isNull();
     }
@@ -269,7 +273,7 @@ class JWTFilterTest {
         // remembering the decision, every later request would repeat these lookups - for a session refused early in its
         // second half, that is per-request database load for as long as the token lives.
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(false);
-        String token = createRotationDueRememberMeToken(0);
+        String token = createRotationDueRememberMeToken();
 
         for (int request = 0; request < 5; request++) {
             assertThat(filterWithToken(token).getHeader(HttpHeaders.SET_COOKIE)).as("a refused session is never extended").isNull();
@@ -283,7 +287,7 @@ class JWTFilterTest {
         // The decision is remembered per token, not per account: a second session of the same user has its own token and
         // has to be judged on its own, otherwise one refusal would stop every other session from being extended.
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(false);
-        filterWithToken(createRotationDueRememberMeToken(0));
+        filterWithToken(createRotationDueRememberMeToken());
 
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
         // A second token for the same account, issued two seconds earlier. The gap has to be whole seconds: `iat` is
@@ -291,7 +295,7 @@ class JWTFilterTest {
         var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         Date issuedAt = new Date(System.currentTimeMillis() - TOKEN_VALIDITY_IN_MILLISECONDS - 2000);
         Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
-        String otherToken = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true, 0);
+        String otherToken = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true);
 
         assertThat(filterWithToken(otherToken).getHeader(HttpHeaders.SET_COOKIE)).as("a different session is judged on its own").isNotNull();
     }
@@ -304,7 +308,7 @@ class JWTFilterTest {
         var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         Date issuedAt = new Date(System.currentTimeMillis() - Math.multiplyExact(MAX_SESSION_LIFETIME_IN_SECONDS, 1000));
         Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
-        String token = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true, 0);
+        String token = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true);
 
         MockHttpServletResponse response = filterWithToken(token);
 
@@ -319,7 +323,7 @@ class JWTFilterTest {
         var authentication = new UsernamePasswordAuthenticationToken("test-user", "test-password", List.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority())));
         Date issuedAt = new Date(System.currentTimeMillis() - Math.multiplyExact(MAX_SESSION_LIFETIME_IN_SECONDS, 1000) + remainingLifetimeInMs);
         Date expiration = new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS / 10);
-        String token = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true, 0);
+        String token = tokenProvider.createToken(authentication, issuedAt, expiration, null, false, null, false, true);
 
         MockHttpServletResponse response = filterWithToken(token);
 
@@ -330,13 +334,14 @@ class JWTFilterTest {
     }
 
     @Test
-    void anExtensionIncrementsTheCountSoTheCapIsReached() throws Exception {
+    void anExtensionKeepsTheSessionEligibleForTheNextOne() throws Exception {
+        // The rotated token has to carry the "remember me" claim forward: it is what makes a session extendable at all, so
+        // dropping it would silently make every extension the last one.
         ArgumentCaptor<String> rotated = ArgumentCaptor.forClass(String.class);
 
-        filterWithToken(createRotationDueRememberMeToken(1));
+        filterWithToken(createRotationDueRememberMeToken());
 
         verify(jwtCookieServiceMock).buildRotatedCookie(rotated.capture(), anyLong());
-        assertThat(tokenProvider.getExtensionCount(rotated.getValue())).isEqualTo(2);
         assertThat(tokenProvider.isRememberMeSession(rotated.getValue())).isTrue();
     }
 
@@ -356,7 +361,7 @@ class JWTFilterTest {
         // an already-issued token and so are enforced at the rotation checkpoint.
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(false);
 
-        assertThat(filterWithToken(createRotationDueRememberMeToken(0)).getHeader(HttpHeaders.SET_COOKIE)).isNull();
+        assertThat(filterWithToken(createRotationDueRememberMeToken()).getHeader(HttpHeaders.SET_COOKIE)).isNull();
     }
 
     @Test

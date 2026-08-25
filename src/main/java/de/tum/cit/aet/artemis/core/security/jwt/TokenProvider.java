@@ -62,12 +62,6 @@ public class TokenProvider {
 
     private static final String TOOLS_KEY = "tools";
 
-    /**
-     * How many times a session has already been silently extended. Bounds how long an active session can be kept alive
-     * without re-authenticating, and is tamper-proof because it is part of the signed token.
-     */
-    public static final String EXTENSION_COUNT = "ext";
-
     /** Whether the session was established with "remember me", which is what makes it eligible for extension at all. */
     public static final String REMEMBER_ME = "remember-me";
 
@@ -126,7 +120,7 @@ public class TokenProvider {
     @NonNull
     public String createToken(Authentication authentication, boolean rememberMe) {
         Date now = new Date();
-        return createToken(authentication, now, new Date(now.getTime() + getTokenValidity(rememberMe)), null, null, null, false, rememberMe, 0);
+        return createToken(authentication, now, new Date(now.getTime() + getTokenValidity(rememberMe)), null, null, null, false, rememberMe);
     }
 
     /**
@@ -162,7 +156,7 @@ public class TokenProvider {
                 passkeyCredentialId = credentialId;
             }
         }
-        return createToken(authentication, null, new Date(validity), tool, null, passkeyCredentialId, isPasskeyApproved, rememberMe, 0);
+        return createToken(authentication, null, new Date(validity), tool, null, passkeyCredentialId, isPasskeyApproved, rememberMe);
     }
 
     /**
@@ -206,11 +200,13 @@ public class TokenProvider {
      */
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
             @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved) {
-        return createToken(authentication, issuedAt, expiration, tool, authenticatedWithPasskey, passkeyCredentialId, isPasskeySuperAdminApproved, false, 0);
+        return createToken(authentication, issuedAt, expiration, tool, authenticatedWithPasskey, passkeyCredentialId, isPasskeySuperAdminApproved, false);
     }
 
     /**
-     * Creates a token that also records whether the session is a "remember me" session and how often it has been extended.
+     * Creates a token that also records whether the session is a "remember me" session, which is what makes it eligible
+     * for silent extension at all. How long such a session may live is bounded by the absolute ceiling applied while
+     * rotating, measured from {@code issuedAt}, rather than by counting extensions.
      *
      * @param authentication              the authentication to create the token for
      * @param issuedAt                    when the session was originally established, preserved across rotations
@@ -220,11 +216,10 @@ public class TokenProvider {
      * @param passkeyCredentialId         the passkey the session belongs to, or {@code null}
      * @param isPasskeySuperAdminApproved whether the passkey is approved for super-admin access
      * @param rememberMe                  whether the session was established with "remember me"
-     * @param extensionCount              how many times the session has already been extended
      * @return the signed token
      */
     public String createToken(Authentication authentication, @Nullable Date issuedAt, Date expiration, @Nullable ToolTokenType tool, @Nullable Boolean authenticatedWithPasskey,
-            @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved, boolean rememberMe, int extensionCount) {
+            @Nullable String passkeyCredentialId, boolean isPasskeySuperAdminApproved, boolean rememberMe) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
         AuthenticationMethod authenticationMethod = AuthenticationMethod.fromAuthentication(authentication);
@@ -249,10 +244,6 @@ public class TokenProvider {
 
         if (rememberMe) {
             jwtBuilder.claim(REMEMBER_ME, true);
-        }
-
-        if (extensionCount > 0) {
-            jwtBuilder.claim(EXTENSION_COUNT, extensionCount);
         }
 
         if (tool != null) {
@@ -358,23 +349,6 @@ public class TokenProvider {
      */
     boolean isRememberMeSession(Claims claims) {
         return Boolean.TRUE.equals(claims.get(REMEMBER_ME, Boolean.class));
-    }
-
-    /**
-     * @param authToken the token to read
-     * @return how many times the session has already been silently extended
-     */
-    public int getExtensionCount(String authToken) {
-        return getExtensionCount(parseClaims(authToken));
-    }
-
-    /**
-     * @param claims claims of an already parsed token
-     * @return how many times the session has already been silently extended
-     */
-    int getExtensionCount(Claims claims) {
-        Integer count = claims.get(EXTENSION_COUNT, Integer.class);
-        return count != null ? count : 0;
     }
 
     /**

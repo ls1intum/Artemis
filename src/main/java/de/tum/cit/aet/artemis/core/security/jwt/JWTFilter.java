@@ -54,9 +54,6 @@ public class JWTFilter extends GenericFilterBean {
 
     private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
-    /** How often a "remember me" password session may be silently extended before the user has to sign in again. */
-    private final int maxSessionExtensions;
-
     /** The longest a "remember me" session may live, measured from the original login, however often it is extended. */
     private final long maxSessionLifetimeInSeconds;
 
@@ -84,11 +81,10 @@ public class JWTFilter extends GenericFilterBean {
     private final long tokenValidityInSecondsForPasskey;
 
     public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            int maxSessionExtensions, long maxSessionLifetimeInSeconds) {
+            long maxSessionLifetimeInSeconds) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
-        this.maxSessionExtensions = maxSessionExtensions;
         this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
     }
@@ -123,22 +119,16 @@ public class JWTFilter extends GenericFilterBean {
      */
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
         // Parsed once for every claim below. Each String accessor on TokenProvider verifies the signature again, and this
-        // method runs on every authenticated cookie request, so reading five claims through them meant five verifications
-        // per request for a session that is not even due for rotation.
+        // method runs on every authenticated cookie request, so reading the claims through them cost one verification each
+        // even for a session that is not due for rotation.
         Claims claims = this.tokenProvider.parseClaims(jwtToken);
 
-        // A passkey session is extended up to the passkey lifetime; a "remember me" password session is extended a bounded
-        // number of times. A plain session is never extended - it is meant to be short.
+        // Both kinds of session are extended while they stay in use, up to a ceiling measured from the original login: the
+        // passkey lifetime for a passkey session, max-session-lifetime-in-seconds for a "remember me" one. A plain session
+        // is never extended - it is meant to be short.
         boolean isPasskeySession = Objects.equals(this.tokenProvider.getAuthenticationMethod(claims), AuthenticationMethod.PASSKEY);
         boolean isRememberMeSession = this.tokenProvider.isRememberMeSession(claims);
         if (!isPasskeySession && !isRememberMeSession) {
-            return;
-        }
-
-        // Bounds how long an active password session can be kept alive without re-authenticating. A passkey session is
-        // already bounded by the passkey lifetime measured from the original login, so it is not counted here.
-        int extensionCount = this.tokenProvider.getExtensionCount(claims);
-        if (!isPasskeySession && extensionCount >= this.maxSessionExtensions) {
             return;
         }
 
@@ -175,10 +165,10 @@ public class JWTFilter extends GenericFilterBean {
             }
 
             // Neither kind of session may outlive its ceiling, measured from the original login: the passkey lifetime for a
-            // passkey session, and for a password session the lifetime a single non-rotating token used to have. Extending
-            // a password session only by count would take it past that former lifetime, and the checks above cannot make up
-            // for it on an externally managed account - a password reset or a deactivation done in LDAP, SAML or OIDC
-            // leaves no trace in the local fields they read, so the ceiling is all that bounds such a session.
+            // passkey session, and for a password session the lifetime a single non-rotating token used to have. This is the
+            // only bound, deliberately - counting extensions instead would make the maximum depend on when the rotating
+            // requests arrive. It is also all that bounds an externally managed account, where a password reset or a
+            // deactivation done in LDAP, SAML or OIDC leaves no trace in the local fields the checks above read.
             long sessionCeilingInSeconds = isPasskeySession ? this.tokenValidityInSecondsForPasskey : this.maxSessionLifetimeInSeconds;
             long newTokenExpirationTimeInMs = Math.min(nowInMs + tokenValidityInMs, issuedAt.getTime() + Math.multiplyExact(sessionCeilingInSeconds, 1000));
             if (newTokenExpirationTimeInMs <= nowInMs) {
@@ -192,7 +182,7 @@ public class JWTFilter extends GenericFilterBean {
             // from that token and carries no details, so deriving them from it would drop the credential id (defeating the
             // check above from the second rotation onwards) and reset the super-admin approval flag.
             var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(claims), isPasskeySession,
-                    passkeyCredentialId, this.tokenProvider.isPasskeySuperAdminApproved(claims), isRememberMeSession, extensionCount + 1);
+                    passkeyCredentialId, this.tokenProvider.isPasskeySuperAdminApproved(claims), isRememberMeSession);
 
             // Build and set the new token as a response cookie
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMs);

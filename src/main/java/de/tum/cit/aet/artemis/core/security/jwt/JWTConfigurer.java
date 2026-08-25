@@ -20,8 +20,6 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
 
     private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
-    private final int maxSessionExtensions;
-
     private final long maxSessionLifetimeInSeconds;
 
     /**
@@ -32,12 +30,11 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      * @param tokenValidityInSecondsForPasskey the passkey token validity in seconds.
      */
     public JWTConfigurer(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey,
-            PasskeyTokenRenewalService passkeyTokenRenewalService, int maxSessionExtensions, long maxSessionLifetimeInSeconds) {
+            PasskeyTokenRenewalService passkeyTokenRenewalService, long maxSessionLifetimeInSeconds) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
-        this.maxSessionExtensions = maxSessionExtensions;
         this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
     }
 
@@ -50,8 +47,7 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      */
     @Override
     public void configure(HttpSecurity http) {
-        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionExtensions,
-                maxSessionLifetimeInSeconds);
+        JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds);
         // Adds the JWTFilter to the security chain before the UsernamePasswordAuthenticationFilter.
         // This ensures that the JWTFilter processes the request first to extract and validate JWTs.
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);

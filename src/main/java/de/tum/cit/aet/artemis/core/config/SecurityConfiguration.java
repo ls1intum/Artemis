@@ -85,24 +85,21 @@ public class SecurityConfiguration {
     private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
     /**
-     * How often a "remember me" session may be silently extended, which bounds how many database lookups one session can
-     * cause and forces a fresh sign-in in the end.
-     */
-    private final int maxSessionExtensions;
-
-    /**
-     * The longest a "remember me" session may live, measured from the original login, regardless of how often it is
-     * extended. Defaults to the thirty days that a single non-rotating token was valid for before rotation existed.
+     * The longest a "remember me" session may live, measured from the original login. Defaults to the thirty days a single
+     * non-rotating token was valid for before rotation existed, so the maximum session length is unchanged.
      * <p>
-     * With the shipped settings this ceiling and the extension count run out at the same moment, so neither loosens the
-     * bound the other sets. A rotation happens when less than half the validity remains, so each extension moves the end
-     * of the session out by half a window rather than a whole one: a session ends at {@code validity * (1 + extensions/2)},
-     * which for a 7.5-day validity and 6 extensions is exactly 30 days.
+     * This is the only bound on a session, deliberately. Counting extensions instead would make the maximum depend on when
+     * requests happen to arrive: a rotation fires on the first request after less than half the validity remains, so a
+     * continuously active session consumes its allowance in half-windows and would end sooner than one that returns just
+     * before each expiry - the most active users getting the shortest sessions. Measuring from {@code issuedAt} is
+     * independent of request timing, and {@code issuedAt} is as tamper-proof as any other claim in the signed token.
      * <p>
-     * The count alone is still not enough to rely on. It bounds the number of rotations, not the wall-clock reach of a
-     * session, and the other renewal checks cannot help on an externally managed account - a password reset or a
-     * deactivation performed in LDAP, SAML or OIDC leaves no trace in the local fields they read. So the ceiling is what
-     * keeps such a session from being extended past its former lifetime if the two ever drift apart.
+     * It also bounds the renewal lookups on its own: with a validity of {@code V} a session can rotate at most
+     * {@code ceiling / (V / 2)} times, about eight over thirty days with the shipped seven-day validity.
+     * <p>
+     * A ceiling is also the only thing that bounds an externally managed session, because a password reset or a
+     * deactivation performed in LDAP, SAML or OIDC leaves no trace in the local account fields the other renewal checks
+     * read.
      */
     private final long maxSessionLifetimeInSeconds;
 
@@ -134,8 +131,7 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-extensions:6}") int maxSessionExtensions,
-            @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
+            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
@@ -144,7 +140,6 @@ public class SecurityConfiguration {
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.moduleFeatureService = moduleFeatureService;
-        this.maxSessionExtensions = maxSessionExtensions;
         this.maxSessionLifetimeInSeconds = requireUsableSessionLifetime(maxSessionLifetimeInSeconds);
     }
 
@@ -424,7 +419,7 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionExtensions, maxSessionLifetimeInSeconds);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds);
     }
 
 }
