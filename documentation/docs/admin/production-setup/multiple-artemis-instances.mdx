@@ -542,7 +542,8 @@ Build agents can be added to and removed from the server cluster depending on th
 assessment of programming exercises. If desired, build agents can execute multiple build jobs concurrently. In this case, you need to make sure that the server node your build agents is running on has enough resources.
 We recommend at least 2 CPUs and 2 GB of RAM for each concurrently running build job.
 
-Build agents do **not** require access to the Shared File System as the repositories used in the build jobs are cloned using HTTPS. Furthermore, as Build Agents do not handle client requests,
+Build agents do **not** require access to the Shared File System, because they clone the repositories used in the build jobs over the network: over SSH when
+`artemis.version-control.build-agent-use-ssh` is `true`, and otherwise over HTTPS. Furthermore, as Build Agents do not handle client requests,
 they should be left out from the [nginx configuration](#nginx-configuration).
 
 
@@ -588,10 +589,16 @@ You can make following adaptations to the `application-prod.yml`:
 
 3. Furthermore, you will need some configuration related to version control and continuous integration.
 
-    Build agents require access to the VC server. Therefore, you need to add credentials so the build agent can access the repositories.
-    These credentials are used to clone repositories via HTTPS. You must also add these credentials to the localvc nodes.
+    Build agents require access to the VC server. How they authenticate for it is selected by
+    `artemis.version-control.build-agent-use-ssh`, and the credentials below belong to only one of the two options:
 
-    HTTPS authentication for build agents is deprecated; prefer SSH keys as described after the example below.
+    - `true` (**recommended**): each agent generates an SSH key pair at startup and authenticates with it, so there is no
+      shared credential to configure and `build-agent-git-username`/`build-agent-git-password` may be omitted entirely.
+    - `false` (default, **deprecated**): the agents clone over HTTPS with the credentials below, which you must add to the
+      build agents and to the localvc nodes alike.
+
+    The HTTPS credentials are therefore required only for that second configuration; the SSH setup is described after the
+    example below.
 
     ```yaml
     artemis:
@@ -599,11 +606,11 @@ You can make following adaptations to the `application-prod.yml`:
             url: <url-to-your-vc-server>
             default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
             # Artemis admin credentials
-            build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc
-            build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc. You can otherwise use an ssh key
+            build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true
+            build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true
     ```
 
-    Preferably, set `artemis.version-control.build-agent-use-ssh: true` to have every agent generate an SSH key pair at startup and authenticate with it, which removes the need for a shared credential entirely; both properties above may then be omitted. Set it on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working — and only afterwards on the localvc nodes, where it stops that pair from granting build agents read access to every repository. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
+    The order matters when you switch an existing installation over. Set `artemis.version-control.build-agent-use-ssh: true` on the build agents first — localvc nodes accept a registered agent's key regardless of their own setting, so builds keep working, and you can move agents one at a time — and only afterwards on the localvc nodes, where it stops that credential pair from granting build agents read access to every repository. Doing it in the other order breaks every agent still cloning over HTTPS. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
 
 4. Configuration related to the execution of build jobs:
 
