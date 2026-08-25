@@ -19,9 +19,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
@@ -63,6 +65,30 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @EntityGraph(type = LOAD, attributePaths = { "buildConfig", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
+
+    /**
+     * Sets the flag that marks the exercise as having changed test cases, but only when it does not already hold that
+     * value.
+     * <p>
+     * Deliberately a modifying query. The flag is a single boolean, and reading the exercise in order to change it
+     * meant fetching the whole exercise together with the course it eagerly brings along, then merging all of it back,
+     * which is two wide statements for one column. Guarding on the current value inside the statement also means the
+     * previous value does not have to be read: the affected row count answers whether anything changed. A null in the
+     * column counts as false, which is how {@link ProgrammingExercise#getTestCasesChanged()} reads it.
+     *
+     * @param exerciseId       the exercise whose flag should be set
+     * @param testCasesChanged the value to set the flag to
+     * @return 1 if the flag was changed, 0 if it already held that value or no such exercise exists
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExercise exercise
+            SET exercise.testCasesChanged = :testCasesChanged
+            WHERE exercise.id = :exerciseId
+                AND COALESCE(exercise.testCasesChanged, FALSE) <> :testCasesChanged
+            """)
+    int updateTestCasesChanged(@Param("exerciseId") long exerciseId, @Param("testCasesChanged") boolean testCasesChanged);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
