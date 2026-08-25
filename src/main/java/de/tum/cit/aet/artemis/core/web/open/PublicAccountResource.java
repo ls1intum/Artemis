@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityEventService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
@@ -104,9 +105,12 @@ public class PublicAccountResource {
 
     private final UserAiPreferenceService userAiPreferenceService;
 
+    private final AccountSecurityEventService accountSecurityEventService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
-            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService) {
+            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService,
+            AccountSecurityEventService accountSecurityEventService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -117,6 +121,7 @@ public class PublicAccountResource {
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userAiPreferenceService = userAiPreferenceService;
+        this.accountSecurityEventService = accountSecurityEventService;
     }
 
     /**
@@ -152,6 +157,8 @@ public class PublicAccountResource {
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
         // The template renders the key, which now lives in user_recovery_key rather than on the user.
         mailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(user, userRecoveryKeyService.findActivationKey(user.getId()), null));
+        // No separate notification: the activation mail already goes to the address that was registered.
+        accountSecurityEventService.recordAccountRegistered(user);
         return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
     }
 
@@ -313,20 +320,28 @@ public class PublicAccountResource {
         if (!users.isEmpty()) {
             List<User> internalUsers = users.stream().filter(User::isInternal).toList();
             if (internalUsers.isEmpty()) {
+                accountSecurityEventService.recordPasswordResetRequestRejected("external-user");
                 throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
             }
             else if (internalUsers.size() >= 2) {
+                accountSecurityEventService.recordPasswordResetRequestRejected("identifier-not-unique");
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
             var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
                 mailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(internalUser, null, userRecoveryKeyService.findResetKey(internalUser.getId())));
+                accountSecurityEventService.recordPasswordResetRequested(internalUser);
+            }
+            else {
+                // Not activated, so no reset key was issued and no mail was sent.
+                accountSecurityEventService.recordPasswordResetRequestRejected("account-not-activated");
             }
         }
         else {
             // Pretend the request has been successful to prevent checking which emails or usernames really exist
             // but log that an invalid attempt has been made
             log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
+            accountSecurityEventService.recordPasswordResetRequestRejected("unknown-identifier");
         }
         return ResponseEntity.ok().build();
     }
@@ -356,6 +371,9 @@ public class PublicAccountResource {
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");
         }
+        // The completed reset is recorded and announced by UserService.completePasswordReset, through
+        // AccountSecurityNotificationService.passwordChanged with the RESET actor, which is also what carries the
+        // revocation summary. A second notice here would mean two audit rows and two near-identical emails per reset.
         return ResponseEntity.ok().build();
     }
 }

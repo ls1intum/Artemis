@@ -75,10 +75,10 @@ public class UserCreationService {
     /**
      * Create user only in the internal Artemis database. This is a pure service method without any logic with respect to external systems.
      * <p>
-     * The account is created <b>activated</b> unless its own owner is expected to activate it, which needs {@code isInternal}
-     * <em>and</em> self-registration to be enabled on this instance. Only then does it get {@code activated = false} and an
-     * activation key. See {@link User#activated} for why an externally managed account must never be created unactivated, and
-     * {@link #isRegistrationEnabled()} for the property involved.
+     * The account is created <b>activated</b> unless its own owner is expected to activate it, which requires
+     * {@code isInternal}: only an internal account gets {@code activated = false} and an activation key. See
+     * {@link User#activated} for why an externally managed account must never be created unactivated, and for why this is
+     * deliberately not narrowed further to instances that have self-registration enabled.
      *
      * @param login              user login string
      * @param password           user password, if set to null, the password will be set randomly
@@ -122,8 +122,8 @@ public class UserCreationService {
         // repositories.
         //
         // Internal accounts keep the existing behaviour. Narrowing this further - to internal accounts on an instance that actually has
-        // self-registration enabled - is a separate change, because the LTI launch is the only caller that creates an internal account
-        // here and it reads `activated` as its own "already initialised" marker.
+        // self-registration enabled - is a separate change: the LTI launch also creates an internal account here, and while it no longer
+        // reads `activated` (it records what it still owes in user_lti.initialized), it does rely on the account starting out inactive.
         if (isInternal) {
             newUser.setActivated(false);
         }
@@ -318,6 +318,14 @@ public class UserCreationService {
             String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
             accountCredentialRevocationService.revokeAllCredentials(savedUser, reason);
         }
+        // Only the deactivation is audited here, and only once the revocation it implies has run, so the entry describes a
+        // transition that has actually taken effect. The admin edit form reaches that transition without going through
+        // deactivateUser, so it would otherwise go unrecorded. The opposite direction needs no entry here: the only caller,
+        // AdminUserResource.updateUser, follows an activating update with userService.activateUser, which audits it - doing
+        // it in both places recorded a single activation twice.
+        if (isBeingDeactivated) {
+            auditAccountStateChange(savedUser, Constants.DEACTIVATE_USER);
+        }
         if (passwordChangedByAdministrator) {
             // The affected user is told, not the administrator who did it: their credentials just stopped working, and only
             // this email lets them tell an administrator's action apart from an intruder's. The acting administrator is
@@ -363,13 +371,16 @@ public class UserCreationService {
     public void deactivateUser(User user) {
         user.setActivated(false);
         saveUser(user);
-        auditAccountStateChange(user, Constants.DEACTIVATE_USER);
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
         // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
+        // Done before the audit entry so that a failure while writing the entry cannot leave an account flagged as
+        // deactivated while its tokens and keys still work.
         accountCredentialRevocationService.revokeAllCredentials(user, "user deactivated");
-        // An outstanding activation key would be a way to undo this: an account still awaiting self-activation would
-        // otherwise keep a working link that flips `activated` back on. A pending reset key goes for the same reason.
+        // An outstanding activation key would be a way to undo this: an account still awaiting activation would otherwise
+        // keep a working link that flips `activated` back on. A pending reset key goes for the same reason. Done before the
+        // audit entry for the same reason the revocation is.
         userRecoveryKeyService.clearAll(user.getId());
+        auditAccountStateChange(user, Constants.DEACTIVATE_USER);
         log.info("Deactivated user: {}", user);
     }
 
@@ -380,13 +391,23 @@ public class UserCreationService {
      * the fact - the audit table keeps deliberate actions like this one far longer than login records. The principal is
      * whoever performed the change, which is an administrator for both the deactivate endpoint and the admin edit form,
      * and {@code system} where there is no authenticated actor, as when a user redeems their own activation key.
+     * <p>
+     * Best-effort with respect to the caller, like {@code AccountSecurityEventService}: the state change and the
+     * credential revocation that accompanies it have already happened by the time this runs, so letting a failed audit
+     * write propagate would report a deactivation as failed after it had taken effect. A failure is logged at error level
+     * instead.
      *
      * @param user      the account whose state changed
      * @param eventType {@link Constants#ACTIVATE_USER} or {@link Constants#DEACTIVATE_USER}
      */
     private void auditAccountStateChange(User user, String eventType) {
         String actor = SecurityUtils.getCurrentUserLogin().orElse(Constants.SYSTEM_ACCOUNT);
-        auditEventRepository.add(new AuditEvent(actor, eventType, "user=" + user.getLogin()));
+        try {
+            auditEventRepository.add(new AuditEvent(actor, eventType, "user=" + user.getLogin()));
+        }
+        catch (Exception e) {
+            log.error("Could not record audit event {} for user {} performed by {}", eventType, user.getLogin(), actor, e);
+        }
     }
 
     /**
@@ -415,6 +436,9 @@ public class UserCreationService {
         if (userRepository.storeInitialPasswordAndActivate(user.getId(), passwordService.hashPassword(newPassword)) != 1) {
             return Optional.empty();
         }
+        // Same as activateUser: an activated account must not carry an activation key. The launch already discards the one
+        // the factory issued, so this is belt and braces - but it keeps the invariant true of every write that activates.
+        userRecoveryKeyService.clearActivationKey(user.getId());
         return Optional.of(newPassword);
     }
 

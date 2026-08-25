@@ -11,6 +11,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
@@ -51,6 +52,23 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
+
+    // Measured baselines for one authenticated git request; a clone or a push is two of these. Upper bounds, so a new
+    // query fails the build.
+    //
+    // The participation-token counts are the ones that matter for exam load: that is what students use. Password
+    // authentication is more expensive because it falls through to the authentication manager, which re-reads the user,
+    // writes an audit event and stamps the last login date. It is measured too so that path cannot rot unnoticed.
+    // The four counts below each went up by one when the personal VCS access token moved into user_vcs_access_token: it is
+    // compared before the other credentials, and reading it is now a query where it used to be a column on the user row
+    // loaded above. Nothing else on this path changed, and the access log no longer re-derives the credential that matched.
+    private static final int GIT_AUTH_QUERY_COUNT = 9;
+
+    private static final int GIT_PUSH_AUTH_QUERY_COUNT = 9;
+
+    private static final int GIT_TOKEN_AUTH_QUERY_COUNT = 6;
+
+    private static final int GIT_TOKEN_PUSH_QUERY_COUNT = 6;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -120,6 +138,87 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Cleanup
         someRepository.resetLocalRepo();
+    }
+
+    /**
+     * Guards the git authentication and authorization path, which runs on every git request and is therefore the
+     * highest-frequency database consumer of an exam.
+     * <p>
+     * The service method is called directly rather than through a real git fetch because the embedded git server handles
+     * the request on its own thread, where the thread-local query interceptor would count nothing.
+     * <p>
+     * Measured baseline. It used to be eight queries higher: the user was loaded without its authorities and course
+     * roles, so every one of the four course-role checks on this path both re-read the whole user row (through
+     * AuthorizationCheckService#loadUserIfNeeded, because User#authorities is lazy) and issued its own EXISTS query.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitRequestQueryCount() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_AUTH_QUERY_COUNT);
+    }
+
+    /**
+     * The case the exam simulation actually drives: a participation-scoped token belonging to the repository's own
+     * student. Password authentication takes a different and more expensive route (it reaches the authentication
+     * manager, which re-reads the user, writes an audit event and stamps the last login date), so it is not
+     * representative of exam load.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitRequestWithParticipationTokenQueryCount() throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var token = localVCLocalCITestService.getParticipationVcsAccessToken(student, participation.getId()).getVcsAccessToken();
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + token).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_AUTH_QUERY_COUNT);
+    }
+
+    /**
+     * The push counterpart of the participation-token fetch above.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitPushWithParticipationTokenQueryCount() throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var token = localVCLocalCITestService.getParticipationVcsAccessToken(student, participation.getId()).getVcsAccessToken();
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + token).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_PUSH_QUERY_COUNT);
+    }
+
+    /**
+     * The push counterpart of {@link #testAuthenticateAndAuthorizeGitRequestQueryCount}. A push authorizes as WRITE,
+     * which additionally resolves whether the participation is locked; measured, that lands on the same count as a
+     * fetch, so both paths are pinned at the same number.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitPushQueryCount() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_PUSH_AUTH_QUERY_COUNT);
     }
 
     @Test

@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
@@ -78,6 +79,9 @@ public class UserTestService {
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
 
     @Autowired
     private CourseTestRepository courseRepository;
@@ -619,6 +623,9 @@ public class UserTestService {
         repoUser.setActivated(false);
         markCreatedByLtiLaunch(repoUser);
         userTestRepository.save(repoUser);
+        // Seeded so the assertion below can fail: the key lives in user_recovery_key now, and an account that has none has
+        // nothing to clear.
+        userRecoveryKeyService.storeActivationKey(repoUser.getId(), "some-key");
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
@@ -630,6 +637,10 @@ public class UserTestService {
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+        // The key the factory generated for the internal account is unreachable state once the account is activated, and
+        // an activated account carrying one would break the invariant the data repair for wrongly unactivated accounts
+        // relies on.
+        assertThat(userRecoveryKeyService.findActivationKey(currentUser.getId())).as("activating through the LTI initialization clears the activation key").isNull();
     }
 
     // Test
