@@ -43,6 +43,14 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
+    @Query("""
+            SELECT exam.id
+            FROM Exam exam
+            WHERE exam.id > :afterId
+            ORDER BY exam.id ASC
+            """)
+    List<Long> findExamIdsAfter(@Param("afterId") long afterId, Pageable pageable);
+
     /**
      * Reads only the dates that decide whether a submission is in time.
      * <p>

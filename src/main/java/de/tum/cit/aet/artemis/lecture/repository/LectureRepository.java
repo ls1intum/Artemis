@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,6 +27,14 @@ import de.tum.cit.aet.artemis.lecture.dto.LectureForOverviewDTO;
 @Lazy
 @Repository
 public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
+
+    @Query("""
+            SELECT lecture.id
+            FROM Lecture lecture
+            WHERE lecture.id > :afterId
+            ORDER BY lecture.id ASC
+            """)
+    List<Long> findLectureIdsAfter(@Param("afterId") long afterId, Pageable pageable);
 
     @Query("""
             SELECT lecture

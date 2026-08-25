@@ -8,6 +8,7 @@ import java.util.Set;
 import org.hibernate.NonUniqueResultException;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -24,6 +25,22 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 @Lazy
 @Repository
 public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit, Long> {
+
+    /**
+     * The concrete content subtypes are the indexable ones; exercise units are never indexed.
+     *
+     * @param afterId  the id the previous page stopped at
+     * @param pageable the page size
+     * @return the next indexable lecture unit ids in ascending order
+     */
+    @Query("""
+            SELECT lectureUnit.id
+            FROM LectureUnit lectureUnit
+            WHERE lectureUnit.id > :afterId
+                AND TYPE(lectureUnit) IN (TextUnit, OnlineUnit, AttachmentVideoUnit)
+            ORDER BY lectureUnit.id ASC
+            """)
+    List<Long> findIndexableUnitIdsAfter(@Param("afterId") long afterId, Pageable pageable);
 
     @Query("""
             SELECT lu

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.service.reconcile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,7 +34,7 @@ class SearchableEntityReconcileSchedulerTest {
 
     @Test
     void testDisabledPassDoesNotRunItsBody() {
-        var scheduler = new SearchableEntityReconcileScheduler(properties(false, false, false));
+        var scheduler = new SearchableEntityReconcileScheduler(properties(false, false, false), mock(SearchableEntityMissingSweep.class));
         AtomicBoolean ran = new AtomicBoolean(false);
 
         scheduler.runPass(ReconcilePass.DRIFT, false, () -> ran.set(true));
@@ -43,7 +44,7 @@ class SearchableEntityReconcileSchedulerTest {
 
     @Test
     void testEnabledPassRunsItsBody() {
-        var scheduler = new SearchableEntityReconcileScheduler(properties(true, true, true));
+        var scheduler = new SearchableEntityReconcileScheduler(properties(true, true, true), mock(SearchableEntityMissingSweep.class));
         AtomicBoolean ran = new AtomicBoolean(false);
 
         scheduler.runPass(ReconcilePass.DRIFT, true, () -> ran.set(true));
@@ -55,7 +56,7 @@ class SearchableEntityReconcileSchedulerTest {
     void testFailingPassDoesNotPropagate() {
         // A scheduled method that throws is suppressed from further executions, which would silently retire the
         // pass until the next restart. A transient failure has to stay transient.
-        var scheduler = new SearchableEntityReconcileScheduler(properties(true, true, true));
+        var scheduler = new SearchableEntityReconcileScheduler(properties(true, true, true), mock(SearchableEntityMissingSweep.class));
 
         assertThatCode(() -> scheduler.runPass(ReconcilePass.ORPHAN, true, () -> {
             throw new IllegalStateException("Weaviate unreachable");
@@ -64,7 +65,7 @@ class SearchableEntityReconcileSchedulerTest {
 
     @Test
     void testScheduledEntryPointsAreNoOpsWhileDisabled() {
-        var scheduler = new SearchableEntityReconcileScheduler(properties(false, false, false));
+        var scheduler = new SearchableEntityReconcileScheduler(properties(false, false, false), mock(SearchableEntityMissingSweep.class));
 
         assertThatCode(() -> {
             scheduler.reconcileDrift();

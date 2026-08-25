@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
@@ -32,6 +33,17 @@ public class ExamRepositoryApi extends AbstractExamApi {
 
     public Exam findByIdElseThrow(long id) {
         return examRepository.findByIdElseThrow(id);
+    }
+
+    /**
+     * Walks the ids expected to be indexed, one page at a time, for the reconcile passes.
+     *
+     * @param afterId the id the previous page stopped at
+     * @param limit   the page size
+     * @return the next exam ids in ascending order
+     */
+    public List<Long> findExamIdsAfter(long afterId, int limit) {
+        return examRepository.findExamIdsAfter(afterId, PageRequest.ofSize(limit));
     }
 
     public Optional<Exam> findById(long id) {

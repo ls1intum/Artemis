@@ -1,9 +1,13 @@
 package de.tum.cit.aet.artemis.globalsearch.repository;
 
+import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -29,6 +33,22 @@ public interface SearchableEntitySyncStateRepository extends ArtemisJpaRepositor
      * @return the ledger row if one exists
      */
     Optional<SearchableEntitySyncState> findByEntityTypeAndEntityId(String entityType, Long entityId);
+
+    /**
+     * Returns which of the given ids already have a confirmed write on record, so a pass can diff a page of
+     * database ids against the ledger in one query rather than asking per entity.
+     *
+     * @param entityType the {@code SearchableEntitySchema.TypeValues} discriminator
+     * @param entityIds  the ids to look up
+     * @return the subset of ids that are present in the ledger
+     */
+    @Query("""
+            SELECT state.entityId
+            FROM SearchableEntitySyncState state
+            WHERE state.entityType = :entityType
+                AND state.entityId IN :entityIds
+            """)
+    Set<Long> findSyncedEntityIds(@Param("entityType") String entityType, @Param("entityIds") Collection<Long> entityIds);
 
     /**
      * Deletes the ledger row for a single entity, if present. Called when an entity is deleted so the ledger

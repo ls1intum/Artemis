@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
@@ -26,6 +27,17 @@ public class LectureRepositoryApi extends AbstractLectureApi {
 
     public LectureRepositoryApi(LectureRepository lectureRepository) {
         this.lectureRepository = lectureRepository;
+    }
+
+    /**
+     * Walks the ids expected to be indexed, one page at a time, for the reconcile passes.
+     *
+     * @param afterId the id the previous page stopped at
+     * @param limit   the page size
+     * @return the next lecture ids in ascending order
+     */
+    public List<Long> findLectureIdsAfter(long afterId, int limit) {
+        return lectureRepository.findLectureIdsAfter(afterId, PageRequest.ofSize(limit));
     }
 
     public Optional<Lecture> findById(Long lectureId) {
