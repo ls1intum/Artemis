@@ -174,6 +174,12 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * fetching every submission a student ever pushed in order to read the last one is a lot of rows for nothing: on
      * the "trigger all failed builds" path that would be every push of every selected participation. Participations
      * without any submission are left out because triggering them is a no-op.
+     * <p>
+     * Newest means the highest id, which is how the exercise-wide query above has always picked it. This path used to
+     * load every submission and pick the newest in memory, where {@link de.tum.cit.aet.artemis.exercise.domain.Submission}
+     * orders by submission date and falls back to the id. The two only disagree when a submission carries a date that
+     * is older than that of a submission inserted before it, which is why the id is the more direct answer to "the
+     * commit that was pushed last".
      *
      * @param exerciseId       is used as a filter for the found participations
      * @param participationIds the participations to retrieve

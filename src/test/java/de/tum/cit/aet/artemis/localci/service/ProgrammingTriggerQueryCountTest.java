@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ParticipationBuildTriggerDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -104,6 +105,43 @@ class ProgrammingTriggerQueryCountTest extends AbstractProgrammingIntegrationLoc
             assertThat(data.commitHash()).isNotNull();
             assertThat(data.submissionId()).isPositive();
             assertThat(data.needsResume()).isFalse();
+        });
+    }
+
+    /**
+     * The detached participation the projection builds has to expose everything the trigger path reads off a
+     * participation, because a missing field would surface as a websocket error for that student rather than as a
+     * failure here. The listed fields are the ones the trigger, the build job, the websocket notification and, for an
+     * exam exercise, the individual working period check actually look at.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void theDetachedParticipationCarriesEverythingTheTriggerReads() throws Exception {
+        createParticipationsWithSubmissions(1);
+        var exercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        var data = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseId(programmingExercise.getId()).getFirst();
+
+        var participation = data.toDetachedParticipation(exercise);
+
+        assertThat(participation.getId()).isEqualTo(data.participationId());
+        assertThat(participation.getRepositoryUri()).isEqualTo(data.repositoryUri());
+        assertThat(participation.getVcsRepositoryUri()).isNotNull();
+        assertThat(participation.getBuildPlanId()).isEqualTo(data.buildPlanId());
+        assertThat(participation.getBranch()).isEqualTo(data.branch());
+        assertThat(participation.getInitializationState()).isEqualTo(data.initializationState());
+        assertThat(participation.getProgrammingExercise()).isSameAs(exercise);
+        assertThat(participation.getExercise()).isSameAs(exercise);
+        // The websocket notification addresses the owner by login, and the exam working period check reads its id.
+        assertThat(participation.getStudents()).singleElement().satisfies(student -> {
+            assertThat(student.getLogin()).isEqualTo(data.studentLogin());
+            assertThat(student.getId()).isEqualTo(data.studentId());
+        });
+        assertThat(participation.getParticipant()).isNotNull();
+        assertThat(participation.getParticipant().getId()).isEqualTo(data.studentId());
+        assertThat(participation.findLatestSubmission()).get().satisfies(submission -> {
+            assertThat(submission.getId()).isEqualTo(data.submissionId());
+            assertThat(((ProgrammingSubmission) submission).getCommitHash()).isEqualTo(data.commitHash());
+            assertThat(submission.getParticipation()).isSameAs(participation);
         });
     }
 

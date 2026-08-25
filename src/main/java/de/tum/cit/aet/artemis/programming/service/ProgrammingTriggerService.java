@@ -129,7 +129,10 @@ public class ProgrammingTriggerService {
         triggerBuildForParticipationData(triggerData, programmingExercise);
 
         // When the instructor build was triggered for the programming exercise, it is not considered 'dirty' anymore.
-        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise, false);
+        // Deliberately by id: that call saves the exercise, and the exercise loaded above carries its auxiliary
+        // repositories, a collection with orphan removal. Merging it after a run that can take minutes would delete an
+        // auxiliary repository added in the meantime, so the flag is flipped on a freshly read exercise instead.
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(exerciseId, false);
         // Let the instructor know that the build run is finished.
         programmingMessagingService.notifyInstructorAboutCompletedExerciseBuildRun(programmingExercise);
     }
@@ -270,18 +273,6 @@ public class ProgrammingTriggerService {
     }
 
     /**
-     * Loads the exercise of the given participations once, with the associations a trigger reads off it, and resolves
-     * the trigger inputs that are the same for all of them.
-     * <p>
-     * The loaded exercise is set on every participation, so the trigger finds the build config and the auxiliary
-     * repositories already initialized and does not query for either. Both of their loaders return the association when
-     * it is already there, so one load here replaces two queries per participation. Nothing is retained between
-     * batches, so there is nothing to invalidate when an instructor changes the exercise.
-     *
-     * @param participationsOfExercise the participations of one exercise that are about to be triggered
-     * @return the trigger inputs shared by those participations
-     */
-    /**
      * Resolves the shared inputs, falling back to resolving nothing if that fails.
      * <p>
      * Resolving happens outside the per-participation error handling, so a failure here would otherwise abort the
@@ -322,6 +313,19 @@ public class ProgrammingTriggerService {
         }
     }
 
+    /**
+     * Loads the exercise of the given participations once, with the associations a trigger reads off it, and resolves
+     * the trigger inputs that are the same for all of them.
+     * <p>
+     * The loaded exercise is set on every participation, so the trigger finds the build config and the auxiliary
+     * repositories already initialized and does not query for either. Both of their loaders return the association when
+     * it is already there, so one load here replaces two queries per participation. Nothing is retained between
+     * batches, so there is nothing to invalidate when an instructor changes the exercise.
+     *
+     * @param participationsOfExercise the participations of one exercise that are about to be triggered
+     * @param loadedExercise           an exercise the caller already loaded, or null
+     * @return the trigger inputs shared by those participations
+     */
     private SharedBuildTriggerData prepareSharedTriggerData(List<ProgrammingExerciseStudentParticipation> participationsOfExercise, @Nullable ProgrammingExercise loadedExercise) {
         if (continuousIntegrationTriggerService.isEmpty()) {
             return SharedBuildTriggerData.NONE;
