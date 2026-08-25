@@ -53,11 +53,13 @@ class SearchableEntityWeaviateServiceEnqueueTest {
 
     private final SearchableEntityResolver resolver = mock(SearchableEntityResolver.class);
 
+    private final SearchableEntityContentHasher contentHasher = new SearchableEntityContentHasher(objectMapper);
+
     private SearchableEntityWeaviateService service;
 
     @BeforeEach
     void setUp() {
-        service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, eventPublisher);
+        service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher);
     }
 
     @Test

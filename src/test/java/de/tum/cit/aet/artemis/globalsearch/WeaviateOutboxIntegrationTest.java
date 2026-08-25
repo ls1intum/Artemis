@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearc
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityContentHasher;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -98,7 +99,8 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
             assertThat(queryCourseProperties(weaviateService, course.getId())).as("course indexed in Weaviate").isNotNull();
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row written").isPresent()
-                    .hasValueSatisfying(state -> assertThat(state.getContentHash()).hasSize(64));
+                    .hasValueSatisfying(state -> assertThat(state.getContentHash()).startsWith(SearchableEntityContentHasher.CURRENT_VERSION_PREFIX)
+                            .hasSize(SearchableEntityContentHasher.CURRENT_VERSION_PREFIX.length() + 64));
             assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).as("outbox row removed after confirmed write").isFalse();
         });
     }

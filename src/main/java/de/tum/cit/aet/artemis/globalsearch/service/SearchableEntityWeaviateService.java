@@ -1,11 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -96,16 +92,19 @@ public class SearchableEntityWeaviateService {
 
     private final ObjectMapper objectMapper;
 
+    private final SearchableEntityContentHasher contentHasher;
+
     private final ApplicationEventPublisher eventPublisher;
 
     private final boolean useHybridSearch;
 
     public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, SearchableEntityResolver resolver, ObjectMapper objectMapper,
-            ApplicationEventPublisher eventPublisher) {
+            SearchableEntityContentHasher contentHasher, ApplicationEventPublisher eventPublisher) {
         this.weaviateService = weaviateService;
         this.outboxRepository = outboxRepository;
         this.resolver = resolver;
         this.objectMapper = objectMapper;
+        this.contentHasher = contentHasher;
         this.eventPublisher = eventPublisher;
         this.useHybridSearch = weaviateService.isVectorizerAvailable();
     }
@@ -445,9 +444,12 @@ public class SearchableEntityWeaviateService {
     }
 
     /**
-     * Serializes a property/parameter map to canonical JSON (keys sorted) so equal maps hash equal. All map
-     * values are JSON-native (strings, numbers, booleans; dates are already RFC3339 strings), so the round
-     * trip through {@link #deserializeMap(String)} preserves the values the Weaviate write needs.
+     * Serializes a bulk delete's parameter map to JSON for storage in {@link WeaviateOutboxEntry#getParams()}.
+     * Keys are sorted so the stored form is stable and diffable. All values are JSON-native, so the round trip
+     * through {@link #deserializeMap(String)} preserves what the delete needs.
+     * <p>
+     * Content hashing lives in {@link SearchableEntityContentHasher}, which must stay the only implementation
+     * so the write path and a later reconcile pass cannot disagree.
      */
     private String serializeMap(Map<String, Object> map) {
         try {
@@ -455,21 +457,6 @@ public class SearchableEntityWeaviateService {
         }
         catch (JsonProcessingException e) {
             throw new WeaviateException("Failed to serialize Weaviate outbox data: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * SHA-256 of the canonical property-map JSON, recorded in the sync ledger so a later reconcile can detect drift.
-     */
-    private static String sha256Hex(String value) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hash);
-        }
-        catch (NoSuchAlgorithmException e) {
-            // SHA-256 is guaranteed to be available on every JVM.
-            throw new IllegalStateException("SHA-256 not available", e);
         }
     }
 
@@ -531,7 +518,7 @@ public class SearchableEntityWeaviateService {
         Optional<Map<String, Object>> desired = resolver.resolve(entry.getEntityType(), entry.getEntityId());
         if (desired.isPresent()) {
             Map<String, Object> properties = desired.get();
-            String contentHash = sha256Hex(serializeMap(properties));
+            String contentHash = contentHasher.hash(properties);
             Map<String, Object> propertiesToWrite = new HashMap<>(properties);
             propertiesToWrite.put(SearchableEntitySchema.Properties.SOURCE_SEQ, entry.getId());
             upsertRow(entry.getEntityType(), entry.getEntityId(), propertiesToWrite);

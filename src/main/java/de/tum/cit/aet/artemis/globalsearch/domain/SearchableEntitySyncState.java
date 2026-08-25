@@ -29,7 +29,7 @@ public class SearchableEntitySyncState extends DomainObject {
     @Column(name = "entity_id", nullable = false)
     private Long entityId;
 
-    @Column(name = "content_hash", nullable = false, length = 64)
+    @Column(name = "content_hash", nullable = false, length = 80)
     private String contentHash;
 
     @Column(name = "synced_at", nullable = false)
