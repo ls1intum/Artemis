@@ -16,6 +16,7 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -213,7 +214,13 @@ public class UserService {
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
-            internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+            // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
+            // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
+            // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
+            if (internalAdmin.getPassword() == null || !passwordService.checkPasswordMatch(internalAdminPassword, internalAdmin.getPassword())) {
+                internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+                internalAdmin.setCredentialsChangedDate(ZonedDateTime.now());
+            }
             // needs to be mutable --> new HashSet<>(Set.of(...))
             internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
             saveUser(internalAdmin);
@@ -287,6 +294,8 @@ public class UserService {
                 .flatMap(row -> userRepository.findById(row.getUserId())).map(user -> {
                     user.setPassword(passwordService.hashPassword(newPassword));
                     userRecoveryKeyService.clearResetKey(user.getId());
+                    // Stops sessions established before the reset from being extended any further.
+                    user.setCredentialsChangedDate(ZonedDateTime.now());
                     saveUser(user);
                     // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
                     // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
@@ -589,6 +598,7 @@ public class UserService {
             }
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
+            user.setCredentialsChangedDate(ZonedDateTime.now());
             saveUser(user);
             // What else is revoked is the user's decision: only they know whether the old password may have been seen by
             // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.

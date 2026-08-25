@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -274,8 +275,9 @@ public class UserCreationService {
         if (updatedUserDTO.getImageUrl() != null) {
             user.setImageUrl(updatedUserDTO.getImageUrl());
         }
-        // Captured before the flag is overwritten: the admin edit form reaches the same transition as deactivateUser, and
-        // it has to revoke the same credentials, otherwise an account the admin sees as deactivated keeps working over git.
+        // Captured before the flag is overwritten: the admin edit form reaches the same two transitions as deactivateUser
+        // and a password reset do. A session established earlier has to stop being extended for both, and the credentials
+        // have to be revoked as well, otherwise an account the admin sees as deactivated keeps working over git.
         boolean isBeingDeactivated = Boolean.TRUE.equals(user.getActivated()) && !updatedUserDTO.isActivated();
         user.setActivated(updatedUserDTO.isActivated());
         user.setTestUser(updatedUserDTO.isTestUser());
@@ -284,17 +286,29 @@ public class UserCreationService {
         // if user was external and becomes internal - it's important to make sure that user still has a password
         boolean wasInternal = user.isInternal();
         user.setInternal(updatedUserDTO.isInternal());
-        boolean revokeCredentialsAfterPasswordChange = user.isInternal() && updatedUserDTO.getPassword() != null && updatedUserDTO.isRevokeCredentials();
 
+        // Set where the password is actually written rather than derived from the request, because only some requests that
+        // carry a password write it: an update that leaves the account external ignores it, and the changed date has to
+        // follow what happened to the credential, not what was asked for.
+        boolean isPasswordBeingChanged = false;
         if (user.isInternal()) {
             if (updatedUserDTO.getPassword() != null) {
                 user.setPassword(passwordService.hashPassword(updatedUserDTO.getPassword()));
+                isPasswordBeingChanged = true;
             }
             else if (!wasInternal || user.getPassword() == null) {
                 // If user becomes internal user and got no password, generate the random password
                 String newPassword = RandomUtil.generatePassword();
                 user.setPassword(passwordService.hashPassword(newPassword));
+                // Deliberately not treated as a password change: the account had no usable password before, so there is no
+                // earlier password-based session for the changed date to end.
             }
+        }
+        // Bumping the changed date always stops an earlier session from being extended; revoking the other credentials on
+        // top of that stays opt-in, because the admin form asks for it separately.
+        boolean revokeCredentialsAfterPasswordChange = isPasswordBeingChanged && updatedUserDTO.isRevokeCredentials();
+        if (isBeingDeactivated || isPasswordBeingChanged) {
+            user.setCredentialsChangedDate(ZonedDateTime.now());
         }
         user.setOrganizations(updatedUserDTO.getOrganizations());
         setUserAuthorities(updatedUserDTO, user);
@@ -302,7 +316,8 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
-        boolean passwordChangedByAdministrator = user.isInternal() && updatedUserDTO.getPassword() != null;
+        // Same condition as the changed date above, so the notice cannot claim a change the account did not receive.
+        boolean passwordChangedByAdministrator = isPasswordBeingChanged;
         boolean credentialsRevoked = isBeingDeactivated || revokeCredentialsAfterPasswordChange;
         if (credentialsRevoked) {
             String reason = isBeingDeactivated ? "user deactivated by an administrator" : "password changed by an administrator";
@@ -364,6 +379,8 @@ public class UserCreationService {
      */
     public void deactivateUser(User user) {
         user.setActivated(false);
+        // Stops sessions established before the deactivation from being extended any further.
+        user.setCredentialsChangedDate(ZonedDateTime.now());
         saveUser(user);
         // Web login checks `activated` on every attempt, but the git authentication paths accept a VCS access token or an
         // SSH key without consulting account state, so deactivation only takes effect once those credentials are gone.
