@@ -38,6 +38,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -590,15 +591,30 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     /**
-     * Build agent credentials should allow READ (fetch/clone) operations
-     * without going through normal user authentication.
+     * Build agent credentials should allow READ (fetch/clone) operations without going through normal user
+     * authentication, as long as the build agents of the installation authenticate that way.
      */
     @Test
-    void testFetch_buildAgentCredentials_succeeds() throws Exception {
+    void testFetch_buildAgentCredentials_succeedsWhenBuildAgentsUseHttps() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
 
         // Build agent bypass only applies to READ — should succeed without normal user auth
-        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false,
+                () -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    /**
+     * Build agent credentials must be refused once the build agents authenticate with an ssh key. They never present
+     * this credential pair then, so accepting it would leave a repository-wide read shortcut open that nothing uses.
+     * <p>
+     * The test context enables ssh for build agents, which is what makes this the ambient configuration here.
+     */
+    @Test
+    void testFetch_buildAgentCredentials_isRejectedWhenBuildAgentsUseSsh() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
+
+        // Falls through to normal user authentication, where "buildjob_user" is not a real user
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
     }
 
     /**
@@ -606,11 +622,14 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
      * The build agent check only applies to RepositoryActionType.READ.
      */
     @Test
-    void testPush_buildAgentCredentials_isRejected() {
+    void testPush_buildAgentCredentials_isRejected() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", "buildjob_user", "buildjob_password");
 
+        // Enabled deliberately, so that the push is rejected by the READ restriction under test rather than because the
+        // ssh configuration of the test context closes the shortcut for every action anyway.
         // Build agent bypass does NOT apply to WRITE — "buildjob_user" is not a real user, so auth fails
-        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false, () -> assertThatExceptionOfType(LocalVCAuthException.class)
+                .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE)));
     }
 
     // == Authorization tests: student access to staff repositories ==
