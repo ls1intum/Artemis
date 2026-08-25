@@ -26,6 +26,8 @@
 >
     <p jhiTranslate="artemisApp.tutorialGroupImportDialog.finishedWarning"></p>
     <ng-template #footer>
-        <button tumUiButton size="small" severity="secondary" type="button" (click)="closeWarningDialog()">Ok</button>
+        <button tumUiButton size="small" severity="secondary" type="button" (click)="closeWarningDialog()">
+            <span jhiTranslate="entity.action.close"></span>
+        </button>
     </ng-template>
 </p-dialog>
