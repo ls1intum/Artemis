@@ -64,9 +64,6 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         // HTTP cache; Playwright's page.route disables it for the page and made the production reload stall under
         // parallel CI load.
         const cdpSession = await page.context().newCDPSession(page);
-        await cdpSession.send('Fetch.enable', {
-            patterns: [{ urlPattern: `*://*/api/quiz/exercises/${quizExercise.id}/submissions/exam`, requestStage: 'Request' }],
-        });
         const failedSave = new Promise<void>((resolve, reject) => {
             cdpSession.once('Fetch.requestPaused', async ({ requestId }) => {
                 try {
@@ -81,6 +78,9 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
                     reject(error);
                 }
             });
+        });
+        await cdpSession.send('Fetch.enable', {
+            patterns: [{ urlPattern: `*://*/api/quiz/exercises/${quizExercise.id}/submissions/exam`, requestStage: 'Request' }],
         });
 
         // Tick an answer option; the exercise becomes unsynced.
