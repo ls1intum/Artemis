@@ -1,32 +1,58 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
+import { By } from '@angular/platform-browser';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideArtemisTumUiTranslator } from 'app/shared-ui/tum-ui-integration/artemis-tum-ui-translator';
 
 describe('SearchFilterComponent', () => {
     let component: SearchFilterComponent;
     let fixture: ComponentFixture<SearchFilterComponent>;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [SearchFilterComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(SearchFilterComponent);
-                component = fixture.componentInstance;
-                fixture.detectChanges();
-            });
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideArtemisTumUiTranslator()],
+        }).compileComponents();
+        fixture = TestBed.createComponent(SearchFilterComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    function input(): HTMLInputElement {
+        return fixture.debugElement.query(By.css('input')).nativeElement;
+    }
+
+    function type(term: string): void {
+        input().value = term;
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+    }
+
+    it('should emit what the reader types into the rendered field', () => {
+        const emitSpy = vi.spyOn(component.newSearchEvent, 'emit');
+
+        type('hello');
+
+        expect(component.searchValue()).toBe('hello');
+        expect(emitSpy).toHaveBeenCalledExactlyOnceWith('hello');
+    });
+
+    it('should emit an empty term when the reader clears the field', () => {
+        type('some text');
+        const emitSpy = vi.spyOn(component.newSearchEvent, 'emit');
+
+        fixture.debugElement.query(By.css('button')).nativeElement.click();
+        fixture.detectChanges();
+
+        expect(component.searchValue()).toBe('');
+        expect(input().value).toBe('');
+        expect(emitSpy).toHaveBeenCalledExactlyOnceWith('');
     });
 
     it('should set searchValue signal and emit on setSearchValue', () => {
@@ -35,8 +61,7 @@ describe('SearchFilterComponent', () => {
         component.setSearchValue('hello');
 
         expect(component.searchValue()).toBe('hello');
-        expect(emitSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledWith('hello');
+        expect(emitSpy).toHaveBeenCalledExactlyOnceWith('hello');
     });
 
     it('should reset searchValue signal and emit empty string on resetSearchValue', () => {
@@ -46,11 +71,22 @@ describe('SearchFilterComponent', () => {
         component.resetSearchValue();
 
         expect(component.searchValue()).toBe('');
-        expect(emitSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalledWith('');
+        expect(emitSpy).toHaveBeenCalledExactlyOnceWith('');
     });
 
-    it('should use default placeholder key', () => {
+    it('should pass the placeholder key through to the field', () => {
         expect(component.placeholderKey()).toBe('artemisApp.course.exercise.search.searchPlaceholder');
+        expect(input().getAttribute('placeholder')).toBe('artemisApp.course.exercise.search.searchPlaceholder');
+
+        fixture.componentRef.setInput('placeholderKey', 'artemisApp.exerciseManagement.search');
+        fixture.detectChanges();
+        expect(input().getAttribute('placeholder')).toBe('artemisApp.exerciseManagement.search');
+    });
+
+    it('should disable the field', () => {
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+
+        expect(input().disabled).toBe(true);
     });
 });
