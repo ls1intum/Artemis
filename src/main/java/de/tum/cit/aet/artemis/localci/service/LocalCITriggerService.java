@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -151,7 +152,24 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll) throws LocalCIException {
-        triggerBuild(participation, null, null, triggerAll, 0);
+        triggerBuild(participation, null, null, triggerAll, 0, SharedBuildTriggerData.NONE);
+    }
+
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, boolean triggerAll, SharedBuildTriggerData sharedData) throws LocalCIException {
+        triggerBuild(participation, null, null, triggerAll, 0, sharedData);
+    }
+
+    /**
+     * Resolves the head commit of the exercise's test repository and the exercise's build statistics, which every
+     * participation of this exercise would otherwise resolve for itself.
+     *
+     * @param exercise the exercise whose participations are about to be triggered
+     * @return the inputs shared by every participation of that exercise
+     */
+    @Override
+    public SharedBuildTriggerData prepareSharedTriggerData(ProgrammingExercise exercise) {
+        return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise));
     }
 
     /**
@@ -164,7 +182,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
-        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0);
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0, SharedBuildTriggerData.NONE);
     }
 
     public void retryBuildJob(BuildJob buildJob, ProgrammingExerciseParticipation participation) throws LocalCIException {
@@ -182,11 +200,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, int retryCount) throws LocalCIException {
-        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, retryCount);
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, retryCount, SharedBuildTriggerData.NONE);
     }
 
-    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount)
-            throws LocalCIException {
+    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount,
+            SharedBuildTriggerData sharedData) throws LocalCIException {
 
         log.info("Triggering build for participation {} and commit hash {}", participation.getId(), commitHashToBuild);
 
@@ -200,18 +218,18 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         if (triggeredByPushTo == null || triggeredByPushTo.equals(RepositoryType.AUXILIARY)) {
             assignmentCommitHash = getCommitHashOrNull(participation.getVcsRepositoryUri(), "assignment repository");
-            testCommitHash = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+            testCommitHash = testCommitHashFrom(sharedData, participation);
         }
         else if (triggeredByPushTo.equals(RepositoryType.TESTS)) {
             assignmentCommitHash = getCommitHashOrNull(participation.getVcsRepositoryUri(), "assignment repository");
             if (commitHashToBuild == null) {
-                commitHashToBuild = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+                commitHashToBuild = testCommitHashFrom(sharedData, participation);
             }
             testCommitHash = commitHashToBuild;
         }
         else {
             assignmentCommitHash = commitHashToBuild;
-            testCommitHash = getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
+            testCommitHash = testCommitHashFrom(sharedData, participation);
         }
 
         // If we couldn't retrieve commit hashes, skip the build - there's nothing to build yet
@@ -237,7 +255,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         var programmingExerciseBuildConfig = loadBuildConfig(programmingExercise);
 
-        var buildStatistics = loadBuildStatistics(programmingExercise);
+        var buildStatistics = sharedData.resolved() ? sharedData.buildStatistics() : loadBuildStatistics(programmingExercise);
 
         long estimatedDuration = (buildStatistics != null && buildStatistics.getBuildDurationSeconds() > 0) ? buildStatistics.getBuildDurationSeconds() : DEFAULT_BUILD_DURATION;
         estimatedDuration = Math.round(estimatedDuration * BUILD_DURATION_SAFETY_FACTOR);
@@ -396,6 +414,19 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {
         return programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(programmingExercise);
+    }
+
+    /**
+     * @param sharedData    the inputs the caller resolved for the whole exercise
+     * @param participation the participation being triggered
+     * @return the head commit of the exercise's test repository, taken from the caller when it resolved it and read
+     *         from the repository otherwise
+     */
+    private String testCommitHashFrom(SharedBuildTriggerData sharedData, ProgrammingExerciseParticipation participation) {
+        if (sharedData.resolved()) {
+            return sharedData.testCommitHash();
+        }
+        return getCommitHashOrNull(participation.getProgrammingExercise().getVcsTestRepositoryUri(), "test repository");
     }
 
     private ProgrammingExerciseBuildStatistics loadBuildStatistics(ProgrammingExercise programmingExercise) {
