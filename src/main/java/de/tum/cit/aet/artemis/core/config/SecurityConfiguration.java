@@ -74,6 +74,14 @@ public class SecurityConfiguration {
 
     private final JWTCookieService jwtCookieService;
 
+    /**
+     * Instantiated at startup even though it is only called while a session is rotated: this class is a
+     * {@code @Configuration}, so an eager consumer pulls the service in regardless of the {@code @Lazy} on the service
+     * itself. Deferring it would need {@code @Lazy} on this parameter or an {@code ObjectProvider}, and
+     * {@code ArchitectureTest.ensureLazyAnnotationNotUsedOnParameters} forbids the first while
+     * {@code ensureObjectProviderNotUsedForCircularDependencies} discourages the second, so the one startup bean is
+     * accounted for in the bean-instantiation threshold instead.
+     */
     private final PasskeyTokenRenewalService passkeyTokenRenewalService;
 
     /**
@@ -86,10 +94,15 @@ public class SecurityConfiguration {
      * The longest a "remember me" session may live, measured from the original login, regardless of how often it is
      * extended. Defaults to the thirty days that a single non-rotating token was valid for before rotation existed.
      * <p>
-     * The extension count alone does not bound this: five seven-day windows are 35 days, which would make an externally
-     * managed session outlive what it could reach before. The other renewal checks cannot help there, because a password
-     * reset or a deactivation performed in LDAP, SAML or OIDC leaves no trace in the local account fields they read. So an
-     * absolute ceiling is what keeps a revoked external session from being extended past its former lifetime.
+     * With the shipped settings this ceiling and the extension count run out at the same moment, so neither loosens the
+     * bound the other sets. A rotation happens when less than half the validity remains, so each extension moves the end
+     * of the session out by half a window rather than a whole one: a session ends at {@code validity * (1 + extensions/2)},
+     * which for a 7.5-day validity and 6 extensions is exactly 30 days.
+     * <p>
+     * The count alone is still not enough to rely on. It bounds the number of rotations, not the wall-clock reach of a
+     * session, and the other renewal checks cannot help on an externally managed account - a password reset or a
+     * deactivation performed in LDAP, SAML or OIDC leaves no trace in the local fields they read. So the ceiling is what
+     * keeps such a session from being extended past its former lifetime if the two ever drift apart.
      */
     private final long maxSessionLifetimeInSeconds;
 
@@ -121,7 +134,7 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-extensions:4}") int maxSessionExtensions,
+            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-extensions:6}") int maxSessionExtensions,
             @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;

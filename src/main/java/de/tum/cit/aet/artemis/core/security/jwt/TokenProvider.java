@@ -328,8 +328,19 @@ public class TokenProvider {
         return false;
     }
 
+    /**
+     * Verifies the signature and returns the claims.
+     * <p>
+     * Every accessor below goes through this, so each one is a full signature verification. A caller that needs more than
+     * one claim of the same token should parse once and use the {@link Claims} overloads instead of calling several of the
+     * {@code String} accessors - {@link JWTFilter} does that on the request path, where the accessors would otherwise
+     * verify the same token several times per request.
+     *
+     * @param authToken the token to read
+     * @return the verified claims
+     */
     @NonNull
-    private Claims parseClaims(String authToken) {
+    Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
 
@@ -338,7 +349,15 @@ public class TokenProvider {
      * @return whether the session was established with "remember me"
      */
     public boolean isRememberMeSession(String authToken) {
-        return Boolean.TRUE.equals(parseClaims(authToken).get(REMEMBER_ME, Boolean.class));
+        return isRememberMeSession(parseClaims(authToken));
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return whether the session was established with "remember me"
+     */
+    boolean isRememberMeSession(Claims claims) {
+        return Boolean.TRUE.equals(claims.get(REMEMBER_ME, Boolean.class));
     }
 
     /**
@@ -346,7 +365,15 @@ public class TokenProvider {
      * @return how many times the session has already been silently extended
      */
     public int getExtensionCount(String authToken) {
-        Integer count = parseClaims(authToken).get(EXTENSION_COUNT, Integer.class);
+        return getExtensionCount(parseClaims(authToken));
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return how many times the session has already been silently extended
+     */
+    int getExtensionCount(Claims claims) {
+        Integer count = claims.get(EXTENSION_COUNT, Integer.class);
         return count != null ? count : 0;
     }
 
@@ -357,7 +384,16 @@ public class TokenProvider {
      */
     @Nullable
     public String getPasskeyCredentialId(String authToken) {
-        return parseClaims(authToken).get(PASSKEY_CREDENTIAL_ID, String.class);
+        return getPasskeyCredentialId(parseClaims(authToken));
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return the passkey this token was issued for, or {@code null} if it carries no credential id
+     */
+    @Nullable
+    String getPasskeyCredentialId(Claims claims) {
+        return claims.get(PASSKEY_CREDENTIAL_ID, String.class);
     }
 
     @NonNull
@@ -382,7 +418,15 @@ public class TokenProvider {
      */
     @Nullable
     public ToolTokenType getTools(String authToken) {
-        Claims claims = parseClaims(authToken);
+        return getTools(parseClaims(authToken));
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return {@link ToolTokenType} if the token contains a tool, null otherwise
+     */
+    @Nullable
+    ToolTokenType getTools(Claims claims) {
         String toolString = claims.get(TOOLS_KEY, String.class);
 
         if (toolString == null) {
@@ -399,10 +443,28 @@ public class TokenProvider {
     @Nullable
     public AuthenticationMethod getAuthenticationMethod(String authToken) {
         try {
-            String method = parseClaims(authToken).get(AUTHENTICATION_METHOD, String.class);
-            return method != null ? AuthenticationMethod.fromMethod(method) : null;
+            return getAuthenticationMethod(parseClaims(authToken));
         }
         catch (UnsupportedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse authentication method from token: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return {@link AuthenticationMethod} that was used to create the token, or null if it carries none or one this
+     *         version does not recognise
+     */
+    @Nullable
+    AuthenticationMethod getAuthenticationMethod(Claims claims) {
+        try {
+            String method = claims.get(AUTHENTICATION_METHOD, String.class);
+            return method != null ? AuthenticationMethod.fromMethod(method) : null;
+        }
+        catch (IllegalArgumentException e) {
+            // Same tolerance as the String accessor: an unrecognised or wrongly typed claim must not fail the request it
+            // arrived on, and JWTFilter reads this on every authenticated request.
             log.warn("Failed to parse authentication method from token: {}", e.getMessage());
             return null;
         }
@@ -414,10 +476,23 @@ public class TokenProvider {
      */
     public boolean isPasskeySuperAdminApproved(String authToken) {
         try {
-            Boolean isApproved = parseClaims(authToken).get(IS_PASSKEY_SUPER_ADMIN_APPROVED, Boolean.class);
-            return Boolean.TRUE.equals(isApproved);
+            return isPasskeySuperAdminApproved(parseClaims(authToken));
         }
         catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e) {
+            log.warn("Failed to parse passkey super admin approval status from token: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * @param claims claims of an already parsed token
+     * @return true if the passkey was super admin approved, false otherwise
+     */
+    boolean isPasskeySuperAdminApproved(Claims claims) {
+        try {
+            return Boolean.TRUE.equals(claims.get(IS_PASSKEY_SUPER_ADMIN_APPROVED, Boolean.class));
+        }
+        catch (IllegalArgumentException e) {
             log.warn("Failed to parse passkey super admin approval status from token: {}", e.getMessage());
             return false;
         }

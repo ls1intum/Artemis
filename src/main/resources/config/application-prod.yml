@@ -115,7 +115,7 @@ jhipster:
                 # base64-secret: ""
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400 # Token is valid 24 hours
-                token-validity-in-seconds-for-remember-me: 604800 # Token is valid 7 days; an active session is silently extended up to artemis.user-management.max-session-extensions times, and never past artemis.user-management.max-session-lifetime-in-seconds after the login
+                token-validity-in-seconds-for-remember-me: 648000 # Token is valid 7.5 days; an active session is silently extended up to artemis.user-management.max-session-extensions times. A rotation happens at half the validity, so the session ends after validity * (1 + extensions / 2) - with the defaults 7.5 days and 6 extensions that is exactly the 30 days a single non-rotating token used to give, and matches artemis.user-management.max-session-lifetime-in-seconds
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: artemis@localhost
         base-url: http://my-server-url-to-change # Modify according to your server's URL

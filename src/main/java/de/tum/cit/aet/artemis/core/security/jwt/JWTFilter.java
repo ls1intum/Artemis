@@ -39,6 +39,7 @@ import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
+import io.jsonwebtoken.Claims;
 
 /**
  * Filters incoming requests and installs a Spring Security principal if a header corresponding to a valid user is found.
@@ -121,24 +122,29 @@ public class JWTFilter extends GenericFilterBean {
      * @throws NotAuthorizedException If the token cannot be renewed due to validation or other issues.
      */
     private void rotateTokenSilently(String jwtToken, Authentication authentication, HttpServletResponse response) throws NotAuthorizedException {
+        // Parsed once for every claim below. Each String accessor on TokenProvider verifies the signature again, and this
+        // method runs on every authenticated cookie request, so reading five claims through them meant five verifications
+        // per request for a session that is not even due for rotation.
+        Claims claims = this.tokenProvider.parseClaims(jwtToken);
+
         // A passkey session is extended up to the passkey lifetime; a "remember me" password session is extended a bounded
         // number of times. A plain session is never extended - it is meant to be short.
-        boolean isPasskeySession = Objects.equals(this.tokenProvider.getAuthenticationMethod(jwtToken), AuthenticationMethod.PASSKEY);
-        boolean isRememberMeSession = this.tokenProvider.isRememberMeSession(jwtToken);
+        boolean isPasskeySession = Objects.equals(this.tokenProvider.getAuthenticationMethod(claims), AuthenticationMethod.PASSKEY);
+        boolean isRememberMeSession = this.tokenProvider.isRememberMeSession(claims);
         if (!isPasskeySession && !isRememberMeSession) {
             return;
         }
 
         // Bounds how long an active password session can be kept alive without re-authenticating. A passkey session is
         // already bounded by the passkey lifetime measured from the original login, so it is not counted here.
-        int extensionCount = this.tokenProvider.getExtensionCount(jwtToken);
+        int extensionCount = this.tokenProvider.getExtensionCount(claims);
         if (!isPasskeySession && extensionCount >= this.maxSessionExtensions) {
             return;
         }
 
         // Extract issued and expiration timestamps from the existing token
-        Date issuedAt = this.tokenProvider.getIssuedAtDate(jwtToken);
-        Date expirationDate = this.tokenProvider.getExpirationDate(jwtToken);
+        Date issuedAt = claims.getIssuedAt();
+        Date expirationDate = claims.getExpiration();
 
         // Calculate remaining lifetime of the token
         long nowInMs = System.currentTimeMillis();
@@ -156,7 +162,7 @@ public class JWTFilter extends GenericFilterBean {
             if (isRenewalAlreadyRefused(jwtToken, nowInMs)) {
                 return;
             }
-            String passkeyCredentialId = this.tokenProvider.getPasskeyCredentialId(jwtToken);
+            String passkeyCredentialId = this.tokenProvider.getPasskeyCredentialId(claims);
             // Only a passkey session has a passkey to verify. Asking for a password session too would refuse every
             // "remember me" extension on an installation that does not have passkeys enabled.
             if (isPasskeySession && !passkeyTokenRenewalService.mayExtendPasskeySession(passkeyCredentialId)) {
@@ -185,8 +191,8 @@ public class JWTFilter extends GenericFilterBean {
             // The passkey claims are read from the expiring token and passed on explicitly: the authentication was rebuilt
             // from that token and carries no details, so deriving them from it would drop the credential id (defeating the
             // check above from the second rotation onwards) and reset the super-admin approval flag.
-            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(jwtToken),
-                    isPasskeySession, passkeyCredentialId, this.tokenProvider.isPasskeySuperAdminApproved(jwtToken), isRememberMeSession, extensionCount + 1);
+            var rotatedToken = this.tokenProvider.createToken(authentication, issuedAt, new Date(newTokenExpirationTimeInMs), this.tokenProvider.getTools(claims), isPasskeySession,
+                    passkeyCredentialId, this.tokenProvider.isPasskeySuperAdminApproved(claims), isRememberMeSession, extensionCount + 1);
 
             // Build and set the new token as a response cookie
             ResponseCookie responseCookie = jwtCookieService.buildRotatedCookie(rotatedToken, rotatedTokenDurationInMs);

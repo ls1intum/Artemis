@@ -15,9 +15,18 @@ artemis:
     use-external: true # enables ldap authentication
     # A "remember me" session is silently extended while it stays in use, so an active user is not signed out when the
     # token expires. Both bounds apply: the session is extended at most this many times, and never past
-    # max-session-lifetime-in-seconds after the original login. A passkey session is not counted against the extension
-    # limit - it keeps its own bound, artemis.user-management.passkey.token-validity-in-seconds-for-passkey.
-    max-session-extensions: 4
+    # max-session-lifetime-in-seconds after the original login.
+    #
+    # A rotation happens once less than half the validity remains, so an extension moves the end of the session out by
+    # half a window, not a whole one. A session therefore ends after
+    #   token-validity-in-seconds-for-remember-me * (1 + max-session-extensions / 2)
+    # which with the shipped 7.5-day validity and 6 extensions is exactly 30 days - the same maximum a single
+    # non-rotating 30-day token gave before, and the same value as the ceiling below, so the two agree rather than one
+    # silently overriding the other. Change one and the other needs recomputing.
+    #
+    # A passkey session is not counted against the extension limit; it keeps its own bound,
+    # artemis.user-management.passkey.token-validity-in-seconds-for-passkey.
+    max-session-extensions: 6
     max-session-lifetime-in-seconds: 2592000 # 30 days, the lifetime a single non-rotating remember-me token used to have
     password-reset:
       links: # The password reset links for different languages
