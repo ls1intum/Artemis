@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTest;
 
 /**
@@ -64,6 +65,9 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     @Autowired
     private JWTCookieService jwtCookieService;
+
+    @Autowired
+    private TokenProvider tokenProvider;
 
     @Autowired
     private ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
@@ -204,8 +208,9 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
         String cookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(cookieHeader).isNotNull();
-        // Verify that cookie is longterm (1 month)
-        assertThat(cookieHeader).contains("Max-Age=2592000");
+        // Verify that the cookie is the long-lived one. Asserted against the configured validity rather than a literal,
+        // so that changing the remember-me lifetime does not silently turn this into a test of the old number.
+        assertThat(cookieHeader).contains("Max-Age=" + tokenProvider.getTokenValidity(true) / 1000);
     }
 
     @Test
@@ -229,8 +234,8 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
         String cookieHeader = response.getHeader(HttpHeaders.SET_COOKIE);
         assertThat(cookieHeader).isNotNull();
-        // Verify that cookie is shortTerm (1 day)
-        assertThat(cookieHeader).contains("Max-Age=86400");
+        // Verify that the cookie is the short-lived one, again from the configured validity.
+        assertThat(cookieHeader).contains("Max-Age=" + tokenProvider.getTokenValidity(false) / 1000);
     }
 
     @Test
