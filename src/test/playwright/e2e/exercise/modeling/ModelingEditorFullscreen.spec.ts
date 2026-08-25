@@ -1,9 +1,15 @@
 import { expect, type Locator } from '@playwright/test';
 
-import { instructor } from '../../../support/users';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+
+import { admin, instructor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
+import { Commands } from '../../../support/commands';
+import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
+import { newBrowserPage } from '../../../support/utils';
 import { SEED_COURSES } from '../../../support/seedData';
 import { dismissPasskeyReminderIfPresent } from '../../../support/dismissPasskeyReminder';
+import modelingExerciseSubmissionTemplate from '../../../fixtures/exercise/modeling/submission.json';
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
@@ -52,6 +58,32 @@ const expectReadOnlyDiagramToFit = async (editor: Locator) => {
 
 test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
     test.use({ viewport: { width: 1440, height: 1000 } });
+
+    // Most tests here work on the creation form and need nothing persisted. The three that open an existing exercise
+    // or example submission do — and the E2E seed provisions no exercises, so they are created here rather than
+    // addressed by guessed ids.
+    let existingExercise: ModelingExercise;
+    let exampleSubmissionId: number;
+
+    test.beforeAll('Create a modeling exercise with an example submission', async ({ browser }) => {
+        const page = await newBrowserPage(browser);
+        const exerciseAPIRequests = new ExerciseAPIRequests(page);
+
+        await Commands.login(page, admin);
+        // The exercise template carries an example solution model, which is what the read-only detail diagram renders.
+        existingExercise = await exerciseAPIRequests.createModelingExercise({ course });
+
+        const exampleSubmissionResponse = await page.request.post(`api/assessment/exercises/${existingExercise.id}/example-submissions`, {
+            data: {
+                exercise: existingExercise,
+                // Read-and-confirm is the mode the assessment-feedback test starts from.
+                usedForTutorial: false,
+                submission: { ...modelingExerciseSubmissionTemplate, id: null, participation: null, exampleSubmission: true },
+            },
+        });
+        expect(exampleSubmissionResponse.ok()).toBe(true);
+        exampleSubmissionId = (await exampleSubmissionResponse.json()).id;
+    });
 
     test('keeps editor chrome and the example explanation responsive', async ({ login, page }) => {
         await login(instructor, `/course-management/${course.id}/modeling-exercises/new`);
@@ -687,7 +719,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
     });
 
     test('separates the assessment rationale from the submission explanation in example assessments', async ({ login, page }) => {
-        await login(instructor, `/course-management/${course.id}/modeling-exercises/8/example-submissions/1`);
+        await login(instructor, `/course-management/${course.id}/modeling-exercises/${existingExercise.id}/example-submissions/${exampleSubmissionId}`);
 
         await dismissPasskeyReminderIfPresent(page);
 
@@ -762,7 +794,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
     });
 
     test('opens assessment feedback for relationships', async ({ login, page }) => {
-        await login(instructor, `/course-management/${course.id}/modeling-exercises/8/example-submissions/1`);
+        await login(instructor, `/course-management/${course.id}/modeling-exercises/${existingExercise.id}/example-submissions/${exampleSubmissionId}`);
         await dismissPasskeyReminderIfPresent(page);
 
         await page.getByRole('button', { name: 'Read and Confirm' }).click();
@@ -794,7 +826,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
     });
 
     test('fits the read-only example solution to the management detail viewport', async ({ login, page }) => {
-        await login(instructor, `/course-management/${course.id}/modeling-exercises/8`);
+        await login(instructor, `/course-management/${course.id}/modeling-exercises/${existingExercise.id}`);
         await dismissPasskeyReminderIfPresent(page);
 
         await expectReadOnlyDiagramToFit(

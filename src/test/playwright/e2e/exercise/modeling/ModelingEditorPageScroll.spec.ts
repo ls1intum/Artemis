@@ -1,11 +1,14 @@
+import dayjs from 'dayjs';
 import { Page, expect } from '@playwright/test';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 import { admin, instructor, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
+import { Commands } from '../../../support/commands';
+import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
 import { SEED_COURSES } from '../../../support/seedData';
 import { dismissPasskeyReminderIfPresent } from '../../../support/dismissPasskeyReminder';
-import { expectNoScrollPastApollonCanvas } from '../../../support/utils';
+import { expectNoScrollPastApollonCanvas, newBrowserPage } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
@@ -74,8 +77,23 @@ test.describe('Apollon canvas is never scrolled past', { tag: '@fast' }, () => {
  * it must therefore change neither the canvas' size nor the page's scroll height.
  */
 test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, () => {
-    const assessmentCourseId = SEED_COURSES.exerciseManagement.id;
-    const assessmentUrl = `/course-management/${assessmentCourseId}/modeling-exercises/8/submissions/8/assessment?correction-round=0`;
+    const assessmentCourse = { id: SEED_COURSES.exerciseAssessment.id } as any;
+    let assessmentExercise: ModelingExercise;
+
+    // The E2E seed provisions no exercises, so the submission this assessment page needs is created here and reached
+    // through the dashboard rather than through a hand-built URL with guessed ids.
+    test.beforeAll('Create a modeling exercise with a submission ready to assess', async ({ browser }) => {
+        const page = await newBrowserPage(browser);
+        const exerciseAPIRequests = new ExerciseAPIRequests(page);
+
+        await Commands.login(page, admin);
+        assessmentExercise = await exerciseAPIRequests.createModelingExercise({ course: assessmentCourse });
+        await Commands.login(page, studentOne);
+        const participation = await (await exerciseAPIRequests.startExerciseParticipation(assessmentExercise.id!)).json();
+        await exerciseAPIRequests.makeModelingExerciseSubmission(assessmentExercise.id!, participation);
+        await Commands.login(page, instructor);
+        await exerciseAPIRequests.updateModelingExerciseDueDate(assessmentExercise, dayjs());
+    });
 
     /**
      * Athena is not part of the E2E stack, so the notice is driven the way the
@@ -118,10 +136,12 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
         return (await canvas.boundingBox())!;
     }
 
-    test('floats the notice over the canvas instead of taking height from it', async ({ login, page }) => {
+    test('floats the notice over the canvas instead of taking height from it', async ({ login, page, exerciseAssessment }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
-        await login(instructor, assessmentUrl);
+        await login(instructor, `/course-management/${assessmentCourse.id}/assessment-dashboard/${assessmentExercise.id!}`);
         await dismissPasskeyReminderIfPresent(page);
+        await exerciseAssessment.clickHaveReadInstructionsButton();
+        await exerciseAssessment.clickStartNewAssessment();
         const island = page.locator('jhi-modeling-assessment .feedback-suggestions-chrome');
         // Baseline: no notice on the seeded submission, so the comparison below is
         // a real before/after rather than two identical states.

@@ -1,11 +1,16 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import java.util.regex.Pattern;
+
 import org.springframework.http.HttpHeaders;
 
 /**
  * Utility class for HTTP headers creation.
  */
 public final class HeaderUtil {
+
+    /** Hoisted so the pattern is compiled once rather than on every header write. */
+    private static final Pattern CONTROL_CHARACTERS = Pattern.compile("[\\p{Cntrl}]+");
 
     private HeaderUtil() {
     }
@@ -47,6 +52,6 @@ public final class HeaderUtil {
         if (message == null) {
             return null;
         }
-        return message.replaceAll("[\\p{Cntrl}]+", " ");
+        return CONTROL_CHARACTERS.matcher(message).replaceAll(" ");
     }
 }

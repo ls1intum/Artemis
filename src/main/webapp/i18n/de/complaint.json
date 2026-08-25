@@ -21,6 +21,7 @@
             "moreInfo": "Beschwerde einreichen",
             "complaintNotAllowedTooltip": "Beschwerde aktuell nicht möglich: maximale Anzahl an Beschwerden ist erreicht oder die Einsichtsperiode ist vorbei.",
             "responseExists": "Antwort auf deine Beschwerde ",
+            "hint": "Scrolle nach unten, um die Beschwerde zu prüfen",
             "accepted": "Angenommen",
             "acceptedLong": "Beschwerde wurde angenommen",
             "rejected": "Abgelehnt",
@@ -83,7 +84,8 @@
                 "loadAllRequestsExplanation": "Die Liste zeigt nur eingereichte Feedbackanfragen über deine Bewertungen an. Mittels des Buttons können alle Feedbackanfragen über alle Reviewer:innen geladen werden: ",
                 "allRequestsLoaded": "Alle Feedbackanfragen geladen",
                 "noRequestsToShow": "Es gibt im Moment keine Feedbackanfragen zu zeigen."
-            }
+            },
+            "hint": "Scrolle nach unten, um die Feedbackanfrage zu prüfen"
         }
     }
 }

@@ -6,6 +6,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { AssessmentHeaderComponent } from '../assessment-header/assessment-header.component';
+import { AssessmentComplaintAlertComponent } from '../assessment-complaint-alert/assessment-complaint-alert.component';
 import { AssessmentNoteComponent } from '../assessment-note/assessment-note.component';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 
@@ -19,7 +20,7 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
     selector: 'jhi-assessment-layout',
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
-    imports: [AssessmentHeaderComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
+    imports: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
 })
 export class AssessmentLayoutComponent {
     @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
@@ -43,6 +44,10 @@ export class AssessmentLayoutComponent {
     readonly complaint = input<Complaint>();
     readonly exercise = input<Exercise>();
     readonly submission = input<Submission>();
+    /**
+     * Modeling renders the note inside its own assessment workspace, so the shared layout must not render a second
+     * one. Defaults to true so text, programming and file upload keep the layout they had.
+     */
     readonly showAssessmentNote = input(true);
     readonly hasAssessmentDueDatePassed = input.required<boolean>();
     readonly isProgrammingExercise = input<boolean>(false); // remove once diff view activated for programming exercises

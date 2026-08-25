@@ -33,6 +33,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         setElementHighlights = vi.fn();
 
+        setReadonly = vi.fn();
+
         getRegionElement = vi.fn((region: string) => {
             if (!this._regionElements.has(region)) {
                 this._regionElements.set(region, document.createElement('div'));
@@ -497,6 +499,31 @@ describe('ModelingAssessmentComponent', () => {
         (comp as any).handleFeedback();
         expect(comp.referencedFeedbacks).toEqual([]);
     });
+    // Regression: Apollon bakes `readonly` in at construction. Submitting an assessment swaps in a fresh result and
+    // flips `readOnly`, but the live canvas kept accepting edits and updating the point tally, so the UI showed a lock
+    // that was not there. Nothing persisted, which made it worse: the tutor saw edits that silently went nowhere.
+    it('should lock the live canvas when readOnly flips after submitting', async () => {
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const editor = comp['apollonEditor'] as unknown as InstanceType<typeof MockApollonEditor>;
+        expect(editor.setReadonly).not.toHaveBeenCalledWith(true);
+
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+
+        expect(editor.setReadonly).toHaveBeenCalledWith(true);
+        // Selection is only reported while read-only, so the flip has to bring that subscription with it.
+        expect(editor.subscribeToAssessmentSelection).toHaveBeenCalled();
+
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+
+        expect(editor.setReadonly).toHaveBeenLastCalledWith(false);
+        expect(editor.unsubscribe).toHaveBeenCalled();
+    });
+
     /** Installs a jsdom-friendly Fullscreen API and returns a restore function. */
     const stubFullscreenApi = (requestFullscreen: () => Promise<void>) => {
         let fullscreenElement: Element | null = null;

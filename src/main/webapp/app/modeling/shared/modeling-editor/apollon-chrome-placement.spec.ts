@@ -43,6 +43,37 @@ describe('calculateBottomCenterPlacement', () => {
 
         expect(placement).toEqual({ elevated: false, panelWidth: 628, shift: 62 });
     });
+
+    it('keeps clear of a palette in the right rail, mirroring the left-rail case', () => {
+        // The zoom/minimap row still leaves room, so the surface stays inline and is bounded by the palette's left
+        // edge rather than by the editor's right inset.
+        const placement = calculateBottomCenterPlacement({
+            ...baseGeometry,
+            palette: rectangle(760, 984),
+            paletteRegion: 'right-rail',
+        });
+
+        expect(placement.elevated).toBe(false);
+        // Right bound is min(minimap.left - gap, palette.left - gap) = min(876, 752) = 752; left bound is zoom.right + gap = 124.
+        expect(placement.panelWidth).toBe(628);
+        expect(placement.shift).toBe(-62);
+    });
+
+    it('lets the palette push the elevated surface off the right edge', () => {
+        const placement = calculateBottomCenterPlacement({
+            ...baseGeometry,
+            zoom: rectangle(16, 430),
+            minimap: rectangle(570, 984),
+            palette: rectangle(700, 984),
+            paletteRegion: 'right-rail',
+        });
+
+        // Elevated, so the surface hangs off the right bound, which the palette has pulled in from the editor's own
+        // inset (984) to palette.left - gap = 692. Width is then 692 - 16 = 676, capped by nothing.
+        expect(placement.elevated).toBe(true);
+        expect(placement.panelWidth).toBe(676);
+        expect(placement.shift).toBe(-146);
+    });
 });
 
 describe('bottom-center placement DOM updates', () => {

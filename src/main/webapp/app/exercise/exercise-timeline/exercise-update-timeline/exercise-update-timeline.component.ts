@@ -71,22 +71,24 @@ export class ExerciseUpdateTimelineComponent implements OnInit {
     }
 
     private computeTimelineItems(): TimelineItem[] {
+        const releaseDateItem: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.releaseDate',
+            date: this.releaseDate,
+        };
+        const startDateItem: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'artemisApp.exercise.startDate',
+            date: this.startDate,
+        };
         const dueDateItem: TimelineItem = {
             kind: 'optional',
             labelStringKey: 'artemisApp.exercise.dueDate',
             date: this.dueDate,
         };
         const timelineItems: TimelineItem[] = [
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.releaseDate',
-                date: this.releaseDate,
-            },
-            {
-                kind: 'optional',
-                labelStringKey: 'artemisApp.exercise.startDate',
-                date: this.startDate,
-            },
+            releaseDateItem,
+            startDateItem,
             dueDateItem,
             {
                 kind: 'optional',
@@ -100,6 +102,12 @@ export class ExerciseUpdateTimelineComponent implements OnInit {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
                 date: this.exampleSolutionPublicationDate,
+                // Only the release and start dates are hard lower bounds server side
+                // (`BaseExercise.isValidExampleSolutionPublicationDate`). The due-date bound is conditional — an
+                // exercise not included in the score may publish its solution earlier — and the assessment due date is
+                // never a bound at all. Without this restriction the default "after every preceding item" check
+                // rejected schedules the server accepts.
+                orderCheckAgainst: [releaseDateItem, startDateItem],
             });
         }
         return timelineItems;

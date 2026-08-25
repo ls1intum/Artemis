@@ -388,6 +388,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     private updateAssessmentExplanationAndExampleAssessment() {
         this.exampleSubmission().assessmentExplanation = this.assessmentExplanation();
+        this.applySelectedModeToExampleSubmission();
         this.exampleSubmissionService
             .update(this.exampleSubmission(), this.exerciseId)
             .pipe(
@@ -409,7 +410,21 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             });
     }
 
+    /**
+     * The training-mode toggle lives beside the assessment, so a save from assessment mode has to carry it. Both save
+     * paths here put the object loaded from the server; without this the toggle silently snapped back while the user
+     * was told the save succeeded. Only `upsertExampleModelingSubmission` used to apply it.
+     */
+    private applySelectedModeToExampleSubmission(): void {
+        this.exampleSubmission().usedForTutorial = this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY;
+    }
+
     private updateExampleAssessment() {
+        // Saving only the assessment does not round-trip the example submission, so persist a pending mode change first.
+        if (this.exampleSubmission().usedForTutorial !== (this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY)) {
+            this.updateAssessmentExplanationAndExampleAssessment();
+            return;
+        }
         this.modelingAssessmentService.saveExampleAssessment(this.assessments(), this.exampleSubmissionId).subscribe({
             next: (result: Result) => {
                 this.updateAssessment(result);

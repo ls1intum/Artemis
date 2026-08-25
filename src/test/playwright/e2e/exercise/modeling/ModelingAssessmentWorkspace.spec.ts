@@ -1,19 +1,43 @@
+import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+
 import { test } from '../../../support/fixtures';
-import { instructor } from '../../../support/users';
+import { admin, instructor, studentOne, tutor } from '../../../support/users';
+import { Commands } from '../../../support/commands';
+import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
+import { newBrowserPage } from '../../../support/utils';
 import { SEED_COURSES } from '../../../support/seedData';
 import { dismissPasskeyReminderIfPresent } from '../../../support/dismissPasskeyReminder';
 
-const courseId = SEED_COURSES.exerciseManagement.id;
+const course = { id: SEED_COURSES.exerciseAssessment.id } as any;
 
 test.describe('Modeling assessment workspace', { tag: '@fast' }, () => {
     test.use({ viewport: { width: 1440, height: 1000 } });
 
-    test('keeps the model, instructions, feedback, and private notes visible without page scrolling', async ({ login, page }) => {
-        await login(instructor, `/course-management/${courseId}/modeling-exercises/8/submissions/8/assessment?correction-round=0`);
+    let modelingExercise: ModelingExercise;
 
+    // The E2E seed only provisions courses, users and conversations, so an assessable submission has to be created
+    // here. Reaching the assessment through the dashboard also avoids hand-building an URL out of guessed ids.
+    test.beforeAll('Create a modeling exercise with a submission ready to assess', async ({ browser }) => {
+        const page = await newBrowserPage(browser);
+        const exerciseAPIRequests = new ExerciseAPIRequests(page);
+
+        await Commands.login(page, admin);
+        modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
+        await Commands.login(page, studentOne);
+        const participation = await (await exerciseAPIRequests.startExerciseParticipation(modelingExercise.id!)).json();
+        await exerciseAPIRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation);
+        await Commands.login(page, instructor);
+        await exerciseAPIRequests.updateModelingExerciseDueDate(modelingExercise, dayjs());
+    });
+
+    test('keeps the model, instructions, feedback, and private notes visible without page scrolling', async ({ login, page, exerciseAssessment }) => {
+        await login(tutor, `/course-management/${course.id}/assessment-dashboard/${modelingExercise.id!}`);
         await dismissPasskeyReminderIfPresent(page);
+        await exerciseAssessment.clickHaveReadInstructionsButton();
+        await exerciseAssessment.clickStartNewAssessment();
 
         const workspace = page.locator('jhi-assessment-workspace');
         const assessment = workspace.locator('jhi-modeling-assessment');

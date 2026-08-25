@@ -283,6 +283,21 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         }
     }
 
+    /**
+     * Hands a projected element back to the frame before Apollon releases the region.
+     *
+     * Apollon's region cleanup removes whatever it still hosts from the document, so releasing a region while the
+     * projected element is inside it detaches that element for good — its `[hidden]`/`@if` bindings then govern a node
+     * that is no longer in the tree. {@link ModelingAssessmentComponent#synchronizeHostRegion} re-parents first for the
+     * same reason.
+     */
+    private releaseHostRegion(region: Parameters<ApollonEditor['getRegionElement']>[0], element: HTMLElement | undefined): void {
+        if (element) {
+            (this.editorFrame()?.nativeElement ?? this.elementRef.nativeElement).prepend(element);
+        }
+        this.apollonEditor?.releaseRegionElement(region);
+    }
+
     private destroyApollonEditor(): void {
         const editor = this.apollonEditor;
         if (editor) {
@@ -291,19 +306,19 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 this.modelSubscription = undefined;
             }
             if (this.topRightRegionMounted) {
-                editor.releaseRegionElement('top-right');
+                this.releaseHostRegion('top-right', this.editorActions()?.nativeElement);
                 this.topRightRegionMounted = false;
             }
             if (this.topLeftRegionMounted) {
-                editor.releaseRegionElement('top-left');
+                this.releaseHostRegion('top-left', this.editorTopLeftRegion()?.nativeElement);
                 this.topLeftRegionMounted = false;
             }
             if (this.bottomCenterMounted) {
-                editor.releaseRegionElement('bottom-center');
+                this.releaseHostRegion('bottom-center', this.editorBottomCenter()?.nativeElement);
                 this.bottomCenterMounted = false;
             }
             if (this.problemStatementRegionMounted) {
-                editor.releaseRegionElement('right-rail');
+                this.releaseHostRegion('right-rail', this.editorProblemStatement()?.nativeElement);
                 this.problemStatementRegionMounted = false;
             }
             this.apollonEditor = undefined;
@@ -362,13 +377,13 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             this.apollonEditor.getRegionElement('top-left').append(topLeft);
             this.topLeftRegionMounted = true;
         } else if (this.topLeftRegionMounted) {
-            this.apollonEditor.releaseRegionElement('top-left');
+            this.releaseHostRegion('top-left', topLeft);
             this.topLeftRegionMounted = false;
         }
 
         const bottomCenter = this.editorBottomCenter()?.nativeElement;
         if (this.bottomCenterMounted && (!bottomCenter || !this.hasEditorBottomCenter())) {
-            this.apollonEditor.releaseRegionElement('bottom-center');
+            this.releaseHostRegion('bottom-center', bottomCenter);
             this.bottomCenterMounted = false;
         }
         if (bottomCenter && this.hasEditorBottomCenter() && !this.bottomCenterMounted) {
@@ -379,7 +394,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         const problemStatement = this.editorProblemStatement()?.nativeElement;
         const shouldMountProblemStatement = this.fullscreenActive() && !!this.problemStatement()?.trim();
         if (this.problemStatementRegionMounted && (!problemStatement || !shouldMountProblemStatement)) {
-            this.apollonEditor.releaseRegionElement('right-rail');
+            this.releaseHostRegion('right-rail', problemStatement);
             this.problemStatementRegionMounted = false;
         }
         if (problemStatement && shouldMountProblemStatement && !this.problemStatementRegionMounted) {
@@ -548,7 +563,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     }
 
     private prepareFullscreenPresentation(editorFrame: HTMLElement): boolean {
-        if (!this.fullscreenPresentation.promote(editorFrame)) {
+        if (!this.fullscreenPresentation.promote(editorFrame, () => this.escapeFullscreen())) {
             return false;
         }
         this.fullscreenActive.set(true);
@@ -556,6 +571,19 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         this.apollonEditor?.setScrollLock(false);
         editorFrame.classList.add('modeling-editor__frame--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
         return true;
+    }
+
+    /**
+     * Stands down when the promoted frame stops being something the user is looking at — the exam page switcher moved
+     * to another exercise, or the frame's `@if` was torn down. Without this the document stays fullscreen on a frame
+     * the host believes it has hidden.
+     */
+    private escapeFullscreen(): void {
+        const wasFullscreen = document.fullscreenElement === document.documentElement;
+        this.restoreFullscreenPresentation();
+        if (wasFullscreen) {
+            void document.exitFullscreen().catch(captureException);
+        }
     }
 
     private restoreFullscreenPresentation(): void {
@@ -566,7 +594,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         this.problemStatementVisible.set(false);
         if (this.problemStatementRegionMounted) {
-            this.apollonEditor?.releaseRegionElement('right-rail');
+            this.releaseHostRegion('right-rail', this.editorProblemStatement()?.nativeElement);
             this.problemStatementRegionMounted = false;
         }
 

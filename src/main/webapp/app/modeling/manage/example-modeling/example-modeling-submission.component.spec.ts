@@ -650,4 +650,39 @@ describe('Example Modeling Submission Component', () => {
             expect(comp.highlightedElements().size).toBe(0);
         });
     });
+    it('should persist a training-mode change made while assessing', () => {
+        // The toggle sits beside the assessment, but only the submission-mode save used to apply it. Saving from
+        // assessment mode put the object as loaded from the server, so the toggle snapped back — under a success toast.
+        const exampleSubmission = { id: 42, usedForTutorial: false, assessmentExplanation: 'same' } as ExampleSubmission;
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set(exampleSubmission);
+        comp.assessmentExplanation.set('same');
+        comp['exampleSubmissionId'] = 42;
+        comp.selectedMode.set(ExampleSubmissionMode.ASSESS_CORRECTLY);
+
+        const update = vi.spyOn(TestBed.inject(ExampleSubmissionService), 'update').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
+        vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
+
+        comp.saveExampleAssessment();
+
+        expect(update).toHaveBeenCalledOnce();
+        expect(update.mock.calls[0][0].usedForTutorial).toBe(true);
+    });
+
+    it('should not round-trip the example submission when the training mode is unchanged', () => {
+        const exampleSubmission = { id: 42, usedForTutorial: true, assessmentExplanation: 'same' } as ExampleSubmission;
+        comp.exercise.set(exercise);
+        comp.exampleSubmission.set(exampleSubmission);
+        comp.assessmentExplanation.set('same');
+        comp['exampleSubmissionId'] = 42;
+        comp.selectedMode.set(ExampleSubmissionMode.ASSESS_CORRECTLY);
+
+        const update = vi.spyOn(TestBed.inject(ExampleSubmissionService), 'update');
+        const saveAssessment = vi.spyOn(TestBed.inject(ModelingAssessmentService), 'saveExampleAssessment').mockReturnValue(of(new Result()));
+
+        comp.saveExampleAssessment();
+
+        expect(update).not.toHaveBeenCalled();
+        expect(saveAssessment).toHaveBeenCalledOnce();
+    });
 });

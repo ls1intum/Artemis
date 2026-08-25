@@ -88,6 +88,7 @@ export class ResizableDirective {
     private moveCleanup?: () => void;
     private externalHandleCleanup?: () => void;
     private handleMutationObserver?: MutationObserver;
+    private handleStylesFrame?: number;
     private readonly managedHandles = new Map<HTMLElement, HandleState>();
 
     constructor() {
@@ -109,6 +110,10 @@ export class ResizableDirective {
             this.renderer.removeStyle(this.document.body, 'user-select');
             this.externalHandleCleanup?.();
             this.handleMutationObserver?.disconnect();
+            if (this.handleStylesFrame !== undefined) {
+                window.cancelAnimationFrame(this.handleStylesFrame);
+                this.handleStylesFrame = undefined;
+            }
             this.restoreManagedHandles();
         });
     }
@@ -139,8 +144,49 @@ export class ResizableDirective {
             this.handleMutationObserver = undefined;
             return;
         }
-        this.handleMutationObserver = new MutationObserver(() => this.applyHandleStyles(this.resizableEdges()));
+        this.handleMutationObserver = new MutationObserver(() => this.scheduleHandleStyles());
         this.handleMutationObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-label', 'aria-labelledby'] });
+    }
+
+    /**
+     * Coalesces handle upkeep into one frame.
+     *
+     * The observer watches `childList` + `subtree`, so hosts with churny content — the markdown explanation editor,
+     * the code-editor grid, the discussion section — mutate it on every keystroke. Reacting per mutation meant a
+     * forced reflow per mutation, because the aria upkeep measures the host. One frame's worth of mutations now
+     * produces one measurement.
+     */
+    private scheduleHandleStyles(): void {
+        if (typeof window.requestAnimationFrame === 'undefined') {
+            this.applyHandleStyles(this.resizableEdges());
+            return;
+        }
+        if (this.handleStylesFrame !== undefined) {
+            return;
+        }
+        this.handleStylesFrame = window.requestAnimationFrame(() => {
+            this.handleStylesFrame = undefined;
+            this.applyHandleStyles(this.resizableEdges());
+        });
+    }
+
+    /** Writing an unchanged value still dirties style/layout, which is the whole cost this path is trying to avoid. */
+    private setStyleIfChanged(element: HTMLElement, property: string, value: string): void {
+        if (element.style.getPropertyValue(property) !== value) {
+            this.renderer.setStyle(element, property, value);
+        }
+    }
+
+    private setAttributeIfChanged(element: HTMLElement, attribute: string, value: string): void {
+        if (element.getAttribute(attribute) !== value) {
+            this.renderer.setAttribute(element, attribute, value);
+        }
+    }
+
+    private removeAttributeIfPresent(element: HTMLElement, attribute: string): void {
+        if (element.hasAttribute(attribute)) {
+            this.renderer.removeAttribute(element, attribute);
+        }
     }
 
     private applyHandleStyles(edges: ResizableEdges): void {
@@ -167,22 +213,22 @@ export class ResizableDirective {
             this.captureHandleState(handle);
             const cursor = edge === 'left' || edge === 'right' ? 'col-resize' : 'row-resize';
             const enabled = this.resizableEnabled();
-            this.renderer.setStyle(handle, 'touch-action', enabled ? 'none' : 'auto');
-            this.renderer.setStyle(handle, 'cursor', enabled ? cursor : 'default');
+            this.setStyleIfChanged(handle, 'touch-action', enabled ? 'none' : 'auto');
+            this.setStyleIfChanged(handle, 'cursor', enabled ? cursor : 'default');
             const hasAccessibleName = handle.hasAttribute('aria-label') || handle.hasAttribute('aria-labelledby');
             if (!hasAccessibleName) {
                 this.restoreHandleAttributes(handle);
                 return;
             }
-            this.renderer.setAttribute(handle, 'role', 'separator');
-            this.renderer.setAttribute(handle, 'tabindex', enabled ? '0' : '-1');
+            this.setAttributeIfChanged(handle, 'role', 'separator');
+            this.setAttributeIfChanged(handle, 'tabindex', enabled ? '0' : '-1');
             if (enabled) {
-                this.renderer.removeAttribute(handle, 'aria-disabled');
+                this.removeAttributeIfPresent(handle, 'aria-disabled');
             } else {
-                this.renderer.setAttribute(handle, 'aria-disabled', 'true');
+                this.setAttributeIfChanged(handle, 'aria-disabled', 'true');
             }
-            this.renderer.setAttribute(handle, 'aria-orientation', edge === 'left' || edge === 'right' ? 'vertical' : 'horizontal');
-            this.renderer.setAttribute(handle, 'aria-controls', this.ensureHostId());
+            this.setAttributeIfChanged(handle, 'aria-orientation', edge === 'left' || edge === 'right' ? 'vertical' : 'horizontal');
+            this.setAttributeIfChanged(handle, 'aria-controls', this.ensureHostId());
             this.updateHandleAria(handle, edge);
         });
     }
@@ -248,23 +294,22 @@ export class ResizableDirective {
     private updateHandleAria(handle: HTMLElement, edge: ActiveEdge, size?: ResizableSizeEvent): void {
         const horizontal = edge === 'left' || edge === 'right';
         const constraints = this.resizableConstraints();
-        const current = size ?? {
-            width: this.host.nativeElement.getBoundingClientRect().width,
-            height: this.host.nativeElement.getBoundingClientRect().height,
-        };
+        // One measurement, not one per axis: `getBoundingClientRect` forces layout.
+        const hostRect = size ? undefined : this.host.nativeElement.getBoundingClientRect();
+        const current = size ?? { width: hostRect!.width, height: hostRect!.height };
         const value = Math.round(horizontal ? current.width : current.height);
         const min = horizontal ? constraints.minWidth : constraints.minHeight;
         const max = horizontal ? constraints.maxWidth : constraints.maxHeight;
-        this.renderer.setAttribute(handle, 'aria-valuenow', `${value}`);
+        this.setAttributeIfChanged(handle, 'aria-valuenow', `${value}`);
         if (min !== undefined) {
-            this.renderer.setAttribute(handle, 'aria-valuemin', `${min}`);
+            this.setAttributeIfChanged(handle, 'aria-valuemin', `${min}`);
         } else {
-            this.renderer.removeAttribute(handle, 'aria-valuemin');
+            this.removeAttributeIfPresent(handle, 'aria-valuemin');
         }
         if (max !== undefined) {
-            this.renderer.setAttribute(handle, 'aria-valuemax', `${max}`);
+            this.setAttributeIfChanged(handle, 'aria-valuemax', `${max}`);
         } else {
-            this.renderer.removeAttribute(handle, 'aria-valuemax');
+            this.removeAttributeIfPresent(handle, 'aria-valuemax');
         }
     }
 

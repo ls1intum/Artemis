@@ -140,6 +140,20 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             this.updateApollonAssessments(this.referencedFeedbacks);
         });
 
+        // Apollon bakes `readonly` in at construction, so a flip on the live instance — submitting an assessment
+        // swaps in a fresh result and locks the canvas — has to be pushed onto the editor. Without it the canvas
+        // still accepts edits and updates the point tally client side while nothing can be saved any more.
+        effect(() => {
+            const readOnly = this.readOnly();
+            const editor = this.apollonEditor;
+            if (!editor) {
+                return;
+            }
+            untracked(() => {
+                editor.setReadonly(readOnly);
+                this.synchronizeAssessmentSelectionSubscription(editor, readOnly);
+            });
+        });
         effect(() => {
             const model = this.umlModel();
 
@@ -250,8 +264,16 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             }
         });
 
-        if (this.readOnly()) {
-            this.assessmentSelectionSubscription = this.apollonEditor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
+        this.synchronizeAssessmentSelectionSubscription(this.apollonEditor, this.readOnly());
+    }
+
+    /** Selection is only reported while the canvas is read-only; a flip has to add or drop that subscription with it. */
+    private synchronizeAssessmentSelectionSubscription(editor: ApollonEditor, readOnly: boolean): void {
+        if (readOnly && this.assessmentSelectionSubscription === undefined) {
+            this.assessmentSelectionSubscription = editor.subscribeToAssessmentSelection((selections) => this.selectedElementIdsChanged.emit(selections));
+        } else if (!readOnly && this.assessmentSelectionSubscription !== undefined) {
+            editor.unsubscribe(this.assessmentSelectionSubscription);
+            this.assessmentSelectionSubscription = undefined;
         }
     }
 
@@ -411,12 +433,21 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     private prepareFullscreenPresentation(assessmentFrame: HTMLElement): boolean {
-        if (!this.fullscreenPresentation.promote(assessmentFrame)) {
+        if (!this.fullscreenPresentation.promote(assessmentFrame, () => this.escapeFullscreen())) {
             return false;
         }
         this.fullscreenActive.set(true);
         assessmentFrame.classList.add('modeling-assessment--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
         return true;
+    }
+
+    /** Mirrors {@link ModelingEditorComponent#escapeFullscreen}: the host hid or dropped the frame, so let go of the screen. */
+    private escapeFullscreen(): void {
+        const wasFullscreen = document.fullscreenElement === document.documentElement;
+        this.restoreFullscreenPresentation();
+        if (wasFullscreen) {
+            void document.exitFullscreen().catch(captureException);
+        }
     }
 
     private restoreFullscreenPresentation(): void {

@@ -12,7 +12,7 @@
         <label
             class="form-control-label"
             for="exampleSolutionPublicationDateEnabled"
-            [ngStyle]="!canConfigureExampleSolutionPublication() ? { color: 'grey' } : {}"
+            [class.text-muted-color]="!canConfigureExampleSolutionPublication()"
             jhiTranslate="artemisApp.exercise.configureExampleSolutionPublication"
         ></label>
     </div>
