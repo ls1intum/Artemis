@@ -15,8 +15,11 @@ import {
     IngestionTypeCount,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
-/** A unit can hold hundreds of content chunks, so both stored lists are paged rather than rendered whole. */
-const PAGE_SIZE = 25;
+/**
+ * A unit can hold hundreds of content chunks, so both stored lists are paged rather than rendered whole. The default
+ * has to be one of the sizes the paginator offers, or its rows-per-page control opens with nothing selected.
+ */
+const DEFAULT_PAGE_SIZE = 20;
 
 /** A breadcrumb step back up the tree. */
 interface Crumb {
@@ -64,10 +67,10 @@ export class CourseIngestionBrowserDetailComponent {
 
     readonly recordsPage = signal(0);
     readonly contentPage = signal(0);
-    protected readonly pageSize = PAGE_SIZE;
+    readonly pageSize = signal(DEFAULT_PAGE_SIZE);
 
     /** The visible slice of the stored records. */
-    readonly pagedRecords = computed(() => slice(this.records(), this.recordsPage()));
+    readonly pagedRecords = computed(() => slice(this.records(), this.recordsPage(), this.pageSize()));
 
     /** The counts behind the type detail's tiles, taken from the coverage row the matrix already has. */
     readonly typeCount = computed<IngestionTypeCount | undefined>(() => {
@@ -107,7 +110,7 @@ export class CourseIngestionBrowserDetailComponent {
     readonly labelledContent = computed<LabelledContentObject[]>(() => this.contentObjects().map((object, index) => ({ label: label(object, index), object })));
 
     /** The visible slice of the stored content objects. */
-    readonly pagedContent = computed(() => slice(this.labelledContent(), this.contentPage()));
+    readonly pagedContent = computed(() => slice(this.labelledContent(), this.contentPage(), this.pageSize()));
 
     /** The path back up the tree from the current selection. */
     readonly breadcrumbs = computed<Crumb[]>(() => {
@@ -158,6 +161,14 @@ export class CourseIngestionBrowserDetailComponent {
 
     protected onContentPageChange(page: number): void {
         this.contentPage.set(page);
+        this.expandedRows.set(new Set());
+    }
+
+    /** Changing the page size returns to the first page, since the old page number indexes a different-sized list. */
+    protected onPageSizeChange(size: number): void {
+        this.pageSize.set(size);
+        this.recordsPage.set(0);
+        this.contentPage.set(0);
         this.expandedRows.set(new Set());
     }
 
@@ -219,9 +230,9 @@ export class CourseIngestionBrowserDetailComponent {
 }
 
 /** The page-sized window into a list. */
-function slice<T>(items: T[], page: number): T[] {
-    const start = page * PAGE_SIZE;
-    return items.slice(start, start + PAGE_SIZE);
+function slice<T>(items: T[], page: number, pageSize: number): T[] {
+    const start = page * pageSize;
+    return items.slice(start, start + pageSize);
 }
 
 /**

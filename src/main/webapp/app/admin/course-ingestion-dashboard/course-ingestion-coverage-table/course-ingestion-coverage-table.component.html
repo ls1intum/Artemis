@@ -158,6 +158,7 @@
             [page]="page()"
             [pageSize]="pageSize()"
             (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
             [ariaLabel]="'artemisApp.courseIngestionDashboard.matrix.title' | artemisTranslate"
         />
     }

@@ -78,13 +78,14 @@
                         } @empty {
                             <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noObjects"></p>
                         }
-                        @if (records().length > pageSize) {
+                        @if (records().length > pageSize()) {
                             <tum-ui-paginator
                                 class="block mt-2"
                                 [totalRecords]="records().length"
                                 [page]="recordsPage()"
-                                [pageSize]="pageSize"
+                                [pageSize]="pageSize()"
                                 (pageChange)="onRecordsPageChange($event)"
+                                (pageSizeChange)="onPageSizeChange($event)"
                                 [ariaLabel]="'artemisApp.courseIngestionDashboard.browser.storedObjects' | artemisTranslate"
                             />
                         }
@@ -145,13 +146,14 @@
                         } @empty {
                             <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noContentUnit"></p>
                         }
-                        @if (labelledContent().length > pageSize) {
+                        @if (labelledContent().length > pageSize()) {
                             <tum-ui-paginator
                                 class="block mt-2"
                                 [totalRecords]="labelledContent().length"
                                 [page]="contentPage()"
-                                [pageSize]="pageSize"
+                                [pageSize]="pageSize()"
                                 (pageChange)="onContentPageChange($event)"
+                                (pageSizeChange)="onPageSizeChange($event)"
                                 [ariaLabel]="'artemisApp.courseIngestionDashboard.browser.storedObjects' | artemisTranslate"
                             />
                         }
