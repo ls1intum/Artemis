@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -74,7 +75,7 @@ class SshKeyDateColumnMigrationMySqlTest {
 
         // Seed the pre-migration schema and data under a non-UTC session, mirroring an existing MySQL instance.
         try (Connection connection = newConnection(); Statement statement = connection.createStatement()) {
-            statement.execute("SET time_zone = '" + NON_UTC_SESSION_ZONE + "'");
+            statement.execute("SET time_zone = '+02:00'");
             statement.execute("""
                     CREATE TABLE user_public_ssh_key (
                         id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -107,7 +108,7 @@ class SshKeyDateColumnMigrationMySqlTest {
 
         // Run the migration on a non-UTC session and keep the connection open for the assertions.
         try (Connection connection = newConnection(); Statement statement = connection.createStatement()) {
-            statement.execute("SET time_zone = '" + NON_UTC_SESSION_ZONE + "'");
+            statement.execute("SET time_zone = '+02:00'");
 
             Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
             Liquibase liquibase = new Liquibase(CHANGELOG, new ClassLoaderResourceAccessor(), database);
@@ -122,15 +123,18 @@ class SshKeyDateColumnMigrationMySqlTest {
             }
 
             // All three columns are now DATETIME with millisecond precision, and nullability is preserved.
-            assertColumn(statement, "creation_date", "datetime", 3, "NO");
-            assertColumn(statement, "last_used_date", "datetime", 3, "YES");
-            assertColumn(statement, "expiry_date", "datetime", 3, "YES");
+            assertColumn(connection, "creation_date", "datetime", 3, "NO");
+            assertColumn(connection, "last_used_date", "datetime", 3, "YES");
+            assertColumn(connection, "expiry_date", "datetime", 3, "YES");
 
-            // The expiry_date index survives the column rewrite.
-            try (ResultSet resultSet = statement.executeQuery("SELECT COUNT(*) FROM information_schema.statistics "
-                    + "WHERE table_schema = DATABASE() AND table_name = 'user_public_ssh_key' AND index_name = 'idx_user_public_ssh_key_expiry_date'")) {
-                resultSet.next();
-                assertThat(resultSet.getInt(1)).as("expiry_date index preserved").isPositive();
+            // The index survives the column rewrite and still targets expiry_date as its first column.
+            try (ResultSet resultSet = statement.executeQuery("""
+                    SELECT column_name, seq_in_index FROM information_schema.statistics
+                    WHERE table_schema = DATABASE() AND table_name = 'user_public_ssh_key' AND index_name = 'idx_user_public_ssh_key_expiry_date'
+                    """)) {
+                assertThat(resultSet.next()).as("expiry_date index preserved").isTrue();
+                assertThat(resultSet.getString("column_name")).as("index targets expiry_date").isEqualTo("expiry_date");
+                assertThat(resultSet.getInt("seq_in_index")).as("expiry_date is the first index column").isEqualTo(1);
             }
 
             // The pre-existing values keep their UTC wall-clock: read as UTC, their epochs must match the seeded epochs.
@@ -168,13 +172,18 @@ class SshKeyDateColumnMigrationMySqlTest {
         return DriverManager.getConnection(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
     }
 
-    private void assertColumn(Statement statement, String columnName, String expectedDataType, int expectedPrecision, String expectedNullable) throws Exception {
-        try (ResultSet resultSet = statement.executeQuery("SELECT data_type, datetime_precision, is_nullable FROM information_schema.columns "
-                + "WHERE table_schema = DATABASE() AND table_name = 'user_public_ssh_key' AND column_name = '" + columnName + "'")) {
-            resultSet.next();
-            assertThat(resultSet.getString("data_type")).as("data type of %s", columnName).isEqualTo(expectedDataType);
-            assertThat(resultSet.getInt("datetime_precision")).as("precision of %s", columnName).isEqualTo(expectedPrecision);
-            assertThat(resultSet.getString("is_nullable")).as("nullability of %s", columnName).isEqualTo(expectedNullable);
+    private void assertColumn(Connection connection, String columnName, String expectedDataType, int expectedPrecision, String expectedNullable) throws Exception {
+        try (PreparedStatement statement = connection.prepareStatement("""
+                SELECT data_type, datetime_precision, is_nullable FROM information_schema.columns
+                WHERE table_schema = DATABASE() AND table_name = 'user_public_ssh_key' AND column_name = ?
+                """)) {
+            statement.setString(1, columnName);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                resultSet.next();
+                assertThat(resultSet.getString("data_type")).as("data type of %s", columnName).isEqualTo(expectedDataType);
+                assertThat(resultSet.getInt("datetime_precision")).as("precision of %s", columnName).isEqualTo(expectedPrecision);
+                assertThat(resultSet.getString("is_nullable")).as("nullability of %s", columnName).isEqualTo(expectedNullable);
+            }
         }
     }
 }
