@@ -18,6 +18,7 @@ describe('CourseIngestionDashboardComponent', () => {
         weaviateReachable: true,
         weaviateAddress: 'http://weaviate:8080',
         irisEnabled: true,
+        irisReachable: true,
         collections: [{ collection: 'ArtemisSearchableEntity', count: 42, readable: true }],
     };
 

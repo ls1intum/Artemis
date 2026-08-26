@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.web.util.PaginationUtil.generatePagina
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import org.springframework.boot.health.contributor.Health;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.IndexedCollectionCountDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IngestionCoverageDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.CoverageRecomputeService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService;
+import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 
 /**
  * Admin-only, read-only endpoints for the ingestion-observability dashboard: the index overview, the stored per-course
@@ -65,12 +67,15 @@ public class IngestionCoverageResource {
 
     private final Environment environment;
 
+    private final Optional<IrisHealthApi> irisHealthApi;
+
     public IngestionCoverageResource(WeaviateHealthIndicator weaviateHealthIndicator, IngestionCoverageWeaviateReadService weaviateReadService,
-            CoverageRecomputeService coverageRecomputeService, Environment environment) {
+            CoverageRecomputeService coverageRecomputeService, Environment environment, Optional<IrisHealthApi> irisHealthApi) {
         this.weaviateHealthIndicator = weaviateHealthIndicator;
         this.weaviateReadService = weaviateReadService;
         this.coverageRecomputeService = coverageRecomputeService;
         this.environment = environment;
+        this.irisHealthApi = irisHealthApi;
     }
 
     /**
@@ -85,13 +90,16 @@ public class IngestionCoverageResource {
         boolean reachable = health.getStatus() == Status.UP;
         String address = String.valueOf(health.getDetails().get("Address"));
         boolean irisEnabled = artemisConfigHelper.isIrisEnabled(environment);
+        // Enabled says the module is switched on; reachable says Iris answered. Reporting only the former reads as
+        // healthy while Iris is down, which is the state an admin most needs to see.
+        boolean irisReachable = irisHealthApi.map(IrisHealthApi::isReachable).orElse(false);
 
         List<IndexedCollectionCountDTO> collections = new ArrayList<>();
         collections.add(toCountDto(SearchableEntitySchema.COLLECTION_NAME, weaviateReadService.countPrefixedCollection(SearchableEntitySchema.COLLECTION_NAME)));
         for (String collection : IRIS_CONTENT_COLLECTIONS) {
             collections.add(toCountDto(collection, weaviateReadService.countExternalCollection(collection)));
         }
-        return ResponseEntity.ok(new IndexOverviewDTO(reachable, address, irisEnabled, collections));
+        return ResponseEntity.ok(new IndexOverviewDTO(reachable, address, irisEnabled, irisReachable, collections));
     }
 
     /**

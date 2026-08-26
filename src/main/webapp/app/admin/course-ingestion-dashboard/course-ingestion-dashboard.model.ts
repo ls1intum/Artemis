@@ -30,6 +30,8 @@ export interface IndexOverview {
     weaviateAddress: string;
     /** Whether the Iris module is enabled (the Iris content collections only exist when it is). */
     irisEnabled: boolean;
+    /** Whether Iris is actually answering. Always false when the module is disabled. */
+    irisReachable: boolean;
     /** The per-collection live object counts. */
     collections: IndexedCollectionCount[];
 }

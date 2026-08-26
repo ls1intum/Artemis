@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideTranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
@@ -189,5 +189,21 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(component.search()).toBe('algo');
         expect(component.page()).toBe(0);
         expect(liveSpy).toHaveBeenLastCalledWith({ page: 0, size: 20, sort: 'title,asc', search: 'algo' });
+    });
+
+    it('should rebuild the filter labels when the language changes', async () => {
+        const translateService = TestBed.inject(TranslateService);
+        vi.spyOn(translateService, 'instant').mockImplementation((key) => `de:${key}`);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // Built once at construction, the labels would keep the fallback language for the life of the component.
+        translateService.use('de');
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component['statusOptions']()[0].label).toBe('de:artemisApp.courseIngestionDashboard.matrix.status.all');
+        expect(component['activeOptions']()[1].label).toBe('de:artemisApp.courseIngestionDashboard.matrix.active.active');
     });
 });
