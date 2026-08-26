@@ -7,13 +7,13 @@ import {
     faChevronDown,
     faChevronRight,
     faCircleQuestion,
+    faClosedCaptioning,
     faFileLines,
     faGraduationCap,
     faHashtag,
     faImage,
     faLayerGroup,
     faListCheck,
-    faWaveSquare,
 } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -36,7 +36,7 @@ const TYPE_ICONS: Record<string, IconDefinition> = {
 
 const CONTENT_ICONS: Record<string, IconDefinition> = {
     slides: faImage,
-    transcript: faWaveSquare,
+    transcript: faClosedCaptioning,
     unit_summary: faAlignLeft,
     segments: faLayerGroup,
 };
@@ -79,6 +79,7 @@ interface ScoreboardRow {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './course-ingestion-browser-tree.component.html',
+    styleUrl: './course-ingestion-browser-tree.component.scss',
 })
 export class CourseIngestionBrowserTreeComponent {
     readonly entities = input.required<IndexedEntity[]>();
