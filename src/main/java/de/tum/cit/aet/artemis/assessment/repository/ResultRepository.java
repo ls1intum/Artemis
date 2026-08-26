@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -499,6 +500,30 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return true if a result exists for the given submission ID, false otherwise.
      */
     boolean existsBySubmissionId(long submissionId);
+
+    /**
+     * Returns the manual results of the given submissions together with the correction round each belongs to.
+     * <p>
+     * The scores overview renders assessment actions per correction round, so it needs one entry per round rather than
+     * only the newest result. Automatic and Athena results are left out because they are not correction rounds, which
+     * matches {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose
+     * assessment type is not set yet.
+     *
+     * @param submissionIds the submissions whose manual results should be read
+     * @return the manual results of those submissions, in no particular order
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO(
+                result.submission.id, result.id, result.correctionRound, result.assessmentType, result.completionDate, result.hasComplaint)
+            FROM Result result
+            WHERE result.submission.id IN :submissionIds
+                AND (result.assessmentType IS NULL
+                    OR result.assessmentType NOT IN (
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    ))
+            """)
+    List<CorrectionRoundResultDTO> findCorrectionRoundResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
     /**
      * Returns true if there is at least one result for the given exercise.
