@@ -1,4 +1,9 @@
-<div #assessmentFrame class="modeling-assessment artemis-apollon-theme" [class]="fullscreenActive() ? fullscreenFrameClasses : ''">
+<div
+    #assessmentFrame
+    class="modeling-assessment artemis-apollon-theme"
+    [class.modeling-assessment--fullscreen]="fullscreenActive()"
+    [class.apollon-fullscreen-frame]="fullscreenActive()"
+>
     <div #topLeftRegion class="modeling-assessment__region modeling-assessment__region--top-left nopan nodrag nowheel">
         <ng-content select="[modelingAssessmentTopLeft]" />
     </div>

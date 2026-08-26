@@ -42,6 +42,8 @@ const { MockApollonEditor } = vi.hoisted(() => {
 
         setElementHighlights = vi.fn();
 
+        revealAssessment = vi.fn();
+
         setReadonly = vi.fn();
 
         getRegionElement = vi.fn((region: string) => {
@@ -103,7 +105,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
-import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    Feedback,
+    FeedbackCorrectionErrorType,
+    FeedbackType,
+} from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
@@ -377,6 +385,84 @@ describe('ModelingAssessmentComponent', () => {
 
         comp.generateFeedbackFromAssessment(Object.values(comp.apollonEditor!.model.assessments));
         expect(comp.elementFeedback.get(mockFeedbackWithGradingInstruction.referenceId!)).toEqual(mockFeedbackWithGradingInstruction);
+    });
+
+    describe('generateFeedbackFromAssessment', () => {
+        const assessmentFor = (overrides: Record<string, unknown> = {}) =>
+            ({ modelElementId: PACKAGE_ID, elementType: 'Package', score: 1, feedback: 'Looks right', ...overrides }) as any;
+
+        it('creates feedback for an element that has none yet', () => {
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor()]);
+
+            expect(created.referenceId).toBe(PACKAGE_ID);
+            expect(created.credits).toBe(1);
+            expect(created.text).toBe('Looks right');
+        });
+
+        it('drops the grading instruction when the tutor overrides its score', () => {
+            const graded = Feedback.forModeling(1, 'Looks right', PACKAGE_ID, 'Package');
+            graded.gradingInstruction = { id: 7 } as any;
+            comp.elementFeedback.set(PACKAGE_ID, graded);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ score: 2 })]);
+
+            expect(graded.credits).toBe(2);
+            expect(graded.gradingInstruction).toBeUndefined();
+        });
+
+        it('marks an accepted suggestion as adapted once its text is edited, and keeps the title unprefixed', () => {
+            const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
+            comp.elementFeedback.set(PACKAGE_ID, suggestion);
+            // Only an edit against what Apollon last showed counts as adapting; without this the first sync would.
+            comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ feedback: 'Edited detail' })]);
+
+            expect(suggestion.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+            expect(suggestion.detailText).toBe('Edited detail');
+        });
+
+        it('leaves an already adapted suggestion titled once and still takes the newest detail', () => {
+            const adapted = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
+            adapted.text = FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction';
+            comp.elementFeedback.set(PACKAGE_ID, adapted);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ feedback: 'Edited again' })]);
+
+            expect(adapted.text).toBe(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER + 'Missing abstraction');
+            expect(adapted.detailText).toBe('Edited again');
+        });
+
+        it('attaches the grading instruction the tutor dropped on an element, and detaches it once removed', () => {
+            const instruction = { id: 7 } as any;
+            comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: instruction })]);
+            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBe(instruction);
+
+            comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: undefined })]);
+            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBeUndefined();
+        });
+
+        it('forgets feedback for elements the tutor deleted from the diagram', () => {
+            comp.elementFeedback.set(RELATIONSHIP_ID, Feedback.forModeling(1, 'Stale', RELATIONSHIP_ID, 'ClassUnidirectional'));
+
+            comp.generateFeedbackFromAssessment([assessmentFor()]);
+
+            expect(comp.elementFeedback.has(RELATIONSHIP_ID)).toBe(false);
+        });
+    });
+
+    it('reveals one element for a feedback list, and clears the selection again', async () => {
+        fixture.componentRef.setInput('umlModel', makeMockModel());
+        fixture.detectChanges();
+        await waitForApollonInitialization();
+        const reveal = comp.apollonEditor!.revealAssessment as unknown as ReturnType<typeof vi.fn>;
+
+        comp.revealAssessment(PACKAGE_ID);
+        expect(reveal).toHaveBeenCalledWith(PACKAGE_ID);
+
+        comp.revealAssessment(undefined);
+        expect(reveal).toHaveBeenLastCalledWith(null);
     });
 
     it('applies highlight overlays to the editor when the highlightedElements input changes', async () => {

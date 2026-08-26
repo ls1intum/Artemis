@@ -34,7 +34,7 @@ import { ModelingAssessmentPanelDirective } from 'app/modeling/manage/assess/mod
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { APOLLON_FULLSCREEN_FRAME_CLASS, FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
+import { FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -64,7 +64,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly fullscreenSupported = document.fullscreenEnabled !== false;
     /** Public so a host can render the control in its own chrome cluster. */
     readonly fullscreenActive = signal(false);
-    protected readonly fullscreenFrameClasses = `modeling-assessment--fullscreen ${APOLLON_FULLSCREEN_FRAME_CLASS}`;
 
     private readonly topLeftRegion = viewChild<ElementRef<HTMLElement>>('topLeftRegion');
     private readonly topRightRegion = viewChild<ElementRef<HTMLElement>>('topRightRegion');

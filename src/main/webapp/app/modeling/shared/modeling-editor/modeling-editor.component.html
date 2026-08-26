@@ -4,7 +4,8 @@
             #editorFrame
             class="modeling-editor__frame artemis-apollon-theme"
             [class.modeling-editor__frame--tile]="tile()"
-            [class]="fullscreenActive() ? fullscreenFrameClasses : ''"
+            [class.modeling-editor__frame--fullscreen]="fullscreenActive()"
+            [class.apollon-fullscreen-frame]="fullscreenActive()"
         >
             <jhi-modeling-editor-help [(visible)]="helpVisible" />
 

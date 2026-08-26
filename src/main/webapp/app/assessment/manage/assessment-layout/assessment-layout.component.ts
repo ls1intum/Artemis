@@ -1,4 +1,4 @@
-import { Component, HostBinding, input, model, output } from '@angular/core';
+import { Component, input, model, output } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -21,10 +21,9 @@ import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-fo
     templateUrl: './assessment-layout.component.html',
     styleUrls: ['./assessment-layout.component.scss'],
     imports: [AssessmentHeaderComponent, AssessmentComplaintAlertComponent, AssessmentNoteComponent, ComplaintsForTutorComponent],
+    host: { class: 'assessment-container' },
 })
 export class AssessmentLayoutComponent {
-    @HostBinding('class.assessment-container') readonly assessmentContainerClass = true;
-
     MORE_FEEDBACK = ComplaintType.MORE_FEEDBACK;
     readonly isLoading = input.required<boolean>();
     readonly saveBusy = input<boolean>(false);

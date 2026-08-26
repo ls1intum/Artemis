@@ -39,7 +39,7 @@ import {
     measureRailDisclosureMaxHeight,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
-import { APOLLON_FULLSCREEN_FRAME_CLASS, FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
+import { FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { ModelingEditorHelpComponent } from 'app/modeling/shared/modeling-editor/modeling-editor-help.component';
 import { ModelingEditorBottomCenterDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-bottom-center.directive';
@@ -92,7 +92,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     readonly helpVisible = signal(false);
     readonly fullscreenActive = signal(false);
-    protected readonly fullscreenFrameClasses = `modeling-editor__frame--fullscreen ${APOLLON_FULLSCREEN_FRAME_CLASS}`;
     readonly problemStatementVisible = signal(false);
     protected readonly problemStatementMaxHeight = signal(RAIL_DISCLOSURE_MAX_HEIGHT);
     protected readonly bottomCenterElevated = signal(false);

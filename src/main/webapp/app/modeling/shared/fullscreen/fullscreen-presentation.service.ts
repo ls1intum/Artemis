@@ -2,7 +2,10 @@ import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
 import { DomPortal, DomPortalOutlet } from '@angular/cdk/portal';
 
-/** Marks a promoted frame; `global.scss` keys the stacking of body- and html-level portals on it. */
+/**
+ * Marks a promoted frame; `global.scss` keys the stacking of body- and html-level portals on it. The editor and
+ * assessment templates bind it by name, so it is the value that must match, not the import.
+ */
 export const APOLLON_FULLSCREEN_FRAME_CLASS = 'apollon-fullscreen-frame';
 
 /** True while no ancestor hides the element. Falls back to client rects where `checkVisibility` is missing (jsdom). */

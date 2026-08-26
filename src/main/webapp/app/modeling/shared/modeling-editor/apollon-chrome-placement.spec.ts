@@ -1,6 +1,9 @@
 import {
+    RAIL_DISCLOSURE_MAX_HEIGHT,
+    RAIL_DISCLOSURE_MIN_HEIGHT,
     applyBottomCenterPlacement,
     calculateBottomCenterPlacement,
+    calculateRailDisclosureMaxHeight,
     clearBottomCenterPlacement,
     synchronizeResizeObserverTargets,
 } from 'app/modeling/shared/modeling-editor/apollon-chrome-placement';
@@ -118,5 +121,54 @@ describe('bottom-center placement DOM updates', () => {
         expect(observer.unobserve).toHaveBeenCalledExactlyOnceWith(first);
         expect(observer.observe).toHaveBeenCalledExactlyOnceWith(third);
         expect([...observed]).toEqual([second, third]);
+    });
+});
+
+describe('calculateRailDisclosureMaxHeight', () => {
+    // A 1000x1000 canvas with the disclosure trigger parked in the top right.
+    const baseGeometry = {
+        root: { left: 0, right: 1000, bottom: 1000 },
+        trigger: { right: 900, bottom: 100 },
+        panelWidth: 300,
+        bottomChrome: [] as Array<{ left: number; right: number; top: number; width: number; height: number } | undefined>,
+        chromeGap: 8,
+        chromeEdge: 16,
+    };
+    const chrome = (left: number, right: number, top: number) => ({ left, right, top, width: right - left, height: 40 });
+
+    it('stops the panel a chrome edge short of the canvas floor when nothing is below it', () => {
+        expect(calculateRailDisclosureMaxHeight(baseGeometry)).toBe(RAIL_DISCLOSURE_MAX_HEIGHT);
+    });
+
+    it('stops a chrome gap short of chrome the panel would otherwise cover', () => {
+        const height = calculateRailDisclosureMaxHeight({ ...baseGeometry, bottomChrome: [chrome(700, 950, 600)] });
+
+        expect(height).toBe(600 - 8 - 100);
+    });
+
+    it('ignores chrome the panel does not reach across', () => {
+        // The panel spans 600..900, so chrome that ends at 500 is beside it rather than beneath it.
+        const height = calculateRailDisclosureMaxHeight({ ...baseGeometry, bottomChrome: [chrome(100, 500, 600)] });
+
+        expect(height).toBe(RAIL_DISCLOSURE_MAX_HEIGHT);
+    });
+
+    it('ignores collapsed and absent chrome', () => {
+        const collapsed = { left: 700, right: 700, top: 600, width: 0, height: 0 };
+        const height = calculateRailDisclosureMaxHeight({ ...baseGeometry, bottomChrome: [undefined, collapsed] });
+
+        expect(height).toBe(RAIL_DISCLOSURE_MAX_HEIGHT);
+    });
+
+    it('ignores chrome that sits level with or above the trigger', () => {
+        const height = calculateRailDisclosureMaxHeight({ ...baseGeometry, bottomChrome: [chrome(700, 950, 100)] });
+
+        expect(height).toBe(RAIL_DISCLOSURE_MAX_HEIGHT);
+    });
+
+    it('keeps the panel usable rather than shrinking it to nothing in a cramped canvas', () => {
+        const height = calculateRailDisclosureMaxHeight({ ...baseGeometry, bottomChrome: [chrome(700, 950, 150)] });
+
+        expect(height).toBe(RAIL_DISCLOSURE_MIN_HEIGHT);
     });
 });

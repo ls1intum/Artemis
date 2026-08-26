@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -76,6 +76,7 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
         ModelingAssessmentPanelDirective,
         NgTemplateOutlet,
     ],
+    host: { '(window:beforeunload)': 'unloadNotification($event)' },
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
     private websocketService = inject(WebsocketService);
@@ -863,7 +864,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return !this.modelHasUnsavedChanges(model) && explanationIsUpToDate;
     }
 
-    @HostListener('window:beforeunload', ['$event'])
     unloadNotification(event: BeforeUnloadEvent) {
         if (!this.canDeactivate()) {
             event.preventDefault();
