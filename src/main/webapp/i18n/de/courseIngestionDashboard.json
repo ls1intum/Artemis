@@ -22,7 +22,13 @@
                 "title": "Indexierte Collections",
                 "collection": "Collection",
                 "objects": "Objekte",
-                "unavailable": "Nicht verfügbar"
+                "unavailable": "Nicht verfügbar",
+                "contents": {
+                    "slides": "Folien",
+                    "transcript": "Transkript",
+                    "segments": "Ausgerichtete Segmente",
+                    "unitSummary": "Einheit-Zusammenfassung"
+                }
             },
             "matrix": {
                 "title": "Abdeckung nach Kurs",
