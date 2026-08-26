@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
@@ -91,6 +92,8 @@ public class DataCleanupService {
 
     private final UserRepository userRepository;
 
+    private final UserActivityService userActivityService;
+
     private final MailSendingService mailSendingService;
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
@@ -109,8 +112,9 @@ public class DataCleanupService {
             StudentScoreCleanupRepository studentScoreCleanupRepository, TeamScoreCleanupRepository teamScoreCleanupRepository,
             SubmissionVersionCleanupRepository submissionVersionCleanupRepository, DataCleanupProperties dataCleanupProperties,
             CourseDataRetentionService courseDataRetentionService, UserService userService, UserRepository userRepository, MailSendingService mailSendingService,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, TestCaseFeedbackCleanupRepository testCaseFeedbackCleanupRepository,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, UserActivityService userActivityService, TestCaseFeedbackCleanupRepository testCaseFeedbackCleanupRepository,
             ScaFeedbackCleanupRepository scaFeedbackCleanupRepository, FeedbackMessageCleanupRepository feedbackMessageCleanupRepository) {
+        this.userActivityService = userActivityService;
         this.resultCleanupRepository = resultCleanupRepository;
         this.ratingCleanupRepository = ratingCleanupRepository;
         this.feedbackCleanupRepository = feedbackCleanupRepository;
@@ -506,7 +510,7 @@ public class DataCleanupService {
                     boolean sent = mailSendingService.buildAndSendSyncReporting(MailRecipientDTO.from(user), NOT_ENROLLED_DELETION_WARNING_SUBJECT_KEY, List.of(),
                             NOT_ENROLLED_DELETION_WARNING_EMAIL_TEMPLATE, contextVariables);
                     if (sent) {
-                        userRepository.updateDeletionWarningSentDate(user.getLogin(), ZonedDateTime.now().toInstant());
+                        userActivityService.recordDeletionWarning(user.getLogin(), ZonedDateTime.now().toInstant());
                         warned++;
                     }
                 }
@@ -541,7 +545,7 @@ public class DataCleanupService {
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteNotEnrolledUsers() {
-        userRepository.clearDeletionWarningForReturnedUsers();
+        userActivityService.clearDeletionWarningForReturnedUsers();
         List<String> logins = notEnrolledUserLoginsToDelete();
         log.info("Soft-deleting {} not-enrolled, inactive, warned user(s)", logins.size());
         logins.forEach(login -> {
