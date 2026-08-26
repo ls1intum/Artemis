@@ -333,6 +333,153 @@ test.describe('Exam assessment', () => {
     });
 });
 
+test.describe.serial('Exam assessment dashboard and scores across two correction rounds', { tag: '@slow' }, () => {
+    // Both rounds are assessed here, so the block needs room for the exam to end plus two assessments.
+    test.describe.configure({ timeout: 240_000 });
+
+    const dashboardCourse = { id: SEED_COURSES.examAssessment.id } as any;
+    let exam: Exam;
+    let examEnd: Dayjs;
+
+    test.beforeAll('Prepare exam', async ({ browser }) => {
+        examEnd = dayjs().add(40, 'seconds');
+        const page = await newBrowserPage(browser);
+        exam = await prepareExam(dashboardCourse, examEnd, ExerciseType.TEXT, page, 2);
+    });
+
+    test('Dashboard offers only the first round until the second correction is enabled', async ({ page, login, examManagement, courseAssessment, exerciseAssessment }) => {
+        await login(instructor);
+        await examManagement.verifySubmitted(dashboardCourse.id!, exam.id!, studentOneName);
+        await waitForExamEnd(exam, page);
+
+        await login(tutor);
+        await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
+        await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
+        await exerciseAssessment.clickHaveReadInstructionsButton();
+
+        // Both headings are always rendered for a two-round exam; what the second correction gates is the submissions
+        // table below them, which is replaced by an explanatory message until an instructor enables the round.
+        await expect(page.getByRole('heading', { name: /Correction Round: 1/ })).toBeVisible();
+        await expect(page.getByRole('heading', { name: /Correction Round: 2/ })).toBeVisible();
+        await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(1);
+        // Nothing is assessed yet, so the first round has a submission on offer and no assessed row.
+        await expect(page.locator('#start-new-assessment')).toHaveCount(1);
+        await expect(page.locator('#open-assessment')).toHaveCount(0);
+    });
+
+    test('First round assessment shows up on the dashboard and opens the second round', async ({
+        page,
+        login,
+        examAssessment,
+        courseAssessment,
+        examManagement,
+        exerciseAssessment,
+    }) => {
+        await login(tutor);
+        await startAssessing(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, false, false);
+        await examAssessment.addNewFeedback(6, 'First corrector');
+        const response = await examAssessment.submitTextAssessment();
+        expect(response.status()).toBe(200);
+
+        // Back on the dashboard the assessed submission is listed for round 1 with the score the tutor gave.
+        await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
+        await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
+        await expect(page.locator('#open-assessment')).toHaveCount(1);
+        await expect(page.getByText('60%').first()).toBeVisible();
+        // The first round has nothing left to hand out, and the second round is still not enabled.
+        await expect(page.locator('#start-new-assessment')).toHaveCount(0);
+        await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(1);
+    });
+
+    test('Second round is assessed independently and both rounds keep their own result', async ({
+        page,
+        login,
+        examAssessment,
+        examParticipation,
+        courseAssessment,
+        examManagement,
+        exerciseAssessment,
+    }) => {
+        await login(instructor);
+        await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
+        await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
+        await exerciseAssessment.toggleSecondCorrectionRound();
+        // The round sections only render for someone who has confirmed the instructions, so that comes before asserting.
+        await exerciseAssessment.clickHaveReadInstructionsButton();
+
+        // Enabling the second correction replaces the message with the round's own submissions table, and it offers the
+        // submission the tutor already assessed.
+        await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(0);
+        await expect(page.getByRole('heading', { name: /Correction Round: 2/ })).toBeVisible();
+        await expect(page.locator('#start-new-assessment')).toHaveCount(1);
+
+        await exerciseAssessment.clickStartNewAssessment();
+        await examAssessment.fillFeedback(9, 'Second corrector');
+        const response = await examAssessment.submitTextAssessment();
+        expect(response.status()).toBe(200);
+
+        // The dashboard lists what the signed-in corrector assessed, so the instructor sees their second round only,
+        // with the score they gave.
+        await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
+        await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
+        await expect(page.getByRole('heading', { name: /Correction Round: 2/ })).toBeVisible();
+        await expect(page.locator('#open-assessment')).toHaveCount(1);
+        await expect(page.getByText('90%').first()).toBeVisible();
+
+        // The tutor still sees their own first round with the score they gave, so the second round did not overwrite it.
+        await login(tutor);
+        await examManagement.openAssessmentDashboard(dashboardCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT);
+        await courseAssessment.clickExerciseDashboardButton(0, EXAM_DASHBOARD_TIMEOUT);
+        await expect(page.locator('#open-assessment')).toHaveCount(1);
+        await expect(page.getByText('60%').first()).toBeVisible();
+        // The student is shown the second corrector's result, not the first one.
+        await login(studentOne, `/courses/${dashboardCourse.id}/exams/${exam.id}`);
+        await examParticipation.checkResultScore('90%');
+    });
+
+    test('Exam scores page reports both correction rounds', async ({ page, login, examManagement, examAPIRequests }) => {
+        await login(instructor);
+        await page.goto(`/course-management/${dashboardCourse.id}/exams/${exam.id}`);
+        await page.waitForLoadState('domcontentloaded');
+        await examManagement.openScoresPage();
+        await page.waitForURL(`**/exams/${exam.id}/scores`);
+        await page.waitForLoadState('domcontentloaded');
+
+        // The two extra column groups only render once a second correction has been started.
+        await expect(page.getByText('First correction', { exact: true })).toBeVisible();
+        await expect(page.getByText('Second correction', { exact: true })).toBeVisible();
+
+        const scores = await examAPIRequests.getExamScores(exam);
+        expect(scores.hasSecondCorrectionAndStarted).toBe(true);
+        const studentResult = scores.studentResults.find((result: any) => result.login === studentOne.username);
+        expect(studentResult).toBeDefined();
+        // The overall result is the second corrector's, so the second round reached the scores page and the first one
+        // did not overwrite it.
+        expect(studentResult.overallPointsAchieved).toBe(9);
+        expect(studentResult.overallScoreAchieved).toBe(90);
+        // Pinned to what the server currently answers, which is not what the column means. The scores page loads the
+        // participations with `findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns`,
+        // whose `r.id = (SELECT MAX(r2.id) FROM s.results r2)` keeps only the newest result per submission. The first
+        // correction is then computed from a submission that carries a single manual result, and
+        // ExamService.calculateFirstCorrectionPoints returns 0 for anything with one manual result or fewer. The first
+        // round really scored 6 of 10 points, which the dashboard test above asserts. Raise this to 6 once the query
+        // fetches both rounds; the assertion is here so that the gap is visible rather than silent.
+        expect(studentResult.overallPointsAchievedInFirstCorrection).toBe(0);
+
+        // The student row shows the final points, not the first corrector's.
+        const studentRow = page.locator('tr', { hasText: studentOne.username });
+        await expect(studentRow).toBeVisible();
+        await expect(studentRow.getByText('9', { exact: true }).first()).toBeVisible();
+    });
+
+    test.afterAll('Delete exam', async ({ browser }) => {
+        const page = await newBrowserPage(browser);
+        await Commands.login(page, admin);
+        await new ExamAPIRequests(page).deleteExam(exam);
+        await page.close();
+    });
+});
+
 test.describe('Exam grading', { tag: '@slow' }, () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
