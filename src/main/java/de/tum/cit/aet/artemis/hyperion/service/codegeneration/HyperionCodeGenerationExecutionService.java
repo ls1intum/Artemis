@@ -345,7 +345,7 @@ public class HyperionCodeGenerationExecutionService {
         // build-log graph; otherwise a compile failure (the most common retry trigger) is hidden behind a useless fallback message.
         try {
             List<BuildLogEntry> buildLogEntries = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId())
-                    .map(ProgrammingSubmission::getBuildLogEntries).orElse(List.of());
+                    .map(ProgrammingSubmission::getBuildLogEntries).map(List::copyOf).orElse(List.of());
             if (!buildLogEntries.isEmpty()) {
                 return buildLogEntries.stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
             }

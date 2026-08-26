@@ -86,10 +86,11 @@ class ProgrammingSubmissionAndResultLocalVCJenkinsIntegrationTest extends Abstra
 
         // Assert that the submission contains build log entries
         ProgrammingSubmission submissionWithLogs = submissionWithLogsOptional.get();
-        List<BuildLogEntry> buildLogEntries = submissionWithLogs.getBuildLogEntries();
+        java.util.Set<BuildLogEntry> buildLogEntries = submissionWithLogs.getBuildLogEntries();
         assertThat(buildLogEntries).hasSize(2);
-        assertThat(buildLogEntries.getFirst().getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
-        assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
+        var orderedBuildLogEntries = List.copyOf(buildLogEntries);
+        assertThat(orderedBuildLogEntries.getFirst().getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
+        assertThat(orderedBuildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {

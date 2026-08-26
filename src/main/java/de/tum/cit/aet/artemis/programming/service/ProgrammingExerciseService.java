@@ -7,7 +7,7 @@ import static de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingE
 import static de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository.TemplateParticipationFetchOptions;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -216,7 +216,7 @@ public class ProgrammingExerciseService {
             // views so the method keeps its feedback promise (explicit exercise context, the result graph is detached)
             latestResultForLatestSubmissionOfTemplate
                     .ifPresent(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExerciseWithTemplate, false));
-            List<Result> resultsForLatestSubmissionTemplate = new ArrayList<>();
+            Set<Result> resultsForLatestSubmissionTemplate = new HashSet<>();
             latestResultForLatestSubmissionOfTemplate.ifPresent(resultsForLatestSubmissionTemplate::add);
             programmingExerciseWithTemplate.getTemplateParticipation().getSubmissions().iterator().next().setResults(resultsForLatestSubmissionTemplate);
         }
@@ -228,7 +228,7 @@ public class ProgrammingExerciseService {
                     .findLatestResultWithFeedbacksForSubmission(solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().getId());
             latestResultForLatestSubmissionOfSolution
                     .ifPresent(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExerciseWithTemplate, true));
-            List<Result> resultsForLatestSubmissionSolution = new ArrayList<>();
+            Set<Result> resultsForLatestSubmissionSolution = new HashSet<>();
             latestResultForLatestSubmissionOfSolution.ifPresent(resultsForLatestSubmissionSolution::add);
             solutionParticipationWithLatestSubmission.getSubmissions().iterator().next().setResults(resultsForLatestSubmissionSolution);
         }
@@ -297,7 +297,7 @@ public class ProgrammingExerciseService {
             Submission submission = submissions.iterator().next();
             Result res = latestResultsForSolutionSubmissions.get(submission.getId());
             if (res != null) {
-                submission.setResults(List.of(res));
+                submission.setResults(Set.of(res));
             }
         }
     }

@@ -354,16 +354,17 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.hideDetails(programmingSubmission, user);
 
         // remove automatic results before sending to client
-        var manualResults = programmingSubmission.getManualResults();
-        if (correctionRound >= manualResults.size()) {
-            programmingSubmission.setResults(List.of());
+        // The result of the requested correction round, which used to be read off the position of the result inside the
+        // submission's result list and is now stored on the result itself.
+        var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
+        if (resultForCorrectionRound == null) {
+            programmingSubmission.setResults(Set.of());
         }
         else {
-            Result manualResult = manualResults.get(correctionRound);
             // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
             // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
-            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(manualResult, programmingExercise, false);
-            programmingSubmission.setResults(List.of(manualResult));
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForCorrectionRound, programmingExercise, false);
+            programmingSubmission.setResults(Set.of(resultForCorrectionRound));
         }
 
         return ResponseEntity.ok(programmingSubmission);

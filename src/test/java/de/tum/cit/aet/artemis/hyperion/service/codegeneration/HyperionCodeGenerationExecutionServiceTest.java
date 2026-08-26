@@ -821,7 +821,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(mockSubmission.getId()).thenReturn(42L);
         // extractBuildLogs re-loads the submission with an eager build-log graph (the result itself is fetched without build logs).
         ProgrammingSubmission eagerSubmission = mock(ProgrammingSubmission.class);
-        when(eagerSubmission.getBuildLogEntries()).thenReturn(logEntries);
+        when(eagerSubmission.getBuildLogEntries()).thenReturn(new java.util.LinkedHashSet<>(logEntries));
         when(programmingSubmissionRepository.findWithEagerBuildLogEntriesById(42L)).thenReturn(Optional.of(eagerSubmission));
         when(logEntry1.getLog()).thenReturn("Error in line 1");
         when(logEntry2.getLog()).thenReturn("Error in line 2");
@@ -857,7 +857,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         // Production re-fetches build logs via the eager query, not the lazy getter; stub that path so the real logs (not the fallback) are asserted.
         when(submission.getId()).thenReturn(7L);
         when(programmingSubmissionRepository.findWithEagerBuildLogEntriesById(7L)).thenReturn(Optional.of(submission));
-        when(submission.getBuildLogEntries()).thenReturn(List.of(logEntry));
+        when(submission.getBuildLogEntries()).thenReturn(java.util.Set.of(logEntry));
         when(logEntry.getLog()).thenReturn("javac: cannot find symbol Sort");
 
         String summary = ReflectionTestUtils.invokeMethod(service, "extractBuildFeedback", result);

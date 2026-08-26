@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -192,8 +193,7 @@ public class SubmissionService {
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toCollection(ArrayList::new));
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
@@ -371,7 +371,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.setResults(new ArrayList<>());
+                    submission.setResults(new HashSet<>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -671,6 +671,10 @@ public class SubmissionService {
             result.setAssessor(userRepository.getUser());
         }
 
+        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
+        // for a correction round is created or claimed, so it is also where a result that predates the column gets its
+        // round the first time a tutor opens it.
+        result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();
