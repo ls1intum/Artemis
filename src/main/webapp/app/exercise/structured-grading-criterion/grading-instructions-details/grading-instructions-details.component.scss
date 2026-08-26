@@ -29,6 +29,8 @@
 }
 
 .sqi-criterion {
+    /* Collapse 2-up level cards from criterion width, not viewport — split panes stay usable. */
+    container-type: inline-size;
     position: relative;
     overflow: hidden;
     border: 1px solid var(--border-color);
@@ -89,13 +91,15 @@
         grid-template-columns: minmax(0, 1fr);
         gap: 0.75rem;
 
-        @media (min-width: 768px) {
+        /* ~2×(~28rem card + gap) before 2-up; below that one level per row. */
+        @container (min-width: 58rem) {
             grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 }
 
 .sqi-instruction {
+    container-type: inline-size;
     overflow-wrap: anywhere;
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
@@ -110,9 +114,13 @@
 
     &__fields-row {
         display: grid;
-        grid-template-columns: 6.25rem minmax(0, 1fr) 6.25rem 2.5rem;
+        grid-template-columns: minmax(0, 1fr);
         gap: 0.75rem;
         align-items: end;
+
+        @container (min-width: 22rem) {
+            grid-template-columns: 6.25rem minmax(0, 1fr) 6.25rem 2.5rem;
+        }
     }
 
     &__field {
@@ -133,6 +141,7 @@
         align-items: center;
         justify-content: center;
         align-self: end;
+        justify-self: end;
         border: 0;
         background: transparent;
         padding: 0;
@@ -155,7 +164,7 @@
         grid-template-columns: minmax(0, 1fr);
         gap: 1rem;
 
-        @media (min-width: 640px) {
+        @container (min-width: 26rem) {
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 0;
 
