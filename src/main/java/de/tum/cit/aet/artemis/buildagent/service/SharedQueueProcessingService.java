@@ -560,17 +560,33 @@ public class SharedQueueProcessingService {
 
             // Cross-check distributed processing jobs against local state
             // Get jobs in distributed map that are assigned to this agent (by agent name, not member address)
-            List<String> distributedJobIds = distributedDataAccessService.getProcessingJobIdsForAgentByName(buildAgentShortName);
+            List<BuildJobQueueItem> distributedJobs = distributedDataAccessService.getProcessingJobsForAgentByName(buildAgentShortName);
 
             // Find jobs in distributed map but not tracked locally (orphaned in distributed state)
-            for (String distributedJobId : distributedJobIds) {
-                if (!localRunningJobIds.contains(distributedJobId)) {
-                    log.warn("Orphaned job in distributed map: job {} is assigned to agent {} but not running locally. Removing from distributed map.", distributedJobId,
-                            buildAgentShortName);
-                    distributedDataAccessService.getDistributedProcessingJobs().remove(distributedJobId);
-                    // Update agent info to reflect accurate counts
-                    buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
+            for (BuildJobQueueItem distributedJob : distributedJobs) {
+                if (localRunningJobIds.contains(distributedJob.id())) {
+                    continue;
                 }
+                // The same grace period the container check above applies, and for a stronger reason. Claiming a job
+                // publishes it to the distributed map before executeBuildJob registers its future locally, so a job
+                // that has just been claimed is legitimately absent from localRunningJobIds for a moment - and the
+                // same holds in reverse once the future completes and before the entry is removed. Removing it in
+                // that window used to skew the running-job counts; since a build agent's clone is authorized against
+                // this very map it now fails the build outright, with a 401 on the repository the job was cloning.
+                //
+                // Bounded, not disabled: a job whose agent really did disappear mid-claim is still removed once it is
+                // older than the grace period, which is the case this cross-check exists for.
+                ZonedDateTime claimedAt = distributedJob.jobTimingInfo() != null ? distributedJob.jobTimingInfo().buildStartDate() : null;
+                if (claimedAt == null || Duration.between(claimedAt, ZonedDateTime.now()).getSeconds() < STALE_DETECTION_MIN_JOB_AGE_SECONDS) {
+                    log.debug("Job {} is assigned to agent {} but not running locally yet, which is normal while it is being claimed or finishing. Leaving it in place.",
+                            distributedJob.id(), buildAgentShortName);
+                    continue;
+                }
+                log.warn("Orphaned job in distributed map: job {} is assigned to agent {} but not running locally. Removing from distributed map.", distributedJob.id(),
+                        buildAgentShortName);
+                distributedDataAccessService.getDistributedProcessingJobs().remove(distributedJob.id());
+                // Update agent info to reflect accurate counts
+                buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get());
             }
         }
         catch (Exception e) {
@@ -785,9 +801,11 @@ public class SharedQueueProcessingService {
                 JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now(),
                         buildJob.jobTimingInfo().estimatedCompletionDate(), buildJob.jobTimingInfo().estimatedDuration());
 
+                // No clone token: the job is finished, so it leaves the processing list and the token stops being
+                // accepted. This item travels on to the result queue and the finished build job records.
                 BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgent(), buildJob.participationId(), buildJob.courseId(),
                         buildJob.exerciseId(), buildJob.retryCount(), buildJob.priority(), BuildStatus.SUCCESSFUL, buildJob.repositoryInfo(), jobTimingInfo, buildJob.buildConfig(),
-                        null);
+                        null, null);
 
                 List<BuildLogDTO> buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
                 buildLogsMap.removeBuildLogs(buildJob.id());

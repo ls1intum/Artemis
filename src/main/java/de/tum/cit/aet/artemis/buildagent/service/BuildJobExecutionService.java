@@ -151,6 +151,20 @@ public class BuildJobExecutionService {
      * @return the parsed LocalCI result
      */
     public BuildResult runBuildJob(BuildJobQueueItem buildJob) {
+        // Bind this job's clone token to the executing thread for the whole job. Every git operation below reaches
+        // the credential through BuildJobGitService, including the ones inherited from AbstractGitService that carry
+        // no build job context. The finally is essential: executor threads are reused, and a token left behind would
+        // be presented for the next job, whose repositories it does not cover.
+        buildJobGitService.setCloneTokenForCurrentThread(buildJob.cloneToken());
+        try {
+            return runBuildJobWithBoundCloneToken(buildJob);
+        }
+        finally {
+            buildJobGitService.clearCloneTokenForCurrentThread();
+        }
+    }
+
+    private BuildResult runBuildJobWithBoundCloneToken(BuildJobQueueItem buildJob) {
         long timeNanoStart = System.nanoTime();
         String startMessage = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJob.id() + " using " + buildJobRunner.type().displayName() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), startMessage);
