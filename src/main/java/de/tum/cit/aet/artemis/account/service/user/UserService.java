@@ -44,6 +44,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
@@ -109,6 +111,8 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
     private final FileService fileService;
 
     private final Optional<ScienceEventApi> scienceEventApi;
@@ -129,14 +133,18 @@ public class UserService {
 
     private final GlobalNotificationSettingService globalNotificationSettingService;
 
+    private final UserActivityService userActivityService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, AuthorityService authorityService,
             AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService, PasswordService passwordService,
             InstanceMessageSendService instanceMessageSendService, FileService fileService, Optional<ScienceEventApi> scienceEventApi,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi, SavedPostRepository savedPostRepository,
             AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
             CourseNotificationSettingService courseNotificationSettingService, UserCourseNotificationStatusService userCourseNotificationStatusService,
-            GlobalNotificationSettingService globalNotificationSettingService) {
+            GlobalNotificationSettingService globalNotificationSettingService, UserRecoveryKeyService userRecoveryKeyService, UserActivityService userActivityService) {
         this.userCreationService = userCreationService;
+        this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userActivityService = userActivityService;
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.authorityService = authorityService;
@@ -209,10 +217,21 @@ public class UserService {
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
-            internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+            // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
+            // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
+            // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
+            boolean internalAdminPasswordChanged = internalAdmin.getPassword() == null || !passwordService.checkPasswordMatch(internalAdminPassword, internalAdmin.getPassword());
+            if (internalAdminPasswordChanged) {
+                internalAdmin.setPassword(passwordService.hashPassword(internalAdminPassword));
+            }
             // needs to be mutable --> new HashSet<>(Set.of(...))
             internalAdmin.setAuthorities(new HashSet<>(Set.of(SUPER_ADMIN_AUTHORITY, new Authority(STUDENT.getAuthority()))));
-            saveUser(internalAdmin);
+            User savedInternalAdmin = saveUser(internalAdmin);
+            // Stamped after the save, and from what the save returned: the timestamp is keyed on the id, and reading it
+            // back off the argument would depend on whether the save persisted or merged.
+            if (internalAdminPasswordChanged) {
+                userActivityService.recordCredentialsChanged(savedInternalAdmin.getId(), Instant.now());
+            }
         }
         else {
             log.info("Create internal admin user {}", internalAdminUsername);
@@ -251,7 +270,7 @@ public class UserService {
      */
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
-        return userRepository.findOneByActivationKey(key).map(user -> {
+        return userRecoveryKeyService.findUserIdByActivationKey(key).flatMap(userRepository::findById).map(user -> {
             activateUser(user);
             return user;
         });
@@ -279,20 +298,22 @@ public class UserService {
      */
     public Optional<User> completePasswordReset(String newPassword, String key, CredentialRevocationChoiceDTO revocationChoice) {
         log.debug("Reset user password for reset key {}", key);
-        return userRepository.findOneByResetKey(key).filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400))).map(user -> {
-            user.setPassword(passwordService.hashPassword(newPassword));
-            user.setResetKey(null);
-            user.setResetDate(null);
-            saveUser(user);
-            // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
-            // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
-            // exactly as they do when changing a password from inside the account - with the difference that a reset
-            // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
-            // only proves control of the mailbox.
-            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
-            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
-            return user;
-        });
+        return userRecoveryKeyService.findByResetKey(key).filter(row -> row.getResetDate() != null && row.getResetDate().isAfter(Instant.now().minusSeconds(86400)))
+                .flatMap(row -> userRepository.findById(row.getUserId())).map(user -> {
+                    user.setPassword(passwordService.hashPassword(newPassword));
+                    userRecoveryKeyService.clearResetKey(user.getId());
+                    saveUser(user);
+                    // Stops sessions established before the reset from being extended any further.
+                    userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+                    // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
+                    // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
+                    // exactly as they do when changing a password from inside the account - with the difference that a reset
+                    // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
+                    // only proves control of the mailbox.
+                    accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
+                    accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
+                    return user;
+                });
     }
 
     /**
@@ -314,9 +335,7 @@ public class UserService {
      */
     public boolean prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            user.setResetKey(RandomUtil.generateResetKey());
-            user.setResetDate(Instant.now());
-            saveUser(user);
+            userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
             return true;
         }
         return false;
@@ -349,7 +368,7 @@ public class UserService {
         // registered users are always internal
         newUser.setInternal(true);
         // new user gets registration key
-        newUser.setActivationKey(RandomUtil.generateActivationKey());
+        // The key is stored after the user is saved, since it is keyed on the user id.
         Set<Authority> authorities = new HashSet<>();
         authorityRepository.findById(STUDENT.getAuthority()).ifPresent(authorities::add);
         newUser.setAuthorities(authorities);
@@ -378,6 +397,7 @@ public class UserService {
 
         // we need to save first so that the user can be found in the database in the subsequent method
         User savedNonActivatedUser = saveUser(newUser);
+        userRecoveryKeyService.storeActivationKey(savedNonActivatedUser.getId(), RandomUtil.generateActivationKey());
 
         // Automatically remove the user if it wasn't activated after a certain amount of time.
         instanceMessageSendService.sendRemoveNonActivatedUserSchedule(savedNonActivatedUser.getId());
@@ -505,6 +525,8 @@ public class UserService {
             // Covers the participation and repository tokens and the SSH keys this method used to delete individually,
             // and additionally the passkeys and the personal VCS access token, which it did not.
             accountCredentialRevocationService.revokeAllCredentials(user, "user soft deleted");
+            // A reset or activation mail sent before the deletion must not remain a way into the anonymised account.
+            userRecoveryKeyService.clearAll(user.getId());
             learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
             globalNotificationSettingService.deleteAllByUserId(user.getId());
             userCourseRoleRepository.deleteByUser_Id(user.getId());
@@ -585,6 +607,7 @@ public class UserService {
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
             saveUser(user);
+            userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
             // What else is revoked is the user's decision: only they know whether the old password may have been seen by
             // someone else, and that is what decides whether losing their enrolled authenticators and keys is warranted.
             accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password changed");

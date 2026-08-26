@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,6 +14,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
+import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -29,6 +31,9 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private AtlasOrchestratorProperties orchestratorProperties;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -116,5 +121,35 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
         request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", examExercise.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnprocessableEntity()).andExpect(jsonPath("$.status").value("FAILED")).andExpect(jsonPath("$.failureReason").value("UNSUPPORTED_EXERCISE"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getDefaults_instructor_returnsDefaultsFromProperties() throws Exception {
+        // @EnforceAtLeastInstructor is a global role gate (not course-scoped), so the configured
+        // server-side defaults are returned verbatim. Asserting against the autowired properties
+        // keeps the test robust if the configured values change.
+        request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.debounceWindowSeconds").value(orchestratorProperties.debounceWindowSeconds()))
+                .andExpect(jsonPath("$.maxDailyOrchestrations").value(orchestratorProperties.maxDailyOrchestrations()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDefaults_student_returnsForbidden() throws Exception {
+        request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getDefaults_atlasAgentFeatureDisabled_returnsForbidden() throws Exception {
+        featureToggleService.disableFeature(Feature.AtlasAgent);
+        request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void getDefaults_anonymous_returnsUnauthorized() throws Exception {
+        request.performMvcRequest(get("/api/atlas/orchestrator/defaults")).andExpect(status().isUnauthorized());
     }
 }
