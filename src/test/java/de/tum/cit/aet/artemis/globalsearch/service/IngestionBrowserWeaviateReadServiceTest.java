@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentPresenceDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import io.weaviate.client6.v1.api.WeaviateClient;
@@ -33,8 +32,8 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
  * <p>
  * Seeds the {@code SearchableEntities} metadata collection and the four Iris content collections directly, then asserts
  * that the browser reads return the stored rows scoped to one course with their populated property maps, that posts and
- * answer posts are excluded, that content presence is the exact distinct unit set per collection, and that reading one
- * unit's objects is scoped to that unit and that collection.
+ * answer posts are excluded, and that reading one unit's objects is scoped to that unit and that
+ * collection.
  * <p>
  * Weaviate indexing is asynchronous, so reads are wrapped in {@link org.awaitility.Awaitility} polls.
  */
@@ -59,6 +58,7 @@ class IngestionBrowserWeaviateReadServiceTest extends AbstractProgrammingIntegra
 
     private static final long UNIT_WITH_CONTENT = 10L;
 
+    /** A second unit, so a per-unit read can be shown not to return it. */
     private static final long UNIT_WITH_ONE_CHUNK = 11L;
 
     private static final String CONTENT_COURSE_ID = "course_id";
@@ -110,7 +110,7 @@ class IngestionBrowserWeaviateReadServiceTest extends AbstractProgrammingIntegra
     }
 
     @Test
-    void storedEntityCarriesItsPopulatedPropertiesAndIngestionTime() throws Exception {
+    void storedEntityCarriesItsTitleAndIngestionTime() throws Exception {
         Instant before = Instant.now().minus(5, ChronoUnit.MINUTES);
         insertMetadata(COURSE_A, SearchableEntitySchema.TypeValues.LECTURE, 20L, "Week 1");
 
@@ -120,39 +120,9 @@ class IngestionBrowserWeaviateReadServiceTest extends AbstractProgrammingIntegra
             IndexedEntityDTO lecture = entities.getFirst();
 
             assertThat(lecture.ingestedAt()).isNotNull().isAfter(before);
-            assertThat(lecture.properties()).containsEntry(SearchableEntitySchema.Properties.TITLE, "Week 1").containsKey(SearchableEntitySchema.Properties.COURSE_ID)
-                    .containsKey(SearchableEntitySchema.Properties.ENTITY_ID);
-            // The schema is a wide sparse superset; the rows the browser renders carry only what is actually set.
-            assertThat(lecture.properties()).doesNotContainKey(SearchableEntitySchema.Properties.DIFFICULTY)
-                    .doesNotContainKey(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE);
-            assertThat(lecture.properties().values()).doesNotContainNull();
-        });
-    }
-
-    @Test
-    void readsExactContentPresencePerCollection() throws Exception {
-        for (String collection : IRIS_CONTENT_COLLECTIONS) {
-            // Two objects for one unit, one for another: presence is the DISTINCT unit set, not the object count.
-            insertContent(collection, COURSE_A, UNIT_WITH_CONTENT, 1);
-            insertContent(collection, COURSE_A, UNIT_WITH_CONTENT, 2);
-            insertContent(collection, COURSE_A, UNIT_WITH_ONE_CHUNK, 1);
-        }
-
-        await().atMost(TIMEOUT).untilAsserted(() -> {
-            List<IndexedContentPresenceDTO> presence = browserReadService.listContentPresenceForCourse(COURSE_A);
-
-            assertThat(presence).extracting(IndexedContentPresenceDTO::key).containsExactly("slides", "transcript", "unit_summary", "segments");
-            assertThat(presence).allSatisfy(entry -> assertThat(entry.unitIds()).containsExactlyInAnyOrder(UNIT_WITH_CONTENT, UNIT_WITH_ONE_CHUNK));
-        });
-    }
-
-    @Test
-    void contentPresenceOmitsCollectionsWithNothingForTheCourse() throws Exception {
-        insertContent(IngestionCoverageWeaviateReadService.LECTURES_COLLECTION, COURSE_A, UNIT_WITH_CONTENT, 1);
-
-        await().atMost(TIMEOUT).untilAsserted(() -> {
-            List<IndexedContentPresenceDTO> presence = browserReadService.listContentPresenceForCourse(COURSE_A);
-            assertThat(presence).extracting(IndexedContentPresenceDTO::key).containsExactly("slides");
+            assertThat(lecture.title()).isEqualTo("Week 1");
+            // A lecture has no parent lecture; the field is only set on units.
+            assertThat(lecture.lectureId()).isNull();
         });
     }
 

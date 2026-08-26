@@ -131,7 +131,7 @@ export class CourseIngestionBrowserTreeComponent {
             if (entity.type !== 'lecture_unit') {
                 continue;
             }
-            const lectureId = asNumber(entity.properties['lecture_id']);
+            const lectureId = entity.lectureId;
             if (lectureId === undefined) {
                 continue;
             }
@@ -247,9 +247,4 @@ export class CourseIngestionBrowserTreeComponent {
     protected typeSelection(type: string): BrowserSelection {
         return { kind: 'type', type };
     }
-}
-
-/** Weaviate returns numeric properties as numbers, but a stored row can carry anything; anything else is unusable here. */
-function asNumber(value: unknown): number | undefined {
-    return typeof value === 'number' ? value : undefined;
 }

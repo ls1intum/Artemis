@@ -32,7 +32,7 @@ describe('CourseIngestionBrowserComponent', () => {
     };
 
     const browserData: CourseBrowserData = {
-        entities: [{ type: 'lecture', entityId: 20, title: 'Week 1', ingestedAt: '2026-08-26T09:00:00Z', properties: { title: 'Week 1' } }],
+        entities: [{ type: 'lecture', entityId: 20, title: 'Week 1', ingestedAt: '2026-08-26T09:00:00Z' }],
         contentPresence: [{ key: 'slides', unitIds: [10, 11] }],
         missingEntities: [{ type: 'exercise', entityId: 5, title: 'Sorting' }],
         contentGaps: [{ lectureUnitId: 11, title: 'Video unit', kind: 'transcript' }],

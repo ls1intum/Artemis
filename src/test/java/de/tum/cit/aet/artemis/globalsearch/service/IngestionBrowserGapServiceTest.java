@@ -43,7 +43,10 @@ import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
 
 /**
- * Integration test for {@link IngestionBrowserGapService} against a real Weaviate Testcontainer and database.
+ * Integration test for the browser's gap lists against a real Weaviate Testcontainer and database.
+ * <p>
+ * Driven through {@link IngestionBrowserService}, which is how the endpoint reaches them, so the id-sets are loaded the
+ * same once-per-open way here as in production.
  * <p>
  * Seeds a course whose database entities are only partially indexed, then asserts the browser names exactly what is
  * absent, resolves each gap to its title, and reports nothing for a type that is fully indexed. The decisive assertion is
@@ -55,7 +58,7 @@ import io.weaviate.client6.v1.api.collections.VectorConfig;
 class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     @Autowired
-    private IngestionBrowserGapService gapService;
+    private IngestionBrowserService browserService;
 
     @Autowired
     private CoverageRecomputeService coverageRecomputeService;
@@ -142,7 +145,7 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
     @Test
     void namesTheEntitiesTheIndexDoesNotHold() {
         await().atMost(TIMEOUT).untilAsserted(() -> {
-            List<MissingEntityDTO> missing = gapService.missingEntitiesForCourse(course.getId());
+            List<MissingEntityDTO> missing = browserService.loadCourseBrowserData(course.getId()).missingEntities();
 
             assertThat(missing).extracting(MissingEntityDTO::type, MissingEntityDTO::entityId, MissingEntityDTO::title)
                     .contains(tuple(SearchableEntitySchema.TypeValues.EXERCISE, missingExercise.getId(), missingExercise.getTitle()));
@@ -157,7 +160,7 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
     @Test
     void namedGapsMatchTheMatrixCountsForTheSameCourse() {
         await().atMost(TIMEOUT).untilAsserted(() -> {
-            List<MissingEntityDTO> missing = gapService.missingEntitiesForCourse(course.getId());
+            List<MissingEntityDTO> missing = browserService.loadCourseBrowserData(course.getId()).missingEntities();
             IngestionCoverageDTO coverage = coverageRecomputeService.computeCoverageLive(List.of(course)).getFirst();
 
             for (IngestionTypeCountDTO typeCount : coverage.typeCounts()) {
@@ -172,7 +175,7 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
     @Test
     void namesTheUnitsWhoseContentWasNeverIngested() {
         await().atMost(TIMEOUT).untilAsserted(() -> {
-            List<MissingContentDTO> gaps = gapService.contentGapsForCourse(course.getId());
+            List<MissingContentDTO> gaps = browserService.loadCourseBrowserData(course.getId()).contentGaps();
 
             // The video unit has no transcript; the PDF unit has slides, so it must not appear.
             assertThat(gaps).extracting(MissingContentDTO::lectureUnitId, MissingContentDTO::kind, MissingContentDTO::title)
@@ -184,7 +187,7 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
     void reportsNoGapsOnceTheMissingContentIsIndexed() throws Exception {
         insertContent(LECTURE_TRANSCRIPTIONS_COLLECTION, course.getId(), videoUnit.getId());
 
-        await().atMost(TIMEOUT).untilAsserted(() -> assertThat(gapService.contentGapsForCourse(course.getId())).isEmpty());
+        await().atMost(TIMEOUT).untilAsserted(() -> assertThat(browserService.loadCourseBrowserData(course.getId()).contentGaps()).isEmpty());
     }
 
     /** The metadata types the browser enumerates; the content and summary types are not entity types. */

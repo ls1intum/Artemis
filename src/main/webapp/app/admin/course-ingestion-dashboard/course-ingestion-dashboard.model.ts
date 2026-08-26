@@ -81,8 +81,9 @@ export interface IngestionCoverage {
 }
 
 /**
- * One object stored in the `SearchableEntities` collection for a course. `properties` is the row as Weaviate holds it,
- * minus the fields it has no value for, because the schema is a wide sparse superset shared by every entity type.
+ * One row stored in the `SearchableEntities` collection for a course, reduced to what the tree needs to place it. The
+ * full stored record is read for a single entity when one is selected, because the property map carries the course's
+ * body text and returning it per row made opening a course ship all of it.
  */
 export interface IndexedEntity {
     /** The indexed entity type (e.g. `lecture`, `lecture_unit`). */
@@ -91,10 +92,10 @@ export interface IndexedEntity {
     entityId: number;
     /** The stored title, absent if the row has none. */
     title?: string;
+    /** The parent lecture, set on lecture units; the tree nests units by it. */
+    lectureId?: number;
     /** When Weaviate created the object (ISO string), absent if it could not be read. */
     ingestedAt?: string;
-    /** The populated stored properties. */
-    properties: Record<string, unknown>;
 }
 
 /**
