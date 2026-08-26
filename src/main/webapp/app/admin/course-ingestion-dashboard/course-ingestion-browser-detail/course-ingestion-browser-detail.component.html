@@ -116,7 +116,10 @@
                         <div class="text-base font-semibold mb-2">
                             {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledLecture' | artemisTranslate) }}
                         </div>
-                        <p class="text-sm text-muted-color m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaLecture"></p>
+                        <div class="mb-2 text-xs text-muted-color">
+                            <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedIn"></span>
+                            <span class="font-mono">SearchableEntities</span>
+                        </div>
                         @if (selectedRecord(); as record) {
                             <jhi-course-ingestion-stored-fields [properties]="record.properties" />
                         } @else {
@@ -131,7 +134,10 @@
                             {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledUnit' | artemisTranslate) }}
                         </div>
 
-                        <p class="text-sm text-muted-color m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaUnit"></p>
+                        <div class="mb-2 text-xs text-muted-color">
+                            <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedIn"></span>
+                            <span class="font-mono">SearchableEntities</span>
+                        </div>
                         @if (selectedRecord(); as record) {
                             <jhi-course-ingestion-stored-fields [properties]="record.properties" />
                         } @else {

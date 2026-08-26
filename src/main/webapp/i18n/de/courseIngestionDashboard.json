@@ -113,9 +113,8 @@
                 "statExpected": "Erwartet",
                 "statMissing": "Fehlend",
                 "breadcrumb": "Navigationspfad",
-                "metaLecture": "Der für diese Vorlesung in der SearchableEntities-Sammlung gespeicherte Datensatz.",
-                "metaUnit": "Der für diese Einheit in der SearchableEntities-Sammlung gespeicherte Datensatz.",
-                "unitCount": "{{count}} Lerneinheiten"
+                "unitCount": "{{count}} Lerneinheiten",
+                "storedIn": "Gespeichert in"
             },
             "status": {
                 "COMPLETE": "Vollständig",
