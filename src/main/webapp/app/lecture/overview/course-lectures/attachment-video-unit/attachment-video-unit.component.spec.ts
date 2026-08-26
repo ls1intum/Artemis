@@ -1084,22 +1084,14 @@ describe('AttachmentVideoUnitComponent', () => {
         });
     });
     describe('Deep linking', () => {
-        const fakePdfViewer = () => ({ getCurrentPage: vi.fn().mockReturnValue(1), goToPage: vi.fn() });
+        let pdfViewer: { getCurrentPage: ReturnType<typeof vi.fn>; goToPage: ReturnType<typeof vi.fn> };
 
-        it('moves the slides of an already open unit to the requested page', () => {
-            const pdfViewer = fakePdfViewer();
+        beforeEach(() => {
+            pdfViewer = { getCurrentPage: vi.fn().mockReturnValue(1), goToPage: vi.fn() };
             (component as any).pdfViewer = () => pdfViewer;
-
-            deepLinkTo(1, { page: 3 });
-            fixture.detectChanges();
-
-            expect(pdfViewer.goToPage).toHaveBeenCalledWith(3);
         });
 
         it('executes the same jump again, so a repeated citation click is not swallowed', () => {
-            const pdfViewer = fakePdfViewer();
-            (component as any).pdfViewer = () => pdfViewer;
-
             deepLinkTo(1, { page: 3 });
             fixture.detectChanges();
             deepLinkTo(1, { page: 3 });
@@ -1110,9 +1102,6 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('ignores a jump addressed to another unit', () => {
-            const pdfViewer = fakePdfViewer();
-            (component as any).pdfViewer = () => pdfViewer;
-
             deepLinkTo(99, { page: 3 });
             fixture.detectChanges();
 
@@ -1122,9 +1111,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
         it('seeks the video without starting playback and lets the requested page win over synchronization', () => {
             const videoPlayer = { seekTo: vi.fn() };
-            const pdfViewer = fakePdfViewer();
             (component as any).videoPlayer = () => videoPlayer;
-            (component as any).pdfViewer = () => pdfViewer;
 
             component['applyDeepLink']({ unitId: 1, timestamp: 30, page: 4 });
 
@@ -1135,8 +1122,7 @@ describe('AttachmentVideoUnitComponent', () => {
         });
 
         it('leaves slides that already show the requested page untouched', () => {
-            const pdfViewer = { getCurrentPage: vi.fn().mockReturnValue(3), goToPage: vi.fn() };
-            (component as any).pdfViewer = () => pdfViewer;
+            pdfViewer.getCurrentPage.mockReturnValue(3);
 
             component['applyDeepLink']({ unitId: 1, page: 3 });
 

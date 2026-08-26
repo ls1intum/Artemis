@@ -580,14 +580,13 @@ describe('CourseLectureDetailsComponent', () => {
     describe('deep-link query params', () => {
         const videoSource = 'https://example.com/video.mp4';
 
-        const attachmentUnit = (id: number, attachment: { link?: string; studentVersion?: string }, video?: string): AttachmentVideoUnit => {
+        const attachmentUnit = (id: number, link = '/path/to/slides.pdf', video = videoSource): AttachmentVideoUnit => {
             const unit = new AttachmentVideoUnit();
             unit.id = id;
             unit.videoSource = video;
             unit.lecture = lecture;
             unit.attachment = new Attachment();
-            unit.attachment.link = attachment.link;
-            unit.attachment.studentVersion = attachment.studentVersion;
+            unit.attachment.link = link;
             return unit;
         };
 
@@ -615,96 +614,69 @@ describe('CourseLectureDetailsComponent', () => {
                 activatedRoute.snapshot.params = { lectureId };
             }
             (activatedRoute as unknown as { queryParams: unknown }).queryParams = of(queryParams);
-            // The router keeps the snapshot in step with the observable; the clearing reads the parameters from there.
             activatedRoute.snapshot.queryParams = queryParams as Params;
             courseLecturesDetailsComponent.ngOnInit();
         };
 
         it.each([
+            { name: 'keeps every target', params: { unit: '7', timestamp: '30', page: '4' }, expected: { unitId: 7, timestamp: 30, page: 4 } },
             {
-                name: 'keeps every target a unit with a video and a PDF can honour',
-                unit: () => attachmentUnit(7, { link: '/path/to/slides.pdf' }, videoSource),
-                params: { unit: '7', timestamp: '30', page: '4' },
-                expected: { unitId: 7, timestamp: 30, page: 4 },
-            },
-            {
-                name: 'drops a negative timestamp and a page below one, keeping the unit',
-                unit: () => attachmentUnit(7, { link: '/path/to/slides.pdf' }, videoSource),
+                name: 'drops a negative timestamp and a page below one',
                 params: { unit: '7', timestamp: '-5', page: '0' },
                 expected: { unitId: 7, timestamp: undefined, page: undefined },
             },
-            {
-                // A target the unit cannot honour reaches nothing: the players and the viewer are only rendered when
-                // the unit has a video or a PDF, so the details page does not have to judge that a second time.
-                name: 'passes a target on even when the unit cannot honour it',
-                unit: () => attachmentUnit(7, { link: '/path/to/slides.zip' }),
-                params: { unit: '7', timestamp: '30', page: '4' },
-                expected: { unitId: 7, timestamp: 30, page: 4 },
-            },
-        ])('should read the deep link from the query params and $name', ({ unit, params, expected }) => {
-            respondWith([unit()]);
+        ])('should read the deep link from the query params and $name', ({ params, expected }) => {
+            respondWith([attachmentUnit(7)]);
 
             reInit(params);
 
             expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining(expected));
         });
 
+        it('should pass a target on even when the unit cannot honour it', () => {
+            // Players and viewer only render when the unit has a video or a PDF, so this page need not judge it twice.
+            respondWith([attachmentUnit(7, '/path/to/slides.zip', undefined)]);
+
+            reInit({ unit: '7', timestamp: '30', page: '4' });
+
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, timestamp: 30, page: 4 }));
+        });
+
         it('should keep the previous deep link when the unit param is not a positive integer', () => {
-            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' })]);
+            respondWith([attachmentUnit(7)]);
             reInit({ unit: '7', page: '4' });
             const executed = courseLecturesDetailsComponent.deepLink();
 
             reInit({ unit: 'not-a-number' });
 
-            // Nothing to execute: parameters without a unit are also what clearing them leaves behind.
             expect(courseLecturesDetailsComponent.deepLink()).toBe(executed);
         });
 
-        it('should give a repeated jump to the same place a new identity, so it is executed again', () => {
-            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' }, videoSource)]);
+        it.each([
+            { name: 'from the URL', jump: () => reInit({ unit: '7', timestamp: '30', page: '4' }) },
+            { name: 'handed over by the service', jump: () => deepLinkRequests.next({ unitId: 7, timestamp: 30, page: 4 }) },
+        ])('should give a repeated jump $name a new identity, so it is executed again', ({ jump }) => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
 
-            reInit({ unit: '7', timestamp: '30', page: '4' });
+            jump();
             const first = courseLecturesDetailsComponent.deepLink();
-            reInit({ unit: '7', timestamp: '30', page: '4' });
+            jump();
             const second = courseLecturesDetailsComponent.deepLink();
 
             // The same place, but a different object: the reference is what marks it as a request of its own.
+            expect(first).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
             expect(second).not.toBe(first);
             expect(second).toEqual(first);
         });
 
-        it('should execute a jump handed over by the service, which never touches the URL', () => {
-            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' }, videoSource)]);
-            reInit();
-            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
-
-            deepLinkRequests.next({ unitId: 7, page: 4 });
-
-            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
-        });
-
-        it('should execute every jump the service hands over, so a repeated one jumps again', () => {
-            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' }, videoSource)]);
-            reInit();
-
-            deepLinkRequests.next({ unitId: 7, page: 4 });
-            const first = courseLecturesDetailsComponent.deepLink();
-            deepLinkRequests.next({ unitId: 7, page: 4 });
-
-            // The same place, but a request of its own, so the card is told to jump a second time.
-            expect(courseLecturesDetailsComponent.deepLink()).not.toBe(first);
-        });
-
         it('should hold a jump back until the lecture it points at is loaded, across the switch to it', () => {
-            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' })]);
+            respondWith([attachmentUnit(7)]);
             reInit({ unit: '7', page: '4' });
 
             // The link for the next lecture arrives while this component still shows the previous one.
-            const deliver = respondLater([attachmentUnit(9, { link: '/path/to/deck.pdf' })], 2);
+            const deliver = respondLater([attachmentUnit(9)], 2);
             reInit({ unit: '9', page: '2' }, '2');
-
-            // Only the units of the lecture the link points at may decide what it can target, and the jump into the
-            // lecture being left is gone.
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
 
             deliver();
@@ -714,26 +686,24 @@ describe('CourseLectureDetailsComponent', () => {
 
         it('should not execute a waiting jump against a lecture it did not arrive for', () => {
             // The link comes in for lecture 2, whose load never answers.
-            respondLater([attachmentUnit(7, { link: '/path/to/slides.pdf' })], 2);
+            respondLater([attachmentUnit(7)], 2);
             reInit({ unit: '7', page: '4' }, '2');
-            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
 
             // Lecture 3 is opened instead and does load, carrying a unit with the very id the waiting link names.
-            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' })], 3);
+            respondWith([attachmentUnit(7)], 3);
             reInit({}, '3');
 
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
         });
 
         it('should forget an executed jump when another lecture is opened', () => {
-            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' })]);
+            respondWith([attachmentUnit(7)]);
             reInit({ unit: '7', page: '4' });
             expect(courseLecturesDetailsComponent.deepLink()).toBeDefined();
 
+            // Kept, it would jump again in every lecture opened afterwards that carries unit 7.
             reInit({}, '2');
 
-            // Kept, the request would be handed to the units of every lecture opened afterwards and jump again in any
-            // that carries unit 7 — including this lecture itself, on a plain visit later on.
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
         });
     });
