@@ -6,27 +6,19 @@
     </div>
 
     @if (presentationAssessments().length) {
-        <table
-            tumUiTable
-            size="small"
-            [striped]="true"
-            [sortField]="sortField()"
-            [sortOrder]="sortOrder()"
-            (sortChange)="onSort($event)"
-            data-testid="presentation-assessments-table"
-        >
+        <table tumUiTable size="small" [striped]="true" data-testid="presentation-assessments-table">
             <thead>
                 <tr>
-                    <th tumUiSortableColumn="title">
+                    <th>
                         <span jhiTranslate="artemisApp.presentationAssessment.title"></span>
                     </th>
-                    <th tumUiSortableColumn="maxPoints">
+                    <th>
                         <span jhiTranslate="artemisApp.presentationAssessment.maxPoints"></span>
                     </th>
-                    <th tumUiSortableColumn="resultPoints">
+                    <th>
                         <span jhiTranslate="artemisApp.presentationAssessment.resultPoints"></span>
                     </th>
-                    <th tumUiSortableColumn="presentationDate">
+                    <th>
                         <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
                     </th>
                     <th>
@@ -36,7 +28,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (presentationAssessment of sortedPresentationAssessments(); track presentationAssessment.id) {
+                @for (presentationAssessment of presentationAssessments(); track presentationAssessment.id) {
                     <tr id="presentation-assessment-{{ presentationAssessment.id }}">
                         <td>{{ presentationAssessment.title }}</td>
                         <td>{{ presentationAssessment.maxPoints }}</td>

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
@@ -19,7 +19,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { PresentationAssessmentFormDialogComponent, PresentationAssessmentFormDialogResult } from 'app/presentation/manage/presentation-assessment-form-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumUiTableDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-presentation-assessment-management',
@@ -36,7 +36,6 @@ import { TumUiButtonComponent, TumUiDialogComponent, TumUiMessageComponent, TumU
         TumUiDialogComponent,
         TumUiMessageComponent,
         TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
     ],
 })
 export class PresentationAssessmentManagementComponent implements OnInit {
@@ -56,14 +55,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly dialogVisible = signal(false);
     readonly dialogPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
     readonly dialogAssignedStudents = signal<User[]>([]);
-    readonly sortField = signal('presentationDate');
-    readonly sortOrder = signal(1);
-
-    readonly sortedPresentationAssessments = computed(() => {
-        const field = this.sortField();
-        const order = this.sortOrder();
-        return [...this.presentationAssessments()].sort((first, second) => this.compareAssessments(first, second, field) * order);
-    });
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -171,11 +162,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
         this.dialogVisible.set(true);
     }
 
-    onSort(event: TumUiTableSortEvent): void {
-        this.sortField.set(event.field);
-        this.sortOrder.set(event.order);
-    }
-
     private save(result: PresentationAssessmentFormDialogResult): void {
         if (this.isSaving()) {
             return;
@@ -209,35 +195,5 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
-    }
-
-    private compareAssessments(first: PresentationAssessment, second: PresentationAssessment, field: string): number {
-        const firstValue = this.sortValue(first, field);
-        const secondValue = this.sortValue(second, field);
-        if (firstValue === secondValue) {
-            return 0;
-        }
-        if (firstValue === undefined || firstValue === null) {
-            return 1;
-        }
-        if (secondValue === undefined || secondValue === null) {
-            return -1;
-        }
-        return firstValue < secondValue ? -1 : 1;
-    }
-
-    private sortValue(presentationAssessment: PresentationAssessment, field: string): string | number | undefined {
-        switch (field) {
-            case 'presentationDate':
-                return presentationAssessment.presentationDate?.valueOf();
-            case 'title':
-                return presentationAssessment.title?.toLowerCase();
-            case 'maxPoints':
-                return presentationAssessment.maxPoints;
-            case 'resultPoints':
-                return presentationAssessment.resultPoints;
-            default:
-                return presentationAssessment.description?.toLowerCase();
-        }
     }
 }
