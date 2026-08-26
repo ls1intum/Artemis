@@ -62,24 +62,19 @@ describe('CourseIngestionBrowserTreeComponent', () => {
     });
 
     it('should list every measured type in fixed order, including types the course has none of', () => {
-        // Exams, FAQs and channels have no counts here, but the scoreboard still lists them.
-        ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel'].forEach((type) => {
+        // Exams, FAQs, channels and the course have no counts here, but the scoreboard still lists them.
+        ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel', 'course'].forEach((type) => {
             expect(query(`tree-node-type:${type}`)).toBeTruthy();
         });
     });
 
-    it('should leave out the course row while the course itself is indexed', () => {
-        // A per-course view always describes exactly one course, so reporting it as 1/1 says nothing.
+    it('should keep the course row whether or not the course itself is indexed', () => {
         fixture.componentRef.setInput('typeCounts', [...typeCounts, { type: 'course', expected: 1, indexed: 1, missing: 0, orphaned: 0 }]);
         fixture.detectChanges();
+        expect(query('tree-node-type:course')).toBeTruthy();
 
-        expect(query('tree-node-type:course')).toBeFalsy();
-    });
-
-    it('should show the course row when the course itself is not indexed', () => {
         fixture.componentRef.setInput('typeCounts', [...typeCounts, { type: 'course', expected: 1, indexed: 0, missing: 1, orphaned: 0 }]);
         fixture.detectChanges();
-
         expect(query('tree-node-type:course')).toBeTruthy();
     });
 

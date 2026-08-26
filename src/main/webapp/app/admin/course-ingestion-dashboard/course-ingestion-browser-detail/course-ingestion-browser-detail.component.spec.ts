@@ -80,8 +80,24 @@ describe('CourseIngestionBrowserDetailComponent', () => {
 
         expect(spy).toHaveBeenCalledWith(7, 'lecture');
 
-        // A record's fields are behind its own disclosure, so nothing is shown until the row is opened.
+        // Exactly one record, so it renders open: a collapsed row would hide the only thing there is to show.
+        expect(query('detail-single-record')).toBeTruthy();
+        expect(query('stored-fields')).toBeTruthy();
+    });
+
+    it('should put each record behind its own disclosure once there is more than one', async () => {
+        vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(
+            of([
+                { type: 'lecture', entityId: 20, title: 'Week 1', properties: { title: 'Week 1' } },
+                { type: 'lecture', entityId: 21, title: 'Week 2', properties: { title: 'Week 2' } },
+            ]),
+        );
+        component.selection.set({ kind: 'type', type: 'lecture' });
+        await settle();
+
+        expect(query('detail-single-record')).toBeFalsy();
         expect(query('stored-fields')).toBeFalsy();
+
         (query('detail-record-20') as HTMLButtonElement).click();
         fixture.detectChanges();
 

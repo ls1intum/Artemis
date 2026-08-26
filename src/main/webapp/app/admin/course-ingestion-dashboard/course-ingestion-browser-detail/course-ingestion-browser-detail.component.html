@@ -56,27 +56,34 @@
                         }
 
                         <p class="text-sm font-medium m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedObjects"></p>
-                        @for (record of pagedRecords(); track record.entityId) {
-                            @let rowKey = 'record:' + record.entityId;
-                            <div class="mb-2 border border-solid rounded">
-                                <button
-                                    type="button"
-                                    class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
-                                    [attr.aria-expanded]="isExpanded(rowKey)"
-                                    (click)="toggleRow(rowKey)"
-                                    [attr.data-testid]="'detail-record-' + record.entityId"
-                                >
-                                    <fa-icon [icon]="isExpanded(rowKey) ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
-                                    <span class="flex-1 truncate">{{ record.title || '#' + record.entityId }}</span>
-                                </button>
-                                @if (isExpanded(rowKey)) {
-                                    <div class="px-2 pb-2">
-                                        <jhi-course-ingestion-stored-fields [properties]="record.properties" />
-                                    </div>
-                                }
+                        @if (records().length === 1) {
+                            <!-- One object: a collapsed row would hide the only thing there is to show. -->
+                            <div class="border border-solid rounded p-2" data-testid="detail-single-record">
+                                <jhi-course-ingestion-stored-fields [properties]="records()[0].properties" />
                             </div>
-                        } @empty {
-                            <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noObjects"></p>
+                        } @else {
+                            @for (record of pagedRecords(); track record.entityId) {
+                                @let rowKey = 'record:' + record.entityId;
+                                <div class="mb-2 border border-solid rounded">
+                                    <button
+                                        type="button"
+                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
+                                        [attr.aria-expanded]="isExpanded(rowKey)"
+                                        (click)="toggleRow(rowKey)"
+                                        [attr.data-testid]="'detail-record-' + record.entityId"
+                                    >
+                                        <fa-icon [icon]="isExpanded(rowKey) ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
+                                        <span class="flex-1 truncate">{{ record.title || '#' + record.entityId }}</span>
+                                    </button>
+                                    @if (isExpanded(rowKey)) {
+                                        <div class="px-2 pb-2">
+                                            <jhi-course-ingestion-stored-fields [properties]="record.properties" />
+                                        </div>
+                                    }
+                                </div>
+                            } @empty {
+                                <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noObjects"></p>
+                            }
                         }
                         @if (records().length > pageSize()) {
                             <tum-ui-paginator
@@ -124,27 +131,33 @@
                 @case ('collection') {
                     <div data-testid="detail-collection">
                         <div class="text-base font-semibold mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + current.key"></div>
-                        @for (entry of pagedContent(); track entry.label) {
-                            @let rowKey = 'content:' + entry.label;
-                            <div class="mb-2 border border-solid rounded">
-                                <button
-                                    type="button"
-                                    class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
-                                    [attr.aria-expanded]="isExpanded(rowKey)"
-                                    (click)="toggleRow(rowKey)"
-                                    [attr.data-testid]="'detail-content-row'"
-                                >
-                                    <fa-icon [icon]="isExpanded(rowKey) ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
-                                    <span class="flex-1 truncate">{{ entry.label }}</span>
-                                </button>
-                                @if (isExpanded(rowKey)) {
-                                    <div class="px-2 pb-2">
-                                        <jhi-course-ingestion-stored-fields [properties]="entry.object.properties" />
-                                    </div>
-                                }
+                        @if (labelledContent().length === 1) {
+                            <div class="border border-solid rounded p-2" data-testid="detail-single-content">
+                                <jhi-course-ingestion-stored-fields [properties]="labelledContent()[0].object.properties" />
                             </div>
-                        } @empty {
-                            <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noContentUnit"></p>
+                        } @else {
+                            @for (entry of pagedContent(); track entry.label) {
+                                @let rowKey = 'content:' + entry.label;
+                                <div class="mb-2 border border-solid rounded">
+                                    <button
+                                        type="button"
+                                        class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
+                                        [attr.aria-expanded]="isExpanded(rowKey)"
+                                        (click)="toggleRow(rowKey)"
+                                        [attr.data-testid]="'detail-content-row'"
+                                    >
+                                        <fa-icon [icon]="isExpanded(rowKey) ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
+                                        <span class="flex-1 truncate">{{ entry.label }}</span>
+                                    </button>
+                                    @if (isExpanded(rowKey)) {
+                                        <div class="px-2 pb-2">
+                                            <jhi-course-ingestion-stored-fields [properties]="entry.object.properties" />
+                                        </div>
+                                    }
+                                </div>
+                            } @empty {
+                                <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noContentUnit"></p>
+                            }
                         }
                         @if (labelledContent().length > pageSize()) {
                             <tum-ui-paginator

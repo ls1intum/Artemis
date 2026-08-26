@@ -21,14 +21,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { BrowserSelection, IndexedContentPresence, IndexedEntity, IngestionTypeCount, selectionKey } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /** The metadata types listed in the scoreboard, in a fixed order so the list does not reshuffle between courses. */
-const SCOREBOARD_TYPES = ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel'] as const;
-
-/**
- * The course row is not in the fixed list. A per-course view always describes exactly one course, so reporting it as
- * "1/1" says nothing. It is worth saying when the course's own row is absent from the index, so the row appears only
- * then.
- */
-const COURSE_TYPE = 'course';
+const SCOREBOARD_TYPES = ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel', 'course'] as const;
 
 /** Icons per metadata type and per content key, from the design record's icon map. */
 const TYPE_ICONS: Record<string, IconDefinition> = {
@@ -120,10 +113,7 @@ export class CourseIngestionBrowserTreeComponent {
     /** One row per measured type, in fixed order, whether or not the course has any of that type. */
     protected readonly scoreboard = computed<ScoreboardRow[]>(() => {
         const counts = new Map(this.typeCounts().map((count) => [count.type, count]));
-        const courseCount = counts.get(COURSE_TYPE);
-        const courseIncomplete = courseCount !== undefined && (courseCount.missing > 0 || courseCount.orphaned > 0);
-        const types: string[] = courseIncomplete ? [...SCOREBOARD_TYPES, COURSE_TYPE] : [...SCOREBOARD_TYPES];
-        return types.map((type) => {
+        return SCOREBOARD_TYPES.map((type) => {
             const count = counts.get(type);
             const indexed = count?.indexed ?? 0;
             const expected = count?.expected ?? 0;
