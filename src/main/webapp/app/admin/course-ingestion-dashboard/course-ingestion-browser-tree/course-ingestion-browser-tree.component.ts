@@ -41,15 +41,29 @@ const CONTENT_ICONS: Record<string, IconDefinition> = {
     segments: faLayerGroup,
 };
 
+/**
+ * A node the template can render without computing anything. The key and the selection are built once with the tree
+ * rather than recomputed for every node on every change detection pass, which is what the template used to do.
+ */
+interface TreeNode {
+    key: string;
+    selection: BrowserSelection;
+}
+
+/** One content collection under a lecture unit. */
+interface ContentNode extends TreeNode {
+    contentKey: string;
+}
+
 /** One lecture unit in the tree, with the content collections that actually hold something for it. */
-interface UnitNode {
+interface UnitNode extends TreeNode {
     unitId: number;
     title: string;
-    contentKeys: string[];
+    content: ContentNode[];
 }
 
 /** One lecture in the tree. {@link indexed} is false when only its units are indexed and the lecture itself is not. */
-interface LectureNode {
+interface LectureNode extends TreeNode {
     lectureId: number;
     title: string;
     indexed: boolean;
@@ -57,7 +71,7 @@ interface LectureNode {
 }
 
 /** One row of the metadata scoreboard. */
-interface ScoreboardRow {
+interface ScoreboardRow extends TreeNode {
     type: string;
     indexed: number;
     expected: number;
@@ -104,7 +118,10 @@ export class CourseIngestionBrowserTreeComponent {
             const indexed = count?.indexed ?? 0;
             const expected = count?.expected ?? 0;
             const complete = (count?.missing ?? 0) === 0 && (count?.orphaned ?? 0) === 0;
+            const selection: BrowserSelection = { kind: 'type', type };
             return {
+                key: selectionKey(selection),
+                selection,
                 type,
                 indexed,
                 expected,
@@ -135,10 +152,18 @@ export class CourseIngestionBrowserTreeComponent {
             if (lectureId === undefined) {
                 continue;
             }
+            const unitSelection: BrowserSelection = { kind: 'unit', unitId: entity.entityId };
             const unit: UnitNode = {
+                key: selectionKey(unitSelection),
+                selection: unitSelection,
                 unitId: entity.entityId,
                 title: entity.title ?? '',
-                contentKeys: unitIdsByContentKey.filter((content) => content.unitIds.has(entity.entityId)).map((content) => content.key),
+                content: unitIdsByContentKey
+                    .filter((content) => content.unitIds.has(entity.entityId))
+                    .map((content) => {
+                        const contentSelection: BrowserSelection = { kind: 'collection', unitId: entity.entityId, key: content.key };
+                        return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: content.key };
+                    }),
             };
             unitsByLecture.set(lectureId, [...(unitsByLecture.get(lectureId) ?? []), unit]);
         }
@@ -147,12 +172,17 @@ export class CourseIngestionBrowserTreeComponent {
         // because its lecture is missing from the index.
         const lectureIds = new Set<number>([...lectureTitles.keys(), ...unitsByLecture.keys()]);
         return [...lectureIds]
-            .map((lectureId) => ({
-                lectureId,
-                title: lectureTitles.get(lectureId) ?? '',
-                indexed: lectureTitles.has(lectureId),
-                units: (unitsByLecture.get(lectureId) ?? []).sort((a, b) => a.title.localeCompare(b.title)),
-            }))
+            .map((lectureId) => {
+                const selection: BrowserSelection = { kind: 'lecture', lectureId };
+                return {
+                    key: selectionKey(selection),
+                    selection,
+                    lectureId,
+                    title: lectureTitles.get(lectureId) ?? '',
+                    indexed: lectureTitles.has(lectureId),
+                    units: (unitsByLecture.get(lectureId) ?? []).sort((a, b) => a.title.localeCompare(b.title)),
+                };
+            })
             .sort((a, b) => a.title.localeCompare(b.title));
     });
 
@@ -210,14 +240,11 @@ export class CourseIngestionBrowserTreeComponent {
         return this.expandedKeys().has(key);
     }
 
-    protected isSelected(selection: BrowserSelection): boolean {
+    /** The selected node's key, computed once per selection rather than per rendered node. */
+    protected readonly selectedKey = computed(() => {
         const current = this.selection();
-        return current !== undefined && selectionKey(current) === selectionKey(selection);
-    }
-
-    protected keyOf(selection: BrowserSelection): string {
-        return selectionKey(selection);
-    }
+        return current === undefined ? undefined : selectionKey(current);
+    });
 
     protected toggle(key: string): void {
         const expanded = new Set(this.expandedKeys());
@@ -230,21 +257,5 @@ export class CourseIngestionBrowserTreeComponent {
     /** Selects a node. Revealing it is handled centrally, so this behaves the same however the selection is made. */
     protected select(selection: BrowserSelection): void {
         this.selection.set(selection);
-    }
-
-    protected lectureSelection(lecture: LectureNode): BrowserSelection {
-        return { kind: 'lecture', lectureId: lecture.lectureId };
-    }
-
-    protected unitSelection(unit: UnitNode): BrowserSelection {
-        return { kind: 'unit', unitId: unit.unitId };
-    }
-
-    protected collectionSelection(unit: UnitNode, key: string): BrowserSelection {
-        return { kind: 'collection', unitId: unit.unitId, key };
-    }
-
-    protected typeSelection(type: string): BrowserSelection {
-        return { kind: 'type', type };
     }
 }

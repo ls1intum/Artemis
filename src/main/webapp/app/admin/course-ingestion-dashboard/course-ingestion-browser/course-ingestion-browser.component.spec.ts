@@ -96,6 +96,35 @@ describe('CourseIngestionBrowserComponent', () => {
         expect(component.incompleteTypeCount()).toBe(2);
     });
 
+    it('should not refetch when the same course arrives as a new object', async () => {
+        const spy = vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of(browserData));
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(spy).toHaveBeenCalledTimes(1);
+
+        // The matrix hands over a fresh object whenever it reloads its rows; the course on screen has not changed.
+        fixture.componentRef.setInput('course', { ...course });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should fetch again when a different course is opened', async () => {
+        const spy = vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(of(browserData));
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.componentRef.setInput('course', { ...course, courseId: 8 });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(spy).toHaveBeenLastCalledWith(8);
+        expect(spy).toHaveBeenCalledTimes(2);
+    });
+
     it('should surface an error instead of a half-rendered browser when a load fails', async () => {
         vi.spyOn(service, 'getCourseBrowserData').mockReturnValue(throwError(() => new Error('boom')));
 
