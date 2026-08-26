@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
@@ -79,6 +80,8 @@ public class AthenaFeedbackSuggestionsService {
 
     private final LLMTokenUsageService llmTokenUsageService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final ResultRepository resultRepository;
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
@@ -103,8 +106,10 @@ public class AthenaFeedbackSuggestionsService {
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, ResultRepository resultRepository,
-            Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi, Optional<FeatureUsageCollector> featureUsageCollector) {
+            Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseCompetencyApi> courseCompetencyApi, UserAiPreferenceService userAiPreferenceService,
+            Optional<FeatureUsageCollector> featureUsageCollector) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
+        this.userAiPreferenceService = userAiPreferenceService;
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
@@ -192,7 +197,9 @@ public class AthenaFeedbackSuggestionsService {
             return null;
         }
 
-        var selection = Optional.ofNullable(user).map(User::getSelectedLLMUsage).orElse(null);
+        // The id is checked as well: the decision is a row keyed on it, so an account that has not been persisted cannot have
+        // one, and looking one up by a null id would fail.
+        var selection = Optional.ofNullable(user).map(User::getId).map(userAiPreferenceService::findDecision).orElse(null);
         if (selection == null || selection == AiSelectionDecision.NO_AI) {
             throw new BadRequestAlertException("AI feedback requires an accepted LLM selection", "submission", "llmSelectionRequired", true);
         }

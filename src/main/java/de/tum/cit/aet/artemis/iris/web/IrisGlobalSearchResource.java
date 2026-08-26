@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -47,8 +48,12 @@ public class IrisGlobalSearchResource {
 
     private final UserRepository userRepository;
 
-    public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository) {
+    private final UserAiPreferenceService userAiPreferenceService;
+
+    public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
+            UserAiPreferenceService userAiPreferenceService) {
         this.pyrisConnectorService = pyrisConnectorService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
     }
@@ -78,13 +83,14 @@ public class IrisGlobalSearchResource {
     @LimitRequestsPerMinute(type = RateLimitType.AI_SEARCH_PIPELINE)
     public ResponseEntity<Void> ask(@RequestBody @Valid GlobalSearchAskRequestDTO requestDTO, Principal principal) {
         var user = userRepository.findOneByLogin(principal.getName()).orElseThrow(() -> new EntityNotFoundException("User", principal.getName()));
-        user.hasOptedIntoLLMUsageElseThrow();
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        var selectedLlmUsage = userAiPreferenceService.findDecision(user.getId());
         pyrisJobService.addGlobalSearchAnswerJob(principal.getName(), requestDTO.runId().toString());
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
         // Pyris may have received the request and already started the pipeline. Removing the token
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
-        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), user.getSelectedLLMUsage());
+        pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage);
         return ResponseEntity.accepted().build();
     }
 }
