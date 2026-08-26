@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
+import de.tum.cit.aet.artemis.atlas.api.CourseAutoOrchestrationApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.FilePathType;
@@ -80,6 +81,8 @@ public class CourseUpdateResource {
 
     private final Optional<LearningPathApi> learningPathApi;
 
+    private final Optional<CourseAutoOrchestrationApi> autoOrchestrationApi;
+
     private final CourseRepository courseRepository;
 
     private final CourseConfigurationRepository courseConfigurationRepository;
@@ -94,14 +97,15 @@ public class CourseUpdateResource {
 
     public CourseUpdateResource(Optional<LtiApi> ltiApi, AuthorizationCheckService authCheckService, FileService fileService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<LearningPathApi> learningPathApi,
-            ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, CourseRepository courseRepository,
-            CourseConfigurationRepository courseConfigurationRepository, ExerciseRepository exerciseRepository, UserRepository userRepository,
+            ConductAgreementService conductAgreementService, Optional<LearnerProfileApi> learnerProfileApi, Optional<CourseAutoOrchestrationApi> autoOrchestrationApi,
+            CourseRepository courseRepository, CourseConfigurationRepository courseConfigurationRepository, ExerciseRepository exerciseRepository, UserRepository userRepository,
             Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService, InstanceMessageSendService instanceMessageSendService) {
         this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.fileService = fileService;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.learningPathApi = learningPathApi;
+        this.autoOrchestrationApi = autoOrchestrationApi;
         this.conductAgreementService = conductAgreementService;
         this.learnerProfileApi = learnerProfileApi;
         this.courseRepository = courseRepository;
@@ -133,6 +137,11 @@ public class CourseUpdateResource {
         // athenaConfig is not included in the findForUpdateById EntityGraph; load it separately to avoid LazyInitializationException in courseUpdateDTO.applyTo()
         existingCourse.setAthenaConfig(courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId).getAthenaConfig());
 
+        // Attach the (lazily-stored) course configuration so applyTo updates it in place instead of creating a duplicate,
+        // and so the admin-only auto-orchestration change detection below compares against the persisted values. Fetched
+        // via its own repository to keep the course update entity graph small.
+        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
+
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
         }
@@ -147,6 +156,17 @@ public class CourseUpdateResource {
         // this is important, otherwise someone could put themselves into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
+        if (!authCheckService.isAdmin(user)) {
+            // instructors are not allowed to change the Atlas auto-orchestration settings (admin-only)
+            boolean autoOrchestrationChanged = existingCourse.getAutoOrchestratorEnabled() != courseUpdateDTO.autoOrchestratorEnabled()
+                    || !Objects.equals(existingCourse.getDebounceWindowSecondsOverride(), courseUpdateDTO.debounceWindowSecondsOverride())
+                    || !Objects.equals(existingCourse.getMaxDailyOrchestrationOverride(), courseUpdateDTO.maxDailyOrchestrationOverride());
+            if (autoOrchestrationChanged) {
+                throw new BadRequestAlertException("You are not allowed to change the auto-orchestration settings of a course", Course.ENTITY_NAME,
+                        "autoOrchestrationSettingsCannotChange", true);
+            }
+        }
+
         if (courseUpdateDTO.title().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
@@ -155,12 +175,9 @@ public class CourseUpdateResource {
         String existingCourseIcon = existingCourse.getCourseIcon();
         // Save values that are checked AFTER applyTo mutates the entity
         boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
+        boolean oldAutoOrchestratorEnabled = existingCourse.getAutoOrchestratorEnabled();
         String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
         boolean oldGradingFeedbackEnabled = existingCourse.getAthenaConfig() != null && existingCourse.getAthenaConfig().isGradingFeedbackEnabled();
-
-        // Attach the (lazily-stored) course configuration so applyTo updates the grade-relevance flag in place instead of
-        // creating a duplicate. Fetched via its own repository to keep the course update entity graph small.
-        existingCourse.setCourseConfiguration(courseConfigurationRepository.findByCourseId(courseId).orElse(null));
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
@@ -204,6 +221,12 @@ public class CourseUpdateResource {
         }
 
         Course result = courseRepository.save(existingCourse);
+
+        // If auto-orchestration was just disabled, drop any buffered content changes so a stale batch cannot fire
+        // (e.g. on re-enable within the debounce window or a scheduler tick before the change propagates).
+        if (oldAutoOrchestratorEnabled && !courseUpdateDTO.autoOrchestratorEnabled()) {
+            autoOrchestrationApi.ifPresent(api -> api.flushBufferedContentChanges(courseId));
+        }
 
         searchableEntityWeaviateService.ifPresent(service -> service.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(result)));
 

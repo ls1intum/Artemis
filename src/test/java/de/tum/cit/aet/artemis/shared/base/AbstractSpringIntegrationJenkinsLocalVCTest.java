@@ -22,8 +22,12 @@ import org.springframework.test.context.TestPropertySource;
 @ResourceLock("AbstractSpringIntegrationJenkinsLocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS })
-@TestPropertySource(properties = { "artemis.user-management.use-external=false",
-        "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!enrollmentservicestudent2).*$",
+@TestPropertySource(properties = {
+        // Jenkins with LocalVC is the one topology that still needs the shared credential: this context runs localvc
+        // without localci, so there are no build jobs and no clone tokens, and Jenkins is not an Artemis build agent.
+        // LocalVCBuildAgentCredentialsValidator refuses to start such a node without them.
+        "artemis.version-control.build-agent-git-username=buildjob_user", "artemis.version-control.build-agent-git-password=buildjob_password",
+        "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!enrollmentservicestudent2).*$",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "info.contact=test@localhost",
         "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken", "artemis.lti.enabled=true", "artemis.athena.enabled=true",
         "artemis.apollon.enabled=true", "artemis.athena.modules.text=module_text_test", "artemis.athena.modules.programming=module_programming_test",

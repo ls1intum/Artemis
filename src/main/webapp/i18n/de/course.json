@@ -251,6 +251,20 @@
                     "tooltip": "Wenn aktiviert, können Studierende vor der Einreichungsfrist vorläufiges KI-Feedback von Athena anfordern."
                 }
             },
+            "autoOrchestration": {
+                "label": "Atlas-Auto-Orchestrierung aktiviert",
+                "tooltip": "Lässt Atlas die Kompetenzen dieses Kurses automatisch überprüfen und aktualisieren, sobald sich der Inhalt einer Aufgabe ändert. Standardmäßig deaktiviert; nur für Kurse aktivieren, in denen die KI die Kompetenzverknüpfungen selbstständig pflegen soll.",
+                "overridePlaceholder": "Standardwert verwenden",
+                "overridePlaceholderWithValue": "Standardwert verwenden ({{ value }})",
+                "debounceWindowSecondsOverride": {
+                    "label": "Wartezeit-Überschreibung (Sekunden)",
+                    "hint": "Wie lange nach der letzten Inhaltsänderung gewartet wird, bevor ein Lauf startet. Leer lassen, um den globalen Standardwert zu verwenden."
+                },
+                "maxDailyOrchestrationOverride": {
+                    "label": "Überschreibung des täglichen Lauflimits",
+                    "hint": "Maximale Anzahl automatischer Läufe pro Tag für diesen Kurs. Leer lassen, um den globalen Standardwert zu verwenden."
+                }
+            },
             "onlineCourse": {
                 "title": "Onlinekurs",
                 "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX/Moodle), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist. Du kannst dies auf der Seite LTI-Konfiguration weiter konfigurieren."
