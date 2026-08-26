@@ -8,15 +8,14 @@
         ></span>
         <ul class="list-none p-0 m-0 mt-1 flex flex-col" aria-labelledby="browser-tree-metadata-label">
             @for (row of scoreboard(); track row.type) {
-                @let selection = typeSelection(row.type);
                 <li>
                     <button
                         type="button"
                         class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
-                        [class.active]="isSelected(selection)"
-                        [attr.aria-current]="isSelected(selection) ? 'true' : undefined"
-                        (click)="select(selection)"
-                        [attr.data-testid]="'tree-node-' + keyOf(selection)"
+                        [class.active]="selectedKey() === row.key"
+                        [attr.aria-current]="selectedKey() === row.key ? 'true' : undefined"
+                        (click)="select(row.selection)"
+                        [attr.data-testid]="'tree-node-' + row.key"
                     >
                         <fa-icon [icon]="row.icon" class="text-muted-color" />
                         <span class="flex-1 truncate" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + row.type"></span>
@@ -38,26 +37,25 @@
             ></span>
             <ul class="list-none p-0 m-0 mt-1 flex flex-col" aria-labelledby="browser-tree-lectures-label">
                 @for (lecture of lectures(); track lecture.lectureId) {
-                    @let lectureSel = lectureSelection(lecture);
                     <li>
                         <div class="flex items-center gap-1">
                             <button
                                 type="button"
                                 class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent border-0 cursor-pointer"
-                                [attr.aria-expanded]="isExpanded(keyOf(lectureSel))"
+                                [attr.aria-expanded]="isExpanded(lecture.key)"
                                 [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.toggleLecture' | artemisTranslate"
-                                (click)="toggle(keyOf(lectureSel))"
-                                [attr.data-testid]="'tree-toggle-' + keyOf(lectureSel)"
+                                (click)="toggle(lecture.key)"
+                                [attr.data-testid]="'tree-toggle-' + lecture.key"
                             >
-                                <fa-icon [icon]="isExpanded(keyOf(lectureSel)) ? faChevronDown : faChevronRight" class="text-xs" />
+                                <fa-icon [icon]="isExpanded(lecture.key) ? faChevronDown : faChevronRight" class="text-xs" />
                             </button>
                             <button
                                 type="button"
                                 class="tree-node flex-1 min-w-0 flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
-                                [class.active]="isSelected(lectureSel)"
-                                [attr.aria-current]="isSelected(lectureSel) ? 'true' : undefined"
-                                (click)="select(lectureSel)"
-                                [attr.data-testid]="'tree-node-' + keyOf(lectureSel)"
+                                [class.active]="selectedKey() === lecture.key"
+                                [attr.aria-current]="selectedKey() === lecture.key ? 'true' : undefined"
+                                (click)="select(lecture.selection)"
+                                [attr.data-testid]="'tree-node-' + lecture.key"
                             >
                                 <span class="flex-1 truncate" [title]="lecture.title">
                                     @if (lecture.title) {
@@ -77,32 +75,31 @@
                             </button>
                         </div>
 
-                        @if (isExpanded(keyOf(lectureSel))) {
+                        @if (isExpanded(lecture.key)) {
                             <ul class="list-none p-0 m-0 ms-5 flex flex-col">
                                 @for (unit of lecture.units; track unit.unitId) {
-                                    @let unitSel = unitSelection(unit);
                                     <li>
                                         <div class="flex items-center gap-1">
                                             <button
                                                 type="button"
                                                 class="tree-toggle shrink-0 w-5 h-5 inline-flex items-center justify-center rounded bg-transparent border-0 cursor-pointer"
-                                                [attr.aria-expanded]="isExpanded(keyOf(unitSel))"
+                                                [attr.aria-expanded]="isExpanded(unit.key)"
                                                 [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.toggleUnit' | artemisTranslate"
-                                                (click)="toggle(keyOf(unitSel))"
-                                                [attr.data-testid]="'tree-toggle-' + keyOf(unitSel)"
-                                                [disabled]="unit.contentKeys.length === 0"
+                                                (click)="toggle(unit.key)"
+                                                [attr.data-testid]="'tree-toggle-' + unit.key"
+                                                [disabled]="unit.content.length === 0"
                                             >
-                                                @if (unit.contentKeys.length > 0) {
-                                                    <fa-icon [icon]="isExpanded(keyOf(unitSel)) ? faChevronDown : faChevronRight" class="text-xs" />
+                                                @if (unit.content.length > 0) {
+                                                    <fa-icon [icon]="isExpanded(unit.key) ? faChevronDown : faChevronRight" class="text-xs" />
                                                 }
                                             </button>
                                             <button
                                                 type="button"
                                                 class="tree-node flex-1 min-w-0 flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
-                                                [class.active]="isSelected(unitSel)"
-                                                [attr.aria-current]="isSelected(unitSel) ? 'true' : undefined"
-                                                (click)="select(unitSel)"
-                                                [attr.data-testid]="'tree-node-' + keyOf(unitSel)"
+                                                [class.active]="selectedKey() === unit.key"
+                                                [attr.aria-current]="selectedKey() === unit.key ? 'true' : undefined"
+                                                (click)="select(unit.selection)"
+                                                [attr.data-testid]="'tree-node-' + unit.key"
                                             >
                                                 <span class="flex-1 truncate" [title]="unit.title">
                                                     @if (unit.title) {
@@ -114,21 +111,23 @@
                                             </button>
                                         </div>
 
-                                        @if (isExpanded(keyOf(unitSel))) {
+                                        @if (isExpanded(unit.key)) {
                                             <ul class="list-none p-0 m-0 ms-5 flex flex-col">
-                                                @for (key of unit.contentKeys; track key) {
-                                                    @let collSel = collectionSelection(unit, key);
+                                                @for (content of unit.content; track content.key) {
                                                     <li>
                                                         <button
                                                             type="button"
                                                             class="tree-node w-full flex items-center gap-2 px-2 py-1 rounded bg-transparent border-0 text-start cursor-pointer"
-                                                            [class.active]="isSelected(collSel)"
-                                                            [attr.aria-current]="isSelected(collSel) ? 'true' : undefined"
-                                                            (click)="select(collSel)"
-                                                            [attr.data-testid]="'tree-node-' + keyOf(collSel)"
+                                                            [class.active]="selectedKey() === content.key"
+                                                            [attr.aria-current]="selectedKey() === content.key ? 'true' : undefined"
+                                                            (click)="select(content.selection)"
+                                                            [attr.data-testid]="'tree-node-' + content.key"
                                                         >
-                                                            <fa-icon [icon]="contentIcons[key]" class="text-muted-color text-xs" />
-                                                            <span class="flex-1 truncate" [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + key"></span>
+                                                            <fa-icon [icon]="contentIcons[content.contentKey]" class="text-muted-color text-xs" />
+                                                            <span
+                                                                class="flex-1 truncate"
+                                                                [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + content.contentKey"
+                                                            ></span>
                                                         </button>
                                                     </li>
                                                 }

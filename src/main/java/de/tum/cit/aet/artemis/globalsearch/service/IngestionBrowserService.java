@@ -53,7 +53,10 @@ public class IngestionBrowserService {
     public CourseBrowserDataDTO loadCourseBrowserData(long courseId) {
         List<Long> courseIds = List.of(courseId);
         ExpectedSets expected = setLoader.loadExpected(courseIds);
-        PresentSets present = setLoader.loadPresent(courseIds, courseIds);
+        // Content can only exist for a course that has lecture units, and the content reads are the expensive ones, so a
+        // course without units skips them entirely rather than aggregating four collections to find nothing.
+        Set<Long> contentCourseIds = expected.lectureUnits().keySet();
+        PresentSets present = setLoader.loadPresent(courseIds, contentCourseIds);
 
         return new CourseBrowserDataDTO(browserReadService.listIndexedEntitiesForCourse(courseId), contentPresence(courseId, present),
                 gapService.missingEntities(courseId, expected, present), gapService.contentGaps(courseId, expected, present));

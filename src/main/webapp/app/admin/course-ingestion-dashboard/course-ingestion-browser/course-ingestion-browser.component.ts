@@ -54,12 +54,17 @@ export class CourseIngestionBrowserComponent {
         return loaded !== undefined && loaded.entities.length === 0 && loaded.contentPresence.length === 0;
     });
 
+    /** The course the current data was loaded for, so a re-render of the same course does not refetch it. */
+    private loadedCourseId?: number;
+
     constructor() {
         // Load when the modal opens, and again if it is reopened on a different course. Loading on the course input
-        // alone would fetch for every row the matrix renders, which is the cost this modal exists to avoid.
+        // alone would fetch for every row the matrix renders, which is the cost this modal exists to avoid. The course
+        // guard matters because the matrix hands over a new object whenever it reloads its rows, which would otherwise
+        // refetch the course already on screen.
         effect(() => {
             const courseId = this.course().courseId;
-            if (this.visible()) {
+            if (this.visible() && courseId !== this.loadedCourseId) {
                 this.load(courseId);
             }
         });
@@ -68,6 +73,7 @@ export class CourseIngestionBrowserComponent {
     /** Closes the modal and drops the loaded data, so reopening always shows current state rather than a stale view. */
     close(): void {
         this.visible.set(false);
+        this.loadedCourseId = undefined;
         this.data.set(undefined);
         this.selection.set(undefined);
     }
@@ -80,11 +86,13 @@ export class CourseIngestionBrowserComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (data) => {
+                    this.loadedCourseId = courseId;
                     this.data.set(data);
                     this.selection.set(undefined);
                     this.loading.set(false);
                 },
                 error: () => {
+                    this.loadedCourseId = undefined;
                     this.data.set(undefined);
                     this.error.set(true);
                     this.loading.set(false);
