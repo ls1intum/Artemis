@@ -29,12 +29,24 @@
                         <div class="text-base font-semibold mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + current.type"></div>
 
                         @if (typeCount(); as counts) {
-                            <div class="flex flex-wrap gap-4 mb-3 text-sm">
-                                <span><span jhiTranslate="artemisApp.courseIngestionDashboard.browser.statIndexed"></span>: {{ counts.indexed }}</span>
-                                <span><span jhiTranslate="artemisApp.courseIngestionDashboard.browser.statExpected"></span>: {{ counts.expected }}</span>
-                                <span [class.text-state-danger]="counts.missing > 0">
-                                    <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.statMissing"></span>: {{ counts.missing }}
-                                </span>
+                            <!-- The number carries the meaning, so it leads and the label sits under it. -->
+                            <div class="mb-3 flex flex-wrap gap-2" data-testid="detail-type-stats">
+                                <div class="min-w-20 flex-1 rounded-lg border border-solid px-3 py-2">
+                                    <div class="text-lg leading-tight font-semibold">{{ counts.indexed }}</div>
+                                    <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statIndexed"></div>
+                                </div>
+                                <div class="min-w-20 flex-1 rounded-lg border border-solid px-3 py-2">
+                                    <div class="text-lg leading-tight font-semibold">{{ counts.expected }}</div>
+                                    <div class="text-xs text-muted-color" jhiTranslate="artemisApp.courseIngestionDashboard.browser.statExpected"></div>
+                                </div>
+                                <div class="min-w-20 flex-1 rounded-lg border border-solid px-3 py-2" [class.text-state-danger]="counts.missing > 0">
+                                    <div class="text-lg leading-tight font-semibold">{{ counts.missing }}</div>
+                                    <div
+                                        class="text-xs"
+                                        [class.text-muted-color]="counts.missing === 0"
+                                        jhiTranslate="artemisApp.courseIngestionDashboard.browser.statMissing"
+                                    ></div>
+                                </div>
                             </div>
                         }
 
