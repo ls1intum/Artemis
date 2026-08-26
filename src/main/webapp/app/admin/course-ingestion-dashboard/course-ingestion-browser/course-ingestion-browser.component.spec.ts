@@ -80,6 +80,17 @@ describe('CourseIngestionBrowserComponent', () => {
         expect(component.error()).toBe(false);
     });
 
+    it('should use the singular label when exactly one type is incomplete', () => {
+        fixture.componentRef.setInput('course', { ...course, typeCounts: [{ type: 'exercise', expected: 4, indexed: 2, missing: 2, orphaned: 0 }] });
+
+        expect(component.incompleteTypeCount()).toBe(1);
+        expect(component.incompleteTypesLabelKey()).toContain('typeIncomplete');
+    });
+
+    it('should use the plural label for more than one incomplete type', () => {
+        expect(component.incompleteTypesLabelKey()).toContain('typesIncomplete');
+    });
+
     it('should count the types that are missing or orphaned for the header chip', () => {
         // Two exercises missing and one orphaned FAQ are two incomplete types; the fully indexed lecture type is not one.
         expect(component.incompleteTypeCount()).toBe(2);
