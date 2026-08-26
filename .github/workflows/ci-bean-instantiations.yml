@@ -26,7 +26,13 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      MAX_INSTANTIATED_BEANS: 142
+      # Raised from develop's 143 for the build agent access hardening. Three of its beans have to be eager, and each
+      # pulls its own dependencies into the startup graph: BuildAgentAddressRegistryService registers cluster
+      # connection listeners and a scheduled refresh, BuildAgentNetworkPolicy parses the configured ranges and states
+      # at startup what this node enforces, and ProxyProtocolAcceptor is installed on the ssh server before it accepts
+      # a connection. A lazy registry that nothing instantiates at startup would stay empty, and no build agent could
+      # clone.
+      MAX_INSTANTIATED_BEANS: 148
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
