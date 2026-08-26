@@ -26,7 +26,7 @@
             @switch (current.kind) {
                 @case ('type') {
                     <div data-testid="detail-type">
-                        <h3 class="text-base font-semibold m-0 mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + current.type"></h3>
+                        <div class="text-base font-semibold mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + current.type"></div>
 
                         @if (typeCount(); as counts) {
                             <div class="flex flex-wrap gap-4 mb-3 text-sm">
@@ -56,26 +56,46 @@
                         }
 
                         <p class="text-sm font-medium m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedObjects"></p>
-                        @for (record of records(); track record.entityId) {
-                            <details class="mb-2 border border-solid rounded p-2">
-                                <summary class="cursor-pointer text-sm">
-                                    {{ record.title || '#' + record.entityId }}
-                                </summary>
-                                <div class="mt-2">
-                                    <jhi-course-ingestion-stored-fields [properties]="record.properties" />
-                                </div>
-                            </details>
+                        @for (record of pagedRecords(); track record.entityId) {
+                            @let rowKey = 'record:' + record.entityId;
+                            <div class="mb-2 border border-solid rounded">
+                                <button
+                                    type="button"
+                                    class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
+                                    [attr.aria-expanded]="isExpanded(rowKey)"
+                                    (click)="toggleRow(rowKey)"
+                                    [attr.data-testid]="'detail-record-' + record.entityId"
+                                >
+                                    <fa-icon [icon]="isExpanded(rowKey) ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
+                                    <span class="flex-1 truncate">{{ record.title || '#' + record.entityId }}</span>
+                                </button>
+                                @if (isExpanded(rowKey)) {
+                                    <div class="px-2 pb-2">
+                                        <jhi-course-ingestion-stored-fields [properties]="record.properties" />
+                                    </div>
+                                }
+                            </div>
                         } @empty {
                             <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noObjects"></p>
+                        }
+                        @if (records().length > pageSize) {
+                            <tum-ui-paginator
+                                class="block mt-2"
+                                [totalRecords]="records().length"
+                                [page]="recordsPage()"
+                                [pageSize]="pageSize"
+                                (pageChange)="onRecordsPageChange($event)"
+                                [ariaLabel]="'artemisApp.courseIngestionDashboard.browser.storedObjects' | artemisTranslate"
+                            />
                         }
                     </div>
                 }
 
                 @case ('lecture') {
                     <div data-testid="detail-lecture">
-                        <h3 class="text-base font-semibold m-0 mb-2">
+                        <div class="text-base font-semibold mb-2">
                             {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledLecture' | artemisTranslate) }}
-                        </h3>
+                        </div>
                         <p class="text-sm text-muted-color m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaLecture"></p>
                         @if (selectedRecord(); as record) {
                             <jhi-course-ingestion-stored-fields [properties]="record.properties" />
@@ -87,9 +107,9 @@
 
                 @case ('unit') {
                     <div data-testid="detail-unit">
-                        <h3 class="text-base font-semibold m-0 mb-2">
+                        <div class="text-base font-semibold mb-2">
                             {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledUnit' | artemisTranslate) }}
-                        </h3>
+                        </div>
 
                         @if (unitContentKeys().length > 0) {
                             <div class="flex flex-wrap gap-2 mb-3">
@@ -110,16 +130,38 @@
 
                 @case ('collection') {
                     <div data-testid="detail-collection">
-                        <h3 class="text-base font-semibold m-0 mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + current.key"></h3>
-                        @for (entry of labelledContent(); track entry.label) {
-                            <details class="mb-2 border border-solid rounded p-2">
-                                <summary class="cursor-pointer text-sm">{{ entry.label }}</summary>
-                                <div class="mt-2">
-                                    <jhi-course-ingestion-stored-fields [properties]="entry.object.properties" />
-                                </div>
-                            </details>
+                        <div class="text-base font-semibold mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + current.key"></div>
+                        @for (entry of pagedContent(); track entry.label) {
+                            @let rowKey = 'content:' + entry.label;
+                            <div class="mb-2 border border-solid rounded">
+                                <button
+                                    type="button"
+                                    class="detail-row w-full flex items-center gap-2 px-2 py-1 bg-transparent border-0 text-start text-sm cursor-pointer"
+                                    [attr.aria-expanded]="isExpanded(rowKey)"
+                                    (click)="toggleRow(rowKey)"
+                                    [attr.data-testid]="'detail-content-row'"
+                                >
+                                    <fa-icon [icon]="isExpanded(rowKey) ? faChevronDown : faChevronRight" class="text-xs text-muted-color" />
+                                    <span class="flex-1 truncate">{{ entry.label }}</span>
+                                </button>
+                                @if (isExpanded(rowKey)) {
+                                    <div class="px-2 pb-2">
+                                        <jhi-course-ingestion-stored-fields [properties]="entry.object.properties" />
+                                    </div>
+                                }
+                            </div>
                         } @empty {
                             <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noContentUnit"></p>
+                        }
+                        @if (labelledContent().length > pageSize) {
+                            <tum-ui-paginator
+                                class="block mt-2"
+                                [totalRecords]="labelledContent().length"
+                                [page]="contentPage()"
+                                [pageSize]="pageSize"
+                                (pageChange)="onContentPageChange($event)"
+                                [ariaLabel]="'artemisApp.courseIngestionDashboard.browser.storedObjects' | artemisTranslate"
+                            />
                         }
                     </div>
                 }

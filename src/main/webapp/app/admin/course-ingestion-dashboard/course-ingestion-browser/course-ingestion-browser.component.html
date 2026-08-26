@@ -30,8 +30,8 @@
         @if (isEmpty()) {
             <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.browser.empty" data-testid="browser-empty"></div>
         } @else if (data(); as loaded) {
-            <div class="grid grid-cols-1 md:grid-cols-[17rem_1fr] gap-4 min-h-[24rem]" data-testid="browser-master-detail">
-                <div class="overflow-y-auto border border-solid rounded-lg p-2" data-testid="browser-navigation">
+            <div class="grid grid-cols-1 md:grid-cols-[17rem_1fr] gap-4 h-[60vh]" data-testid="browser-master-detail">
+                <div class="min-h-0 overflow-y-auto border border-solid rounded-lg p-2" data-testid="browser-navigation">
                     <jhi-course-ingestion-browser-tree
                         [entities]="loaded.entities"
                         [contentPresence]="loaded.contentPresence"
@@ -41,7 +41,7 @@
                 </div>
 
                 <!-- Detail pane for the current selection. -->
-                <div class="overflow-auto border border-solid rounded-lg p-4" data-testid="browser-detail">
+                <div class="min-h-0 overflow-auto border border-solid rounded-lg p-4" data-testid="browser-detail">
                     <jhi-course-ingestion-browser-detail [courseId]="course().courseId" [data]="loaded" [typeCounts]="course().typeCounts" [(selection)]="selection" />
                 </div>
             </div>
