@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "courseIngestionDashboard": {
-            "title": "Ingestion Dashboard",
+            "title": "Index Dashboard",
             "subtitle": "Per course, how complete the global-search index is compared to what the database expects. Read-only.",
             "loading": "Loading...",
             "overview": {
