@@ -109,6 +109,23 @@ export interface IndexedContentPresence {
     unitIds: number[];
 }
 
+/**
+ * The full stored record of one `SearchableEntities` row, shown in the detail pane. The heavy counterpart of
+ * {@link IndexedEntity}, fetched for the one type an admin selected rather than for the whole course.
+ */
+export interface IndexedEntityRecord {
+    /** The indexed entity type. */
+    type: string;
+    /** The database id of the entity this row represents. */
+    entityId: number;
+    /** The stored title, absent if the row has none. */
+    title?: string;
+    /** When Weaviate created the object (ISO string), absent if it could not be read. */
+    ingestedAt?: string;
+    /** The stored properties, minus the ones this row has no value for. */
+    properties: Record<string, unknown>;
+}
+
 /** One object stored in an Iris lecture-content collection, shown when a collection node is selected. */
 export interface IndexedContentObject {
     /** When Weaviate created the object (ISO string), absent if it could not be read. */

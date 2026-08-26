@@ -42,7 +42,7 @@
 
                 <!-- Detail pane for the current selection. -->
                 <div class="overflow-auto border border-solid rounded-lg p-4" data-testid="browser-detail">
-                    <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.selectPrompt"></p>
+                    <jhi-course-ingestion-browser-detail [courseId]="course().courseId" [data]="loaded" [typeCounts]="course().typeCounts" [(selection)]="selection" />
                 </div>
             </div>
         }

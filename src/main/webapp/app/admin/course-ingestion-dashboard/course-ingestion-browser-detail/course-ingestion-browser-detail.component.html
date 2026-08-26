@@ -1,0 +1,131 @@
+@if (selection(); as current) {
+    <div class="flex flex-col gap-4">
+        @if (breadcrumbs().length > 0) {
+            <nav class="flex flex-wrap items-center gap-1 text-sm text-muted-color" [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.breadcrumb' | artemisTranslate">
+                @for (crumb of breadcrumbs(); track crumb.label) {
+                    <button
+                        type="button"
+                        class="bg-transparent border-0 p-0 underline cursor-pointer text-inherit"
+                        (click)="select(crumb.selection)"
+                        data-testid="detail-breadcrumb"
+                    >
+                        {{ crumb.label }}
+                    </button>
+                    <span aria-hidden="true">/</span>
+                }
+            </nav>
+        }
+
+        @if (error()) {
+            <tum-ui-message severity="error" class="w-full" data-testid="detail-error">{{
+                'artemisApp.courseIngestionDashboard.browser.detailError' | artemisTranslate
+            }}</tum-ui-message>
+        } @else if (loading()) {
+            <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.loading" data-testid="detail-loading"></div>
+        } @else {
+            @switch (current.kind) {
+                @case ('type') {
+                    <div data-testid="detail-type">
+                        <h3 class="text-base font-semibold m-0 mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + current.type"></h3>
+
+                        @if (typeCount(); as counts) {
+                            <div class="flex flex-wrap gap-4 mb-3 text-sm">
+                                <span><span jhiTranslate="artemisApp.courseIngestionDashboard.browser.statIndexed"></span>: {{ counts.indexed }}</span>
+                                <span><span jhiTranslate="artemisApp.courseIngestionDashboard.browser.statExpected"></span>: {{ counts.expected }}</span>
+                                <span [class.text-state-danger]="counts.missing > 0">
+                                    <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.statMissing"></span>: {{ counts.missing }}
+                                </span>
+                            </div>
+                        }
+
+                        @if (missingOfType().length > 0) {
+                            <div class="mb-3" data-testid="detail-missing-list">
+                                <p class="text-sm text-state-danger m-0 mb-1" jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIngested"></p>
+                                <ul class="list-none p-0 m-0 flex flex-col gap-1 max-h-40 overflow-y-auto">
+                                    @for (missing of missingOfType(); track missing.entityId) {
+                                        <li class="text-sm">
+                                            @if (missing.title) {
+                                                {{ missing.title }}
+                                            } @else {
+                                                <span class="font-mono">#{{ missing.entityId }}</span>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+
+                        <p class="text-sm font-medium m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedObjects"></p>
+                        @for (record of records(); track record.entityId) {
+                            <details class="mb-2 border border-solid rounded p-2">
+                                <summary class="cursor-pointer text-sm">
+                                    {{ record.title || '#' + record.entityId }}
+                                </summary>
+                                <div class="mt-2">
+                                    <jhi-course-ingestion-stored-fields [properties]="record.properties" />
+                                </div>
+                            </details>
+                        } @empty {
+                            <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noObjects"></p>
+                        }
+                    </div>
+                }
+
+                @case ('lecture') {
+                    <div data-testid="detail-lecture">
+                        <h3 class="text-base font-semibold m-0 mb-2">
+                            {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledLecture' | artemisTranslate) }}
+                        </h3>
+                        <p class="text-sm text-muted-color m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaLecture"></p>
+                        @if (selectedRecord(); as record) {
+                            <jhi-course-ingestion-stored-fields [properties]="record.properties" />
+                        } @else {
+                            <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIndexedRecord"></p>
+                        }
+                    </div>
+                }
+
+                @case ('unit') {
+                    <div data-testid="detail-unit">
+                        <h3 class="text-base font-semibold m-0 mb-2">
+                            {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledUnit' | artemisTranslate) }}
+                        </h3>
+
+                        @if (unitContentKeys().length > 0) {
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                @for (key of unitContentKeys(); track key) {
+                                    <tum-ui-tag severity="secondary" rounded [value]="'artemisApp.courseIngestionDashboard.browser.content_' + key | artemisTranslate" />
+                                }
+                            </div>
+                        }
+
+                        <p class="text-sm text-muted-color m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaUnit"></p>
+                        @if (selectedRecord(); as record) {
+                            <jhi-course-ingestion-stored-fields [properties]="record.properties" />
+                        } @else {
+                            <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.notIndexedRecord"></p>
+                        }
+                    </div>
+                }
+
+                @case ('collection') {
+                    <div data-testid="detail-collection">
+                        <h3 class="text-base font-semibold m-0 mb-2" [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + current.key"></h3>
+                        @for (entry of labelledContent(); track entry.label) {
+                            <details class="mb-2 border border-solid rounded p-2">
+                                <summary class="cursor-pointer text-sm">{{ entry.label }}</summary>
+                                <div class="mt-2">
+                                    <jhi-course-ingestion-stored-fields [properties]="entry.object.properties" />
+                                </div>
+                            </details>
+                        } @empty {
+                            <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.noContentUnit"></p>
+                        }
+                    </div>
+                }
+            }
+        }
+    </div>
+} @else {
+    <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.selectPrompt"></p>
+}

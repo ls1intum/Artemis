@@ -101,7 +101,18 @@
                 "content_transcript": "Transkript",
                 "content_unit_summary": "Einheit-Zusammenfassung",
                 "content_segments": "Ausgerichtete Segmente",
-                "typeIncomplete": "Typ unvollständig"
+                "typeIncomplete": "Typ unvollständig",
+                "detailError": "Der gespeicherte Inhalt konnte nicht geladen werden. Bitte versuchen Sie es erneut.",
+                "storedObjects": "Gespeicherte Objekte",
+                "noObjects": "Hier sind noch keine Objekte gespeichert.",
+                "noContentUnit": "Für diese Einheit sind noch keine Inhalte gespeichert.",
+                "noFields": "Keine befüllten Felder.",
+                "notIngested": "Erwartet, aber nicht indexiert:",
+                "notIndexedRecord": "Nicht indexiert, daher gibt es keinen gespeicherten Datensatz.",
+                "statIndexed": "Indexiert",
+                "statExpected": "Erwartet",
+                "statMissing": "Fehlend",
+                "breadcrumb": "Navigationspfad"
             },
             "status": {
                 "COMPLETE": "Vollständig",

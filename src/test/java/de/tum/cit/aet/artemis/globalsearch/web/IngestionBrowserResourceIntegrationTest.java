@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityRecordDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.MissingEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserWeaviateReadService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -76,6 +78,7 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
     void nonAdminIsForbiddenOnBothEndpoints() throws Exception {
         long courseId = course.getId();
         request.get(BASE + "courses/" + courseId + "/browser", HttpStatus.FORBIDDEN, CourseBrowserDataDTO.class);
+        request.getList(BASE + "courses/" + courseId + "/entities?type=lecture", HttpStatus.FORBIDDEN, IndexedEntityRecordDTO.class);
         request.getList(BASE + "courses/" + courseId + "/units/" + UNIT_ID + "/content?key=slides", HttpStatus.FORBIDDEN, IndexedContentObjectDTO.class);
     }
 
@@ -83,7 +86,28 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
     @WithMockUser(username = "admin", roles = "ADMIN")
     void unknownCourseIsNotFoundOnBothEndpoints() throws Exception {
         request.get(BASE + "courses/" + UNKNOWN_COURSE_ID + "/browser", HttpStatus.NOT_FOUND, CourseBrowserDataDTO.class);
+        request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/entities?type=lecture", HttpStatus.NOT_FOUND, IndexedEntityRecordDTO.class);
         request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/units/" + UNIT_ID + "/content?key=slides", HttpStatus.NOT_FOUND, IndexedContentObjectDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void unknownEntityTypeIsRejected() throws Exception {
+        request.getList(BASE + "courses/" + course.getId() + "/entities?type=not-a-type", HttpStatus.BAD_REQUEST, IndexedEntityRecordDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void returnsTheStoredRecordsOfOneType() throws Exception {
+        long courseId = course.getId();
+        insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, course.getTitle());
+
+        await().atMost(TIMEOUT).until(() -> !browserReadService.listIndexedEntityRecords(courseId, SearchableEntitySchema.TypeValues.COURSE).isEmpty());
+
+        List<IndexedEntityRecordDTO> records = request.getList(BASE + "courses/" + courseId + "/entities?type=course", HttpStatus.OK, IndexedEntityRecordDTO.class);
+        assertThat(records).hasSize(1);
+        // The record carries the stored property map, which the tree payload deliberately does not.
+        assertThat(records.getFirst().properties()).containsEntry(SearchableEntitySchema.Properties.TITLE, course.getTitle());
     }
 
     @Test

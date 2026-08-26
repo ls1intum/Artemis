@@ -7,6 +7,7 @@ import {
     CourseBrowserData,
     IndexOverview,
     IndexedContentObject,
+    IndexedEntityRecord,
     IngestionCoverage,
     IngestionCoverageStatus,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
@@ -85,6 +86,15 @@ export class CourseIngestionDashboardService {
      */
     getCourseBrowserData(courseId: number): Observable<CourseBrowserData> {
         return this.http.get<CourseBrowserData>(`${this.baseUrl}/courses/${courseId}/browser`);
+    }
+
+    /**
+     * GET the full stored records of one entity type for a course, property maps included. Fetched when a type, lecture
+     * or unit is selected, because those maps carry the entity's body text and are not loaded with the course.
+     */
+    getIndexedEntityRecords(courseId: number, type: string): Observable<IndexedEntityRecord[]> {
+        const params = new HttpParams().set('type', type);
+        return this.http.get<IndexedEntityRecord[]>(`${this.baseUrl}/courses/${courseId}/entities`, { params });
     }
 
     /**
