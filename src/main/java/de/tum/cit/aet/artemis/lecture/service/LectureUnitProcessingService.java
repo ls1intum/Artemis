@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -11,7 +12,6 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
@@ -244,8 +244,12 @@ public class LectureUnitProcessingService {
     public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
         String prefix = "Temp_" + lectureId + "_";
         String sanitisedFilename = FileUtil.checkAndSanitizeFilename(file.getOriginalFilename());
-        Path filePath = FilePathConverter.getTempFilePath().resolve(FileUtil.generateFilename(prefix, sanitisedFilename, false));
-        FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
+        Path filePath = FileUtil.resolveWithinDirectoryElseThrow(FilePathConverter.getTempFilePath(), FileUtil.generateFilename(prefix, sanitisedFilename, false));
+        // The containment check above is lexical, so it cannot see a symlink planted at the destination. Creating the
+        // file exclusively is what keeps the write inside the temp directory.
+        try (InputStream inputStream = file.getInputStream()) {
+            FileUtil.writeNewFileElseThrow(inputStream, filePath);
+        }
         fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
         return filePath.getFileName().toString().substring(prefix.length());
     }
@@ -259,7 +263,9 @@ public class LectureUnitProcessingService {
      */
     public Path getPathForTempFilename(long lectureId, String filename) {
         String fullFilename = "Temp_" + lectureId + "_" + FileUtil.sanitizeFilename(filename);
-        return FilePathConverter.getTempFilePath().resolve(fullFilename);
+        // The filename reaches this method straight from a path variable. Sanitising it already removes every path
+        // separator, but the containment check is what proves the result cannot leave the temp directory.
+        return FileUtil.resolveWithinDirectoryElseThrow(FilePathConverter.getTempFilePath(), fullFilename);
     }
 
     /**
