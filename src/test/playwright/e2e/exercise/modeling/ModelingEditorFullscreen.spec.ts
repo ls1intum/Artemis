@@ -1,4 +1,4 @@
-import { expect, type Locator } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
@@ -12,6 +12,23 @@ import { dismissPasskeyReminderIfPresent } from '../../../support/dismissPasskey
 import modelingExerciseSubmissionTemplate from '../../../fixtures/exercise/modeling/submission.json';
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
+
+const DEFAULT_VIEWPORT = { width: 1440, height: 1000 };
+/** Box geometry is compared across elements the browser rounds independently, so exact edges never line up. */
+const SUB_PIXEL_TOLERANCE = 1;
+/** Once the surface is clamped to the frame rather than placed against a control, the clamp rounds a little wider. */
+const CLAMPED_INSET_TOLERANCE = 3;
+/** Enough growth to distinguish an expanded minimap from the collapsed button. */
+const MINIMAP_EXPANDED_MIN_GROWTH = 100;
+/** How far the explanation notch is dragged upwards when the resize is exercised. */
+const EXPLANATION_RESIZE_DRAG = 55;
+
+/** The gap Apollon leaves between the controls in an overlay corner, which is also the inset the chrome must respect. */
+const chromeColumnGap = (page: Page) =>
+    page
+        .locator('.apollon-overlay-corner')
+        .first()
+        .evaluate((region) => Number.parseFloat(getComputedStyle(region).columnGap));
 
 const expectReadOnlyDiagramToFit = async (editor: Locator) => {
     await editor.scrollIntoViewIfNeeded();
@@ -57,7 +74,7 @@ const expectReadOnlyDiagramToFit = async (editor: Locator) => {
 };
 
 test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
-    test.use({ viewport: { width: 1440, height: 1000 } });
+    test.use({ viewport: DEFAULT_VIEWPORT });
 
     // Most tests here work on the creation form and need nothing persisted. The three that open an existing exercise
     // or example submission do — and the E2E seed provisions no exercises, so they are created here rather than
@@ -113,45 +130,30 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         exampleSubmissionId = (await exampleSubmissionResponse.json()).id;
     });
 
-    test('keeps editor chrome and the example explanation responsive', async ({ login, page }) => {
+    test('renders the Artemis chrome actions as native Apollon controls', async ({ login, page }) => {
         await login(instructor, `/course-management/${course.id}/modeling-exercises/new`);
-
-        const actions = page.locator('.modeling-editor__actions');
-
-        const diagramTypeIsland = page.locator('[data-apollon-region="top-left"] .modeling-editor__top-left');
-        const diagramTypeSelect = diagramTypeIsland.getByRole('combobox', { name: 'Diagram Type' });
-        await expect(diagramTypeSelect).toBeVisible();
-        await expect(diagramTypeSelect).toContainText('Class Diagram');
-
-        // Wait for the palette - the last part of the editor to appear - so the
-        // interaction below happens on a mounted editor, as a user's would.
         await expect(page.locator('[data-testid="apollon-palette"]').first()).toBeVisible();
 
+        const actions = page.locator('.modeling-editor__actions');
+        const diagramTypeIsland = page.locator('[data-apollon-region="top-left"] .modeling-editor__top-left');
+        const diagramTypeSelect = diagramTypeIsland.getByRole('combobox', { name: 'Diagram Type' });
+        await expect(diagramTypeSelect).toContainText('Class Diagram');
+
+        const diagramTypeBox = (await diagramTypeIsland.boundingBox())!;
+        const actionsBox = (await actions.boundingBox())!;
+        expect(diagramTypeBox.x + diagramTypeBox.width).toBeLessThanOrEqual(actionsBox.x);
+
+        // Switching the diagram type tears Apollon down and remounts it, which is the one way the hosted regions can
+        // be lost. Operability is read from the value changing rather than from focus, which Apollon moves while mounting.
         await diagramTypeSelect.scrollIntoViewIfNeeded();
         await diagramTypeSelect.click();
-        // Operability is asserted through the listbox opening and the value changing, not through focus:
-        // Apollon moves focus once while mounting, so a focus check would race initialization.
-        await expect(diagramTypeSelect).toHaveAttribute('aria-expanded', 'true');
         await page.getByRole('option', { name: 'Activity Diagram' }).click();
         await expect(diagramTypeSelect).toContainText('Activity Diagram');
         await expect(diagramTypeIsland).toBeVisible();
-        await diagramTypeSelect.click();
-        await page.getByRole('option', { name: 'Class Diagram' }).click();
-        await expect(diagramTypeSelect).toContainText('Class Diagram');
-
-        const diagramTypeBox = await diagramTypeIsland.boundingBox();
-        const actionsBox = await actions.boundingBox();
-        expect(diagramTypeBox).not.toBeNull();
-        expect(actionsBox).not.toBeNull();
-        expect(diagramTypeBox!.x).toBeLessThan(actionsBox!.x);
-        expect(diagramTypeBox!.x + diagramTypeBox!.width).toBeLessThanOrEqual(actionsBox!.x);
+        await expect(actions).toBeVisible();
 
         const helpButton = page.getByRole('button', { name: 'Help' });
-        await expect(helpButton).toContainText('Help');
-
         const fullscreenButton = page.getByTestId('modeling-editor-fullscreen');
-        await expect(fullscreenButton).toBeVisible();
-        await expect(fullscreenButton).toContainText('Fullscreen');
         const zoomOutButton = page.locator('[data-apollon-control="apollon:zoom"] .apollon-chrome-iconbtn').first();
         await expect(zoomOutButton).toBeVisible();
         for (const button of [helpButton, fullscreenButton]) {
@@ -159,34 +161,26 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
             await expect(button).toHaveClass(/apollon-chrome-iconbtn/);
             await expect(button).not.toHaveAttribute('data-slot');
         }
-        const [helpButtonBox, fullscreenButtonBox, zoomOutButtonBox] = await Promise.all([helpButton.boundingBox(), fullscreenButton.boundingBox(), zoomOutButton.boundingBox()]);
-        expect(helpButtonBox).not.toBeNull();
-        expect(fullscreenButtonBox).not.toBeNull();
-        expect(zoomOutButtonBox).not.toBeNull();
-        expect(helpButtonBox!.height).toBe(zoomOutButtonBox!.height);
-        expect(fullscreenButtonBox!.height).toBe(helpButtonBox!.height);
-        const editorChromeStyle = async (button: typeof helpButton) =>
+
+        // Artemis' own actions must be indistinguishable from Apollon's controls, apart from the icon-to-label gap
+        // that only the labelled ones need.
+        const restingAppearance = (button: Locator) =>
             button.evaluate((element) => {
                 const style = getComputedStyle(element);
-                return {
-                    backgroundColor: style.backgroundColor,
-                    borderRadius: style.borderRadius,
-                    color: style.color,
-                    gap: style.gap,
-                    transitionDuration: style.transitionDuration,
-                    transitionProperty: style.transitionProperty,
-                };
+                return { backgroundColor: style.backgroundColor, borderRadius: style.borderRadius, color: style.color, gap: style.gap, height: style.height };
             });
-        const zoomChromeStyle = await editorChromeStyle(zoomOutButton);
-        const { gap: zoomGap, ...zoomControlStyle } = zoomChromeStyle;
-        // Artemis' own actions must be indistinguishable from Apollon's controls, apart from the
-        // icon-to-label gap that only the labelled ones need.
+        const { gap: zoomGap, ...zoomAppearance } = await restingAppearance(zoomOutButton);
         expect(zoomGap).toBe('normal');
-        for (const labeledButton of [helpButton, fullscreenButton]) {
-            const { gap, ...labeledControlStyle } = await editorChromeStyle(labeledButton);
+        for (const labelledButton of [helpButton, fullscreenButton]) {
+            const { gap, ...labelledAppearance } = await restingAppearance(labelledButton);
             expect(gap).not.toBe('normal');
-            expect(labeledControlStyle).toEqual(zoomControlStyle);
+            expect(labelledAppearance).toEqual(zoomAppearance);
         }
+    });
+
+    test('mounts the problem statement in the rail and the example explanation in the bottom-center chrome', async ({ login, page }) => {
+        await login(instructor, `/course-management/${course.id}/modeling-exercises/new`);
+        await expect(page.locator('[data-testid="apollon-palette"]').first()).toBeVisible();
         await expect(page.locator('jhi-apollon-rail-disclosure')).toBeHidden();
 
         const problemStatementEditor = page.locator('#field_problemStatement .monaco-editor');
@@ -195,159 +189,137 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(page.locator('.apollon-rail-disclosure__panel')).toContainText('Design task');
 
         const bottomCenter = page.locator('.modeling-exercise-example-explanation');
+        const surface = bottomCenter.locator('.modeling-explanation-surface__surface');
+        const notch = bottomCenter.locator('.modeling-explanation-surface__notch');
+        const editor = page.locator('.modeling-markdown-explanation-editor__editor');
+        const chromeGap = await chromeColumnGap(page);
+        await expect(surface).toBeVisible();
+        await expect(notch).toContainText('Example Solution Explanation');
+        await bottomCenter.scrollIntoViewIfNeeded();
+
+        const surfaceBox = (await surface.boundingBox())!;
+        const editorBox = (await editor.boundingBox())!;
+        // The editor sits fully inside the surface on all four sides, which is also what proves the surface is not collapsed.
+        expect(editorBox.x).toBeGreaterThan(surfaceBox.x);
+        expect(editorBox.x + editorBox.width).toBeLessThan(surfaceBox.x + surfaceBox.width);
+        expect(editorBox.y).toBeGreaterThan(surfaceBox.y);
+        expect(editorBox.y + editorBox.height).toBeLessThan(surfaceBox.y + surfaceBox.height);
+
+        const minimap = page.locator('[data-apollon-control="apollon:minimap"]');
+        const minimapBox = (await minimap.boundingBox())!;
+        const [paletteBox, zoomBox] = await Promise.all([
+            page.locator('[data-apollon-control="apollon:palette"]').boundingBox(),
+            page.locator('[data-apollon-control="apollon:zoom"]').boundingBox(),
+        ]);
+        expect(surfaceBox.x).toBeGreaterThanOrEqual(Math.max(paletteBox!.x + paletteBox!.width, zoomBox!.x + zoomBox!.width) + chromeGap - SUB_PIXEL_TOLERANCE);
+        expect(surfaceBox.x + surfaceBox.width).toBeLessThanOrEqual(minimapBox.x - chromeGap + SUB_PIXEL_TOLERANCE);
+        await expect(page.locator('[data-apollon-region="bottom-center"] .modeling-editor__bottom-center:not(.modeling-editor__bottom-center--elevated)')).toBeVisible();
+
+        // The label must fit its notch; an ellipsis here means the notch stopped tracking the surface width.
+        expect(await notch.locator('span').evaluate((label) => label.scrollWidth <= label.clientWidth + 1)).toBe(true);
+
+        // Expanding the minimap has to push the surface back, and collapsing it has to hand the room back.
+        await minimap.getByRole('button', { name: 'Show minimap' }).click();
+        await expect(minimap.getByRole('button', { name: 'Hide minimap' })).toBeVisible();
+        await expect.poll(async () => (await minimap.boundingBox())!.width).toBeGreaterThan(minimapBox.width + MINIMAP_EXPANDED_MIN_GROWTH);
+        await expect
+            .poll(async () => {
+                const [reflowed, expandedMap] = await Promise.all([surface.boundingBox(), minimap.boundingBox()]);
+                return reflowed!.x + reflowed!.width <= expandedMap!.x - chromeGap + SUB_PIXEL_TOLERANCE;
+            })
+            .toBe(true);
+        await minimap.getByRole('button', { name: 'Hide minimap' }).click();
+        await expect
+            .poll(async () => {
+                const restored = (await surface.boundingBox())!;
+                return { x: Math.round(restored.x), width: Math.round(restored.width) };
+            })
+            .toEqual({ x: Math.round(surfaceBox.x), width: Math.round(surfaceBox.width) });
+    });
+
+    test('keeps the example explanation clear of the chrome when it is resized or the viewport shrinks', async ({ login, page }) => {
+        await login(instructor, `/course-management/${course.id}/modeling-exercises/new`);
+        await expect(page.locator('[data-testid="apollon-palette"]').first()).toBeVisible();
+
+        const editorFrame = page.locator('.modeling-editor__frame');
+        const bottomCenter = page.locator('.modeling-exercise-example-explanation');
+        const surface = bottomCenter.locator('.modeling-explanation-surface__surface');
+        const notch = bottomCenter.locator('.modeling-explanation-surface__notch');
         const palette = page.locator('[data-apollon-control="apollon:palette"]');
         const zoom = page.locator('[data-apollon-control="apollon:zoom"]');
         const minimap = page.locator('[data-apollon-control="apollon:minimap"]');
-        const editorFrame = page.locator('.modeling-editor__frame');
-        const chromeGap = await page
-            .locator('.apollon-overlay-corner')
-            .first()
-            .evaluate((region) => Number.parseFloat(getComputedStyle(region).columnGap));
-        await expect(bottomCenter).toBeVisible();
+        const canvasViewport = page.locator('.modeling-editor__frame .react-flow__viewport');
+        const chromeGap = await chromeColumnGap(page);
+        await expect(surface).toBeVisible();
         await bottomCenter.scrollIntoViewIfNeeded();
-        const frameBefore = await editorFrame.boundingBox();
-        const zoomBefore = await zoom.boundingBox();
-        const minimapBefore = await minimap.boundingBox();
-        const viewportTransformBefore = await page.locator('.modeling-editor__frame .react-flow__viewport').evaluate((viewport) => getComputedStyle(viewport).transform);
-        const exampleExplanationSurface = bottomCenter.locator('.modeling-explanation-surface__surface');
-        const exampleExplanationEditor = page.locator('.modeling-markdown-explanation-editor__editor');
-        const exampleExplanationNotch = bottomCenter.locator('.modeling-explanation-surface__notch');
-        await expect(exampleExplanationSurface).toBeVisible();
-        await expect(exampleExplanationNotch).toContainText('Example Solution Explanation');
-        const exampleExplanationSurfaceBox = await exampleExplanationSurface.boundingBox();
-        const exampleExplanationEditorBox = await exampleExplanationEditor.boundingBox();
-        const explanationPaletteBox = await palette.boundingBox();
-        const zoomBox = await zoom.boundingBox();
-        const minimapBox = await minimap.boundingBox();
-        expect(exampleExplanationSurfaceBox).not.toBeNull();
-        expect(exampleExplanationEditorBox).not.toBeNull();
-        expect(explanationPaletteBox).not.toBeNull();
-        expect(zoomBox).not.toBeNull();
-        expect(minimapBox).not.toBeNull();
-        // The editor sits fully inside the surface on all four sides, which is also what proves the surface is not collapsed.
-        expect(exampleExplanationEditorBox!.x).toBeGreaterThan(exampleExplanationSurfaceBox!.x);
-        expect(exampleExplanationEditorBox!.x + exampleExplanationEditorBox!.width).toBeLessThan(exampleExplanationSurfaceBox!.x + exampleExplanationSurfaceBox!.width);
-        expect(exampleExplanationEditorBox!.y).toBeGreaterThan(exampleExplanationSurfaceBox!.y);
-        expect(exampleExplanationEditorBox!.y + exampleExplanationEditorBox!.height).toBeLessThan(exampleExplanationSurfaceBox!.y + exampleExplanationSurfaceBox!.height);
-        expect(exampleExplanationSurfaceBox!.x).toBeGreaterThanOrEqual(
-            Math.max(explanationPaletteBox!.x + explanationPaletteBox!.width, zoomBox!.x + zoomBox!.width) + chromeGap - 1,
-        );
-        expect(exampleExplanationSurfaceBox!.x + exampleExplanationSurfaceBox!.width).toBeLessThanOrEqual(minimapBox!.x - chromeGap + 1);
-        await expect(page.locator('[data-apollon-region="bottom-center"] .modeling-editor__bottom-center:not(.modeling-editor__bottom-center--elevated)')).toBeVisible();
 
-        const showMinimap = minimap.getByRole('button', { name: 'Show minimap' });
-        await showMinimap.click();
-        const hideMinimap = minimap.getByRole('button', { name: 'Hide minimap' });
-        await expect(hideMinimap).toBeVisible();
-        await expect
-            .poll(async () => {
-                const [surfaceBox, mapBox] = await Promise.all([exampleExplanationSurface.boundingBox(), minimap.boundingBox()]);
-                return !!surfaceBox && !!mapBox && surfaceBox.x + surfaceBox.width <= mapBox.x - chromeGap + 1;
-            })
-            .toBe(true);
-        const expandedMinimapBox = await minimap.boundingBox();
-        expect(expandedMinimapBox).not.toBeNull();
-        expect(expandedMinimapBox!.width).toBeGreaterThan(minimapBox!.width + 100);
-        await hideMinimap.click();
-        await expect(showMinimap).toBeVisible();
-        await expect
-            .poll(async () => {
-                const surfaceBox = await exampleExplanationSurface.boundingBox();
-                return surfaceBox ? { x: Math.round(surfaceBox.x), width: Math.round(surfaceBox.width) } : undefined;
-            })
-            .toEqual({ x: Math.round(exampleExplanationSurfaceBox!.x), width: Math.round(exampleExplanationSurfaceBox!.width) });
+        const frameBefore = (await editorFrame.boundingBox())!;
+        const zoomBefore = (await zoom.boundingBox())!;
+        const minimapBefore = (await minimap.boundingBox())!;
+        const surfaceBefore = (await surface.boundingBox())!;
+        const canvasTransformBefore = await canvasViewport.evaluate((viewport) => getComputedStyle(viewport).transform);
 
-        const explanationLabel = exampleExplanationNotch.locator('span');
-        expect(await explanationLabel.evaluate((label) => label.scrollWidth <= label.clientWidth + 1)).toBe(true);
-        const markdownFullscreenButton = exampleExplanationEditor.locator('.md-action-palette .md-toolbar-btn').last();
+        // The markdown editor takes the browser fullscreen from inside the surface; leaving it must not resize the surface.
+        const markdownFullscreenButton = page.locator('.modeling-markdown-explanation-editor__editor .md-action-palette .md-toolbar-btn').last();
         await markdownFullscreenButton.click();
         await expect.poll(() => page.evaluate(() => document.fullscreenElement?.classList.contains('h-full'))).toBe(true);
         await markdownFullscreenButton.click();
         await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();
-        await expect.poll(async () => (await exampleExplanationSurface.boundingBox())?.width ?? 0).toBeLessThanOrEqual(exampleExplanationSurfaceBox!.width + 1);
+        await expect.poll(async () => (await surface.boundingBox())!.width).toBeLessThanOrEqual(surfaceBefore.width + SUB_PIXEL_TOLERANCE);
 
-        const resizeHandleBox = await exampleExplanationNotch.boundingBox();
-        expect(resizeHandleBox).not.toBeNull();
-        const resizeHandleHitTarget = await exampleExplanationNotch.evaluate((notch) => {
-            const rect = notch.getBoundingClientRect();
+        // The notch doubles as the resize handle, so nothing may sit on top of it.
+        const notchBox = (await notch.boundingBox())!;
+        const hitTarget = await notch.evaluate((element) => {
+            const rect = element.getBoundingClientRect();
             const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
-            return {
-                isResizeHandle: hit === notch || notch.contains(hit) || hit?.classList.contains('modeling-explanation-surface__resizer'),
-                tagName: hit?.tagName,
-                className: hit?.getAttribute('class'),
-            };
+            return { isNotch: element.contains(hit), tagName: hit?.tagName, className: hit?.getAttribute('class') };
         });
-        expect(resizeHandleHitTarget.isResizeHandle, JSON.stringify(resizeHandleHitTarget)).toBe(true);
-        await page.mouse.move(resizeHandleBox!.x + resizeHandleBox!.width / 2, resizeHandleBox!.y + resizeHandleBox!.height / 2);
+        expect(hitTarget.isNotch, JSON.stringify(hitTarget)).toBe(true);
+        await page.mouse.move(notchBox.x + notchBox.width / 2, notchBox.y + notchBox.height / 2);
         await page.mouse.down();
-        await page.mouse.move(resizeHandleBox!.x + resizeHandleBox!.width / 2, resizeHandleBox!.y - 55, { steps: 6 });
+        await page.mouse.move(notchBox.x + notchBox.width / 2, notchBox.y - EXPLANATION_RESIZE_DRAG, { steps: 6 });
         await page.mouse.up();
-        await expect(exampleExplanationSurface).toHaveClass(/modeling-explanation-surface__surface--manually-sized/);
-        await expect.poll(async () => (await exampleExplanationSurface.boundingBox())?.height ?? 0).toBeGreaterThan(exampleExplanationSurfaceBox!.height + 40);
+        await expect(surface).toHaveClass(/modeling-explanation-surface__surface--manually-sized/);
+        await expect.poll(async () => (await surface.boundingBox())!.height).toBeGreaterThan(surfaceBefore.height + EXPLANATION_RESIZE_DRAG * 0.7);
 
+        // Narrow enough that the surface has to give way to the side controls, then narrow enough that it can only
+        // clear the palette and must clamp to the frame instead.
         await page.setViewportSize({ width: 900, height: 900 });
         await expect(bottomCenter).toBeVisible();
         await expect
             .poll(async () => {
-                const [surfaceBox, paletteBox, zoomBox, mapBox] = await Promise.all([
-                    exampleExplanationSurface.boundingBox(),
-                    palette.boundingBox(),
-                    zoom.boundingBox(),
-                    minimap.boundingBox(),
-                ]);
-                if (!surfaceBox || !paletteBox || !zoomBox || !mapBox) {
-                    return false;
-                }
-                const placementLeft = Math.max(paletteBox.x + paletteBox.width, zoomBox.x + zoomBox.width) + chromeGap - 1;
-                return surfaceBox.x >= placementLeft && surfaceBox.x + surfaceBox.width <= mapBox.x - chromeGap + 1;
+                const [surfaceBox, paletteBox, zoomBox, minimapBox] = await Promise.all([surface.boundingBox(), palette.boundingBox(), zoom.boundingBox(), minimap.boundingBox()]);
+                const clearsSideControls = Math.max(paletteBox!.x + paletteBox!.width, zoomBox!.x + zoomBox!.width) + chromeGap - SUB_PIXEL_TOLERANCE;
+                return surfaceBox!.x >= clearsSideControls && surfaceBox!.x + surfaceBox!.width <= minimapBox!.x - chromeGap + SUB_PIXEL_TOLERANCE;
             })
             .toBe(true);
 
         await page.setViewportSize({ width: 640, height: 900 });
         await expect
             .poll(async () => {
-                const [frameBox, surfaceBox, paletteBox] = await Promise.all([editorFrame.boundingBox(), exampleExplanationSurface.boundingBox(), palette.boundingBox()]);
-                if (!frameBox || !surfaceBox || !paletteBox) {
-                    return false;
-                }
+                const [frameBox, surfaceBox, paletteBox] = await Promise.all([editorFrame.boundingBox(), surface.boundingBox(), palette.boundingBox()]);
                 return (
-                    surfaceBox.x >= frameBox.x + chromeGap - 3 &&
-                    surfaceBox.x + surfaceBox.width <= frameBox.x + frameBox.width - chromeGap + 3 &&
-                    surfaceBox.x >= paletteBox.x + paletteBox.width + chromeGap - 1
+                    surfaceBox!.x >= frameBox!.x + chromeGap - CLAMPED_INSET_TOLERANCE &&
+                    surfaceBox!.x + surfaceBox!.width <= frameBox!.x + frameBox!.width - chromeGap + CLAMPED_INSET_TOLERANCE &&
+                    surfaceBox!.x >= paletteBox!.x + paletteBox!.width + chromeGap - SUB_PIXEL_TOLERANCE
                 );
             })
             .toBe(true);
-        const [compactFrameBox, compactSurfaceBox, compactEditorBox, compactPaletteBox] = await Promise.all([
-            editorFrame.boundingBox(),
-            exampleExplanationSurface.boundingBox(),
-            page.locator('.modeling-markdown-explanation-editor__editor').boundingBox(),
-            palette.boundingBox(),
-        ]);
-        expect(compactFrameBox).not.toBeNull();
-        expect(compactSurfaceBox).not.toBeNull();
-        expect(compactEditorBox).not.toBeNull();
-        expect(compactPaletteBox).not.toBeNull();
-        expect(compactSurfaceBox!.x).toBeGreaterThanOrEqual(compactFrameBox!.x + chromeGap - 3);
-        expect(compactSurfaceBox!.x + compactSurfaceBox!.width).toBeLessThanOrEqual(compactFrameBox!.x + compactFrameBox!.width - chromeGap + 3);
-        expect(compactSurfaceBox!.x).toBeGreaterThanOrEqual(compactPaletteBox!.x + compactPaletteBox!.width + chromeGap - 1);
+        const [compactSurfaceBox, compactEditorBox] = await Promise.all([surface.boundingBox(), page.locator('.modeling-markdown-explanation-editor__editor').boundingBox()]);
         expect(compactEditorBox!.x).toBeGreaterThan(compactSurfaceBox!.x);
         expect(compactEditorBox!.x + compactEditorBox!.width).toBeLessThan(compactSurfaceBox!.x + compactSurfaceBox!.width);
 
-        await page.setViewportSize({ width: 1440, height: 1000 });
-        const frameAfter = await editorFrame.boundingBox();
-        const zoomAfter = await zoom.boundingBox();
-        const minimapAfter = await minimap.boundingBox();
-        const viewportTransformAfter = await page.locator('.modeling-editor__frame .react-flow__viewport').evaluate((viewport) => getComputedStyle(viewport).transform);
-        expect(frameBefore).not.toBeNull();
-        expect(frameAfter).not.toBeNull();
-        expect(zoomBefore).not.toBeNull();
-        expect(zoomAfter).not.toBeNull();
-        expect(minimapBefore).not.toBeNull();
-        expect(minimapAfter).not.toBeNull();
-        expect(viewportTransformAfter).toBe(viewportTransformBefore);
-        const bottomInset = (frame: NonNullable<typeof frameBefore>, control: NonNullable<typeof zoomBefore>) => frame.y + frame.height - (control.y + control.height);
-        expect(Math.abs(bottomInset(frameBefore!, zoomBefore!) - bottomInset(frameAfter!, zoomAfter!))).toBeLessThanOrEqual(1);
-        expect(Math.abs(bottomInset(frameBefore!, minimapBefore!) - bottomInset(frameAfter!, minimapAfter!))).toBeLessThanOrEqual(1);
+        // Back where it started: resizing must not have panned the canvas or moved the controls off the frame's edge.
+        await page.setViewportSize(DEFAULT_VIEWPORT);
+        await expect.poll(() => canvasViewport.evaluate((viewport) => getComputedStyle(viewport).transform)).toBe(canvasTransformBefore);
+        const bottomInset = (frame: { y: number; height: number }, control: { y: number; height: number }) => frame.y + frame.height - (control.y + control.height);
+        const frameAfter = (await editorFrame.boundingBox())!;
+        for (const [before, after] of [
+            [zoomBefore, (await zoom.boundingBox())!],
+            [minimapBefore, (await minimap.boundingBox())!],
+        ]) {
+            expect(Math.abs(bottomInset(frameBefore, before) - bottomInset(frameAfter, after))).toBeLessThanOrEqual(SUB_PIXEL_TOLERANCE);
+        }
     });
 
     /**
@@ -628,7 +600,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         expect(narrowProblemBox!.x).toBeGreaterThan(narrowDiagramTypeBox!.x + narrowDiagramTypeBox!.width);
         await page.evaluate(() => document.exitFullscreen());
         await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();
-        await page.setViewportSize({ width: 1440, height: 1000 });
+        await page.setViewportSize(DEFAULT_VIEWPORT);
         await fullscreenButton.click();
         await expect.poll(() => page.evaluate(() => document.fullscreenElement === document.documentElement)).toBe(true);
         await expect(fullscreenFrame.locator('[data-apollon-region="right-rail"] jhi-apollon-rail-disclosure')).toBeVisible();

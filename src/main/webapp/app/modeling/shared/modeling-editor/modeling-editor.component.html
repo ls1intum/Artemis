@@ -1,6 +1,11 @@
 <div class="modeling-editor" [class.modeling-editor--readonly]="readOnly()">
     @if (!readOnly()) {
-        <div #editorFrame class="modeling-editor__frame artemis-apollon-theme" [class.modeling-editor__frame--tile]="tile()">
+        <div
+            #editorFrame
+            class="modeling-editor__frame artemis-apollon-theme"
+            [class.modeling-editor__frame--tile]="tile()"
+            [class]="fullscreenActive() ? fullscreenFrameClasses : ''"
+        >
             <jhi-modeling-editor-help [(visible)]="helpVisible" />
 
             <div #editorTopLeftRegion class="modeling-editor__top-left-region nopan nodrag nowheel">

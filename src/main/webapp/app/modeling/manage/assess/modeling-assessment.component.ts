@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
@@ -19,6 +19,7 @@ import { normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { TranslateService } from '@ngx-translate/core';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ContentObserver } from '@angular/cdk/observers';
 import { ApollonRailDisclosureComponent } from 'app/modeling/shared/modeling-editor/apollon-rail-disclosure/apollon-rail-disclosure.component';
 import {
     RAIL_DISCLOSURE_MAX_HEIGHT,
@@ -56,11 +57,14 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private readonly translateService = inject(TranslateService);
     private readonly fullscreenPresentation = inject(FullscreenPresentationService);
+    private readonly contentObserver = inject(ContentObserver);
+    private readonly destroyRef = inject(DestroyRef);
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
     private readonly fullscreenSupported = document.fullscreenEnabled !== false;
     /** Public so a host can render the control in its own chrome cluster. */
     readonly fullscreenActive = signal(false);
+    protected readonly fullscreenFrameClasses = `modeling-assessment--fullscreen ${APOLLON_FULLSCREEN_FRAME_CLASS}`;
 
     private readonly topLeftRegion = viewChild<ElementRef<HTMLElement>>('topLeftRegion');
     private readonly topRightRegion = viewChild<ElementRef<HTMLElement>>('topRightRegion');
@@ -109,7 +113,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     /** Guards the one-off camera frame in {@link reserveRoomForPanel}. */
     private hasFramedForPanelInset = false;
     private readonly observedChromeResizeTargets = new Set<HTMLElement>();
-    private chromeMountObserver?: MutationObserver;
     private chromeResizeFrame?: number;
     private isUpdatingFromServer = false;
     protected readonly bottomCenterElevated = signal(false);
@@ -215,7 +218,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             window.cancelAnimationFrame(this.fitViewFrame);
         }
         this.observedChromeResizeTargets.clear();
-        this.chromeMountObserver?.disconnect();
         if (this.chromeResizeFrame !== undefined) {
             window.cancelAnimationFrame(this.chromeResizeFrame);
         }
@@ -341,10 +343,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.chromeResizeObserver = new ResizeObserver(() => this.scheduleChromePlacement());
         const bottomCenter = this.bottomCenterRegion()?.nativeElement;
         synchronizeResizeObserverTargets(this.chromeResizeObserver, this.observedChromeResizeTargets, [host, bottomCenter]);
-        if (typeof MutationObserver !== 'undefined') {
-            this.chromeMountObserver = new MutationObserver(() => this.scheduleChromePlacement());
-            this.chromeMountObserver.observe(host, { childList: true, subtree: true });
-        }
+        this.contentObserver
+            .observe(host)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => this.scheduleChromePlacement());
         this.scheduleChromePlacement();
     }
 
@@ -445,7 +447,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             return false;
         }
         this.fullscreenActive.set(true);
-        assessmentFrame.classList.add('modeling-assessment--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
         return true;
     }
 
@@ -465,7 +466,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         this.fullscreenPresentation.restore();
-        assessmentFrame?.classList.remove('modeling-assessment--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
         this.fullscreenActive.set(false);
     }
 

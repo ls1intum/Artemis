@@ -28,6 +28,8 @@ import { normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ContentObserver } from '@angular/cdk/observers';
+import { Subscription } from 'rxjs';
 import { ApollonRailDisclosureComponent } from 'app/modeling/shared/modeling-editor/apollon-rail-disclosure/apollon-rail-disclosure.component';
 import {
     RAIL_DISCLOSURE_MAX_HEIGHT,
@@ -75,6 +77,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private readonly elementRef = inject(ElementRef);
     private readonly translateService = inject(TranslateService);
     private readonly fullscreenPresentation = inject(FullscreenPresentationService);
+    private readonly contentObserver = inject(ContentObserver);
 
     protected readonly editorFrame = viewChild<ElementRef<HTMLElement>>('editorFrame');
     private readonly editorActions = viewChild<ElementRef<HTMLElement>>('editorActions');
@@ -89,6 +92,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     readonly helpVisible = signal(false);
     readonly fullscreenActive = signal(false);
+    protected readonly fullscreenFrameClasses = `modeling-editor__frame--fullscreen ${APOLLON_FULLSCREEN_FRAME_CLASS}`;
     readonly problemStatementVisible = signal(false);
     protected readonly problemStatementMaxHeight = signal(RAIL_DISCLOSURE_MAX_HEIGHT);
     protected readonly bottomCenterElevated = signal(false);
@@ -119,7 +123,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private problemStatementRegionMounted = false;
     private chromeResizeObserver: ResizeObserver | undefined;
     private readonly observedChromeResizeTargets = new Set<HTMLElement>();
-    private chromeMountObserver: MutationObserver | undefined;
+    private chromeMountSubscription?: Subscription;
     private chromeResizeFrame: number | undefined;
     private readOnlyExportRevision = 0;
 
@@ -420,14 +424,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     private observeChromeMount(): void {
         const editorFrame = this.editorFrame()?.nativeElement;
-        this.chromeMountObserver?.disconnect();
-        this.chromeMountObserver = undefined;
-        if (!editorFrame || typeof MutationObserver === 'undefined') {
-            return;
-        }
-
-        this.chromeMountObserver = new MutationObserver(() => this.scheduleChromePlacement());
-        this.chromeMountObserver.observe(editorFrame, { childList: true, subtree: true });
+        this.chromeMountSubscription?.unsubscribe();
+        this.chromeMountSubscription = editorFrame ? this.contentObserver.observe(editorFrame).subscribe(() => this.scheduleChromePlacement()) : undefined;
     }
 
     private observeChromeResizeTargets(...elements: Array<HTMLElement | null | undefined>): void {
@@ -568,7 +566,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         this.fullscreenActive.set(true);
         this.problemStatementVisible.set(!!this.problemStatement()?.trim());
         this.apollonEditor?.setScrollLock(false);
-        editorFrame.classList.add('modeling-editor__frame--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
         return true;
     }
 
@@ -598,7 +595,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         }
 
         this.fullscreenPresentation.restore();
-        editorFrame?.classList.remove('modeling-editor__frame--fullscreen', APOLLON_FULLSCREEN_FRAME_CLASS);
         this.fullscreenActive.set(false);
         this.apollonEditor?.setScrollLock(this.scrollLock());
     }
@@ -609,8 +605,8 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         this.chromeResizeObserver?.disconnect();
         this.chromeResizeObserver = undefined;
         this.observedChromeResizeTargets.clear();
-        this.chromeMountObserver?.disconnect();
-        this.chromeMountObserver = undefined;
+        this.chromeMountSubscription?.unsubscribe();
+        this.chromeMountSubscription = undefined;
         if (this.chromeResizeFrame !== undefined) {
             window.cancelAnimationFrame(this.chromeResizeFrame);
             this.chromeResizeFrame = undefined;

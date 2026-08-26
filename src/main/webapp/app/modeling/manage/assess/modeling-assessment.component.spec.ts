@@ -681,6 +681,7 @@ describe('ModelingAssessmentComponent', () => {
         try {
             await comp.toggleFullscreen();
             comp['onFullscreenChange']();
+            fixture.detectChanges();
 
             expect(document.documentElement.requestFullscreen).toHaveBeenCalledOnce();
             expect(comp.fullscreenActive()).toBe(true);
@@ -689,6 +690,7 @@ describe('ModelingAssessmentComponent', () => {
 
             await comp.toggleFullscreen();
             comp['onFullscreenChange']();
+            fixture.detectChanges();
 
             expect(api.exitFullscreen).toHaveBeenCalledOnce();
             expect(comp.fullscreenActive()).toBe(false);

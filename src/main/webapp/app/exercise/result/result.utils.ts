@@ -269,16 +269,9 @@ export const evaluateTemplateStatus = (
     return ResultTemplateStatus.NO_RESULT;
 };
 
-/**
- * A result does not necessarily belong to a participation. Example submissions (instructor-authored samples used for
- * tutor training) own a submission and a result directly, with no participation anywhere in the object graph — neither
- * as an explicit input nor via `result.submission.participation`. Results rendered from the exam summary or the
- * course-overview sidebar may likewise arrive with the participation stripped server-side.
- *
- * Every helper below therefore takes `participation: Participation | undefined` and answers "nothing
- * participation-specific is known" instead of throwing. Callers must not launder an absent participation through a
- * non-null assertion.
- */
+// A result does not necessarily belong to a participation: example submissions own one directly, and the exam summary
+// and course-overview sidebar strip it server-side. The helpers below therefore take an optional participation and
+// answer "nothing participation-specific is known" rather than throwing. Do not launder one in with a `!`.
 
 /**
  * The submission a result should be judged against: the result's own submission when present (it is the potentially
