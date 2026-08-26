@@ -40,6 +40,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
 import { ApollonEditor, UMLDiagramType } from '@tumaet/apollon';
 import { By } from '@angular/platform-browser';
+import { Location } from '@angular/common';
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
@@ -186,6 +187,21 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(pane).not.toBeNull();
         expect(pane.query(By.directive(AssessmentComplaintAlertComponent))).not.toBeNull();
         expect(pane.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+    });
+
+    // Regression: the URL rewrite after locking a random submission read `window.location.hash`, which is empty in
+    // this path-routed app. `''.replace(...)` stayed empty, so `location.go('')` discarded the assessment URL — a
+    // reload then no longer landed on the locked submission. It has to rewrite the real path, and only the `new` segment.
+    it('should rewrite only the new segment of the assessment path once a random submission is locked', async () => {
+        const location = TestBed.inject(Location);
+        vi.spyOn(location, 'path').mockReturnValue('/course-management/1/modeling-exercises/7/submissions/new/assessment?correction-round=0');
+        const go = vi.spyOn(location, 'go').mockImplementation(() => {});
+        vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(getSubmissionWithData()));
+
+        component['loadRandomSubmission'](7);
+        await fixture.whenStable();
+
+        expect(go).toHaveBeenCalledExactlyOnceWith('/course-management/1/modeling-exercises/7/submissions/1/assessment?correction-round=0');
     });
 
     describe('ngOnInit tests', () => {

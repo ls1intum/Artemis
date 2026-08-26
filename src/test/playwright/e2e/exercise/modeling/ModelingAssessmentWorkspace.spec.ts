@@ -28,7 +28,11 @@ test.describe('Modeling assessment workspace', { tag: '@fast' }, () => {
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
         await Commands.login(page, studentOne);
         const participation = await (await exerciseAPIRequests.startExerciseParticipation(modelingExercise.id!)).json();
-        await exerciseAPIRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation);
+        // The bottom-center region only mounts when there is an explanation to show, and this test pins that the
+        // tutor sees it beside the model, so the submission has to carry one.
+        await exerciseAPIRequests.makeModelingExerciseSubmission(modelingExercise.id!, participation, {
+            explanationText: 'I modelled the domain around a single aggregate root.',
+        });
         await Commands.login(page, instructor);
         await exerciseAPIRequests.updateModelingExerciseDueDate(modelingExercise, dayjs());
     });
@@ -112,7 +116,10 @@ test.describe('Modeling assessment workspace', { tag: '@fast' }, () => {
             JSON.stringify({ canvasBox, controlBoxes, footerBox }),
         ).toBe(true);
 
-        const emptyFeedback = workspace.locator('.unreferenced-feedback__empty');
-        await expect(emptyFeedback).toBeVisible();
+        // A fresh assessment has no unreferenced feedback yet, so the list shows its empty-state message rather than
+        // any feedback cards. `UnreferencedFeedbackComponent` renders that as a `tum-ui-message`.
+        const unreferencedFeedback = workspace.locator('.unreferenced-feedback');
+        await expect(unreferencedFeedback.locator('tum-ui-message')).toBeVisible();
+        await expect(unreferencedFeedback.locator('jhi-unreferenced-feedback-detail')).toHaveCount(0);
     });
 });

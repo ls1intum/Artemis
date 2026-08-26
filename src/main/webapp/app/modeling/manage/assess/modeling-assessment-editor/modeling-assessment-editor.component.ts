@@ -237,7 +237,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
 
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission()!.id}`);
+                // `window.location.hash` is empty in this path-routed app, so the old rewrite collapsed to
+                // `location.go('')` and threw the assessment URL away: a reload then landed somewhere else entirely
+                // instead of on the submission just locked. Rewrite the actual path, and only the `new` segment.
+                const newUrl = this.location.path().replace('/submissions/new/', `/submissions/${this.submission()!.id}/`);
                 this.location.go(newUrl);
             },
             error: (error: HttpErrorResponse) => {

@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import { Page, expect } from '@playwright/test';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
-import { admin, instructor, studentOne } from '../../../support/users';
+import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { Commands } from '../../../support/commands';
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
@@ -138,7 +138,9 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
 
     test('floats the notice over the canvas instead of taking height from it', async ({ login, page, exerciseAssessment }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
-        await login(instructor, `/course-management/${assessmentCourse.id}/assessment-dashboard/${assessmentExercise.id!}`);
+        // The tutor, not the instructor: this is the tutor assessment page, and the notice is gated on the logged-in
+        // user owning the (not yet submitted) assessment.
+        await login(tutor, `/course-management/${assessmentCourse.id}/assessment-dashboard/${assessmentExercise.id!}`);
         await dismissPasskeyReminderIfPresent(page);
         await exerciseAssessment.clickHaveReadInstructionsButton();
         await exerciseAssessment.clickStartNewAssessment();

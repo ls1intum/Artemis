@@ -73,12 +73,40 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         // The exercise template carries an example solution model, which is what the read-only detail diagram renders.
         existingExercise = await exerciseAPIRequests.createModelingExercise({ course });
 
+        // The submission template has no relationships, but one test opens assessment feedback on a relationship, so
+        // the model gets an association between two of its classes.
+        const model = JSON.parse(modelingExerciseSubmissionTemplate.model);
+        model.relationships.push({
+            id: 'e6ea1e64-9f0a-4a2b-8f0e-2a4a1c5d6e70',
+            type: 'ClassUnidirectional',
+            name: '',
+            owner: null,
+            bounds: { x: 100, y: 232, width: 240, height: 198 },
+            path: [
+                { x: 100, y: 0 },
+                { x: 100, y: 198 },
+                { x: 240, y: 198 },
+            ],
+            source: { direction: 'Down', element: '8786cede-a45c-4593-ac6a-b7ac235f1fae' },
+            target: { direction: 'Left', element: 'ccf5edad-98d5-401d-9885-e332607dfa6a' },
+            isManuallyLayouted: false,
+        });
+
         const exampleSubmissionResponse = await page.request.post(`api/assessment/exercises/${existingExercise.id}/example-submissions`, {
             data: {
                 exercise: existingExercise,
                 // Read-and-confirm is the mode the assessment-feedback test starts from.
                 usedForTutorial: false,
-                submission: { ...modelingExerciseSubmissionTemplate, id: null, participation: null, exampleSubmission: true },
+                submission: {
+                    ...modelingExerciseSubmissionTemplate,
+                    model: JSON.stringify(model),
+                    // The bottom-center region only mounts when there is an explanation, and one test asserts the
+                    // submission explanation sits there, separate from the assessment rationale.
+                    explanationText: 'The abstract class captures the shared behaviour of both concrete classes.',
+                    id: null,
+                    participation: null,
+                    exampleSubmission: true,
+                },
             },
         });
         expect(exampleSubmissionResponse.ok()).toBe(true);
@@ -724,7 +752,8 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await dismissPasskeyReminderIfPresent(page);
 
         const editWorkspace = page.locator('.example-submission-edit-split');
-        await expect(editWorkspace.getByRole('heading', { name: 'Instructions' })).toBeVisible();
+        // `exact`, or this also matches the collapsible "Assessment Instructions" header in the same pane.
+        await expect(editWorkspace.getByRole('heading', { name: 'Instructions', exact: true })).toBeVisible();
         const editEditor = editWorkspace.locator('jhi-modeling-editor');
         await editEditor.getByTestId('modeling-editor-fullscreen').click();
         await expect.poll(() => page.evaluate(() => document.fullscreenElement === document.documentElement)).toBe(true);
@@ -759,7 +788,7 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(page.getByRole('button', { name: 'Define assessment' })).toHaveAttribute('aria-pressed', 'true');
         await expect(page.getByRole('button', { name: 'Define assessment' })).toHaveClass(/apollon-chrome-iconbtn--toggle/);
         await expect(assessment.locator('.example-assessment-rationale')).toHaveCount(0);
-        await expect(workspace.getByRole('heading', { name: 'Instructions' })).toBeVisible();
+        await expect(workspace.getByRole('heading', { name: 'Instructions', exact: true })).toBeVisible();
         await expect(workspace.getByRole('heading', { name: 'Feedback', exact: true })).toBeVisible();
         await expectReadOnlyDiagramToFit(workspace.locator('[assessmentWorkspaceInstructions] jhi-modeling-editor'));
         await expect
