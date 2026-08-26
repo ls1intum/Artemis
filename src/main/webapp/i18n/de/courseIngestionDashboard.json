@@ -14,9 +14,9 @@
                 "reachable": "Weaviate erreichbar",
                 "unreachable": "Weaviate nicht erreichbar",
                 "address": "Adresse",
-                "irisModule": "Iris-Modul",
-                "enabled": "Aktiviert",
-                "disabled": "Deaktiviert"
+                "irisReachable": "Iris erreichbar",
+                "irisUnreachable": "Iris nicht erreichbar",
+                "irisDisabled": "Iris deaktiviert"
             },
             "collections": {
                 "title": "Indexierte Collections",

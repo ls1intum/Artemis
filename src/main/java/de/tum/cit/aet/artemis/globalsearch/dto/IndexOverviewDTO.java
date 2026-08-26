@@ -10,7 +10,8 @@ import java.util.List;
  * @param weaviateReachable whether the Weaviate instance is currently reachable
  * @param weaviateAddress   the configured Weaviate address (shown whether or not it is reachable)
  * @param irisEnabled       whether the Iris module is enabled (the Iris content collections only exist when it is)
+ * @param irisReachable     whether Iris is actually answering; always {@code false} when the module is disabled
  * @param collections       the per-collection live object counts
  */
-public record IndexOverviewDTO(boolean weaviateReachable, String weaviateAddress, boolean irisEnabled, List<IndexedCollectionCountDTO> collections) {
+public record IndexOverviewDTO(boolean weaviateReachable, String weaviateAddress, boolean irisEnabled, boolean irisReachable, List<IndexedCollectionCountDTO> collections) {
 }

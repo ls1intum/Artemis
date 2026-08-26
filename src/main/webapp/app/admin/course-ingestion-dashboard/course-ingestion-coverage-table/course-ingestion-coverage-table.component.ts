@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -124,18 +124,30 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     /** The active filter as the string the select-button binds to (empty = any). */
     protected readonly activeFilterValue = computed(() => (this.activeFilter() === undefined ? '' : String(this.activeFilter())));
 
-    protected readonly statusOptions: SelectOption[] = [
-        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.status.all'), value: '' },
-        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.COMPLETE'), value: 'COMPLETE' },
-        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.INCOMPLETE'), value: 'INCOMPLETE' },
-        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.EMPTY'), value: 'EMPTY' },
-    ];
+    /**
+     * Rebuilds the filter labels when the language changes. A field initialiser resolves once at construction, before
+     * the translations are loaded and never again, so the labels stayed on the English fallback in a German session.
+     */
+    private readonly languageChange = toSignal(this.translateService.onLangChange);
 
-    protected readonly activeOptions: SelectOption[] = [
-        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.all'), value: '' },
-        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.active'), value: 'true' },
-        { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.inactive'), value: 'false' },
-    ];
+    protected readonly statusOptions = computed<SelectOption[]>(() => {
+        this.languageChange();
+        return [
+            { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.status.all'), value: '' },
+            { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.COMPLETE'), value: 'COMPLETE' },
+            { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.INCOMPLETE'), value: 'INCOMPLETE' },
+            { label: this.translateService.instant('artemisApp.courseIngestionDashboard.status.EMPTY'), value: 'EMPTY' },
+        ];
+    });
+
+    protected readonly activeOptions = computed<SelectOption[]>(() => {
+        this.languageChange();
+        return [
+            { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.all'), value: '' },
+            { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.active'), value: 'true' },
+            { label: this.translateService.instant('artemisApp.courseIngestionDashboard.matrix.active.inactive'), value: 'false' },
+        ];
+    });
 
     constructor() {
         this.searchInput$.pipe(debounceTime(SEARCH_DEBOUNCE_MS), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef)).subscribe((term) => {

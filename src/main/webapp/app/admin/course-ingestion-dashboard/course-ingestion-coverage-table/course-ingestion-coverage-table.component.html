@@ -11,7 +11,7 @@
             data-testid="coverage-search"
         />
         <tum-ui-select-button
-            [options]="statusOptions"
+            [options]="statusOptions()"
             optionLabel="label"
             optionValue="value"
             size="small"
@@ -20,7 +20,7 @@
             [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.filterByStatus' | artemisTranslate"
         />
         <tum-ui-select-button
-            [options]="activeOptions"
+            [options]="activeOptions()"
             optionLabel="label"
             optionValue="value"
             size="small"
@@ -127,7 +127,7 @@
                             }
                             <td class="text-end">
                                 <span class="inline-flex items-center justify-end gap-2 {{ statusClass(row.status) }}">
-                                    <span aria-hidden="true">&#9679;</span>
+                                    <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
                                     <span class="text-sm" [jhiTranslate]="'artemisApp.courseIngestionDashboard.status.' + row.status"></span>
                                 </span>
                             </td>

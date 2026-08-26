@@ -18,6 +18,7 @@ describe('CourseIngestionOverviewComponent', () => {
         weaviateReachable: true,
         weaviateAddress: 'http://weaviate:8080',
         irisEnabled: true,
+        irisReachable: true,
         collections: [
             { collection: 'ArtemisSearchableEntity', count: 42, readable: true },
             { collection: 'LectureUnits', count: null, readable: false },
@@ -87,5 +88,34 @@ describe('CourseIngestionOverviewComponent', () => {
         expect(component.error()).toBe(true);
         expect(component.loading()).toBe(false);
         expect(component.overview()).toBeUndefined();
+    });
+
+    it('should report Iris as reachable when it answers', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(document.querySelector('[data-testid="iris-status"]')?.getAttribute('data-severity')).toBe('success');
+    });
+
+    it('should report Iris as unreachable when the module is on but it does not answer', async () => {
+        // Enabled is configuration; reachable is the question an admin is actually asking.
+        vi.spyOn(service, 'getIndexOverview').mockReturnValue(of({ ...reachableOverview, irisEnabled: true, irisReachable: false }));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(document.querySelector('[data-testid="iris-status"]')?.getAttribute('data-severity')).toBe('error');
+    });
+
+    it('should report Iris as disabled rather than unreachable when the module is off', async () => {
+        vi.spyOn(service, 'getIndexOverview').mockReturnValue(of({ ...reachableOverview, irisEnabled: false, irisReachable: false }));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(document.querySelector('[data-testid="iris-status"]')?.getAttribute('data-severity')).toBe('disabled');
     });
 });

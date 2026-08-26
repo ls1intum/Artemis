@@ -32,7 +32,7 @@
                             data-testid="weaviate-status"
                             [attr.data-severity]="o.weaviateReachable ? 'success' : 'error'"
                         >
-                            <span aria-hidden="true">&#9679;</span>
+                            <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
                             <span
                                 class="font-medium"
                                 [jhiTranslate]="
@@ -45,16 +45,31 @@
                             <span class="font-mono" data-testid="weaviate-address">{{ o.weaviateAddress }}</span>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 text-sm">
-                        <span jhiTranslate="artemisApp.courseIngestionDashboard.services.irisModule"></span>:
-                        <tum-ui-tag
-                            [severity]="o.irisEnabled ? 'success' : 'secondary'"
-                            [value]="
-                                (o.irisEnabled ? 'artemisApp.courseIngestionDashboard.services.enabled' : 'artemisApp.courseIngestionDashboard.services.disabled')
-                                    | artemisTranslate
-                            "
-                            rounded
-                        />
+                    <!-- Iris reports reachability like Weaviate above. Reporting only that the module is enabled read as
+                         healthy while Iris was down, which is exactly when an admin is looking. -->
+                    <div class="flex flex-col gap-1">
+                        @if (o.irisEnabled) {
+                            <div
+                                class="inline-flex items-center gap-2 {{ o.irisReachable ? 'text-state-success' : 'text-state-danger' }}"
+                                data-testid="iris-status"
+                                [attr.data-severity]="o.irisReachable ? 'success' : 'error'"
+                            >
+                                <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                                <span
+                                    class="font-medium"
+                                    [jhiTranslate]="
+                                        o.irisReachable
+                                            ? 'artemisApp.courseIngestionDashboard.services.irisReachable'
+                                            : 'artemisApp.courseIngestionDashboard.services.irisUnreachable'
+                                    "
+                                ></span>
+                            </div>
+                        } @else {
+                            <div class="inline-flex items-center gap-2 text-muted-color" data-testid="iris-status" data-severity="disabled">
+                                <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                                <span class="font-medium" jhiTranslate="artemisApp.courseIngestionDashboard.services.irisDisabled"></span>
+                            </div>
+                        }
                     </div>
                 </div>
             </tum-ui-card>
