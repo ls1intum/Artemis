@@ -101,7 +101,18 @@
                 "content_transcript": "Transcript",
                 "content_unit_summary": "Unit summary",
                 "content_segments": "Aligned segments",
-                "typeIncomplete": "type incomplete"
+                "typeIncomplete": "type incomplete",
+                "detailError": "Failed to load what is stored here. Please try again.",
+                "storedObjects": "Stored objects",
+                "noObjects": "No objects are stored here yet.",
+                "noContentUnit": "No content is stored for this unit yet.",
+                "noFields": "No populated fields.",
+                "notIngested": "Expected but not indexed:",
+                "notIndexedRecord": "This is not indexed, so there is no stored record.",
+                "statIndexed": "Indexed",
+                "statExpected": "Expected",
+                "statMissing": "Missing",
+                "breadcrumb": "Breadcrumb"
             },
             "status": {
                 "COMPLETE": "Complete",

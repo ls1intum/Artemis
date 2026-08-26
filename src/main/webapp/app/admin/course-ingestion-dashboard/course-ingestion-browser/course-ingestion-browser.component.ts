@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
 import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
+import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-detail/course-ingestion-browser-detail.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
@@ -20,7 +21,15 @@ import { BrowserSelection, CourseBrowserData, IngestionCoverage } from 'app/admi
 @Component({
     selector: 'jhi-course-ingestion-browser',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent, CourseIngestionBrowserTreeComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        TumUiDialogComponent,
+        TumUiMessageComponent,
+        TumUiTagComponent,
+        CourseIngestionBrowserTreeComponent,
+        CourseIngestionBrowserDetailComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './course-ingestion-browser.component.html',
 })
 export class CourseIngestionBrowserComponent {

@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityRecordDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
@@ -150,6 +151,45 @@ public class IngestionBrowserWeaviateReadService {
         }
         catch (Exception exception) {
             throw new WeaviateException("Failed to read the indexed entities for course " + courseId + ": " + exception.getMessage(), exception);
+        }
+    }
+
+    /**
+     * Reads the full stored records of one entity type for a course, property maps included, for the detail pane.
+     * <p>
+     * Scoped to a single type because that is what an admin selects, and because the property map carries the entity's
+     * body text: reading a whole course's records to show one type's would ship the rest for nothing.
+     *
+     * @param courseId the course to read
+     * @param type     the {@code SearchableEntitySchema.TypeValues} discriminator to read
+     * @return the stored records of that type, in no particular order
+     * @throws WeaviateException if the collection cannot be read
+     */
+    public List<IndexedEntityRecordDTO> listIndexedEntityRecords(long courseId, String type) {
+        try {
+            CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+            Filter filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId), Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type));
+
+            var response = collection.query.fetchObjects(builder -> builder.filters(filter).limit(ENTITY_READ_LIMIT).returnMetadata(Metadata.CREATION_TIME_UNIX));
+            List<WeaviateObject<Map<String, Object>>> objects = response.objects();
+            if (objects.size() >= ENTITY_READ_LIMIT) {
+                log.warn("Course {} returned the maximum {} '{}' records; the detail pane is showing a truncated view.", courseId, ENTITY_READ_LIMIT, type);
+            }
+
+            List<IndexedEntityRecordDTO> records = new ArrayList<>(objects.size());
+            for (WeaviateObject<Map<String, Object>> object : objects) {
+                Map<String, Object> properties = object.properties();
+                Long entityId = asLong(properties.get(SearchableEntitySchema.Properties.ENTITY_ID));
+                if (entityId == null) {
+                    continue;
+                }
+                records.add(new IndexedEntityRecordDTO(type, entityId, asString(properties.get(SearchableEntitySchema.Properties.TITLE)), creationTime(object),
+                        populatedOnly(properties)));
+            }
+            return records;
+        }
+        catch (Exception exception) {
+            throw new WeaviateException("Failed to read the '" + type + "' records for course " + courseId + ": " + exception.getMessage(), exception);
         }
     }
 

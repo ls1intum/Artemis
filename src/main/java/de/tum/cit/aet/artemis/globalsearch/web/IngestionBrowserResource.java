@@ -20,8 +20,10 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
+import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityRecordDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserWeaviateReadService;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService;
 
 /**
  * Admin-only, read-only endpoints for the per-course content browser: what the index holds for a course, and what it is
@@ -66,6 +68,25 @@ public class IngestionBrowserResource {
     public ResponseEntity<CourseBrowserDataDTO> getCourseBrowserData(@PathVariable long courseId) {
         requireCourse(courseId);
         return ResponseEntity.ok(browserService.loadCourseBrowserData(courseId));
+    }
+
+    /**
+     * GET .../courses/{courseId}/entities : the full stored records of one entity type for a course, property maps
+     * included. Fetched when an admin selects a type, a lecture or a unit in the tree, because those records carry the
+     * entity's body text and are not worth loading for a whole course up front.
+     *
+     * @param courseId the course to inspect
+     * @param type     the entity type to read
+     * @return the stored records of that type
+     */
+    @GetMapping("courses/{courseId}/entities")
+    public ResponseEntity<List<IndexedEntityRecordDTO>> getIndexedEntityRecords(@PathVariable long courseId, @RequestParam String type) {
+        requireCourse(courseId);
+        if (!IngestionCoverageWeaviateReadService.METADATA_TYPES.contains(type)) {
+            throw new BadRequestAlertException("Unknown entity type '" + type + "'; expected one of " + IngestionCoverageWeaviateReadService.METADATA_TYPES, ENTITY_NAME,
+                    "unknownEntityType");
+        }
+        return ResponseEntity.ok(browserReadService.listIndexedEntityRecords(courseId, type));
     }
 
     /**
