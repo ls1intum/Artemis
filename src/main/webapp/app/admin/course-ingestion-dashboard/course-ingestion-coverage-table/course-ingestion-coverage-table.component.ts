@@ -239,6 +239,13 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
         this.load();
     }
 
+    /** Changing the page size returns to the first page, since the old page number indexes a different-sized list. */
+    protected onPageSizeChange(size: number): void {
+        this.pageSize.set(size);
+        this.page.set(0);
+        this.load();
+    }
+
     protected onRefresh(): void {
         this.refreshing.set(true);
         this.dashboardService

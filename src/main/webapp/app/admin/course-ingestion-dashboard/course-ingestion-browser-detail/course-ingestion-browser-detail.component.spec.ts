@@ -150,13 +150,33 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         await settle();
 
         expect(component.labelledContent()).toHaveLength(60);
-        expect(component.pagedContent()).toHaveLength(25);
+        expect(component.pagedContent()).toHaveLength(20);
         expect(component.pagedContent()[0].label).toBe('Page 1');
 
         component.contentPage.set(1);
         fixture.detectChanges();
 
-        expect(component.pagedContent()[0].label).toBe('Page 26');
+        expect(component.pagedContent()[0].label).toBe('Page 21');
+    });
+
+    it('should honour a change of page size and return to the first page', async () => {
+        const many = Array.from({ length: 60 }, (_, index) => ({ properties: { page_number: index + 1 } }));
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(of(many));
+
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+        component.contentPage.set(2);
+        fixture.detectChanges();
+
+        // The paginator reports a size change separately from a page change; the size must actually take effect.
+        component['onPageSizeChange'](50);
+        fixture.detectChanges();
+
+        expect(component.pageSize()).toBe(50);
+        expect(component.pagedContent()).toHaveLength(50);
+        // Page 2 of a 20-row list does not exist in a 50-row one, so the view returns to the start.
+        expect(component.contentPage()).toBe(0);
+        expect(component.pagedContent()[0].label).toBe('Page 1');
     });
 
     it('should surface an error rather than an empty pane when a read fails', async () => {

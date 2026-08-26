@@ -222,4 +222,20 @@ describe('CourseIngestionCoverageTableComponent', () => {
 
         expect(emitted).toEqual([rows[0]]);
     });
+
+    it('should apply a page size change and reload from the first page', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component['onPageChange'](2);
+        await fixture.whenStable();
+        liveSpy.mockClear();
+
+        // The paginator emits a size change separately from a page change, so it needs its own handler to take effect.
+        component['onPageSizeChange'](50);
+        await fixture.whenStable();
+
+        expect(component.pageSize()).toBe(50);
+        expect(component.page()).toBe(0);
+        expect(liveSpy).toHaveBeenCalledWith(expect.objectContaining({ page: 0, size: 50 }));
+    });
 });
