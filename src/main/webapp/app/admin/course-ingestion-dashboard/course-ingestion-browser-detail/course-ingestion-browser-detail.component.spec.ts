@@ -71,6 +71,13 @@ describe('CourseIngestionBrowserDetailComponent', () => {
 
         expect(query('detail-type')).toBeTruthy();
         expect(query('detail-missing-list')?.textContent).toContain('Sorting');
+
+        // Indexed, expected and missing each read as their own figure rather than a run-on line of label-colon-value.
+        const stats = query('detail-type-stats');
+        expect(stats).toBeTruthy();
+        expect(stats?.textContent).toContain('2');
+        expect(stats?.textContent).toContain('3');
+        expect(stats?.textContent).toContain('1');
     });
 
     it('should read the stored records for the selected type', async () => {
