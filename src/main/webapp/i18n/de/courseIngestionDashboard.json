@@ -100,7 +100,8 @@
                 "content_slides": "Folien",
                 "content_transcript": "Transkript",
                 "content_unit_summary": "Einheit-Zusammenfassung",
-                "content_segments": "Ausgerichtete Segmente"
+                "content_segments": "Ausgerichtete Segmente",
+                "typeIncomplete": "Typ unvollständig"
             },
             "status": {
                 "COMPLETE": "Vollständig",

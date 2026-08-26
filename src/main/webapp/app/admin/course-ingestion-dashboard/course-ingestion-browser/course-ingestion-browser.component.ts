@@ -43,6 +43,11 @@ export class CourseIngestionBrowserComponent {
     /** How many measured types are not fully indexed, shown as the header chip. */
     readonly incompleteTypeCount = computed(() => this.course().typeCounts.filter((count) => count.missing > 0 || count.orphaned > 0).length);
 
+    /** The chip's label key, so one incomplete type does not read as "1 types incomplete" in either language. */
+    readonly incompleteTypesLabelKey = computed(() =>
+        this.incompleteTypeCount() === 1 ? 'artemisApp.courseIngestionDashboard.browser.typeIncomplete' : 'artemisApp.courseIngestionDashboard.browser.typesIncomplete',
+    );
+
     /** True once loading finished and the index turned out to hold nothing at all for this course. */
     readonly isEmpty = computed(() => {
         const loaded = this.data();

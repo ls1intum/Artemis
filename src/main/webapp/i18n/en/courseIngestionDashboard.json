@@ -100,7 +100,8 @@
                 "content_slides": "Slides",
                 "content_transcript": "Transcript",
                 "content_unit_summary": "Unit summary",
-                "content_segments": "Aligned segments"
+                "content_segments": "Aligned segments",
+                "typeIncomplete": "type incomplete"
             },
             "status": {
                 "COMPLETE": "Complete",

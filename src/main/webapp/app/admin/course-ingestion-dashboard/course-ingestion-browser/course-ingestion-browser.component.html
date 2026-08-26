@@ -11,12 +11,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2 w-full">
             <span class="truncate">{{ course().courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course().courseId }}</span>
             @if (incompleteTypeCount() > 0) {
-                <tum-ui-tag
-                    severity="danger"
-                    rounded
-                    [value]="incompleteTypeCount() + ' ' + ('artemisApp.courseIngestionDashboard.browser.typesIncomplete' | artemisTranslate)"
-                    data-testid="incomplete-types-chip"
-                />
+                <tum-ui-tag severity="danger" rounded [value]="incompleteTypeCount() + ' ' + (incompleteTypesLabelKey() | artemisTranslate)" data-testid="incomplete-types-chip" />
             }
         </div>
     </ng-template>
