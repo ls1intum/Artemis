@@ -19,7 +19,7 @@ import {
  * A unit can hold hundreds of content chunks, so both stored lists are paged rather than rendered whole. The default
  * has to be one of the sizes the paginator offers, or its rows-per-page control opens with nothing selected.
  */
-const DEFAULT_PAGE_SIZE = 20;
+const DEFAULT_PAGE_SIZE = 10;
 
 /** A breadcrumb step back up the tree. */
 interface Crumb {

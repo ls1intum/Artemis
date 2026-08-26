@@ -166,13 +166,13 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         await settle();
 
         expect(component.labelledContent()).toHaveLength(60);
-        expect(component.pagedContent()).toHaveLength(20);
+        expect(component.pagedContent()).toHaveLength(10);
         expect(component.pagedContent()[0].label).toBe('Page 1');
 
         component.contentPage.set(1);
         fixture.detectChanges();
 
-        expect(component.pagedContent()[0].label).toBe('Page 21');
+        expect(component.pagedContent()[0].label).toBe('Page 11');
     });
 
     it('should honour a change of page size and return to the first page', async () => {
@@ -190,7 +190,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
 
         expect(component.pageSize()).toBe(50);
         expect(component.pagedContent()).toHaveLength(50);
-        // Page 2 of a 20-row list does not exist in a 50-row one, so the view returns to the start.
+        // Page 2 of a 10-row list does not exist in a 50-row one, so the view returns to the start.
         expect(component.contentPage()).toBe(0);
         expect(component.pagedContent()[0].label).toBe('Page 1');
     });
