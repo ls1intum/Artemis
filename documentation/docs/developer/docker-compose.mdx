@@ -98,11 +98,13 @@ JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64SECRET="<output of: openssl rand -bas
 ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD="<a unique password>"
 ```
 
-If your setup also activates `localvc` or `buildagent` - the setups listed above do not - add a build-agent git password of your own, because the shipped one is rejected as well:
+If your setup also activates `localvc` **without** `localci` - the Jenkins with LocalVC shape - add a build-agent git password of your own, because the shipped one is rejected as well:
 
 ```bash
-ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync with the build agents>"
+ARTEMIS_VERSIONCONTROL_BUILDAGENTGITPASSWORD="<a unique password, kept in sync with Jenkins>"
 ```
+
+Do **not** set it where `localci` is active: such a node refuses to start with it, because its build agents authenticate per build job and need no shared secret. See [Build Agent Authentication](/admin/production-setup/security#build-agent-authentication).
 
 Hand the file to the setup with a small override file, `docker/local-secrets.yml`:
 

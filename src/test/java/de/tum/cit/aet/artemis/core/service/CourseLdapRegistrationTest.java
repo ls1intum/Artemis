@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
@@ -44,6 +45,9 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
 
     @Autowired
     private UserCourseRoleTestRepository userCourseRoleTestRepository;
+
+    @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
 
     @BeforeEach
     void initTestCase() {
@@ -86,7 +90,7 @@ class CourseLdapRegistrationTest extends AbstractSpringIntegrationLocalCILocalVC
         // repository they were unable to clone or push to.
         var importedUser = userRepository.findOneByLogin(userName).orElseThrow();
         assertThat(importedUser.getActivated()).as("imported LDAP user is activated").isTrue();
-        assertThat(importedUser.getActivationKey()).as("imported LDAP user gets no activation key").isNull();
+        assertThat(userRecoveryKeyService.findActivationKey(importedUser.getId())).as("imported LDAP user gets no activation key").isNull();
     }
 
     @Test

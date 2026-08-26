@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -34,6 +35,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -764,7 +768,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         @WithMockUser(username = "admin", roles = "ADMIN")
         void updateUser_recordsTheCredentialChangeWhenDeactivating() throws Exception {
             User user = userUtilService.createAndSaveUser(TEST_PREFIX + "deactivated");
-            assertThat(user.getCredentialsChangedDate()).isNull();
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).isNull();
 
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
             managedUserVM.setId(user.getId());
@@ -775,14 +779,14 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
             User updated = userTestRepository.findOneByLogin(user.getLogin()).orElseThrow();
             assertThat(updated.getActivated()).isFalse();
-            assertThat(updated.getCredentialsChangedDate()).as("deactivating through the admin form has to end existing sessions too").isNotNull();
+            assertThat(userActivityService.findCredentialsChangedDate(updated.getId())).as("deactivating through the admin form has to end existing sessions too").isNotNull();
         }
 
         @Test
         @WithMockUser(username = "admin", roles = "ADMIN")
         void updateUser_recordsTheCredentialChangeWhenResettingThePassword() throws Exception {
             User user = userUtilService.createAndSaveUser(TEST_PREFIX + "newpassword");
-            assertThat(user.getCredentialsChangedDate()).isNull();
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).isNull();
 
             ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
             managedUserVM.setId(user.getId());
@@ -793,8 +797,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
 
-            assertThat(userTestRepository.findOneByLogin(user.getLogin()).orElseThrow().getCredentialsChangedDate())
-                    .as("a password set by an admin has to end sessions established before it").isNotNull();
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).as("a password set by an admin has to end sessions established before it").isNotNull();
         }
 
         @Test
@@ -809,8 +812,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
 
-            assertThat(userTestRepository.findOneByLogin(user.getLogin()).orElseThrow().getCredentialsChangedDate())
-                    .as("editing a name is not a credential change and must not log the user out").isNull();
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).as("editing a name is not a credential change and must not log the user out").isNull();
         }
     }
 }
