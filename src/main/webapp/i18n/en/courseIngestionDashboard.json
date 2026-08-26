@@ -112,7 +112,9 @@
                 "statIndexed": "Indexed",
                 "statExpected": "Expected",
                 "statMissing": "Missing",
-                "breadcrumb": "Breadcrumb"
+                "breadcrumb": "Breadcrumb",
+                "metaLecture": "The record stored for this lecture in the SearchableEntities collection.",
+                "metaUnit": "The record stored for this unit in the SearchableEntities collection."
             },
             "status": {
                 "COMPLETE": "Complete",

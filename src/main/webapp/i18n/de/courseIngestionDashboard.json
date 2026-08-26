@@ -112,7 +112,9 @@
                 "statIndexed": "Indexiert",
                 "statExpected": "Erwartet",
                 "statMissing": "Fehlend",
-                "breadcrumb": "Navigationspfad"
+                "breadcrumb": "Navigationspfad",
+                "metaLecture": "Der für diese Vorlesung in der SearchableEntities-Sammlung gespeicherte Datensatz.",
+                "metaUnit": "Der für diese Einheit in der SearchableEntities-Sammlung gespeicherte Datensatz."
             },
             "status": {
                 "COMPLETE": "Vollständig",
