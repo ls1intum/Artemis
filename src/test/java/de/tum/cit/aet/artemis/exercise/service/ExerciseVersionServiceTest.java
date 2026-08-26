@@ -609,9 +609,8 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         // Administrative / structural fields that must NOT trigger. competencyLinks is intentionally
         // here (not content-bearing): an orchestrator-driven link edit must not re-arm the pipeline.
         Set<String> competencyIrrelevant = Set.of("id", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate", "dueDate",
-                "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "allowFeedbackRequests", "includedInOverallScore",
-                "gradingInstructions", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "feedbackSuggestionModule", "gradingCriteria",
-                "plagiarismDetectionConfig",
+                "assessmentDueDate", "exampleSolutionPublicationDate", "mode", "allowComplaintsForAutomaticAssessments", "includedInOverallScore", "gradingInstructions",
+                "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled", "gradingCriteria", "plagiarismDetectionConfig",
                 // classified per-field via the dotted allowlist entries: repo commits for programmingData,
                 // the extracted components for modelingData / quizData.
                 "programmingData", "modelingData", "quizData");

@@ -406,7 +406,7 @@
                                     (change)="changeAutoOrchestratorEnabled()"
                                 />
                                 <label class="form-control-label" jhiTranslate="artemisApp.course.autoOrchestration.label" for="field_autoOrchestratorEnabled"></label>
-                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.autoOrchestration.tooltip' | artemisTranslate }}" />
+                                <fa-icon [icon]="faQuestionCircle" class="text-secondary" [tumUiTooltip]="'artemisApp.course.autoOrchestration.tooltip' | artemisTranslate" />
                             </div>
                             @if (courseForm.get('autoOrchestratorEnabled')?.value) {
                                 <div class="row mt-2">
