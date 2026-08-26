@@ -40,7 +40,7 @@ export class LectureUnitComponent implements OnDestroy {
     viewIsolatedButtonLabel = input<string>('artemisApp.textUnit.isolated');
     viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
     isPresentationMode = input.required<boolean>();
-    /** A pending jump into this unit; set only when the deep link targets it. */
+    /** A pending jump into this unit; set only when the lecture's deep link targets it. */
     readonly deepLink = input<LectureDeepLink | undefined>(undefined);
 
     readonly showOriginalVersionButton = input<boolean>(false);
@@ -61,8 +61,8 @@ export class LectureUnitComponent implements OnDestroy {
     readonly isStudentPath = computed(() => this.router.url.startsWith('/courses'));
 
     constructor() {
-        // Every deep link is executed, however the card currently looks: the user may have collapsed the unit or
-        // scrolled on since the last jump, and asking for the same place again has to bring them back there.
+        // Executed however the card currently looks: the user may have collapsed the unit or scrolled on since the last
+        // jump, so asking for the same place again has to bring them back.
         effect(
             (onCleanup) => {
                 const deepLink = this.deepLink();

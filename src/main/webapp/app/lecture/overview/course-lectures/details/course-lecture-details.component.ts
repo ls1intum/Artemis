@@ -153,12 +153,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly toggleSidebar = (): void => this.sidebarToggle()?.();
 
     private readonly deepLinkState = signal<LectureDeepLink | undefined>(undefined);
-    /** The jump the page is currently executing (Iris citation, global search result, pasted link). */
     readonly deepLink = this.deepLinkState.asReadonly();
-    /**
-     * A deep link read from the URL that still waits for its lecture to finish loading, together with the lecture it
-     * arrived for — without that, it could be executed against whichever lecture happens to load next.
-     */
+    /** A jump waiting for its lecture to load, with the lecture it arrived for — else another one could execute it. */
     private pendingDeepLink?: { readonly deepLink: LectureDeepLink; readonly lectureId: number };
 
     // ViewChildren to access all attachment/video unit components
@@ -203,9 +199,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             const lectureId = +params.lectureId;
             if (lectureId !== this.lectureId) {
-                // This component outlives the lecture: Angular reuses it for a new lectureId, so a jump belonging to
-                // the lecture being left must not stay behind. A request that came in for the lecture being entered is
-                // the one exception, which is why it is only dropped when it names another one.
+                // Angular reuses this component for a new lectureId, so a jump belonging to the lecture being left must
+                // not stay behind — except one that came in for the lecture being entered.
                 this.deepLinkState.set(undefined);
                 if (this.pendingDeepLink && this.pendingDeepLink.lectureId !== lectureId) {
                     this.pendingDeepLink = undefined;
@@ -219,8 +214,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        // A jump that survived a page load: a shared or pasted link, a bookmark, a reload. The URL is the only thing
-        // that crosses a cold start, so this is the way in from outside the running app.
+        // A jump that survived a page load — a shared link, a bookmark, a reload. The URL is the only carrier that
+        // crosses a cold start; jumps issued inside the running app come through the service below instead.
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const deepLink = parseLectureDeepLink(params);
             if (deepLink) {
@@ -228,14 +223,12 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        // A jump issued inside the running app while this page is already on screen, handed over without touching the
-        // URL. Both ways in end up below, so a jump is executed the same however it arrived.
         this.deepLinkService.requests.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((deepLink) => this.acceptDeepLink(deepLink));
     }
 
     private acceptDeepLink(deepLink: LectureDeepLink): void {
-        // The snapshot, not `lectureId`: it is already advanced to the lecture the link arrived with, while the field
-        // is only set once the route parameters are reported, which happens after the query parameters.
+        // The snapshot, not `lectureId`: it already names the lecture the link arrived with, while the field is only
+        // set once the route parameters are reported, which happens after the query parameters.
         this.pendingDeepLink = { deepLink, lectureId: Number(this.activatedRoute.snapshot.params['lectureId']) };
         this.publishDeepLink();
     }
@@ -335,11 +328,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Hands the pending deep link to the units, once the lecture it arrived for is the loaded one.
-     *
-     * The route reports the link while the page is still loading, and a link into another lecture even arrives before
-     * the switch, so until then it waits and loadData publishes it. A link naming a unit this lecture does not have
-     * simply matches no card. It is published at most once, as executing the same request twice would jump twice.
+     * Hands the pending jump to the units, once the lecture it arrived for is the loaded one — a link can arrive before
+     * its lecture, so until then it waits and loadData publishes it. Published at most once: twice would jump twice.
      */
     private publishDeepLink(): void {
         const pending = this.pendingDeepLink;

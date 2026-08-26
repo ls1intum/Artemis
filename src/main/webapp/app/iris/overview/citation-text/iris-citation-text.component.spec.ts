@@ -153,9 +153,9 @@ describe('IrisCitationTextComponent', () => {
     });
 
     describe('navigating to a citation', () => {
-        const clickCitation = () => {
+        const clickCitation = (marker = '[cite:L:7:3:::Key:]') => {
             const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
-            const el = render('[cite:L:7:3:::Key:]', citationInfo);
+            const el = render(marker, citationInfo);
             const citation = el.querySelector('.iris-citation--clickable') as HTMLElement;
             expect(citation).toBeTruthy();
             citation.click();
@@ -167,6 +167,15 @@ describe('IrisCitationTextComponent', () => {
             clickCitation();
 
             expect(jump).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { unitId: 7, timestamp: undefined, page: 3 });
+        });
+
+        it('drops a page a citation cannot be honoured with, as a URL carrying the same value would be', () => {
+            const jump = vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump').mockImplementation(() => {});
+
+            clickCitation('[cite:L:7:0:::Key:]');
+
+            // A jump handed over directly skips the query parameters, so it must not skip their rules with them.
+            expect(jump).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], expect.objectContaining({ page: undefined }));
         });
     });
 

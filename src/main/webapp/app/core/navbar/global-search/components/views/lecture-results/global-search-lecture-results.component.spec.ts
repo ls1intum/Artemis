@@ -165,7 +165,9 @@ describe('GlobalSearchLectureResultsComponent', () => {
     });
 
     describe('Keyboard navigation', () => {
-        const jumpSpy = () => vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump');
+        // Stubbed out: what the jump does with the link is the service's own business, and letting it run would send
+        // the test router at a URL no route in this TestBed matches.
+        const jumpSpy = () => vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump').mockImplementation(() => {});
 
         it('should jump to the result when Enter is pressed on a selected result', () => {
             (component as any).lectureResults.set([mockResult]);
@@ -187,6 +189,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
+            jumpSpy();
             const close = vi.spyOn(TestBed.inject(SearchOverlayService), 'close');
 
             component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));

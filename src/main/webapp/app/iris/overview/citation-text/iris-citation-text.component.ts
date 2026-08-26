@@ -3,6 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
+import { lectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
 import { IrisCitationParsed } from './iris-citation-text.model';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
@@ -305,11 +306,11 @@ export class IrisCitationTextComponent {
             return;
         }
 
-        this.deepLinkService.jump(['/courses', courseId, 'lectures', lectureId], {
-            unitId: Number(unitId),
-            timestamp: timestamp ? Number(timestamp) : undefined,
-            page: page ? Number(page) : undefined,
-        });
+        // Through the model, not by hand: a jump handed over directly skips the query parameters, not their rules.
+        const deepLink = lectureDeepLink(Number(unitId), timestamp ? Number(timestamp) : undefined, page ? Number(page) : undefined);
+        if (deepLink) {
+            this.deepLinkService.jump(['/courses', courseId, 'lectures', lectureId], deepLink);
+        }
     }
 
     /**

@@ -296,10 +296,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         });
 
-        // Execute every jump that arrives, even when it asks for the place the unit is already showing: the user may
-        // have scrolled the video on or paged through the slides since, and clicking that citation again has to bring
-        // them back. Player and viewer read the target from their inputs while they are being created; once they are
-        // on screen those inputs are past and only this call still moves them.
+        // Player and viewer read the target from their inputs only while being created; once on screen, this is the
+        // only thing that still moves them, which is what makes a repeated jump work.
         effect(() => {
             const deepLink = this.matchedDeepLink();
             if (deepLink) {
@@ -309,15 +307,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     /**
-     * Moves the video and the slides to the place the deep link asks for, as far as they are already on screen.
+     * Moves video and slides to the place asked for, as far as they are on screen.
      *
-     * The video is seeked first: with synchronization enabled it drags the slides along to the segment's page, and the
-     * link's own page has to be the one that survives.
+     * Seeks first: with synchronization on, that drags the slides to the segment's page, and the link's own page has to
+     * be the one that survives.
      */
     private applyDeepLink(deepLink: LectureDeepLink): void {
         if (deepLink.timestamp !== undefined) {
             const videoPlayer = this.videoPlayer();
-            // Seeking must not start playback: a citation takes the user to a place, it does not play it for them.
+            // Never start playback: a citation takes the user to a place, it does not play it for them.
             if (videoPlayer) {
                 videoPlayer.seekTo(deepLink.timestamp, false);
             } else {
@@ -326,8 +324,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
 
         const pdfViewer = this.pdfViewer();
-        // Slides that already show the requested page stay untouched, so the marker below cannot outlive a page change
-        // that never happens. Bringing the viewer back into view is the card's part of the jump.
+        // Slides already on the requested page stay untouched, so the marker below cannot outlive a change that never happens.
         if (deepLink.page !== undefined && pdfViewer && pdfViewer.getCurrentPage() !== deepLink.page) {
             // Tells onPdfCurrentPageChange that this page change is ours, so synchronization does not answer it by
             // seeking the video away from the timestamp we just set.

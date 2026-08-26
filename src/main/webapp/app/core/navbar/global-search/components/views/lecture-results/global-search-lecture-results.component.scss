@@ -23,6 +23,9 @@
 .lecture-result-card {
     background: var(--module-bg);
     border-radius: 0.5rem;
+
+    // The card opens a result on click but carries no href, and an anchor without one keeps the text cursor.
+    cursor: pointer;
     transition:
         border-color 0.15s,
         background 0.15s;

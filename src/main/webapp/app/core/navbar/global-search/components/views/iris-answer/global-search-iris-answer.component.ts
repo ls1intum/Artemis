@@ -56,12 +56,7 @@ export class GlobalSearchIrisAnswerComponent {
     private readonly deepLinkService = inject(LectureDeepLinkService);
     private readonly overlay = inject(SearchOverlayService);
 
-    /**
-     * Opens the lecture unit this source points at.
-     *
-     * A jump that stays on the page the user is already on does not navigate, so the overlay has to be closed here —
-     * the modal otherwise closes itself on the navigation that no longer happens.
-     */
+    /** Closes the overlay itself: the modal otherwise rides on a navigation, which a same-page jump no longer makes. */
     protected openSource(source: LectureSearchResult): void {
         this.deepLinkService.jump(source.lectureUnit.link, parseLectureDeepLink(source.lectureUnit.queryParams));
         this.overlay.close();
