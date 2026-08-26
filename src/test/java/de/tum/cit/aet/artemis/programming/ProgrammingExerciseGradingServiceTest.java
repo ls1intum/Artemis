@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
@@ -1437,7 +1438,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(result.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
         int typedFeedbackCount = testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())).size()
                 + scaFeedbackRepository.findByResultIds(List.of(result.getId())).size();
-        assertThat(result.getFeedbacks().size() + typedFeedbackCount).isEqualTo(feedbackSize);
+        // A loader that promises feedback attaches the synthesized view of the typed rows to getFeedbacks(), so adding
+        // both counts would count those rows twice. A synthesized view carries a negative (synthetic) id, which is what
+        // tells it apart from feedback that genuinely lives in the feedback table.
+        long ownFeedbackCount = result.getFeedbacks().stream()
+                .filter(feedback -> feedback.getId() == null || !ProgrammingFeedbackSynthesizerService.isSyntheticId(feedback.getId())).count();
+        assertThat(ownFeedbackCount + typedFeedbackCount).isEqualTo(feedbackSize);
         assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
 
         Exercise exercise = result.getSubmission().getParticipation().getExercise();
