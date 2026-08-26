@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.assessment.dto.BonusResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.SubmissionManualResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
@@ -531,6 +532,10 @@ public class ExamService {
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
+        // The first correction round is reported next to the final score, and the participations above carry only the
+        // newest result per submission, which is what the final score is built from. Read the manual results of those
+        // submissions once here so the statistic can name the earlier round without widening that fetch.
+        Map<Long, List<SubmissionManualResultDTO>> manualResultsBySubmissionId = loadManualResultsForFirstCorrection(exam, participationsByStudentId.values());
         for (StudentExam studentExam : studentExams) {
             var studentGrades = new HashSet<>(gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
             var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
@@ -544,7 +549,7 @@ public class ExamService {
             }
 
             var studentResult = calculateStudentResultWithGrade(studentExam, studentGrades, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping, examBonusCalculator,
-                    studentExercises, participations);
+                    studentExercises, participations, manualResultsBySubmissionId);
             studentResults.add(studentResult);
         }
 
@@ -581,7 +586,7 @@ public class ExamService {
         var exercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
         var participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
         var studentResult = calculateStudentResultWithGrade(studentExam, studentExamGrades, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator, exercises,
-                participations);
+                participations, Map.of());
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
@@ -872,7 +877,8 @@ public class ExamService {
      */
     private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, Set<ExamGradeScoreDTO> examGrades, Exam exam, Optional<GradingScale> gradingScale,
             boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts, PlagiarismMapping plagiarismMapping,
-            ExamBonusCalculator examBonusCalculator, List<Exercise> studentExercises, List<StudentParticipation> participations) {
+            ExamBonusCalculator examBonusCalculator, List<Exercise> studentExercises, List<StudentParticipation> participations,
+            Map<Long, List<SubmissionManualResultDTO>> manualResultsBySubmissionId) {
         User user = studentExam.getUser();
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
             String noParticipationGrade = gradingScale.map(GradingScale::getNoParticipationGradeOrDefault).orElse(GradingScale.DEFAULT_NO_PARTICIPATION_GRADE);
@@ -907,7 +913,8 @@ public class ExamService {
                 overallPointsAchieved += achievedPoints;
             }
             if (calculateFirstCorrectionPoints) {
-                double firstCorrectionPoints = calculateFirstCorrectionPoints(studentParticipation, exam, examGrade, plagiarismPointDeductionPercentage);
+                double firstCorrectionPoints = calculateFirstCorrectionPoints(studentParticipation, exam, examGrade, plagiarismPointDeductionPercentage,
+                        manualResultsBySubmissionId);
                 overallPointsAchievedInFirstCorrection += firstCorrectionPoints;
             }
 
@@ -975,7 +982,31 @@ public class ExamService {
      * @param plagiarismPointDeductionPercentage the percentage of points to be deducted due to plagiarism
      * @return the points achieved in the first correction round or 0.0 if not applicable
      */
-    private double calculateFirstCorrectionPoints(StudentParticipation participation, Exam exam, ExamGradeScoreDTO examGrade, double plagiarismPointDeductionPercentage) {
+    /**
+     * Reads the manual results of the latest submission of every given participation, grouped by submission.
+     * <p>
+     * Only needed while an exam has two correction rounds, because that is the only case in which the exam scores report
+     * a first correction round at all. Returns an empty map otherwise so no query is issued.
+     *
+     * @param exam                  the exam whose scores are being computed
+     * @param participationsPerUser the participations already loaded for the students of that exam
+     * @return the manual results per submission id
+     */
+    private Map<Long, List<SubmissionManualResultDTO>> loadManualResultsForFirstCorrection(Exam exam, Collection<List<StudentParticipation>> participationsPerUser) {
+        if (exam.getNumberOfCorrectionRoundsInExam() != 2) {
+            return Map.of();
+        }
+        Set<Long> latestSubmissionIds = participationsPerUser.stream().flatMap(Collection::stream)
+                .map(participation -> participation.getSubmissions().stream().max(Comparator.comparing(DomainObject::getId)).orElse(null)).filter(Objects::nonNull)
+                .map(DomainObject::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        if (latestSubmissionIds.isEmpty()) {
+            return Map.of();
+        }
+        return resultRepository.findManualResultsBySubmissionIds(latestSubmissionIds).stream().collect(Collectors.groupingBy(SubmissionManualResultDTO::submissionId));
+    }
+
+    private double calculateFirstCorrectionPoints(StudentParticipation participation, Exam exam, ExamGradeScoreDTO examGrade, double plagiarismPointDeductionPercentage,
+            Map<Long, List<SubmissionManualResultDTO>> manualResultsBySubmissionId) {
         if (exam.getNumberOfCorrectionRoundsInExam() != 2) {
             return 0.0;
         }
@@ -991,13 +1022,16 @@ public class ExamService {
             return 0.0;
         }
 
-        Submission submission = latestSubmission.get();
-        if (submission.getManualResults().size() <= 1) {
+        // Read from the manual results loaded for this purpose. The participations themselves carry only the newest
+        // result per submission, which is what the exam score is computed from, so an earlier round is not among them.
+        List<SubmissionManualResultDTO> manualResults = manualResultsBySubmissionId.getOrDefault(latestSubmission.get().getId(), List.of());
+        if (manualResults.size() <= 1) {
             return 0.0;
         }
 
-        Result firstManualResult = submission.getFirstManualResult();
-        double firstRoundScore = (firstManualResult != null && firstManualResult.getScore() != null) ? firstManualResult.getScore() : 0.0;
+        // The first round is the earliest of them, and results are created in the order the rounds are assessed.
+        Double firstRoundScoreOrNull = manualResults.stream().min(Comparator.comparingLong(SubmissionManualResultDTO::resultId)).map(SubmissionManualResultDTO::score).orElse(null);
+        double firstRoundScore = firstRoundScoreOrNull != null ? firstRoundScoreOrNull : 0.0;
 
         return calculateAchievedPoints(examGrade.maxPoints(), firstRoundScore, exam.getCourse(), plagiarismPointDeductionPercentage);
     }

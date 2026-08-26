@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.SubmissionManualResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
@@ -499,6 +500,31 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return true if a result exists for the given submission ID, false otherwise.
      */
     boolean existsBySubmissionId(long submissionId);
+
+    /**
+     * Returns the manual results of the given submissions, reduced to the submission, the result id and the score.
+     * <p>
+     * Used by the exam score statistics to report what an exercise scored in the first correction round. The
+     * participations there are loaded with only the newest result per submission, which is all the exam score itself
+     * needs, so the earlier rounds are read separately rather than by widening that fetch.
+     * <p>
+     * "Manual" matches {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()}: everything that is
+     * neither automatic nor Athena based, including a result whose assessment type is not set yet.
+     *
+     * @param submissionIds the submissions whose manual results should be read
+     * @return the manual results of those submissions, in no particular order
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.SubmissionManualResultDTO(result.submission.id, result.id, result.score)
+            FROM Result result
+            WHERE result.submission.id IN :submissionIds
+                AND (result.assessmentType IS NULL
+                    OR result.assessmentType NOT IN (
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                        de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
+                    ))
+            """)
+    List<SubmissionManualResultDTO> findManualResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
     /**
      * Returns true if there is at least one result for the given exercise.
