@@ -141,6 +141,19 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
                 reloadCommitted = true;
             }
         });
+        // TEMPORARY DIAGNOSTICS (to be removed before merge): the CI failure shows no conduction fetch and no save
+        // request after the reload, so the client is not resuming the exam. Nothing in the server or nginx logs can
+        // show why, so capture what the browser itself does.
+        const clientLog: string[] = [];
+        page.on('console', (message) => clientLog.push(`console.${message.type()}: ${message.text().slice(0, 200)}`));
+        page.on('pageerror', (error) => clientLog.push(`pageerror: ${error.message.slice(0, 300)}`));
+        page.on('requestfailed', (request) => clientLog.push(`requestfailed: ${request.method()} ${request.url().slice(0, 140)} ${request.failure()?.errorText}`));
+        page.on('response', (response) => {
+            if (response.url().includes('/api/')) {
+                clientLog.push(`${response.status()} ${response.request().method()} ${response.url().slice(0, 140)}`);
+            }
+        });
+
         const successfulResends: string[] = [];
         page.on('response', (response) => {
             if (!reloadCommitted) {
@@ -164,13 +177,26 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         //
         // The budget is the point: the previous version allowed exactly 30000ms for reload plus bootstrap plus exam
         // re-fetch plus re-send, and every failure was that one wait expiring. See RESEND_TIMEOUT above.
-        await expect
-            .poll(() => successfulResends.length, {
-                message: 'the answer restored from local storage was never re-sent to the server',
-                timeout: RESEND_TIMEOUT,
-                intervals: [POLLING_INTERVAL],
-            })
-            .toBeGreaterThan(0);
+        try {
+            await expect
+                .poll(() => successfulResends.length, {
+                    message: 'the answer restored from local storage was never re-sent to the server',
+                    timeout: RESEND_TIMEOUT,
+                    intervals: [POLLING_INTERVAL],
+                })
+                .toBeGreaterThan(0);
+        } catch (pollExpired) {
+            // TEMPORARY DIAGNOSTICS (to be removed before merge).
+            const storage = await page.evaluate(() =>
+                Object.keys(window.localStorage)
+                    .filter((key) => key.startsWith('artemis_student_exam'))
+                    .map((key) => `${key} = ${(window.localStorage.getItem(key) ?? '').slice(0, 120)}`),
+            );
+            console.log('=== DIAG url after reload ===\n' + page.url());
+            console.log('=== DIAG localStorage ===\n' + storage.join('\n'));
+            console.log('=== DIAG client activity (' + clientLog.length + ' entries) ===\n' + clientLog.join('\n'));
+            throw pollExpired;
+        }
 
         // The restored answer is still selected in the UI: the client read it back out of local storage.
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
