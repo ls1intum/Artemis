@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
@@ -12,6 +14,9 @@ import {
     IndexedEntityRecord,
     IngestionTypeCount,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+
+/** A unit can hold hundreds of content chunks, so both stored lists are paged rather than rendered whole. */
+const PAGE_SIZE = 25;
 
 /** A breadcrumb step back up the tree. */
 interface Crumb {
@@ -35,7 +40,7 @@ interface LabelledContentObject {
 @Component({
     selector: 'jhi-course-ingestion-browser-detail',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiMessageComponent, TumUiTagComponent, CourseIngestionStoredFieldsComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumUiMessageComponent, TumUiPaginatorComponent, TumUiTagComponent, FaIconComponent, CourseIngestionStoredFieldsComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './course-ingestion-browser-detail.component.html',
 })
 export class CourseIngestionBrowserDetailComponent {
@@ -49,10 +54,20 @@ export class CourseIngestionBrowserDetailComponent {
     /** Shared with the tree, so a breadcrumb can move the selection back up. */
     readonly selection = model<BrowserSelection | undefined>(undefined);
 
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faChevronDown = faChevronDown;
+
     readonly records = signal<IndexedEntityRecord[]>([]);
     readonly contentObjects = signal<IndexedContentObject[]>([]);
     readonly loading = signal(false);
     readonly error = signal(false);
+
+    readonly recordsPage = signal(0);
+    readonly contentPage = signal(0);
+    protected readonly pageSize = PAGE_SIZE;
+
+    /** The visible slice of the stored records. */
+    readonly pagedRecords = computed(() => slice(this.records(), this.recordsPage()));
 
     /** The counts behind the type detail's tiles, taken from the coverage row the matrix already has. */
     readonly typeCount = computed<IngestionTypeCount | undefined>(() => {
@@ -91,6 +106,9 @@ export class CourseIngestionBrowserDetailComponent {
 
     readonly labelledContent = computed<LabelledContentObject[]>(() => this.contentObjects().map((object, index) => ({ label: label(object, index), object })));
 
+    /** The visible slice of the stored content objects. */
+    readonly pagedContent = computed(() => slice(this.labelledContent(), this.contentPage()));
+
     /** The path back up the tree from the current selection. */
     readonly breadcrumbs = computed<Crumb[]>(() => {
         const current = this.selection();
@@ -126,6 +144,31 @@ export class CourseIngestionBrowserDetailComponent {
         });
     }
 
+    /** Which stored records are expanded, by their row key. Reset whenever a new selection loads. */
+    private readonly expandedRows = signal<ReadonlySet<string>>(new Set());
+
+    protected isExpanded(key: string): boolean {
+        return this.expandedRows().has(key);
+    }
+
+    protected onRecordsPageChange(page: number): void {
+        this.recordsPage.set(page);
+        this.expandedRows.set(new Set());
+    }
+
+    protected onContentPageChange(page: number): void {
+        this.contentPage.set(page);
+        this.expandedRows.set(new Set());
+    }
+
+    protected toggleRow(key: string): void {
+        const expanded = new Set(this.expandedRows());
+        if (!expanded.delete(key)) {
+            expanded.add(key);
+        }
+        this.expandedRows.set(expanded);
+    }
+
     /** Moves the selection to a breadcrumb, which the tree picks up and reveals. */
     select(selection: BrowserSelection): void {
         this.selection.set(selection);
@@ -134,6 +177,8 @@ export class CourseIngestionBrowserDetailComponent {
     private loadRecords(type: string): void {
         this.loading.set(true);
         this.error.set(false);
+        this.expandedRows.set(new Set());
+        this.recordsPage.set(0);
         this.contentObjects.set([]);
         this.dashboardService
             .getIndexedEntityRecords(this.courseId(), type)
@@ -154,6 +199,8 @@ export class CourseIngestionBrowserDetailComponent {
     private loadContentObjects(unitId: number, key: string): void {
         this.loading.set(true);
         this.error.set(false);
+        this.expandedRows.set(new Set());
+        this.contentPage.set(0);
         this.dashboardService
             .getUnitContent(this.courseId(), unitId, key)
             .pipe(takeUntilDestroyed(this.destroyRef))
@@ -169,6 +216,12 @@ export class CourseIngestionBrowserDetailComponent {
                 },
             });
     }
+}
+
+/** The page-sized window into a list. */
+function slice<T>(items: T[], page: number): T[] {
+    const start = page * PAGE_SIZE;
+    return items.slice(start, start + PAGE_SIZE);
 }
 
 /**

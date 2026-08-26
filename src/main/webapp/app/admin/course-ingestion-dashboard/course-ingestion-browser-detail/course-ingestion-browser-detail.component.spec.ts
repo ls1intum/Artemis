@@ -79,6 +79,12 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         await settle();
 
         expect(spy).toHaveBeenCalledWith(7, 'lecture');
+
+        // A record's fields are behind its own disclosure, so nothing is shown until the row is opened.
+        expect(query('stored-fields')).toBeFalsy();
+        (query('detail-record-20') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
         expect(query('stored-fields')).toBeTruthy();
     });
 
@@ -133,6 +139,24 @@ describe('CourseIngestionBrowserDetailComponent', () => {
 
         component.select(component.breadcrumbs()[0].selection);
         expect(component.selection()).toEqual({ kind: 'lecture', lectureId: 20 });
+    });
+
+    it('should page long content lists rather than rendering every chunk', async () => {
+        // A slide deck runs to hundreds of chunks; rendering them all is what made the pane an endless scroll.
+        const many = Array.from({ length: 60 }, (_, index) => ({ properties: { page_number: index + 1 } }));
+        vi.spyOn(service, 'getUnitContent').mockReturnValue(of(many));
+
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+
+        expect(component.labelledContent()).toHaveLength(60);
+        expect(component.pagedContent()).toHaveLength(25);
+        expect(component.pagedContent()[0].label).toBe('Page 1');
+
+        component.contentPage.set(1);
+        fixture.detectChanges();
+
+        expect(component.pagedContent()[0].label).toBe('Page 26');
     });
 
     it('should surface an error rather than an empty pane when a read fails', async () => {
