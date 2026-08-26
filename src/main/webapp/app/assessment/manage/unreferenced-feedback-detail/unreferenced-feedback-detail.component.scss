@@ -21,7 +21,10 @@
 }
 
 .feedback-card__points-input {
-    /* The +/- buttons replace the browser spinner, which would otherwise crowd the centered value. */
+    /* Compact so the title field keeps most of the header row; +/- replace the spinner. */
+    width: 3.75rem;
+    min-width: 3.75rem;
+
     &::-webkit-inner-spin-button,
     &::-webkit-outer-spin-button {
         appearance: none;
