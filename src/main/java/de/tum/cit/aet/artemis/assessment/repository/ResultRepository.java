@@ -28,13 +28,13 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.SubmissionManualResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
@@ -502,20 +502,20 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsBySubmissionId(long submissionId);
 
     /**
-     * Returns the manual results of the given submissions, reduced to the submission, the result id and the score.
+     * Returns the manual results of the given submissions together with the correction round each belongs to.
      * <p>
-     * Used by the exam score statistics to report what an exercise scored in the first correction round. The
-     * participations there are loaded with only the newest result per submission, which is all the exam score itself
-     * needs, so the earlier rounds are read separately rather than by widening that fetch.
-     * <p>
-     * "Manual" matches {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()}: everything that is
-     * neither automatic nor Athena based, including a result whose assessment type is not set yet.
+     * Two callers need this. The scores overview renders assessment actions per correction round, so it needs one entry
+     * per round rather than only the newest result, and the exam score statistics report what the first round scored.
+     * Automatic and Athena results are left out because they are not correction rounds, which matches
+     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
+     * type is not set yet.
      *
      * @param submissionIds the submissions whose manual results should be read
      * @return the manual results of those submissions, in no particular order
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.SubmissionManualResultDTO(result.submission.id, result.id, result.score)
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO(
+                result.submission.id, result.id, result.correctionRound, result.assessmentType, result.completionDate, result.hasComplaint, result.score)
             FROM Result result
             WHERE result.submission.id IN :submissionIds
                 AND (result.assessmentType IS NULL
@@ -524,7 +524,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                     ))
             """)
-    List<SubmissionManualResultDTO> findManualResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+    List<CorrectionRoundResultDTO> findCorrectionRoundResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
 
     /**
      * Returns true if there is at least one result for the given exercise.

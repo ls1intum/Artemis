@@ -11,7 +11,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/progr
 import { toUpdateProgrammingExerciseDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
 import { toProgrammingExerciseTimelineUpdateDTO } from 'app/programming/manage/services/programming-exercise-timeline-update-dto.model';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getNewestResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -323,11 +323,8 @@ export class ProgrammingExerciseService {
 
         // important: sort to get the latest submission (the order of the server can be random)
         this.sortService.sortByProperty(submissions, 'submissionDate', true);
-        const results = submissions.sort().last()?.results;
-        if (results && results.length > 0) {
-            return results.last();
-        }
-        return undefined;
+        // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+        return getNewestResult(submissions.sort().last()?.results);
     }
 
     /**
