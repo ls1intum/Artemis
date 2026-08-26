@@ -11,6 +11,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
@@ -37,6 +38,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -51,6 +53,20 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localvcint";
+
+    // Measured baselines for one authenticated git request; a clone or a push is two of these. Upper bounds, so a new
+    // query fails the build.
+    //
+    // The participation-token counts are the ones that matter for exam load: that is what students use. Password
+    // authentication is more expensive because it falls through to the authentication manager, which re-reads the user,
+    // writes an audit event and stamps the last login date. It is measured too so that path cannot rot unnoticed.
+    private static final int GIT_AUTH_QUERY_COUNT = 8;
+
+    private static final int GIT_PUSH_AUTH_QUERY_COUNT = 8;
+
+    private static final int GIT_TOKEN_AUTH_QUERY_COUNT = 5;
+
+    private static final int GIT_TOKEN_PUSH_QUERY_COUNT = 5;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -120,6 +136,87 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
         // Cleanup
         someRepository.resetLocalRepo();
+    }
+
+    /**
+     * Guards the git authentication and authorization path, which runs on every git request and is therefore the
+     * highest-frequency database consumer of an exam.
+     * <p>
+     * The service method is called directly rather than through a real git fetch because the embedded git server handles
+     * the request on its own thread, where the thread-local query interceptor would count nothing.
+     * <p>
+     * Measured baseline. It used to be eight queries higher: the user was loaded without its authorities and course
+     * roles, so every one of the four course-role checks on this path both re-read the whole user row (through
+     * AuthorizationCheckService#loadUserIfNeeded, because User#authorities is lazy) and issued its own EXISTS query.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitRequestQueryCount() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_AUTH_QUERY_COUNT);
+    }
+
+    /**
+     * The case the exam simulation actually drives: a participation-scoped token belonging to the repository's own
+     * student. Password authentication takes a different and more expensive route (it reaches the authentication
+     * manager, which re-reads the user, writes an audit event and stamps the last login date), so it is not
+     * representative of exam load.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitRequestWithParticipationTokenQueryCount() throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var token = localVCLocalCITestService.getParticipationVcsAccessToken(student, participation.getId()).getVcsAccessToken();
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + token).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/info/refs");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_AUTH_QUERY_COUNT);
+    }
+
+    /**
+     * The push counterpart of the participation-token fetch above.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitPushWithParticipationTokenQueryCount() throws Exception {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        var token = localVCLocalCITestService.getParticipationVcsAccessToken(student, participation.getId()).getVcsAccessToken();
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + token).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_TOKEN_PUSH_QUERY_COUNT);
+    }
+
+    /**
+     * The push counterpart of {@link #testAuthenticateAndAuthorizeGitRequestQueryCount}. A push authorizes as WRITE,
+     * which additionally resolves whether the participation is locked; measured, that lands on the same count as a
+     * fetch, so both paths are pinned at the same number.
+     */
+    @Test
+    void testAuthenticateAndAuthorizeGitPushQueryCount() throws Exception {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        String authorizationHeader = "Basic " + Base64.getEncoder().encodeToString((student1Login + ":" + USER_PASSWORD).getBytes(StandardCharsets.UTF_8));
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/git-receive-pack");
+        request.addHeader(HttpHeaders.AUTHORIZATION, authorizationHeader);
+
+        assertThatDb(() -> {
+            localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+            return null;
+        }).hasBeenCalledAtMostTimes(GIT_PUSH_AUTH_QUERY_COUNT);
     }
 
     @Test
@@ -491,15 +588,40 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     /**
-     * Build agent credentials should allow READ (fetch/clone) operations
-     * without going through normal user authentication.
+     * The shared credential shortcut is unreachable on a node that runs local CI, whatever is configured.
+     * <p>
+     * {@code LocalVCBuildAgentCredentialsValidator} already refuses to start such a node with a credential pair set, so
+     * this is the second half of the same guarantee: even a pair that arrives by some other route opens nothing. Every
+     * build job here carries a token covering its own assignment, test, solution and auxiliary repositories, so no
+     * Artemis build agent has a use for a credential that opens every repository in the installation.
+     * <p>
+     * The pair still works on a local VC node without local CI, which is the Jenkins with LocalVC setup; that case is
+     * covered by {@code LocalVCBuildAgentCredentialsValidatorTest} rather than here, because this test context runs
+     * local CI.
      */
     @Test
-    void testFetch_buildAgentCredentials_succeeds() throws Exception {
+    void testFetch_buildAgentCredentials_isRejectedWithLocalCi() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
 
-        // Build agent bypass only applies to READ — should succeed without normal user auth
-        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false,
+                () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitUsername", "buildjob_user",
+                        () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitPassword", "buildjob_password",
+                                () -> assertThatExceptionOfType(LocalVCAuthException.class)
+                                        .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ)))));
+    }
+
+    /**
+     * Build agent credentials must be refused once the build agents authenticate with an ssh key. They never present
+     * this credential pair then, so accepting it would leave a repository-wide read shortcut open that nothing uses.
+     * <p>
+     * The test context enables ssh for build agents, which is what makes this the ambient configuration here.
+     */
+    @Test
+    void testFetch_buildAgentCredentials_isRejectedWhenBuildAgentsUseSsh() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
+
+        // Falls through to normal user authentication, where "buildjob_user" is not a real user
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
     }
 
     /**
@@ -507,11 +629,14 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
      * The build agent check only applies to RepositoryActionType.READ.
      */
     @Test
-    void testPush_buildAgentCredentials_isRejected() {
+    void testPush_buildAgentCredentials_isRejected() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", "buildjob_user", "buildjob_password");
 
+        // Enabled deliberately, so that the push is rejected by the READ restriction under test rather than because the
+        // ssh configuration of the test context closes the shortcut for every action anyway.
         // Build agent bypass does NOT apply to WRITE — "buildjob_user" is not a real user, so auth fails
-        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false, () -> assertThatExceptionOfType(LocalVCAuthException.class)
+                .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE)));
     }
 
     // == Authorization tests: student access to staff repositories ==

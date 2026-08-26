@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission.cr
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPena
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -276,15 +276,15 @@ public class ProgrammingExerciseGradingService {
      * @return The submission or empty if no submissions exist
      */
     protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, BuildResultNotification buildResult) {
-        var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
-        if (submissions.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return submissions.stream().filter(theSubmission -> {
-            var commitHash = buildResult.commitHash(theSubmission.getType());
-            return !ObjectUtils.isEmpty(commitHash) && commitHash.equals(theSubmission.getCommitHash());
-        }).max(Comparator.naturalOrder());
+        // Matching a commit hash needs the hash, the submission type and a way to order candidates, so only those are
+        // read. Loading the submissions themselves means loading each one's participation, exercise and course, because
+        // those are eager associations, so a student who pushed ten times used to make the database ship the exercise's
+        // problem statement ten times over to find one commit hash. Only the submission that matches is then loaded.
+        var candidates = programmingSubmissionRepository.findCommitHashesByParticipationId(participationId);
+        return candidates.stream().filter(candidate -> {
+            var commitHash = buildResult.commitHash(candidate.type());
+            return !ObjectUtils.isEmpty(commitHash) && commitHash.equals(candidate.commitHash());
+        }).max(ProgrammingSubmissionCommitHashDTO.NEWEST_FIRST).flatMap(match -> programmingSubmissionRepository.findProgrammingSubmissionWithResultsById(match.id()));
     }
 
     @NonNull
@@ -328,7 +328,11 @@ public class ProgrammingExerciseGradingService {
             // Only lock the repository and the participation if the participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
             // test run repository).
             // Student test exam participations will still be locked by this.
-            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow().getSubmissionPolicy();
+            // Already resolved: calculateScoreForResult above loads the submission policy for a student participation
+            // and sets it on this very exercise instance. Loading it again meant a second fetch of the whole exercise
+            // and the course it eagerly brings with it, problem statement and code of conduct included, for every
+            // result.
+            SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
             if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }

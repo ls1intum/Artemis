@@ -52,6 +52,12 @@ class RedissonDistributedDataTest extends AbstractDistributedDataTest {
     }
 
     @Override
+    protected boolean clientsReachCoreNodesDirectly() {
+        // Clients connect to Redis, which is not a core node and not on the path a clone takes
+        return false;
+    }
+
+    @Override
     protected DistributedDataProvider getDistributedDataProvider() {
         return redissonDistributedDataProvider;
     }

@@ -166,6 +166,27 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
+    void createModelingSubmission_ignoresAParticipationSentByTheClient() throws Exception {
+        StudentParticipation ownParticipation = participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
+        StudentParticipation someoneElsesParticipation = participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
+
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        // This endpoint deserializes the request body into the entity, so a client can name any participation here. The
+        // server has to resolve the participation from the authenticated user, or from what the exam submission gate
+        // handed it, and never off the submission, or a student could write their submission into somebody else's
+        // participation.
+        submission.setParticipation(someoneElsesParticipation);
+
+        ModelingSubmission returned = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+                ModelingSubmission.class, HttpStatus.OK);
+
+        ModelingSubmission stored = modelingSubmissionRepo.findById(returned.getId()).orElseThrow();
+        assertThat(stored.getParticipation().getId()).isEqualTo(ownParticipation.getId());
+        assertThat(stored.getParticipation().getId()).isNotEqualTo(someoneElsesParticipation.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void saveAndSubmitModelingSubmission_tooLarge() throws Exception {
         participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student1");
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(emptyModel, false);
