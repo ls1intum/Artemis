@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterion
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -756,6 +757,31 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(response.errorCategories()).containsExactlyInAnyOrder("Student Error", "Ares Error", "AST Error");
 
         assertThat(response.totalItems()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAllFeedbackDetailsForExerciseWithLongFeedbackMatchesAffectedStudents() throws Exception {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        String longMessage = "a".repeat(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH + 1);
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, longMessage);
+
+        String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details" + "?page=1&pageSize=10&sortedColumn=count&sortingOrder=ASCENDING"
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=&filterErrorCategories=&groupFeedback=false";
+
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
+
+        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getResultsOnPage().getFirst();
+        // the payload carries the legacy 300-character preview, not the full deduplicated message
+        assertThat(feedbackDetail.hasLongFeedbackText()).isTrue();
+        assertThat(feedbackDetail.detailTexts()).containsExactly("a".repeat(294) + " [...]");
+
+        // creating a feedback channel passes exactly these texts back, so the lookup has to match the preview
+        List<String> affectedLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(programmingExercise.getId(), feedbackDetail.detailTexts(),
+                feedbackDetail.testCaseName());
+        assertThat(affectedLogins).containsExactly(TEST_PREFIX + "student1");
     }
 
     @Test

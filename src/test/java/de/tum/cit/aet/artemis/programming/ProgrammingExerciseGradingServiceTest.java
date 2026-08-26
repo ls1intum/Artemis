@@ -1447,6 +1447,11 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(result.getAssessmentType()).isEqualTo(assessmentType);
 
         Exercise exercise = result.getSubmission().getParticipation().getExercise();
+        // Re-derive the score from the stored rows: the typed collections supply the automatic points, so the
+        // synthesized views a feedback-promising loader attached to getFeedbacks() must be dropped first -
+        // otherwise the same automatic feedback would be counted twice.
+        result.setFeedbacks(
+                result.getFeedbacks().stream().filter(feedback -> feedback.getId() == null || !ProgrammingFeedbackSynthesizerService.isSyntheticId(feedback.getId())).toList());
         result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())));
         result.setScaFeedbacks(scaFeedbackRepository.findByResultIds(List.of(result.getId())));
         double calculatedScore = result.calculateTotalPointsForProgrammingExercises(gradingService.calculateTestCasePoints((ProgrammingExercise) exercise, result))

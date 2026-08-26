@@ -1622,7 +1622,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHEN MIN(m.text) LIKE 'Unwanted Statement found%' THEN 'AST Error'
                     ELSE 'Student Error'
                 END,
-                CASE WHEN MAX(LENGTH(m.text)) > 1000 THEN TRUE ELSE FALSE END
+                CASE WHEN MAX(LENGTH(m.text)) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH THEN TRUE ELSE FALSE END
             )
             FROM ProgrammingExerciseStudentParticipation p
             INNER JOIN p.submissions s
@@ -1744,6 +1744,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     /**
      * Retrieves the logins of students affected by a specific feedback detail text in a given exercise.
+     * <p>
+     * The given detail texts come from {@link #findFilteredFeedbackByExerciseId} and therefore carry the legacy
+     * preview contract of {@code Feedback#setDetailText} (messages longer than
+     * {@code FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH} are cut to 294 characters plus the {@code " [...]"} marker).
+     * The comparison has to apply the very same projection to the stored message, otherwise no student would be
+     * matched for any long feedback.
      *
      * @param exerciseId   The ID of the exercise for which affected students are requested.
      * @param detailTexts  The feedback detail text to filter by.
@@ -1763,7 +1769,11 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             INNER JOIN f.testCase tc
             LEFT JOIN f.message m
             WHERE p.exercise.id = :exerciseId
-              AND COALESCE(m.text, '') IN :detailTexts
+              AND COALESCE(CASE
+                    WHEN LENGTH(m.text) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH
+                    THEN CONCAT(SUBSTRING(m.text, 1, 294), ' [...]')
+                    ELSE m.text
+                END, '') IN :detailTexts
               AND tc.testName = :testCaseName
               AND p.testRun = FALSE
             """)

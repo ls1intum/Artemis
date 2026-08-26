@@ -285,7 +285,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         Result storedResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(modelingAssessment.getId());
         Result updatedResult = storedResult.getSubmission().getLatestResult();
         participationUtilService.checkFeedbackCorrectlyStored(modelingAssessment.getFeedbacks(), updatedResult.getFeedbacks(), FeedbackType.MANUAL);
-        final String[] ignoringFields = { "feedbacks", "submission", "participation", "assessor" };
+        // the typed automatic feedback collections are lazy and irrelevant here (programming exercises only)
+        final String[] ignoringFields = { "feedbacks", "testCaseFeedbacks", "scaFeedbacks", "submission", "participation", "assessor" };
         assertThat(storedResult).as("only feedbacks are changed in the result").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(modelingAssessment);
     }
 
