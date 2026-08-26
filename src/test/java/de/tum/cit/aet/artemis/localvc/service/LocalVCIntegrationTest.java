@@ -38,6 +38,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.util.ConfigUtil;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -587,15 +588,40 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     /**
-     * Build agent credentials should allow READ (fetch/clone) operations
-     * without going through normal user authentication.
+     * The shared credential shortcut is unreachable on a node that runs local CI, whatever is configured.
+     * <p>
+     * {@code LocalVCBuildAgentCredentialsValidator} already refuses to start such a node with a credential pair set, so
+     * this is the second half of the same guarantee: even a pair that arrives by some other route opens nothing. Every
+     * build job here carries a token covering its own assignment, test, solution and auxiliary repositories, so no
+     * Artemis build agent has a use for a credential that opens every repository in the installation.
+     * <p>
+     * The pair still works on a local VC node without local CI, which is the Jenkins with LocalVC setup; that case is
+     * covered by {@code LocalVCBuildAgentCredentialsValidatorTest} rather than here, because this test context runs
+     * local CI.
      */
     @Test
-    void testFetch_buildAgentCredentials_succeeds() throws Exception {
+    void testFetch_buildAgentCredentials_isRejectedWithLocalCi() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
 
-        // Build agent bypass only applies to READ — should succeed without normal user auth
-        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false,
+                () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitUsername", "buildjob_user",
+                        () -> ConfigUtil.testWithChangedConfig(localVCServletService, "buildAgentGitPassword", "buildjob_password",
+                                () -> assertThatExceptionOfType(LocalVCAuthException.class)
+                                        .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ)))));
+    }
+
+    /**
+     * Build agent credentials must be refused once the build agents authenticate with an ssh key. They never present
+     * this credential pair then, so accepting it would leave a repository-wide read shortcut open that nothing uses.
+     * <p>
+     * The test context enables ssh for build agents, which is what makes this the ambient configuration here.
+     */
+    @Test
+    void testFetch_buildAgentCredentials_isRejectedWhenBuildAgentsUseSsh() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
+
+        // Falls through to normal user authentication, where "buildjob_user" is not a real user
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
     }
 
     /**
@@ -603,11 +629,14 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
      * The build agent check only applies to RepositoryActionType.READ.
      */
     @Test
-    void testPush_buildAgentCredentials_isRejected() {
+    void testPush_buildAgentCredentials_isRejected() throws Throwable {
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", "buildjob_user", "buildjob_password");
 
+        // Enabled deliberately, so that the push is rejected by the READ restriction under test rather than because the
+        // ssh configuration of the test context closes the shortcut for every action anyway.
         // Build agent bypass does NOT apply to WRITE — "buildjob_user" is not a real user, so auth fails
-        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+        ConfigUtil.testWithChangedConfig(localVCServletService, "useSshForBuildAgent", false, () -> assertThatExceptionOfType(LocalVCAuthException.class)
+                .isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE)));
     }
 
     // == Authorization tests: student access to staff repositories ==
