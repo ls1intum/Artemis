@@ -507,6 +507,129 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
     });
 });
 
+test.describe.serial('Cancelling one correction round leaves the other one alone', { tag: '@slow' }, () => {
+    test.describe.configure({ timeout: 240_000 });
+
+    const cancelCourse = { id: SEED_COURSES.examAssessment.id } as any;
+    let exam: Exam;
+    let examEnd: Dayjs;
+    let exerciseId: number;
+
+    test.beforeAll('Prepare exam', async ({ browser }) => {
+        examEnd = dayjs().add(40, 'seconds');
+        const page = await newBrowserPage(browser);
+        exam = await prepareExam(cancelCourse, examEnd, ExerciseType.TEXT, page, 2);
+        await Commands.login(page, admin);
+        const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
+        exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
+    });
+
+    test('First round is assessed and the second one is left as a draft', async ({ page, login, examAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
+        await login(instructor);
+        await examManagement.verifySubmitted(cancelCourse.id!, exam.id!, studentOneName);
+        await waitForExamEnd(exam, page);
+
+        // The tutor finishes the first round.
+        await login(tutor);
+        await startAssessing(cancelCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
+        await examAssessment.addNewFeedback(6, 'First corrector');
+        const response = await examAssessment.submitTextAssessment();
+        expect(response.status()).toBe(200);
+
+        // The instructor starts the second round but does not submit it, which is what leaves a draft behind.
+        await login(instructor);
+        await startAssessing(cancelCourse.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
+        await expect(exerciseAssessment.getLockedMessage()).toBeVisible();
+    });
+
+    test('Scores view offers to continue and to cancel only the round that is a draft', async ({ page, login }) => {
+        await login(instructor);
+        await page.goto(`/course-management/${cancelCourse.id}/text-exercises/${exerciseId}/scores`);
+        await page.waitForLoadState('domcontentloaded');
+
+        const studentRow = page.locator('tr', { hasText: studentOneName });
+        await expect(studentRow).toBeVisible({ timeout: EXAM_DASHBOARD_TIMEOUT });
+
+        // The finished first round can be opened and cannot be cancelled.
+        await expect(studentRow.getByRole('link', { name: 'Open assessment of correction round 1' })).toBeVisible();
+        await expect(studentRow.getByRole('button', { name: 'Cancel assessment of correction round 1' })).toHaveCount(0);
+        // The draft second round can be continued and cancelled.
+        await expect(studentRow.getByRole('link', { name: 'Continue assessment in correction round 2' })).toBeVisible();
+        await expect(studentRow.getByRole('button', { name: 'Cancel assessment of correction round 2' })).toBeVisible();
+        // The draft has no score yet, so the column still shows the first corrector's result.
+        await expect(studentRow.getByText('60%')).toBeVisible();
+    });
+
+    test('Cancelling the second round releases it and keeps the first round assessed', async ({ page, login }) => {
+        await login(instructor);
+        await page.goto(`/course-management/${cancelCourse.id}/text-exercises/${exerciseId}/scores`);
+        await page.waitForLoadState('domcontentloaded');
+
+        const studentRow = page.locator('tr', { hasText: studentOneName });
+        await expect(studentRow).toBeVisible({ timeout: EXAM_DASHBOARD_TIMEOUT });
+
+        // Cancelling asks for confirmation, and a dialog nobody answers is dismissed, which would cancel nothing.
+        page.once('dialog', (dialog) => void dialog.accept());
+        const cancelResponse = page.waitForResponse((response) => response.url().includes('/cancel-assessment') && response.request().method() === 'POST');
+        await studentRow.getByRole('button', { name: 'Cancel assessment of correction round 2' }).click();
+        expect((await cancelResponse).status()).toBeLessThan(400);
+
+        // The second round is on offer again, and nothing about the first round changed. Releasing the wrong round is
+        // what made cancelling round 1 release round 2 before (#13396).
+        await expect(studentRow.getByRole('link', { name: 'Assess submission in correction round 2' })).toBeVisible({ timeout: EXAM_DASHBOARD_TIMEOUT });
+        await expect(studentRow.getByRole('button', { name: /Cancel assessment of correction round/ })).toHaveCount(0);
+        await expect(studentRow.getByRole('link', { name: 'Open assessment of correction round 1' })).toBeVisible();
+        await expect(studentRow.getByText('60%')).toBeVisible();
+    });
+
+    test.afterAll('Delete exam', async ({ browser }) => {
+        const page = await newBrowserPage(browser);
+        await Commands.login(page, admin);
+        await new ExamAPIRequests(page).deleteExam(exam);
+        await page.close();
+    });
+});
+
+test.describe.serial('A test run of an exam with two correction rounds', { tag: '@slow' }, () => {
+    test.describe.configure({ timeout: 180_000 });
+
+    const testRunCourse = { id: SEED_COURSES.examAssessment.id } as any;
+    let exam: Exam;
+    let exerciseId: number;
+
+    test.beforeAll('Prepare exam', async ({ browser }) => {
+        const page = await newBrowserPage(browser);
+        exam = await prepareExam(testRunCourse, dayjs().add(40, 'seconds'), ExerciseType.TEXT, page, 2);
+        await Commands.login(page, admin);
+        const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
+        exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
+    });
+
+    test('Does not offer a second correction round', async ({ page, login }) => {
+        await login(instructor);
+        // The dashboard of a test run lives on its own route, which is what tells the page it is a test run.
+        await page.goto(`/course-management/${testRunCourse.id}/exams/${exam.id}/test-assessment-dashboard/${exerciseId}`);
+        await page.waitForLoadState('domcontentloaded');
+
+        // A test run is a dry run for the instructor, so a second corrector never enters the picture: the toggle that
+        // enables the round is not offered, and no round hands out submissions.
+        await expect(page.getByTestId('toggle-second-correction')).toHaveCount(0);
+        await expect(page.locator('#start-new-assessment')).toHaveCount(0);
+        await expect(page.getByText('This correction round is not yet enabled.')).toHaveCount(0);
+        // The regular dashboard of the same exercise does offer the toggle, so the difference is the test run itself.
+        await page.goto(`/course-management/${testRunCourse.id}/exams/${exam.id}/assessment-dashboard/${exerciseId}`);
+        await page.waitForLoadState('domcontentloaded');
+        await expect(page.getByTestId('toggle-second-correction')).toHaveCount(1);
+    });
+
+    test.afterAll('Delete exam', async ({ browser }) => {
+        const page = await newBrowserPage(browser);
+        await Commands.login(page, admin);
+        await new ExamAPIRequests(page).deleteExam(exam);
+        await page.close();
+    });
+});
+
 test.describe('Exam grading', { tag: '@slow' }, () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
