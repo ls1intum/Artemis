@@ -53,6 +53,11 @@ export interface CourseCreateDTO {
 
     // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
     gradeRelevant: boolean;
+
+    // Atlas auto-orchestration configuration (per-course)
+    autoOrchestratorEnabled: boolean;
+    debounceWindowSecondsOverride?: number;
+    maxDailyOrchestrationOverride?: number;
 }
 
 /**
@@ -107,6 +112,11 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
 
         // Grade-relevance defaults to true when the course has no explicit configuration yet.
         gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+
+        // Atlas auto-orchestration configuration (per-course)
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
     };
 }
 
@@ -168,6 +178,11 @@ export interface CourseUpdateDTO {
 
     // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course
     dataRetentionHold: boolean;
+
+    // Atlas auto-orchestration configuration (per-course)
+    autoOrchestratorEnabled: boolean;
+    debounceWindowSecondsOverride?: number;
+    maxDailyOrchestrationOverride?: number;
 }
 
 /**
@@ -177,14 +192,20 @@ export interface CourseUpdateDTO {
  * @returns a hydrated Course with reconstructed retention configuration and dates
  */
 export function courseFromUpdateDTO(dto: CourseUpdateDTO): Course {
-    const { gradeRelevant, dataRetentionHold, ...courseData } = dto;
+    const { gradeRelevant, dataRetentionHold, autoOrchestratorEnabled, debounceWindowSecondsOverride, maxDailyOrchestrationOverride, ...courseData } = dto;
     const course: Course = hydrate(new Course(), courseData);
     course.startDate = convertDateStringFromServer(dto.startDate);
     course.endDate = convertDateStringFromServer(dto.endDate);
     course.enrollmentStartDate = convertDateStringFromServer(dto.enrollmentStartDate);
     course.enrollmentEndDate = convertDateStringFromServer(dto.enrollmentEndDate);
     course.unenrollmentEndDate = convertDateStringFromServer(dto.unenrollmentEndDate);
-    course.courseConfiguration = { gradeRelevant, dataRetentionHold };
+    course.courseConfiguration = {
+        gradeRelevant,
+        dataRetentionHold,
+        autoOrchestratorEnabled,
+        debounceWindowSecondsOverride,
+        maxDailyOrchestrationOverride,
+    };
     return course;
 }
 
@@ -249,5 +270,10 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
 
         // A course without an explicit configuration is not under a retention hold.
         dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+
+        // Atlas auto-orchestration configuration (per-course)
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
     };
 }

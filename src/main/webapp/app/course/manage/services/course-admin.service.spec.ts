@@ -59,6 +59,9 @@ describe('Course Admin Service', () => {
                 expect(res.body?.courseConfiguration).toEqual({
                     gradeRelevant: returnedFromService.gradeRelevant,
                     dataRetentionHold: returnedFromService.dataRetentionHold,
+                    autoOrchestratorEnabled: returnedFromService.autoOrchestratorEnabled,
+                    debounceWindowSecondsOverride: returnedFromService.debounceWindowSecondsOverride,
+                    maxDailyOrchestrationOverride: returnedFromService.maxDailyOrchestrationOverride,
                 });
             });
 

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Move the activity timestamps out of jhi_user. Unlike the other clusters this one is not sparse - last_login_date is
+        set for every account - so it earns its place by isolating a per-login write off the wide user row rather than by
+        saving width on rows that do not need it.
+
+        The login write stays a single statement: it updates this table with the user resolved by a subquery on the login,
+        rather than looking the id up first. Only an account with no row yet - one created after this migration that has
+        never logged in - costs a second statement, and only on its first login.
+
+        The cleanup reads join this table with an outer join, so an account without a row behaves exactly as a null column
+        did: COALESCE falls back to the creation date, and no warning is recorded.
+
+        UA-2 (separate follow-up PR after staging sign-off):
+              DROP jhi_user.last_login_date and jhi_user.deletion_warning_sent_date.
+    -->
+    <changeSet id="20260821222758-1-create-user-activity" author="krusche">
+        <createTable tableName="user_activity">
+            <column name="user_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="last_login_date" type="DATETIME(3)"/>
+            <column name="deletion_warning_sent_date" type="DATETIME(3)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="user_activity" baseColumnNames="user_id" constraintName="fk_user_activity_user"
+                                 referencedTableName="jhi_user" referencedColumnNames="id" onDelete="CASCADE"/>
+        <createIndex indexName="idx_user_activity_last_login_date" tableName="user_activity">
+            <column name="last_login_date"/>
+        </createIndex>
+        <createIndex indexName="idx_user_activity_deletion_warning" tableName="user_activity">
+            <column name="deletion_warning_sent_date"/>
+        </createIndex>
+    </changeSet>
+
+    <!--
+        Every existing account gets a row, so the login write is a plain update for all of them.
+    -->
+    <changeSet id="20260821222758-2-backfill" author="krusche">
+        <sql>
+            INSERT INTO user_activity (user_id, last_login_date, deletion_warning_sent_date)
+            SELECT id, last_login_date, deletion_warning_sent_date FROM jhi_user
+        </sql>
+        <rollback>
+            <sql>DELETE FROM user_activity</sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseConfiguration;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
@@ -72,7 +73,11 @@ public record CourseUpdateDTO(
 
         // Data-privacy / retention: whether a pending objection or legal proceeding suspends the cleanup for this course.
         // Boxed so an omitted value fails safe to keeping an existing hold rather than silently lifting it.
-        @Nullable Boolean dataRetentionHold) {
+        @Nullable Boolean dataRetentionHold,
+
+        // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
+        boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -128,13 +133,21 @@ public record CourseUpdateDTO(
         course.setTimeZone(timeZone);
         course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
+        // Enforce the auto-orchestration override bounds server-side: the @Min(1) bean-validation annotations are not
+        // active here (the multipart update endpoint does not run @Valid), so a crafted request could otherwise persist
+        // zero/negative overrides that the scheduler would treat as invalid configuration.
+        if ((debounceWindowSecondsOverride != null && debounceWindowSecondsOverride < 1) || (maxDailyOrchestrationOverride != null && maxDailyOrchestrationOverride < 1)) {
+            throw new BadRequestAlertException("Auto-orchestration overrides must be positive", Course.ENTITY_NAME, "invalidAutoOrchestrationOverride", true);
+        }
+
         // Only allow transitioning from false to true (one-way)
         if (onboardingDone) {
             course.setOnboardingDone(true);
         }
 
-        // Data-privacy / retention: update the grade-relevance flag on the course's configuration, creating it if absent.
-        // The course must be loaded with its (lazy) configuration for this to update in place instead of creating a duplicate.
+        // Update the course's configuration (data-retention flags plus the Atlas auto-orchestration settings), creating
+        // it if absent. The course must be loaded with its (lazy) configuration for this to update in place instead of
+        // creating a duplicate.
         CourseConfiguration configuration = course.getCourseConfiguration();
         if (configuration == null) {
             configuration = new CourseConfiguration();
@@ -146,6 +159,9 @@ public record CourseUpdateDTO(
         // Fail safe to keeping an existing hold: an omitted flag must never lift a legal hold and expose the course to
         // the cleanup again.
         configuration.setDataRetentionHold(dataRetentionHold == null ? configuration.isDataRetentionHold() : dataRetentionHold);
+        configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
+        configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
+        configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
 
         return course;
     }
@@ -164,6 +180,7 @@ public record CourseUpdateDTO(
                 course.getColor(), course.getCourseIcon(), course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(),
                 course.getCourseInformationSharingMessagingCodeOfConduct(), course.getLearningPathsEnabled(), course.getPresentationScore(), course.getMaxPoints(),
                 course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(), course.getCourseInformationSharingConfiguration(),
-                course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold());
+                course.isOnboardingDone(), course.isGradeRelevant(), course.isDataRetentionHold(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
+                course.getMaxDailyOrchestrationOverride());
     }
 }
