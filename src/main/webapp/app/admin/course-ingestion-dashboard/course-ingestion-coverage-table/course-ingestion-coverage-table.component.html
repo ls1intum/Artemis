@@ -89,8 +89,8 @@
                         @for (type of allTypes; track type; let i = $index) {
                             <th class="text-center text-xs {{ dividerAt(i) }}" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + type"></th>
                         }
-                        <th class="cursor-pointer select-none text-end" (click)="toggleSort('worstFirst')">
-                            <span class="inline-flex items-center justify-end gap-1">
+                        <th class="cursor-pointer select-none" (click)="toggleSort('worstFirst')">
+                            <span class="inline-flex items-center gap-1">
                                 <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.column.status"></span>
                                 <fa-icon [icon]="sortIcon('worstFirst')" class="text-xs text-muted-color" />
                             </span>
@@ -125,8 +125,8 @@
                                     <span class="{{ c.class }}">{{ c.text }}</span>
                                 </td>
                             }
-                            <td class="text-end">
-                                <span class="inline-flex items-center justify-end gap-2 {{ statusClass(row.status) }}">
+                            <td>
+                                <span class="inline-flex items-center gap-2 whitespace-nowrap {{ statusClass(row.status) }}">
                                     <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
                                     <span class="text-sm" [jhiTranslate]="'artemisApp.courseIngestionDashboard.status.' + row.status"></span>
                                 </span>
