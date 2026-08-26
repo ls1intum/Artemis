@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -532,14 +533,11 @@ public class ExamService {
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
         var gradesByUser = examGrades.stream().collect(Collectors.groupingBy(ExamGradeScoreDTO::userId, Collectors.toSet()));
-        // The first correction round is reported next to the final score, and the participations above carry only the
-        // newest result per submission, which is what the final score is built from. Read the manual results of those
-        // submissions once here so the statistic can name the earlier round without widening that fetch.
-        Map<Long, List<SubmissionManualResultDTO>> manualResultsBySubmissionId = loadManualResultsForFirstCorrection(exam, participationsByStudentId.values());
-        for (StudentExam studentExam : studentExams) {
-            var studentGrades = new HashSet<>(gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
-            var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
 
+        // Resolve the participations of every student exam first. A test run and a test exam load theirs individually,
+        // and they have to be part of the preload below as much as the regular ones.
+        Map<Long, List<StudentParticipation>> participationsByStudentExamId = new LinkedHashMap<>();
+        for (StudentExam studentExam : studentExams) {
             List<StudentParticipation> participations;
             if (studentExam.isTestRun() || studentExam.isTestExam()) {
                 participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
@@ -547,6 +545,18 @@ public class ExamService {
             else {
                 participations = participationsByStudentId.getOrDefault(studentExam.getUser().getId(), List.of());
             }
+            participationsByStudentExamId.put(studentExam.getId(), participations);
+        }
+
+        // The first correction round is reported next to the final score, and the participations above carry only the
+        // newest result per submission, which is what the final score is built from. Read the manual results of those
+        // submissions once here so the statistic can name the earlier round without widening that fetch.
+        Map<Long, List<SubmissionManualResultDTO>> manualResultsBySubmissionId = loadManualResultsForFirstCorrection(exam, participationsByStudentExamId.values());
+        for (StudentExam studentExam : studentExams) {
+            var studentGrades = new HashSet<>(gradesByUser.getOrDefault(studentExam.getUser().getId(), Set.of()));
+            var studentExercises = studentExam.getExercises().stream().filter(Objects::nonNull).toList();
+
+            List<StudentParticipation> participations = participationsByStudentExamId.getOrDefault(studentExam.getId(), List.of());
 
             var studentResult = calculateStudentResultWithGrade(studentExam, studentGrades, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping, examBonusCalculator,
                     studentExercises, participations, manualResultsBySubmissionId);
