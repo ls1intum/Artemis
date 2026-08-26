@@ -13,11 +13,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.service.CourseLoadService;
@@ -54,12 +56,11 @@ class PyrisPipelineServiceTest {
         var user = new User();
         user.setId(7L);
         user.setLogin("student");
-        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
         when(userRepository.findByIdElseThrow(7L)).thenReturn(user);
         when(pyrisJobService.addChatJob(1L, 2L, 3L, null)).thenReturn("run-1");
 
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), irisChatWebsocketService,
-                mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class));
+                mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class));
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
 
         var session = new IrisChatSession();
@@ -81,7 +82,7 @@ class PyrisPipelineServiceTest {
         var userRepository = mock(UserRepository.class);
 
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), mock(IrisChatWebsocketService.class),
-                mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class));
+                mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class));
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
 
         doThrow(new PyrisConnectorException("boom")).when(pyrisConnectorService).executePipeline(eq("chat"), any(), any());
@@ -100,19 +101,42 @@ class PyrisPipelineServiceTest {
         assertThat(capturedError.get().message()).isEqualTo("artemisApp.iris.error.internal");
     }
 
+    /**
+     * The decision reaches Pyris through the settings DTO and decides which model may answer, so the settings have to carry
+     * the decision the account actually recorded.
+     */
+    @Test
+    void chatPipelineSettingsCarryTheRecordedDecision() {
+        var settings = executeChatPipelineAndCaptureSettings(false, AiSelectionDecision.LOCAL_AI);
+
+        assertThat(settings.selection()).isEqualTo(AiSelectionDecision.LOCAL_AI);
+    }
+
+    @Test
+    void chatPipelineSettingsCarryNoDecisionWhenTheAccountHasNotDecided() {
+        var settings = executeChatPipelineAndCaptureSettings(false, null);
+
+        assertThat(settings.selection()).isNull();
+    }
+
     private PyrisPipelineExecutionSettingsDTO executeChatPipelineAndCaptureSettings(boolean responseStreamingEnabled) {
+        return executeChatPipelineAndCaptureSettings(responseStreamingEnabled, AiSelectionDecision.CLOUD_AI);
+    }
+
+    private PyrisPipelineExecutionSettingsDTO executeChatPipelineAndCaptureSettings(boolean responseStreamingEnabled, @Nullable AiSelectionDecision recordedDecision) {
         var pyrisConnectorService = mock(PyrisConnectorService.class);
         var pyrisJobService = mock(PyrisJobService.class);
         var userRepository = mock(UserRepository.class);
         var user = new User();
         user.setId(7L);
         user.setLogin("student");
-        user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
         when(userRepository.findByIdElseThrow(7L)).thenReturn(user);
         when(pyrisJobService.addChatJob(1L, 2L, 3L, null)).thenReturn("run-1");
+        var userAiPreferenceService = mock(UserAiPreferenceService.class);
+        when(userAiPreferenceService.findDecision(7L)).thenReturn(recordedDecision);
 
         var service = new PyrisPipelineService(pyrisConnectorService, pyrisJobService, mock(PyrisDTOService.class), mock(IrisChatWebsocketService.class),
-                mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class));
+                mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), userAiPreferenceService);
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.example");
         ReflectionTestUtils.setField(service, "responseStreamingEnabled", responseStreamingEnabled);
 
