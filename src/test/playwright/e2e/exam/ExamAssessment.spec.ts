@@ -50,7 +50,7 @@ test.describe('Exam assessment', () => {
             // `waitForExamEnd` returns once the exam ends.
             examEnd = dayjs().add(180, 'seconds');
             const page = await newBrowserPage(browser);
-            exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
+            exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page, 2);
         });
 
         test('Assess a programming exercise submission (MANUAL)', async ({
@@ -75,8 +75,32 @@ test.describe('Exam assessment', () => {
             await examParticipation.checkResultScore('70%');
         });
 
+        test('Instructor makes a second round of assessment', async ({ login, examManagement, examAssessment, examParticipation, courseAssessment, exerciseAssessment }) => {
+            await login(instructor);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
+            // The second round starts from a copy of the first one, so the unreferenced feedback the tutor left is
+            // already there and gets a new value instead of being added again.
+            await examAssessment.fillFeedback(4, 'Better than it looks');
+            const response = await examAssessment.submit();
+            expect(response.status()).toBe(200);
+            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
+            await examParticipation.checkResultScore('90%');
+        });
+
         test('Complaints about programming exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
-            await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
+            await handleComplaint(
+                course,
+                exam,
+                false,
+                ExerciseType.PROGRAMMING,
+                page,
+                studentAssessment,
+                examManagement,
+                examAssessment,
+                courseAssessment,
+                exerciseAssessment,
+                false,
+            );
         });
 
         test.afterAll('Delete exam', async ({ browser }) => {
@@ -94,7 +118,7 @@ test.describe('Exam assessment', () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
-            exam = await prepareExam(course, examEnd, ExerciseType.MODELING, page);
+            exam = await prepareExam(course, examEnd, ExerciseType.MODELING, page, 2);
         });
 
         test('Assess a modeling exercise submission', async ({
@@ -125,8 +149,34 @@ test.describe('Exam assessment', () => {
             await examParticipation.checkResultScore('40%');
         });
 
+        test('Instructor makes a second round of assessment', async ({
+            login,
+            examManagement,
+            modelingExerciseAssessment,
+            examParticipation,
+            courseAssessment,
+            exerciseAssessment,
+        }) => {
+            await login(instructor);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
+            // The second round starts from a copy of the first one, so the unreferenced feedback is already there and
+            // gets a new value rather than being added again. The component assessments are applied again as well: the
+            // submit button only enables once every model element carries an assessment, and re-applying them is what
+            // a second corrector does anyway. 7 unreferenced plus -1 and 0 on the components makes 6 of 10 points.
+            await modelingExerciseAssessment.fillFeedback(7, 'Better than it looks');
+            await modelingExerciseAssessment.openAssessmentForComponent(0);
+            await modelingExerciseAssessment.assessComponent(-1, 'Still wrong');
+            await modelingExerciseAssessment.clickNextAssessment();
+            await modelingExerciseAssessment.assessComponent(0, 'Neutral');
+            await modelingExerciseAssessment.clickNextAssessment();
+            const response = await modelingExerciseAssessment.submit();
+            expect(response.status()).toBe(200);
+            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
+            await examParticipation.checkResultScore('60%');
+        });
+
         test('Complaints about modeling exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
-            await handleComplaint(course, exam, true, ExerciseType.MODELING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
+            await handleComplaint(course, exam, true, ExerciseType.MODELING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment, false);
         });
 
         test.afterAll('Delete exam', async ({ browser }) => {
@@ -172,6 +222,62 @@ test.describe('Exam assessment', () => {
 
         test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
             await handleComplaint(course, exam, true, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment, false);
+        });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
+    });
+
+    test.describe.serial('File upload exercise assessment', { tag: '@slow' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
+
+        test.beforeAll('Prepare exam', async ({ browser }) => {
+            examEnd = dayjs().add(40, 'seconds');
+            const page = await newBrowserPage(browser);
+            exam = await prepareExam(course, examEnd, ExerciseType.FILE_UPLOAD, page, 2);
+        });
+
+        test('Assess a file upload exercise submission', async ({
+            page,
+            login,
+            examManagement,
+            fileUploadExerciseAssessment,
+            examParticipation,
+            courseAssessment,
+            exerciseAssessment,
+        }) => {
+            await login(instructor);
+            await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            await waitForExamEnd(exam, page);
+            await login(tutor);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
+            await fileUploadExerciseAssessment.addNewFeedback(7, 'Good job');
+            await fileUploadExerciseAssessment.submitFeedback();
+            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
+            await examParticipation.checkResultScore('70%');
+        });
+
+        test('Instructor makes a second round of assessment', async ({
+            login,
+            examManagement,
+            fileUploadExerciseAssessment,
+            examParticipation,
+            courseAssessment,
+            exerciseAssessment,
+        }) => {
+            await login(instructor);
+            await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
+            // The second round starts from a copy of the first one, so the feedback the tutor left is already there and
+            // gets a new value instead of being added again.
+            await fileUploadExerciseAssessment.fillFeedback(9, 'Better than it looks');
+            await fileUploadExerciseAssessment.submitFeedback();
+            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
+            await examParticipation.checkResultScore('90%');
         });
 
         test.afterAll('Delete exam', async ({ browser }) => {
