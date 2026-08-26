@@ -67,12 +67,9 @@ public class PresentationAssessmentService {
      * @return the persisted presentation assessment
      */
     public PresentationAssessment update(Course course, PresentationAssessmentDTO dto) {
-        Set<User> students = dto.studentLogins() != null ? resolveAssignedCourseStudents(course, dto.studentLogins()) : null;
         PresentationAssessment presentationAssessment = presentationAssessmentRepository.findByIdAndCourseIdElseThrow(dto.id(), course.getId());
         applyDto(presentationAssessment, dto);
-        if (students != null) {
-            presentationAssessment.setStudents(students);
-        }
+        presentationAssessment.setStudents(resolveAssignedCourseStudents(course, dto.studentLogins()));
         return presentationAssessmentRepository.save(presentationAssessment);
     }
 
