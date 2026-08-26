@@ -1,7 +1,7 @@
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { Course, CourseInformationSharingConfiguration, Language } from './course.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { deepClone, hydrate } from 'app/foundation/util/deep-clone.util';
 
 /**
  * DTO for creating a new course.
@@ -192,7 +192,12 @@ export interface CourseUpdateDTO {
  * @returns a hydrated Course with reconstructed retention configuration and dates
  */
 export function courseFromUpdateDTO(dto: CourseUpdateDTO): Course {
-    const { gradeRelevant, dataRetentionHold, autoOrchestratorEnabled, debounceWindowSecondsOverride, maxDailyOrchestrationOverride, ...courseData } = dto;
+    const courseData: Partial<CourseUpdateDTO> = deepClone(dto);
+    delete courseData.gradeRelevant;
+    delete courseData.dataRetentionHold;
+    delete courseData.autoOrchestratorEnabled;
+    delete courseData.debounceWindowSecondsOverride;
+    delete courseData.maxDailyOrchestrationOverride;
     const course: Course = hydrate(new Course(), courseData);
     course.startDate = convertDateStringFromServer(dto.startDate);
     course.endDate = convertDateStringFromServer(dto.endDate);
@@ -200,11 +205,11 @@ export function courseFromUpdateDTO(dto: CourseUpdateDTO): Course {
     course.enrollmentEndDate = convertDateStringFromServer(dto.enrollmentEndDate);
     course.unenrollmentEndDate = convertDateStringFromServer(dto.unenrollmentEndDate);
     course.courseConfiguration = {
-        gradeRelevant,
-        dataRetentionHold,
-        autoOrchestratorEnabled,
-        debounceWindowSecondsOverride,
-        maxDailyOrchestrationOverride,
+        gradeRelevant: dto.gradeRelevant,
+        dataRetentionHold: dto.dataRetentionHold,
+        autoOrchestratorEnabled: dto.autoOrchestratorEnabled,
+        debounceWindowSecondsOverride: dto.debounceWindowSecondsOverride,
+        maxDailyOrchestrationOverride: dto.maxDailyOrchestrationOverride,
     };
     return course;
 }

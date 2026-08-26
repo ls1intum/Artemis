@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -803,6 +804,32 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_rejectsNullOrganizationReference() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "nullorganization");
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            Set<OrganizationDTO> organizationDTOs = new HashSet<>();
+            organizationDTOs.add(null);
+            managedUserVM.setOrganizations(organizationDTOs);
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_rejectsOrganizationReferenceWithoutId() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "organizationwithoutid");
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            managedUserVM.setOrganizations(Set.of(new OrganizationDTO(null, "Ignored", "ignored", null, null, "ignored", null, null, null)));
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isBadRequest());
         }
     }
 

@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
@@ -39,6 +38,7 @@ import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
@@ -320,7 +320,10 @@ public class UserCreationService {
             user.setOrganizations(null);
         }
         else {
-            Set<Long> organizationIds = organizationDTOs.stream().map(OrganizationDTO::id).filter(Objects::nonNull).collect(Collectors.toSet());
+            if (organizationDTOs.stream().anyMatch(organizationDTO -> organizationDTO == null || organizationDTO.id() == null)) {
+                throw new BadRequestAlertException("Every organization reference must contain an ID", "userManagement", "invalidOrganizationReference");
+            }
+            Set<Long> organizationIds = organizationDTOs.stream().map(OrganizationDTO::id).collect(Collectors.toSet());
             List<Organization> organizations = organizationRepository.findAllById(organizationIds);
             if (organizations.size() != organizationIds.size()) {
                 Set<Long> resolvedOrganizationIds = organizations.stream().map(Organization::getId).collect(Collectors.toSet());
