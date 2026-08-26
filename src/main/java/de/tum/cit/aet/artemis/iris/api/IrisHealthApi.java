@@ -26,12 +26,14 @@ public class IrisHealthApi extends AbstractIrisApi {
     }
 
     /**
-     * Whether Iris is currently reachable. The underlying check is cached for {@code artemis.iris.health-ttl}, so this is
-     * cheap enough to call on a page load.
+     * Whether Iris is currently reachable.
+     * <p>
+     * Reads the cached health rather than probing: the indicator caches for {@code artemis.iris.health-ttl}, and a page
+     * that shows this on every load has no reason to make a fresh call to Iris each time.
      *
      * @return {@code true} if Iris answered its last health check
      */
     public boolean isReachable() {
-        return pyrisHealthIndicator.health().getStatus() == Status.UP;
+        return pyrisHealthIndicator.health(true).getStatus() == Status.UP;
     }
 }
