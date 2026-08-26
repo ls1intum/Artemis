@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
@@ -24,7 +25,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
@@ -48,17 +51,24 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final RateLimitService rateLimitService;
 
+    private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
+
+    private final Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService;
+
     private static final int AUTHENTICATION_FAILED_CODE = 10;
 
     @Value("${server.url}")
     private String artemisServerUrl;
 
     public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<DistributedDataAccessService> localCIDistributedDataAccessService,
-            UserSshPublicKeyRepository userSshPublicKeyRepository, RateLimitService rateLimitService) {
+            UserSshPublicKeyRepository userSshPublicKeyRepository, RateLimitService rateLimitService, BuildAgentNetworkPolicy buildAgentNetworkPolicy,
+            Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService) {
         this.userRepository = userRepository;
         this.localCIDistributedDataAccessService = localCIDistributedDataAccessService;
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
         this.rateLimitService = rateLimitService;
+        this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
+        this.buildAgentAddressRegistryService = buildAgentAddressRegistryService;
     }
 
     @Override
@@ -89,13 +99,16 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
      */
     private boolean authenticateUser(UserSshPublicKey storedKey, PublicKey providedKey, ServerSession session) {
         try {
-            String ipString = ((InetSocketAddress) session.getRemoteAddress()).getHostString();
+            // getClientAddress rather than getRemoteAddress: behind a load balancer the latter is the balancer, so
+            // every user would share one rate limit bucket. ProxyProtocolAcceptor fills in the real client where the
+            // balancer announces it, and where it does not the two are the same address anyway.
+            String ipString = ((InetSocketAddress) session.getClientAddress()).getHostString();
             final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
 
             rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
         }
         catch (RuntimeException e) {
-            log.warn("Rate limit exceeded for SSH authentication from {}", session.getRemoteAddress(), e);
+            log.warn("Rate limit exceeded for SSH authentication from {}", session.getClientAddress(), e);
             return false;
         }
 
@@ -148,12 +161,42 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
             if (matchingAgent.isPresent()) {
                 var agent = matchingAgent.get().buildAgent();
+
+                // The key proves which agent this is; the address decides whether that agent may act from here. Behind
+                // a load balancer this is the client address recovered from the PROXY protocol header rather than the
+                // balancer, which is the whole reason ProxyProtocolAcceptor exists.
+                String clientAddress = hostOf(session.getClientAddress());
+                if (clientAddress == null) {
+                    // No usable address means the origin cannot be established. Refuse rather than fall through to the
+                    // checks below, both of which answer "yes" when they have nothing to constrain: an unconfigured
+                    // allowlist permits everything, and the registry permits everything while it cannot observe.
+                    log.warn("Refusing build agent {} because its client address could not be determined from {}", agent.name(), session.getClientAddress());
+                    return false;
+                }
+                if (!buildAgentNetworkPolicy.isWithinAllowedRanges(clientAddress)) {
+                    log.warn("Refusing build agent {} authenticating from {}, which is outside the configured build agent networks", agent.name(), clientAddress);
+                    return false;
+                }
+                if (buildAgentAddressRegistryService.isPresent() && !buildAgentAddressRegistryService.get().isRegisteredAddressOfAgent(agent.name(), clientAddress)) {
+                    log.warn("Refusing a key of build agent {} presented from {}, which is not an address that agent is connected from", agent.name(), clientAddress);
+                    return false;
+                }
+
                 log.debug("Authenticating build agent {} on address {}", agent.displayName(), agent.memberAddress());
                 session.setAttribute(SshConstants.IS_BUILD_AGENT_KEY, true);
+                // Recorded so the repository check can scope this session to the jobs this agent is actually running
+                session.setAttribute(SshConstants.BUILD_AGENT_NAME_KEY, agent.name());
                 return true;
             }
         }
         return false;
+    }
+
+    private static String hostOf(SocketAddress address) {
+        if (address instanceof InetSocketAddress inetSocketAddress && inetSocketAddress.getAddress() != null) {
+            return inetSocketAddress.getAddress().getHostAddress();
+        }
+        return null;
     }
 
     /**

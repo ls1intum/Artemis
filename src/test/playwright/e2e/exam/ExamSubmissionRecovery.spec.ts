@@ -27,12 +27,12 @@ const quizSaveUrl = /\/api\/quiz\/exercises\/\d+\/submissions\/exam/;
 // Ceiling for the post-reload re-send. Generous on purpose, and it costs nothing when things are fast: expect.poll
 // returns as soon as the re-send lands, which locally is about two seconds. The ceiling only matters on a loaded CI
 // runner, where the re-send is preceded by a full client re-bootstrap with Playwright's per-context HTTP cache
-// disabled - bundle and lazy chunks re-fetched, then the exam re-fetched, then the answer restored and sent. A 30s
-// ceiling (the RELOAD_RENDER_TIMEOUT default) was measurably too tight there: CI saw zero re-sends inside it while the
-// same code re-sent in ~2s locally. Measured: this test takes ~4s end to end against the local dev server and
-// ~113s in CI against the containerised production WAR, so the multiplier is sized for the slow environment
-// rather than the fast one - every previous budget here was sized to the happy path and kept expiring.
-// Paired with the test.setTimeout in the describe block below, which keeps the worst case inside the cap.
+// disabled - bundle and lazy chunks re-fetched, then the exam re-fetched, then the answer restored and sent.
+//
+// A caution for whoever reads this next: the observed "CI saw zero re-sends" was NOT this budget being too small. It
+// was the test reloading before the client had recorded the failed save, after which no re-send can ever happen - see
+// the wait added before the reload below. Enlarging this number was tried repeatedly and never fixed it. If this poll
+// expires again, the cause is upstream of the budget.
 const RESEND_TIMEOUT = 4 * RELOAD_RENDER_TIMEOUT;
 
 // Everything in the test that is not the post-reload wait: participation start, navigation, ticking the answer, the
@@ -92,6 +92,26 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         });
         await getExercise(page, quizExercise.id!).locator('#save-exam').click();
         await failedSave;
+
+        // Wait for the CLIENT to have recorded the failure, not merely for the 503 to appear on the wire.
+        //
+        // This is the difference between this test passing and failing. `waitForResponse` resolves the moment Playwright
+        // sees the response; the Angular error handler that records the failure (`onSaveSubmissionError` ->
+        // `setLastSaveFailed(true)`) runs afterwards. Reloading in between produces a page whose local storage says the
+        // last save succeeded, so the recovery branch in `handleStudentExam` never runs: nothing is restored and nothing
+        // is re-sent. The re-send poll below then waits out its whole budget for an event that can no longer happen,
+        // which is why every earlier attempt to fix this by enlarging that budget failed.
+        //
+        // The cached exam itself is not at risk - `triggerSave` writes it synchronously before issuing the request - so
+        // this flag is the only thing to wait for.
+        const saveFailedKey = `artemis_student_exam_${course.id}_${exam.id}-save-failed`;
+        await expect
+            .poll(() => page.evaluate((key) => window.localStorage.getItem(key), saveFailedKey), {
+                message: 'the client never recorded the failed save, so a reload would not attempt any recovery',
+                timeout: RELOAD_RENDER_TIMEOUT,
+                intervals: [POLLING_INTERVAL],
+            })
+            .toBe('true');
         // Record SUCCESSFUL re-sends, but only ones issued after the reload has committed.
         //
         // Both boundaries matter. The listener is attached before the outage is lifted so it cannot miss a re-send the

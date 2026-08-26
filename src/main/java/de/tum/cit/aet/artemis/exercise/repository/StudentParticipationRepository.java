@@ -25,9 +25,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -39,6 +41,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
@@ -435,6 +438,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
             """)
@@ -460,6 +469,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
                 AND p.testRun = :testRun
@@ -640,6 +655,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
             """)
@@ -1031,6 +1052,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.testRun = FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
@@ -1258,6 +1285,43 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerResultsById(participationId), participationId);
     }
+
+    /**
+     * Updates the initialization state of a single participation without loading it first.
+     * <p>
+     * Prefer this over {@code save} on a detached participation whose only change is its state: Spring Data routes a
+     * detached entity through {@code merge}, which reads the row back before writing it, so the save costs a SELECT and
+     * an UPDATE where one UPDATE does.
+     *
+     * @param participationId the id of the participation to update
+     * @param state           the new initialization state
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentParticipation p
+            SET p.initializationState = :state
+            WHERE p.id = :participationId
+            """)
+    void updateInitializationState(@Param("participationId") long participationId, @Param("state") InitializationState state);
+
+    /**
+     * Updates the initialization state and the initialization date of a single participation without loading it first.
+     *
+     * @param participationId    the id of the participation to update
+     * @param state              the new initialization state
+     * @param initializationDate the new initialization date
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentParticipation p
+            SET p.initializationState = :state,
+                p.initializationDate = :initializationDate
+            WHERE p.id = :participationId
+            """)
+    void updateInitializationStateAndDate(@Param("participationId") long participationId, @Param("state") InitializationState state,
+            @Param("initializationDate") ZonedDateTime initializationDate);
 
     @NonNull
     default StudentParticipation findByIdWithLatestSubmissionsResultsFeedbackElseThrow(long participationId) {

@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -64,11 +64,11 @@ public class FileUploadSubmissionService extends SubmissionService {
 
     public FileUploadSubmissionService(FileUploadSubmissionRepository fileUploadSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
-            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
+            AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService,
             ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi,
             TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaApi, testCaseFeedbackRepository, scaFeedbackRepository);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
         this.exerciseDateService = exerciseDateService;
@@ -77,18 +77,24 @@ public class FileUploadSubmissionService extends SubmissionService {
     /**
      * Handles file upload submissions sent from the client and saves them in the database.
      *
-     * @param fileUploadSubmission the file upload submission that should be saved
-     * @param exercise             the corresponding file upload exercise
-     * @param file                 the file that will be stored on the server
-     * @param user                 the user who initiated the save/submission
+     * @param fileUploadSubmission      the file upload submission that should be saved
+     * @param exercise                  the corresponding file upload exercise
+     * @param file                      the file that will be stored on the server
+     * @param user                      the user who initiated the save/submission
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return the saved file upload submission
      * @throws IOException        if file can't be saved
      * @throws EmptyFileException if file is empty
      */
-    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
-            throws IOException, EmptyFileException {
+    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user,
+            @Nullable StudentParticipation participationFromExamGate) throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
+        // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
+        // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
+        // would return the same row. Every other caller passes null and the participation is resolved here.
+        final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
+                : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
@@ -150,7 +156,9 @@ public class FileUploadSubmissionService extends SubmissionService {
 
         if (participation.getInitializationState() != InitializationState.FINISHED) {
             participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
+            // The participation was loaded from the database, so its row exists and only this one column changed. Saving
+            // the detached entity would merge it, reading the row back before writing it.
+            studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.FINISHED);
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
@@ -159,8 +167,9 @@ public class FileUploadSubmissionService extends SubmissionService {
         // Note: we save before the new file path is set to potentially remove the old file on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         fileUploadSubmission.setFilePath(newFilePath.toString());
-        // Note: we save again so that the new file is stored on the file system
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+        // Note: the path is written on its own so that the new file is recorded. Only this column changed and the row
+        // exists, so it is an update rather than a save, which would read the submission back first.
+        fileUploadSubmissionRepository.updateFilePath(fileUploadSubmission.getId(), fileUploadSubmission.getFilePath());
 
         return fileUploadSubmission;
     }
