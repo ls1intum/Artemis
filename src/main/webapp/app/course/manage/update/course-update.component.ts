@@ -47,6 +47,7 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-update',
@@ -381,7 +382,7 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         const rawValue = this.courseForm.getRawValue();
-        const course = rawValue as Course;
+        const course = hydrate(new Course(), rawValue);
         // NOTE: prevent overriding this value accidentally
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;
