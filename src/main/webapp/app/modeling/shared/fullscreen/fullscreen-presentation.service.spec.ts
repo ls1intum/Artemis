@@ -35,9 +35,6 @@ describe('FullscreenPresentationService', () => {
         expect(editor.nextElementSibling).toBe(sibling);
     });
 
-    // Regression for the exam page switcher: the exam hides the previous exercise with `[hidden]` on a wrapper the
-    // promoted frame no longer descends from, so nothing could hide it any more. Switching exercises left the editor
-    // pinned fullscreen over the whole app, intercepting every click, recoverable only by exiting on the stuck frame.
     it('escapes when the slot the editor came from stops being shown', () => {
         parent = document.createElement('div');
         const editor = document.createElement('div');
@@ -76,8 +73,6 @@ describe('FullscreenPresentationService', () => {
         vi.unstubAllGlobals();
     });
 
-    // Regression for a `readOnly` flip: the frame's `@if` is torn down while the document is still fullscreen, which
-    // left the browser fullscreen on nothing at all.
     it('escapes when the promoted editor is destroyed underneath it', async () => {
         parent = document.createElement('div');
         const editor = document.createElement('div');

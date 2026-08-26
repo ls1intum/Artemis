@@ -2,10 +2,10 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { test } from '../../../support/fixtures';
-import { instructor } from '../../../support/users';
-import { dismissPasskeyReminderIfPresent } from '../../../support/dismissPasskeyReminder';
-import { SEED_COURSES } from '../../../support/seedData';
+import { test } from '../support/fixtures';
+import { instructor } from '../support/users';
+import { dismissPasskeyReminderIfPresent } from '../support/dismissPasskeyReminder';
+import { SEED_COURSES } from '../support/seedData';
 
 const regenerateAssets = process.env.UPDATE_MODELING_HELP_SCREENSHOTS === '1';
 const assetDirectory = path.resolve(__dirname, '../../../../../..', 'src/main/webapp/content/images/modeling-help');
@@ -205,8 +205,8 @@ const locateEditor = async (page: Page) => {
  * That the shipped images exist and resolve IS asserted, by the help dialog checks in
  * `ModelingEditorFullscreen.spec.ts`.
  */
-test.describe('Modeling help assets', { tag: '@fast' }, () => {
-    test.skip(!regenerateAssets, 'Regenerate with UPDATE_MODELING_HELP_SCREENSHOTS=1 ./run-e2e-tests-local-fast.sh --filter "Modeling help assets".');
+test.describe('Modeling help assets', { tag: '@tool' }, () => {
+    test.skip(!regenerateAssets, 'Regenerate with UPDATE_MODELING_HELP_SCREENSHOTS=1 pnpm exec playwright test tools/regenerate-modeling-help-assets.spec.ts --grep @tool.');
     test.use({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2 });
 
     test('regenerates focused walkthrough images from the live editor', async ({ login, page }, testInfo) => {

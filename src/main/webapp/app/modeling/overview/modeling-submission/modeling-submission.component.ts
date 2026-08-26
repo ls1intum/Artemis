@@ -40,6 +40,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -85,6 +86,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
+    private localeConversionService = inject(LocaleConversionService);
 
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
@@ -110,10 +112,17 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return tone === 'negative' ? faXmark : faTriangleExclamation;
     }
 
-    /** Signed, so a reader can tell a deduction from an award without the colour. */
+    /**
+     * Same formatting as {@link UnifiedFeedbackComponent}: locale decimal separator, the course's score accuracy, and
+     * the singular/plural point label. Signed, so a deduction reads as one without relying on colour.
+     */
     protected feedbackPoints(feedback: Feedback): string {
         const credits = feedback.credits ?? 0;
-        return credits > 0 ? `+${credits}` : `${credits}`;
+        const formatted = this.localeConversionService.toLocaleString(credits, this.course()?.accuracyOfScores);
+        const label = this.translateService.instant(`artemisApp.assessment.detail.points.${Math.abs(credits) === 1 ? 'one' : 'many'}`, {
+            points: formatted,
+        });
+        return credits > 0 ? `+${label}` : label;
     }
 
     protected feedbackElementName(feedback: Feedback): string | undefined {
@@ -148,9 +157,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly result = signal<Result | undefined>(undefined);
     readonly resultWithComplaint = signal<Result | undefined>(undefined);
 
-    selectedElementIds: string[] = [];
-    /** Signal mirror of {@link selectedElementIds}, for template-driven emphasis. */
-    protected readonly selectedElementIdsSignal = signal<string[]>([]);
+    readonly selectedElementIds = signal<string[]>([]);
     /** Element referenced by the feedback entry currently hovered or focused. */
     protected readonly previewedFeedbackReferenceId = signal<string | undefined>(undefined);
     protected readonly highlightedFeedbackElements = computed(() => {
@@ -387,8 +394,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.resultWithComplaint.set(undefined);
         this.assessmentsNames.set({});
         this.totalScore = 0;
-        this.selectedElementIds = [];
-        this.selectedElementIdsSignal.set([]);
+        this.selectedElementIds.set([]);
         this.previewedFeedbackReferenceId.set(undefined);
         this.retryStarted.set(false);
         this.isChanged.set(false);
@@ -817,8 +823,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     onSelectedElementIdsChanged(selectedElementIds: string[]) {
-        this.selectedElementIds = selectedElementIds;
-        this.selectedElementIdsSignal.set(selectedElementIds);
+        this.selectedElementIds.set(selectedElementIds);
     }
 
     /**
@@ -827,7 +832,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * is left with a silently shortened assessment.
      */
     isFeedbackForSelection(feedback: Feedback): boolean {
-        const selected = this.selectedElementIdsSignal();
+        const selected = this.selectedElementIds();
         return selected.length > 0 && !!feedback.referenceId && selected.includes(feedback.referenceId);
     }
 

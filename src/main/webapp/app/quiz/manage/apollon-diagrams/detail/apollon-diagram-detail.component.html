@@ -60,10 +60,10 @@
             type="button"
             class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
             data-testid="apollon-diagram-crop"
-            [attr.aria-pressed]="crop()"
+            [attr.aria-pressed]="cropToSelection()"
             [attr.aria-label]="'artemisApp.apollonDiagram.detail.crop' | artemisTranslate"
             [title]="'artemisApp.apollonDiagram.detail.crop' | artemisTranslate"
-            (click)="crop.set(!crop())"
+            (click)="cropToSelection.set(!cropToSelection())"
         >
             <fa-icon [icon]="faCropSimple" />
             <span jhiTranslate="artemisApp.apollonDiagram.detail.crop"></span>

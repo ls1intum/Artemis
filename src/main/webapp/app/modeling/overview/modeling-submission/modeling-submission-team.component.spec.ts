@@ -417,7 +417,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const selectedIds = ['element1', 'element2', 'relationship1'];
         comp.onSelectedElementIdsChanged(selectedIds);
-        expect(comp.selectedElementIds).toEqual(selectedIds);
+        expect(comp.selectedElementIds()).toEqual(selectedIds);
     });
 
     it('should not mark any feedback while nothing is selected on the diagram', () => {

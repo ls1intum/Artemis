@@ -196,10 +196,8 @@ describe('ResultComponent', () => {
         });
 
         describe('results that belong to no participation', () => {
-            // Regression guard: an example submission owns a submission and a result but no participation. The
-            // component used to launder that away with `this.resolvedParticipation()!`, so rendering the badge threw
-            // "Cannot read properties of undefined (reading 'submissions')" out of getLatestSubmission — twice per
-            // row on the example-submission list page.
+            // The badge used to throw here: `resolvedParticipation()!` laundered the absent participation into
+            // getLatestSubmission. See the participation note in result.utils.ts.
             const exampleSubmissionResult: Result = {
                 id: 7,
                 score: 90,

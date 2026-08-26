@@ -1,5 +1,4 @@
-import { Component, OnInit, computed, effect, input, model, output, signal } from '@angular/core';
-import { NgStyle } from '@angular/common';
+import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -17,9 +16,9 @@ import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/t
     selector: 'jhi-exercise-update-timeline',
     templateUrl: './exercise-update-timeline.component.html',
     styleUrl: './exercise-update-timeline.component.scss',
-    imports: [FormsModule, NgStyle, TranslateDirective, TimelineComponent],
+    imports: [FormsModule, TranslateDirective, TimelineComponent],
 })
-export class ExerciseUpdateTimelineComponent implements OnInit {
+export class ExerciseUpdateTimelineComponent {
     readonly hasExampleSolution = input(false);
     /** The server resets the publication date on import, so the opt-in is inert there (as for programming exercises). */
     readonly isImport = input(false);
@@ -36,7 +35,15 @@ export class ExerciseUpdateTimelineComponent implements OnInit {
     readonly timelineStatus = output<TimelineStatus>();
 
     readonly canConfigureExampleSolutionPublication = computed(() => this.hasExampleSolution() && !this.isImport() && !this.lockedToGroup());
-    readonly isExampleSolutionPublicationDateVisible = signal(false);
+
+    /**
+     * Follows whether the opt-in is configurable at all, but stays user-writable in between: losing the example
+     * solution closes the picker, and an exercise that already has a publication date opens it.
+     */
+    readonly isExampleSolutionPublicationDateVisible = linkedSignal<boolean, boolean>({
+        source: this.canConfigureExampleSolutionPublication,
+        computation: (canConfigure, previous) => canConfigure && (previous?.value ?? untracked(this.exampleSolutionPublicationDate) !== undefined),
+    });
 
     /** Explains a disabled opt-in; `undefined` while the opt-in is usable. */
     readonly exampleSolutionPublicationHintKey = computed<string | undefined>(() => {
@@ -55,19 +62,21 @@ export class ExerciseUpdateTimelineComponent implements OnInit {
     readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
     constructor() {
+        // The one thing that cannot be derived: the date belongs to the parent form, and a date the exercise can no
+        // longer configure must not survive into a submit. Visibility itself is a linkedSignal, not an effect.
         effect(() => {
             if (!this.canConfigureExampleSolutionPublication()) {
-                this.isExampleSolutionPublicationDateVisible.set(false);
-            }
-            if (!this.isExampleSolutionPublicationDateVisible()) {
                 this.exampleSolutionPublicationDate.set(undefined);
             }
         });
     }
 
-    ngOnInit(): void {
-        // Show the picker for an already configured date, so editing an exercise starts from its persisted state.
-        this.isExampleSolutionPublicationDateVisible.set(this.exampleSolutionPublicationDate() !== undefined);
+    /** Closing the opt-in discards the date it was configuring. */
+    protected onPublicationOptInChange(visible: boolean): void {
+        this.isExampleSolutionPublicationDateVisible.set(visible);
+        if (!visible) {
+            this.exampleSolutionPublicationDate.set(undefined);
+        }
     }
 
     private computeTimelineItems(): TimelineItem[] {

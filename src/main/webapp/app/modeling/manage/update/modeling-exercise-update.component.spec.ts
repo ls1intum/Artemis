@@ -435,9 +435,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         await fixture.whenStable();
         fixture.detectChanges();
 
-        // No standalone picker left in the solution section ...
         expect(fixture.nativeElement.querySelector('[name="exampleSolutionPublicationDate"]')).toBeNull();
-        // ... the timeline owns the opt-in, and it is usable because the exercise has an example solution.
         const toggle = fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-toggle"]') as HTMLInputElement;
         expect(toggle).not.toBeNull();
         expect(toggle.disabled).toBe(false);

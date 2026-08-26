@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, ApollonView, UMLModel } from '@tumaet/apollon';
 import { convertRenderedSVGToPNG } from '../exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
@@ -52,7 +52,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     apollonDiagram = signal<ApollonDiagram | undefined>(undefined);
     apollonEditor?: ApollonEditor;
-    private lastSavedModelJson = '';
+    private readonly lastSavedModelJson = signal('');
+    private readonly currentModelJson = signal('');
     private modelSubscription: number | undefined;
     private selectionSubscription: number | undefined;
     private actionsRegionMounted = false;
@@ -61,10 +62,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     readonly title = signal('');
     readonly isTitleValid = computed(() => this.title().trim().length > 0);
 
-    readonly isSaved = signal(true);
+    /** Derived, never assigned: a diagram is saved while neither its model nor its title differs from what was stored. */
+    readonly isSaved = computed(() => this.currentModelJson() === this.lastSavedModelJson() && this.title() === (this.apollonDiagram()?.title ?? ''));
 
-    /** Whether to crop the downloaded image to the selection. */
-    readonly crop = signal(true);
+    readonly cropToSelection = signal(true);
 
     /** Mirrors Apollon's selection so the download control has a real disabled state. */
     readonly selectedElementIds = signal<string[]>([]);
@@ -115,17 +116,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
             this.apollonEditor?.setLabels(createApollonLabels(this.translateService));
         });
-
-        // A title edit is an unsaved change just like a model edit.
-        effect(() => {
-            const title = this.title();
-            untracked(() => {
-                const diagram = this.apollonDiagram();
-                if (diagram && title !== (diagram.title ?? '')) {
-                    this.isSaved.set(false);
-                }
-            });
-        });
     }
 
     /**
@@ -169,7 +159,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         const diagram = this.apollonDiagram();
         const normalizedModel = initialModel ? normalizeApollonModel(initialModel) : undefined;
-        this.lastSavedModelJson = normalizedModel ? JSON.stringify(normalizedModel) : '';
+        const savedModelJson = normalizedModel ? JSON.stringify(normalizedModel) : '';
+        this.lastSavedModelJson.set(savedModelJson);
+        this.currentModelJson.set(savedModelJson);
         const editorOptions: ConstructorParameters<typeof ApollonEditor>[1] = {
             mode: ApollonMode.Modelling,
             view: ApollonView.Modelling,
@@ -185,7 +177,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         // Apollon's React/Zustand store fires outside Angular; the signal writes below schedule
         // change detection under zoneless, so template bindings stay fresh.
         this.modelSubscription = this.apollonEditor.subscribeToModelChange((newModel) => {
-            this.isSaved.set(JSON.stringify(newModel) === this.lastSavedModelJson && this.title() === (this.apollonDiagram()?.title ?? ''));
+            this.currentModelJson.set(JSON.stringify(newModel));
             this.modelRevision.update((revision) => revision + 1);
         });
         this.selectionSubscription = this.apollonEditor.subscribeToSelectionChange((selectedElementIds) => {
@@ -246,10 +238,11 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const result = await lastValueFrom(this.apollonDiagramService.update(updatedDiagram, this.courseId()));
         if (result?.ok) {
             this.alertService.success('artemisApp.apollonDiagram.updated', { title: updatedDiagram.title });
-            this.lastSavedModelJson = JSON.stringify(umlModel);
+            const savedModelJson = JSON.stringify(umlModel);
+            this.lastSavedModelJson.set(savedModelJson);
+            this.currentModelJson.set(savedModelJson);
             this.apollonDiagram.set(updatedDiagram);
             this.title.set(updatedDiagram.title ?? '');
-            this.isSaved.set(true);
             this.setAutoSaveTimer();
             return true;
         } else {
@@ -338,7 +331,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
 
         const svg = await this.apollonEditor.exportAsSVG({
-            keepOriginalSize: !this.crop(),
+            keepOriginalSize: !this.cropToSelection(),
             include: this.selectedElementIds(),
             svgMode: 'compat',
         });

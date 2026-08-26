@@ -1,17 +1,12 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, inject } from '@angular/core';
+import { DomPortal, DomPortalOutlet } from '@angular/cdk/portal';
 
-/**
- * Marks the element that a component promoted to `<body>` for document-root fullscreen. Global rules key the stacking
- * of body- and html-level portals (Apollon popovers, CDK overlays) on it, so both Apollon surfaces must carry the
- * same class rather than each inventing its own.
- */
+/** Marks a promoted frame; `global.scss` keys the stacking of body- and html-level portals on it. */
 export const APOLLON_FULLSCREEN_FRAME_CLASS = 'apollon-fullscreen-frame';
 
-/** True when the element still produces a box, i.e. no ancestor hides it. */
+/** True while no ancestor hides the element. Falls back to client rects where `checkVisibility` is missing (jsdom). */
 function isSlotStillShown(element: Element): boolean {
-    // `checkVisibility` is the precise answer but is not implemented everywhere (jsdom included); the client-rect
-    // fallback catches exactly the `display: none` case this guard exists for.
     const withCheckVisibility = element as Element & { checkVisibility?: (options?: unknown) => boolean };
     if (typeof withCheckVisibility.checkVisibility === 'function') {
         return withCheckVisibility.checkVisibility();
@@ -20,44 +15,35 @@ function isSlotStillShown(element: Element): boolean {
 }
 
 /**
- * Owns a single body promotion; restoration removes the element if its original view no longer exists.
+ * Owns a single promotion of a frame to `<body>` for document-root fullscreen.
  *
- * Promotion re-parents the frame to `<body>`, which takes it out of reach of everything its original ancestors do to
- * it. Two hosts rely on exactly that reach and would otherwise strand a fullscreen frame over the whole app:
- *
- * - the exam page switcher hides the previous exercise with `[hidden]` on a wrapper the frame no longer descends from
- *   (`exam-participation.component.html`), so switching exercises left the old editor pinned fullscreen and
- *   intercepting every click;
- * - a `readOnly` flip destroys the frame's `@if` block, removing the element from `<body>` while the document stays
- *   fullscreen with nothing in it.
- *
- * The promotion therefore watches for both and calls back so the owner can stand down.
+ * Promotion puts the frame out of reach of whatever its original ancestors do to it, so the promotion watches for the
+ * two ways a host can drop it — hiding the original slot, or destroying the frame — and calls back to stand down.
  */
 @Injectable({ providedIn: 'root' })
 export class FullscreenPresentationService {
     private readonly document = inject(DOCUMENT);
-    private promotedElement?: HTMLElement;
-    private restoreAnchor?: Comment;
+    private portal?: DomPortal<HTMLElement>;
+    private outlet?: DomPortalOutlet;
+    /** The frame's original parent, captured before the move so the escape watch can tell when that slot is hidden. */
+    private slot?: HTMLElement;
     private escapeObservers: { disconnect(): void }[] = [];
 
     owns(element: HTMLElement | undefined): boolean {
-        return element !== undefined && this.promotedElement === element;
+        return element !== undefined && this.portal?.element === element;
     }
 
-    /**
-     * @param element the frame to show fullscreen
-     * @param onEscape called when the promotion stops being legitimate — the original slot got hidden, or the element
-     *                 was destroyed underneath us. The owner is expected to restore and leave fullscreen.
-     */
+    /** @param onEscape run when the original slot is hidden or the frame is destroyed; restore and exit fullscreen. */
     promote(element: HTMLElement, onEscape?: () => void): boolean {
-        if (this.promotedElement) {
+        if (this.portal) {
             return false;
         }
 
-        this.restoreAnchor = this.document.createComment('fullscreen-presentation-anchor');
-        element.before(this.restoreAnchor);
-        this.promotedElement = element;
-        this.document.body.append(element);
+        this.slot = element.parentElement ?? undefined;
+        // `detach`, never `dispose`: disposing a DomPortalOutlet removes its outlet element, which here is <body>.
+        this.outlet = new DomPortalOutlet(this.document.body);
+        this.portal = new DomPortal(element);
+        this.outlet.attach(this.portal);
         if (onEscape) {
             this.watchForEscape(element, onEscape);
         }
@@ -65,33 +51,28 @@ export class FullscreenPresentationService {
     }
 
     restore(): void {
-        const element = this.promotedElement;
-        const anchor = this.restoreAnchor;
+        const element = this.portal?.element;
+        // The portal swaps the frame back over its anchor. Correct the two cases that leaves: a destroyed frame would
+        // be resurrected, and a frame whose view is gone has no anchor left and would strand under <body>.
+        const wasDestroyed = !!element && !element.isConnected;
         this.stopWatching();
-        if (!element || !anchor) {
-            return;
-        }
-
-        // A destroyed frame must not be resurrected into the view that just dropped it.
-        if (anchor.parentNode && element.isConnected) {
-            anchor.parentNode.insertBefore(element, anchor.nextSibling);
-        } else {
+        this.outlet?.detach();
+        if (element && (wasDestroyed || element.parentElement === this.document.body)) {
             element.remove();
         }
-        anchor.remove();
-        this.promotedElement = undefined;
-        this.restoreAnchor = undefined;
+        this.outlet = undefined;
+        this.portal = undefined;
+        this.slot = undefined;
     }
 
     private watchForEscape(element: HTMLElement, onEscape: () => void): void {
         const escapeOnce = () => {
-            if (this.promotedElement === element) {
+            if (this.owns(element)) {
                 onEscape();
             }
         };
 
-        // The frame is a direct child of <body> while promoted, so a shallow childList watch is enough to notice
-        // Angular tearing it out from under us, and costs nothing while it stays.
+        // Promoted frames are direct children of <body>, so a shallow childList watch catches Angular destroying one.
         if (typeof MutationObserver !== 'undefined') {
             const removalObserver = new MutationObserver(() => {
                 if (!element.isConnected) {
@@ -102,12 +83,11 @@ export class FullscreenPresentationService {
             this.escapeObservers.push(removalObserver);
         }
 
-        // The slot the frame came from still sits in the original view, so it still reacts to whatever hides that
-        // view. An IntersectionObserver fires when it stops producing a box — including via an ancestor's `[hidden]`.
-        const slot = this.restoreAnchor?.parentElement;
+        // The slot stays in the original view, so it still reacts to whatever hides it; intersection is the trigger,
+        // `isSlotStillShown` the decision, since scrolling out of view is not an escape.
+        const slot = this.slot;
         if (slot && typeof IntersectionObserver !== 'undefined') {
             const hiddenObserver = new IntersectionObserver(() => {
-                // Intersection alone would also mean "merely scrolled out of view", which is not an escape.
                 if (!isSlotStillShown(slot)) {
                     escapeOnce();
                 }

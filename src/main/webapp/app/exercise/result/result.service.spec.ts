@@ -363,9 +363,7 @@ describe('ResultService', () => {
         });
 
         it('builds the string for a result without a participation and does not report it to Sentry', () => {
-            // Regression guard: an example submission's result belongs to no participation. That used to fall into the
-            // "either the result or exercise was undefined" branch, which rendered an empty score on the
-            // example-submission list and reported a Sentry event on every change-detection pass.
+            // This used to hit the "result or exercise undefined" branch: empty score plus a Sentry event per CD pass.
             const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
             captureExceptionSpy.mockClear();
 

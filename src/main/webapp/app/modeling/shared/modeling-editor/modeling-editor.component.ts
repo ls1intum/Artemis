@@ -2,7 +2,6 @@ import {
     AfterViewInit,
     Component,
     ElementRef,
-    HostListener,
     OnDestroy,
     ViewEncapsulation,
     computed,
@@ -51,6 +50,7 @@ type ApollonEditorE2eHostElement = HTMLElement & { __apollonEditor?: ApollonEdit
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    host: { '(document:fullscreenchange)': 'onFullscreenChange()' },
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -545,7 +545,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         }
     }
 
-    @HostListener('document:fullscreenchange')
     protected onFullscreenChange(): void {
         const ownsPresentation = this.fullscreenPresentation.owns(this.editorFrame()?.nativeElement);
         const ownsFullscreen = ownsPresentation && document.fullscreenElement === document.documentElement;

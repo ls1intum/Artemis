@@ -596,7 +596,7 @@ describe('ModelingSubmissionComponent', () => {
 
         const selectedIds = ['element1', 'element2', 'relationship1'];
         comp.onSelectedElementIdsChanged(selectedIds);
-        expect(comp.selectedElementIds).toEqual(selectedIds);
+        expect(comp.selectedElementIds()).toEqual(selectedIds);
     });
 
     it('should not mark any feedback while nothing is selected on the diagram', () => {
@@ -886,17 +886,25 @@ describe('ModelingSubmissionComponent', () => {
         // element name Apollon shows. Credits of exactly 0 are their own case — feedback without points is a
         // remark, not a deduction.
         it.each([
-            { credits: 5, tone: 'positive', points: '+5', icon: faCheck },
-            { credits: -2.5, tone: 'negative', points: '-2.5', icon: faXmark },
-            { credits: 0, tone: 'zero', points: '0', icon: faTriangleExclamation },
-            { credits: undefined, tone: 'zero', points: '0', icon: faTriangleExclamation },
-        ])('describes feedback worth $credits credits as $tone', ({ credits, tone, points, icon }) => {
+            { credits: 5, tone: 'positive', signed: true, pluralKey: 'many', icon: faCheck },
+            { credits: 1, tone: 'positive', signed: true, pluralKey: 'one', icon: faCheck },
+            { credits: -2.5, tone: 'negative', signed: false, pluralKey: 'many', icon: faXmark },
+            { credits: -1, tone: 'negative', signed: false, pluralKey: 'one', icon: faXmark },
+            { credits: 0, tone: 'zero', signed: false, pluralKey: 'many', icon: faTriangleExclamation },
+            { credits: undefined, tone: 'zero', signed: false, pluralKey: 'many', icon: faTriangleExclamation },
+        ])('describes feedback worth $credits credits as $tone', ({ credits, tone, signed, pluralKey, icon }) => {
             createModelingSubmissionComponent();
+            const translate = vi.spyOn(TestBed.inject(TranslateService), 'instant');
             const feedback = { credits } as Feedback;
 
             expect(comp['feedbackTone'](feedback)).toBe(tone);
-            expect(comp['feedbackPoints'](feedback)).toBe(points);
             expect(comp['feedbackToneIcon'](feedback)).toBe(icon);
+
+            // Points go through the shared locale formatting, so the assertion is on the key and the formatted value
+            // rather than on a raw number: a German reader must see "2,5", and one point must not read "1 Points".
+            const rendered = comp['feedbackPoints'](feedback);
+            expect(translate).toHaveBeenCalledWith(`artemisApp.assessment.detail.points.${pluralKey}`, { points: (credits ?? 0).toLocaleString('en') });
+            expect(rendered.startsWith('+')).toBe(signed);
         });
 
         it('should soften the Apollon owner separator in an element name and stay silent without one', () => {

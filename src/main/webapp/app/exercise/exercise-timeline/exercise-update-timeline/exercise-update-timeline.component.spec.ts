@@ -150,10 +150,6 @@ describe('ExerciseUpdateTimelineComponent', () => {
         expect(emitSpy).toHaveBeenCalledExactlyOnceWith(timelineStatus);
     });
     it('should only order the example solution publication date against the release and start dates', async () => {
-        // The server (BaseExercise.isValidExampleSolutionPublicationDate) treats only the release and start dates as
-        // hard lower bounds. The due-date bound is conditional on the exercise being included in the score, and the
-        // assessment due date is never a bound. Inheriting the default "after every preceding item" check made the
-        // form reject schedules the server accepts — publishing a solution before the assessment due date is normal.
         await createComponent({ hasExampleSolution: true, exampleSolutionPublicationDate: dayjs() });
 
         const items = component.timelineItems();

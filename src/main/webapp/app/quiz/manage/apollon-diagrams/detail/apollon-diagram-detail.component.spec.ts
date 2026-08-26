@@ -504,7 +504,7 @@ describe('ApollonDiagramDetail Component', () => {
 
             fixture.componentInstance.apollonDiagram.set(diagram);
             await fixture.componentInstance.initializeApollonEditor(v3Model);
-            fixture.componentInstance.crop.set(false);
+            fixture.componentInstance.cropToSelection.set(false);
 
             await fixture.componentInstance.downloadSelection();
 
@@ -533,11 +533,15 @@ describe('ApollonDiagramDetail Component', () => {
     // ===========================================
     // MODAL CONFIRMATION TESTS
     // ===========================================
+    /** `isSaved` is derived, so the tests drive the title it derives from rather than the flag. */
+    const markSaved = (component: ApollonDiagramDetailComponent) => component.title.set(component.apollonDiagram()?.title ?? '');
+    const markUnsaved = (component: ApollonDiagramDetailComponent) => component.title.set(`${component.apollonDiagram()?.title ?? ''} edited`);
+
     describe('confirmExitDetailView', () => {
         it('should emit closeModal directly when saved', () => {
             const emitSpy = vi.spyOn(fixture.componentInstance.closeModal, 'emit');
 
-            fixture.componentInstance.isSaved.set(true);
+            markSaved(fixture.componentInstance);
             fixture.componentInstance.confirmExitDetailView(true);
 
             expect(emitSpy).toHaveBeenCalledOnce();
@@ -546,14 +550,14 @@ describe('ApollonDiagramDetail Component', () => {
         it('should emit closeEdit directly when saved', () => {
             const emitSpy = vi.spyOn(fixture.componentInstance.closeEdit, 'emit');
 
-            fixture.componentInstance.isSaved.set(true);
+            markSaved(fixture.componentInstance);
             fixture.componentInstance.confirmExitDetailView(false);
 
             expect(emitSpy).toHaveBeenCalledOnce();
         });
 
         it('should open confirmation modal when not saved', () => {
-            fixture.componentInstance.isSaved.set(false);
+            markUnsaved(fixture.componentInstance);
             fixture.componentInstance.confirmExitDetailView(true);
 
             expect(mockDialogService.open).toHaveBeenCalledOnce();
@@ -562,7 +566,7 @@ describe('ApollonDiagramDetail Component', () => {
         it('should emit closeModal after dialog confirmation', () => {
             const emitSpy = vi.spyOn(fixture.componentInstance.closeModal, 'emit');
 
-            fixture.componentInstance.isSaved.set(false);
+            markUnsaved(fixture.componentInstance);
             fixture.componentInstance.confirmExitDetailView(true);
 
             dialogClose.next({ confirmed: true });
@@ -661,16 +665,21 @@ describe('ApollonDiagramDetail Component', () => {
             expect(fixture.componentInstance.isTitleValid()).toBe(true);
         });
 
-        it('should mark the diagram as unsaved when only the title changed', async () => {
+        it('should track the title against the stored one in both directions', async () => {
             const stored = { ...diagram, title: 'Stored title' } as ApollonDiagram;
             fixture.componentInstance.apollonDiagram.set(stored);
             fixture.componentInstance.title.set('Stored title');
-            fixture.componentInstance.isSaved.set(true);
+            expect(fixture.componentInstance.isSaved()).toBe(true);
 
             fixture.componentInstance.title.set('Renamed');
             await fixture.whenStable();
-
             expect(fixture.componentInstance.isSaved()).toBe(false);
+
+            // Restoring the title clears the flag again. It used to stay stuck on "unsaved changes" until the model
+            // next changed, because the flag was pushed by an effect that only ever set it to false.
+            fixture.componentInstance.title.set('Stored title');
+            await fixture.whenStable();
+            expect(fixture.componentInstance.isSaved()).toBe(true);
         });
 
         it('should persist the edited title', async () => {

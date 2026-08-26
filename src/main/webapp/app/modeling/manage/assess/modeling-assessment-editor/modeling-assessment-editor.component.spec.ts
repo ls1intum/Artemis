@@ -167,10 +167,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         } as unknown as ModelingSubmission;
     };
 
-    // Regression: this page is sized to the viewport with `overflow: hidden`, so the shared layout's complaint
-    // section — a "scroll down to review the complaint" banner plus the form it points at, both appended below the
-    // assessment — was clipped out of reach, and the banner pointed at a scroll the page cannot perform. The page
-    // opts out of the shared section and renders both inside its own scrollable "Feedback & notes" pane instead.
     it('should place the complaint banner and form in its own scrollable pane rather than under the assessment', async () => {
         vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
         vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>));

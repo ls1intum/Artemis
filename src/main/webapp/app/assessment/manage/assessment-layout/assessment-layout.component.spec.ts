@@ -138,10 +138,6 @@ describe('AssessmentLayoutComponent', () => {
             expect(fixture.debugElement.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
         });
 
-        // The banner reads "scroll down to review the complaint" and the form it points at is appended below the
-        // assessment. A workspace that is sized to the viewport and does not scroll — the modeling assessment page —
-        // would clip that form out of reach and send the tutor scrolling somewhere they cannot go. Such a page opts
-        // out of both and places the form in its own scrollable pane instead; the two must never come apart.
         it('should drop the hint banner together with the form when the page places the complaint itself', () => {
             fixture.componentRef.setInput('complaint', complaint);
             fixture.componentRef.setInput('showComplaintSection', false);

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, computed, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
@@ -48,6 +48,7 @@ type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor 
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
+    host: { '(document:fullscreenchange)': 'onFullscreenChange()' },
     imports: [ModelingExplanationEditorComponent, ApollonRailDisclosureComponent],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
@@ -424,7 +425,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
     }
 
-    @HostListener('document:fullscreenchange')
     protected onFullscreenChange(): void {
         const ownsPresentation = this.fullscreenPresentation.owns(this.assessmentFrame()?.nativeElement);
         const ownsFullscreen = ownsPresentation && document.fullscreenElement === document.documentElement;

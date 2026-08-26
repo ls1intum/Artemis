@@ -7,7 +7,8 @@
             id="exampleSolutionPublicationDateEnabled"
             data-testid="example-solution-publication-toggle"
             [disabled]="!canConfigureExampleSolutionPublication()"
-            [(ngModel)]="isExampleSolutionPublicationDateVisible"
+            [ngModel]="isExampleSolutionPublicationDateVisible()"
+            (ngModelChange)="onPublicationOptInChange($event)"
         />
         <label
             class="form-control-label"

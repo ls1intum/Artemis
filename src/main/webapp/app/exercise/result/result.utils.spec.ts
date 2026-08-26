@@ -370,12 +370,7 @@ describe('ResultUtils', () => {
     });
 
     describe('results without a participation', () => {
-        // Regression guard: example submissions own a submission and a result but no participation — neither as an
-        // explicit input nor via result.submission.participation. Every helper below used to declare a non-optional
-        // `participation: Participation`, and the two that dereference it (getLatestSubmission via
-        // isBuildFailedAndResultIsAutomatic, and isStudentParticipation) threw
-        // "Cannot read properties of undefined (reading 'submissions')" once ResultComponent passed the absent
-        // participation through a non-null assertion.
+        // See the participation note in result.utils.ts.
         const automaticResult = { id: 1, score: 80, assessmentType: AssessmentType.AUTOMATIC } as Result;
 
         it('isBuildFailedAndResultIsAutomatic does not throw and reports no build failure', () => {
