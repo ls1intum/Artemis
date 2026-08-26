@@ -88,7 +88,19 @@
                 "typesIncomplete": "types incomplete",
                 "selectPrompt": "Select an item on the left to inspect what is stored in Weaviate.",
                 "empty": "Nothing is indexed in Weaviate for this course yet.",
-                "error": "Failed to load the indexed content for this course. Please try again."
+                "error": "Failed to load the indexed content for this course. Please try again.",
+                "navigationLabel": "Indexed content navigation",
+                "entityMetadata": "Entity metadata",
+                "browseLectures": "Browse lectures",
+                "toggleLecture": "Show or hide this lecture's units",
+                "toggleUnit": "Show or hide this unit's content",
+                "untitledLecture": "Untitled lecture",
+                "untitledUnit": "Untitled unit",
+                "lectureNotIndexed": "not indexed",
+                "content_slides": "Slides",
+                "content_transcript": "Transcript",
+                "content_unit_summary": "Unit summary",
+                "content_segments": "Aligned segments"
             },
             "status": {
                 "COMPLETE": "Complete",

@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { CourseIngestionBrowserTreeComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-tree/course-ingestion-browser-tree.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
-import { CourseBrowserData, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import { BrowserSelection, CourseBrowserData, IngestionCoverage } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /**
  * The per-course content browser: a master-detail modal over what the index actually holds for one course.
@@ -19,7 +20,7 @@ import { CourseBrowserData, IngestionCoverage } from 'app/admin/course-ingestion
 @Component({
     selector: 'jhi-course-ingestion-browser',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumUiDialogComponent, TumUiMessageComponent, TumUiTagComponent, CourseIngestionBrowserTreeComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './course-ingestion-browser.component.html',
 })
 export class CourseIngestionBrowserComponent {
@@ -33,6 +34,9 @@ export class CourseIngestionBrowserComponent {
     readonly course = input.required<IngestionCoverage>();
 
     readonly data = signal<CourseBrowserData | undefined>(undefined);
+
+    /** What the detail pane is showing. Owned here because both the tree and the detail pane need it. */
+    readonly selection = signal<BrowserSelection | undefined>(undefined);
     readonly loading = signal(false);
     readonly error = signal(false);
 
@@ -60,6 +64,7 @@ export class CourseIngestionBrowserComponent {
     close(): void {
         this.visible.set(false);
         this.data.set(undefined);
+        this.selection.set(undefined);
     }
 
     private load(courseId: number): void {
@@ -71,6 +76,7 @@ export class CourseIngestionBrowserComponent {
             .subscribe({
                 next: (data) => {
                     this.data.set(data);
+                    this.selection.set(undefined);
                     this.loading.set(false);
                 },
                 error: () => {
