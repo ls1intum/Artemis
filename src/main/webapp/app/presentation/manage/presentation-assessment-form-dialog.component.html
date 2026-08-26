@@ -1,0 +1,155 @@
+<form [formGroup]="editForm" (ngSubmit)="save()" novalidate class="flex flex-col gap-6">
+    <div class="grid grid-cols-1 items-start gap-4 min-[40rem]:grid-cols-2 min-[72rem]:grid-cols-[minmax(14rem,1.4fr)_minmax(8rem,0.8fr)_minmax(8rem,0.8fr)_minmax(14rem,1fr)]">
+        <div class="col-span-full flex min-w-0 flex-col gap-2 min-[72rem]:col-span-1">
+            <label for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
+            <input
+                id="presentation-assessment-title"
+                tumUiInput
+                class="w-full"
+                type="text"
+                formControlName="title"
+                [placeholder]="'artemisApp.presentationAssessment.placeholder.title' | artemisTranslate"
+            />
+            @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
+                <tum-ui-message severity="error" data-testid="presentation-title-error">
+                    <span
+                        [jhiTranslate]="editForm.controls.title.hasError('maxlength') ? 'entity.validation.maxlength' : 'entity.validation.required'"
+                        [translateValues]="{ max: titleMaxLength }"
+                    ></span>
+                </tum-ui-message>
+            }
+        </div>
+
+        <div class="flex min-w-0 flex-col gap-2">
+            <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
+            <input
+                id="presentation-assessment-max-points"
+                tumUiInput
+                class="w-full"
+                type="text"
+                inputmode="decimal"
+                formControlName="maxPoints"
+                [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
+            />
+            @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
+                <tum-ui-message severity="error" data-testid="presentation-max-points-error">
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.maxPoints.hasError('numberRequired')
+                                ? 'artemisApp.presentationAssessment.validation.numberRequired'
+                                : editForm.controls.maxPoints.hasError('wholeNumber')
+                                  ? 'artemisApp.presentationAssessment.validation.wholeNumber'
+                                  : editForm.controls.maxPoints.hasError('max')
+                                    ? 'artemisApp.presentationAssessment.validation.pointsMax'
+                                    : 'artemisApp.presentationAssessment.validation.maxPointsMin'
+                        "
+                        [translateValues]="{ max: maxPointsUpperBound }"
+                    ></span>
+                </tum-ui-message>
+            }
+        </div>
+
+        <div class="flex min-w-0 flex-col gap-2">
+            <label for="presentation-assessment-result-points" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
+            <input
+                id="presentation-assessment-result-points"
+                tumUiInput
+                class="w-full"
+                type="text"
+                inputmode="decimal"
+                formControlName="resultPoints"
+                [placeholder]="'artemisApp.presentationAssessment.placeholder.resultPoints' | artemisTranslate"
+            />
+            @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
+                <tum-ui-message severity="error" data-testid="presentation-result-points-error">
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.resultPoints.hasError('numberRequired')
+                                ? 'artemisApp.presentationAssessment.validation.numberRequired'
+                                : editForm.controls.resultPoints.hasError('wholeNumber')
+                                  ? 'artemisApp.presentationAssessment.validation.wholeNumber'
+                                  : editForm.controls.resultPoints.hasError('max')
+                                    ? 'artemisApp.presentationAssessment.validation.pointsMax'
+                                    : 'artemisApp.presentationAssessment.validation.resultPointsMin'
+                        "
+                        [translateValues]="{ max: maxPointsUpperBound }"
+                    ></span>
+                </tum-ui-message>
+            }
+            @if (editForm.hasError('resultPointsExceedMaxPoints') && (editForm.controls.resultPoints.touched || editForm.controls.maxPoints.touched)) {
+                <tum-ui-message severity="error" data-testid="presentation-result-points-max-error">
+                    <span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span>
+                </tum-ui-message>
+            }
+        </div>
+
+        <div class="flex min-w-0 flex-col gap-2">
+            <jhi-date-time-picker
+                class="[&_[data-testid='date-picker-wrapper']]:mt-2"
+                id="presentation-assessment-date"
+                labelName="{{ 'artemisApp.presentationAssessment.presentationDate' | artemisTranslate }}"
+                formControlName="presentationDate"
+                name="presentationDate"
+                [min]="minPresentationDate"
+                [disabled]="isSaving()"
+                [appendTo]="'self'"
+            />
+        </div>
+
+        <div class="col-span-full flex min-w-0 flex-col gap-2">
+            <label for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
+            <textarea
+                id="presentation-assessment-description"
+                tumUiTextarea
+                class="min-h-28 w-full resize-y"
+                rows="4"
+                formControlName="description"
+                [placeholder]="'artemisApp.presentationAssessment.placeholder.description' | artemisTranslate"
+            ></textarea>
+            @if (editForm.controls.description.invalid && editForm.controls.description.touched) {
+                <tum-ui-message severity="error" data-testid="presentation-description-error">
+                    <span jhiTranslate="entity.validation.maxlength" [translateValues]="{ max: descriptionMaxLength }"></span>
+                </tum-ui-message>
+            }
+        </div>
+    </div>
+
+    @if (presentationStudentCourse()) {
+        <div class="min-w-0 overflow-x-auto">
+            <jhi-course-group
+                [(allGroupUsers)]="assignedStudents"
+                [courseRoleSlug]="studentsCourseGroup"
+                [isLoadingAllGroupUsers]="false"
+                [isAdmin]="false"
+                [course]="presentationStudentCourse()!"
+                [addUserToGroup]="addStudentToPresentation"
+                [removeUserFromGroup]="removeStudentFromPresentation"
+                [handleUsersSizeChange]="handleAssignedStudentsSizeChange"
+                [exportFileName]="studentExportFilename()"
+                [userSearch]="studentSearch"
+                [isDisabled]="isSaving()"
+                removeUserQuestionKey="artemisApp.presentationAssessment.students.removeQuestion"
+            >
+                <span>
+                    <span>{{ studentSectionTitle() || ('artemisApp.presentationAssessment.students.newPresentation' | artemisTranslate) }} - </span>
+                    @if (filteredAssignedStudentsSize() < assignedStudents().length) {
+                        <span>{{ filteredAssignedStudentsSize() }} <span jhiTranslate="artemisApp.course.courseGroup.outOf"></span> </span>
+                    }
+                    {{ assignedStudents().length }}
+                    <span jhiTranslate="artemisApp.course.students"></span>
+                </span>
+            </jhi-course-group>
+        </div>
+    }
+
+    <div class="flex flex-col-reverse gap-2 min-[40rem]:flex-row min-[40rem]:justify-end">
+        <tum-ui-button severity="secondary" type="button" [disabled]="isSaving()" (clicked)="cancel()">
+            <fa-icon [icon]="faBan" />
+            <span jhiTranslate="entity.action.cancel"></span>
+        </tum-ui-button>
+        <tum-ui-button type="submit" [disabled]="isSaving()">
+            <fa-icon [icon]="faSave" />
+            <span jhiTranslate="entity.action.save"></span>
+        </tum-ui-button>
+    </div>
+</form>

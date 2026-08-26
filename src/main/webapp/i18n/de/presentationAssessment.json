@@ -1,0 +1,42 @@
+{
+    "artemisApp": {
+        "presentationAssessment": {
+            "home": {
+                "title": "Präsentationen",
+                "createLabel": "Präsentation erstellen",
+                "editLabel": "Präsentation bearbeiten"
+            },
+            "created": "Die Präsentationsbewertung wurde erfolgreich erstellt",
+            "updated": "Die Präsentationsbewertung wurde erfolgreich aktualisiert",
+            "deleted": "Die Präsentationsbewertung {{ title }} wurde erfolgreich gelöscht",
+            "title": "Titel",
+            "description": "Beschreibung",
+            "maxPoints": "Max. Punkte",
+            "resultPoints": "Ergebnis",
+            "resultPointsExceedMaxPoints": "Die erreichten Punkte dürfen die maximalen Punkte nicht überschreiten.",
+            "placeholder": {
+                "title": "Titel",
+                "maxPoints": "0",
+                "resultPoints": "0",
+                "description": "Beschreibung eingeben"
+            },
+            "validation": {
+                "numberRequired": "Bitte gib eine Zahl ein.",
+                "wholeNumber": "Bitte gib eine ganze Zahl ein.",
+                "maxPointsMin": "Max. Punkte müssen mindestens 1 betragen.",
+                "resultPointsMin": "Das Ergebnis muss mindestens 0 betragen.",
+                "pointsMax": "Punkte dürfen {{ max }} nicht überschreiten."
+            },
+            "presentationDate": "Präsentationstermin",
+            "noExisting": "Für diesen Kurs gibt es noch keine Präsentationsbewertungen.",
+            "delete": {
+                "question": "Soll die Präsentationsbewertung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib den Titel der Präsentationsbewertung zur Bestätigung ein."
+            },
+            "students": {
+                "newPresentation": "Neue Präsentation",
+                "removeQuestion": "Soll der Benutzer mit Login <strong>{{ title }}</strong> wirklich aus dieser Präsentation entfernt werden?"
+            }
+        }
+    }
+}

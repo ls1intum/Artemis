@@ -237,6 +237,10 @@
                 "label": "Lernpfade aktiviert",
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
+            "presentationAssessments": {
+                "label": "Präsentationen aktiviert",
+                "tooltip": "Zeigt den Menüpunkt Präsentationen in der Kursnavigation und erlaubt Lehrenden, Kurspräsentationen zu verwalten."
+            },
             "autoOrchestration": {
                 "label": "Atlas-Auto-Orchestrierung aktiviert",
                 "tooltip": "Lässt Atlas die Kompetenzen dieses Kurses automatisch überprüfen und aktualisieren, sobald sich der Inhalt einer Aufgabe ändert. Standardmäßig deaktiviert; nur für Kurse aktivieren, in denen die KI die Kompetenzverknüpfungen selbstständig pflegen soll.",

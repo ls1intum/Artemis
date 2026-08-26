@@ -1,0 +1,186 @@
+package de.tum.cit.aet.artemis.presentation.web;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+
+import jakarta.validation.Valid;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.presentation.domain.PresentationAssessment;
+import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentDTO;
+import de.tum.cit.aet.artemis.presentation.dto.PresentationAssessmentStudentDTO;
+import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepository;
+import de.tum.cit.aet.artemis.presentation.service.PresentationAssessmentService;
+
+/**
+ * REST controller for managing course-level presentation assessments.
+ */
+@Profile(PROFILE_CORE)
+@Lazy
+@RestController
+@RequestMapping("api/presentation/")
+public class PresentationAssessmentResource {
+
+    private static final Logger log = LoggerFactory.getLogger(PresentationAssessmentResource.class);
+
+    private final PresentationAssessmentService presentationAssessmentService;
+
+    private final PresentationAssessmentRepository presentationAssessmentRepository;
+
+    private final CourseRepository courseRepository;
+
+    public PresentationAssessmentResource(PresentationAssessmentService presentationAssessmentService, PresentationAssessmentRepository presentationAssessmentRepository,
+            CourseRepository courseRepository) {
+        this.presentationAssessmentService = presentationAssessmentService;
+        this.presentationAssessmentRepository = presentationAssessmentRepository;
+        this.courseRepository = courseRepository;
+    }
+
+    /**
+     * GET /api/presentation/courses/{courseId}/presentation-assessments : get all presentation assessments for a course.
+     *
+     * @param courseId the course id
+     * @return the ResponseEntity with status 200 (OK) and the presentation assessments
+     */
+    @GetMapping("courses/{courseId}/presentation-assessments")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<PresentationAssessmentDTO>> getPresentationAssessments(@PathVariable long courseId) {
+        log.debug("REST request to get presentation assessments for course {}", courseId);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        List<PresentationAssessmentDTO> presentationAssessments = presentationAssessmentRepository.findAllByCourseId(courseId).stream().map(PresentationAssessmentDTO::of).toList();
+        return ResponseEntity.ok(presentationAssessments);
+    }
+
+    /**
+     * GET /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId} : get a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @return the ResponseEntity with status 200 (OK) and the presentation assessment
+     */
+    @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<PresentationAssessmentDTO> getPresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
+        log.debug("REST request to get presentation assessment {} for course {}", assessmentId, courseId);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId)));
+    }
+
+    /**
+     * POST /api/presentation/courses/{courseId}/presentation-assessments : create a presentation assessment.
+     *
+     * @param courseId the course id
+     * @param dto      the presentation assessment data
+     * @return the ResponseEntity with status 201 (Created) and the created presentation assessment
+     * @throws URISyntaxException if the Location URI is invalid
+     */
+    @PostMapping("courses/{courseId}/presentation-assessments")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<PresentationAssessmentDTO> createPresentationAssessment(@PathVariable long courseId, @Valid @RequestBody PresentationAssessmentDTO dto)
+            throws URISyntaxException {
+        log.debug("REST request to create presentation assessment for course {}: {}", courseId, dto);
+        validatePresentationAssessmentCourseId(courseId, dto);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        PresentationAssessment presentationAssessment = presentationAssessmentService.create(course, dto);
+        PresentationAssessmentDTO result = PresentationAssessmentDTO.of(presentationAssessment);
+        return ResponseEntity.created(new URI("/api/presentation/courses/" + courseId + "/presentation-assessments/" + result.id())).body(result);
+    }
+
+    /**
+     * PUT /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId} : update a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @param dto          the updated presentation assessment data
+     * @return the ResponseEntity with status 200 (OK) and the updated presentation assessment
+     */
+    @PutMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<PresentationAssessmentDTO> updatePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId,
+            @Valid @RequestBody PresentationAssessmentDTO dto) {
+        log.debug("REST request to update presentation assessment {} for course {}: {}", assessmentId, courseId, dto);
+        validatePresentationAssessmentUpdateRequest(assessmentId, dto);
+        validatePresentationAssessmentCourseId(courseId, dto);
+        Course course = findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        return ResponseEntity.ok(PresentationAssessmentDTO.of(presentationAssessmentService.update(course, dto)));
+    }
+
+    /**
+     * DELETE /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId} : delete a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @return the ResponseEntity with status 204 (No Content)
+     */
+    @DeleteMapping("courses/{courseId}/presentation-assessments/{assessmentId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> deletePresentationAssessment(@PathVariable long courseId, @PathVariable long assessmentId) {
+        log.debug("REST request to delete presentation assessment {} for course {}", assessmentId, courseId);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        presentationAssessmentService.delete(courseId, assessmentId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * GET /api/presentation/courses/{courseId}/presentation-assessments/{assessmentId}/students : get students assigned to a presentation assessment.
+     *
+     * @param courseId     the course id
+     * @param assessmentId the presentation assessment id
+     * @return the ResponseEntity with status 200 (OK) and the assigned students
+     */
+    @GetMapping("courses/{courseId}/presentation-assessments/{assessmentId}/students")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<List<PresentationAssessmentStudentDTO>> getPresentationAssessmentStudents(@PathVariable long courseId, @PathVariable long assessmentId) {
+        log.debug("REST request to get students for presentation assessment {} in course {}", assessmentId, courseId);
+        findCourseAndCheckPresentationAssessmentsEnabled(courseId);
+        presentationAssessmentRepository.findByIdAndCourseIdElseThrow(assessmentId, courseId);
+        return ResponseEntity
+                .ok(presentationAssessmentRepository.findStudentsForPresentationAssessment(assessmentId, courseId).stream().map(PresentationAssessmentStudentDTO::of).toList());
+    }
+
+    private Course findCourseAndCheckPresentationAssessmentsEnabled(long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!course.getPresentationAssessmentsEnabled()) {
+            throw new AccessForbiddenException("Presentation assessments are disabled for this course.");
+        }
+        return course;
+    }
+
+    private void validatePresentationAssessmentUpdateRequest(long assessmentId, PresentationAssessmentDTO dto) {
+        if (dto.id() == null) {
+            throw new BadRequestAlertException("A presentation assessment update must have an ID", PresentationAssessment.ENTITY_NAME, "idMissing");
+        }
+        if (!dto.id().equals(assessmentId)) {
+            throw new BadRequestAlertException("The path id and body id must match", PresentationAssessment.ENTITY_NAME, "idMismatch");
+        }
+    }
+
+    private void validatePresentationAssessmentCourseId(long courseId, PresentationAssessmentDTO dto) {
+        if (dto.courseId() != null && dto.courseId() != courseId) {
+            throw new BadRequestAlertException("The path course id and body course id must match", PresentationAssessment.ENTITY_NAME, "courseIdMismatch");
+        }
+    }
+}

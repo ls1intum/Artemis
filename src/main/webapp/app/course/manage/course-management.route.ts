@@ -8,6 +8,7 @@ import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { FaqResolve } from 'app/communication/faq/faq-resolve.service';
 import { CourseManagementResolve } from 'app/course/manage/services/course-management-resolve.service';
 import { PasskeyAuthenticationGuard } from 'app/core/auth/passkey-authentication-guard/passkey-authentication.guard';
+import { presentationAssessmentFeatureGuard } from 'app/presentation/manage/presentation-assessment-feature.guard';
 
 export const courseManagementRoutes: Routes = [
     {
@@ -286,6 +287,16 @@ export const courseManagementRoutes: Routes = [
                             pageTitle: 'artemisApp.ratingList.pageTitle',
                         },
                         canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'presentations',
+                        loadComponent: () =>
+                            import('app/presentation/manage/presentation-assessment-management.component').then((m) => m.PresentationAssessmentManagementComponent),
+                        data: {
+                            authorities: IS_AT_LEAST_INSTRUCTOR,
+                            pageTitle: 'artemisApp.presentationAssessment.home.title',
+                        },
+                        canActivate: [UserRouteAccessService, presentationAssessmentFeatureGuard],
                     },
                     {
                         path: 'competency-management',

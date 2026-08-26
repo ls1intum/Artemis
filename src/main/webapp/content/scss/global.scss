@@ -247,6 +247,9 @@ Generic styles
 // sets an inline `min-width` equal to the (full-width) input, which stretches the calendar far too wide.
 .jhi-date-time-picker-panel {
     min-width: auto !important;
+    width: max-content !important;
+    max-width: calc(100vw - 2rem);
+    z-index: 1065 !important;
 }
 
 // PrimeNG date pickers render their own (rounded) invalid border via `[invalid]` / `.invalid-date-input`

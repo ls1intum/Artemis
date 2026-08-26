@@ -1,0 +1,42 @@
+{
+    "artemisApp": {
+        "presentationAssessment": {
+            "home": {
+                "title": "Presentations",
+                "createLabel": "Create presentation",
+                "editLabel": "Edit presentation"
+            },
+            "created": "The presentation assessment was successfully created",
+            "updated": "The presentation assessment was successfully updated",
+            "deleted": "The presentation assessment {{ title }} was successfully deleted",
+            "title": "Title",
+            "description": "Description",
+            "maxPoints": "Max. points",
+            "resultPoints": "Result",
+            "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
+            "placeholder": {
+                "title": "Title",
+                "maxPoints": "0",
+                "resultPoints": "0",
+                "description": "Enter a description"
+            },
+            "validation": {
+                "numberRequired": "Please enter a number.",
+                "wholeNumber": "Please enter a whole number.",
+                "maxPointsMin": "Max. points must be at least 1.",
+                "resultPointsMin": "Result must be at least 0.",
+                "pointsMax": "Points must not exceed {{ max }}."
+            },
+            "presentationDate": "Presentation date",
+            "noExisting": "There are no presentation assessments for this course yet.",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the presentation assessment <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the title of the presentation assessment to confirm."
+            },
+            "students": {
+                "newPresentation": "New presentation",
+                "removeQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this presentation?"
+            }
+        }
+    }
+}

@@ -1,0 +1,96 @@
+<div>
+    <div *titleBarActions class="flex justify-end">
+        <tum-ui-button id="create-presentation-assessment" size="small" [icon]="faPlus" [disabled]="isSaving()" (clicked)="startCreate()">
+            <span jhiTranslate="artemisApp.presentationAssessment.home.createLabel"></span>
+        </tum-ui-button>
+    </div>
+
+    @if (presentationAssessments().length) {
+        <table
+            tumUiTable
+            size="small"
+            [striped]="true"
+            [sortField]="sortField()"
+            [sortOrder]="sortOrder()"
+            (sortChange)="onSort($event)"
+            data-testid="presentation-assessments-table"
+        >
+            <thead>
+                <tr>
+                    <th tumUiSortableColumn="title">
+                        <span jhiTranslate="artemisApp.presentationAssessment.title"></span>
+                    </th>
+                    <th tumUiSortableColumn="maxPoints">
+                        <span jhiTranslate="artemisApp.presentationAssessment.maxPoints"></span>
+                    </th>
+                    <th tumUiSortableColumn="resultPoints">
+                        <span jhiTranslate="artemisApp.presentationAssessment.resultPoints"></span>
+                    </th>
+                    <th tumUiSortableColumn="presentationDate">
+                        <span jhiTranslate="artemisApp.presentationAssessment.presentationDate"></span>
+                    </th>
+                    <th>
+                        <span jhiTranslate="artemisApp.presentationAssessment.description"></span>
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (presentationAssessment of sortedPresentationAssessments(); track presentationAssessment.id) {
+                    <tr id="presentation-assessment-{{ presentationAssessment.id }}">
+                        <td>{{ presentationAssessment.title }}</td>
+                        <td>{{ presentationAssessment.maxPoints }}</td>
+                        <td>{{ presentationAssessment.resultPoints ?? '-' }}</td>
+                        <td>{{ presentationAssessment.presentationDate | artemisDate }}</td>
+                        <td>{{ presentationAssessment.description }}</td>
+                        <td>
+                            <div class="flex justify-end gap-2">
+                                <tum-ui-button size="small" [icon]="faPencilAlt" [disabled]="isSaving()" (clicked)="startEdit(presentationAssessment)">
+                                    <span class="hidden md:inline" jhiTranslate="entity.action.edit"></span>
+                                </tum-ui-button>
+                                <button
+                                    jhiDeleteButton
+                                    id="delete-presentation-assessment-{{ presentationAssessment.id }}"
+                                    [entityTitle]="presentationAssessment.title || ''"
+                                    deleteQuestion="artemisApp.presentationAssessment.delete.question"
+                                    deleteConfirmationText="artemisApp.presentationAssessment.delete.typeNameToConfirm"
+                                    (delete)="deletePresentationAssessment(presentationAssessment)"
+                                    [dialogError]="dialogError$"
+                                >
+                                    <fa-icon [icon]="faTrash" />
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    } @else {
+        <tum-ui-message severity="secondary" data-testid="presentation-assessments-empty-message">
+            <span jhiTranslate="artemisApp.presentationAssessment.noExisting"></span>
+        </tum-ui-message>
+    }
+
+    <tum-ui-dialog
+        [visible]="dialogVisible()"
+        (visibleChange)="handleDialogVisibleChange($event)"
+        size="large"
+        [header]="(dialogPresentationAssessment() ? 'artemisApp.presentationAssessment.home.editLabel' : 'artemisApp.presentationAssessment.home.createLabel') | artemisTranslate"
+        [closable]="!isSaving()"
+        [closeOnEscape]="!isSaving()"
+        [dismissableMask]="!isSaving()"
+        [closeButtonAriaLabel]="'entity.action.close' | artemisTranslate"
+    >
+        @if (dialogVisible()) {
+            <jhi-presentation-assessment-form-dialog
+                [courseId]="courseId()"
+                [course]="course()"
+                [presentationAssessment]="dialogPresentationAssessment()"
+                [initialAssignedStudents]="dialogAssignedStudents()"
+                [isSaving]="isSaving()"
+                (saved)="handleDialogSave($event)"
+                (cancelled)="handleDialogCancel()"
+            />
+        }
+    </tum-ui-dialog>
+</div>

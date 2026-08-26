@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260825190500-1-convert-presentation-assessment-points-to-integers" author="suckart">
+        <modifyDataType tableName="presentation_assessment" columnName="max_points" newDataType="integer"/>
+        <modifyDataType tableName="presentation_assessment" columnName="result_points" newDataType="integer"/>
+    </changeSet>
+</databaseChangeLog>
