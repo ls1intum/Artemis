@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
@@ -138,6 +137,8 @@ public class LocalVCServletService {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
     // Optional: a node running LocalVC with Jenkins has no local CI, so it has neither build jobs nor a registry
     private final Optional<DistributedDataAccessService> distributedDataAccessService;
 
@@ -192,7 +193,7 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService, Optional<DistributedDataAccessService> distributedDataAccessService,
+            ExerciseVersionService exerciseVersionService, UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
             Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
             BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
         this.distributedDataAccessService = distributedDataAccessService;
@@ -215,6 +216,7 @@ public class LocalVCServletService {
         this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
     }
 
     /**
@@ -357,7 +359,8 @@ public class LocalVCServletService {
         // the requests that never need it (a staff token, a failed credential) still do not pay for it.
         Supplier<ProgrammingExerciseParticipation> participationForRepository = participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exercise);
 
-        User user = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
+        var authenticated = authenticateUser(authorizationHeader, exercise, localVCRepositoryUri, participationForRepository);
+        User user = authenticated.user();
 
         // Check that offline IDE usage is allowed.
         try {
@@ -373,7 +376,7 @@ public class LocalVCServletService {
             // The data transfer requests (git-upload-pack, git-receive-pack) will update this log entry
             // via PreUploadHook / processNewPush rather than creating a duplicate.
             if (request.getRequestURI().endsWith("/info/refs")) {
-                savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+                savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation, authenticated.mechanism());
             }
         }
         catch (LocalVCForbiddenException e) {
@@ -388,19 +391,19 @@ public class LocalVCServletService {
     /**
      * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized.
      *
-     * @param request               The object containing all information about the incoming request.
-     * @param localVCRepositoryUri  The uri of the requested repository
-     * @param user                  The user
-     * @param repositoryAction      Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
-     * @param optionalParticipation The participation for which the access log should be stored. If an empty Optional is provided, the method does nothing
+     * @param request                 The object containing all information about the incoming request.
+     * @param localVCRepositoryUri    The uri of the requested repository
+     * @param user                    The user
+     * @param repositoryAction        Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
+     * @param optionalParticipation   The participation for which the access log should be stored. If an empty Optional is provided, the method does nothing
+     * @param authenticationMechanism The credential the request authenticated with, as reported by the authentication itself
      * @throws LocalVCAuthException If the user authentication fails or the user is not authorized to access a certain repository.
      */
     private void savePreliminaryVcsAccessLogForHTTPs(HttpServletRequest request, LocalVCRepositoryUri localVCRepositoryUri, User user, RepositoryActionType repositoryAction,
-            Optional<ProgrammingExerciseParticipation> optionalParticipation) throws LocalVCAuthException {
+            Optional<ProgrammingExerciseParticipation> optionalParticipation, AuthenticationMechanism authenticationMechanism) throws LocalVCAuthException {
         if (optionalParticipation.isPresent()) {
             ProgrammingExerciseParticipation participation = optionalParticipation.get();
             var ipAddress = request.getRemoteAddr();
-            var authenticationMechanism = resolveHTTPSAuthenticationMechanism(request.getHeader(HttpHeaders.AUTHORIZATION), user, localVCRepositoryUri);
 
             String finalCommitHash = getCommitHash(localVCRepositoryUri);
             RepositoryActionType finalRepositoryAction = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH : RepositoryActionType.PULL;
@@ -504,7 +507,7 @@ public class LocalVCServletService {
         if (!password.startsWith(TOKEN_PREFIX)) {
             return AuthenticationMechanism.PASSWORD;
         }
-        if (secretMatches(user.getVcsAccessToken(), password)) {
+        if (secretMatches(userVcsAccessTokenService.findToken(user.getId()), password)) {
             return AuthenticationMechanism.USER_VCS_ACCESS_TOKEN;
         }
         if (localVCRepositoryUri != null) {
@@ -728,7 +731,7 @@ public class LocalVCServletService {
      * @throws LocalVCAuthException    if an error occurs during authentication with the local version control system
      * @throws AuthenticationException if the authentication credentials are invalid or authentication fails
      */
-    private User authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri,
+    private AuthenticatedUser authenticateUser(String authorizationHeader, ProgrammingExercise exercise, LocalVCRepositoryUri localVCRepositoryUri,
             Supplier<ProgrammingExerciseParticipation> participationForRepository) throws LocalVCAuthException, AuthenticationException {
 
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
@@ -767,20 +770,20 @@ public class LocalVCServletService {
             throw new LocalVCAuthException("Account is not active");
         }
 
-        // check user VCS access token
-        if (user.getVcsAccessTokenExpiryDate() != null && user.getVcsAccessTokenExpiryDate().isAfter(ZonedDateTime.now())
-                && secretMatches(user.getVcsAccessToken(), passwordOrToken)) {
-            return user;
+        // check user VCS access token. findUsableToken already excludes an expired one, so the expiry is not compared here.
+        var personalToken = userVcsAccessTokenService.findUsableToken(user.getId());
+        if (personalToken.isPresent() && secretMatches(personalToken.get().getToken(), passwordOrToken)) {
+            return new AuthenticatedUser(user, AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
         }
 
         // check user participation VCS access token
         if (tryAuthenticationWithParticipationVCSAccessToken(user, passwordOrToken, exercise, participationForRepository)) {
-            return user;
+            return new AuthenticatedUser(user, AuthenticationMechanism.PARTICIPATION_VCS_ACCESS_TOKEN);
         }
 
         // check repository-scoped VCS access token (course staff token bound to a single base repository)
         if (tryAuthenticationWithRepositoryVcsAccessToken(user, passwordOrToken, localVCRepositoryUri)) {
-            return user;
+            return new AuthenticatedUser(user, AuthenticationMechanism.REPOSITORY_VCS_ACCESS_TOKEN);
         }
 
         // if the user does not have an access token or used a password, we try to authenticate the user with it
@@ -788,7 +791,20 @@ public class LocalVCServletService {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, passwordOrToken);
         authenticationManager.authenticate(authenticationToken);
 
-        return user;
+        return new AuthenticatedUser(user, AuthenticationMechanism.PASSWORD);
+    }
+
+    /**
+     * The account a git request authenticated as, together with the credential it used.
+     * <p>
+     * The mechanism is reported here rather than derived again for the access log. Deriving it again means repeating the
+     * lookups the authentication just did - and getting it right at all depended on the matched participation token being
+     * copied onto the in-memory user, which made a participation token show up in the log as the user's own.
+     *
+     * @param user      the authenticated account
+     * @param mechanism the credential it authenticated with
+     */
+    private record AuthenticatedUser(User user, AuthenticationMechanism mechanism) {
     }
 
     /**
@@ -819,7 +835,8 @@ public class LocalVCServletService {
                     // Only the token itself is compared, so only the token is read.
                     var storedToken = participationVCSAccessTokenRepository.findTokenByUserIdAndParticipationId(user.getId(), participationId.get());
                     if (storedToken.isPresent() && secretMatches(storedToken.get(), providedToken)) {
-                        user.setVcsAccessToken(storedToken.get());
+                        // The matched token is deliberately not copied onto the user. Copying it would make this participation
+                        // token indistinguishable from the user's own one, and the access log would record the wrong mechanism.
                         return true;
                     }
                 }

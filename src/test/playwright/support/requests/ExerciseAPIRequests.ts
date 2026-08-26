@@ -30,6 +30,7 @@ import {
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -427,25 +428,35 @@ export class ExerciseAPIRequests {
         options: { mode?: ExerciseMode; teamAssignmentConfig?: TeamAssignmentConfig } = {},
     ): Promise<ModelingExercise> {
         const { mode = ExerciseMode.INDIVIDUAL, teamAssignmentConfig } = options;
-        const templateCopy = {
-            ...modelingExerciseTemplate,
+        // The create endpoint consumes the flat UpdateModelingExerciseDTO (courseId XOR exerciseGroupId), matching what
+        // the Angular client sends via toUpdateModelingExerciseDTO — not the nested entity shape.
+        const createDto: UpdateModelingExerciseDTO = {
             title,
             channelName: 'exercise-' + titleLowercase(title),
+            problemStatement: modelingExerciseTemplate.problemStatement,
+            gradingInstructions: modelingExerciseTemplate.gradingInstructions,
+            categories: modelingExerciseTemplate.categories,
+            difficulty: modelingExerciseTemplate.difficulty as UpdateModelingExerciseDTO['difficulty'],
+            maxPoints: modelingExerciseTemplate.maxPoints,
+            bonusPoints: modelingExerciseTemplate.bonusPoints,
+            includedInOverallScore: modelingExerciseTemplate.includedInOverallScore as UpdateModelingExerciseDTO['includedInOverallScore'],
+            presentationScoreEnabled: modelingExerciseTemplate.presentationScoreEnabled,
+            secondCorrectionEnabled: modelingExerciseTemplate.secondCorrectionEnabled,
+            diagramType: modelingExerciseTemplate.diagramType as UpdateModelingExerciseDTO['diagramType'],
+            exampleSolutionModel: modelingExerciseTemplate.exampleSolutionModel,
+            exampleSolutionExplanation: modelingExerciseTemplate.exampleSolutionExplanation,
             mode,
-            ...(teamAssignmentConfig ? { teamAssignmentConfig } : {}),
+            ...(teamAssignmentConfig ? { teamAssignmentConfig: { minTeamSize: teamAssignmentConfig.minTeamSize, maxTeamSize: teamAssignmentConfig.maxTeamSize } } : {}),
         };
-        const dates = {
-            releaseDate: dayjsToString(releaseDate),
-            dueDate: dayjsToString(dueDate),
-            assessmentDueDate: dayjsToString(assessmentDueDate),
-        };
-        let newModelingExercise;
         if (Object.hasOwn(body, 'course')) {
-            newModelingExercise = Object.assign({}, templateCopy, dates, body);
+            createDto.courseId = (body as { course: Course }).course.id;
+            createDto.releaseDate = dayjsToString(releaseDate);
+            createDto.dueDate = dayjsToString(dueDate);
+            createDto.assessmentDueDate = dayjsToString(assessmentDueDate);
         } else {
-            newModelingExercise = Object.assign({}, templateCopy, body);
+            createDto.exerciseGroupId = (body as { exerciseGroup: ExerciseGroup }).exerciseGroup.id;
         }
-        const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: newModelingExercise });
+        const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: createDto });
         return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
