@@ -15,6 +15,8 @@ import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 
 class ResultDTOSerializationTest {
 
+    private static final ZonedDateTime COMPLETION_DATE = ZonedDateTime.parse("2026-01-15T10:00:00Z");
+
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     /**
@@ -27,7 +29,7 @@ class ResultDTOSerializationTest {
         Result result = new Result();
         result.setId(1L);
         result.setAssessmentType(AssessmentType.MANUAL);
-        result.setCompletionDate(ZonedDateTime.now());
+        result.setCompletionDate(COMPLETION_DATE);
         result.setCorrectionRound(0);
 
         String json = objectMapper.writeValueAsString(ResultDTO.of(result));
