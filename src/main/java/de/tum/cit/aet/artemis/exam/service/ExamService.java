@@ -285,11 +285,11 @@ public class ExamService {
                 if (latestResult != null) {
                     latestResult.setSubmission(lastSubmission);
                     latestResult.filterSensitiveInformation();
-                    lastSubmission.setResults(List.of(latestResult));
+                    lastSubmission.setResults(Set.of(latestResult));
                 }
             }
             else {
-                lastSubmission.setResults(List.of());
+                lastSubmission.setResults(Set.of());
             }
         }
     }
@@ -434,7 +434,7 @@ public class ExamService {
                 ex.getSolutionParticipation().getSubmissions().forEach(sub -> {
                     Result result = latestSolutionResults.get(sub.getId());
                     if (result != null) {
-                        sub.setResults(List.of(result));
+                        sub.setResults(Set.of(result));
                     }
                 });
             }
@@ -442,7 +442,7 @@ public class ExamService {
                 ex.getTemplateParticipation().getSubmissions().forEach(sub -> {
                     Result result = latestTemplateResults.get(sub.getId());
                     if (result != null) {
-                        sub.setResults(List.of(result));
+                        sub.setResults(Set.of(result));
                     }
                 });
             }
