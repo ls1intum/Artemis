@@ -39,6 +39,10 @@ const RESEND_TIMEOUT = 4 * RELOAD_RENDER_TIMEOUT;
 // derived from it does not sit right on the measurement.
 const SETUP_AND_ASSERTION_ALLOWANCE = 120_000;
 
+// Deadline for the forced save to reach the interception. Matches the bound the page.route version had on its
+// waitForResponse, so switching to CDP does not quietly turn a missed injection into a four-minute timeout.
+const FAILED_SAVE_TIMEOUT = 30_000;
+
 test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, () => {
     // Block the Angular service worker so the request reaches the page network target intercepted below. The
     // answer-restore-on-reload logic under test lives in the client (local storage), not the service worker.
@@ -78,6 +82,14 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         const cdpSession = await page.context().newCDPSession(page);
         let outageActive = true;
         const failedSave = new Promise<void>((resolveFailedSave, rejectFailedSave) => {
+            // Bounded on purpose. Without a deadline, a save that never reaches the interception - a changed endpoint, a
+            // pattern that stops matching - leaves this pending until the per-test timeout, which reports the re-send as
+            // the failure and hides that no save was ever injected. The wait is for one request the click just issued,
+            // so it is either answered promptly or something is wrong.
+            const deadline = setTimeout(
+                () => rejectFailedSave(new Error(`No save request was intercepted within ${FAILED_SAVE_TIMEOUT}ms, so the outage under test was never injected`)),
+                FAILED_SAVE_TIMEOUT,
+            );
             cdpSession.on('Fetch.requestPaused', async ({ requestId }) => {
                 try {
                     await cdpSession.send('Fetch.fulfillRequest', {
@@ -87,12 +99,14 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
                         body: 'e30=',
                     });
                     // Settles on the first failed save; a promise ignores every later call.
+                    clearTimeout(deadline);
                     resolveFailedSave();
                 } catch (error) {
                     // Lifting the outage detaches the session, and a request paused at that moment is released by
                     // Fetch.disable rather than answered here, so only a failure during the outage means the injection
                     // itself is broken.
                     if (outageActive) {
+                        clearTimeout(deadline);
                         rejectFailedSave(error as Error);
                     }
                 }
@@ -109,7 +123,14 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         // Force a save attempt and wait deterministically until CDP has fulfilled it with 503.
         // The answer is written to local storage but the server submission stays empty.
         await getExercise(page, quizExercise.id!).locator('#save-exam').click();
-        await failedSave;
+        try {
+            await failedSave;
+        } catch (injectionFailed) {
+            // Leave no interception behind on the way out, or the paused request outlives the test.
+            outageActive = false;
+            await cdpSession.detach().catch(() => undefined);
+            throw injectionFailed;
+        }
 
         // Wait for the CLIENT to have recorded the failure, not merely for the 503 to appear on the wire.
         //
