@@ -79,7 +79,8 @@
                     "transcript": "Transkript",
                     "segment_summary": "Segm.-Zusammenf.",
                     "unit_summary": "Einheit-Zusammenf."
-                }
+                },
+                "openBrowser": "Indexierte Inhalte dieses Kurses anzeigen"
             },
             "browser": {
                 "ariaLabel": "Indexierte Inhalte dieses Kurses",

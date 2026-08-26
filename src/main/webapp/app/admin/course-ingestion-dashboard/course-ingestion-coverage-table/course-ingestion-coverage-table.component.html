@@ -99,15 +99,24 @@
                 </thead>
                 <tbody>
                     @for (row of rows(); track row.courseId) {
-                        <tr>
+                        <!-- The row opens the content browser. The title is a real button so the row is reachable by
+                             keyboard and has an accessible name; its click bubbles to the row handler, so there is one
+                             handler rather than two that could disagree. -->
+                        <tr class="cursor-pointer" (click)="openBrowser(row)">
                             <td>
-                                <div class="max-w-xs truncate font-medium" [title]="row.courseTitle">
+                                <button
+                                    type="button"
+                                    class="max-w-xs truncate font-medium bg-transparent border-0 p-0 text-start text-inherit cursor-pointer"
+                                    [title]="row.courseTitle"
+                                    [attr.aria-label]="'artemisApp.courseIngestionDashboard.matrix.openBrowser' | artemisTranslate"
+                                    data-testid="coverage-row-open"
+                                >
                                     @if (row.courseTitle) {
                                         {{ row.courseTitle }}
                                     } @else {
                                         <span jhiTranslate="artemisApp.courseIngestionDashboard.matrix.courseFallback"></span> {{ row.courseId }}
                                     }
-                                </div>
+                                </button>
                                 @if (row.semester) {
                                     <div class="text-xs text-muted-color">{{ row.semester }}</div>
                                 }
