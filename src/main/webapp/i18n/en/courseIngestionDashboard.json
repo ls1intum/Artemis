@@ -22,7 +22,13 @@
                 "title": "Indexed collections",
                 "collection": "Collection",
                 "objects": "Objects",
-                "unavailable": "Unavailable"
+                "unavailable": "Unavailable",
+                "contents": {
+                    "slides": "Slides",
+                    "transcript": "Transcript",
+                    "segments": "Aligned segments",
+                    "unitSummary": "Unit summary"
+                }
             },
             "matrix": {
                 "title": "Coverage by course",

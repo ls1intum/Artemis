@@ -8,6 +8,18 @@ import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dash
 import { IndexOverview } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /**
+ * What each Iris collection actually holds. The names come from the Iris pipeline and do not describe their contents:
+ * `Lectures` stores slide page chunks, and `LectureUnits` stores one summary per unit. Showing only the raw name left a
+ * reader to guess, and to wonder where the slides were.
+ */
+const COLLECTION_CONTENTS: Record<string, string> = {
+    Lectures: 'artemisApp.courseIngestionDashboard.collections.contents.slides',
+    LectureTranscriptions: 'artemisApp.courseIngestionDashboard.collections.contents.transcript',
+    LectureUnitSegments: 'artemisApp.courseIngestionDashboard.collections.contents.segments',
+    LectureUnits: 'artemisApp.courseIngestionDashboard.collections.contents.unitSummary',
+};
+
+/**
  * Renders the top-band index overview of the ingestion-observability dashboard: a "Services" area (Weaviate
  * reachability + address, and whether the Iris module is enabled) and an "Indexed collections" area (one row per
  * tracked collection with its live object count, or "unavailable" when the collection cannot be read). It consumes
@@ -28,6 +40,11 @@ export class CourseIngestionOverviewComponent implements OnInit {
     readonly overview = signal<IndexOverview | undefined>(undefined);
     readonly loading = signal(true);
     readonly error = signal(false);
+
+    /** The label naming what a collection holds, where its own name does not. */
+    protected contentLabelKey(collection: string): string | undefined {
+        return COLLECTION_CONTENTS[collection];
+    }
 
     ngOnInit(): void {
         this.reload();

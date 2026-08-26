@@ -86,7 +86,12 @@
                     <tbody>
                         @for (collection of o.collections; track collection.collection) {
                             <tr>
-                                <td class="font-mono">{{ collection.collection }}</td>
+                                <td>
+                                    <span class="font-mono">{{ collection.collection }}</span>
+                                    @if (contentLabelKey(collection.collection); as labelKey) {
+                                        <span class="ms-2 text-xs text-muted-color" [jhiTranslate]="labelKey"></span>
+                                    }
+                                </td>
                                 <td class="text-end">
                                     @if (collection.readable) {
                                         <span>{{ collection.count }}</span>
