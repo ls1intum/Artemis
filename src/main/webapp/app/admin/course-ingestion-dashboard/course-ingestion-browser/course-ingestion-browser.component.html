@@ -34,10 +34,16 @@
     @if (!loading() && !error() && data()) {
         @if (isEmpty()) {
             <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.browser.empty" data-testid="browser-empty"></div>
-        } @else {
+        } @else if (data(); as loaded) {
             <div class="grid grid-cols-1 md:grid-cols-[17rem_1fr] gap-4 min-h-[24rem]" data-testid="browser-master-detail">
-                <!-- Navigation pane. The type scoreboard and the lecture drill tree render here. -->
-                <div class="overflow-y-auto border border-solid rounded-lg p-2" data-testid="browser-navigation"></div>
+                <div class="overflow-y-auto border border-solid rounded-lg p-2" data-testid="browser-navigation">
+                    <jhi-course-ingestion-browser-tree
+                        [entities]="loaded.entities"
+                        [contentPresence]="loaded.contentPresence"
+                        [typeCounts]="course().typeCounts"
+                        [(selection)]="selection"
+                    />
+                </div>
 
                 <!-- Detail pane for the current selection. -->
                 <div class="overflow-auto border border-solid rounded-lg p-4" data-testid="browser-detail">

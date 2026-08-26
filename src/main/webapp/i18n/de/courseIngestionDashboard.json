@@ -88,7 +88,19 @@
                 "typesIncomplete": "Typen unvollständig",
                 "selectPrompt": "Wählen Sie links einen Eintrag aus, um zu sehen, was in Weaviate gespeichert ist.",
                 "empty": "Für diesen Kurs ist in Weaviate noch nichts indexiert.",
-                "error": "Die indexierten Inhalte dieses Kurses konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+                "error": "Die indexierten Inhalte dieses Kurses konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+                "navigationLabel": "Navigation der indexierten Inhalte",
+                "entityMetadata": "Entitäts-Metadaten",
+                "browseLectures": "Vorlesungen durchsuchen",
+                "toggleLecture": "Einheiten dieser Vorlesung ein- oder ausblenden",
+                "toggleUnit": "Inhalte dieser Einheit ein- oder ausblenden",
+                "untitledLecture": "Vorlesung ohne Titel",
+                "untitledUnit": "Einheit ohne Titel",
+                "lectureNotIndexed": "nicht indexiert",
+                "content_slides": "Folien",
+                "content_transcript": "Transkript",
+                "content_unit_summary": "Einheit-Zusammenfassung",
+                "content_segments": "Ausgerichtete Segmente"
             },
             "status": {
                 "COMPLETE": "Vollständig",
