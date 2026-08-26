@@ -81,6 +81,14 @@
                     "unit_summary": "Einheit-Zusammenf."
                 }
             },
+            "browser": {
+                "ariaLabel": "Indexierte Inhalte dieses Kurses",
+                "subtitle": "Alle indexierten Inhalte dieses Kurses durchsuchen: von der Vorlesung über die Einheit bis zur Sammlung, oder einen Metadaten-Typ wählen, um zu sehen, was fehlt.",
+                "typesIncomplete": "Typen unvollständig",
+                "selectPrompt": "Wählen Sie links einen Eintrag aus, um zu sehen, was in Weaviate gespeichert ist.",
+                "empty": "Für diesen Kurs ist in Weaviate noch nichts indexiert.",
+                "error": "Die indexierten Inhalte dieses Kurses konnten nicht geladen werden. Bitte versuchen Sie es erneut."
+            },
             "status": {
                 "COMPLETE": "Vollständig",
                 "INCOMPLETE": "Unvollständig",

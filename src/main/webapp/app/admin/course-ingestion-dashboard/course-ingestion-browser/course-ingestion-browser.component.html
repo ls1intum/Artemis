@@ -1,0 +1,49 @@
+<tum-ui-dialog
+    [(visible)]="visible"
+    size="large"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    [ariaLabel]="'artemisApp.courseIngestionDashboard.browser.ariaLabel' | artemisTranslate"
+    (hidden)="close()"
+>
+    <ng-template #header>
+        <div class="flex flex-wrap items-center justify-between gap-2 w-full">
+            <span class="truncate">{{ course().courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course().courseId }}</span>
+            @if (incompleteTypeCount() > 0) {
+                <tum-ui-tag
+                    severity="danger"
+                    rounded
+                    [value]="incompleteTypeCount() + ' ' + ('artemisApp.courseIngestionDashboard.browser.typesIncomplete' | artemisTranslate)"
+                    data-testid="incomplete-types-chip"
+                />
+            }
+        </div>
+    </ng-template>
+
+    <p class="text-muted-color text-sm mt-0 mb-3" jhiTranslate="artemisApp.courseIngestionDashboard.browser.subtitle"></p>
+
+    @if (loading()) {
+        <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.loading" data-testid="browser-loading"></div>
+    }
+
+    @if (error()) {
+        <tum-ui-message severity="error" class="w-full" data-testid="browser-error">{{ 'artemisApp.courseIngestionDashboard.browser.error' | artemisTranslate }}</tum-ui-message>
+    }
+
+    @if (!loading() && !error() && data()) {
+        @if (isEmpty()) {
+            <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.browser.empty" data-testid="browser-empty"></div>
+        } @else {
+            <div class="grid grid-cols-1 md:grid-cols-[17rem_1fr] gap-4 min-h-[24rem]" data-testid="browser-master-detail">
+                <!-- Navigation pane. The type scoreboard and the lecture drill tree render here. -->
+                <div class="overflow-y-auto border border-solid rounded-lg p-2" data-testid="browser-navigation"></div>
+
+                <!-- Detail pane for the current selection. -->
+                <div class="overflow-auto border border-solid rounded-lg p-4" data-testid="browser-detail">
+                    <p class="text-muted-color text-sm m-0" jhiTranslate="artemisApp.courseIngestionDashboard.browser.selectPrompt"></p>
+                </div>
+            </div>
+        }
+    }
+</tum-ui-dialog>

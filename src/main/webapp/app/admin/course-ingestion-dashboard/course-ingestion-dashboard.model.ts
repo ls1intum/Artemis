@@ -79,3 +79,67 @@ export interface IngestionCoverage {
     /** The per-type expected/indexed/missing/orphaned counts. */
     typeCounts: IngestionTypeCount[];
 }
+
+/**
+ * One object stored in the `SearchableEntities` collection for a course. `properties` is the row as Weaviate holds it,
+ * minus the fields it has no value for, because the schema is a wide sparse superset shared by every entity type.
+ */
+export interface IndexedEntity {
+    /** The indexed entity type (e.g. `lecture`, `lecture_unit`). */
+    type: string;
+    /** The database id of the entity this row represents. */
+    entityId: number;
+    /** The stored title, absent if the row has none. */
+    title?: string;
+    /** When Weaviate created the object (ISO string), absent if it could not be read. */
+    ingestedAt?: string;
+    /** The populated stored properties. */
+    properties: Record<string, unknown>;
+}
+
+/**
+ * Which lecture units hold content in one Iris collection. Presence, not payload: the tree needs to know which units
+ * have slides or a transcript in order to draw, and reads the objects themselves only once a node is selected.
+ */
+export interface IndexedContentPresence {
+    /** The content key: `slides`, `transcript`, `unit_summary` or `segments`. */
+    key: string;
+    /** The ids of the lecture units holding at least one object in the backing collection. */
+    unitIds: number[];
+}
+
+/** One object stored in an Iris lecture-content collection, shown when a collection node is selected. */
+export interface IndexedContentObject {
+    /** When Weaviate created the object (ISO string), absent if it could not be read. */
+    ingestedAt?: string;
+    /** The populated stored properties. */
+    properties: Record<string, unknown>;
+}
+
+/** One entity the database expects to be indexed that the index does not hold. */
+export interface MissingEntity {
+    /** The indexed entity type. */
+    type: string;
+    /** The database id of the missing entity. */
+    entityId: number;
+    /** The entity's title or name, absent if it could no longer be resolved. */
+    title?: string;
+}
+
+/** One lecture unit that should have ingested content but does not. */
+export interface MissingContent {
+    /** The database id of the lecture unit. */
+    lectureUnitId: number;
+    /** The unit's name, absent if it could no longer be resolved. */
+    title?: string;
+    /** Which content is absent. */
+    kind: 'slides' | 'transcript';
+}
+
+/** The four datasets the content browser loads when it opens a course. */
+export interface CourseBrowserData {
+    entities: IndexedEntity[];
+    contentPresence: IndexedContentPresence[];
+    missingEntities: MissingEntity[];
+    contentGaps: MissingContent[];
+}

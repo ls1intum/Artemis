@@ -81,6 +81,14 @@
                     "unit_summary": "Unit summary"
                 }
             },
+            "browser": {
+                "ariaLabel": "Indexed content for this course",
+                "subtitle": "Browse everything indexed for this course: drill from lecture to unit to collection, or pick a metadata type to see what is missing.",
+                "typesIncomplete": "types incomplete",
+                "selectPrompt": "Select an item on the left to inspect what is stored in Weaviate.",
+                "empty": "Nothing is indexed in Weaviate for this course yet.",
+                "error": "Failed to load the indexed content for this course. Please try again."
+            },
             "status": {
                 "COMPLETE": "Complete",
                 "INCOMPLETE": "Incomplete",
