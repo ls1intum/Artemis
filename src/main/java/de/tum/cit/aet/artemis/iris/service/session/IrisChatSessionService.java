@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -90,6 +91,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisSettingsService irisSettingsService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final IrisChatWebsocketService irisChatWebsocketService;
 
     private final AuthorizationCheckService authCheckService;
@@ -116,10 +119,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
-            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService) {
+            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
         this.irisChatSessionRepository = irisChatSessionRepository;
@@ -178,7 +182,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @Override
     public void checkHasAccessTo(User user, IrisChatSession session) {
-        user.hasOptedIntoLLMUsageElseThrow();
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
 
         // Session ownership check (uniform across all contexts)
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -249,7 +253,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             return;
         }
 
-        if (!studentParticipation.getStudent().map(User::hasOptedIntoLLMUsage).orElse(false)) {
+        if (!studentParticipation.getStudent().map(student -> userAiPreferenceService.hasOptedIntoLlmUsage(student.getId())).orElse(false)) {
             return;
         }
 
@@ -397,7 +401,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @return the current (or newly created) Iris session
      */
     public IrisChatSession getCurrentSessionOrCreateIfNotExists(IrisChatMode mode, long entityId, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var resolved = resolveAndAuthorize(mode, entityId, user);
         return switch (mode) {
             case PROGRAMMING_EXERCISE_CHAT, TEXT_EXERCISE_CHAT -> findExerciseSessionOrCourseFallback(resolved.exercise(), user, mode);
@@ -484,7 +488,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @return the existing reusable empty course chat session for today, or a newly created one
      */
     public IrisChatSession findOrCreateEmptySession(long courseId, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var course = resolveAndAuthorize(IrisChatMode.COURSE_CHAT, courseId, user).course();
         return findOrCreateEmptyCourseSession(course, user);
     }

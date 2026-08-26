@@ -10,12 +10,47 @@ artemis:
         # In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes.
         local-vcs-repo-path: ./local-vcs-repos
         url: http://localhost:8000
-        # Deprecated: prefer build-agent-use-ssh below. Both credentials may be omitted entirely once it is true.
-        build-agent-git-username: buildjob_user # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true. This config must be set for build agents and localvc.
-        build-agent-git-password: buildjob_password # Replace with more secure credentials for production. Required for https access to localvc, and ignored when build-agent-use-ssh is true. This config must be set for build agents and localvc. You can also use an ssh key
-        # Recommended: if true, build agents generate a key pair at startup and use ssh to clone repositories from core nodes. Also set ssh-template-clone-url and ssh-private-key-folder-path for the build agents if true.
-        # On a core node this instead governs the build-agent shortcut over https: with true, the core node stops granting that credential pair read access to every repository rather
-        # than leaving a shortcut open that no build agent uses (the pair is still processed as ordinary Basic credentials afterwards, which opens only what the named account may
-        # access). A core node accepts a registered build agent's public key either way, so set this on the build agents first (builds keep
-        # working) and on the core nodes afterwards. Setting it on the core nodes while an agent still clones over https breaks that agent.
+        # ------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # How build agents authenticate when they clone from this node. Pick the first option that is possible for you;
+        # the first two need no secret from you at all, because the agents establish their own credentials.
+        #
+        #   1. SSH KEYS - recommended, configures itself.
+        #      Set build-agent-use-ssh: true below and on every build agent, plus ssh-template-clone-url and
+        #      ssh-private-key-folder-path on the agents. Each agent then generates its own key pair at startup, keeps
+        #      the private key on its own disk and publishes only the public key. Nothing to distribute or rotate.
+        #
+        #   2. BUILD JOB CLONE TOKENS - the automatic fallback over https, also configures itself.
+        #      Used whenever build-agent-use-ssh is false. REQUIRES NO CONFIGURATION AT ALL. A token is minted per build
+        #      job and is accepted only for that job's own assignment, test, solution and auxiliary repositories, and
+        #      only while the job runs. Use this where ssh is not practical, e.g. port 7921 is not reachable by agents.
+        #
+        #   3. A SHARED USERNAME AND PASSWORD - Jenkins only, and refused everywhere else.
+        #      build-agent-git-username / build-agent-git-password below are accepted ONLY on a localvc node that does
+        #      NOT run local CI, which in practice means Jenkins with LocalVC: Jenkins is not an Artemis build agent, so
+        #      it has neither a key nor a build job and nothing else to present. A node running local CI REFUSES TO
+        #      START with either of them set, because one static secret shared by every agent and every core node opens
+        #      every repository in the installation and nothing here needs it.
+        #
+        # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
+        # ------------------------------------------------------------------------------------------------------------------------------------------------------------
+        # Deliberately unset - see option 3 above. Set these only for Jenkins with LocalVC, on a node without local CI.
+        # build-agent-git-username:
+        # build-agent-git-password:
+        # Option 1. Set on the build agents first (they keep working, because a core node accepts a registered agent's public key whatever this node has), then here.
         build-agent-use-ssh: false
+        ssh-proxy-protocol:
+            # CIDR blocks of the reverse proxies that forward the git ssh port at the TCP level, e.g. an nginx stream block.
+            # A connection from one of these must begin with a HAProxy PROXY protocol header naming the real client, and is refused otherwise; enable "proxy_protocol on"
+            # on those proxies at the same time. A connection from any other address is handled as ordinary ssh and keeps its socket peer, so direct connections are unaffected.
+            # Deliberately keyed on the source address rather than on whether a header is present: believing a header from any sender would let anyone reaching this port claim
+            # an arbitrary client address. Leave empty when ssh is not fronted by a proxy; every ssh connection is then attributed to the address it actually comes from.
+            trusted-sources: []
+    continuous-integration:
+        build-agent-network:
+            # CIDR blocks or single addresses that build agents may clone repositories from. Empty means no restriction, which is the default so that an upgrade does not stop
+            # existing build agents; set it to bound which hosts can act as a build agent at all. Agents register the address they connect to the cluster from, and a clone is
+            # only accepted from an address the agent presenting it is currently connected from.
+            allowed-ranges: []
+            # CIDR blocks of reverse proxies whose X-Forwarded-For header may be believed when resolving the client of an HTTP git request. Any client can set that header, so it
+            # is only consulted when the request's TCP peer is one of these addresses. Empty means the header is never trusted and the TCP peer is always used.
+            trusted-proxies: []
