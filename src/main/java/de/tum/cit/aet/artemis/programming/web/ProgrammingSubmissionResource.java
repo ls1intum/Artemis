@@ -215,7 +215,9 @@ public class ProgrammingSubmissionResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the instructor check below resolves in memory instead of issuing its
+        // own membership query.
+        User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMember());
         programmingTriggerService.triggerInstructorBuildForExercise(exerciseId);
@@ -239,15 +241,18 @@ public class ProgrammingSubmissionResource {
         if (participationIds.isEmpty()) {
             throw new BadRequestAlertException("participationIds cannot be empty", "ProgrammingSubmission", "participationIdsEmpty");
         }
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Loaded with the associations the trigger reads off the exercise, so no participation has to load either of
+        // them for itself. The template and solution participations this used to fetch are not read here.
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", exerciseId));
         if (!authCheckService.isAtLeastInstructorForExercise(programmingExercise)) {
             throw new AccessForbiddenException();
         }
 
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
-        var participations = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndParticipationIds(exerciseId, participationIds);
-        programmingTriggerService.triggerBuildForParticipations(participations);
+        var triggerData = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseIdAndParticipationIds(exerciseId, participationIds);
+        programmingTriggerService.triggerBuildForParticipationData(triggerData, programmingExercise);
 
         return ResponseEntity.ok().build();
     }
@@ -345,13 +350,10 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.hideDetails(programmingSubmission, user);
 
         // remove automatic results before sending to client
-        var manualResults = programmingSubmission.getManualResults();
-        if (correctionRound >= manualResults.size()) {
-            programmingSubmission.setResults(List.of());
-        }
-        else {
-            programmingSubmission.setResults(List.of(manualResults.get(correctionRound)));
-        }
+        // The result of the requested correction round, which used to be read off the position of the result inside the
+        // submission's result list and is now stored on the result itself.
+        var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
+        programmingSubmission.setResults(resultForCorrectionRound == null ? Set.of() : Set.of(resultForCorrectionRound));
 
         return ResponseEntity.ok(programmingSubmission);
     }

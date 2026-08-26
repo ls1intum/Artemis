@@ -975,7 +975,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         Submission submissionWithResult = participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null,
                 quizExercise.getScoreForSubmission(quizSubmission), true);
-        Result result = submissionWithResult.getResults().getFirst();
+        Result result = submissionWithResult.getFirstResult();
 
         QuizSubmission loadedByResult = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
         assertLoadedSubmissionHasAllSelectedOptions(loadedByResult, mcQuestion.getId(), expectedSelectedOptionIds);

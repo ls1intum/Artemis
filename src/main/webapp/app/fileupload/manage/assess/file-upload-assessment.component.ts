@@ -279,9 +279,10 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.course.set(getCourseFromExercise(exercise));
         this.hasAssessmentDueDatePassed.set(!!exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
         if (this.resultId > 0) {
-            const foundIndex = submission.results?.findIndex((result) => result.id === this.resultId);
-            this.correctionRound.set(foundIndex !== undefined && foundIndex >= 0 ? foundIndex : 0);
-            this.result.set(getSubmissionResultById(submission, this.resultId));
+            const resultForId = getSubmissionResultById(submission, this.resultId);
+            // Read off the result, not off its position in the results array.
+            this.correctionRound.set(resultForId?.correctionRound ?? 0);
+            this.result.set(resultForId);
         } else {
             this.result.set(getLatestSubmissionResult(submission));
         }

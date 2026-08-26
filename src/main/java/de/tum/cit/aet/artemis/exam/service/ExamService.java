@@ -285,11 +285,11 @@ public class ExamService {
                 if (latestResult != null) {
                     latestResult.setSubmission(lastSubmission);
                     latestResult.filterSensitiveInformation();
-                    lastSubmission.setResults(List.of(latestResult));
+                    lastSubmission.setResults(Set.of(latestResult));
                 }
             }
             else {
-                lastSubmission.setResults(List.of());
+                lastSubmission.setResults(Set.of());
             }
         }
     }
@@ -434,7 +434,7 @@ public class ExamService {
                 ex.getSolutionParticipation().getSubmissions().forEach(sub -> {
                     Result result = latestSolutionResults.get(sub.getId());
                     if (result != null) {
-                        sub.setResults(List.of(result));
+                        sub.setResults(Set.of(result));
                     }
                 });
             }
@@ -442,7 +442,7 @@ public class ExamService {
                 ex.getTemplateParticipation().getSubmissions().forEach(sub -> {
                     Result result = latestTemplateResults.get(sub.getId());
                     if (result != null) {
-                        sub.setResults(List.of(result));
+                        sub.setResults(Set.of(result));
                     }
                 });
             }
@@ -747,11 +747,22 @@ public class ExamService {
      * @param studentExam the studentExam for which to load exercises
      */
     public void loadQuizExercisesForStudentExam(StudentExam studentExam) {
+        Set<Long> quizExerciseIds = studentExam.getExercises().stream().filter(QuizExercise.class::isInstance).map(DomainObject::getId).collect(Collectors.toSet());
+        if (quizExerciseIds.isEmpty()) {
+            return;
+        }
+        // One query for every quiz of the student exam instead of one per quiz: each of those was its own transaction
+        // round trip, and an exam can contain several quizzes.
+        Map<Long, QuizExercise> quizExercisesById = quizExerciseRepository.findWithEagerQuestionsByIdIn(quizExerciseIds).stream()
+                .collect(Collectors.toMap(DomainObject::getId, Function.identity()));
         for (int i = 0; i < studentExam.getExercises().size(); i++) {
             var exercise = studentExam.getExercises().get(i);
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
-                var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
+                var quizExercise = quizExercisesById.get(exercise.getId());
+                if (quizExercise == null) {
+                    throw new EntityNotFoundException("QuizExercise", exercise.getId());
+                }
                 // filter quiz solutions unless they may be revealed: see StudentExam#shouldRevealQuizSolutions
                 if (!studentExam.shouldRevealQuizSolutions()) {
                     quizExercise.filterForStudentsDuringQuiz();
@@ -1417,7 +1428,7 @@ public class ExamService {
      *
      * @param exam the exam to archive
      */
-    @Async
+    @Async("longRunningJobExecutor")
     public void archiveExam(Exam exam) {
         long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();
