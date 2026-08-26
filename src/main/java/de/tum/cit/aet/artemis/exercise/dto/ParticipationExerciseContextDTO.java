@@ -33,7 +33,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ParticipationExerciseContextDTO(Long id, @Nullable String title, String type, ExerciseType exerciseType, @Nullable AssessmentType assessmentType,
         @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
-        @Nullable Double maxPoints, @Nullable ParticipationCourseContextDTO course, @Nullable ParticipationExerciseGroupContextDTO exerciseGroup) {
+        @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) Double maxPoints, @Nullable ParticipationCourseContextDTO course,
+        @Nullable ParticipationExerciseGroupContextDTO exerciseGroup) {
 
     /**
      * Minimal exercise-group context required by participation clients.

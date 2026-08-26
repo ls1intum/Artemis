@@ -40,7 +40,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentParticipationDTO(Long id, @Nullable InitializationState initializationState, @Nullable ZonedDateTime initializationDate,
-        @Nullable ZonedDateTime individualDueDate, @Nullable Double presentationScore, boolean testRun, String type, @Nullable Integer submissionCount,
+        @Nullable ZonedDateTime individualDueDate, @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) Double presentationScore,
+        @JsonInclude(JsonInclude.Include.ALWAYS) boolean testRun, String type, @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) Integer submissionCount,
         @Nullable String participantName, @Nullable String participantIdentifier, @Nullable UserPublicInfoDTO student, @Nullable ParticipationTeamDTO team,
         @Nullable ParticipationExerciseContextDTO exercise, @Nullable List<ParticipationSubmissionDTO> submissions, @Nullable String repositoryUri, @Nullable String buildPlanId,
         @Nullable String branch) implements Serializable {

@@ -15,7 +15,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * @param accuracyOfScores the configured number of decimal places for scores, if available
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationCourseContextDTO(Long id, @Nullable String title, @Nullable String shortName, @Nullable Integer accuracyOfScores) {
+public record ParticipationCourseContextDTO(Long id, @Nullable String title, @Nullable String shortName,
+        @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) Integer accuracyOfScores) {
 
     /**
      * Creates a minimal course context response.

@@ -495,7 +495,9 @@ export class Commands {
         }
 
         const countResults = (participation: StudentParticipationDTO | undefined): number => {
-            return participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+            const submissionResultsCount = participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
+            const directResultsCount = (participation as any)?.results?.length ?? 0;
+            return submissionResultsCount + directResultsCount;
         };
 
         const numberOfBuildResults = countResults(exerciseParticipation);
@@ -544,10 +546,9 @@ export class Commands {
         const startTime = Date.now();
 
         const getLatestResultId = (participation: StudentParticipationDTO): number | undefined => {
-            const ids = (participation.submissions ?? [])
-                .flatMap((s) => s.results ?? [])
-                .map((r) => r.id)
-                .filter((id): id is number => id !== undefined && id !== null);
+            const submissionResultIds = (participation.submissions ?? []).flatMap((s) => s.results ?? []).map((r) => r.id);
+            const directResultIds = ((participation as any).results ?? []).map((r: any) => r.id);
+            const ids = [...submissionResultIds, ...directResultIds].filter((id): id is number => id !== undefined && id !== null);
             return ids.length > 0 ? Math.max(...ids) : undefined;
         };
 
