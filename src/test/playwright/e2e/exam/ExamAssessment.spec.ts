@@ -153,23 +153,26 @@ test.describe('Exam assessment', () => {
             login,
             examManagement,
             modelingExerciseAssessment,
+            examAssessment,
             examParticipation,
             courseAssessment,
             exerciseAssessment,
         }) => {
             await login(instructor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment, true, true);
-            // The second round starts from a copy of the first one, so the unreferenced feedback is already there and
-            // gets a new value rather than being added again. The component assessments are applied again as well: the
-            // submit button only enables once every model element carries an assessment, and re-applying them is what
-            // a second corrector does anyway. 7 unreferenced plus -1 and 0 on the components makes 6 of 10 points.
-            await modelingExerciseAssessment.fillFeedback(7, 'Better than it looks');
+            // The component assessments come first: they wait for the Apollon editor, and the editor re-renders once the
+            // server data for the round arrives, which discards anything typed into the feedback form before that. The
+            // second round starts from a copy of the first one, so the unreferenced feedback already exists and gets a
+            // new value rather than being added again. 7 unreferenced plus -1 and 0 on the components is 6 of 10 points.
             await modelingExerciseAssessment.openAssessmentForComponent(0);
             await modelingExerciseAssessment.assessComponent(-1, 'Still wrong');
             await modelingExerciseAssessment.clickNextAssessment();
             await modelingExerciseAssessment.assessComponent(0, 'Neutral');
             await modelingExerciseAssessment.clickNextAssessment();
-            const response = await modelingExerciseAssessment.submit();
+            await modelingExerciseAssessment.fillFeedback(7, 'Better than it looks');
+            // Submitted through the exam page object, like the first round: it accepts the confirmation dialog the
+            // editor raises. Playwright dismisses a dialog nobody handles, which cancels the submit silently.
+            const response = await examAssessment.submitModelingAssessment();
             expect(response.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('60%');
