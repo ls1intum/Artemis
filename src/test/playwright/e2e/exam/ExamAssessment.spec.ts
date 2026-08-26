@@ -340,11 +340,17 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
     const dashboardCourse = { id: SEED_COURSES.examAssessment.id } as any;
     let exam: Exam;
     let examEnd: Dayjs;
+    let exerciseId: number;
 
     test.beforeAll('Prepare exam', async ({ browser }) => {
         examEnd = dayjs().add(40, 'seconds');
         const page = await newBrowserPage(browser);
         exam = await prepareExam(dashboardCourse, examEnd, ExerciseType.TEXT, page, 2);
+        // prepareExam leaves the page signed in as the student who took the exam, and reading the exercise groups needs
+        // staff rights.
+        await Commands.login(page, admin);
+        const exerciseGroups = await new ExamAPIRequests(page).getExerciseGroups(exam);
+        exerciseId = exerciseGroups.flatMap((group) => group.exercises ?? [])[0].id!;
     });
 
     test('Dashboard offers only the first round until the second correction is enabled', async ({ page, login, examManagement, courseAssessment, exerciseAssessment }) => {
@@ -435,6 +441,27 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         // The student is shown the second corrector's result, not the first one.
         await login(studentOne, `/courses/${dashboardCourse.id}/exams/${exam.id}`);
         await examParticipation.checkResultScore('90%');
+    });
+
+    test('Exercise scores page offers the actions of each correction round', async ({ page, login }) => {
+        await login(instructor);
+        // The scores page renders one set of assessment actions per correction round of the exam.
+        await page.goto(`/course-management/${dashboardCourse.id}/text-exercises/${exerciseId}/scores`);
+        await page.waitForLoadState('domcontentloaded');
+
+        const studentRow = page.locator('tr', { hasText: studentOneName });
+        await expect(studentRow).toBeVisible({ timeout: EXAM_DASHBOARD_TIMEOUT });
+
+        // Both rounds are assessed, so each round offers to open its own assessment rather than to start one. Getting
+        // the round wrong here is what indexing the results by the round used to do.
+        await expect(studentRow.getByRole('link', { name: 'Open assessment of correction round 1' })).toBeVisible();
+        await expect(studentRow.getByRole('link', { name: 'Open assessment of correction round 2' })).toBeVisible();
+        await expect(studentRow.getByRole('link', { name: 'Assess submission in correction round 1' })).toHaveCount(0);
+        await expect(studentRow.getByRole('link', { name: 'Assess submission in correction round 2' })).toHaveCount(0);
+        // Both assessments are finished, so neither round is cancellable.
+        await expect(studentRow.getByRole('button', { name: /Cancel assessment of correction round/ })).toHaveCount(0);
+        // The score column shows the final result, which is the second corrector's.
+        await expect(studentRow.getByText('90%')).toBeVisible();
     });
 
     test('Exam scores page reports both correction rounds', async ({ page, login, examManagement, examAPIRequests }) => {
