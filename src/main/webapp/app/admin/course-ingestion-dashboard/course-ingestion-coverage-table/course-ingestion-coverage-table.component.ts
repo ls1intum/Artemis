@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -99,6 +99,9 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
     /** Raw search input; debounced before it triggers a reload. */
     private readonly searchInput$ = new Subject<string>();
 
+    /** Emitted when a course row is activated, so the page can open the content browser for it. */
+    readonly courseSelected = output<IngestionCoverage>();
+
     protected readonly faSync = faSync;
     protected readonly metadataTypes = METADATA_TYPES;
     protected readonly contentTypes = CONTENT_TYPES;
@@ -155,6 +158,11 @@ export class CourseIngestionCoverageTableComponent implements OnInit {
             this.page.set(0);
             this.load();
         });
+    }
+
+    /** Activating a row asks the page to open the content browser for that course. */
+    protected openBrowser(row: IngestionCoverage): void {
+        this.courseSelected.emit(row);
     }
 
     ngOnInit(): void {

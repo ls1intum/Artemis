@@ -79,7 +79,8 @@
                     "transcript": "Transcript",
                     "segment_summary": "Seg. summary",
                     "unit_summary": "Unit summary"
-                }
+                },
+                "openBrowser": "Show indexed content for this course"
             },
             "browser": {
                 "ariaLabel": "Indexed content for this course",

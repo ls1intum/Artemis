@@ -7,5 +7,10 @@
 
     <jhi-course-ingestion-overview class="block mb-4" />
 
-    <jhi-course-ingestion-coverage-table class="block" />
+    <jhi-course-ingestion-coverage-table class="block" (courseSelected)="openBrowser($event)" />
+
+    <!-- Rendered only once a course has been chosen, so the modal never loads for a course nobody opened. -->
+    @if (selectedCourse(); as course) {
+        <jhi-course-ingestion-browser [course]="course" [(visible)]="browserVisible" />
+    }
 </div>
