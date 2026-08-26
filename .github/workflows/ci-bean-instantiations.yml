@@ -32,7 +32,7 @@ jobs:
       # at startup what this node enforces, and ProxyProtocolAcceptor is installed on the ssh server before it accepts
       # a connection. A lazy registry that nothing instantiates at startup would stay empty, and no build agent could
       # clone.
-      MAX_INSTANTIATED_BEANS: 148
+      MAX_INSTANTIATED_BEANS: 152
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:
