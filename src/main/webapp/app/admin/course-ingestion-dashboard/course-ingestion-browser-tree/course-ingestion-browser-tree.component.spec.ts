@@ -9,20 +9,20 @@ describe('CourseIngestionBrowserTreeComponent', () => {
     let component: CourseIngestionBrowserTreeComponent;
     let fixture: ComponentFixture<CourseIngestionBrowserTreeComponent>;
 
-    const entity = (type: string, entityId: number, title: string, properties: Record<string, unknown> = {}): IndexedEntity => ({
+    const entity = (type: string, entityId: number, title: string, lectureId?: number): IndexedEntity => ({
         type,
         entityId,
         title,
+        lectureId,
         ingestedAt: '2026-08-26T09:00:00Z',
-        properties: { type, entity_id: entityId, ...properties },
     });
 
     // Lecture 20 holds units 10 and 11. Unit 12 belongs to lecture 21, which is itself NOT indexed.
     const entities: IndexedEntity[] = [
         entity('lecture', 20, 'Week 1'),
-        entity('lecture_unit', 11, 'Intro slides', { lecture_id: 20 }),
-        entity('lecture_unit', 10, 'A recap', { lecture_id: 20 }),
-        entity('lecture_unit', 12, 'Orphaned unit', { lecture_id: 21 }),
+        entity('lecture_unit', 11, 'Intro slides', 20),
+        entity('lecture_unit', 10, 'A recap', 20),
+        entity('lecture_unit', 12, 'Orphaned unit', 21),
         entity('exercise', 1, 'Sorting'),
     ];
 

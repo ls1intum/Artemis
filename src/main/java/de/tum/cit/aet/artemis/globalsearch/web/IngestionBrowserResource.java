@@ -18,21 +18,19 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentPresenceDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.MissingContentDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.MissingEntityDTO;
-import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserGapService;
+import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserService;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserWeaviateReadService;
 
 /**
  * Admin-only, read-only endpoints for the per-course content browser: what the index holds for a course, and what it is
  * missing. Only available when Weaviate is enabled; every endpoint requires admin.
  * <p>
- * Four of these are fired together when the browser opens a course, and are therefore scoped and bounded so that opening
- * a course stays a cheap operation. The fifth is fetched only when an admin selects a collection under a lecture unit,
- * because the content objects are the one payload heavy enough that loading them up front would not pay for itself.
+ * Opening a course is one request, because everything it renders derives from the same two id-sets and splitting it up
+ * meant reloading those sets per part. The second endpoint is fetched only when an admin selects a collection under a
+ * lecture unit, since the content objects are the one payload heavy enough that loading them up front would not pay for
+ * itself.
  */
 @Profile(PROFILE_CORE)
 @Conditional(WeaviateEnabled.class)
@@ -44,69 +42,30 @@ public class IngestionBrowserResource {
 
     private static final String ENTITY_NAME = "ingestionBrowser";
 
-    private final IngestionBrowserWeaviateReadService browserReadService;
+    private final IngestionBrowserService browserService;
 
-    private final IngestionBrowserGapService gapService;
+    private final IngestionBrowserWeaviateReadService browserReadService;
 
     private final CourseRepository courseRepository;
 
-    public IngestionBrowserResource(IngestionBrowserWeaviateReadService browserReadService, IngestionBrowserGapService gapService, CourseRepository courseRepository) {
+    public IngestionBrowserResource(IngestionBrowserService browserService, IngestionBrowserWeaviateReadService browserReadService, CourseRepository courseRepository) {
+        this.browserService = browserService;
         this.browserReadService = browserReadService;
-        this.gapService = gapService;
         this.courseRepository = courseRepository;
     }
 
     /**
-     * GET .../courses/{courseId}/indexed-entities : the {@code SearchableEntities} rows stored for a course, each with the
-     * properties Weaviate actually holds, for the browser's tree and its stored-record panes.
+     * GET .../courses/{courseId}/browser : everything the content browser renders when it opens a course, in one
+     * response: the stored entities, which units hold content per Iris collection, the entities the index is missing,
+     * and the per-unit content gaps.
      *
      * @param courseId the course to inspect
-     * @return the stored rows
+     * @return the browser payload for the course
      */
-    @GetMapping("courses/{courseId}/indexed-entities")
-    public ResponseEntity<List<IndexedEntityDTO>> getIndexedEntities(@PathVariable long courseId) {
+    @GetMapping("courses/{courseId}/browser")
+    public ResponseEntity<CourseBrowserDataDTO> getCourseBrowserData(@PathVariable long courseId) {
         requireCourse(courseId);
-        return ResponseEntity.ok(browserReadService.listIndexedEntitiesForCourse(courseId));
-    }
-
-    /**
-     * GET .../courses/{courseId}/indexed-content : which lecture units hold content in each Iris collection, so the tree
-     * knows which units to give a slides, transcript, summary or segments node. Presence only; the objects behind a node
-     * are fetched when it is selected.
-     *
-     * @param courseId the course to inspect
-     * @return one entry per content key that has any content for the course
-     */
-    @GetMapping("courses/{courseId}/indexed-content")
-    public ResponseEntity<List<IndexedContentPresenceDTO>> getIndexedContent(@PathVariable long courseId) {
-        requireCourse(courseId);
-        return ResponseEntity.ok(browserReadService.listContentPresenceForCourse(courseId));
-    }
-
-    /**
-     * GET .../courses/{courseId}/missing-entities : the entities the database expects to be indexed for a course that the
-     * index does not hold, resolved to their titles.
-     *
-     * @param courseId the course to inspect
-     * @return the missing entities, named
-     */
-    @GetMapping("courses/{courseId}/missing-entities")
-    public ResponseEntity<List<MissingEntityDTO>> getMissingEntities(@PathVariable long courseId) {
-        requireCourse(courseId);
-        return ResponseEntity.ok(gapService.missingEntitiesForCourse(courseId));
-    }
-
-    /**
-     * GET .../courses/{courseId}/content-gaps : the lecture units whose slide or transcript content was never ingested.
-     * Empty when Iris is not enabled, since nothing ingests lecture content in that configuration.
-     *
-     * @param courseId the course to inspect
-     * @return the per-unit content gaps, named
-     */
-    @GetMapping("courses/{courseId}/content-gaps")
-    public ResponseEntity<List<MissingContentDTO>> getContentGaps(@PathVariable long courseId) {
-        requireCourse(courseId);
-        return ResponseEntity.ok(gapService.contentGapsForCourse(courseId));
+        return ResponseEntity.ok(browserService.loadCourseBrowserData(courseId));
     }
 
     /**

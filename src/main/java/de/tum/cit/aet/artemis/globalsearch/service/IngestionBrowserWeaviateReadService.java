@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentPresenceDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
@@ -49,12 +47,24 @@ public class IngestionBrowserWeaviateReadService {
      * The browser's stable content keys, mapped to the exact (unprefixed) Iris collection each one is stored in. The
      * keys are the browser's own vocabulary and cross the wire; the collection names belong to the Iris pipeline.
      */
-    private static final Map<String, String> CONTENT_COLLECTION_BY_KEY = Map.of("slides", IngestionCoverageWeaviateReadService.LECTURES_COLLECTION, "transcript",
-            IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION, "unit_summary", IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION, "segments",
+    public static final String KEY_SLIDES = "slides";
+
+    public static final String KEY_TRANSCRIPT = "transcript";
+
+    public static final String KEY_UNIT_SUMMARY = "unit_summary";
+
+    public static final String KEY_SEGMENTS = "segments";
+
+    private static final Map<String, String> CONTENT_COLLECTION_BY_KEY = Map.of(KEY_SLIDES, IngestionCoverageWeaviateReadService.LECTURES_COLLECTION, KEY_TRANSCRIPT,
+            IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION, KEY_UNIT_SUMMARY, IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION, KEY_SEGMENTS,
             IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION);
 
     /** Fixed display order for the content keys, so the tree lists a unit's collections the same way every time. */
-    private static final List<String> CONTENT_KEY_ORDER = List.of("slides", "transcript", "unit_summary", "segments");
+    private static final List<String> CONTENT_KEY_ORDER = List.of(KEY_SLIDES, KEY_TRANSCRIPT, KEY_UNIT_SUMMARY, KEY_SEGMENTS);
+
+    /** The only properties the tree needs to place a row. Everything else is read when a row is actually selected. */
+    private static final String[] TREE_PROPERTIES = { SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.Properties.ENTITY_ID, SearchableEntitySchema.Properties.TITLE,
+            SearchableEntitySchema.Properties.LECTURE_ID };
 
     /**
      * Upper bound on the metadata rows read for one course. A course's browsable metadata runs to tens or low hundreds
@@ -73,11 +83,8 @@ public class IngestionBrowserWeaviateReadService {
 
     private final WeaviateService weaviateService;
 
-    private final IngestionCoverageWeaviateReadService coverageReadService;
-
-    public IngestionBrowserWeaviateReadService(WeaviateService weaviateService, IngestionCoverageWeaviateReadService coverageReadService) {
+    public IngestionBrowserWeaviateReadService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
-        this.coverageReadService = coverageReadService;
     }
 
     /**
@@ -105,6 +112,9 @@ public class IngestionBrowserWeaviateReadService {
      * Restricted to the types the coverage matrix measures, which excludes posts and answer posts. That is what makes the
      * read bounded: a busy course has millions of posts, and enumerating them would both dwarf the response and crowd the
      * lectures and units the tree is built from out of it entirely.
+     * <p>
+     * Only the properties the tree places a row by are requested. Asking for the whole row meant every entity carried its
+     * body text, which is the bulk of what a course stores and none of what a list of titles needs.
      *
      * @param courseId the course to read
      * @return the stored rows, in no particular order
@@ -116,7 +126,8 @@ public class IngestionBrowserWeaviateReadService {
             Filter filter = Filter.and(Filter.property(SearchableEntitySchema.Properties.COURSE_ID).eq(courseId),
                     Filter.property(SearchableEntitySchema.Properties.TYPE).containsAny(IngestionCoverageWeaviateReadService.METADATA_TYPES.toArray(new String[0])));
 
-            var response = collection.query.fetchObjects(builder -> builder.filters(filter).limit(ENTITY_READ_LIMIT).returnMetadata(Metadata.CREATION_TIME_UNIX));
+            var response = collection.query
+                    .fetchObjects(builder -> builder.filters(filter).limit(ENTITY_READ_LIMIT).returnProperties(TREE_PROPERTIES).returnMetadata(Metadata.CREATION_TIME_UNIX));
             List<WeaviateObject<Map<String, Object>>> objects = response.objects();
             if (objects.size() >= ENTITY_READ_LIMIT) {
                 log.warn("Course {} returned the maximum {} indexed entities; the content browser is showing a truncated view.", courseId, ENTITY_READ_LIMIT);
@@ -132,36 +143,14 @@ public class IngestionBrowserWeaviateReadService {
                     log.warn("Skipping a malformed SearchableEntities row {} for course {}: it has no type or entity id.", object.uuid(), courseId);
                     continue;
                 }
-                entities.add(
-                        new IndexedEntityDTO(type, entityId, asString(properties.get(SearchableEntitySchema.Properties.TITLE)), creationTime(object), populatedOnly(properties)));
+                entities.add(new IndexedEntityDTO(type, entityId, asString(properties.get(SearchableEntitySchema.Properties.TITLE)),
+                        asLong(properties.get(SearchableEntitySchema.Properties.LECTURE_ID)), creationTime(object)));
             }
             return entities;
         }
         catch (Exception exception) {
             throw new WeaviateException("Failed to read the indexed entities for course " + courseId + ": " + exception.getMessage(), exception);
         }
-    }
-
-    /**
-     * Reads which lecture units hold content in each Iris collection for a course, so the browser can draw the tree.
-     * <p>
-     * Delegates to the coverage read layer, which is also what the completeness matrix counts. Sharing that read is
-     * deliberate: a unit the matrix counts as having slides and a unit the browser draws a slides node for are then the
-     * same unit by construction, rather than by two implementations agreeing.
-     *
-     * @param courseId the course to read
-     * @return one entry per content key that has any content for the course, in display order
-     */
-    public List<IndexedContentPresenceDTO> listContentPresenceForCourse(long courseId) {
-        List<IndexedContentPresenceDTO> presence = new ArrayList<>();
-        for (String contentKey : CONTENT_KEY_ORDER) {
-            Map<Long, Set<Long>> unitIdsByCourse = coverageReadService.readPresentContentUnitIds(CONTENT_COLLECTION_BY_KEY.get(contentKey), List.of(courseId));
-            Set<Long> unitIds = unitIdsByCourse.get(courseId);
-            if (unitIds != null && !unitIds.isEmpty()) {
-                presence.add(new IndexedContentPresenceDTO(contentKey, unitIds));
-            }
-        }
-        return presence;
     }
 
     /**

@@ -6,7 +6,6 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,10 +19,9 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentObjectDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.IndexedContentPresenceDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.IndexedEntityDTO;
-import de.tum.cit.aet.artemis.globalsearch.dto.MissingContentDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.MissingEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.IngestionBrowserWeaviateReadService;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
@@ -31,8 +29,8 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 
 /**
  * Integration tests for {@link IngestionBrowserResource}: the admin-only per-course content browser endpoints. Verifies
- * that non-admins are forbidden and an unknown course is a 404 on every endpoint, that an unknown content key is
- * rejected, and that the endpoints return what the browser needs for a real course.
+ * that non-admins are forbidden and an unknown course is a 404 on both endpoints, that an unknown content key is
+ * rejected, and that opening a course returns what the browser needs in a single response.
  */
 @EnabledIf("isWeaviateEnabled")
 class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -75,22 +73,16 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void nonAdminIsForbiddenOnEveryEndpoint() throws Exception {
+    void nonAdminIsForbiddenOnBothEndpoints() throws Exception {
         long courseId = course.getId();
-        request.getList(BASE + "courses/" + courseId + "/indexed-entities", HttpStatus.FORBIDDEN, IndexedEntityDTO.class);
-        request.getList(BASE + "courses/" + courseId + "/indexed-content", HttpStatus.FORBIDDEN, IndexedContentPresenceDTO.class);
-        request.getList(BASE + "courses/" + courseId + "/missing-entities", HttpStatus.FORBIDDEN, MissingEntityDTO.class);
-        request.getList(BASE + "courses/" + courseId + "/content-gaps", HttpStatus.FORBIDDEN, MissingContentDTO.class);
+        request.get(BASE + "courses/" + courseId + "/browser", HttpStatus.FORBIDDEN, CourseBrowserDataDTO.class);
         request.getList(BASE + "courses/" + courseId + "/units/" + UNIT_ID + "/content?key=slides", HttpStatus.FORBIDDEN, IndexedContentObjectDTO.class);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void unknownCourseIsNotFoundOnEveryEndpoint() throws Exception {
-        request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/indexed-entities", HttpStatus.NOT_FOUND, IndexedEntityDTO.class);
-        request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/indexed-content", HttpStatus.NOT_FOUND, IndexedContentPresenceDTO.class);
-        request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/missing-entities", HttpStatus.NOT_FOUND, MissingEntityDTO.class);
-        request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/content-gaps", HttpStatus.NOT_FOUND, MissingContentDTO.class);
+    void unknownCourseIsNotFoundOnBothEndpoints() throws Exception {
+        request.get(BASE + "courses/" + UNKNOWN_COURSE_ID + "/browser", HttpStatus.NOT_FOUND, CourseBrowserDataDTO.class);
         request.getList(BASE + "courses/" + UNKNOWN_COURSE_ID + "/units/" + UNIT_ID + "/content?key=slides", HttpStatus.NOT_FOUND, IndexedContentObjectDTO.class);
     }
 
@@ -102,7 +94,7 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void returnsTheStoredEntitiesForACourse() throws Exception {
+    void returnsTheBrowserPayloadForACourse() throws Exception {
         long courseId = course.getId();
         insertMetadata(courseId, SearchableEntitySchema.TypeValues.COURSE, courseId, course.getTitle());
 
@@ -111,8 +103,8 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
         // security context does not apply; the request itself has to run on the test thread or it comes back 401.
         await().atMost(TIMEOUT).until(() -> !browserReadService.listIndexedEntitiesForCourse(courseId).isEmpty());
 
-        List<IndexedEntityDTO> entities = request.getList(BASE + "courses/" + courseId + "/indexed-entities", HttpStatus.OK, IndexedEntityDTO.class);
-        assertThat(entities).extracting(IndexedEntityDTO::type, IndexedEntityDTO::entityId, IndexedEntityDTO::title)
+        CourseBrowserDataDTO data = request.get(BASE + "courses/" + courseId + "/browser", HttpStatus.OK, CourseBrowserDataDTO.class);
+        assertThat(data.entities()).extracting(IndexedEntityDTO::type, IndexedEntityDTO::entityId, IndexedEntityDTO::title)
                 .contains(tuple(SearchableEntitySchema.TypeValues.COURSE, courseId, course.getTitle()));
     }
 
@@ -122,17 +114,18 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
         long courseId = course.getId();
 
         // Nothing was indexed for this course, so there is nothing to wait for: the course row itself is expected and absent.
-        List<MissingEntityDTO> missing = request.getList(BASE + "courses/" + courseId + "/missing-entities", HttpStatus.OK, MissingEntityDTO.class);
-        assertThat(missing).extracting(MissingEntityDTO::type, MissingEntityDTO::entityId).contains(tuple(SearchableEntitySchema.TypeValues.COURSE, courseId));
+        CourseBrowserDataDTO data = request.get(BASE + "courses/" + courseId + "/browser", HttpStatus.OK, CourseBrowserDataDTO.class);
+        assertThat(data.missingEntities()).extracting(MissingEntityDTO::type, MissingEntityDTO::entityId).contains(tuple(SearchableEntitySchema.TypeValues.COURSE, courseId));
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void servesContentPresenceAndGapsForACourse() throws Exception {
+    void servesContentPresenceAndGapsInTheSameResponse() throws Exception {
         long courseId = course.getId();
 
-        assertThat(request.getList(BASE + "courses/" + courseId + "/indexed-content", HttpStatus.OK, IndexedContentPresenceDTO.class)).isNotNull();
-        assertThat(request.getList(BASE + "courses/" + courseId + "/content-gaps", HttpStatus.OK, MissingContentDTO.class)).isNotNull();
+        CourseBrowserDataDTO data = request.get(BASE + "courses/" + courseId + "/browser", HttpStatus.OK, CourseBrowserDataDTO.class);
+        assertThat(data.contentPresence()).isNotNull();
+        assertThat(data.contentGaps()).isNotNull();
     }
 
     private void insertMetadata(long courseId, String type, long entityId, String title) throws Exception {

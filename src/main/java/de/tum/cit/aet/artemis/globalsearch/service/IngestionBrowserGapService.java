@@ -59,8 +59,6 @@ public class IngestionBrowserGapService {
 
     private static final String KIND_TRANSCRIPT = "transcript";
 
-    private final IngestionCoverageSetLoader setLoader;
-
     private final ExerciseRepository exerciseRepository;
 
     private final FaqRepository faqRepository;
@@ -79,10 +77,9 @@ public class IngestionBrowserGapService {
 
     private final Environment environment;
 
-    public IngestionBrowserGapService(IngestionCoverageSetLoader setLoader, ExerciseRepository exerciseRepository, FaqRepository faqRepository, ChannelRepository channelRepository,
-            CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
-            Optional<ExamRepositoryApi> examRepositoryApi, Environment environment) {
-        this.setLoader = setLoader;
+    public IngestionBrowserGapService(ExerciseRepository exerciseRepository, FaqRepository faqRepository, ChannelRepository channelRepository, CourseRepository courseRepository,
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<ExamRepositoryApi> examRepositoryApi,
+            Environment environment) {
         this.exerciseRepository = exerciseRepository;
         this.faqRepository = faqRepository;
         this.channelRepository = channelRepository;
@@ -97,16 +94,13 @@ public class IngestionBrowserGapService {
      * The entities the database expects to be indexed for a course that the index does not hold, resolved to their
      * titles and sorted by type then id.
      * <p>
-     * Only metadata is read: the Iris content aggregations are the heavier reads and say nothing about entity metadata,
-     * so they are skipped here.
      *
      * @param courseId the course to inspect
+     * @param expected what the database expects indexed, already loaded
+     * @param present  what the index holds, already loaded
      * @return the missing entities, named
      */
-    public List<MissingEntityDTO> missingEntitiesForCourse(long courseId) {
-        List<Long> courseIds = List.of(courseId);
-        ExpectedSets expected = setLoader.loadExpected(courseIds);
-        PresentSets present = setLoader.loadPresent(courseIds, List.of());
+    public List<MissingEntityDTO> missingEntities(long courseId, ExpectedSets expected, PresentSets present) {
         Map<String, Set<Long>> presentByType = present.metadataByCourse().getOrDefault(courseId, Map.of());
 
         List<MissingEntityDTO> missing = new ArrayList<>();
@@ -131,16 +125,14 @@ public class IngestionBrowserGapService {
      * every unit with a PDF as a gap would describe a feature that is switched off rather than a problem to fix.
      *
      * @param courseId the course to inspect
+     * @param expected what the database expects indexed, already loaded
+     * @param present  what the index holds, already loaded
      * @return the per-unit content gaps, named
      */
-    public List<MissingContentDTO> contentGapsForCourse(long courseId) {
+    public List<MissingContentDTO> contentGaps(long courseId, ExpectedSets expected, PresentSets present) {
         if (!artemisConfigHelper.isIrisEnabled(environment)) {
             return List.of();
         }
-        List<Long> courseIds = List.of(courseId);
-        ExpectedSets expected = setLoader.loadExpected(courseIds);
-        PresentSets present = setLoader.loadPresent(courseIds, courseIds);
-
         Set<Long> missingSlides = difference(expected.pdfUnits().get(courseId), present.slides().get(courseId));
         Set<Long> missingTranscript = difference(expected.videoUnits().get(courseId), present.transcript().get(courseId));
         if (missingSlides.isEmpty() && missingTranscript.isEmpty()) {
