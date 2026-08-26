@@ -157,9 +157,6 @@
     border: 1px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
     font-size: 0.6875rem;
     color: var(--bs-body-color);
-
-    // The chip opens a source on click but carries no href, and an anchor without one keeps the text cursor.
-    cursor: pointer;
     transition:
         border-color 0.15s,
         background 0.15s;

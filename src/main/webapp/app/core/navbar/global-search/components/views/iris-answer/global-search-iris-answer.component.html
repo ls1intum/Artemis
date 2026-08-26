@@ -42,10 +42,8 @@
                     @for (source of visibleSources(); track $index) {
                         <a
                             class="iris-chip d-inline-flex align-items-center text-decoration-none text-nowrap rounded-pill"
-                            role="link"
-                            tabindex="0"
-                            (click)="openSource(source)"
-                            (keydown.enter)="openSource(source)"
+                            [attr.href]="visibleSourceHrefs()[$index]"
+                            (click)="onSourceClick($event, source)"
                         >
                             <fa-icon [icon]="SOURCE_ICONS[source.lectureUnit.sourceType] ?? faFile" class="iris-chip-icon flex-shrink-0" aria-hidden="true" />
                             <span class="iris-chip-name text-truncate">{{ source.lectureUnit.name }}</span>

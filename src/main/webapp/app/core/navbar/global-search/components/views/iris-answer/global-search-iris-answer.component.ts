@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, injec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -40,6 +41,9 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
 })
 export class GlobalSearchIrisAnswerComponent {
     private readonly irisSearchAnswerService = inject(IrisSearchAnswerService);
+    private readonly router = inject(Router);
+    private readonly deepLinkService = inject(LectureDeepLinkService);
+    private readonly overlay = inject(SearchOverlayService);
 
     readonly searchQuery = input.required<string>();
 
@@ -53,14 +57,6 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly moreOpen = signal(false);
     protected readonly shouldClamp = computed(() => this.isOverflowing() && !this.isExpanded());
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
-    private readonly deepLinkService = inject(LectureDeepLinkService);
-    private readonly overlay = inject(SearchOverlayService);
-
-    /** Closes the overlay itself: the modal otherwise rides on a navigation, which a same-page jump no longer makes. */
-    protected openSource(source: LectureSearchResult): void {
-        this.deepLinkService.jump(source.lectureUnit.link, parseLectureDeepLink(source.lectureUnit.queryParams));
-        this.overlay.close();
-    }
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly INITIAL_VISIBLE_SOURCE_COUNT = 2;
@@ -74,6 +70,14 @@ export class GlobalSearchIrisAnswerComponent {
     };
 
     protected readonly visibleSources = computed(() => (this.moreOpen() ? this.sources() : this.sources().slice(0, this.INITIAL_VISIBLE_SOURCE_COUNT)));
+
+    /**
+     * The chips keep a real href, so middle-click and Cmd-click still open a source in a new tab. Computed for the
+     * whole list rather than per chip in the template, which would rebuild every URL on each change detection run.
+     */
+    protected readonly visibleSourceHrefs = computed(() =>
+        this.visibleSources().map((source) => this.router.serializeUrl(this.router.createUrlTree([source.lectureUnit.link], { queryParams: source.lectureUnit.queryParams }))),
+    );
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
@@ -152,5 +156,18 @@ export class GlobalSearchIrisAnswerComponent {
 
     collapse(): void {
         this.isExpanded.set(false);
+    }
+
+    protected onSourceClick(event: MouseEvent, source: LectureSearchResult): void {
+        // A modified click belongs to the browser, which opens the href in a new tab. Same condition as RouterLink.
+        if (event.button !== 0 || event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) {
+            return;
+        }
+
+        event.preventDefault();
+        // The service jumps without navigating when the lecture is already on screen, so the overlay is closed here —
+        // the modal otherwise rides on a navigation that then does not happen.
+        this.deepLinkService.jump(source.lectureUnit.link, parseLectureDeepLink(source.lectureUnit.queryParams));
+        this.overlay.close();
     }
 }

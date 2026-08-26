@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, signal, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faFileLines } from '@fortawesome/free-solid-svg-icons';
+import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SkeletonModule } from 'primeng/skeleton';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
@@ -26,6 +27,7 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     readonly selectedIndex = input<number>(-1);
     protected readonly back = output<void>();
     private readonly searchService = inject(LectureSearchService);
+    private readonly router = inject(Router);
     private readonly deepLinkService = inject(LectureDeepLinkService);
     private readonly overlay = inject(SearchOverlayService);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
@@ -33,6 +35,13 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     protected readonly isLoading = signal(false);
     protected readonly hasError = signal(false);
     readonly itemCount = computed(() => this.lectureResults().length);
+    /**
+     * The cards keep a real href, so middle-click and Cmd-click still open a result in a new tab. Computed for the
+     * whole list rather than per card in the template, which would rebuild every URL on each change detection run.
+     */
+    protected readonly resultHrefs = computed(() =>
+        this.lectureResults().map((result) => this.router.serializeUrl(this.router.createUrlTree([result.lectureUnit.link], { queryParams: result.lectureUnit.queryParams }))),
+    );
     private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
@@ -88,8 +97,21 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
         }
     }
 
-    /** Closes the overlay itself: the modal otherwise rides on a navigation, which a same-page jump no longer makes. */
-    protected openResult(result: LectureSearchResult): void {
+    protected onResultClick(event: MouseEvent, result: LectureSearchResult): void {
+        // A modified click belongs to the browser, which opens the href in a new tab. Same condition as RouterLink.
+        if (event.button !== 0 || event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) {
+            return;
+        }
+
+        event.preventDefault();
+        this.openResult(result);
+    }
+
+    /**
+     * The service jumps without navigating when the lecture is already on screen, so the overlay is closed here — the
+     * modal otherwise rides on a navigation that then does not happen.
+     */
+    private openResult(result: LectureSearchResult): void {
         this.deepLinkService.jump(result.lectureUnit.link, parseLectureDeepLink(result.lectureUnit.queryParams));
         this.overlay.close();
     }
