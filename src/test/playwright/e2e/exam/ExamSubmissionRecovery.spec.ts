@@ -8,6 +8,7 @@ import { Exercise, ExerciseType } from '../../support/constants';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
 import { POLLING_INTERVAL, RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
+import { Commands } from '../../support/commands';
 
 /**
  * Regression test for silent exam answer loss after a failed save.
@@ -141,27 +142,6 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
                 reloadCommitted = true;
             }
         });
-        // TEMPORARY DIAGNOSTICS (to be removed before merge): the CI failure shows no conduction fetch and no save
-        // request after the reload, so the client is not resuming the exam. Nothing in the server or nginx logs can
-        // show why, so capture what the browser itself does.
-        const clientLog: string[] = [];
-        const startedAt = Date.now();
-        const at = () => `+${String(Date.now() - startedAt).padStart(6, ' ')}ms`;
-        page.on('console', (message) => clientLog.push(`${at()} console.${message.type()}: ${message.text().slice(0, 180)}`));
-        page.on('pageerror', (error) => clientLog.push(`${at()} pageerror: ${error.message.slice(0, 250)}`));
-        page.on('requestfailed', (request) => clientLog.push(`${at()} requestfailed: ${request.url().slice(0, 120)} ${request.failure()?.errorText}`));
-        page.on('framenavigated', (frame) => {
-            if (frame === page.mainFrame()) {
-                clientLog.push(`${at()} NAVIGATED -> ${frame.url().slice(0, 140)}`);
-            }
-        });
-        page.on('response', (response) => {
-            const url = response.url();
-            if (url.includes('/api/') || url.endsWith('.js')) {
-                clientLog.push(`${at()} ${response.status()} ${response.request().method()} ${url.slice(0, 120)}`);
-            }
-        });
-
         const successfulResends: string[] = [];
         page.on('response', (response) => {
             if (!reloadCommitted) {
@@ -173,12 +153,23 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         });
 
         // Stop failing saves so the post-reload re-send can succeed.
+        // The route to come back to after the reload, read before it can drift.
+        const examUrl = page.url();
+
         outageActive = false;
         await cdpSession.send('Fetch.disable');
         await cdpSession.detach();
-        await page.reload();
-        // TEMPORARY DIAGNOSTICS (to be removed before merge).
-        clientLog.push(`${at()} RELOAD RETURNED, url = ${page.url()}`);
+        // Reload through the route-restoring helper rather than page.reload() directly.
+        //
+        // This is what the test was missing. A reload re-bootstraps the SPA, and when a lazy route chunk fails to
+        // resolve behind the multi-node HTTPS load balancer - an intermittent module-fetch failure the suite already
+        // recovers from elsewhere - the router drops to the /courses fallback and never returns. The exam is then not
+        // on screen, so the client never restores the answer and never re-sends it, and the poll below waits out its
+        // whole budget for something that can no longer happen. That is the failure this test kept hitting in CI, and
+        // no timeout is large enough to fix it. Restoring the route explicitly turns that dead end into one more
+        // attempt, and reports honestly when the SPA could not load the route at all.
+        const restoredExamRoute = await Commands.reloadAndRestoreRoute(page, examUrl);
+        expect(restoredExamRoute, 'the exam route did not survive the reload, so no recovery could be attempted').toBe(true);
 
         // The client re-sends the restored answer by itself while starting up, so the only thing to do is wait for it.
         // Nothing is clicked here on purpose: by the time the exercise is on screen the save button is already
@@ -187,26 +178,13 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         //
         // The budget is the point: the previous version allowed exactly 30000ms for reload plus bootstrap plus exam
         // re-fetch plus re-send, and every failure was that one wait expiring. See RESEND_TIMEOUT above.
-        try {
-            await expect
-                .poll(() => successfulResends.length, {
-                    message: 'the answer restored from local storage was never re-sent to the server',
-                    timeout: RESEND_TIMEOUT,
-                    intervals: [POLLING_INTERVAL],
-                })
-                .toBeGreaterThan(0);
-        } catch (pollExpired) {
-            // TEMPORARY DIAGNOSTICS (to be removed before merge).
-            const storage = await page.evaluate(() =>
-                Object.keys(window.localStorage)
-                    .filter((key) => key.startsWith('artemis_student_exam'))
-                    .map((key) => `${key} = ${(window.localStorage.getItem(key) ?? '').slice(0, 120)}`),
-            );
-            console.log('=== DIAG url after reload ===\n' + page.url());
-            console.log('=== DIAG localStorage ===\n' + storage.join('\n'));
-            console.log('=== DIAG client activity (' + clientLog.length + ' entries) ===\n' + clientLog.join('\n'));
-            throw pollExpired;
-        }
+        await expect
+            .poll(() => successfulResends.length, {
+                message: 'the answer restored from local storage was never re-sent to the server',
+                timeout: RESEND_TIMEOUT,
+                intervals: [POLLING_INTERVAL],
+            })
+            .toBeGreaterThan(0);
 
         // The restored answer is still selected in the UI: the client read it back out of local storage.
         await examNavigation.openOrSaveExerciseByTitle(quizExercise.exerciseGroup!.title!);
