@@ -41,6 +41,11 @@
     <property name="hashType" value="BYTEA" dbms="postgresql"/>
     <property name="messageTextType" value="MEDIUMTEXT" dbms="mysql"/>
     <property name="messageTextType" value="TEXT" dbms="postgresql"/>
+    <!-- Fallback for every other database, which in practice is the in-memory H2 that the bean instantiation
+         check boots against. A property keeps the value it is first given, so the two definitions above still
+         win on the databases they name; without these the placeholders would reach H2 unsubstituted. -->
+    <property name="hashType" value="VARBINARY(32)"/>
+    <property name="messageTextType" value="CLOB"/>
 
     <changeSet id="20260817090000-01-create-feedback-message" author="krusche">
         <createTable tableName="feedback_message">
