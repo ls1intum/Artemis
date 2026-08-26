@@ -133,7 +133,12 @@ public class LtiService {
     protected Authentication createNewUserFromLaunchRequest(String email, String login, String firstName, String lastName) {
         final var user = userRepository.findOneByLogin(login).orElseGet(() -> {
             var password = RandomUtil.generatePassword();
-            final User newUser = userCreationService.createUser(login, password, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+            // Some LTI platforms (e.g. Open edX) omit the given_name and family_name claims in the id token.
+            // Fall back to the login so the user always has a non-null display name; a null name would
+            // otherwise crash JGit's PersonIdent ("Name of PersonIdent must not be null") on the next commit.
+            String effectiveFirstName = StringUtils.hasLength(firstName) ? firstName : login;
+            String effectiveLastName = StringUtils.hasLength(lastName) ? lastName : "";
+            final User newUser = userCreationService.createUser(login, password, effectiveFirstName, effectiveLastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setLtiCreated(true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
