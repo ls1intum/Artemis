@@ -9,4 +9,5 @@ RUN apk add --no-cache bash coreutils ip6tables iptables tar
 # with a builder container that usually runs as root, and the isolation container needs NET_ADMIN.
 WORKDIR /var/tmp
 
+# nosemgrep: dockerfile.security.missing-user.missing-user
 CMD ["sh", "-c", "while true; do sleep 3600; done"]
