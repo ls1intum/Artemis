@@ -676,10 +676,11 @@ public class SubmissionService {
         // round the first time a tutor opens it.
         result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = resultRepository.save(result);
-        result.setAssessor(assessor);
+        // Deliberately keep (and return) the object the submission's result set already holds instead of the
+        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
+        // would keep the stale instance. Returning the original also avoids the assessor (and every other
+        // association) turning into an uninitialized proxy, which the merge result does.
+        resultRepository.save(result);
         return result;
     }
 
