@@ -71,7 +71,12 @@
                                         data-testid="lecture-not-indexed"
                                     ></span>
                                 }
-                                <span class="font-mono text-xs text-muted-color shrink-0">{{ lecture.units.length }}</span>
+                                <span
+                                    class="font-mono text-xs text-muted-color shrink-0"
+                                    [title]="'artemisApp.courseIngestionDashboard.browser.unitCount' | artemisTranslate: { count: lecture.units.length }"
+                                    [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.unitCount' | artemisTranslate: { count: lecture.units.length }"
+                                    >{{ lecture.units.length }}</span
+                                >
                             </button>
                         </div>
 

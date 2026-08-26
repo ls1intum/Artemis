@@ -114,7 +114,8 @@
                 "statMissing": "Missing",
                 "breadcrumb": "Breadcrumb",
                 "metaLecture": "The record stored for this lecture in the SearchableEntities collection.",
-                "metaUnit": "The record stored for this unit in the SearchableEntities collection."
+                "metaUnit": "The record stored for this unit in the SearchableEntities collection.",
+                "unitCount": "{{count}} lecture units"
             },
             "status": {
                 "COMPLETE": "Complete",
