@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -63,39 +62,32 @@ public class ProgrammingExerciseTestCaseChangedService {
     }
 
     /**
-     * see the description below
+     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be built & tested.
+     * This method also sends out a notification to the client if testCasesChanged = true.
+     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise has no results, the method will return immediately.
+     * <p>
+     * The flag is flipped with a single guarded statement rather than by loading the exercise and saving it back. It is
+     * one boolean, and reading the exercise for it fetched the whole exercise and the course it eagerly brings along,
+     * then merged all of it back. Writing it directly also removes the window in which that merge could overwrite
+     * another field of the exercise with the value it had when the exercise was read, which for a "build all" run is
+     * the whole duration of the run.
      *
      * @param programmingExerciseId id of a ProgrammingExercise.
      * @param testCasesChanged      set to true to mark the programming exercise as dirty.
-     * @throws EntityNotFoundException if the programming exercise does not exist.
      */
-    public void setTestCasesChanged(long programmingExerciseId, boolean testCasesChanged) throws EntityNotFoundException {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        setTestCasesChanged(programmingExercise, testCasesChanged);
-    }
-
-    /**
-     * If testCasesChanged = true, this marks the programming exercise as dirty, meaning that its test cases were changed and the student submissions should be built & tested.
-     * This method also sends out a notification to the client if testCasesChanged = true.
-     * In case the testCaseChanged value is the same for the programming exercise or the programming exercise is not released or has no results, the method will return immediately.
-     *
-     * @param programmingExercise a ProgrammingExercise.
-     * @param testCasesChanged    set to true to mark the programming exercise as dirty.
-     * @throws EntityNotFoundException if the programming exercise does not exist.
-     */
-    public void setTestCasesChanged(ProgrammingExercise programmingExercise, boolean testCasesChanged) throws EntityNotFoundException {
-
-        // If the flag testCasesChanged has not changed, we can stop the execution
-        // Also, if the programming exercise has no results yet, there is no point in setting test cases changed to *true*.
-        // It is only relevant when there are student submissions that should get an updated result.
-
-        boolean resultsExist = resultRepository.existsByExerciseId(programmingExercise.getId());
-
-        if (testCasesChanged == programmingExercise.getTestCasesChanged() || (!resultsExist && testCasesChanged)) {
+    public void setTestCasesChanged(long programmingExerciseId, boolean testCasesChanged) {
+        // Marking the exercise as dirty is only relevant when there are student submissions whose result should be
+        // updated, so a request to set the flag is dropped when the exercise has no results at all.
+        if (testCasesChanged && !resultRepository.existsByExerciseId(programmingExerciseId)) {
             return;
         }
-        programmingExercise.setTestCasesChanged(testCasesChanged);
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // The statement only touches the row when the flag differs, so its row count says whether anything changed and
+        // the previous value never has to be read.
+        if (programmingExerciseRepository.updateTestCasesChanged(programmingExerciseId, testCasesChanged) == 0) {
+            return;
+        }
+        // Only the notification needs the exercise itself, and only when the flag really changed.
+        var updatedProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         // Send a websocket message about the new state to the client.
         programmingTestCaseChangedUserNotificationService.notifyUserAboutTestCaseChanged(testCasesChanged, updatedProgrammingExercise);
     }

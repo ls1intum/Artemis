@@ -621,6 +621,21 @@ public final class Constants {
     public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
 
     /**
+     * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with
+     * the key pair they generate at startup when {@code true}, or with the build-agent git username and password when
+     * {@code false}.
+     * <p>
+     * It means something different on each node role. On a build agent it picks the mechanism the agent uses. On a core
+     * node it governs only the build-agent shortcut over https: {@code true} stops that pair from granting
+     * repository-wide read, though it is still processed as ordinary Basic credentials afterwards. Core nodes
+     * accept a registered build agent's public key either way, because a key is per-agent and only reaches a core node
+     * through an agent that has joined the cluster, so unlike the shared credential pair there is nothing to close.
+     * Setting it on the agents therefore keeps builds running, and setting it on the core nodes is what removes the
+     * credential.
+     */
+    public static final String BUILD_AGENT_USE_SSH_PROPERTY_NAME = "artemis.version-control.build-agent-use-ssh";
+
+    /**
      * The name of the property used to define the directories for file uploads.
      */
     public static final String UPLOADS_FILE_PATH_PROPERTY_NAME = "artemis.file-upload-path";
