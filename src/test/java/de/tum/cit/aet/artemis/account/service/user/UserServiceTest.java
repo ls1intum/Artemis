@@ -14,6 +14,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -36,6 +37,9 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     @Autowired
     private UserCreationService userCreationService;
+
+    @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
 
     @BeforeEach
     void initTestCase() {
@@ -229,11 +233,11 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         // An externally managed account never receives an activation mail and could never redeem a key, so it must not be
         // left waiting for one.
         assertThat(user.getActivated()).as("external user is created activated").isTrue();
-        assertThat(user.getActivationKey()).as("external user gets no activation key").isNull();
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).as("external user gets no activation key").isNull();
 
         User reloadedUser = userRepository.findOneByLogin(login).orElseThrow();
         assertThat(reloadedUser.getActivated()).as("persisted external user is activated").isTrue();
-        assertThat(reloadedUser.getActivationKey()).isNull();
+        assertThat(userRecoveryKeyService.findActivationKey(reloadedUser.getId())).isNull();
 
         userRepository.delete(reloadedUser);
     }
@@ -244,7 +248,7 @@ class UserServiceTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
         User user = userCreationService.createUser(login, "password123", "Internal", "User", "int_unactivated@example.com", null, null, "en", true);
 
         assertThat(user.getActivated()).as("internal user still awaits activation").isFalse();
-        assertThat(user.getActivationKey()).as("internal user needs a key to activate with").isNotNull();
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).as("internal user needs a key to activate with").isNotNull();
 
         userRepository.delete(userRepository.findOneByLogin(login).orElseThrow());
     }

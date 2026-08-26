@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
@@ -35,6 +36,9 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserTestRepository userRepository;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -89,7 +93,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         User superAdmin = createUser(TEST_PREFIX + "warnsuper", false, Set.of(Authority.SUPER_ADMIN_AUTHORITY), false, longAgo); // super admin -> keep
         User deleted = createUser(TEST_PREFIX + "warndeleted", false, Set.of(), true, longAgo); // already deleted -> keep
         User alreadyWarned = createUser(TEST_PREFIX + "warnalready", false, Set.of(), false, longAgo); // already warned -> keep
-        userRepository.updateDeletionWarningSentDate(alreadyWarned.getLogin(), longAgo);
+        userActivityService.recordDeletionWarning(alreadyWarned.getLogin(), longAgo);
 
         final List<String> logins = userRepository.findNotEnrolledUsersToWarn(cutoff).stream().map(User::getLogin).toList();
 
@@ -110,11 +114,11 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         final Instant warnedWithinGrace = ZonedDateTime.now().minusDays(5).toInstant();
 
         User due = createUser(TEST_PREFIX + "delcand", false, Set.of(), false, longAgo);
-        userRepository.updateDeletionWarningSentDate(due.getLogin(), warnedPastGrace); // warned past grace, no login since -> delete
+        userActivityService.recordDeletionWarning(due.getLogin(), warnedPastGrace); // warned past grace, no login since -> delete
         User withinGrace = createUser(TEST_PREFIX + "delgrace", false, Set.of(), false, longAgo);
-        userRepository.updateDeletionWarningSentDate(withinGrace.getLogin(), warnedWithinGrace); // still within grace -> keep
+        userActivityService.recordDeletionWarning(withinGrace.getLogin(), warnedWithinGrace); // still within grace -> keep
         User loggedInSince = createUser(TEST_PREFIX + "delloggedin", false, Set.of(), false, ZonedDateTime.now().toInstant());
-        userRepository.updateDeletionWarningSentDate(loggedInSince.getLogin(), warnedPastGrace); // logged in after warning -> keep
+        userActivityService.recordDeletionWarning(loggedInSince.getLogin(), warnedPastGrace); // logged in after warning -> keep
         User notWarned = createUser(TEST_PREFIX + "delnotwarned", false, Set.of(), false, longAgo); // never warned -> keep
 
         final List<String> logins = userRepository.findNotEnrolledUserLoginsToDelete(graceCutoff);
@@ -133,17 +137,17 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         final Instant warned = ZonedDateTime.now().minusDays(10).toInstant();
 
         User stillInactive = createUser(TEST_PREFIX + "clrinactive", false, Set.of(), false, longAgo);
-        userRepository.updateDeletionWarningSentDate(stillInactive.getLogin(), warned);
+        userActivityService.recordDeletionWarning(stillInactive.getLogin(), warned);
         User reEnrolled = createUser(TEST_PREFIX + "clrenrolled", true, Set.of(), false, longAgo);
-        userRepository.updateDeletionWarningSentDate(reEnrolled.getLogin(), warned);
+        userActivityService.recordDeletionWarning(reEnrolled.getLogin(), warned);
         User loggedInSince = createUser(TEST_PREFIX + "clrloggedin", false, Set.of(), false, ZonedDateTime.now().toInstant());
-        userRepository.updateDeletionWarningSentDate(loggedInSince.getLogin(), warned);
+        userActivityService.recordDeletionWarning(loggedInSince.getLogin(), warned);
 
-        userRepository.clearDeletionWarningForReturnedUsers();
+        userActivityService.clearDeletionWarningForReturnedUsers();
 
-        assertThat(userRepository.findById(stillInactive.getId())).get().extracting(User::getDeletionWarningSentDate).isNotNull();
-        assertThat(userRepository.findById(reEnrolled.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
-        assertThat(userRepository.findById(loggedInSince.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(stillInactive.getId())).isNotNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(reEnrolled.getId())).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(loggedInSince.getId())).isNull();
     }
 
     /**
@@ -159,7 +163,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         if (enrolled) {
             userUtilService.enrollUserInCourse(user, courseUtilService.createCourse(), CourseRole.STUDENT);
         }
-        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
+        userActivityService.recordLogin(user.getLogin(), lastLoginDate);
         return user;
     }
 
