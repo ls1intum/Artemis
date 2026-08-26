@@ -128,12 +128,13 @@ public class ProgrammingPlagiarismDetectionService {
         // Only one plagiarism check per course allowed
         var courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        try {
-            if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
-                throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
-            }
-            plagiarismCacheService.setActivePlagiarismCheck(courseId);
+        // Claim the course before entering the try block: the finally below releases the course, and a caller that was
+        // refused must not release the check somebody else is running.
+        if (!plagiarismCacheService.tryStartPlagiarismCheck(courseId)) {
+            throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
+        }
 
+        try {
             JPlagResult jPlagResult = computeJPlagResult(programmingExercise, similarityThreshold, minimumScore, minimumSize);
             if (jPlagResult == null) {
                 log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
@@ -156,7 +157,7 @@ public class ProgrammingPlagiarismDetectionService {
             return textPlagiarismResult;
         }
         finally {
-            plagiarismCacheService.setInactivePlagiarismCheck(courseId);
+            plagiarismCacheService.finishPlagiarismCheck(courseId);
         }
     }
 
