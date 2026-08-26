@@ -90,16 +90,16 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
         for (User user : users) {
-            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
-            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userUtilService.setAiSelectionDecisionDate(user, ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.CLOUD_AI);
             userTestRepository.save(user);
         }
 
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
+        userUtilService.setAiSelectionDecisionDate(student1, ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student1);
         var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
+        userUtilService.setAiSelectionDecisionDate(student2, ZonedDateTime.now().minusDays(1));
         userTestRepository.save(student2);
 
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);

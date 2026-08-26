@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Move the AI preferences out of jhi_user. The selection decision is set on 22% of accounts and only 60 of 34,354
+        have turned Memiris off, and both are state the iris module cares about rather than the account module.
+
+        The decision is stored as a varchar rather than repeating the DB-specific ENUM the original column needed, which
+        also removes the divergence between the MySQL and PostgreSQL definitions of that column.
+
+        A row exists only for an account that has made a decision or turned Memiris off. The absence of a row therefore
+        means "no decision recorded, Memiris enabled" - which is what the null column plus the DEFAULT TRUE meant before,
+        and which UserAiPreferenceService is the single place to resolve.
+
+        AI-2 (separate follow-up PR after staging sign-off):
+              DROP jhi_user.ai_selection_decision, jhi_user.ai_selection_decision_date and jhi_user.memiris_enabled.
+    -->
+    <changeSet id="20260821223847-1-create-user-ai-preference" author="krusche">
+        <createTable tableName="user_ai_preference">
+            <column name="user_id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="selection_decision" type="VARCHAR(20)"/>
+            <column name="selection_decision_date" type="DATETIME(3)"/>
+            <column name="memiris_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="user_ai_preference" baseColumnNames="user_id" constraintName="fk_user_ai_preference_user"
+                                 referencedTableName="jhi_user" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20260821223847-2-backfill" author="krusche">
+        <sql>
+            INSERT INTO user_ai_preference (user_id, selection_decision, selection_decision_date, memiris_enabled)
+            SELECT id, ai_selection_decision, ai_selection_decision_date, memiris_enabled
+            FROM jhi_user
+            WHERE ai_selection_decision IS NOT NULL OR memiris_enabled = FALSE
+        </sql>
+        <rollback>
+            <sql>DELETE FROM user_ai_preference</sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
