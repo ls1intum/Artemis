@@ -25,12 +25,15 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.dto.ActiveCourseDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -44,6 +47,54 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Lazy
 @Repository
 public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, JpaSpecificationExecutor<Course> {
+
+    /**
+     * Answers in one query whether a course has lectures, competencies, tutorial groups, accepted FAQs, quiz questions
+     * available for practice, and an exam already visible to the user.
+     * <p>
+     * These six used to be six separate round trips, one per feature module, issued on every course entry to build the
+     * sidebar. The schema is shared regardless of which modules are enabled, so a single course-side query can answer
+     * all of them; a disabled module simply has no rows. Module enablement is still applied on top in
+     * {@code CourseAvailableTabsService}, so a disabled module hides its tab even when rows exist.
+     * <p>
+     * Each branch below is an independent existence check against an indexed {@code course_id} (plus one join for quiz
+     * questions and the user-scoped predicate for exams), so the planner satisfies them with index seeks and folding
+     * them together measured faster than issuing them separately rather than slower.
+     * <p>
+     * Iris enablement is deliberately not folded in: its flag lives inside a JSON column and the answer for a course
+     * without a settings row comes from {@code IrisCourseSettings.defaultSettings()} in Java, so expressing it here
+     * would need database-specific JSON extraction and would duplicate that default. It is a primary-key lookup anyway.
+     *
+     * @param courseId      the course to inspect
+     * @param userId        the user asking, for the user-scoped exam visibility check
+     * @param acceptedState the FAQ state that counts as visible to students
+     * @param now           the current time, used for quiz due dates and exam visibility
+     * @return which kinds of content the course has
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO(
+                CASE WHEN EXISTS (SELECT 1 FROM Lecture l WHERE l.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM CourseCompetency cc WHERE cc.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM TutorialGroup tg WHERE tg.course.id = :courseId) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM Faq f WHERE f.course.id = :courseId AND f.faqState = :acceptedState) THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (SELECT 1 FROM QuizQuestion q WHERE q.exercise.course.id = :courseId AND q.exercise.dueDate IS NOT NULL AND q.exercise.dueDate < :now)
+                    THEN TRUE ELSE FALSE END,
+                CASE WHEN EXISTS (
+                    SELECT 1 FROM Exam e
+                    WHERE e.course.id = :courseId
+                        AND e.visibleDate <= :now
+                        AND (
+                            e.testExam = TRUE
+                            OR EXISTS (SELECT 1 FROM ExamUser eu WHERE eu.exam = e AND eu.user.id = :userId)
+                            OR EXISTS (SELECT 1 FROM UserCourseRole ucr WHERE ucr.user.id = :userId AND ucr.course.id = :courseId AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT, de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR, de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR))
+                        )
+                ) THEN TRUE ELSE FALSE END
+            )
+            FROM Course c
+            WHERE c.id = :courseId
+            """)
+    CourseContentAvailabilityDTO findContentAvailability(@Param("courseId") long courseId, @Param("userId") long userId, @Param("acceptedState") FaqState acceptedState,
+            @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT COUNT(c) > 0
@@ -170,7 +221,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
+    // The variant group is LAZY on Exercise, so it must be loaded explicitly here: the exercise management view and the
+    // instructor scores page both read it off this response, and an unloaded proxy would serialize as null.
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup" })
     Course findWithEagerExercisesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites" })
@@ -180,13 +233,17 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = "exerciseVariantGroups")
+    Optional<Course> findWithEagerExerciseVariantGroupsById(long courseId);
+
     /**
      * Returns an optional course by id with eagerly loaded exercises, plagiarism detection configuration, team assignment configuration, lectures and attachments.
      *
      * @param courseId The id of the course to find
      * @return the populated course or an empty optional if no course was found
      */
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "exercises.exerciseVariantGroup",
+            "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
@@ -228,7 +285,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             """)
     Optional<Course> findWithEagerOrganizationsAndCompetenciesAndPrerequisitesAndLearningPaths(@Param("courseId") long courseId);
 
-    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance for editing.
+    // courseConfiguration is fetched here so the (instructor) course management view exposes grade-relevance and the
+    // per-course Atlas auto-orchestration settings for editing.
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration", "courseConfiguration" })
     Course findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(long courseId);
 
@@ -427,6 +485,10 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
 
     default Course findByIdWithEagerExercisesElseThrow(long courseId) throws EntityNotFoundException {
         return getValueElseThrow(Optional.ofNullable(findWithEagerExercisesById(courseId)), courseId);
+    }
+
+    default Course findWithEagerExerciseVariantGroupsByIdElseThrow(long courseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithEagerExerciseVariantGroupsById(courseId), courseId);
     }
 
     default Course findByIdWithEagerOnlineCourseConfigurationElseThrow(long courseId) throws EntityNotFoundException {
@@ -670,4 +732,46 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
             AND ucr.role = de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR
             """)
     long countCoursesForInstructor(@Param("userId") Long userId);
+
+    /**
+     * Projects the fields the course overview container renders.
+     *
+     * The endpoint used to load the whole {@code Course} to read a handful of scalars off it. Selecting them directly
+     * means the successful path materialises no entity at all, so nothing can lazily initialise on the way out and the
+     * response cannot drift as the entity gains fields.
+     *
+     * The unread notification count lives outside this table, so the caller fills it in with
+     * {@link CourseForOverviewDTO#withNotificationCount(long)}.
+     *
+     * @param courseId the course to project
+     * @return the projected course, or empty when it does not exist
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO(
+                course.id,
+                course.title,
+                course.startDate,
+                course.endDate,
+                course.color,
+                course.courseIcon,
+                course.testCourse,
+                course.onlineCourse,
+                course.enrollmentEnabled,
+                course.enrollmentEndDate,
+                course.unenrollmentEnabled,
+                course.unenrollmentEndDate,
+                course.courseInformationSharingConfiguration,
+                course.courseInformationSharingMessagingCodeOfConduct,
+                course.accuracyOfScores,
+                course.presentationScore,
+                course.maxComplaints,
+                course.maxTeamComplaints,
+                course.maxComplaintTimeDays,
+                course.maxComplaintTextLimit,
+                course.maxComplaintResponseTextLimit,
+                course.maxRequestMoreFeedbackTimeDays)
+            FROM Course course
+            WHERE course.id = :courseId
+            """)
+    Optional<CourseForOverviewDTO> findForOverview(@Param("courseId") long courseId);
 }

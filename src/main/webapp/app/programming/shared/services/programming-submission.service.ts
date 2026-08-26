@@ -191,6 +191,19 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     }
 
     /**
+     * Stores the submission state of one exercise, then refreshes the result ETA.
+     *
+     * Assigning the entry keeps the outer map's identity — nothing observes it by reference, and copying it would
+     * duplicate every accumulated submission graph. The price is that this bypasses the {@link exerciseBuildState}
+     * setter, which is what recomputes the ETA, so it has to be recomputed here. Every direct write to the map goes
+     * through this method so the two cannot drift apart again.
+     */
+    private storeExerciseSubmissionState(exerciseId: number, exerciseSubmissionState: ExerciseSubmissionState): void {
+        this.exerciseBuildStateValue[exerciseId] = exerciseSubmissionState;
+        this.updateResultEta();
+    }
+
+    /**
      * Based on the number of building submissions, calculate the result eta.
      *
      */
@@ -752,7 +765,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 catchError(() => of({})),
             )
             .subscribe((exerciseBuildState: ExerciseSubmissionState) => {
-                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseBuildState };
+                this.storeExerciseSubmissionState(exerciseId, exerciseBuildState);
                 this.exerciseBuildStateSubjects.get(exerciseId)?.next(exerciseBuildState);
             });
         return this.exerciseBuildStateSubjects
@@ -868,8 +881,8 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             }),
             // Now update the exercise build state object and start the build and result subscription regardless of the submission state.
             tap((submissionStateObj: ProgrammingSubmissionStateObj) => {
-                const exerciseSubmissionState: ExerciseSubmissionState = { ...(this.exerciseBuildState[exerciseId] || {}), [participationId]: submissionStateObj };
-                this.exerciseBuildState = { ...this.exerciseBuildState, [exerciseId]: exerciseSubmissionState };
+                const exerciseSubmissionState = this.withSubmissionState(this.exerciseBuildState[exerciseId] ?? {}, participationId, submissionStateObj);
+                this.storeExerciseSubmissionState(exerciseId, exerciseSubmissionState);
                 this.subscribeForNewResult(participationId, exerciseId, personal);
             }),
         );
@@ -884,7 +897,29 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             return {};
         }
         const { participationId, submission, submissionState } = programmingSubmissionState;
-        return { ...exerciseSubmissionState, [participationId]: { participationId, submissionState, submission } };
+        // Assign into the accumulator instead of copying it. `reduce` creates the seed fresh per subscription and
+        // publishes nothing until the source completes, so the accumulator is not observable here — whereas copying
+        // it once per participation is quadratic, and with `cloneWith` it deep-cloned every submission graph
+        // accumulated so far (the spec alone drives 340 participations).
+        exerciseSubmissionState[participationId] = { participationId, submissionState, submission };
+        return exerciseSubmissionState;
+    }
+
+    /**
+     * Returns a new record holding `previous`' entries plus the updated entry for `participationId`.
+     *
+     * Shallow on purpose. The per-exercise state is handed to subscribers, which compare it by reference under
+     * zoneless change detection, so it has to be a fresh object — but the entries themselves must stay the very
+     * submission objects the rest of the application holds, and deep-cloning the whole accumulated state on every
+     * pending submission would be quadratic in the number of participations.
+     */
+    private withSubmissionState(previous: ExerciseSubmissionState, participationId: number, submissionStateObj: ProgrammingSubmissionStateObj): ExerciseSubmissionState {
+        const updated: ExerciseSubmissionState = {};
+        for (const existingParticipationId of Object.keys(previous)) {
+            updated[Number(existingParticipationId)] = previous[Number(existingParticipationId)];
+        }
+        updated[participationId] = submissionStateObj;
+        return updated;
     }
 
     private didSubmissionStartProcessing(commitHash: string): boolean {
@@ -955,13 +990,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const convertedSubmissions: ProgrammingSubmission[] = [];
         for (const submission of submissions) {
             this.convertItemWithLatestSubmissionResultFromServer(submission);
-            convertedSubmissions.push({ ...submission });
+            convertedSubmissions.push(deepClone(submission));
         }
         return res.clone({ body: convertedSubmissions });
     }
 
     private static convertItemWithLatestSubmissionResultFromServer(programmingSubmission: ProgrammingSubmission): ProgrammingSubmission {
-        const convertedProgrammingSubmission = Object.assign({}, programmingSubmission);
+        const convertedProgrammingSubmission = deepClone(programmingSubmission);
         setLatestSubmissionResult(convertedProgrammingSubmission, getLatestSubmissionResult(convertedProgrammingSubmission));
         convertedProgrammingSubmission.participation = ParticipationService.convertParticipationDatesFromServer(programmingSubmission.participation);
         return convertedProgrammingSubmission;

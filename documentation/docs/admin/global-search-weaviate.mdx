@@ -49,7 +49,7 @@ The Artemis repository ships two ready-to-use Compose files under `docker/`. Run
 
 ```bash
 # From the Artemis repo root:
-docker compose -f docker/weaviate.yml up -d
+docker compose --env-file .env -f docker/weaviate.yml up -d
 ```
 
 **OpenAI-compatible external embedder:**
@@ -57,7 +57,7 @@ docker compose -f docker/weaviate.yml up -d
 Change the `env_file` entry in `docker/weaviate.yml` from `./weaviate/default.env` to `./weaviate/openai.env`, then run the same Compose command:
 
 ```bash
-docker compose -f docker/weaviate.yml up -d
+docker compose --env-file .env -f docker/weaviate.yml up -d
 ```
 
 **Local CPU embeddings (embeddinggemma sidecar):**
@@ -66,11 +66,11 @@ Before the first build, accept the [embeddinggemma model license](https://huggin
 
 ```bash
 export HF_TOKEN=your_huggingface_token
-docker compose -f docker/weaviate-embeddings.yml build
-docker compose -f docker/weaviate-embeddings.yml up -d
+docker compose --env-file .env -f docker/weaviate-embeddings.yml build
+docker compose --env-file .env -f docker/weaviate-embeddings.yml up -d
 ```
 
-The shipped image is pinned to **Weaviate 1.37.9** (`cr.weaviate.io/semitechnologies/weaviate:1.37.9`).
+The shipped image is pinned to **Weaviate 1.37.14** (`cr.weaviate.io/semitechnologies/weaviate:1.37.14`).
 
 **Ports exposed by both files:**
 

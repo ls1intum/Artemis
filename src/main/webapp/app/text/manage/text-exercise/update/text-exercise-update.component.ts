@@ -15,7 +15,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { FormsModule, NgForm, NgModel } from '@angular/forms';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/foundation/util/global.utils';
@@ -28,6 +27,7 @@ import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -45,9 +45,10 @@ import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
 import { getCommonExerciseInvalidReasons, getPlagiarismInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -66,6 +67,7 @@ import { getCommonExerciseInvalidReasons, getPlagiarismInvalidReasons } from 'ap
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
@@ -120,7 +122,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
     backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
-    readonly timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false, invalidItems: [] });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
@@ -184,7 +186,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
 
-            this.backupExercise = cloneDeep(this.textExercise);
+            this.backupExercise = deepClone(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
 

@@ -38,14 +38,16 @@ import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
-import { cloneDeep, isEmpty } from 'lodash-es';
+import { isEmpty } from 'lodash-es';
 import { Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -71,6 +73,7 @@ import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-vali
         ArtemisTranslatePipe,
         ModelingExerciseTimelineComponent,
         ExerciseFeedbackSuggestionOptionsComponent,
+        ExerciseGroupTimelineLockComponent,
     ],
 })
 export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
@@ -85,7 +88,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly navigationUtilService = inject(ArtemisNavigationUtilService);
     private readonly calendarService = inject(CalendarService);
-    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false, invalidItems: [] });
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     readonly teamConfigFormGroupComponent = viewChild(TeamConfigFormGroupComponent);
@@ -177,7 +180,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 this.exampleSolution.set(importDiagram(parseJson(this.modelingExercise.exampleSolutionModel)));
             }
 
-            this.backupExercise = cloneDeep(this.modelingExercise);
+            this.backupExercise = deepClone(this.modelingExercise);
         });
 
         this.activatedRoute.url
@@ -354,6 +357,28 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 },
             });
     }
+
+    /** Copies the latest modeling-editor content to the exercise before criteria generation. */
+    readonly synchronizeForAssessmentCriteriaGeneration = () => {
+        this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor()?.getCurrentModel());
+    };
+
+    /**
+     * Keeps the serialized example solution synchronized with modeling-editor changes.
+     * @param model Latest model emitted by the editor.
+     */
+    readonly onModelChanged = (model: UMLModel): void => {
+        this.modelingExercise.exampleSolutionModel = JSON.stringify(model);
+        void this.calculateFormSectionStatus();
+    };
+
+    /** Supplies modeling-specific example-solution context for assessment-criteria generation. */
+    readonly assessmentCriteriaAdditionalContext = () =>
+        [
+            `Diagram type:\n${this.modelingExercise.diagramType ?? ''}`,
+            `Serialized example solution model:\n${this.modelingExercise.exampleSolutionModel ?? ''}`,
+            `Example solution explanation:\n${this.modelingExercise.exampleSolutionExplanation ?? ''}`,
+        ].join('\n\n');
 
     /**
      * Return to the exercise overview page

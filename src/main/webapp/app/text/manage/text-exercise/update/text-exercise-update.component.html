@@ -1,4 +1,5 @@
 <form name="editForm" role="form" novalidate #editForm="ngForm">
+    <jhi-exercise-group-timeline-lock #variantLock [exercise]="textExercise" (exerciseChange)="textExercise = $event" />
     <div class="d-flex align-items-center gap-2">
         @if (!textExercise.id) {
             <h2 id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel"></h2>
@@ -76,6 +77,8 @@
                     [error]="textExercise.exampleSolutionPublicationDateError!"
                     (valueChange)="validateDate()"
                     [disabled]="isImport()"
+                    [lockedToGroup]="variantLock.locked()"
+                    (lockedClick)="variantLock.openModal()"
                 />
                 @if (isImport()) {
                     <span class="text-warning" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateImportInfo"></span>
@@ -95,6 +98,8 @@
                     [(startDate)]="textExercise.startDate"
                     [(dueDate)]="textExercise.dueDate"
                     [(assessmentDueDate)]="textExercise.assessmentDueDate"
+                    [lockedToGroup]="variantLock.locked()"
+                    (lockedClick)="variantLock.openModal()"
                     (timelineStatus)="timelineStatus.set($event)"
                 />
             }
@@ -163,7 +168,13 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise" />
+            <jhi-grading-instructions-details
+                id="gradingInstructions"
+                [exercise]="textExercise"
+                [editable]="!isSaving()"
+                [exampleSolution]="textExercise.exampleSolution"
+                (criteriaGenerated)="editForm.form.markAsDirty()"
+            />
         </div>
     </div>
     <jhi-form-footer

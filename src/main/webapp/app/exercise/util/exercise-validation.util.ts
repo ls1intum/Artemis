@@ -1,5 +1,5 @@
 import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import type { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 const MIN_POINTS = 1;
@@ -16,7 +16,7 @@ export interface ExerciseValidationViewState {
     minTitleLength?: number;
     isTitleDisallowed: boolean;
     isChannelNameRequired: boolean;
-    timelineStatus: ExerciseTimelineStatus;
+    timelineStatus: TimelineStatus;
     isExampleSolutionPublicationDateInputValid: boolean;
 }
 
@@ -57,7 +57,7 @@ export function getPlagiarismInvalidReasons(plagiarismComponent: ExerciseUpdateP
         .map(([, translateKey]) => ({ translateKey, translateValues: {} }));
 }
 
-function getTimelineInvalidReasons(timelineStatus: ExerciseTimelineStatus): ValidationReason[] {
+function getTimelineInvalidReasons(timelineStatus: TimelineStatus): ValidationReason[] {
     return timelineStatus.invalidItems.map((item) => ({ translateKey: item.reasonKey, translateValues: { dateName: item.dateName } }));
 }
 

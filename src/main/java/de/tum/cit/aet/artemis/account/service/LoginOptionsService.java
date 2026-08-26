@@ -10,17 +10,19 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO.LoginMethod;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.account.service.ldap.LdapUserDto;
-import de.tum.cit.aet.artemis.account.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 /**
- * Service responsible for determining the appropriate login options (such as password, OIDC, or SAML2)
- * for a user based on their identifier (login or email).
+ * Determines which login option (password, OIDC, or SAML2) the login form should offer for a given identifier, so that the
+ * identifier-first form can either show a password field or send the user to the configured identity provider.
+ * <p>
+ * The decision is made from local account state alone. This backs an unauthenticated endpoint, so its answer must be
+ * derivable from what the caller already supplies: it deliberately does not consult the configured directory, which would
+ * both make the response depend on whether the identifier exists there and let an unauthenticated caller drive queries
+ * against it.
  */
 @Profile(PROFILE_CORE)
 @Service
@@ -28,8 +30,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 public class LoginOptionsService {
 
     private final UserRepository userRepository;
-
-    private final Optional<LdapUserService> ldapUserService;
 
     @Value("${artemis.user-management.oidc.enabled:false}")
     private boolean oidcEnabled;
@@ -43,13 +43,19 @@ public class LoginOptionsService {
     @Value("${info.saml2.buttonLabel:TUM Login}")
     private String samlDisplayName;
 
-    public LoginOptionsService(UserRepository userRepository, Optional<LdapUserService> ldapUserService) {
+    public LoginOptionsService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.ldapUserService = ldapUserService;
     }
 
     /**
      * Determines which login method the user should use based on their identifier (login or email).
+     * <p>
+     * An internal account is the only kind that authenticates against a password stored in Artemis, so it is the only case
+     * answered with the password form. Everything else - an externally managed account, and an identifier this instance has
+     * never seen - is sent to the external provider, which is also where a first-time user gets provisioned. Those two are
+     * answered identically on purpose, so the response does not distinguish a known identifier from an unknown one.
+     * <p>
+     * Falls back to the password form when no external provider is configured, and for a blank identifier.
      *
      * @param emailOrLogin the username or email address entered by the user
      * @return the LoginOptionsDTO containing the determined login method and the display name of the provider
@@ -60,32 +66,19 @@ public class LoginOptionsService {
         }
         String sanitizedInput = emailOrLogin.trim().toLowerCase(Locale.ROOT);
         boolean isEmail = SecurityUtils.isEmail(sanitizedInput);
-        Optional<User> user = isEmail ? userRepository.findOneByEmailIgnoreCase(sanitizedInput) : userRepository.findOneByLogin(sanitizedInput);
-        // if user is already in database
-        if (user.isPresent()) {
-            if (user.get().isInternal()) {
-                return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
-            }
-            else {
-                return getExternalUser();
-            }
+        // only project the internal flag instead of loading the whole user entity: empty means the user is not in the database
+        Optional<Boolean> internalFlag = isEmail ? userRepository.isInternalUserByEmailIgnoreCase(sanitizedInput) : userRepository.isInternalUserByLogin(sanitizedInput);
+        // An internal account is the only kind that authenticates against a password stored in Artemis, so it is the only case that
+        // needs the password form. Everything else - an externally managed account, and an identifier this instance has never seen -
+        // is sent to the external provider, which is also where a first-time user gets provisioned.
+        //
+        // The two are answered identically on purpose. This endpoint is unauthenticated, so its answer must be derivable from what the
+        // caller already knows; it deliberately does not consult the configured directory, which would both make the response depend on
+        // whether the identifier exists there and let an unauthenticated caller drive queries against it.
+        if (internalFlag.isPresent() && internalFlag.get()) {
+            return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
         }
-        if (ldapUserService.isPresent()) {
-            Optional<LdapUserDto> ldapUser = isEmail ? ldapUserService.get().findByAnyEmail(sanitizedInput) : ldapUserService.get().findByLogin(sanitizedInput);
-            // if user has a university account
-            if (ldapUser.isPresent()) {
-                return getExternalUser();
-            }
-            // if not: this is an internal user
-            else {
-                return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
-            }
-        }
-        // If user is new and ldap is disabled - provide the SSO authentication option
-        if (oidcEnabled || samlEnabled) {
-            return getExternalUser();
-        }
-        return new LoginOptionsDTO(LoginMethod.PASSWORD, null);
+        return getExternalUser();
     }
 
     /**

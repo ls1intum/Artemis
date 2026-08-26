@@ -13,7 +13,6 @@ import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Size;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -33,8 +32,11 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityEventService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -53,6 +55,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
@@ -66,6 +69,12 @@ import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 public class PublicAccountResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicAccountResource.class);
+
+    /**
+     * Upper bound for the identifier accepted by {@link #getLoginOptions}. A login is at most {@link Constants#USERNAME_MAX_LENGTH} characters and an email address at most 100,
+     * so this is a generous outer bound that no legitimate identifier reaches. It exists to keep an unauthenticated caller from sending an arbitrarily long string.
+     */
+    private static final int MAX_LOGIN_IDENTIFIER_LENGTH = 255;
 
     @Value("${artemis.user-management.registration.allowed-email-pattern:#{null}}")
     private Optional<Pattern> allowedEmailPattern;
@@ -90,8 +99,18 @@ public class PublicAccountResource {
 
     private final LoginOptionsService loginOptionsService;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
+    private final UserAiPreferenceService userAiPreferenceService;
+
+    private final AccountSecurityEventService accountSecurityEventService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
-            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService) {
+            Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
+            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService,
+            AccountSecurityEventService accountSecurityEventService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -99,6 +118,10 @@ public class PublicAccountResource {
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.tokenProvider = tokenProvider;
         this.loginOptionsService = loginOptionsService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
+        this.userRecoveryKeyService = userRecoveryKeyService;
+        this.userAiPreferenceService = userAiPreferenceService;
+        this.accountSecurityEventService = accountSecurityEventService;
     }
 
     /**
@@ -132,12 +155,19 @@ public class PublicAccountResource {
         }
 
         User user = userService.registerUser(managedUserVM, managedUserVM.getPassword());
-        mailService.sendActivationEmail(MailRecipientDTO.from(user));
+        // The template renders the key, which now lives in user_recovery_key rather than on the user.
+        mailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(user, userRecoveryKeyService.findActivationKey(user.getId()), null));
+        // No separate notification: the activation mail already goes to the address that was registered.
+        accountSecurityEventService.recordAccountRegistered(user);
         return ResponseEntity.created(new URI("/api/register/" + user.getId())).build();
     }
 
     /**
      * {@code GET /activate} : activate the registered user.
+     * <p>
+     * The only way an activation key is ever redeemed, and gated behind the self-registration feature just like the mail that
+     * carries the key. That is why an unactivated account is only ever meaningful for an internal account on an instance with
+     * registration enabled - see {@link User#activated}.
      *
      * @param key the activation key.
      * @return ResponseEntity with status 200 (OK)
@@ -145,6 +175,7 @@ public class PublicAccountResource {
      */
     @GetMapping("activate")
     @EnforceNothing
+    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
     public ResponseEntity<Void> activateAccount(@RequestParam("key") String key) {
         if (accountService.isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
@@ -214,11 +245,14 @@ public class PublicAccountResource {
         return ResponseEntity.ok(userDTO);
     }
 
-    private static UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
+    private UserDTO getUserDTO(User user, boolean shouldPromptUserToSetupPasskey, boolean isLoggedInWithPasskey, boolean isPasskeySuperAdminApproved) {
         UserDTO userDTO = new UserDTO(user);
         // we set this value on purpose here: the user can only fetch their own information, make the token available for constructing the token-based clone-URL
-        userDTO.setVcsAccessToken(user.getVcsAccessToken());
-        userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
+        userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
+        userDTO.setMemirisEnabled(userAiPreferenceService.isMemirisEnabled(user.getId()));
+        userDTO.setVcsAccessToken(userVcsAccessTokenService.findToken(user.getId()));
+        userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(user.getId()));
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
@@ -230,14 +264,25 @@ public class PublicAccountResource {
      * <p>
      * This endpoint is public and is used during the first step of the identifier-first login flow
      * to determine if the user should enter their local password or redirect to an external identity provider.
+     * <p>
+     * Being unauthenticated, it is bounded on two layers: {@link RateLimitType#LOGIN_OPTIONS} here, and a matching nginx zone
+     * keyed on the real TCP peer, which this limiter cannot see. It has its own bucket rather than sharing
+     * {@link RateLimitType#AUTHENTICATION}, because the client calls it once immediately before authenticating and sharing
+     * would halve the budget a real user has for logging in. See {@link LoginOptionsService} for why the answer is derived
+     * from local account state only.
      *
      * @param usernameOrEmail the login or email address entered by the user
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and with body the {@link LoginOptionsDTO}
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the identifier is longer than {@link #MAX_LOGIN_IDENTIFIER_LENGTH} characters
      */
     @GetMapping("login-options")
     @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.AUTHENTICATION)
-    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") @Size(max = 255) String usernameOrEmail) {
+    @LimitRequestsPerMinute(type = RateLimitType.LOGIN_OPTIONS)
+    public ResponseEntity<LoginOptionsDTO> getLoginOptions(@RequestParam("usernameOrEmail") String usernameOrEmail) {
+        // checked here rather than with @Size, because this class is not annotated with @Validated and constraints on method parameters are only enforced when it is
+        if (usernameOrEmail != null && usernameOrEmail.length() > MAX_LOGIN_IDENTIFIER_LENGTH) {
+            throw new BadRequestAlertException("The provided username or email is too long", "Account", "usernameOrEmailTooLong");
+        }
         LoginOptionsDTO loginOptions = loginOptionsService.getLoginOptions(usernameOrEmail);
         return ResponseEntity.ok(loginOptions);
     }
@@ -275,20 +320,28 @@ public class PublicAccountResource {
         if (!users.isEmpty()) {
             List<User> internalUsers = users.stream().filter(User::isInternal).toList();
             if (internalUsers.isEmpty()) {
+                accountSecurityEventService.recordPasswordResetRequestRejected("external-user");
                 throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
             }
             else if (internalUsers.size() >= 2) {
+                accountSecurityEventService.recordPasswordResetRequestRejected("identifier-not-unique");
                 throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
             }
             var internalUser = internalUsers.getFirst();
             if (userService.prepareUserForPasswordReset(internalUser)) {
-                mailService.sendPasswordResetMail(MailRecipientDTO.from(internalUser));
+                mailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(internalUser, null, userRecoveryKeyService.findResetKey(internalUser.getId())));
+                accountSecurityEventService.recordPasswordResetRequested(internalUser);
+            }
+            else {
+                // Not activated, so no reset key was issued and no mail was sent.
+                accountSecurityEventService.recordPasswordResetRequestRejected("account-not-activated");
             }
         }
         else {
             // Pretend the request has been successful to prevent checking which emails or usernames really exist
             // but log that an invalid attempt has been made
             log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
+            accountSecurityEventService.recordPasswordResetRequestRejected("unknown-identifier");
         }
         return ResponseEntity.ok().build();
     }
@@ -313,11 +366,14 @@ public class PublicAccountResource {
         if (StringUtils.isEmpty(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey(), keyAndPassword.revokeCredentialsOrAll());
 
         if (user.isEmpty()) {
             throw new AccessForbiddenException("No user was found for this reset key");
         }
+        // The completed reset is recorded and announced by UserService.completePasswordReset, through
+        // AccountSecurityNotificationService.passwordChanged with the RESET actor, which is also what carries the
+        // revocation summary. A second notice here would mean two audit rows and two near-identical emails per reset.
         return ResponseEntity.ok().build();
     }
 }

@@ -5,7 +5,7 @@ import { MockComponent } from 'ng-mocks';
 import { LectureTimelineComponent } from 'app/lecture/manage/lecture-period/lecture-timeline.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseTimelineComponent } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineComponent } from 'app/shared-ui/timeline/timeline.component';
 import dayjs from 'dayjs/esm';
 
 describe('LectureTimelineComponent', () => {
@@ -17,7 +17,7 @@ describe('LectureTimelineComponent', () => {
             imports: [LectureTimelineComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
-            .overrideComponent(LectureTimelineComponent, { set: { imports: [MockComponent(ExerciseTimelineComponent)] } })
+            .overrideComponent(LectureTimelineComponent, { set: { imports: [MockComponent(TimelineComponent)] } })
             .compileComponents();
 
         fixture = TestBed.createComponent(LectureTimelineComponent);
@@ -43,7 +43,7 @@ describe('LectureTimelineComponent', () => {
     it('should forward the timeline status', () => {
         fixture.detectChanges();
         const emitSpy = vi.spyOn(component.timelineStatusChange, 'emit');
-        const timeline = fixture.debugElement.query(By.directive(ExerciseTimelineComponent)).componentInstance as ExerciseTimelineComponent;
+        const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as TimelineComponent;
         const status = { valid: false, empty: false, invalidItems: [] };
 
         timeline.timelineStatusChange.emit(status);

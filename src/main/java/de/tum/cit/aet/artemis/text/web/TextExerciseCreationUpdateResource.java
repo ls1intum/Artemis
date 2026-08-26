@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.course.service.CourseService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
@@ -100,11 +101,14 @@ public class TextExerciseCreationUpdateResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -121,6 +125,7 @@ public class TextExerciseCreationUpdateResource {
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -234,6 +239,13 @@ public class TextExerciseCreationUpdateResource {
         // For course exercises, verify the courseId matches; for exam exercises, courseId is null (exerciseGroupId is used instead)
         if (updateTextExerciseDTO.courseId() != null && !Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateTextExerciseDTO.courseId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
+        // The exercise group itself cannot be changed here — reassignment goes through
+        // ExerciseGroupResource#moveExerciseToGroup, which enforces the student-exam safety check (moving an exercise
+        // after student exams were generated would desync their selections).
+        if (updateTextExerciseDTO.exerciseGroupId() != null && originalExercise.getExerciseGroup() != null
+                && !Objects.equals(originalExercise.getExerciseGroup().getId(), updateTextExerciseDTO.exerciseGroupId())) {
+            throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
         }
 
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
@@ -378,6 +390,9 @@ public class TextExerciseCreationUpdateResource {
         exercise.setDueDate(dto.dueDate());
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+
+        // A variant group owns its members' timeline, so pin the dates back to the group before validating.
+        exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
 
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();

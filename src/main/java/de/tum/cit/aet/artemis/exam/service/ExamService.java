@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.detail.StudentExamForDetailDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -585,7 +586,7 @@ public class ExamService {
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
         var achievedPointsPerExercise = calculatePointsStudentAchievedInExercises(studentExamGrades, exam.getCourse(), plagiarismMapping);
-        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentExam, studentResult, achievedPointsPerExercise);
+        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, StudentExamForDetailDTO.of(studentExam), studentResult, achievedPointsPerExercise);
     }
 
     @Nullable
@@ -746,13 +747,24 @@ public class ExamService {
      * @param studentExam the studentExam for which to load exercises
      */
     public void loadQuizExercisesForStudentExam(StudentExam studentExam) {
+        Set<Long> quizExerciseIds = studentExam.getExercises().stream().filter(QuizExercise.class::isInstance).map(DomainObject::getId).collect(Collectors.toSet());
+        if (quizExerciseIds.isEmpty()) {
+            return;
+        }
+        // One query for every quiz of the student exam instead of one per quiz: each of those was its own transaction
+        // round trip, and an exam can contain several quizzes.
+        Map<Long, QuizExercise> quizExercisesById = quizExerciseRepository.findWithEagerQuestionsByIdIn(quizExerciseIds).stream()
+                .collect(Collectors.toMap(DomainObject::getId, Function.identity()));
         for (int i = 0; i < studentExam.getExercises().size(); i++) {
             var exercise = studentExam.getExercises().get(i);
             if (exercise instanceof QuizExercise) {
                 // reload and replace the quiz exercise
-                var quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                // filter quiz solutions when the publish result date is not set (or when set before the publish result date)
-                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
+                var quizExercise = quizExercisesById.get(exercise.getId());
+                if (quizExercise == null) {
+                    throw new EntityNotFoundException("QuizExercise", exercise.getId());
+                }
+                // filter quiz solutions unless they may be revealed: see StudentExam#shouldRevealQuizSolutions
+                if (!studentExam.shouldRevealQuizSolutions()) {
                     quizExercise.filterForStudentsDuringQuiz();
                 }
                 studentExam.getExercises().set(i, quizExercise);
@@ -1416,7 +1428,7 @@ public class ExamService {
      *
      * @param exam the exam to archive
      */
-    @Async
+    @Async("longRunningJobExecutor")
     public void archiveExam(Exam exam) {
         long start = System.nanoTime();
         SecurityUtils.setAuthorizationObject();

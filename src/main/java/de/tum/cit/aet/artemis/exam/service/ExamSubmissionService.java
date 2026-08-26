@@ -1,11 +1,14 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import java.time.ZonedDateTime;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -17,18 +20,34 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamScheduleDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
+import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Conditional(ExamEnabled.class)
 @Lazy
 @Service
 public class ExamSubmissionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExamSubmissionService.class);
+
+    private final ExamRepository examRepository;
 
     private final StudentExamRepository studentExamRepository;
 
@@ -36,12 +55,10 @@ public class ExamSubmissionService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ExamRepository examRepository;
-
-    public ExamSubmissionService(StudentExamRepository studentExamRepository, ExamRepository examRepository, ParticipationService participationService,
+    public ExamSubmissionService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ParticipationService participationService,
             AuthorizationCheckService authorizationCheckService) {
-        this.studentExamRepository = studentExamRepository;
         this.examRepository = examRepository;
+        this.studentExamRepository = studentExamRepository;
         this.participationService = participationService;
         this.authorizationCheckService = authorizationCheckService;
     }
@@ -73,8 +90,8 @@ public class ExamSubmissionService {
         }
 
         Exam exam = exercise.getExerciseGroup().getExam();
-        Optional<StudentExam> optionalStudentExam = findStudentExamForUser(user, exam);
-        if (optionalStudentExam.isEmpty()) {
+        Optional<StudentExamSubmissionGateDTO> optionalSubmissionGate = findSubmissionGateForUser(user, exam, exercise.getId());
+        if (optionalSubmissionGate.isEmpty()) {
             // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
             // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. auto save every 30 seconds for every student) therefore it is best to limit
             // unnecessary database calls
@@ -83,35 +100,32 @@ public class ExamSubmissionService {
             }
             return true;
         }
-        StudentExam studentExam = optionalStudentExam.get();
+        StudentExamSubmissionGateDTO submissionGate = optionalSubmissionGate.get();
 
-        // Users are only allowed to access exercises that are part of their own student exam
-        if (!studentExam.getExercises().contains(exercise)) {
+        // Users are only allowed to access exercises that are part of their own student exam. The database answered this
+        // as part of the projection above, so the exercise collection never has to be loaded.
+        if (!submissionGate.containsRequestedExercise()) {
             return false;
         }
 
         // if the student exam was already submitted, the user cannot save anymore
-        if (Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.getSubmissionDate() != null) {
+        if (submissionGate.isHandedIn()) {
             return false;
         }
 
         // Check that the submission is in time
-        return isSubmissionInTime(exercise, studentExam, withGracePeriod);
+        return isSubmissionInTime(exercise, submissionGate, withGracePeriod);
     }
 
-    private Optional<StudentExam> findStudentExamForUser(User user, Exam exam) {
-
-        Optional<StudentExam> optionalStudentExam;
-        // Since multiple student exams for a test exam might exist, find the latest unsubmitted student exam based on the created date
+    private Optional<StudentExamSubmissionGateDTO> findSubmissionGateForUser(User user, Exam exam, long exerciseId) {
+        // The query returns the newest student exam first.
+        List<StudentExamSubmissionGateDTO> submissionGates = studentExamRepository.findSubmissionGatesByUserIdAndExamId(user.getId(), exam.getId(), exerciseId, false);
         if (exam.isTestExam()) {
-            optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
-                    .max(Comparator.comparing(StudentExam::getCreatedDate));
+            // Since multiple student exams for a test exam might exist, find the latest unsubmitted student exam based on the created date
+            return submissionGates.stream().filter(submissionGate -> !submissionGate.isHandedIn()).findFirst();
         }
-        else {
-            // for real exams, there's only one student exam per exam
-            optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId(), false);
-        }
-        return optionalStudentExam;
+        // for real exams, there's only one student exam per exam
+        return submissionGates.stream().findFirst();
     }
 
     /**
@@ -144,15 +158,24 @@ public class ExamSubmissionService {
      * <p>
      * TODO: we might want to move this to the SubmissionService
      *
+     * The submission is modified in place, so the caller keeps the instance it passed in. What is returned instead is
+     * the participation this call resolved, so the per-type save can reuse it rather than reading the same row again.
+     * It is returned rather than left on the submission because {@code Submission#participation} is deserialized from
+     * the request body: a caller that read it back off the submission would be trusting whatever participation the
+     * client named. Two cases deliberately return null and leave the lookup to the caller: several participations,
+     * where that lookup decides (and reports) which one applies, and a test run, where the lookup filters on
+     * {@code testRun = FALSE} and would therefore select a different participation than this one.
+     *
      * @param exercise   the exercise for which the submission should be saved
-     * @param submission the submission
+     * @param submission the submission, whose id is set in place when an earlier submission exists
      * @param user       the current user
-     * @return the submission. If a submission already exists for the exercise we will set the id
+     * @return the participation the caller may reuse, or null if the caller has to resolve it itself
      */
-    public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
+    @Nullable
+    public StudentParticipation preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submission or if it is a programming exercise or if it is a test exam exercise
         if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise || exercise.getExam().isTestExam()) {
-            return submission;
+            return null;
         }
 
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, user.getId());
@@ -165,18 +188,172 @@ public class ExamSubmissionService {
                 // is invoked the existing submission will be updated.
                 submission.setId(existingSubmission.getId());
             }
+            StudentParticipation resolved = participations.getFirst();
+            if (participations.size() == 1 && !resolved.isTestRun()) {
+                return resolved;
+            }
         }
 
-        return submission;
+        return null;
     }
 
-    private boolean isSubmissionInTime(Exercise exercise, StudentExam studentExam, boolean withGracePeriod) {
-        // The attributes of the exam (e.g. startDate) are missing. Therefore we need to load it.
-        Exam exam = examRepository.findByIdElseThrow(exercise.getExerciseGroup().getExam().getId());
-        ZonedDateTime calculatedEndDate = withGracePeriod ? exam.getEndDate().plusSeconds(exam.getGracePeriod()) : exam.getEndDate();
-        if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
-            calculatedEndDate = withGracePeriod ? studentExam.getIndividualEndDateWithGracePeriod() : studentExam.getIndividualEndDate();
+    private boolean isSubmissionInTime(Exercise exercise, StudentExamSubmissionGateDTO submissionGate, boolean withGracePeriod) {
+        // The exam has to be re-read rather than taken from exercise.getExerciseGroup().getExam(): callers may hold an
+        // exercise that was loaded before the exam dates were last changed, and this check has to see the current dates.
+        // ExamSubmissionServiceTest#testCheckSubmissionAllowance_isSubmissionInTime covers exactly that case.
+        // Read only the dates, not the exam entity: this gate uses nothing else, and loading the entity also hydrates the
+        // course through an eager association.
+        ExamScheduleDTO examSchedule = examRepository.findScheduleById(exercise.getExerciseGroup().getExam().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Exam", exercise.getExerciseGroup().getExam().getId()));
+        ZonedDateTime calculatedEndDate = withGracePeriod ? examSchedule.endDate().plusSeconds(Objects.requireNonNullElse(examSchedule.gracePeriod(), 0)) : examSchedule.endDate();
+        if (submissionGate.hasWorkingTime()) {
+            calculatedEndDate = submissionGate.individualEndDate(examSchedule, withGracePeriod);
         }
-        return exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
+        return examSchedule.startDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());
+    }
+
+    /**
+     * Returns {@code true} if the drag and drop answer submitted answer of a quiz exercise are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a drag and drop submitted answer
+     * @param answer2 a drag and drop submitted answer to be compared with {@code answer1} for equality
+     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
+     */
+    public static boolean isContentEqualTo(DragAndDropSubmittedAnswer answer1, DragAndDropSubmittedAnswer answer2) {
+        // we use a record with dragItemId and dropLocationId and use streams to create those records for both submitted answers and compare them using sets
+        Set<DnDMapping> mappings1 = answer1.toDnDMapping();
+        Set<DnDMapping> mappings2 = answer2.toDnDMapping();
+        return Objects.equals(mappings1, mappings2);
+    }
+
+    /**
+     * Returns {@code true} if the multiple choice answer submitted answer of a quiz exercise are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a multiple choice submitted answer
+     * @param answer2 a multiple choice submitted answer to be compared with {@code answer1} for equality
+     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
+     */
+    public static boolean isContentEqualTo(MultipleChoiceSubmittedAnswer answer1, MultipleChoiceSubmittedAnswer answer2) {
+        // we compare if all selected options are the same by comparing the selection option id sets, e.g. (1,3,5) vs. (2,4,5)
+        Set<Long> selections1 = answer1.toSelectedIds();
+        Set<Long> selections2 = answer2.toSelectedIds();
+        return Objects.equals(selections1, selections2);
+    }
+
+    /**
+     * Returns {@code true} if the short answer submitted answer of a quiz exercise are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a short answer submitted answer
+     * @param answer2 a short answer submitted answer to be compared with {@code answer1} for equality
+     * @return {@code true} if the answers are equal to each other and {@code false} otherwise
+     */
+    public static boolean isContentEqualTo(ShortAnswerSubmittedAnswer answer1, ShortAnswerSubmittedAnswer answer2) {
+        // we use a record with spotId and spotText and use streams to create those records for both submitted answers and compare them using sets
+        Set<SAMapping> mappings1 = answer1.toSAMappings();
+        Set<SAMapping> mappings2 = answer2.toSAMappings();
+        return Objects.equals(mappings1, mappings2);
+    }
+
+    /**
+     * Returns {@code true} if the quiz submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param submission1 a quiz submission
+     * @param submission2 a quiz submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
+     */
+    public static boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
+        if (submission1 == null && submission2 == null) {
+            return true;
+        }
+        else if (submission1 == null || submission2 == null) {
+            return false;
+        }
+
+        var answers1 = submission1.getSubmittedAnswers();
+        var answers2 = submission2.getSubmittedAnswers();
+        if (answers1.size() != answers2.size()) {
+            return false;
+        }
+
+        for (var answer1 : answers1) {
+            for (var answer2 : answers2) {
+                QuizQuestion quizQuestion1 = answer1.getQuizQuestion();
+                QuizQuestion quizQuestion2 = answer2.getQuizQuestion();
+
+                // we should still be able to compare even if the quizQuestion or the quizQuestion id is null
+                if (quizQuestion1 == null || quizQuestion1.getId() == null || quizQuestion2 == null || quizQuestion2.getId() == null
+                        || quizQuestion1.getId().equals(quizQuestion2.getId())) {
+                    if (!isContentEqualTo(answer1, answer2)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        // we did not find any differences
+        return true;
+    }
+
+    /**
+     * Returns {@code true} if the quiz submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param answer1 a quiz submission
+     * @param answer2 a quiz submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise; unsupported or
+     *         mismatched answer types are logged and also yield {@code false}
+     */
+    public static boolean isContentEqualTo(SubmittedAnswer answer1, SubmittedAnswer answer2) {
+        return switch (answer1) {
+            case DragAndDropSubmittedAnswer dndSubmittedAnswer1 when answer2 instanceof DragAndDropSubmittedAnswer dndSubmittedAnswer2 ->
+                isContentEqualTo(dndSubmittedAnswer1, dndSubmittedAnswer2);
+            case MultipleChoiceSubmittedAnswer mcSubmittedAnswer1 when answer2 instanceof MultipleChoiceSubmittedAnswer mcSubmittedAnswer2 ->
+                isContentEqualTo(mcSubmittedAnswer1, mcSubmittedAnswer2);
+            case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer1 when answer2 instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer2 ->
+                isContentEqualTo(shortAnswerSubmittedAnswer1, shortAnswerSubmittedAnswer2);
+            default -> {
+                log.error("Cannot compare {} and {} for equality, classes unknown", answer1, answer2);
+                yield false;
+            }
+        };
+    }
+
+    /**
+     * Returns {@code true} if the text submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param submission1 a text submission
+     * @param submission2 a text submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the text submissions are equal to each other and {@code false} otherwise
+     */
+    public static boolean isContentEqualTo(@Nullable TextSubmission submission1, @Nullable TextSubmission submission2) {
+        if (submission1 == null && submission2 == null) {
+            return true;
+        }
+        else if (submission1 == null || submission2 == null) {
+            return false;
+        }
+        return Objects.equals(submission1.getText(), submission2.getText());
+    }
+
+    /**
+     * Returns {@code true} if the modeling submissions are equal to each other
+     * and {@code false} otherwise.
+     *
+     * @param submission1 a modeling submission
+     * @param submission2 a modeling submission to be compared with {@code submission1} for equality
+     * @return {@code true} if the modeling submissions are equal to each other and {@code false} otherwise
+     */
+    public static boolean isContentEqualTo(@Nullable ModelingSubmission submission1, @Nullable ModelingSubmission submission2) {
+        if (submission1 == null && submission2 == null) {
+            return true;
+        }
+        else if (submission1 == null || submission2 == null) {
+            return false;
+        }
+        return Objects.equals(submission1.getModel(), submission2.getModel()) && Objects.equals(submission1.getExplanationText(), submission2.getExplanationText());
     }
 }

@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
@@ -67,6 +68,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -137,13 +139,16 @@ public class FileUploadExerciseResource {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ExerciseVariantGroupService exerciseVariantGroupService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ExerciseVariantGroupService exerciseVariantGroupService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -165,6 +170,7 @@ public class FileUploadExerciseResource {
         this.atlasMLApi = atlasMLApi;
         this.competencyApi = competencyApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
 
     /**
@@ -487,9 +493,16 @@ public class FileUploadExerciseResource {
             }
         }
 
-        // For exam exercises: exerciseGroupId required (courseId is optional/informational)
-        if (existingExercise.isExamExercise() && !hasExerciseGroupId) {
-            throw new BadRequestAlertException("Exam exercise requires exerciseGroupId.", ENTITY_NAME, "exerciseGroupIdMissing");
+        // For exam exercises: exerciseGroupId required (courseId is optional/informational). The group itself cannot be
+        // changed here — reassignment goes through ExerciseGroupResource#moveExerciseToGroup, which enforces the
+        // student-exam safety check (moving an exercise after student exams were generated would desync their selections).
+        if (existingExercise.isExamExercise()) {
+            if (!hasExerciseGroupId) {
+                throw new BadRequestAlertException("Exam exercise requires exerciseGroupId.", ENTITY_NAME, "exerciseGroupIdMissing");
+            }
+            if (!Objects.equals(existingExercise.getExerciseGroup().getId(), dto.exerciseGroupId())) {
+                throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
+            }
         }
     }
 
@@ -773,6 +786,9 @@ public class FileUploadExerciseResource {
         exercise.setDueDate(updateFileUploadExerciseDTO.dueDate());
         exercise.setAssessmentDueDate(updateFileUploadExerciseDTO.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(updateFileUploadExerciseDTO.exampleSolutionPublicationDate());
+
+        // A variant group owns its members' timeline, so pin the dates back to the group before validating.
+        exerciseVariantGroupService.applyOwningGroupTimeline(exercise);
 
         // Validates general settings: points, dates
         exercise.validateGeneralSettings();

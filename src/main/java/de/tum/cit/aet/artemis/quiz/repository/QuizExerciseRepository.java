@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -66,12 +67,17 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
+    // exerciseVariantGroup is LAZY, and QuizExerciseWithoutQuestionsDTO reads its title/maxPoints/dates, so it must be
+    // loaded here — otherwise the DTO mapping would trigger a proxy initialization outside the session.
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "competencyLinks.competency",
-            "quizBatches", "gradingCriteria" })
+            "quizBatches", "gradingCriteria", "exerciseVariantGroup" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
+    Set<QuizExercise> findWithEagerQuestionsByIdIn(Collection<Long> quizExerciseIds);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks.competency" })
     Optional<QuizExercise> findWithEagerQuestionsAndCompetenciesById(Long quizExerciseId);

@@ -13,6 +13,7 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { captureException } from '@sentry/angular';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-team-students-online-list',
@@ -156,11 +157,12 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         // The server may send null dates (never typed/acted); the accessors and templates handle that. The array
         // cast (on the map result, not an object literal — so it satisfies consistent-type-assertions) keeps the
         // stream typed as OnlineTeamStudent[] the way it was before strictFunctionTypes enforced the callback variance.
-        return students.map((student) => ({
-            ...student,
-            lastTypingDate: student.lastTypingDate !== null ? dayjs(student.lastTypingDate) : null,
-            lastActionDate: student.lastActionDate !== null ? dayjs(student.lastActionDate) : null,
-        })) as OnlineTeamStudent[];
+        return students.map((student) =>
+            cloneWith(student, {
+                lastTypingDate: student.lastTypingDate !== null ? dayjs(student.lastTypingDate) : null,
+                lastActionDate: student.lastActionDate !== null ? dayjs(student.lastActionDate) : null,
+            }),
+        ) as OnlineTeamStudent[];
     }
 
     /**

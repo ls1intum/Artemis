@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -34,6 +35,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -189,6 +193,46 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             // Verify user was updated to super admin
             User updatedUser = userTestRepository.findByIdWithAuthoritiesElseThrow(regularUser.getId());
             assertThat(updatedUser.getAuthorities()).extracting(Authority::getName).contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void updateUser_externalToInternalWithoutPassword_generatesPassword() throws Exception {
+            ManagedUserVM externalUserDTO = userUtilService.createManagedUserVM(TEST_PREFIX + "extuser");
+            externalUserDTO.setInternal(false);
+            mockMvc.perform(post("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(externalUserDTO)))
+                    .andExpect(status().isCreated());
+
+            User externalUser = userTestRepository.findOneByLogin(TEST_PREFIX + "extuser").orElseThrow();
+            assertThat(externalUser.isInternal()).isFalse();
+            // set external user to internal and provide no password
+            ManagedUserVM updateDTO = userUtilService.createManagedUserVM(externalUser.getLogin());
+            updateDTO.setId(externalUser.getId());
+            updateDTO.setInternal(true);
+            updateDTO.setPassword(null);
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(updateDTO))).andExpect(status().isOk());
+
+            User updatedUser = userTestRepository.findByIdWithAuthoritiesElseThrow(externalUser.getId());
+            assertThat(updatedUser.isInternal()).isTrue();
+            assertThat(updatedUser.getPassword()).isNotNull().isNotEmpty();
+        }
+
+        @Test
+        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        void updateUser_internalToExternal_reverseTransition_success() throws Exception {
+            User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "internaluser");
+            assertThat(regularUser.isInternal()).isTrue();
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(regularUser.getLogin());
+            managedUserVM.setId(regularUser.getId());
+            managedUserVM.setInternal(false);
+
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            User updatedUser = userTestRepository.findByIdWithAuthoritiesElseThrow(regularUser.getId());
+            assertThat(updatedUser.isInternal()).isFalse();
         }
 
         @Test
@@ -708,6 +752,67 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
                     .andExpect(status().isOk());
             assertThat(userTestRepository.findOneByLogin(user.getLogin()).orElseThrow().isTestUser()).as("the flag is cleared").isFalse();
+        }
+    }
+
+    /**
+     * The admin edit form reaches the same transitions as the dedicated deactivate endpoint and a password reset do, but
+     * it writes the fields itself. Without the timestamp, a session established earlier keeps passing the credential-change
+     * checkpoint and is extended for the rest of its lifetime, so an account that the admin sees as deactivated stays
+     * usable.
+     */
+    @Nested
+    class CredentialsChangedDateOnAdminUpdate {
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_recordsTheCredentialChangeWhenDeactivating() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "deactivated");
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).isNull();
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            managedUserVM.setActivated(false);
+            managedUserVM.setPassword(null);
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            User updated = userTestRepository.findOneByLogin(user.getLogin()).orElseThrow();
+            assertThat(updated.getActivated()).isFalse();
+            assertThat(userActivityService.findCredentialsChangedDate(updated.getId())).as("deactivating through the admin form has to end existing sessions too").isNotNull();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_recordsTheCredentialChangeWhenResettingThePassword() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "newpassword");
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).isNull();
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            // #13492 made the internal flag caller-controlled, and only an internal account receives the password: an
+            // update that leaves it external ignores the password, so this has to say what it means.
+            managedUserVM.setInternal(true);
+            managedUserVM.setPassword("a-new-admin-set-password");
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).as("a password set by an admin has to end sessions established before it").isNotNull();
+        }
+
+        @Test
+        @WithMockUser(username = "admin", roles = "ADMIN")
+        void updateUser_leavesTheCredentialChangeAloneForAnUnrelatedEdit() throws Exception {
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "renamed");
+
+            ManagedUserVM managedUserVM = userUtilService.createManagedUserVM(user.getLogin());
+            managedUserVM.setId(user.getId());
+            managedUserVM.setPassword(null);
+            managedUserVM.setFirstName("Renamed");
+            mockMvc.perform(put("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(managedUserVM)))
+                    .andExpect(status().isOk());
+
+            assertThat(userActivityService.findCredentialsChangedDate(user.getId())).as("editing a name is not a credential change and must not log the user out").isNull();
         }
     }
 }

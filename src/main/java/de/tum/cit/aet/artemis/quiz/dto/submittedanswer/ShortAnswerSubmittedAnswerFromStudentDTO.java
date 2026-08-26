@@ -8,7 +8,11 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.SchemaProperty;
 
+@Schema(requiredProperties = { "type" })
+@SchemaProperty(name = "type", schema = @Schema(type = "string", allowableValues = { "short-answer" }, defaultValue = "short-answer"))
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ShortAnswerSubmittedAnswerFromStudentDTO(@NotNull Long questionId, @NotNull List<@Valid ShortAnswerSubmittedTextFromStudentDTO> submittedTexts)
         implements SubmittedAnswerFromStudentDTO {

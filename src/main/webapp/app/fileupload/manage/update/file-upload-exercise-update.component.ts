@@ -13,7 +13,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason, getCourseId, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { cloneDeep } from 'lodash-es';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -24,6 +23,7 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { FormsModule, NgModel } from '@angular/forms';
@@ -40,9 +40,10 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared-ui/form/fo
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
-import { ExerciseTimelineStatus } from 'app/exercise/exercise-timeline/exercise-timeline.component';
+import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { FileUploadExerciseTimelineComponent } from 'app/fileupload/manage/file-upload-exercise-timeline/file-upload-exercise-timeline.component';
 import { getCommonExerciseInvalidReasons } from 'app/exercise/util/exercise-validation.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 const MIN_FILE_PATTERN_LENGTH = 2;
 
@@ -64,6 +65,7 @@ const MIN_FILE_PATTERN_LENGTH = 2;
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
         FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         FaIconComponent,
         NgbTooltip,
@@ -106,7 +108,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
     notificationText = signal<string | undefined>(undefined);
     exerciseCategories = signal<ExerciseCategory[]>([]);
     existingCategories = signal<ExerciseCategory[]>([]);
-    timelineStatus = signal<ExerciseTimelineStatus>({ valid: true, empty: false, invalidItems: [] });
+    timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
     examCourseId = signal<number | undefined>(undefined);
     formStatusSections = signal<FormSectionStatus[]>([]);
@@ -141,7 +143,7 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
             const data = this.routeData();
             if (data?.fileUploadExercise) {
                 this.fileUploadExercise.set(data.fileUploadExercise);
-                this.backupExercise.set(cloneDeep(data.fileUploadExercise));
+                this.backupExercise.set(deepClone(data.fileUploadExercise));
                 this.examCourseId.set(getCourseId(data.fileUploadExercise));
             }
         });

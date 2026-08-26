@@ -28,7 +28,6 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 
@@ -69,6 +68,7 @@ import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
 import { ButtonModule } from 'primeng/button';
 import { TextareaModule } from 'primeng/textarea';
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -78,6 +78,7 @@ import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-g
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -107,6 +108,7 @@ import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice
         InputTextModule,
         InputNumberModule,
         FormDateTimePickerComponent,
+        ExerciseGroupTimelineLockComponent,
         QuizAiGenerationModalComponent,
         JsonPipe,
         Select,
@@ -297,8 +299,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                         } else if (this.quizExercise()) {
                             this.quizExercise().exerciseGroup = this.exerciseGroup;
                             this.savedEntity.exerciseGroup = this.exerciseGroup;
-                            // Commit a new reference so the in-place mutation renders under zoneless OnPush.
-                            this.quizExercise.update((quizExercise) => ({ ...quizExercise }));
+                            // Re-set the same reference so the in-place mutation renders: the signal is declared with
+                            // `equal: () => false`. No copy, so the questions the child editors hold stay the same objects.
+                            this.quizExercise.set(this.quizExercise());
                         }
                     });
                 } else {
@@ -308,8 +311,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                     } else if (this.quizExercise()) {
                         this.quizExercise().course = this.course;
                         this.savedEntity.course = this.course;
-                        // Commit a new reference so the in-place mutation renders under zoneless OnPush.
-                        this.quizExercise.update((quizExercise) => ({ ...quizExercise }));
+                        // Re-set the same reference so the in-place mutation renders (see above).
+                        this.quizExercise.set(this.quizExercise());
                     }
                 }
             });
@@ -393,7 +396,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.exerciseService.validateDate(this.quizExercise());
 
         // Assign savedEntity to identify local changes
-        this.savedEntity = this.quizExercise().id && !this.isImport() ? cloneDeep(this.quizExercise()) : new QuizExercise(undefined, undefined);
+        this.savedEntity = this.quizExercise().id && !this.isImport() ? deepClone(this.quizExercise()) : new QuizExercise(undefined, undefined);
 
         this.cacheValidation();
     }
@@ -642,13 +645,15 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 descriptionKey: 'artemisApp.quizWarning.description',
                 confirmButtonKey: 'artemisApp.quizWarning.confirmButton',
             };
-            const ref = this.dialogService.open(GenericConfirmationDialogComponent, {
-                ...this.defaultSecondLayerDialogOptions,
-                data: {
-                    translationKeys: keys,
-                    canBeUndone: true,
-                },
-            });
+            const ref = this.dialogService.open(
+                GenericConfirmationDialogComponent,
+                cloneWith(this.defaultSecondLayerDialogOptions, {
+                    data: {
+                        translationKeys: keys,
+                        canBeUndone: true,
+                    },
+                }),
+            );
             ref?.onClose.subscribe((confirmed: boolean | undefined) => {
                 if (confirmed) {
                     this.save();
@@ -742,7 +747,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         // by the previous implementation flipped the banner on for fresh, not-yet-started quizzes.
         this.quizExercise().isEditable = this.quizExercise().isEditable ?? isQuizEditable(this.quizExercise());
         this.exerciseService.validateDate(this.quizExercise());
-        this.savedEntity = cloneDeep(this.quizExercise());
+        this.savedEntity = deepClone(this.quizExercise());
 
         if (isCreate) {
             // Update the browser URL from /new to /<id>/edit without Angular navigation.

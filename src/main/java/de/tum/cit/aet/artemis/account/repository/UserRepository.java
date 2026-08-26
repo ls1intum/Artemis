@@ -42,7 +42,6 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
-import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
@@ -82,15 +81,44 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
 
-    Optional<User> findOneByResetKey(String resetKey);
-
     Optional<User> findOneByEmailIgnoreCase(String email);
-
-    List<User> findByVcsAccessTokenExpiryDateBetween(ZonedDateTime from, ZonedDateTime to);
 
     Optional<User> findOneByLogin(String login);
 
-    Optional<User> findOneByActivationKey(String activationKey);
+    /**
+     * Determines whether a user with the given login exists and, if so, whether that user is internal.
+     * <p>
+     * Only the {@code internal} flag is projected, so callers that just need to distinguish between "unknown", "internal" and "external" do not load the full user entity
+     * (and stay unaffected by columns or eagerly fetched associations that may be added to {@link User} later on).
+     *
+     * @param login the login to look up
+     * @return an {@link Optional} containing {@code true} if a non-deleted user exists and is internal, {@code false} if that user is external,
+     *         or an empty {@link Optional} if no such user exists
+     */
+    @Query("""
+            SELECT u.internal
+            FROM User u
+            WHERE u.login = :login
+                AND u.deleted = FALSE
+            """)
+    Optional<Boolean> isInternalUserByLogin(@Param("login") String login);
+
+    /**
+     * Determines whether a user with the given email exists (ignoring case) and, if so, whether that user is internal.
+     * <p>
+     * Projects only the {@code internal} flag, see {@link #isInternalUserByLogin}.
+     *
+     * @param email the email address to look up, matched case-insensitively
+     * @return an {@link Optional} containing {@code true} if a non-deleted user exists and is internal, {@code false} if that user is external,
+     *         or an empty {@link Optional} if no such user exists
+     */
+    @Query("""
+            SELECT u.internal
+            FROM User u
+            WHERE LOWER(u.email) = LOWER(:email)
+                AND u.deleted = FALSE
+            """)
+    Optional<Boolean> isInternalUserByEmailIgnoreCase(@Param("email") String email);
 
     @EntityGraph(type = LOAD, attributePaths = { "authorities" })
     Set<User> findAllWithAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
@@ -889,35 +917,27 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateUserLanguageKey(@Param("userId") long userId, @Param("languageKey") String languageKey);
 
+    /**
+     * Stores the password an account is given when it completes its first LTI launch, and makes the account usable.
+     * <p>
+     * A single guarded statement rather than saving the entity the caller read: {@code save} writes every field of an
+     * instance loaded before the request, so a deactivation or soft delete that landed in between would be written back
+     * out again. The guard also means a deleted account receives no password at all.
+     *
+     * @param userId       the account
+     * @param passwordHash the hashed password to store
+     * @return the number of updated rows, 0 if the account was deleted in the meantime
+     */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.vcsAccessToken = :vcsAccessToken,
-                user.vcsAccessTokenExpiryDate = :vcsAccessTokenExpiryDate
+            SET user.password = :passwordHash,
+                user.activated = TRUE
             WHERE user.id = :userId
+                AND user.deleted = FALSE
             """)
-    void updateUserVcsAccessToken(@Param("userId") long userId, @Param("vcsAccessToken") String vcsAccessToken,
-            @Param("vcsAccessTokenExpiryDate") ZonedDateTime vcsAccessTokenExpiryDate);
-
-    @Modifying
-    @Transactional
-    @Query("""
-            UPDATE User user
-            SET user.aiSelectionDecision = :decision,
-                user.aiSelectionDecisionDate = :timestamp
-            WHERE user.id = :userId
-            """)
-    void updateSelectedLLMUsage(@Param("userId") long userId, @Param("decision") AiSelectionDecision decision, @Param("timestamp") ZonedDateTime timestamp);
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.memirisEnabled = :memirisEnabled
-            WHERE user.id = :userId
-            """)
-    void updateMemirisEnabled(@Param("userId") long userId, @Param("memirisEnabled") boolean memirisEnabled);
+    int storeInitialPasswordAndActivate(@Param("userId") long userId, @Param("passwordHash") String passwordHash);
 
     @Query("""
             SELECT DISTINCT team.students AS student
@@ -947,23 +967,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<String> findAllNotEnrolledUsers();
 
     /**
-     * Records a user's last login. Set on every successful authentication (see {@code CustomAuditEventRepository}) and
-     * used as the activity signal for the data-privacy not-enrolled-user cleanup.
-     *
-     * @param login         the login of the user who just authenticated
-     * @param lastLoginDate the login timestamp to store
-     * @return the number of updated rows (0 if no user with that login exists)
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.lastLoginDate = :lastLoginDate
-            WHERE user.login = :login
-            """)
-    int updateLastLoginDate(@Param("login") String login, @Param("lastLoginDate") Instant lastLoginDate);
-
-    /**
      * Finds all not-enrolled, inactive users who have NOT yet been warned about an upcoming deletion. This is phase 1 of
      * the two-phase not-enrolled-user cleanup: these users are emailed a warning and then stamped with a
      * {@code deletionWarningSentDate}. Administrators are excluded.
@@ -975,30 +978,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user
             FROM User user
+                LEFT JOIN UserActivity activity ON activity.userId = user.id
             WHERE NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
-                AND user.deletionWarningSentDate IS NULL
-                AND COALESCE(user.lastLoginDate, user.createdDate) < :inactiveBefore
+                AND activity.deletionWarningSentDate IS NULL
+                AND COALESCE(activity.lastLoginDate, user.createdDate) < :inactiveBefore
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             ORDER BY user.login
             """)
     List<User> findNotEnrolledUsersToWarn(@Param("inactiveBefore") Instant inactiveBefore);
-
-    /**
-     * Records that a not-enrolled user has been warned about an upcoming deletion.
-     *
-     * @param login the login of the warned user
-     * @param date  the warning timestamp
-     * @return the number of updated rows
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.deletionWarningSentDate = :date
-            WHERE user.login = :login
-            """)
-    int updateDeletionWarningSentDate(@Param("login") String login, @Param("date") Instant date);
 
     /**
      * Finds the logins of not-enrolled users who are due for deletion: they were warned, their grace period has elapsed,
@@ -1012,32 +1000,16 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.login
             FROM User user
+                LEFT JOIN UserActivity activity ON activity.userId = user.id
             WHERE NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
-                AND user.deletionWarningSentDate IS NOT NULL
-                AND user.deletionWarningSentDate < :warnedBefore
-                AND (user.lastLoginDate IS NULL OR user.lastLoginDate < user.deletionWarningSentDate)
+                AND activity.deletionWarningSentDate IS NOT NULL
+                AND activity.deletionWarningSentDate < :warnedBefore
+                AND (activity.lastLoginDate IS NULL OR activity.lastLoginDate < activity.deletionWarningSentDate)
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             ORDER BY user.login
             """)
     List<String> findNotEnrolledUserLoginsToDelete(@Param("warnedBefore") Instant warnedBefore);
-
-    /**
-     * Clears the deletion warning of users who "came back" after being warned: they either got enrolled in a course
-     * again or logged in after the warning was sent. This prevents deleting an account the user evidently still wants,
-     * and lets them be warned afresh only if they become inactive again.
-     *
-     * @return the number of users whose warning was cleared
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.deletionWarningSentDate = NULL
-            WHERE user.deletionWarningSentDate IS NOT NULL
-                AND (EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) OR (user.lastLoginDate IS NOT NULL AND user.lastLoginDate >= user.deletionWarningSentDate))
-            """)
-    int clearDeletionWarningForReturnedUsers();
 
     /**
      * Get all managed users
