@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisCitationTextComponent } from './iris-citation-text.component';
@@ -161,28 +161,12 @@ describe('IrisCitationTextComponent', () => {
             citation.click();
         };
 
-        /** Pretends the router has arrived at the given URL, which is what `isActive` reads the current one from. */
-        const pretendCurrentUrl = (router: Router, url: string) =>
-            Object.defineProperty(router, 'lastSuccessfulNavigation', { value: () => ({ finalUrl: router.parseUrl(url) }), configurable: true });
-
-        it('replaces the history entry when the jump stays inside the lecture that is already open', () => {
-            const router = TestBed.inject(Router);
-            const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-            pretendCurrentUrl(router, '/courses/1/lectures/1');
+        it('hands the jump to the deep-link service, which decides whether it navigates', () => {
+            const jump = vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump').mockImplementation(() => {});
 
             clickCitation();
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], expect.objectContaining({ queryParams: { unit: '7', page: '3' }, replaceUrl: true }));
-        });
-
-        it('keeps the history entry when the jump leaves the page the student came from', () => {
-            const router = TestBed.inject(Router);
-            const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-            pretendCurrentUrl(router, '/courses/1/dashboard');
-
-            clickCitation();
-
-            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], expect.objectContaining({ replaceUrl: false }));
+            expect(jump).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { unitId: 7, timestamp: undefined, page: 3 });
         });
     });
 

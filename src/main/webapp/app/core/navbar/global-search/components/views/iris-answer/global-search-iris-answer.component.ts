@@ -2,7 +2,6 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, injec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -14,7 +13,9 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { deepLinkStaysOnCurrentPage } from 'app/lecture/overview/course-lectures/lecture-deep-link.navigation';
+import { parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
+import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
 const CLAMP_LINE_COUNT = 4;
@@ -33,7 +34,7 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective, IrisThinkingBubbleComponent],
+    imports: [FaIconComponent, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective, IrisThinkingBubbleComponent],
     templateUrl: './global-search-iris-answer.component.html',
     styleUrls: ['./global-search-iris-answer.component.scss'],
 })
@@ -52,14 +53,18 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly moreOpen = signal(false);
     protected readonly shouldClamp = computed(() => this.isOverflowing() && !this.isExpanded());
     protected readonly sources = computed(() => this.irisResult()?.sources ?? []);
-    private readonly router = inject(Router);
+    private readonly deepLinkService = inject(LectureDeepLinkService);
+    private readonly overlay = inject(SearchOverlayService);
 
     /**
-     * Whether opening this source lands on the page the user is already looking at, in which case the jump replaces the
-     * current history entry instead of pushing an identical one. See {@link deepLinkStaysOnCurrentPage}.
+     * Opens the lecture unit this source points at.
+     *
+     * A jump that stays on the page the user is already on does not navigate, so the overlay has to be closed here —
+     * the modal otherwise closes itself on the navigation that no longer happens.
      */
-    protected staysOnCurrentPage(source: LectureSearchResult): boolean {
-        return deepLinkStaysOnCurrentPage(this.router, this.router.parseUrl(source.lectureUnit.link));
+    protected openSource(source: LectureSearchResult): void {
+        this.deepLinkService.jump(source.lectureUnit.link, parseLectureDeepLink(source.lectureUnit.queryParams));
+        this.overlay.close();
     }
 
     protected readonly IrisLogoSize = IrisLogoSize;

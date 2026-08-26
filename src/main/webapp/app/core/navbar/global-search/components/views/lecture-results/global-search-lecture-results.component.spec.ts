@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
@@ -9,6 +9,8 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { GlobalSearchLectureResultsComponent } from './global-search-lecture-results.component';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
+import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 
 const mockResult: LectureSearchResult = {
     course: { id: 1, name: 'Advanced Web Development' },
@@ -163,64 +165,57 @@ describe('GlobalSearchLectureResultsComponent', () => {
     });
 
     describe('Keyboard navigation', () => {
-        it('should navigate to result link when Enter is pressed on a selected result', () => {
+        const jumpSpy = () => vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump');
+
+        it('should jump to the result when Enter is pressed on a selected result', () => {
             (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
+            const jump = jumpSpy();
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
             const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
             component.handleKeydown(event);
 
             expect(preventDefaultSpy).toHaveBeenCalled();
-            // Not the page currently on screen, so the jump keeps its own history entry.
-            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams, replaceUrl: false });
+            // The service decides whether this is a navigation or a hand-over; the result only says where to go.
+            expect(jump).toHaveBeenCalledWith(mockResult.lectureUnit.link, expect.objectContaining({ unitId: expect.any(Number) }));
         });
 
-        it('should replace the history entry when the selected result is the page already open', () => {
-            const router = TestBed.inject(Router);
-            // What isActive reads to find out where the user currently is.
-            Object.defineProperty(router, 'lastSuccessfulNavigation', {
-                value: () => ({ finalUrl: router.parseUrl(mockResult.lectureUnit.link) }),
-                configurable: true,
-            });
+        it('should close the overlay, which no longer happens on a navigation that stays on the page', () => {
             (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
-            const navigateSpy = vi.spyOn(router, 'navigate');
+            const close = vi.spyOn(TestBed.inject(SearchOverlayService), 'close');
 
             component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
 
-            // Without this the jump pushes a second entry for the same page, and Back appears to do nothing.
-            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], expect.objectContaining({ replaceUrl: true }));
+            expect(close).toHaveBeenCalled();
         });
 
-        it('should not navigate when Enter is pressed with no selection', () => {
+        it('should not jump when Enter is pressed with no selection', () => {
             (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', -1);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
-            const event = new KeyboardEvent('keydown', { key: 'Enter' });
+            const jump = jumpSpy();
 
-            component.handleKeydown(event);
+            component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
 
-            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(jump).not.toHaveBeenCalled();
         });
 
-        it('should not navigate on non-Enter key', () => {
+        it('should not jump on non-Enter key', () => {
             (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
 
-            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
-            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            const jump = jumpSpy();
 
-            component.handleKeydown(event);
+            component.handleKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
 
-            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(jump).not.toHaveBeenCalled();
         });
     });
 

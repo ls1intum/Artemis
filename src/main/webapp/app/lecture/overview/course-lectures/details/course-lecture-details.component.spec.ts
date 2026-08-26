@@ -61,6 +61,8 @@ import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-me
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -74,6 +76,8 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureService: LectureService;
     /** Stands in for the router's event stream; emit a NavigationEnd to let a navigation finish. */
     let routerEvents: Subject<NavigationEnd>;
+    /** Stands in for the deep-link service; emit to hand the page a jump issued while it is already on screen. */
+    let deepLinkRequests: Subject<LectureDeepLink>;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -113,6 +117,7 @@ describe('CourseLectureDetailsComponent', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         routerEvents = new Subject<NavigationEnd>();
+        deepLinkRequests = new Subject<LectureDeepLink>();
 
         await TestBed.configureTestingModule({
             imports: [
@@ -191,6 +196,7 @@ describe('CourseLectureDetailsComponent', () => {
                     },
                 },
                 MockProvider(Router, { events: routerEvents }),
+                { provide: LectureDeepLinkService, useValue: { requests: deepLinkRequests.asObservable(), jump: vi.fn() } },
                 MockProvider(ScienceService),
                 MockProvider(IrisSettingsService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -435,76 +441,6 @@ describe('CourseLectureDetailsComponent', () => {
         expect(updatedUnit).not.toBe(lectureUnit3);
     });
 
-    describe('dropUnreachableTargets', () => {
-        const dropUnreachable = (unitId: number, target: { timestamp?: number; page?: number } = {}) =>
-            courseLecturesDetailsComponent['dropUnreachableTargets']({ unitId, ...target });
-
-        const attachmentVideoUnit = (config: { id: number; videoSource?: string; youtubeVideoId?: string; pdfLink?: string }) => {
-            const unit = new AttachmentVideoUnit();
-            unit.id = config.id;
-            unit.videoSource = config.videoSource;
-            unit.youtubeVideoId = config.youtubeVideoId;
-            if (config.pdfLink) {
-                unit.attachment = new Attachment();
-                unit.attachment.link = config.pdfLink;
-            }
-            unit.lecture = lecture;
-            return unit;
-        };
-
-        it('should keep the timestamp for a unit with only a video', () => {
-            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 100, videoSource: 'https://example.com/video.mp4' })]);
-
-            expect(dropUnreachable(100, { timestamp: 45.5 })?.timestamp).toBe(45.5);
-        });
-
-        it('should keep the timestamp for a unit with only a YouTube video', () => {
-            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 103, youtubeVideoId: 'dQw4w9WgXcQ' })]);
-
-            expect(dropUnreachable(103, { timestamp: 30 })?.timestamp).toBe(30);
-        });
-
-        it('should keep the page for a unit with only a PDF', () => {
-            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 101, pdfLink: '/path/to/slides.pdf' })]);
-
-            expect(dropUnreachable(101, { page: 5 })?.page).toBe(5);
-        });
-
-        it('should keep both targets for a unit with a video and a PDF', () => {
-            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 104, youtubeVideoId: 'dQw4w9WgXcQ', pdfLink: '/path/to/slides.pdf' })]);
-
-            expect(dropUnreachable(104, { timestamp: 60, page: 7 })).toEqual({ unitId: 104, timestamp: 60, page: 7 });
-        });
-
-        it('should drop the timestamp for a unit without any video', () => {
-            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 105, pdfLink: '/path/to/document.pdf' })]);
-
-            expect(dropUnreachable(105, { timestamp: 45, page: 2 })).toEqual({ unitId: 105, timestamp: undefined, page: 2 });
-        });
-
-        it('should drop the page for a unit whose attachment is not a PDF', () => {
-            courseLecturesDetailsComponent.lectureUnits.set([attachmentVideoUnit({ id: 106, videoSource: 'https://example.com/video.mp4', pdfLink: '/path/to/notes.txt' })]);
-
-            expect(dropUnreachable(106, { timestamp: 12, page: 2 })).toEqual({ unitId: 106, timestamp: 12, page: undefined });
-        });
-
-        it('should keep the unit but drop both targets for a unit that is not an attachment/video unit', () => {
-            const textUnit = new TextUnit();
-            textUnit.id = 200;
-            textUnit.lecture = lecture;
-            courseLecturesDetailsComponent.lectureUnits.set([textUnit]);
-
-            // Such a unit has no place to jump to inside it, but it is still opened and scrolled to.
-            expect(dropUnreachable(200, { timestamp: 12, page: 3 })).toEqual({ unitId: 200 });
-        });
-
-        it('should drop the whole link when the unit is not part of the lecture', () => {
-            courseLecturesDetailsComponent.lectureUnits.set([lectureUnit3]);
-
-            expect(dropUnreachable(9999, { timestamp: 12, page: 3 })).toBeUndefined();
-        });
-    });
-
     describe('Context Collection', () => {
         it('collectVisibleContexts: returns empty array when no units', () => {
             fixture.changeDetectorRef.detectChanges();
@@ -684,8 +620,6 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.ngOnInit();
         };
 
-        const navigationEnd = () => new NavigationEnd(1, '/courses/1/lectures/1', '/courses/1/lectures/1');
-
         it.each([
             {
                 name: 'keeps every target a unit with a video and a PDF can honour',
@@ -700,17 +634,12 @@ describe('CourseLectureDetailsComponent', () => {
                 expected: { unitId: 7, timestamp: undefined, page: undefined },
             },
             {
-                // The unit itself decides on the same candidate in AttachmentVideoUnitComponent.hasPdf.
-                name: 'keeps the page when only the student version names a PDF',
-                unit: () => attachmentUnit(7, { link: '/path/to/slides', studentVersion: '/path/to/slides-student.pdf' }),
-                params: { unit: '7', page: '4' },
-                expected: { unitId: 7, page: 4 },
-            },
-            {
-                name: 'drops the page when no candidate names a PDF',
-                unit: () => attachmentUnit(7, { link: '/path/to/slides.zip' }, videoSource),
+                // A target the unit cannot honour reaches nothing: the players and the viewer are only rendered when
+                // the unit has a video or a PDF, so the details page does not have to judge that a second time.
+                name: 'passes a target on even when the unit cannot honour it',
+                unit: () => attachmentUnit(7, { link: '/path/to/slides.zip' }),
                 params: { unit: '7', timestamp: '30', page: '4' },
-                expected: { unitId: 7, timestamp: 30, page: undefined },
+                expected: { unitId: 7, timestamp: 30, page: 4 },
             },
         ])('should read the deep link from the query params and $name', ({ unit, params, expected }) => {
             respondWith([unit()]);
@@ -744,33 +673,26 @@ describe('CourseLectureDetailsComponent', () => {
             expect(second).toEqual(first);
         });
 
-        it('should take the deep link out of the URL once the navigation that delivered it has finished', () => {
-            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        it('should execute a jump handed over by the service, which never touches the URL', () => {
             respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' }, videoSource)]);
+            reInit();
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
 
-            reInit({ unit: '7', timestamp: '30', page: '4' });
-            expect(navigateSpy).not.toHaveBeenCalled();
+            deepLinkRequests.next({ unitId: 7, page: 4 });
 
-            routerEvents.next(navigationEnd());
-
-            expect(navigateSpy).toHaveBeenCalledWith(
-                [],
-                expect.objectContaining({
-                    queryParams: { unit: null, timestamp: null, page: null },
-                    queryParamsHandling: 'merge',
-                    replaceUrl: true,
-                }),
-            );
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
         });
 
-        it('should leave a URL that carries no deep link alone', () => {
-            const navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-
+        it('should execute every jump the service hands over, so a repeated one jumps again', () => {
+            respondWith([attachmentUnit(7, { link: '/path/to/slides.pdf' }, videoSource)]);
             reInit();
-            // Also the state the clearing itself leaves behind, so it must not start another navigation.
-            routerEvents.next(navigationEnd());
 
-            expect(navigateSpy).not.toHaveBeenCalled();
+            deepLinkRequests.next({ unitId: 7, page: 4 });
+            const first = courseLecturesDetailsComponent.deepLink();
+            deepLinkRequests.next({ unitId: 7, page: 4 });
+
+            // The same place, but a request of its own, so the card is told to jump a second time.
+            expect(courseLecturesDetailsComponent.deepLink()).not.toBe(first);
         });
 
         it('should hold a jump back until the lecture it points at is loaded, across the switch to it', () => {
@@ -801,24 +723,6 @@ describe('CourseLectureDetailsComponent', () => {
             reInit({}, '3');
 
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
-        });
-
-        it('should ignore a lecture response that arrives after its lecture was left', () => {
-            // Lecture 2 is asked for and does not answer yet.
-            const deliverLeftLecture = respondLater([attachmentUnit(7, { link: '/path/to/slides.pdf' })], 2);
-            reInit({}, '2');
-
-            // Lecture 3 is opened and answers, carrying a jump of its own.
-            respondWith([attachmentUnit(9, { link: '/path/to/deck.pdf' })], 3);
-            reInit({ unit: '9', page: '2' }, '3');
-            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 9 }));
-
-            deliverLeftLecture();
-
-            // The late answer must not put its lecture back under lecture 3's route, which would leave the executed
-            // jump pointing into units it was never meant for.
-            expect(courseLecturesDetailsComponent.lecture()?.id).toBe(3);
-            expect(courseLecturesDetailsComponent.lectureUnits().map((unit) => unit.id)).toEqual([9]);
         });
 
         it('should forget an executed jump when another lecture is opened', () => {

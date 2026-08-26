@@ -1,17 +1,17 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Attachment, attachmentIsPdf } from 'app/lecture/shared/entities/attachment.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { filter, finalize, tap } from 'rxjs/operators';
+import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faChalkboardTeacher, faComment, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -44,7 +44,8 @@ import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
-import { LECTURE_DEEP_LINK_QUERY_PARAMS, LectureDeepLink, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { LectureDeepLink, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface LectureUnitCompletionEvent {
@@ -81,7 +82,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly lectureService = inject(LectureService);
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly router = inject(Router);
+    private readonly deepLinkService = inject(LectureDeepLinkService);
     private readonly fileService = inject(FileService);
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
@@ -155,9 +156,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     /** The jump the page is currently executing (Iris citation, global search result, pasted link). */
     readonly deepLink = this.deepLinkState.asReadonly();
     /**
-     * A deep link read from the URL that still waits for the lecture units, which decide what it may target, together
-     * with the lecture it arrived for. Without that lecture the request would be nothing but a unit id and could be
-     * executed against whichever lecture happens to load next.
+     * A deep link read from the URL that still waits for its lecture to finish loading, together with the lecture it
+     * arrived for — without that, it could be executed against whichever lecture happens to load next.
      */
     private pendingDeepLink?: { readonly deepLink: LectureDeepLink; readonly lectureId: number };
 
@@ -203,10 +203,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             const lectureId = +params.lectureId;
             if (lectureId !== this.lectureId) {
-                // Both jumps belong to the lecture being left, and this component outlives it: Angular reuses it for a
-                // new lectureId. Kept around, they would be executed against a lecture they were never meant for. The
-                // one exception is a request that came in for the lecture being entered, which is why it is only
-                // dropped when it names another one.
+                // This component outlives the lecture: Angular reuses it for a new lectureId, so a jump belonging to
+                // the lecture being left must not stay behind. A request that came in for the lecture being entered is
+                // the one exception, which is why it is only dropped when it names another one.
                 this.deepLinkState.set(undefined);
                 if (this.pendingDeepLink && this.pendingDeepLink.lectureId !== lectureId) {
                     this.pendingDeepLink = undefined;
@@ -220,53 +219,39 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
+        // A jump that survived a page load: a shared or pasted link, a bookmark, a reload. The URL is the only thing
+        // that crosses a cold start, so this is the way in from outside the running app.
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const deepLink = parseLectureDeepLink(params);
-            if (!deepLink) {
-                // Also the emission caused by clearing the parameters; there is nothing to execute then.
-                return;
+            if (deepLink) {
+                this.acceptDeepLink(deepLink);
             }
-
-            // The snapshot, not `lectureId`: it is already advanced to the lecture the link arrived with, while the
-            // field is only set once the route parameters are reported, which happens after the query parameters.
-            this.pendingDeepLink = { deepLink, lectureId: Number(this.activatedRoute.snapshot.params['lectureId']) };
-            this.publishDeepLink();
         });
 
-        // The parameters are read while the router is still activating this page, so they can only be taken back out
-        // once that navigation has finished: starting the next one from inside it cancels it half-way through.
-        this.router.events
-            .pipe(
-                filter((event) => event instanceof NavigationEnd),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe(() => this.clearDeepLinkQueryParams());
+        // A jump issued inside the running app while this page is already on screen, handed over without touching the
+        // URL. Both ways in end up below, so a jump is executed the same however it arrived.
+        this.deepLinkService.requests.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((deepLink) => this.acceptDeepLink(deepLink));
+    }
+
+    private acceptDeepLink(deepLink: LectureDeepLink): void {
+        // The snapshot, not `lectureId`: it is already advanced to the lecture the link arrived with, while the field
+        // is only set once the route parameters are reported, which happens after the query parameters.
+        this.pendingDeepLink = { deepLink, lectureId: Number(this.activatedRoute.snapshot.params['lectureId']) };
+        this.publishDeepLink();
     }
 
     loadData() {
         this.isLoading.set(true);
         if (this.lectureId) {
-            // Requests are not cancelled when another lecture is opened, so an earlier one can still answer once its
-            // lecture is gone from the page. Everything below therefore only acts while the lecture it asked for is
-            // still the one the route selects; otherwise it would put its lecture back under another one's route, and
-            // a deep link already executed for that other lecture would be left pointing into the wrong units.
-            const requestedLectureId = this.lectureId;
-            const isStillCurrent = () => requestedLectureId === this.lectureId;
             this.lectureService
-                .findWithDetails(requestedLectureId)
+                .findWithDetails(this.lectureId)
                 .pipe(
                     finalize(() => {
-                        if (isStillCurrent()) {
-                            this.isLoading.set(false);
-                        }
+                        this.isLoading.set(false);
                     }),
                 )
                 .subscribe({
                     next: (findLectureResult) => {
-                        if (!isStillCurrent()) {
-                            return;
-                        }
-
                         const lecture = findLectureResult.body!;
                         this.lecture.set(lecture);
                         lecture.attachments?.forEach((attachment) => {
@@ -278,7 +263,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         this.lectureUnits.set(lecture.lectureUnits ?? []);
                         this.publishDeepLink();
                         this.hasPdfLectureUnit.set(
-                            this.lectureUnits().some((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && attachmentIsPdf((unit as AttachmentVideoUnit).attachment)),
+                            this.lectureUnits().some(
+                                (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+                            ),
                         );
                         if (this.irisEnabled && lecture.course?.id) {
                             this.irisSettingsService.getCourseSettingsWithRateLimit(lecture.course.id).subscribe((response) => {
@@ -296,12 +283,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         }
                         this.informationBoxData.set(informationBoxData);
                     },
-                    error: (errorResponse: HttpErrorResponse) => {
-                        // A lecture the user has already left failing is not something to interrupt them about.
-                        if (isStillCurrent()) {
-                            onError(this.alertService, errorResponse);
-                        }
-                    },
+                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
                 });
         }
     }
@@ -353,12 +335,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Hands the pending deep link to the units, once they are known.
+     * Hands the pending deep link to the units, once the lecture it arrived for is the loaded one.
      *
-     * Only the lecture the link arrived for may decide what it can target, and that lecture's units arrive later: the
-     * route reports the link while the page is still loading, and a link into another lecture even arrives before the
-     * switch. Until its own lecture is the loaded one the link waits and loadData publishes it. It is published at most
-     * once, as executing the same request twice would jump twice.
+     * The route reports the link while the page is still loading, and a link into another lecture even arrives before
+     * the switch, so until then it waits and loadData publishes it. A link naming a unit this lecture does not have
+     * simply matches no card. It is published at most once, as executing the same request twice would jump twice.
      */
     private publishDeepLink(): void {
         const pending = this.pendingDeepLink;
@@ -367,60 +348,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
 
         this.pendingDeepLink = undefined;
-        this.deepLinkState.set(this.dropUnreachableTargets(pending.deepLink));
-    }
-
-    /**
-     * Drops the parts of a deep link the target unit cannot honour, so a stale link cannot make a unit look like it has
-     * a video or slides. Returns undefined when the unit is gone from the lecture.
-     *
-     * Only an attachment/video unit has places to jump to inside it; every other unit is opened and scrolled to, which
-     * is all a jump can mean there.
-     */
-    private dropUnreachableTargets(deepLink: LectureDeepLink): LectureDeepLink | undefined {
-        const targetUnit = this.lectureUnits().find((unit) => unit.id === deepLink.unitId);
-        if (!targetUnit) {
-            return undefined;
-        }
-
-        if (targetUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
-            return { unitId: deepLink.unitId };
-        }
-
-        const attachmentUnit = targetUnit as AttachmentVideoUnit;
-        const hasVideo = !!attachmentUnit.videoSource || !!attachmentUnit.youtubeVideoId;
-
-        return {
-            unitId: deepLink.unitId,
-            timestamp: hasVideo ? deepLink.timestamp : undefined,
-            page: attachmentIsPdf(attachmentUnit.attachment) ? deepLink.page : undefined,
-        };
-    }
-
-    /**
-     * Takes the deep link out of the URL, once the navigation that brought it in has finished.
-     *
-     * The parameters are a one-shot command, not a description of what is on screen. Left in place they go stale as soon
-     * as the user collapses the unit or scrolls on, and worse: the next click on the same citation would navigate to the
-     * URL that is already active, which the router reports as no change at all, so the jump would never arrive.
-     *
-     * Runs after every navigation and decides from the URL whether there is anything to take out, so the removal itself
-     * passes through here without starting another one. Parameters that named no reachable unit are dropped as well:
-     * they are as stale as the ones that were executed, and nothing acts on them either.
-     */
-    private clearDeepLinkQueryParams(): void {
-        const queryParams = this.activatedRoute.snapshot.queryParams;
-        if (!LECTURE_DEEP_LINK_QUERY_PARAMS.some((param) => queryParams[param] !== undefined)) {
-            return;
-        }
-
-        void this.router.navigate([], {
-            relativeTo: this.activatedRoute,
-            // Angular removes a query parameter when it is merged in as null; other parameters on the page are kept.
-            queryParams: Object.fromEntries(LECTURE_DEEP_LINK_QUERY_PARAMS.map((param) => [param, null])),
-            queryParamsHandling: 'merge',
-            replaceUrl: true,
-        });
+        this.deepLinkState.set(pending.deepLink);
     }
 
     createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {

@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, signal, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SkeletonModule } from 'primeng/skeleton';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
@@ -9,7 +8,9 @@ import { LectureSearchService } from 'app/core/navbar/global-search/services/lec
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { deepLinkStaysOnCurrentPage } from 'app/lecture/overview/course-lectures/lecture-deep-link.navigation';
+import { parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
+import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 
 @Component({
     selector: 'jhi-global-search-lecture-results',
@@ -17,7 +18,7 @@ import { deepLinkStaysOnCurrentPage } from 'app/lecture/overview/course-lectures
     templateUrl: 'global-search-lecture-results.component.html',
     styleUrls: ['./global-search-lecture-results.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, FaIconComponent, RouterLink, SkeletonModule],
+    imports: [ArtemisTranslatePipe, FaIconComponent, SkeletonModule],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchLectureResultsComponent) }],
 })
 export class GlobalSearchLectureResultsComponent extends SearchResultView {
@@ -25,7 +26,8 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     readonly selectedIndex = input<number>(-1);
     protected readonly back = output<void>();
     private readonly searchService = inject(LectureSearchService);
-    private readonly router = inject(Router);
+    private readonly deepLinkService = inject(LectureDeepLinkService);
+    private readonly overlay = inject(SearchOverlayService);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     protected readonly lectureResults = signal<LectureSearchResult[]>([]);
     protected readonly isLoading = signal(false);
@@ -82,15 +84,18 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
         const result = this.lectureResults()[index];
         if (result) {
             event.preventDefault();
-            void this.router.navigate([result.lectureUnit.link], { queryParams: result.lectureUnit.queryParams, replaceUrl: this.staysOnCurrentPage(result) });
+            this.openResult(result);
         }
     }
 
     /**
-     * Whether opening this result lands on the page the user is already looking at, in which case the jump replaces the
-     * current history entry instead of pushing an identical one. See {@link deepLinkStaysOnCurrentPage}.
+     * Opens the lecture unit the result points at.
+     *
+     * A jump that stays on the page the user is already on does not navigate, so the overlay has to be closed here —
+     * the modal otherwise closes itself on the navigation that no longer happens.
      */
-    protected staysOnCurrentPage(result: LectureSearchResult): boolean {
-        return deepLinkStaysOnCurrentPage(this.router, this.router.parseUrl(result.lectureUnit.link));
+    protected openResult(result: LectureSearchResult): void {
+        this.deepLinkService.jump(result.lectureUnit.link, parseLectureDeepLink(result.lectureUnit.queryParams));
+        this.overlay.close();
     }
 }

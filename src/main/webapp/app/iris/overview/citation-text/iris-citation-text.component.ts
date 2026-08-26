@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
-import { deepLinkStaysOnCurrentPage, lectureDetailsRoute } from 'app/lecture/overview/course-lectures/lecture-deep-link.navigation';
+import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
 import { IrisCitationParsed } from './iris-citation-text.model';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
@@ -23,7 +22,7 @@ import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faC
 export class IrisCitationTextComponent {
     private readonly domSanitizer = inject(DomSanitizer);
     private readonly translateService = inject(TranslateService);
-    private readonly router = inject(Router);
+    private readonly deepLinkService = inject(LectureDeepLinkService);
 
     /**
      * Maps citation type classes to FontAwesome icons.
@@ -306,18 +305,11 @@ export class IrisCitationTextComponent {
             return;
         }
 
-        const queryParams: Record<string, string> = { unit: unitId };
-        if (timestamp) {
-            queryParams.timestamp = timestamp;
-        }
-        if (page) {
-            queryParams.page = page;
-        }
-
-        const lectureRoute = lectureDetailsRoute(courseId, lectureId);
-        const replaceUrl = deepLinkStaysOnCurrentPage(this.router, this.router.createUrlTree(lectureRoute));
-
-        void this.router.navigate(lectureRoute, { queryParams, replaceUrl });
+        this.deepLinkService.jump(['/courses', courseId, 'lectures', lectureId], {
+            unitId: Number(unitId),
+            timestamp: timestamp ? Number(timestamp) : undefined,
+            page: page ? Number(page) : undefined,
+        });
     }
 
     /**

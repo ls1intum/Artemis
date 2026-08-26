@@ -11,11 +11,7 @@ export class LectureUnitDirective<T extends LectureUnit> {
     /** The lecture's pending jump; every unit gets it and picks out the ones addressed to itself. */
     readonly deepLink = input<LectureDeepLink | undefined>(undefined);
 
-    /**
-     * The pending jump if it targets this unit, handed on as it is so that it keeps its identity: marking the unit as
-     * completed re-evaluates this and yields the same object, which goes no further, while asking for the same place
-     * twice yields a new one and reaches the unit.
-     */
+    /** The pending jump if it targets this unit, handed on unchanged so that it keeps its identity. */
     readonly matchedDeepLink = computed(() => {
         const deepLink = this.deepLink();
         return deepLink?.unitId === this.lectureUnit()?.id ? deepLink : undefined;
