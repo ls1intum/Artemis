@@ -18,7 +18,14 @@ import {
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { BrowserSelection, IndexedContentPresence, IndexedEntity, IngestionTypeCount, selectionKey } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
+import {
+    BrowserSelection,
+    IndexedContentPresence,
+    IndexedEntity,
+    IngestionTypeCount,
+    MissingContent,
+    selectionKey,
+} from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /** The metadata types listed in the scoreboard, in a fixed order so the list does not reshuffle between courses. */
 const SCOREBOARD_TYPES = ['exercise', 'lecture', 'lecture_unit', 'exam', 'faq', 'channel', 'course'] as const;
@@ -60,6 +67,8 @@ interface UnitNode extends TreeNode {
     unitId: number;
     title: string;
     content: ContentNode[];
+    /** False when content the unit should have was never ingested. */
+    complete: boolean;
 }
 
 /** One lecture in the tree. {@link indexed} is false when only its units are indexed and the lecture itself is not. */
@@ -68,6 +77,8 @@ interface LectureNode extends TreeNode {
     title: string;
     indexed: boolean;
     units: UnitNode[];
+    /** False when the lecture is not indexed itself, or any of its units is missing content. */
+    complete: boolean;
 }
 
 /** One row of the metadata scoreboard. */
@@ -99,6 +110,7 @@ export class CourseIngestionBrowserTreeComponent {
     readonly entities = input.required<IndexedEntity[]>();
     readonly contentPresence = input.required<IndexedContentPresence[]>();
     readonly typeCounts = input.required<IngestionTypeCount[]>();
+    readonly contentGaps = input.required<MissingContent[]>();
 
     /** The current selection, shared with the detail pane through the modal. */
     readonly selection = model<BrowserSelection | undefined>(undefined);
@@ -135,6 +147,7 @@ export class CourseIngestionBrowserTreeComponent {
     protected readonly lectures = computed<LectureNode[]>(() => {
         const entities = this.entities();
         const unitIdsByContentKey = this.contentPresence().map((presence) => ({ key: presence.key, unitIds: new Set(presence.unitIds) }));
+        const unitsWithGaps = new Set(this.contentGaps().map((gap) => gap.lectureUnitId));
 
         const lectureTitles = new Map<number, string>();
         for (const entity of entities) {
@@ -164,6 +177,7 @@ export class CourseIngestionBrowserTreeComponent {
                         const contentSelection: BrowserSelection = { kind: 'collection', unitId: entity.entityId, key: content.key };
                         return { key: selectionKey(contentSelection), selection: contentSelection, contentKey: content.key };
                     }),
+                complete: !unitsWithGaps.has(entity.entityId),
             };
             unitsByLecture.set(lectureId, [...(unitsByLecture.get(lectureId) ?? []), unit]);
         }
@@ -174,13 +188,17 @@ export class CourseIngestionBrowserTreeComponent {
         return [...lectureIds]
             .map((lectureId) => {
                 const selection: BrowserSelection = { kind: 'lecture', lectureId };
+                const units = (unitsByLecture.get(lectureId) ?? []).sort((a, b) => a.title.localeCompare(b.title));
                 return {
                     key: selectionKey(selection),
                     selection,
                     lectureId,
                     title: lectureTitles.get(lectureId) ?? '',
                     indexed: lectureTitles.has(lectureId),
-                    units: (unitsByLecture.get(lectureId) ?? []).sort((a, b) => a.title.localeCompare(b.title)),
+                    units,
+                    // A lecture is only as complete as what sits under it, so an unindexed lecture or any unit missing
+                    // content marks the whole branch, which is what makes a collapsed tree worth scanning.
+                    complete: lectureTitles.has(lectureId) && units.every((unit) => unit.complete),
                 };
             })
             .sort((a, b) => a.title.localeCompare(b.title));

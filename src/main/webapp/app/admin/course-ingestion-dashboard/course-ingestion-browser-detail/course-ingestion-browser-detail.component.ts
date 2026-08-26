@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumUiMessageComponent, TumUiPaginatorComponent } from '@tumaet/ui-angular';
-import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { Router } from '@angular/router';
+import { TumUiButtonComponent, TumUiMessageComponent, TumUiPaginatorComponent } from '@tumaet/ui-angular';
+import { faArrowUpRightFromSquare, faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -13,6 +14,7 @@ import {
     IndexedContentObject,
     IndexedEntityRecord,
     IngestionTypeCount,
+    MissingContent,
 } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.model';
 
 /**
@@ -43,12 +45,21 @@ interface LabelledContentObject {
 @Component({
     selector: 'jhi-course-ingestion-browser-detail',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiMessageComponent, TumUiPaginatorComponent, FaIconComponent, CourseIngestionStoredFieldsComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        TumUiButtonComponent,
+        TumUiMessageComponent,
+        TumUiPaginatorComponent,
+        FaIconComponent,
+        CourseIngestionStoredFieldsComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './course-ingestion-browser-detail.component.html',
 })
 export class CourseIngestionBrowserDetailComponent {
     private readonly dashboardService = inject(CourseIngestionDashboardService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly router = inject(Router);
 
     readonly courseId = input.required<number>();
     readonly data = input.required<CourseBrowserData>();
@@ -57,6 +68,7 @@ export class CourseIngestionBrowserDetailComponent {
     /** Shared with the tree, so a breadcrumb can move the selection back up. */
     readonly selection = model<BrowserSelection | undefined>(undefined);
 
+    protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
     protected readonly faChevronRight = faChevronRight;
     protected readonly faChevronDown = faChevronDown;
 
@@ -111,6 +123,39 @@ export class CourseIngestionBrowserDetailComponent {
 
     /** The visible slice of the stored content objects. */
     readonly pagedContent = computed(() => slice(this.labelledContent(), this.contentPage(), this.pageSize()));
+
+    /** The content this unit should have but does not, so the pane can say so rather than just showing what is there. */
+    readonly missingContentOfUnit = computed<MissingContent[]>(() => {
+        const current = this.selection();
+        const unitId = current?.kind === 'unit' ? current.unitId : undefined;
+        return unitId === undefined ? [] : this.data().contentGaps.filter((gap) => gap.lectureUnitId === unitId);
+    });
+
+    /**
+     * Where "open in Artemis" should go for the current selection, and what to call it. A collection belongs to a unit,
+     * so it opens the same page a unit does; anything else falls back to the course.
+     */
+    readonly openTarget = computed<{ link: (string | number)[]; labelKey: string } | undefined>(() => {
+        const current = this.selection();
+        const courseId = this.courseId();
+        if (current?.kind === 'lecture') {
+            return { link: ['/course-management', courseId, 'lectures', current.lectureId], labelKey: 'artemisApp.courseIngestionDashboard.browser.openLecture' };
+        }
+        if (current?.kind === 'unit' || current?.kind === 'collection') {
+            const lectureId = this.lectureIdOfUnit(current.unitId);
+            if (lectureId !== undefined) {
+                return {
+                    link: ['/course-management', courseId, 'lectures', lectureId, 'unit-management'],
+                    labelKey: 'artemisApp.courseIngestionDashboard.browser.openUnit',
+                };
+            }
+        }
+        return { link: ['/course-management', courseId], labelKey: 'artemisApp.courseIngestionDashboard.browser.openCourse' };
+    });
+
+    private lectureIdOfUnit(unitId: number): number | undefined {
+        return this.data().entities.find((entity) => entity.type === 'lecture_unit' && entity.entityId === unitId)?.lectureId;
+    }
 
     /** The path back up the tree from the current selection. */
     readonly breadcrumbs = computed<Crumb[]>(() => {
@@ -178,6 +223,14 @@ export class CourseIngestionBrowserDetailComponent {
             expanded.add(key);
         }
         this.expandedRows.set(expanded);
+    }
+
+    /** Opens the Artemis page behind the current selection. */
+    openInArtemis(): void {
+        const target = this.openTarget();
+        if (target) {
+            void this.router.navigate(target.link);
+        }
     }
 
     /** Moves the selection to a breadcrumb, which the tree picks up and reveals. */

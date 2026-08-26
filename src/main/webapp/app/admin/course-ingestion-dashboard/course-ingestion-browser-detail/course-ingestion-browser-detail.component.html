@@ -1,5 +1,12 @@
 @if (selection(); as current) {
     <div class="flex flex-col gap-4">
+        @if (openTarget(); as target) {
+            <div class="flex justify-end">
+                <tum-ui-button severity="secondary" variant="outlined" size="small" [icon]="faArrowUpRightFromSquare" (clicked)="openInArtemis()" data-testid="detail-open">
+                    {{ target.labelKey | artemisTranslate }}
+                </tum-ui-button>
+            </div>
+        }
         @if (breadcrumbs().length > 0) {
             <nav class="flex flex-wrap items-center gap-1 text-sm text-muted-color" [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.breadcrumb' | artemisTranslate">
                 @for (crumb of breadcrumbs(); track crumb.label) {
@@ -130,10 +137,19 @@
 
                 @case ('unit') {
                     <div data-testid="detail-unit">
-                        <div class="text-base font-semibold mb-2">
+                        <div class="text-base font-semibold">
                             {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledUnit' | artemisTranslate) }}
                         </div>
 
+                        @if (missingContentOfUnit().length > 0) {
+                            <div class="mb-2 flex flex-wrap items-center gap-1 text-sm text-state-danger" data-testid="detail-content-gap">
+                                <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                                <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.missingContent"></span>
+                                @for (gap of missingContentOfUnit(); track gap.kind) {
+                                    <span [jhiTranslate]="'artemisApp.courseIngestionDashboard.browser.content_' + gap.kind"></span>
+                                }
+                            </div>
+                        }
                         <div class="mb-2 text-xs text-muted-color">
                             <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.storedIn"></span>
                             <span class="font-mono">SearchableEntities</span>

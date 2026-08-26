@@ -20,7 +20,7 @@
                         <fa-icon [icon]="row.icon" class="text-muted-color" />
                         <span class="flex-1 truncate" [jhiTranslate]="'artemisApp.courseIngestionDashboard.matrix.type.' + row.type"></span>
                         <span class="font-mono text-xs text-muted-color">{{ row.indexed }}/{{ row.expected }}</span>
-                        <span aria-hidden="true" [class]="row.dotClass">&#9679;</span>
+                        <span class="inline-block size-2 shrink-0 rounded-full bg-current {{ row.dotClass }}" aria-hidden="true"></span>
                     </button>
                 </li>
             }
@@ -77,6 +77,14 @@
                                     [attr.aria-label]="'artemisApp.courseIngestionDashboard.browser.unitCount' | artemisTranslate: { count: lecture.units.length }"
                                     >{{ lecture.units.length }}</span
                                 >
+                                <span
+                                    class="inline-block size-2 shrink-0 rounded-full bg-current {{ lecture.complete ? 'text-state-success' : 'text-state-danger' }}"
+                                    [attr.data-testid]="'tree-dot-' + lecture.key"
+                                    [attr.aria-label]="
+                                        (lecture.complete ? 'artemisApp.courseIngestionDashboard.browser.dotComplete' : 'artemisApp.courseIngestionDashboard.browser.dotIncomplete')
+                                            | artemisTranslate
+                                    "
+                                ></span>
                             </button>
                         </div>
 
@@ -113,6 +121,16 @@
                                                         <span jhiTranslate="artemisApp.courseIngestionDashboard.browser.untitledUnit"></span>
                                                     }
                                                 </span>
+                                                <span
+                                                    class="inline-block size-2 shrink-0 rounded-full bg-current {{ unit.complete ? 'text-state-success' : 'text-state-danger' }}"
+                                                    [attr.data-testid]="'tree-dot-' + unit.key"
+                                                    [attr.aria-label]="
+                                                        (unit.complete
+                                                            ? 'artemisApp.courseIngestionDashboard.browser.dotComplete'
+                                                            : 'artemisApp.courseIngestionDashboard.browser.dotIncomplete'
+                                                        ) | artemisTranslate
+                                                    "
+                                                ></span>
                                             </button>
                                         </div>
 

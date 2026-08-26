@@ -11,10 +11,9 @@
         <div class="flex flex-wrap items-center justify-between gap-2 w-full">
             <span class="truncate">{{ course().courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course().courseId }}</span>
             @if (incompleteTypeCount() > 0) {
-                <!-- The same dot-and-label the matrix status column and the tree scoreboard use, rather than a filled
-                     alert pill competing with the title next to it. -->
-                <span class="inline-flex items-center gap-2 text-sm font-normal text-state-danger" data-testid="incomplete-types-chip">
-                    <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                <!-- No dot here. A dot earns its place in a column of statuses, where it aligns and scans; beside a
+                     title it is a lone mark next to text that already carries the colour. -->
+                <span class="text-sm font-normal text-state-danger" data-testid="incomplete-types-chip">
                     {{ incompleteTypeCount() }} {{ incompleteTypesLabelKey() | artemisTranslate }}
                 </span>
             }
@@ -41,6 +40,7 @@
                         [entities]="loaded.entities"
                         [contentPresence]="loaded.contentPresence"
                         [typeCounts]="course().typeCounts"
+                        [contentGaps]="loaded.contentGaps"
                         [(selection)]="selection"
                     />
                 </div>

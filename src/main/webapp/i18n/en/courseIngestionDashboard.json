@@ -114,7 +114,13 @@
                 "statMissing": "Missing",
                 "breadcrumb": "Breadcrumb",
                 "unitCount": "{{count}} lecture units",
-                "storedIn": "Stored in"
+                "storedIn": "Stored in",
+                "dotComplete": "Complete",
+                "dotIncomplete": "Incomplete",
+                "missingContent": "Missing content:",
+                "openLecture": "Open lecture",
+                "openUnit": "Open unit",
+                "openCourse": "Open course"
             },
             "status": {
                 "COMPLETE": "Complete",
