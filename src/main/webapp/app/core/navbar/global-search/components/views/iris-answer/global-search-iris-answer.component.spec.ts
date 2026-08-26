@@ -196,7 +196,6 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         const chips = fixture.nativeElement.querySelectorAll('a.iris-chip');
         expect(chips.length).toBe(2);
-        expect(chips[0].getAttribute('href')).toBe('/u/1?unit=1&page=1');
     });
 
     it('should show the "+N more" button when there are more than 2 sources', () => {

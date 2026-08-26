@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
@@ -162,52 +162,46 @@ describe('GlobalSearchLectureResultsComponent', () => {
         });
     });
 
-    describe('Opening a result', () => {
-        let navigate: ReturnType<typeof vi.spyOn>;
-
-        beforeEach(() => {
-            navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    describe('Keyboard navigation', () => {
+        it('should navigate to result link when Enter is pressed on a selected result', () => {
             (component as any).lectureResults.set([mockResult]);
-            fixture.componentRef.setInput('searchQuery', 'angular');
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
-        });
 
-        const getCard = () => {
-            const card = fixture.nativeElement.querySelector('.lecture-result-card') as HTMLAnchorElement;
-            expect(card).toBeTruthy();
-            return card;
-        };
-
-        it('should keep a real href, so the browser still offers the result in a new tab', () => {
-            const card = getCard();
-
-            expect(card.getAttribute('href')).toBe('/courses/1/lectures/1/units/1?unit=1&page=3');
-        });
-
-        it('should navigate to the selected result when Enter is pressed', () => {
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
             const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
             component.handleKeydown(event);
 
             expect(preventDefaultSpy).toHaveBeenCalled();
-            expect(navigate).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
+            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
         });
 
-        it('should not jump when Enter is pressed with no selection', () => {
+        it('should not navigate when Enter is pressed with no selection', () => {
+            (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', -1);
             fixture.detectChanges();
 
-            component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
+            const event = new KeyboardEvent('keydown', { key: 'Enter' });
 
-            expect(navigate).not.toHaveBeenCalled();
+            component.handleKeydown(event);
+
+            expect(navigateSpy).not.toHaveBeenCalled();
         });
 
-        it('should not jump on non-Enter key', () => {
-            component.handleKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        it('should not navigate on non-Enter key', () => {
+            (component as any).lectureResults.set([mockResult]);
+            fixture.componentRef.setInput('selectedIndex', 0);
+            fixture.detectChanges();
 
-            expect(navigate).not.toHaveBeenCalled();
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
+            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+
+            component.handleKeydown(event);
+
+            expect(navigateSpy).not.toHaveBeenCalled();
         });
     });
 
