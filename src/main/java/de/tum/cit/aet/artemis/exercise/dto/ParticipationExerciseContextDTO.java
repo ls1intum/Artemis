@@ -41,6 +41,7 @@ public record ParticipationExerciseContextDTO(Long id, @Nullable String title, S
      * @param id   the unique identifier of the exercise group
      * @param exam the minimal exam context
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ParticipationExerciseGroupContextDTO(long id, ParticipationExamContextDTO exam) {
     }
 
@@ -49,11 +50,12 @@ public record ParticipationExerciseContextDTO(Long id, @Nullable String title, S
      *
      * @param id the unique identifier of the exam
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ParticipationExamContextDTO(long id) {
     }
 
     /**
-     * Creates a minimal exercise context after the caller has applied sensitive-information filtering.
+     * Creates a minimal exercise context.
      *
      * @param exercise the exercise to map
      * @return the minimal exercise context

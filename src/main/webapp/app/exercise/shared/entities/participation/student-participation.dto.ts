@@ -150,8 +150,9 @@ function fromParticipationExerciseContextDTO(dto: ParticipationExerciseContextDT
     exercise.dueDate = convertDateStringFromServer(dto.dueDate);
     exercise.assessmentDueDate = convertDateStringFromServer(dto.assessmentDueDate);
     exercise.maxPoints = dto.maxPoints;
-    exercise.course = dto.course ? deepClone(dto.course) : undefined;
-    exercise.exerciseGroup = dto.exerciseGroup ? fromExerciseGroupDTO(dto.exerciseGroup, exercise.course) : undefined;
+    const course = dto.course ? deepClone(dto.course) : undefined;
+    exercise.course = dto.exerciseGroup ? undefined : course;
+    exercise.exerciseGroup = dto.exerciseGroup ? fromExerciseGroupDTO(dto.exerciseGroup, course) : undefined;
     return exercise;
 }
 

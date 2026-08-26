@@ -69,7 +69,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     /**
      * Maps a newly started participation including its visible participant, exercise, and initialized submissions.
      *
-     * @param participation the newly started participation after sensitive-information filtering
+     * @param participation the newly started participation
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterStart(StudentParticipation participation) {
@@ -77,13 +77,13 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     }
 
     /**
-     * Maps a resumed programming participation including its filtered exercise context.
+     * Maps a resumed programming participation including its exercise context.
      *
-     * @param participation the resumed programming participation after sensitive-information filtering
+     * @param participation the resumed programming participation
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterResume(ProgrammingExerciseStudentParticipation participation) {
-        return of(participation, false, true, true);
+        return of(participation, false, true, false);
     }
 
     /**

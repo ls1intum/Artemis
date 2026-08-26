@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
@@ -178,11 +179,10 @@ public class ParticipationResource {
         }
 
         if (exercise.isTeamMode()) {
-            participation = studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), participant.getId()).orElseThrow();
+            participation = studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), participant.getId()).orElseThrow(
+                    () -> new EntityNotFoundException("Could not find the started participation for exercise " + exercise.getId() + " and team " + participant.getId() + "."));
         }
 
-        // remove sensitive information before sending participation to the client
-        participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation));
     }
 
@@ -232,8 +232,6 @@ public class ParticipationResource {
 
         StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation, useGradedParticipation);
 
-        // remove sensitive information before sending participation to the client
-        participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation));
     }
 
@@ -277,7 +275,6 @@ public class ParticipationResource {
         }
 
         participation = participationService.resumeProgrammingExercise(participation);
-        participation.getExercise().filterSensitiveInformation();
         return ResponseEntity.ok().body(StudentParticipationDTO.ofAfterResume(participation));
     }
 

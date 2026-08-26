@@ -30,6 +30,7 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mockito;
@@ -390,6 +391,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation).isNotNull();
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(participation.student().getId()).isEqualTo(user.getId());
+        assertThat(participation.submissions()).hasSize(1);
     }
 
     @Test
@@ -1324,6 +1326,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(updatedParticipation.initializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(updatedParticipation.repositoryUri()).isEqualTo(participation.getRepositoryUri());
         assertThat(updatedParticipation.exercise().id()).isEqualTo(programmingExercise.getId());
+        assertThat(updatedParticipation.submissions()).isNull();
     }
 
     @Test
@@ -1368,6 +1371,17 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void updateParticipation_notStored() throws Exception {
         var dto = new ParticipationUpdateDTO(-1L, textExercise.getId(), null);
         request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto, StudentParticipation.class, HttpStatus.NOT_FOUND);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "id", "exerciseId" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateParticipationRejectsMissingRequiredField(String missingField) throws Exception {
+        Long participationId = missingField.equals("id") ? null : 1L;
+        Long exerciseId = missingField.equals("exerciseId") ? null : textExercise.getId();
+        var dto = new ParticipationUpdateDTO(participationId, exerciseId, null);
+
+        request.put("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto, HttpStatus.BAD_REQUEST);
     }
 
     // Helper method to create a ParticipationUpdateDTO from a StudentParticipation
@@ -1496,6 +1510,17 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         final var participationsToUpdate = new DueDateUpdateDTOList(participation);
         request.putAndExpectError("/api/exercise/exercises/%d/participations/update-individual-due-date".formatted(exercise.getId()), participationsToUpdate,
                 HttpStatus.BAD_REQUEST, "quizexercise");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "id", "exerciseId" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateIndividualDueDateRejectsMissingRequiredField(String missingField) throws Exception {
+        Long participationId = missingField.equals("id") ? null : 1L;
+        Long exerciseId = missingField.equals("exerciseId") ? null : textExercise.getId();
+        var dto = new ParticipationDueDateUpdateDTO(participationId, exerciseId, null);
+
+        request.put("/api/exercise/exercises/" + textExercise.getId() + "/participations/update-individual-due-date", List.of(dto), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1673,6 +1698,22 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(actualParticipation.exercise()).isNotNull();
         assertThat(actualParticipation.exercise().course()).isNotNull();
         assertThat(actualParticipation.exercise().course().id()).isEqualTo(course.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getExamParticipationIncludesCourseAndExamContextRequiredForClientAccessRights() throws Exception {
+        var examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        var participation = participationUtilService.createAndSaveParticipationForExercise(examExercise, TEST_PREFIX + "student1");
+
+        var actualParticipation = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
+
+        assertThat(actualParticipation.exercise()).isNotNull();
+        assertThat(actualParticipation.exercise().course()).isNotNull();
+        assertThat(actualParticipation.exercise().course().id()).isEqualTo(examExercise.getExam().getCourse().getId());
+        assertThat(actualParticipation.exercise().exerciseGroup()).isNotNull();
+        assertThat(actualParticipation.exercise().exerciseGroup().id()).isEqualTo(examExercise.getExerciseGroup().getId());
+        assertThat(actualParticipation.exercise().exerciseGroup().exam().id()).isEqualTo(examExercise.getExam().getId());
     }
 
     @Test

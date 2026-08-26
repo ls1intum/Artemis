@@ -17,7 +17,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import dayjs from 'dayjs/esm';
 import { StudentParticipationDTO, fromStudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -178,9 +177,8 @@ export class ParticipationService {
     }
 
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
-        const copy = this.convertParticipationDatesFromClient(participation);
         return this.http
-            .put<StudentParticipationDTO>(`${this.resourceUrl}/${participation.id}/cleanup-build-plan`, copy, { observe: 'response' })
+            .put<StudentParticipationDTO>(`${this.resourceUrl}/${participation.id}/cleanup-build-plan`, null, { observe: 'response' })
             .pipe(map((res) => this.processParticipationDTOResponseType(res)));
     }
 
@@ -190,14 +188,6 @@ export class ParticipationService {
 
     getBuildJobIdsForResultsOfParticipation(participationId: number): Observable<{ [key: string]: string }> {
         return this.http.get<{ [key: string]: string }>(`api/assessment/participations/${participationId}/results/build-job-ids`);
-    }
-
-    protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {
-        // return a copy of the object
-        return cloneWith(participation, {
-            initializationDate: convertDateFromClient(participation.initializationDate),
-            individualDueDate: convertDateFromClient(participation.individualDueDate),
-        });
     }
 
     protected convertParticipationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {

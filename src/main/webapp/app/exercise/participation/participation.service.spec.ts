@@ -88,7 +88,34 @@ describe('Participation Service', () => {
             expect((resp.body as ProgrammingExerciseStudentParticipation).buildPlanId).toBeUndefined();
         });
         const req = httpMock.expectOne({ method: 'PUT' });
+        expect(req.request.body).toBeNull();
         req.flush({ id: 123, initializationState: InitializationState.INACTIVE, testRun: false, type: ParticipationType.PROGRAMMING });
+    });
+
+    it('should preserve the exam exercise course shape', () => {
+        const returnedFromService: StudentParticipationDTO = {
+            id: 123,
+            testRun: false,
+            type: ParticipationType.STUDENT,
+            exercise: {
+                id: 42,
+                type: ExerciseType.TEXT,
+                exerciseType: ExerciseType.TEXT,
+                course: { id: 7 },
+                exerciseGroup: {
+                    id: 8,
+                    exam: { id: 9 },
+                },
+            },
+        };
+
+        service.find(123).subscribe((resp) => {
+            expect(resp.body?.exercise?.course).toBeUndefined();
+            expect(resp.body?.exercise?.exerciseGroup?.exam?.course?.id).toBe(7);
+        });
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
     });
 
     it('should merge student participations for programming exercises', () => {
