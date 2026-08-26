@@ -27,6 +27,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackItemId;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ide.UserIdeMapping;
 import de.tum.cit.aet.artemis.shared.architecture.util.ClassNode;
@@ -46,7 +47,8 @@ class ObjectMethodTest {
     private static final String BASE_PACKAGE_NAME = "de.tum.cit.aet.artemis";
 
     private static final Map<Class<?>, List<?>> ID_TEST_VALUES = Map.of(Long.class, List.of(1L, 42L), String.class, List.of("A", "B"), UserIdeMapping.UserIdeMappingId.class,
-            List.of(new UserIdeMapping.UserIdeMappingId(1L, ProgrammingLanguage.JAVA), new UserIdeMapping.UserIdeMappingId(42L, ProgrammingLanguage.PYTHON)));
+            List.of(new UserIdeMapping.UserIdeMappingId(1L, ProgrammingLanguage.JAVA), new UserIdeMapping.UserIdeMappingId(42L, ProgrammingLanguage.PYTHON)), FeedbackItemId.class,
+            List.of(new FeedbackItemId(1L, 1), new FeedbackItemId(42L, 2)));
 
     /**
      * Generates test in form of a hierarchical structure, see also JUnit 5 dynamic tests
