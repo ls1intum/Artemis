@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockPipe } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
@@ -9,8 +9,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { GlobalSearchLectureResultsComponent } from './global-search-lecture-results.component';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
-import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 
 const mockResult: LectureSearchResult = {
     course: { id: 1, name: 'Advanced Web Development' },
@@ -165,65 +163,36 @@ describe('GlobalSearchLectureResultsComponent', () => {
     });
 
     describe('Opening a result', () => {
-        let jump: ReturnType<typeof vi.spyOn>;
+        let navigate: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
-            // Stubbed: letting it run would send the test router at a URL no route in this TestBed matches.
-            jump = vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump').mockImplementation(() => {});
+            navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
             (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('searchQuery', 'angular');
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
         });
 
-        const clickCard = (init: MouseEventInit) => {
+        const getCard = () => {
             const card = fixture.nativeElement.querySelector('.lecture-result-card') as HTMLAnchorElement;
-            const event = new MouseEvent('click', { cancelable: true, ...init });
-            card.dispatchEvent(event);
-            return { card, event };
+            expect(card).toBeTruthy();
+            return card;
         };
 
         it('should keep a real href, so the browser still offers the result in a new tab', () => {
-            const { card } = clickCard({ button: 0 });
+            const card = getCard();
 
             expect(card.getAttribute('href')).toBe('/courses/1/lectures/1/units/1?unit=1&page=3');
         });
 
-        it('should close the overlay, which a same-page jump no longer does via navigation', () => {
-            const close = vi.spyOn(TestBed.inject(SearchOverlayService), 'close');
-
-            clickCard({ button: 0 });
-
-            expect(close).toHaveBeenCalled();
-        });
-
-        it('should take over a plain left click and jump', () => {
-            const { event } = clickCard({ button: 0 });
-
-            expect(event.defaultPrevented).toBe(true);
-            expect(jump).toHaveBeenCalledWith(mockResult.lectureUnit.link, expect.objectContaining({ unitId: 1, page: 3 }));
-        });
-
-        it.each([
-            { name: 'middle button', init: { button: 1 } },
-            { name: 'Cmd/Ctrl', init: { button: 0, metaKey: true } },
-            { name: 'Shift', init: { button: 0, shiftKey: true } },
-        ])('should leave a click with $name to the browser, which opens the href itself', ({ init }) => {
-            const { event } = clickCard(init);
-
-            // Preventing the default here would swallow "open in new tab".
-            expect(event.defaultPrevented).toBe(false);
-            expect(jump).not.toHaveBeenCalled();
-        });
-
-        it('should jump when Enter is pressed on the selected result', () => {
+        it('should navigate to the selected result when Enter is pressed', () => {
             const event = new KeyboardEvent('keydown', { key: 'Enter' });
             const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
 
             component.handleKeydown(event);
 
             expect(preventDefaultSpy).toHaveBeenCalled();
-            expect(jump).toHaveBeenCalledWith(mockResult.lectureUnit.link, expect.objectContaining({ unitId: 1, page: 3 }));
+            expect(navigate).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
         });
 
         it('should not jump when Enter is pressed with no selection', () => {
@@ -232,13 +201,13 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
             component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
 
-            expect(jump).not.toHaveBeenCalled();
+            expect(navigate).not.toHaveBeenCalled();
         });
 
         it('should not jump on non-Enter key', () => {
             component.handleKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
 
-            expect(jump).not.toHaveBeenCalled();
+            expect(navigate).not.toHaveBeenCalled();
         });
     });
 

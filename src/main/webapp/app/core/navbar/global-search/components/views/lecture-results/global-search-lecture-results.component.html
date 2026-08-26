@@ -32,8 +32,8 @@
                 class="lecture-result-card border p-3 text-decoration-none d-block"
                 role="listitem"
                 [class.is-selected]="selectedIndex() === $index"
-                [attr.href]="resultHrefs()[$index]"
-                (click)="onResultClick($event, result)"
+                [routerLink]="result.lectureUnit.link"
+                [queryParams]="result.lectureUnit.queryParams"
             >
                 <div class="d-flex align-items-start gap-2 mb-2">
                     <div class="lecture-card-icon-box d-flex align-items-center justify-content-center flex-shrink-0">

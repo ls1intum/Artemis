@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
-import { lectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
-import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
+import { lectureDeepLink, lectureDeepLinkQueryParams } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { IrisCitationParsed } from './iris-citation-text.model';
 import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
@@ -23,7 +23,7 @@ import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faC
 export class IrisCitationTextComponent {
     private readonly domSanitizer = inject(DomSanitizer);
     private readonly translateService = inject(TranslateService);
-    private readonly deepLinkService = inject(LectureDeepLinkService);
+    private readonly router = inject(Router);
 
     /**
      * Maps citation type classes to FontAwesome icons.
@@ -306,10 +306,9 @@ export class IrisCitationTextComponent {
             return;
         }
 
-        // Through the model, not by hand: a jump handed over directly skips the query parameters, not their rules.
         const deepLink = lectureDeepLink(Number(unitId), timestamp ? Number(timestamp) : undefined, page ? Number(page) : undefined);
         if (deepLink) {
-            this.deepLinkService.jump(['/courses', courseId, 'lectures', lectureId], deepLink);
+            void this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams: lectureDeepLinkQueryParams(deepLink) });
         }
     }
 

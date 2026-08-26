@@ -1,12 +1,6 @@
 import { Params } from '@angular/router';
 
-/**
- * A request to jump to a place inside a lecture unit, e.g. from an Iris citation or a global search result.
- *
- * A deep link is a command, not state: its identity, not its values, says whether it still has to be executed, and
- * every request is a freshly allocated object. Consumers must therefore pass one on as it is — never copy or
- * value-compare it, and never give a signal holding it a custom `equal`, or repeated jumps are swallowed.
- */
+/** A request to jump to a place inside a lecture unit, e.g. from an Iris citation or a global search result. */
 export interface LectureDeepLink {
     readonly unitId: number;
     /** Video position in seconds, if the unit has a video. */
@@ -15,12 +9,7 @@ export interface LectureDeepLink {
     readonly page?: number;
 }
 
-/**
- * Builds a deep link, dropping the parts that cannot be honoured.
- *
- * Every jump goes through here whichever way it reached the app, so a citation with a broken page number is judged like
- * a hand-edited URL. A bad timestamp or page is dropped rather than voiding the link — the unit is still worth opening.
- */
+/** Builds a deep link, dropping invalid timestamp/page values while keeping a valid unit target. */
 export function lectureDeepLink(unitId: number, timestamp?: number, page?: number): LectureDeepLink | undefined {
     if (!Number.isInteger(unitId) || unitId <= 0) {
         return undefined;
@@ -38,7 +27,7 @@ export function parseLectureDeepLink(params: Params): LectureDeepLink | undefine
     return lectureDeepLink(Number(params['unit']), Number(params['timestamp']), Number(params['page']));
 }
 
-/** Writes a deep link into query parameters, for the one case that needs them: a jump that opens another lecture. */
+/** Writes a deep link into lecture query parameters. */
 export function lectureDeepLinkQueryParams(deepLink: LectureDeepLink): Params {
     const params: Params = { unit: deepLink.unitId };
     if (deepLink.timestamp !== undefined) {

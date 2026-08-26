@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisCitationTextComponent } from './iris-citation-text.component';
@@ -71,7 +71,7 @@ describe('IrisCitationTextComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [IrisCitationTextComponent],
-            providers: [provideHttpClient(), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [provideHttpClient(), provideRouter([]), { provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(IrisCitationTextComponent);
@@ -161,21 +161,20 @@ describe('IrisCitationTextComponent', () => {
             citation.click();
         };
 
-        it('hands the jump to the deep-link service, which decides whether it navigates', () => {
-            const jump = vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump').mockImplementation(() => {});
+        it('navigates to the citation target with lecture query parameters', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
             clickCitation();
 
-            expect(jump).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { unitId: 7, timestamp: undefined, page: 3 });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7, page: 3 } });
         });
 
         it('drops a page a citation cannot be honoured with, as a URL carrying the same value would be', () => {
-            const jump = vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump').mockImplementation(() => {});
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
             clickCitation('[cite:L:7:0:::Key:]');
 
-            // A jump handed over directly skips the query parameters, so it must not skip their rules with them.
-            expect(jump).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], expect.objectContaining({ page: undefined }));
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7 } });
         });
     });
 

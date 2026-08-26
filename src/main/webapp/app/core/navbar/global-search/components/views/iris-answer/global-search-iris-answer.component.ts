@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, injec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -13,10 +13,6 @@ import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iri
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
-import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
-import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
-import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
 const CLAMP_LINE_COUNT = 4;
@@ -35,15 +31,12 @@ const IRIS_ANSWER_DEBOUNCE_MS = SEARCH_DEBOUNCE_MS + 300;
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective, IrisThinkingBubbleComponent],
+    imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective, IrisThinkingBubbleComponent],
     templateUrl: './global-search-iris-answer.component.html',
     styleUrls: ['./global-search-iris-answer.component.scss'],
 })
 export class GlobalSearchIrisAnswerComponent {
     private readonly irisSearchAnswerService = inject(IrisSearchAnswerService);
-    private readonly router = inject(Router);
-    private readonly deepLinkService = inject(LectureDeepLinkService);
-    private readonly overlay = inject(SearchOverlayService);
 
     readonly searchQuery = input.required<string>();
 
@@ -70,14 +63,6 @@ export class GlobalSearchIrisAnswerComponent {
     };
 
     protected readonly visibleSources = computed(() => (this.moreOpen() ? this.sources() : this.sources().slice(0, this.INITIAL_VISIBLE_SOURCE_COUNT)));
-
-    /**
-     * The chips keep a real href, so middle-click and Cmd-click still open a source in a new tab. Computed for the
-     * whole list rather than per chip in the template, which would rebuild every URL on each change detection run.
-     */
-    protected readonly visibleSourceHrefs = computed(() =>
-        this.visibleSources().map((source) => this.router.serializeUrl(this.router.createUrlTree([source.lectureUnit.link], { queryParams: source.lectureUnit.queryParams }))),
-    );
 
     constructor() {
         // Measure answer overflow after each new result; reset when the result clears.
@@ -156,18 +141,5 @@ export class GlobalSearchIrisAnswerComponent {
 
     collapse(): void {
         this.isExpanded.set(false);
-    }
-
-    protected onSourceClick(event: MouseEvent, source: LectureSearchResult): void {
-        // A modified click belongs to the browser, which opens the href in a new tab. Same condition as RouterLink.
-        if (event.button !== 0 || event.ctrlKey || event.shiftKey || event.altKey || event.metaKey) {
-            return;
-        }
-
-        event.preventDefault();
-        // The service jumps without navigating when the lecture is already on screen, so the overlay is closed here —
-        // the modal otherwise rides on a navigation that then does not happen.
-        this.deepLinkService.jump(source.lectureUnit.link, parseLectureDeepLink(source.lectureUnit.queryParams));
-        this.overlay.close();
     }
 }

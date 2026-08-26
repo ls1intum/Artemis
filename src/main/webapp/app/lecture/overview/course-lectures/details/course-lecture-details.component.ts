@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
@@ -11,7 +11,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { finalize, tap } from 'rxjs/operators';
+import { filter, finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faChalkboardTeacher, faComment, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
@@ -45,7 +45,6 @@ import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { LectureDeepLink, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
-import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface LectureUnitCompletionEvent {
@@ -82,7 +81,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly lectureService = inject(LectureService);
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly activatedRoute = inject(ActivatedRoute);
-    private readonly deepLinkService = inject(LectureDeepLinkService);
+    private readonly router = inject(Router);
     private readonly fileService = inject(FileService);
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
@@ -214,22 +213,31 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        // A jump that survived a page load — a shared link, a bookmark, a reload. The URL is the only carrier that
-        // crosses a cold start; jumps issued inside the running app come through the service below instead.
-        this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            const deepLink = parseLectureDeepLink(params);
-            if (deepLink) {
-                this.acceptDeepLink(deepLink);
-            }
-        });
-
-        this.deepLinkService.requests.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((deepLink) => this.acceptDeepLink(deepLink));
+        // Reacts to NavigationEnd rather than to the queryParams observable: that one only emits when the values
+        // change, so clicking the same citation twice would be swallowed. What makes an identical URL produce a fresh
+        // navigation — and therefore this event — is `onSameUrlNavigation: 'reload'` in app.config.ts. Remove that and
+        // repeated jumps stop arriving here, silently.
+        this.acceptDeepLinkFromRoute();
+        const initialNavigationId = this.router.currentNavigation()?.id;
+        this.router.events
+            .pipe(
+                // The navigation that is activating this page right now has already been handled by the call above.
+                filter((event): event is NavigationEnd => event instanceof NavigationEnd && event.id !== initialNavigationId),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe(() => this.acceptDeepLinkFromRoute());
     }
 
-    private acceptDeepLink(deepLink: LectureDeepLink): void {
-        // The snapshot, not `lectureId`: it already names the lecture the link arrived with, while the field is only
-        // set once the route parameters are reported, which happens after the query parameters.
-        this.pendingDeepLink = { deepLink, lectureId: Number(this.activatedRoute.snapshot.params['lectureId']) };
+    private acceptDeepLinkFromRoute(): void {
+        const routeLectureId = Number(this.activatedRoute.snapshot.params['lectureId']);
+        const deepLink = parseLectureDeepLink(this.activatedRoute.snapshot.queryParams);
+        if (!deepLink) {
+            this.pendingDeepLink = undefined;
+            this.deepLinkState.set(undefined);
+            return;
+        }
+
+        this.pendingDeepLink = { deepLink, lectureId: routeLectureId };
         this.publishDeepLink();
     }
 

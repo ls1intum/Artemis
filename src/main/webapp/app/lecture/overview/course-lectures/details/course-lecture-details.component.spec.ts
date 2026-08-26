@@ -61,8 +61,6 @@ import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-me
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
-import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -76,8 +74,6 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureService: LectureService;
     /** Stands in for the router's event stream; emit a NavigationEnd to let a navigation finish. */
     let routerEvents: Subject<NavigationEnd>;
-    /** Stands in for the deep-link service; emit to hand the page a jump issued while it is already on screen. */
-    let deepLinkRequests: Subject<LectureDeepLink>;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -117,7 +113,6 @@ describe('CourseLectureDetailsComponent', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         routerEvents = new Subject<NavigationEnd>();
-        deepLinkRequests = new Subject<LectureDeepLink>();
 
         await TestBed.configureTestingModule({
             imports: [
@@ -195,8 +190,8 @@ describe('CourseLectureDetailsComponent', () => {
                         },
                     },
                 },
-                MockProvider(Router, { events: routerEvents }),
-                { provide: LectureDeepLinkService, useValue: { requests: deepLinkRequests.asObservable(), jump: vi.fn() } },
+                // currentNavigation is a signal property, which MockProvider does not stub on its own.
+                MockProvider(Router, { events: routerEvents, currentNavigation: signal(null) }),
                 MockProvider(ScienceService),
                 MockProvider(IrisSettingsService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -579,6 +574,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     describe('deep-link query params', () => {
         const videoSource = 'https://example.com/video.mp4';
+        let navigationId = 0;
 
         const attachmentUnit = (id: number, link = '/path/to/slides.pdf', video = videoSource): AttachmentVideoUnit => {
             const unit = new AttachmentVideoUnit();
@@ -618,6 +614,13 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.ngOnInit();
         };
 
+        const emitNavigationWithQueryParams = (queryParams: Record<string, unknown>, lectureId = '1') => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.snapshot.params = { lectureId };
+            activatedRoute.snapshot.queryParams = queryParams as Params;
+            routerEvents.next(new NavigationEnd(++navigationId, `/courses/1/lectures/${lectureId}`, `/courses/1/lectures/${lectureId}`));
+        };
+
         it.each([
             { name: 'keeps every target', params: { unit: '7', timestamp: '30', page: '4' }, expected: { unitId: 7, timestamp: 30, page: 4 } },
             {
@@ -642,29 +645,25 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, timestamp: 30, page: 4 }));
         });
 
-        it('should keep the previous deep link when the unit param is not a positive integer', () => {
+        it('should clear the previous deep link when the unit param is not a positive integer', () => {
             respondWith([attachmentUnit(7)]);
             reInit({ unit: '7', page: '4' });
-            const executed = courseLecturesDetailsComponent.deepLink();
+            expect(courseLecturesDetailsComponent.deepLink()).toBeDefined();
 
             reInit({ unit: 'not-a-number' });
 
-            expect(courseLecturesDetailsComponent.deepLink()).toBe(executed);
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
         });
 
-        it.each([
-            { name: 'from the URL', jump: () => reInit({ unit: '7', timestamp: '30', page: '4' }) },
-            { name: 'handed over by the service', jump: () => deepLinkRequests.next({ unitId: 7, timestamp: 30, page: 4 }) },
-        ])('should give a repeated jump $name a new identity, so it is executed again', ({ jump }) => {
+        it('should give a repeated URL navigation a new identity, so it is executed again', () => {
             respondWith([attachmentUnit(7)]);
             reInit();
 
-            jump();
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
             const first = courseLecturesDetailsComponent.deepLink();
-            jump();
+            emitNavigationWithQueryParams({ unit: '7', timestamp: '30', page: '4' });
             const second = courseLecturesDetailsComponent.deepLink();
 
-            // The same place, but a different object: the reference is what marks it as a request of its own.
             expect(first).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
             expect(second).not.toBe(first);
             expect(second).toEqual(first);

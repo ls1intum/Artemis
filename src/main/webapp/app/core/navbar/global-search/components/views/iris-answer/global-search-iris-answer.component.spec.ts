@@ -12,8 +12,6 @@ import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/
 import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.component';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { LectureDeepLinkService } from 'app/lecture/overview/course-lectures/lecture-deep-link.service';
-import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 
 const SOURCES: LectureSearchResult[] = [
@@ -198,52 +196,7 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         const chips = fixture.nativeElement.querySelectorAll('a.iris-chip');
         expect(chips.length).toBe(2);
-    });
-
-    describe('Opening a source chip', () => {
-        let jump: ReturnType<typeof vi.spyOn>;
-
-        beforeEach(() => {
-            jump = vi.spyOn(TestBed.inject(LectureDeepLinkService), 'jump').mockImplementation(() => {});
-            // @ts-expect-error
-            component.irisResult.set({ answer: 'Some answer', sources: SOURCES.slice(0, 1) });
-            fixture.detectChanges();
-        });
-
-        const clickChip = (init: MouseEventInit) => {
-            const chip = fixture.nativeElement.querySelector('a.iris-chip') as HTMLAnchorElement;
-            const event = new MouseEvent('click', { cancelable: true, ...init });
-            chip.dispatchEvent(event);
-            return { chip, event };
-        };
-
-        it('should keep a real href, so the browser still offers the source in a new tab', () => {
-            const { chip } = clickChip({ button: 0 });
-
-            expect(chip.getAttribute('href')).toBe('/u/1?unit=1&page=1');
-        });
-
-        it('should close the overlay, which a same-page jump no longer does via navigation', () => {
-            const close = vi.spyOn(TestBed.inject(SearchOverlayService), 'close');
-
-            clickChip({ button: 0 });
-
-            expect(close).toHaveBeenCalled();
-        });
-
-        it('should take over a plain left click and jump', () => {
-            const { event } = clickChip({ button: 0 });
-
-            expect(event.defaultPrevented).toBe(true);
-            expect(jump).toHaveBeenCalledWith('/u/1', expect.objectContaining({ unitId: 1, page: 1 }));
-        });
-
-        it('should leave a Cmd/Ctrl click to the browser, which opens the href itself', () => {
-            const { event } = clickChip({ button: 0, metaKey: true });
-
-            expect(event.defaultPrevented).toBe(false);
-            expect(jump).not.toHaveBeenCalled();
-        });
+        expect(chips[0].getAttribute('href')).toBe('/u/1?unit=1&page=1');
     });
 
     it('should show the "+N more" button when there are more than 2 sources', () => {
