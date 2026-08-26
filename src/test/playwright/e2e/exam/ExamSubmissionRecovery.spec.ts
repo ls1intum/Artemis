@@ -145,12 +145,20 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         // request after the reload, so the client is not resuming the exam. Nothing in the server or nginx logs can
         // show why, so capture what the browser itself does.
         const clientLog: string[] = [];
-        page.on('console', (message) => clientLog.push(`console.${message.type()}: ${message.text().slice(0, 200)}`));
-        page.on('pageerror', (error) => clientLog.push(`pageerror: ${error.message.slice(0, 300)}`));
-        page.on('requestfailed', (request) => clientLog.push(`requestfailed: ${request.method()} ${request.url().slice(0, 140)} ${request.failure()?.errorText}`));
+        const startedAt = Date.now();
+        const at = () => `+${String(Date.now() - startedAt).padStart(6, ' ')}ms`;
+        page.on('console', (message) => clientLog.push(`${at()} console.${message.type()}: ${message.text().slice(0, 180)}`));
+        page.on('pageerror', (error) => clientLog.push(`${at()} pageerror: ${error.message.slice(0, 250)}`));
+        page.on('requestfailed', (request) => clientLog.push(`${at()} requestfailed: ${request.url().slice(0, 120)} ${request.failure()?.errorText}`));
+        page.on('framenavigated', (frame) => {
+            if (frame === page.mainFrame()) {
+                clientLog.push(`${at()} NAVIGATED -> ${frame.url().slice(0, 140)}`);
+            }
+        });
         page.on('response', (response) => {
-            if (response.url().includes('/api/')) {
-                clientLog.push(`${response.status()} ${response.request().method()} ${response.url().slice(0, 140)}`);
+            const url = response.url();
+            if (url.includes('/api/') || url.endsWith('.js')) {
+                clientLog.push(`${at()} ${response.status()} ${response.request().method()} ${url.slice(0, 120)}`);
             }
         });
 
@@ -169,6 +177,8 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         await cdpSession.send('Fetch.disable');
         await cdpSession.detach();
         await page.reload();
+        // TEMPORARY DIAGNOSTICS (to be removed before merge).
+        clientLog.push(`${at()} RELOAD RETURNED, url = ${page.url()}`);
 
         // The client re-sends the restored answer by itself while starting up, so the only thing to do is wait for it.
         // Nothing is clicked here on purpose: by the time the exercise is on screen the save button is already
