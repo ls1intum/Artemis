@@ -11,7 +11,12 @@
         <div class="flex flex-wrap items-center justify-between gap-2 w-full">
             <span class="truncate">{{ course().courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course().courseId }}</span>
             @if (incompleteTypeCount() > 0) {
-                <tum-ui-tag severity="danger" rounded [value]="incompleteTypeCount() + ' ' + (incompleteTypesLabelKey() | artemisTranslate)" data-testid="incomplete-types-chip" />
+                <!-- The same dot-and-label the matrix status column and the tree scoreboard use, rather than a filled
+                     alert pill competing with the title next to it. -->
+                <span class="inline-flex items-center gap-2 text-sm font-normal text-state-danger" data-testid="incomplete-types-chip">
+                    <span class="inline-block size-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                    {{ incompleteTypeCount() }} {{ incompleteTypesLabelKey() | artemisTranslate }}
+                </span>
             }
         </div>
     </ng-template>
