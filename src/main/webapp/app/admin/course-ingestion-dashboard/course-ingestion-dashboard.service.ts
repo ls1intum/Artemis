@@ -32,8 +32,7 @@ export interface LiveCoverageRequest extends CoveragePageRequest {
 export class CourseIngestionDashboardService {
     private http = inject(HttpClient);
 
-    // TEMPORARY (revert before merge): matches the instructor-accessible path the resource is served under.
-    private readonly baseUrl = 'api/global-search/ingestion-dashboard';
+    private readonly baseUrl = 'api/global-search/admin';
 
     /** GET the index overview: Weaviate reachability + address, whether Iris is enabled, and per-collection object counts. */
     getIndexOverview(): Observable<IndexOverview> {

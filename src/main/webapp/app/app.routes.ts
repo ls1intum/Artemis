@@ -69,20 +69,6 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService, PasskeyAuthenticationGuard],
         loadChildren: () => import('app/admin/admin.routes'),
     },
-    // TEMPORARY (revert before merge): the ingestion dashboard normally lives at /admin/course-ingestion-dashboard,
-    // behind the admin-only /admin route above. This second entry point renders the very same component for instructors
-    // so the page can be exercised on the test server from an account without admin rights. Nothing about the page or
-    // its data changes here - only who is allowed to reach it.
-    {
-        path: 'ingestion-dashboard',
-        loadComponent: () => import('app/admin/course-ingestion-dashboard/course-ingestion-dashboard.component').then((m) => m.CourseIngestionDashboardComponent),
-        data: {
-            authorities: IS_AT_LEAST_INSTRUCTOR,
-            pageTitle: 'artemisApp.courseIngestionDashboard.title',
-            usesModuleBackground: true,
-        },
-        canActivate: [UserRouteAccessService],
-    },
     {
         path: 'privacy',
         loadComponent: () => import('app/core/legal/privacy.component').then((m) => m.PrivacyComponent),
