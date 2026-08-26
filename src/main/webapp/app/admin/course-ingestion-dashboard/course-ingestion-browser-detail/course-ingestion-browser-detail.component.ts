@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, model, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumUiMessageComponent, TumUiPaginatorComponent } from '@tumaet/ui-angular';
 import { faChevronDown, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -40,7 +40,7 @@ interface LabelledContentObject {
 @Component({
     selector: 'jhi-course-ingestion-browser-detail',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumUiMessageComponent, TumUiPaginatorComponent, TumUiTagComponent, FaIconComponent, CourseIngestionStoredFieldsComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [TumUiMessageComponent, TumUiPaginatorComponent, FaIconComponent, CourseIngestionStoredFieldsComponent, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './course-ingestion-browser-detail.component.html',
 })
 export class CourseIngestionBrowserDetailComponent {

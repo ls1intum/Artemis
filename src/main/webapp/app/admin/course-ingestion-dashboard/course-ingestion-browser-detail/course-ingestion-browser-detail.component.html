@@ -111,14 +111,6 @@
                             {{ selectedRecord()?.title || ('artemisApp.courseIngestionDashboard.browser.untitledUnit' | artemisTranslate) }}
                         </div>
 
-                        @if (unitContentKeys().length > 0) {
-                            <div class="flex flex-wrap gap-2 mb-3">
-                                @for (key of unitContentKeys(); track key) {
-                                    <tum-ui-tag severity="secondary" rounded [value]="'artemisApp.courseIngestionDashboard.browser.content_' + key | artemisTranslate" />
-                                }
-                            </div>
-                        }
-
                         <p class="text-sm text-muted-color m-0 mb-2" jhiTranslate="artemisApp.courseIngestionDashboard.browser.metaUnit"></p>
                         @if (selectedRecord(); as record) {
                             <jhi-course-ingestion-stored-fields [properties]="record.properties" />
