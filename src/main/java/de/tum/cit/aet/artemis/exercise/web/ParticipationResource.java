@@ -179,8 +179,9 @@ public class ParticipationResource {
         }
 
         if (exercise.isTeamMode()) {
-            participation = studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), participant.getId()).orElseThrow(
-                    () -> new EntityNotFoundException("Could not find the started participation for exercise " + exercise.getId() + " and team " + participant.getId() + "."));
+            long teamId = participant.getId();
+            participation = studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), teamId)
+                    .orElseThrow(() -> new EntityNotFoundException("Could not find the started participation for exercise " + exercise.getId() + " and team " + teamId + "."));
         }
 
         return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(StudentParticipationDTO.ofAfterStart(participation));
