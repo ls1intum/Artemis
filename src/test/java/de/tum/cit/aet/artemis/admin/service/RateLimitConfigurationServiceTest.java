@@ -76,6 +76,35 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_LoginOptions_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getLoginOptionsRequestsPerMinute()).thenReturn(12);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.LOGIN_OPTIONS);
+
+        assertThat(rpm).isEqualTo(12);
+    }
+
+    @Test
+    void testGetEffectiveRpm_LoginOptions_WithNullValue_ShouldReturnDefault() {
+        when(properties.getLoginOptionsRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.LOGIN_OPTIONS);
+
+        assertThat(rpm).isEqualTo(RateLimitType.LOGIN_OPTIONS.getDefaultRpm()); // 30
+    }
+
+    @Test
+    void testGetEffectiveRpm_LoginOptions_DoesNotShareTheAuthenticationBudget() {
+        // The two types must stay independently configurable: the login form calls login-options immediately before
+        // authenticating, so a shared setting would silently halve the login budget.
+        when(properties.getLoginOptionsRequestsPerMinute()).thenReturn(7);
+        when(properties.getAuthenticationRequestsPerMinute()).thenReturn(99);
+
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.LOGIN_OPTIONS)).isEqualTo(7);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.AUTHENTICATION)).isEqualTo(99);
+    }
+
+    @Test
     void testGetEffectiveRpm_ProblemStatementRendering_WithCustomValue_ShouldReturnCustomValue() {
         when(properties.getProblemStatementRenderingRequestsPerMinute()).thenReturn(42);
 

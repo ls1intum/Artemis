@@ -529,7 +529,6 @@
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value. This also affects all students' grades in the exam!"
             },
-            "numberOfExerciseGroups": "Number of exercise groups:",
             "numberOfExercisesInExam": "Number of exercises in exam",
             "numberOfExercisesInExamTooltip": "The number of exercises must be equal to the number of exercise groups",
             "numberOfCorrectionRoundsInExam": "Number of correction rounds in exam",
@@ -694,6 +693,10 @@
                 "create": "Create new Exercise Group",
                 "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
+                "addExercise": "Add Exercise",
+                "editNotPossibleExamStarted": "Editing is not possible because the exam has already started.",
+                "editGroup": "Edit group",
+                "deleteGroup": "Delete group",
                 "selectExerciseGroup": "Select Exercise Groups",
                 "selectExerciseGroupExplanation": "Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it",
                 "noExerciseGroup": "The selected exam {{examTitle}} has no exercise groups",
@@ -703,6 +706,7 @@
                 "mandatory": "Mandatory",
                 "optional": "Optional",
                 "noExercises": "No exercises have been added yet.",
+                "noExerciseGroups": "No exercise groups have been created yet.",
                 "titleInfo": "The title of the exercise group is shown to the students as the name of the exercise.",
                 "delete": {
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",

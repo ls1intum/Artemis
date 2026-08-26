@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -29,9 +30,18 @@ public class JWTCookieService {
 
     private final Environment environment;
 
-    public JWTCookieService(TokenProvider tokenProvider, Environment environment) {
+    /**
+     * Absolute ceiling on a session, measured from the login. Read from the same property as
+     * {@link de.tum.cit.aet.artemis.core.config.SecurityConfiguration}, which rejects an unusable value at startup, so
+     * this copy is known good by the time any cookie is built.
+     */
+    private final long maxSessionLifetimeInSeconds;
+
+    public JWTCookieService(TokenProvider tokenProvider, Environment environment,
+            @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
         this.tokenProvider = tokenProvider;
         this.environment = environment;
+        this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
     }
 
     /**
@@ -52,7 +62,16 @@ public class JWTCookieService {
      * @return the login ResponseCookie containing the JWT
      */
     public ResponseCookie buildLoginCookie(boolean rememberMe, @Nullable ToolTokenType tool) {
-        return buildLoginCookie(tokenProvider.getTokenValidity(rememberMe), tool);
+        // The flag is passed on rather than only converted into a duration: it is what marks the session extendable, and
+        // dropping it here would leave every production login without the claim, so no session would ever be extended.
+        //
+        // Clipped to the absolute ceiling here, not only while rotating. JWTFilter caps a rotated token at
+        // issuedAt + ceiling, but refusing a rotation cannot shorten the token already in the browser: with a
+        // remember-me validity of seven days and a ceiling of one day, the login handed out a seven-day token and the
+        // first refused rotation left it usable for the remaining six.
+        long duration = Math.min(tokenProvider.getTokenValidity(rememberMe), Math.multiplyExact(maxSessionLifetimeInSeconds, 1000));
+        String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), duration, tool, rememberMe);
+        return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
     }
 
     /**
