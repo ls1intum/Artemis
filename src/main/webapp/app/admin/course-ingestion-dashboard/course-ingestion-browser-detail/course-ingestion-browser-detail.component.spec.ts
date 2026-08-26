@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideTranslateService } from '@ngx-translate/core';
+import { provideRouter } from '@angular/router';
 
 import { CourseIngestionBrowserDetailComponent } from 'app/admin/course-ingestion-dashboard/course-ingestion-browser-detail/course-ingestion-browser-detail.component';
 import { CourseIngestionDashboardService } from 'app/admin/course-ingestion-dashboard/course-ingestion-dashboard.service';
@@ -21,7 +22,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
         ],
         contentPresence: [{ key: 'slides', unitIds: [11] }],
         missingEntities: [{ type: 'exercise', entityId: 5, title: 'Sorting' }],
-        contentGaps: [],
+        contentGaps: [{ lectureUnitId: 11, title: 'Intro slides', kind: 'transcript' as const }],
     };
 
     const typeCounts: IngestionTypeCount[] = [{ type: 'exercise', expected: 3, indexed: 2, missing: 1, orphaned: 0 }];
@@ -41,7 +42,7 @@ describe('CourseIngestionBrowserDetailComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [CourseIngestionBrowserDetailComponent],
-            providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService()],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideTranslateService(), provideRouter([])],
         });
         service = TestBed.inject(CourseIngestionDashboardService);
         vi.spyOn(service, 'getIndexedEntityRecords').mockReturnValue(of(records));
@@ -209,5 +210,47 @@ describe('CourseIngestionBrowserDetailComponent', () => {
 
         expect(component.error()).toBe(true);
         expect(query('detail-error')).toBeTruthy();
+    });
+
+    it('should say what content a unit is missing rather than leaving it to be inferred', async () => {
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+
+        expect(component.missingContentOfUnit()).toHaveLength(1);
+        expect(query('detail-content-gap')).toBeTruthy();
+    });
+
+    it('should not show a gap banner for a unit that has everything', async () => {
+        component.selection.set({ kind: 'unit', unitId: 99 });
+        await settle();
+
+        expect(query('detail-content-gap')).toBeFalsy();
+    });
+
+    it('should point the open action at the lecture page for a lecture', async () => {
+        component.selection.set({ kind: 'lecture', lectureId: 20 });
+        await settle();
+
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20]);
+        expect(component.openTarget()?.labelKey).toContain('openLecture');
+    });
+
+    it('should point a unit and its collections at the unit management page', async () => {
+        component.selection.set({ kind: 'unit', unitId: 11 });
+        await settle();
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20, 'unit-management']);
+
+        // A collection belongs to a unit, so it opens the same page.
+        component.selection.set({ kind: 'collection', unitId: 11, key: 'slides' });
+        await settle();
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7, 'lectures', 20, 'unit-management']);
+    });
+
+    it('should fall back to the course page for a metadata type', async () => {
+        component.selection.set({ kind: 'type', type: 'exercise' });
+        await settle();
+
+        expect(component.openTarget()?.link).toEqual(['/course-management', 7]);
+        expect(component.openTarget()?.labelKey).toContain('openCourse');
     });
 });

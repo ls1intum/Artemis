@@ -114,7 +114,13 @@
                 "statMissing": "Fehlend",
                 "breadcrumb": "Navigationspfad",
                 "unitCount": "{{count}} Lerneinheiten",
-                "storedIn": "Gespeichert in"
+                "storedIn": "Gespeichert in",
+                "dotComplete": "Vollständig",
+                "dotIncomplete": "Unvollständig",
+                "missingContent": "Fehlende Inhalte:",
+                "openLecture": "Vorlesung öffnen",
+                "openUnit": "Einheit öffnen",
+                "openCourse": "Kurs öffnen"
             },
             "status": {
                 "COMPLETE": "Vollständig",

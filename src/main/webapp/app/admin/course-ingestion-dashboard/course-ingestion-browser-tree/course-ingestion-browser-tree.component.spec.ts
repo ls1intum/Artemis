@@ -54,6 +54,8 @@ describe('CourseIngestionBrowserTreeComponent', () => {
         fixture.componentRef.setInput('entities', entities);
         fixture.componentRef.setInput('contentPresence', contentPresence);
         fixture.componentRef.setInput('typeCounts', typeCounts);
+        // Unit 12 never had its transcript ingested, so its branch should read incomplete.
+        fixture.componentRef.setInput('contentGaps', [{ lectureUnitId: 12, title: 'Orphaned unit', kind: 'transcript' }]);
         fixture.detectChanges();
     });
 
@@ -152,5 +154,19 @@ describe('CourseIngestionBrowserTreeComponent', () => {
 
         click('tree-toggle-lecture:20');
         expect(query('tree-node-unit:11')).toBeFalsy();
+    });
+
+    it('should mark a unit whose content was never ingested, and leave a complete one alone', () => {
+        click('tree-toggle-lecture:20');
+        click('tree-toggle-lecture:21');
+
+        expect(query('tree-dot-unit:11')?.className).toContain('text-state-success');
+        expect(query('tree-dot-unit:12')?.className).toContain('text-state-danger');
+    });
+
+    it('should carry a unit gap up to its lecture, so a collapsed branch still shows it', () => {
+        // Lecture 21 holds the unit with the gap; lecture 20's units are all complete.
+        expect(query('tree-dot-lecture:21')?.className).toContain('text-state-danger');
+        expect(query('tree-dot-lecture:20')?.className).toContain('text-state-success');
     });
 });
