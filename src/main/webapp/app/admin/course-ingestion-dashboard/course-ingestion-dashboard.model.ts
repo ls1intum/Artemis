@@ -1,6 +1,6 @@
 /**
  * Frontend models for the admin-only ingestion-coverage observability dashboard. These mirror the read-only response
- * DTOs served by the backend `IngestionCoverageResource` under `api/global-search/ingestion-dashboard/`.
+ * DTOs served by the backend `IngestionCoverageResource` under `api/global-search/admin/`.
  */
 
 /** Overall Weaviate index coverage of a course. */
