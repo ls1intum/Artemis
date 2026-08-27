@@ -19,6 +19,13 @@ public final class QuizStatisticProjections {
         long getParticipantCount();
     }
 
+    public interface ParticipantCount {
+
+        Boolean getRated();
+
+        long getParticipantCount();
+    }
+
     public interface QuestionAggregate {
 
         Boolean getRated();

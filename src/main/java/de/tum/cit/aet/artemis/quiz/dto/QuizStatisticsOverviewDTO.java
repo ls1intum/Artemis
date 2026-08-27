@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.quiz.dto;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
@@ -22,16 +21,18 @@ public record QuizStatisticsOverviewDTO(@JsonUnwrapped QuizExerciseWithoutQuesti
     /**
      * Creates an overview response from the quiz and its per-question statistics.
      *
-     * @param quizExercise         the quiz exercise
-     * @param statisticsByQuestion statistics keyed by question id
+     * @param quizExercise            the quiz exercise
+     * @param statisticsByQuestion    statistics keyed by question id
+     * @param ratedParticipantCount   the number of latest eligible rated results
+     * @param unratedParticipantCount the number of latest eligible unrated results
      * @return the overview response
      */
-    public static QuizStatisticsOverviewDTO of(QuizExercise quizExercise, Map<Long, QuizQuestionStatisticDTO> statisticsByQuestion) {
+    public static QuizStatisticsOverviewDTO of(QuizExercise quizExercise, Map<Long, QuizQuestionStatisticDTO> statisticsByQuestion, long ratedParticipantCount,
+            long unratedParticipantCount) {
         List<QuestionStatisticsDTO> questions = quizExercise.getQuizQuestions().stream()
                 .map(question -> QuestionStatisticsDTO.of(question, statisticsByQuestion.get(question.getId()))).toList();
-        int ratedCount = statisticsByQuestion.values().stream().filter(Objects::nonNull).mapToInt(QuizQuestionStatisticDTO::participantsRated).max().orElse(0);
-        int unratedCount = statisticsByQuestion.values().stream().filter(Objects::nonNull).mapToInt(QuizQuestionStatisticDTO::participantsUnrated).max().orElse(0);
-        return new QuizStatisticsOverviewDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questions, ratedCount, unratedCount);
+        return new QuizStatisticsOverviewDTO(QuizExerciseWithoutQuestionsDTO.of(quizExercise), questions, Math.toIntExact(ratedParticipantCount),
+                Math.toIntExact(unratedParticipantCount));
     }
 }
 
