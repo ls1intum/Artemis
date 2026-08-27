@@ -484,14 +484,9 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         // did not overwrite it.
         expect(studentResult.overallPointsAchieved).toBe(9);
         expect(studentResult.overallScoreAchieved).toBe(90);
-        // Pinned to what the server currently answers, which is not what the column means. The scores page loads the
-        // participations with `findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns`,
-        // whose `r.id = (SELECT MAX(r2.id) FROM s.results r2)` keeps only the newest result per submission. The first
-        // correction is then computed from a submission that carries a single manual result, and
-        // ExamService.calculateFirstCorrectionPoints returns 0 for anything with one manual result or fewer. The first
-        // round really scored 6 of 10 points, which the dashboard test above asserts. Raise this to 6 once the query
-        // fetches both rounds; the assertion is here so that the gap is visible rather than silent.
-        expect(studentResult.overallPointsAchievedInFirstCorrection).toBe(0);
+        // The first corrector gave 6 of 10 points, which the dashboard test above shows as 60%. The two rounds are
+        // reported next to each other rather than one replacing the other.
+        expect(studentResult.overallPointsAchievedInFirstCorrection).toBe(6);
 
         // The student row shows the final points, not the first corrector's.
         const studentRow = page.locator('tr', { hasText: studentOne.username });
