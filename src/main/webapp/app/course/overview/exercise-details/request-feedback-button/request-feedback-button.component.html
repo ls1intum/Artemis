@@ -23,6 +23,20 @@
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
             </button>
         }
+    } @else if (athenaEnabled()) {
+        <div class="ai-feedback-hint d-flex align-items-center gap-2" [id]="'ai-feedback-hint-' + exercise().id">
+            <span class="text-body-secondary" jhiTranslate="artemisApp.exerciseActions.aiFeedbackAvailableHint"></span>
+            <button
+                class="btn btn-outline-primary"
+                (click)="showLLMSelectionModal()"
+                [class.btn-sm]="smallButtons()"
+                [id]="'enable-ai-feedback-' + exercise().id"
+                [ngbTooltip]="'artemisApp.exerciseActions.enableAiFeedbackTooltip' | artemisTranslate"
+            >
+                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.enableAiFeedback"></span>
+            </button>
+        </div>
     } @else {
         <a
             class="btn btn-primary"
