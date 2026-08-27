@@ -502,17 +502,18 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     /**
      * Returns the manual results of the given submissions together with the correction round each belongs to.
      * <p>
-     * The scores overview renders assessment actions per correction round, so it needs one entry per round rather than
-     * only the newest result. Automatic and Athena results are left out because they are not correction rounds, which
-     * matches {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose
-     * assessment type is not set yet.
+     * Two callers need this. The scores overview renders assessment actions per correction round, so it needs one entry
+     * per round rather than only the newest result, and the exam score statistics report what the first round scored.
+     * Automatic and Athena results are left out because they are not correction rounds, which matches
+     * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
+     * type is not set yet.
      *
      * @param submissionIds the submissions whose manual results should be read
      * @return the manual results of those submissions, in no particular order
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO(
-                result.submission.id, result.id, result.correctionRound, result.assessmentType, result.completionDate, result.hasComplaint)
+                result.submission.id, result.id, result.correctionRound, result.assessmentType, result.completionDate, result.hasComplaint, result.score)
             FROM Result result
             WHERE result.submission.id IN :submissionIds
                 AND (result.assessmentType IS NULL
