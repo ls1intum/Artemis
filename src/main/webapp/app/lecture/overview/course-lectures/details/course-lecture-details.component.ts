@@ -278,17 +278,24 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     loadData() {
-        this.isLoading.set(true);
-        if (this.lectureId) {
+        const requestedLectureId = this.lectureId;
+        if (requestedLectureId) {
+            this.isLoading.set(true);
             this.lectureService
-                .findWithDetails(this.lectureId)
+                .findWithDetails(requestedLectureId)
                 .pipe(
                     finalize(() => {
-                        this.isLoading.set(false);
+                        if (requestedLectureId === this.lectureId) {
+                            this.isLoading.set(false);
+                        }
                     }),
                 )
                 .subscribe({
                     next: (findLectureResult) => {
+                        if (requestedLectureId !== this.lectureId) {
+                            return;
+                        }
+
                         const lecture = findLectureResult.body!;
                         this.lecture.set(lecture);
                         lecture.attachments?.forEach((attachment) => {
@@ -306,6 +313,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         );
                         if (this.irisEnabled && lecture.course?.id) {
                             this.irisSettingsService.getCourseSettingsWithRateLimit(lecture.course.id).subscribe((response) => {
+                                if (requestedLectureId !== this.lectureId) {
+                                    return;
+                                }
+
                                 this.irisSettings.set(response);
                             });
                         }
@@ -320,7 +331,13 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         }
                         this.informationBoxData.set(informationBoxData);
                     },
-                    error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                    error: (errorResponse: HttpErrorResponse) => {
+                        if (requestedLectureId !== this.lectureId) {
+                            return;
+                        }
+
+                        onError(this.alertService, errorResponse);
+                    },
                 });
         }
     }
