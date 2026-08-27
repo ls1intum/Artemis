@@ -11,7 +11,9 @@
     }
 </ng-template>
 <article class="bonus-form-start">
-    <h2 jhiTranslate="artemisApp.bonus.title"></h2>
+    <div *titleBarTitle class="flex items-center">
+        <h5 class="mb-0" jhiTranslate="artemisApp.bonus.title"></h5>
+    </div>
     <div class="row mt-4">
         <div class="bonus-form-step col-1"></div>
         <div class="form-group col">
@@ -221,14 +223,17 @@
                     </table>
                 </div>
             }
-            <div>
-                <button (click)="save()" [disabled]="isLoading()" class="btn btn-primary mr-1 mb-1" type="button">
-                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+            <ng-template titleBarActions>
+                <button tumUiButton severity="primary" size="small" (click)="save()" [disabled]="isLoading()" type="button">
+                    <fa-icon [icon]="faSave" /><span class="title-bar-collapsible-label" jhiTranslate="entity.action.save"></span>
                 </button>
                 @if (bonus.id) {
                     <button
-                        class="mb-1"
                         jhiDeleteButton
+                        tumUiButton
+                        severity="danger"
+                        size="small"
+                        [renderButtonStyle]="false"
                         [entityTitle]="''"
                         [buttonSize]="ButtonSize.MEDIUM"
                         deleteQuestion="artemisApp.bonus.deleteQuestion"
@@ -236,10 +241,10 @@
                         [dialogError]="dialogError$"
                         [disabled]="isLoading()"
                     >
-                        <fa-icon [icon]="faTimes"><span jhiTranslate="entity.action.delete"></span></fa-icon>
+                        <fa-icon [icon]="faTrash" /><span class="title-bar-collapsible-label" jhiTranslate="entity.action.delete"></span>
                     </button>
                 }
-            </div>
+            </ng-template>
         }
     </div>
 </article>
