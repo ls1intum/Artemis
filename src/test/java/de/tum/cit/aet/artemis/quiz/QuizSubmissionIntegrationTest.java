@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.multipart.MultipartFile;
@@ -118,9 +117,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -263,7 +259,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         QuizSubmission nullRatedSubmission = createScoredSubmission(quizExercise, false, tiedCompletionDate.plusSeconds(1));
         participationUtilService.addSubmission(quizExercise, nullRatedSubmission, TEST_PREFIX + "student2");
         Result nullRatedResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(1), nullRatedSubmission, true, false, 0);
-        assertThat(jdbcTemplate.update("UPDATE result SET rated = NULL WHERE id = ?", nullRatedResult.getId())).isOne();
+        assertThat(resultRepository.setRatedToNull(nullRatedResult.getId())).isOne();
 
         QuizSubmission ratedSubmission = createScoredSubmission(quizExercise, true, tiedCompletionDate.plusSeconds(2));
         participationUtilService.addSubmission(quizExercise, ratedSubmission, TEST_PREFIX + "student3");
@@ -886,7 +882,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private static JsonNode findNodeByLong(JsonNode nodes, String fieldName, long value) {
         for (JsonNode node : nodes) {
-            if (node.path(fieldName).asLong() == value) {
+            if (node.hasNonNull(fieldName) && node.path(fieldName).asLong() == value) {
                 return node;
             }
         }
@@ -895,7 +891,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private static JsonNode findNodeByDouble(JsonNode nodes, String fieldName, double value) {
         for (JsonNode node : nodes) {
-            if (Double.compare(node.path(fieldName).asDouble(), value) == 0) {
+            if (node.hasNonNull(fieldName) && Double.compare(node.path(fieldName).asDouble(), value) == 0) {
                 return node;
             }
         }

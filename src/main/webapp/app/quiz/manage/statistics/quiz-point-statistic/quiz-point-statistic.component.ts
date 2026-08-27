@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ChartModule } from 'primeng/chart';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Subscription } from 'rxjs';
+import { Subscription, filter, switchMap } from 'rxjs';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
@@ -80,21 +80,24 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
                 this.quizExerciseChannel = '/topic/courses/' + params['courseId'] + '/quizExercises';
 
                 // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-                this.quizExerciseSubscription = this.websocketService.subscribe<QuizExercise>(this.quizExerciseChannel).subscribe((quiz: QuizExercise) => {
-                    if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
-                        this.quizExerciseService.findPointStatistic(params['exerciseId']).subscribe((res) => {
-                            this.loadQuizSuccess(res.body!);
-                        });
-                    }
-                });
+                this.quizExerciseSubscription = this.websocketService
+                    .subscribe<QuizExercise>(this.quizExerciseChannel)
+                    .pipe(
+                        filter((quiz) => this.waitingForQuizStart && params['exerciseId'] === quiz.id),
+                        switchMap(() => this.quizExerciseService.findPointStatistic(params['exerciseId'])),
+                    )
+                    .subscribe((res) => {
+                        this.loadQuizSuccess(res.body!);
+                    });
             }
 
             // A statistics notification carries no counters; reload only this page's on-demand data.
-            this.quizDataSubscription = this.websocketService.subscribe<number>(this.websocketChannelForData).subscribe(() => {
-                this.quizExerciseService.findPointStatistic(params['exerciseId']).subscribe((res) => {
+            this.quizDataSubscription = this.websocketService
+                .subscribe<number>(this.websocketChannelForData)
+                .pipe(switchMap(() => this.quizExerciseService.findPointStatistic(params['exerciseId'])))
+                .subscribe((res) => {
                     this.loadQuizSuccess(res.body!);
                 });
-            });
         });
 
         // update displayed times in UI regularly
