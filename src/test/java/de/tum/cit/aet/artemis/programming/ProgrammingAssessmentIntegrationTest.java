@@ -110,6 +110,41 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void updateAssessmentAfterComplaint_responseKeepsTypedAutomaticFeedback() throws Exception {
+        ProgrammingSubmission submissionWithComplaint = ParticipationFactory.generateProgrammingSubmission(true);
+        submissionWithComplaint = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submissionWithComplaint,
+                TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
+        Result complainedAboutResult = submissionWithComplaint.getLatestResult();
+
+        // stored automatic test-case feedback (typed table) on the result that is complained about
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "complaintResponseTest");
+        participationUtilService.addTestCaseFeedbackToResult(complainedAboutResult, testCase, false, "typed complaint failure message");
+
+        Complaint complaint = complaintRepo.save(new Complaint().result(complainedAboutResult).complaintText("This is not fair"));
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("accepted");
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
+
+        Result updatedResult = request.putWithResponseBody("/api/programming/programming-submissions/" + submissionWithComplaint.getId() + "/assessment-after-complaint",
+                assessmentUpdate, Result.class, HttpStatus.OK);
+
+        // the typed rows are copied onto the new result ...
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(updatedResult.getId()))).hasSize(1);
+        // ... and the complaint response must expose them as synthesized views next to the manual feedback -
+        // the typed collections are not serialized, so the client would otherwise lose all automatic feedback
+        assertThat(updatedResult.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getId()).isNegative();
+            assertThat(feedback.getDetailText()).isEqualTo("typed complaint failure message");
+        });
+        assertThat(updatedResult.getFeedbacks()).anySatisfy(feedback -> assertThat(feedback.getDetailText()).isEqualTo("nice submission 1"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",

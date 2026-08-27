@@ -105,6 +105,21 @@ public class AssessmentService {
     }
 
     /**
+     * Attaches the synthesized legacy views of a programming result's typed automatic feedback, so that a
+     * response serializing the result still carries the test-case and static code analysis feedback. The
+     * typed collections themselves are JSON-ignored, so without this the automatic feedback is dropped. The
+     * programming subclass ({@code ProgrammingAssessmentService}) overrides this with the real synthesis;
+     * the base implementation is only reached for non-programming exercises (the programming complaint flow
+     * always goes through the subclass bean).
+     *
+     * @param exercise the programming exercise the result belongs to
+     * @param result   the result about to be serialized
+     */
+    protected void attachSynthesizedAutomaticFeedback(ProgrammingExercise exercise, Result result) {
+        // no-op, see the programming subclass
+    }
+
+    /**
      * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about.
      *
      * @param originalResult   the original assessment that was complained about
@@ -135,7 +150,12 @@ public class AssessmentService {
             newResult.copyProgrammingExerciseCounters(originalResult);
 
             Result savedResult = resultRepository.save(newResult);
-            return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).orElseThrow(); // to eagerly load assessor
+            // eagerly load the assessor and the manual feedback the response serializes
+            Result reloadedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(savedResult.getId()).orElseThrow();
+            // the copied automatic test-case and SCA feedback lives in JSON-ignored typed collections - attach
+            // the synthesized legacy views (after all persistence) so the complaint response keeps it
+            attachSynthesizedAutomaticFeedback(programmingExercise, reloadedResult);
+            return reloadedResult;
         }
         else {
             return resultRepository.submitResult(newResult, exercise);

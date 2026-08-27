@@ -75,6 +75,12 @@ public class ProgrammingAssessmentService extends AssessmentService {
         return testCasePointsService.calculateTestCasePoints(exercise, result);
     }
 
+    @Override
+    protected void attachSynthesizedAutomaticFeedback(ProgrammingExercise exercise, Result result) {
+        // a complaint always concerns a student participation, never the solution participation
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, exercise, false);
+    }
+
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to SEMI_AUTOMATIC and sets the assessor attribute.
      * Furthermore, it saves the result in the database.
