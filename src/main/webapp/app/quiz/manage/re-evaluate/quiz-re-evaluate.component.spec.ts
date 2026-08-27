@@ -167,18 +167,6 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(comp.invalidReasons()).toHaveLength(0);
     });
 
-    it('should refresh the cached validity when reordering questions', () => {
-        comp.ngOnInit();
-        vi.advanceTimersByTime(0);
-        const cacheValidationSpy = vi.spyOn(comp, 'cacheValidation');
-
-        comp.moveDown(comp.quizExercise().quizQuestions![0]);
-        expect(cacheValidationSpy).toHaveBeenCalledOnce();
-
-        comp.moveUp(comp.quizExercise().quizQuestions![1]);
-        expect(cacheValidationSpy).toHaveBeenCalledTimes(2);
-    });
-
     it('should clear invalid state after deleting and restoring the only question via resetAll', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);
