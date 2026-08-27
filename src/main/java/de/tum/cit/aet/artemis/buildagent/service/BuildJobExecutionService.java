@@ -171,6 +171,20 @@ public class BuildJobExecutionService {
      * @throws LocalCIException If any error occurs during the preparation or execution of the build job.
      */
     public BuildResult runBuildJob(BuildJobQueueItem buildJob, String containerName) {
+        // Bind this job's clone token to the executing thread for the whole job. Every git operation below reaches
+        // the credential through BuildJobGitService, including the ones inherited from AbstractGitService that carry
+        // no build job context. The finally is essential: executor threads are reused, and a token left behind would
+        // be presented for the next job, whose repositories it does not cover.
+        buildJobGitService.setCloneTokenForCurrentThread(buildJob.cloneToken());
+        try {
+            return runBuildJobWithBoundCloneToken(buildJob, containerName);
+        }
+        finally {
+            buildJobGitService.clearCloneTokenForCurrentThread();
+        }
+    }
+
+    private BuildResult runBuildJobWithBoundCloneToken(BuildJobQueueItem buildJob, String containerName) {
 
         String msg = "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         log.debug(msg);

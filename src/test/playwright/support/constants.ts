@@ -69,6 +69,7 @@ export class AdditionalData {
     submission?: ProgrammingExerciseSubmission;
     expectedScore?: number;
     textFixture?: string;
+    fileUploadFixture?: string;
     practiceMode?: boolean;
     skipBuildResultCheck?: boolean;
     progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
