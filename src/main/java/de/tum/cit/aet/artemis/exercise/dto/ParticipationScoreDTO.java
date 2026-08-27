@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -13,5 +14,5 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 public record ParticipationScoreDTO(long participationId, ZonedDateTime initializationDate, int submissionCount, String participantName, String participantIdentifier,
         Long studentId, Long teamId, Long resultId, Double score, Boolean successful, ZonedDateTime completionDate, AssessmentType assessmentType, String assessmentNote,
         Long durationInSeconds, Long submissionId, Boolean buildFailed, String buildPlanId, String repositoryUri, boolean testRun, Integer testCaseCount,
-        Integer passedTestCaseCount, Integer codeIssueCount) {
+        Integer passedTestCaseCount, Integer codeIssueCount, List<CorrectionRoundResultDTO> correctionRoundResults) {
 }

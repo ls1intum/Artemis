@@ -997,9 +997,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
             assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(epsilon));
 
             double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
-            if (!withSecondCorrectionAndStarted) {
-                assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
-            }
+            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;
