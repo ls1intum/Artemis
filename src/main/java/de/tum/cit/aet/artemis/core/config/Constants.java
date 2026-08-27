@@ -629,6 +629,8 @@ public final class Constants {
      * The name of the property used to enable or disable the Deimos malicious participation analysis module.
      */
     public static final String DEIMOS_ENABLED_PROPERTY_NAME = "artemis.deimos.enabled";
+
+    /**
      * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with
      * the key pair they generate at startup when {@code true}, or with the build-agent git username and password when
      * {@code false}.
