@@ -785,15 +785,6 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Gets the participation data for a programming exercise with the specified exercise ID.
-     * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
-     * participation data (with latest result) via the per-participation endpoint.
-     *
-     * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
-     * @returns A Promise<StudentParticipationDTO> representing the student participation with latest result.
-     * @throws Error if no participations are found for the exercise.
-     */
-    /**
      * Triggers an instructor build-and-test run for ALL student participations of a programming exercise.
      * Used by exam tests to run the AFTER_DUE_DATE-gated build "test" phase on demand instead of waiting for
      * the server's scheduled build-and-test-after-due-date (which defaults to dueDate + 15 min for exams).
@@ -842,6 +833,15 @@ export class ExerciseAPIRequests {
         }
     }
 
+    /**
+     * Gets the participation data for a programming exercise with the specified exercise ID.
+     * Uses the paginated endpoint to fetch the first participation's ID, then fetches full
+     * participation data (with latest result) via the per-participation endpoint.
+     *
+     * @param exerciseId - The ID of the exercise for which to retrieve the participation data.
+     * @returns A Promise<StudentParticipationDTO> representing the student participation with latest result.
+     * @throws Error if no participations are found for the exercise.
+     */
     async getProgrammingExerciseParticipation(exerciseId: number): Promise<StudentParticipationDTO> {
         const pageResponse = await this.page.request.get(
             `api/exercise/exercises/${exerciseId}/participations/page?page=0&pageSize=1&sortingOrder=ASCENDING&sortedColumn=participantName&searchTerm=&filterProp=`,
