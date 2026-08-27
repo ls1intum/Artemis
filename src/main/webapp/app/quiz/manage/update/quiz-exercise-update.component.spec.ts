@@ -2350,6 +2350,38 @@ describe('QuizExerciseUpdateComponent', () => {
             expect(comp.uneditableReason()).toBe('');
         });
 
+        // isSaveDisabled() honours dueDateError and hasErrorInQuizBatches(), which isValidQuiz() ignores, so
+        // gating the tooltip on quizIsValid() alone left the button disabled with nothing to explain it.
+        it('should be enabled for a quiz that is valid but has a date error, so its reason shows', () => {
+            comp.quizIsValid.set(true);
+            comp.invalidReasons.set([{ translateKey: 'artemisApp.quizExercise.dueDateError', translateValues: {} }]);
+
+            expect(comp.isSaveTooltipDisabled()).toBe(false);
+        });
+
+        it('should report a due date error as an invalid reason', () => {
+            const exercise = comp.quizExercise();
+            exercise.title = 'Valid title';
+            exercise.duration = 60;
+            exercise.quizQuestions = [];
+            exercise.dueDateError = true;
+            comp.quizExercise.set(exercise);
+
+            expect(comp.computeInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.quizExercise.dueDateError', translateValues: {} });
+        });
+
+        it('should report a batch start time error as an invalid reason', () => {
+            const exercise = comp.quizExercise();
+            exercise.title = 'Valid title';
+            exercise.duration = 60;
+            exercise.quizQuestions = [];
+            exercise.quizMode = QuizMode.BATCHED;
+            exercise.quizBatches = [{ startTimeError: true } as QuizBatch];
+            comp.quizExercise.set(exercise);
+
+            expect(comp.computeInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.quizExercise.startTimeError', translateValues: {} });
+        });
+
         it('should be enabled with no uneditable reason for an invalid quiz, so the reason list shows', () => {
             comp.quizIsValid.set(false);
             comp.invalidReasons.set([

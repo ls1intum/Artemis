@@ -897,6 +897,18 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return [];
         }
         // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
+        // isValidQuiz() ignores the date flags even though isSaveDisabled() honours them, so without these the
+        // save button can disable with nothing to explain it.
+        if (this.quizExercise().dueDateError) {
+            invalidReasons.push({ translateKey: 'artemisApp.quizExercise.dueDateError', translateValues: {} });
+        }
+        if (this.hasErrorInQuizBatches()) {
+            invalidReasons.push({
+                translateKey:
+                    this.quizExercise().quizMode === QuizMode.SYNCHRONIZED ? 'artemisApp.quizExercise.startTimeErrorSynchronized' : 'artemisApp.quizExercise.startTimeError',
+                translateValues: {},
+            });
+        }
         return super.computeInvalidReasons().concat(invalidReasons);
     }
 
@@ -925,7 +937,8 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     /** Set only while the quiz cannot be edited at all; takes precedence over the validation reasons. */
     readonly uneditableReason = computed<string>(() => (this.quizExercise()?.isEditable ? '' : this.saveButtonTooltip));
 
-    readonly isSaveTooltipDisabled = computed<boolean>(() => !this.uneditableReason() && this.quizIsValid());
+    // Also gated on the reason list, because isSaveDisabled() honours date errors that quizIsValid() does not.
+    readonly isSaveTooltipDisabled = computed<boolean>(() => !this.uneditableReason() && this.quizIsValid() && !this.invalidReasons().length);
 
     hasErrorInQuizBatches(): boolean {
         return !!this.quizExercise()?.quizBatches?.some((batch) => batch.startTimeError);
