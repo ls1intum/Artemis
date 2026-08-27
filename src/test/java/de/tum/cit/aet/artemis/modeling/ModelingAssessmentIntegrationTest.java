@@ -10,7 +10,9 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -226,7 +228,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(submission.getResults()).hasSize(2);
 
         // Get result IDs
-        Result expectedFirstResult = submission.getResults().getFirst();
+        Result expectedFirstResult = submission.getFirstResult();
         Result expectedLatestResult = submission.getLatestResult();
         Long firstResultId = expectedFirstResult.getId();
         Long latestResultId = expectedLatestResult.getId();
@@ -860,9 +862,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         body = new ModelingAssessmentDTO(toFeedbackDTOs(feedbacks), "text");
-        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(
-                API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/results/" + submissionWithoutSecondAssessment.getResults().get(1).getId() + "/assessment",
-                body, ResultDTO.class, HttpStatus.OK, params);
+        final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/results/"
+                + resultsInCreationOrder(submissionWithoutSecondAssessment).get(1).getId() + "/assessment", body, ResultDTO.class, HttpStatus.OK, params);
         assertThat(secondSubmittedManualResult).isNotNull();
 
         // make sure that new result correctly appears after the assessment for second correction round
@@ -1186,12 +1187,20 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
-        Result firstResult = submission.getResults().getFirst();
+        Result firstResult = submission.getFirstResult();
         Result lastResult = submission.getLatestResult();
         request.delete("/api/modeling/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
-        assertThat(submission.getResults().getFirst()).isEqualTo(lastResult);
+        assertThat(submission.getFirstResult()).isEqualTo(lastResult);
+    }
+
+    /**
+     * The results of a submission in the order they were created. The submission's results are an unordered set, so a
+     * test that cares about the order of creation has to say so; ids ascend with creation.
+     */
+    private static List<Result> resultsInCreationOrder(Submission submission) {
+        return submission.getResults().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Result::getId)).toList();
     }
 }

@@ -715,6 +715,16 @@ public class CourseUtilService {
         programmingSubmission.addResult(resultProgramming);
         resultProgramming.setSubmission(programmingSubmission);
 
+        // Save the results before the submissions. A result owns the foreign key to its submission, so saving it here
+        // is what creates the row. Saving the submission first would create it through the cascade on its results
+        // instead, and because a merge does not write the generated id back to the detached result, the save below
+        // would then insert a second copy of every result.
+        resultModeling = resultRepo.save(resultModeling);
+        resultText = resultRepo.save(resultText);
+        resultFileUpload = resultRepo.save(resultFileUpload);
+        resultQuiz = resultRepo.save(resultQuiz);
+        resultProgramming = resultRepo.save(resultProgramming);
+
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);
         textSubmission = submissionRepository.save(textSubmission);
@@ -727,13 +737,6 @@ public class CourseUtilService {
         resultFileUpload.setSubmission(fileUploadSubmission);
         resultQuiz.setSubmission(quizSubmission);
         resultProgramming.setSubmission(programmingSubmission);
-
-        // Save results
-        resultRepo.save(resultModeling);
-        resultRepo.save(resultText);
-        resultRepo.save(resultFileUpload);
-        resultRepo.save(resultQuiz);
-        resultRepo.save(resultProgramming);
 
         // Save exercises
         exerciseRepository.save(modelingExercise);
