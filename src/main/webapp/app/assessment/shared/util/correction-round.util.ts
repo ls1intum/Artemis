@@ -1,4 +1,10 @@
 /**
+ * Every server endpoint that takes a `correction-round` binds it to a Java `int`, so a larger value is not a round
+ * either: it reaches the endpoint unchanged and comes back as a 400 rather than opening the first round.
+ */
+const MAX_CORRECTION_ROUND = 2 ** 31 - 1;
+
+/**
  * The correction round an assessment page works on is carried only in the `correction-round` query parameter. It is both
  * sent to the server as the round to load and used to index the results of the loaded submission, so it has to be one
  * value derived in one place. `Number()` cannot be used for that on its own: it turns `null`, `''` and whitespace all
@@ -20,7 +26,9 @@ export function parseCorrectionRound(rawCorrectionRound: string | null | undefin
     if (!normalizedCorrectionRound || !/^\d+$/.test(normalizedCorrectionRound)) {
         return 0;
     }
-    // A long enough digit string still exceeds the range in which integers are exact, so it is no usable round either.
+    // The regular expression leaves only non-negative decimal integers, so the sole remaining way to be unusable is
+    // being too large for the `int` the server binds this to. That also covers a digit string long enough to lose
+    // precision, or to become `Infinity`, since both are far beyond that bound.
     const correctionRound = Number(normalizedCorrectionRound);
-    return Number.isSafeInteger(correctionRound) ? correctionRound : 0;
+    return correctionRound <= MAX_CORRECTION_ROUND ? correctionRound : 0;
 }

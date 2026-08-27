@@ -21,7 +21,9 @@ describe('correction round util', () => {
         { raw: '-1', description: 'negative' },
         { raw: 'Infinity', description: 'infinite' },
         { raw: 'NaN', description: 'literally NaN' },
+        { raw: '2147483648', description: 'one above the int the server binds the round to' },
         { raw: '9007199254740993', description: 'beyond the safe integer range' },
+        { raw: '9'.repeat(400), description: 'so long that Number() returns Infinity' },
         { raw: '1e3', description: 'exponential' },
         { raw: '0x2', description: 'hexadecimal' },
         { raw: '+1', description: 'explicitly signed' },
@@ -36,5 +38,11 @@ describe('correction round util', () => {
     it('should accept a round that is a plain integer string of more than one digit', () => {
         // Guards against a stricter check that only accepts single digits, since the number of rounds is not capped at 10.
         expect(parseCorrectionRound('12')).toBe(12);
+    });
+
+    it('should accept the largest round the server can bind', () => {
+        // Pins the bound from the other side, so that rejecting oversized values cannot turn into an off-by-one that
+        // also rejects a value the endpoint would have taken.
+        expect(parseCorrectionRound('2147483647')).toBe(2147483647);
     });
 });
