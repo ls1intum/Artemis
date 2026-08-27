@@ -161,21 +161,16 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         result.setRated(false);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
-        // save result
-        result = resultRepository.save(result);
-
-        // setup result - submission relation
+        // The result owns the foreign key to its submission, so it is set before the result is written. This used to
+        // save the result first and attach the submission afterwards, which stored a result without a submission.
         result.setSubmission(quizSubmission);
         // calculate score and update result accordingly
         result.evaluateQuizSubmission(quizExercise);
         quizSubmission.addResult(result);
         quizSubmission.setParticipation(participation);
 
-        // save submission to set result index column
         quizSubmissionRepository.save(quizSubmission);
-
-        // save result to store score
-        resultRepository.save(result);
+        result = resultRepository.save(result);
 
         // Update the quiz statistics asynchronously: statistics are only relevant for instructors, so the student must
         // not wait for them. Previously this ran a full recalculation synchronously, iterating every participation of
