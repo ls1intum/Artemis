@@ -19,6 +19,7 @@ public class Prerequisite extends CourseCompetency {
     public Prerequisite(CourseCompetency courseCompetency) {
         super(courseCompetency.getTitle(), courseCompetency.getDescription(), courseCompetency.getSoftDueDate(), courseCompetency.getMasteryThreshold(),
                 courseCompetency.getTaxonomy(), courseCompetency.isOptional());
+        setGeneratedByAi(courseCompetency.isGeneratedByAi());
         if (courseCompetency instanceof Competency) {
             setLinkedCourseCompetency(courseCompetency);
         }

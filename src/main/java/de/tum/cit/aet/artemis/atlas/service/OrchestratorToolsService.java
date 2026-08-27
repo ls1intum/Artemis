@@ -347,6 +347,7 @@ public class OrchestratorToolsService {
         Course course = courseOpt.get();
         Competency competency = new Competency(title.trim(), description == null ? "" : description.trim(), null, CourseCompetency.DEFAULT_MASTERY_THRESHOLD, parsedTaxonomy,
                 false);
+        competency.setGeneratedByAi(true);
         try {
             competencyValidator.checkForCreation(competency);
         }
@@ -551,6 +552,7 @@ public class OrchestratorToolsService {
         }
         else {
             CompetencyExerciseLink newLink = new CompetencyExerciseLink(competency, exercise, effectiveWeight);
+            newLink.setGeneratedByAi(true);
             competencyExerciseLinkRepository.save(newLink);
             detail = "Linked exercise " + exercise.getTitle() + " to competency " + competency.getTitle() + " (weight " + formatWeight(effectiveWeight) + ").";
         }

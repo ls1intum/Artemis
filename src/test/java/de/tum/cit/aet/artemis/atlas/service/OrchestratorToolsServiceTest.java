@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.ai.chat.model.ToolContext;
@@ -125,6 +126,10 @@ class OrchestratorToolsServiceTest {
         String result = service.createCompetency("Sorting Algorithms", "Understand sorting basics.", "UNDERSTAND", JUSTIFICATION, toolContext);
 
         assertThat(result).contains("\"id\":101").contains("Sorting Algorithms").contains("UNDERSTAND");
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<Competency>> competencyCaptor = ArgumentCaptor.forClass(List.class);
+        verify(competencyService).createCompetencies(competencyCaptor.capture(), eq(course));
+        assertThat(competencyCaptor.getValue()).singleElement().satisfies(competency -> assertThat(competency.isGeneratedByAi()).isTrue());
         assertThat(appliedActions).singleElement().satisfies(action -> {
             assertThat(action.type()).isEqualTo(AppliedActionDTO.ActionType.CREATE);
             assertThat(action.competencyId()).isEqualTo(101L);
@@ -162,6 +167,7 @@ class OrchestratorToolsServiceTest {
     @Test
     void editCompetency_titleChange_updatesAndLogsActionWithJustification() {
         CourseCompetency existing = newCompetency(10L, "Old Title", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        existing.setGeneratedByAi(true);
         when(courseCompetencyRepository.findById(10L)).thenReturn(Optional.of(existing));
         when(courseCompetencyRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -169,6 +175,7 @@ class OrchestratorToolsServiceTest {
 
         assertThat(result).contains("New Title").contains("\"changed\"");
         assertThat(existing.getTitle()).isEqualTo("New Title");
+        assertThat(existing.isGeneratedByAi()).isTrue();
         assertThat(appliedActions).singleElement().satisfies(a -> {
             assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.EDIT);
             assertThat(a.justification()).isEqualTo(JUSTIFICATION);
@@ -220,7 +227,9 @@ class OrchestratorToolsServiceTest {
         String result = service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
 
         assertThat(result).contains("\"status\":\"ok\"").contains("\"weight\":1.0");
-        verify(competencyExerciseLinkRepository).save(any(CompetencyExerciseLink.class));
+        ArgumentCaptor<CompetencyExerciseLink> linkCaptor = ArgumentCaptor.forClass(CompetencyExerciseLink.class);
+        verify(competencyExerciseLinkRepository).save(linkCaptor.capture());
+        assertThat(linkCaptor.getValue().isGeneratedByAi()).isTrue();
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(exercise);
         assertThat(appliedActions).singleElement().satisfies(a -> {
             assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.ASSIGN);
@@ -309,6 +318,23 @@ class OrchestratorToolsServiceTest {
         verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
         verify(competencyProgressApi, never()).updateProgressByLearningObjectAsync(any());
         assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignExerciseToCompetency_reweightPreservesExistingAuthorship() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(5L, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        ProgrammingExercise exercise = exerciseInCourse(20L, "Implement Quicksort", course);
+        CompetencyExerciseLink existing = new CompetencyExerciseLink(competency, exercise, 0.5);
+        existing.setGeneratedByAi(true);
+        when(courseCompetencyRepository.findById(5L)).thenReturn(Optional.of(competency));
+        when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(exercise);
+        when(competencyExerciseLinkRepository.findByExerciseIdAndCompetencyId(20L, 5L)).thenReturn(Optional.of(existing));
+
+        service.assignExerciseToCompetency(5L, 20L, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(existing.getWeight()).isEqualTo(1.0);
+        assertThat(existing.isGeneratedByAi()).isTrue();
     }
 
     @Test

@@ -367,6 +367,7 @@ public class ExerciseMappingToolsService {
                         link.setCompetency(competency);
                         link.setExercise(exercise);
                         link.setWeight(mapping.getWeight());
+                        link.setGeneratedByAi(true);
                         linksToCreate.add(link);
                     }
                     else {

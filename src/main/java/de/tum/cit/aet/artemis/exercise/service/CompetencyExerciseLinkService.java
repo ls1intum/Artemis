@@ -149,7 +149,9 @@ public class CompetencyExerciseLinkService {
             if (exerciseCourseId != null && competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
                 continue;
             }
-            resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
+            CompetencyExerciseLink resolvedLink = new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight());
+            resolvedLink.setGeneratedByAi(link.isGeneratedByAi());
+            resolvedLinks.add(resolvedLink);
         }
         exercise.setCompetencyLinks(resolvedLinks);
     }

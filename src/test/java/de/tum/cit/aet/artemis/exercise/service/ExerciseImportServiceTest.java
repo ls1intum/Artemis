@@ -12,6 +12,8 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -102,6 +104,23 @@ class ExerciseImportServiceTest {
         assertThat(newExercise.getDifficulty()).isEqualTo(DifficultyLevel.EASY);
         assertThat(newExercise.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(newExercise.getGradingInstructions()).isEqualTo("Source grading instructions");
+    }
+
+    @Test
+    void preservesCompetencyLinkProvenanceWhenRebindingLinksToTheImportedExercise() {
+        TextExercise source = sourceWithContent();
+        TextExercise newExercise = new TextExercise();
+        newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        CompetencyExerciseLink link = new CompetencyExerciseLink(new Competency(), newExercise, 0.5);
+        link.setGeneratedByAi(true);
+        newExercise.setCompetencyLinks(new HashSet<>(Set.of(link)));
+
+        service.copyBasis(newExercise, source);
+
+        assertThat(newExercise.getCompetencyLinks()).singleElement().satisfies(copiedLink -> {
+            assertThat(copiedLink.getExercise()).isSameAs(newExercise);
+            assertThat(copiedLink.isGeneratedByAi()).isTrue();
+        });
     }
 
     @Test

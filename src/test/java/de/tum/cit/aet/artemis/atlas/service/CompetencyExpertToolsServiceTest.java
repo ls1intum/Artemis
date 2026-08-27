@@ -247,13 +247,16 @@ class CompetencyExpertToolsServiceTest {
             assertThat(actualJsonNode.get("updated").asInt()).isZero();
             assertThat(actualJsonNode.get("failed").asInt()).isZero();
 
-            verify(competencyRepository, times(1)).save(any(Competency.class));
+            ArgumentCaptor<Competency> competencyCaptor = ArgumentCaptor.forClass(Competency.class);
+            verify(competencyRepository).save(competencyCaptor.capture());
+            assertThat(competencyCaptor.getValue().isGeneratedByAi()).isTrue();
             assertThat(AtlasAgentService.wasCompetencyModified()).isTrue();
         }
 
         @Test
         void shouldUpdateExistingCompetencySuccessfully() throws JsonProcessingException {
             CompetencyOperation updateOperation = new CompetencyOperation(1L, "Updated Title", "Updated description", CompetencyTaxonomy.ANALYZE);
+            testCompetency.setGeneratedByAi(true);
 
             when(courseRepository.findById(123L)).thenReturn(Optional.of(testCourse));
             when(competencyRepository.findById(1L)).thenReturn(Optional.of(testCompetency));
@@ -272,6 +275,7 @@ class CompetencyExpertToolsServiceTest {
             assertThat(actualSavedCompetency.getTitle()).isEqualTo("Updated Title");
             assertThat(actualSavedCompetency.getDescription()).isEqualTo("Updated description");
             assertThat(actualSavedCompetency.getTaxonomy()).isEqualTo(CompetencyTaxonomy.ANALYZE);
+            assertThat(actualSavedCompetency.isGeneratedByAi()).isTrue();
 
             assertThat(AtlasAgentService.wasCompetencyModified()).isTrue();
         }

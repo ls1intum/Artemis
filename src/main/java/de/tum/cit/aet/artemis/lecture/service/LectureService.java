@@ -425,7 +425,7 @@ public class LectureService {
         LectureDetailsDTO.CompetencyDTO competencyDTO = competency != null
                 ? new LectureDetailsDTO.CompetencyDTO(competency.getId(), competency.getTitle(), competency.getTaxonomy())
                 : null;
-        return new LectureDetailsDTO.CompetencyLinkDTO(competencyDTO, competencyLink.getWeight());
+        return new LectureDetailsDTO.CompetencyLinkDTO(competencyDTO, competencyLink.getWeight(), competencyLink.isGeneratedByAi());
     }
 
     /**
