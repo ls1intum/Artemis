@@ -352,13 +352,10 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.hideDetails(programmingSubmission, user);
 
         // remove automatic results before sending to client
-        var manualResults = programmingSubmission.getManualResults();
-        if (correctionRound >= manualResults.size()) {
-            programmingSubmission.setResults(List.of());
-        }
-        else {
-            programmingSubmission.setResults(List.of(manualResults.get(correctionRound)));
-        }
+        // The result of the requested correction round, which used to be read off the position of the result inside the
+        // submission's result list and is now stored on the result itself.
+        var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
+        programmingSubmission.setResults(resultForCorrectionRound == null ? Set.of() : Set.of(resultForCorrectionRound));
 
         return ResponseEntity.ok(programmingSubmission);
     }

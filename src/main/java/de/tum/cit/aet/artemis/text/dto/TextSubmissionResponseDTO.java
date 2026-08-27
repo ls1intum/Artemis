@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.text.dto;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
-import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -25,8 +25,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextSubmissionResponseDTO(Long id, String submissionExerciseType, String text, Language language, Boolean submitted, ZonedDateTime submissionDate,
-        SubmissionType type, Boolean exampleSubmission, StudentParticipationDTO participation, List<@Nullable ResultDTO> results, List<TextBlockDTO> blocks)
-        implements Serializable {
+        SubmissionType type, Boolean exampleSubmission, StudentParticipationDTO participation, List<ResultDTO> results, List<TextBlockDTO> blocks) implements Serializable {
 
     /**
      * Converts a {@link TextSubmission} into a {@link TextSubmissionResponseDTO} without the participation's student.
@@ -50,9 +49,9 @@ public record TextSubmissionResponseDTO(Long id, String submissionExerciseType, 
             return null;
         }
 
-        List<@Nullable ResultDTO> results = null;
+        List<ResultDTO> results = null;
         if (Hibernate.isInitialized(submission.getResults()) && submission.getResults() != null) {
-            results = submission.getResults().stream().map(result -> result == null ? null : ResultDTO.of(result)).toList();
+            results = submission.getResults().stream().filter(Objects::nonNull).map(ResultDTO::of).toList();
         }
 
         List<TextBlockDTO> blocks = null;

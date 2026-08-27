@@ -497,7 +497,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         Optional<Result> orginalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
-        assertThat(exampleSubmission.getSubmission().getResults().getFirst().getFeedbacks().iterator().next().getGradingInstruction().getId())
+        assertThat(exampleSubmission.getSubmission().getFirstResult().getFeedbacks().iterator().next().getGradingInstruction().getId())
                 .isEqualTo(orginalResult.orElseThrow().getFeedbacks().iterator().next().getGradingInstruction().getId());
     }
 
