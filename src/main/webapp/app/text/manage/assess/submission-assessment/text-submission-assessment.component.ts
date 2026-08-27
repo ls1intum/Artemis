@@ -230,8 +230,8 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(this.submission, this.resultId()));
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound.set(this.submission!.results?.findIndex((result) => result.id === this.resultId())!);
+            // Read off the result, not off its position in the results array.
+            this.correctionRound.set(this.result()?.correctionRound ?? 0);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission, this.correctionRound()));
         }
@@ -379,7 +379,9 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * (only if this is a fresh submission, i.e. no assessments exist yet)
      */
     loadFeedbackSuggestions(): void {
-        if (this.assessments.length > 0) {
+        // Without a result there is nothing to attach a suggestion to. This happens for a correction round the tutor has
+        // not started yet, where the submission is opened before a result exists.
+        if (this.assessments.length > 0 || !this.result()) {
             return;
         }
         this.loadingFeedbackSuggestions.set(true);

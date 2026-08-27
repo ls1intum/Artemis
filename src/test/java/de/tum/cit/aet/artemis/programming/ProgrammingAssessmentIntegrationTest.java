@@ -11,7 +11,9 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -774,7 +776,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
             assertThat(submission.getResults()).isNotNull();
             assertThat(submission.getLatestResult()).isNotNull();
             assertThat(submission.getResults()).hasSize(1);
-            assertThat(submission.getResults().getFirst().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+            assertThat(submission.getFirstResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
         }
 
         // request to manually assess latest submission (correction round: 0)
@@ -1054,9 +1056,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(5);
-        Result firstResult = submission.getResults().getFirst();
-        Result midResult = submission.getResults().get(2);
-        Result firstSemiAutomaticResult = submission.getResults().get(3);
+        Result firstResult = submission.getFirstResult();
+        Result midResult = resultsInCreationOrder(submission).get(2);
+        Result firstSemiAutomaticResult = resultsInCreationOrder(submission).get(3);
 
         Result lastResult = submission.getLatestResult();
         // we will only delete the middle automatic result at index 2
@@ -1065,9 +1067,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(4);
-        assertThat(submission.getResults().getFirst()).isEqualTo(firstResult);
-        assertThat(submission.getResults().get(2)).isEqualTo(firstSemiAutomaticResult);
-        assertThat(submission.getResults().get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
+        assertThat(submission.getFirstResult()).isEqualTo(firstResult);
+        assertThat(resultsInCreationOrder(submission).get(2)).isEqualTo(firstSemiAutomaticResult);
+        assertThat(resultsInCreationOrder(submission).get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
     }
 
     @Test
@@ -1112,9 +1114,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.getFirst();
-        Result resultToDelete = submission.getResults().get(0);
-        Result secondResult = submission.getResults().get(1);
-        Result thirdResult = submission.getResults().get(2);
+        Result resultToDelete = resultsInCreationOrder(submission).get(0);
+        Result secondResult = resultsInCreationOrder(submission).get(1);
+        Result thirdResult = resultsInCreationOrder(submission).get(2);
         assertThat(submission.getResults()).hasSize(3);
 
         request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/"
@@ -1122,7 +1124,15 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getResults().get(0)).isEqualTo(secondResult);
-        assertThat(submission.getResults().get(1)).isEqualTo(thirdResult);
+        assertThat(resultsInCreationOrder(submission).get(0)).isEqualTo(secondResult);
+        assertThat(resultsInCreationOrder(submission).get(1)).isEqualTo(thirdResult);
+    }
+
+    /**
+     * The results of a submission in the order they were created. The submission's results are an unordered set, so a
+     * test that cares about the order of creation has to say so; ids ascend with creation.
+     */
+    private static List<Result> resultsInCreationOrder(Submission submission) {
+        return submission.getResults().stream().filter(Objects::nonNull).sorted(Comparator.comparing(Result::getId)).toList();
     }
 }
