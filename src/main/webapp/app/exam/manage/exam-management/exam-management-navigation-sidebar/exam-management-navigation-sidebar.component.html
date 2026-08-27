@@ -22,8 +22,14 @@
                                 <hr />
                             }
                             <div class="accordion-header flex items-center justify-between bg-module px-1 py-2" (click)="toggleExam(exam.id!)">
-                                <div class="truncate">
-                                    {{ exam.title }}
+                                <div class="flex items-center gap-2 overflow-hidden mr-2 flex-1">
+                                    <fa-icon
+                                        [icon]="exam.testExam ? faVial : faGraduationCap"
+                                        [tumUiTooltip]="
+                                            (exam.testExam ? 'artemisApp.examManagement.testExam.testExam' : 'artemisApp.examManagement.testExam.realExam') | artemisTranslate
+                                        "
+                                    />
+                                    <span class="truncate">{{ exam.title }}</span>
                                 </div>
                                 <div class="icon-container">
                                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="expandedExams().has(exam.id!)" />

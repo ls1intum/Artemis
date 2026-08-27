@@ -1,7 +1,13 @@
 <tum-ui-tag severity="secondary" data-testid="exam-mode-tag">
     @if (testExam()) {
-        <span jhiTranslate="artemisApp.examManagement.testExam.testExam" class="flex items-center font-bold text-primary text-xs"></span>
+        <span class="flex items-center gap-1 font-bold text-primary text-xs">
+            <fa-icon [icon]="faVial" />
+            <span jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
+        </span>
     } @else {
-        <span jhiTranslate="artemisApp.examManagement.testExam.realExam" class="flex items-center font-bold text-success text-xs"></span>
+        <span class="flex items-center gap-1 font-bold text-success text-xs">
+            <fa-icon [icon]="faGraduationCap" />
+            <span jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
+        </span>
     }
 </tum-ui-tag>
