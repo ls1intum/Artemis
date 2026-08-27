@@ -117,6 +117,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         submission.results = [
             {
                 id: 2374,
+                correctionRound: 0,
                 completionDate: dayjs('2019-07-09T11:51:23.251Z'),
                 successful: false,
                 score: 8,

@@ -215,7 +215,7 @@ public class ParticipationDeletionService {
         // Delete all submissions for this participation
         submissions.forEach(submission -> {
             // We have to set the results to an empty list because otherwise clearing the build log entries does not work correctly
-            submission.setResults(List.of());
+            submission.setResults(Set.of());
             if (submission instanceof ProgrammingSubmission programmingSubmission) {
                 buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
             }
