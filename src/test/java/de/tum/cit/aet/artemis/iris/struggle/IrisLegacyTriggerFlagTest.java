@@ -75,15 +75,13 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        // The AI decision and its timestamp moved out of jhi_user into their own table (#13546).
         for (User user : users) {
-            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
-            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-            userTestRepository.save(user);
+            userUtilService.setAiSelectionDecision(user, AiSelectionDecision.CLOUD_AI);
+            userUtilService.setAiSelectionDecisionDate(user, ZonedDateTime.parse("2025-12-11T00:00:00Z"));
         }
 
-        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
-        userTestRepository.save(student1);
+        userUtilService.setAiSelectionDecisionDate(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), ZonedDateTime.now().minusDays(1));
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

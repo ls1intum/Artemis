@@ -89,10 +89,10 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         // Seed an opted-in student1 (UserFactory defaults every generated user to CLOUD_AI, so this is enough
         // for the server-side AI opt-in gate). Re-assert CLOUD_AI defensively.
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        // The AI decision and its timestamp moved out of jhi_user into their own table (#13546).
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        student1.setSelectedLLMUsageTimestamp(ZonedDateTime.now().minusDays(1));
-        userTestRepository.save(student1);
+        userUtilService.setAiSelectionDecision(student1, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecisionDate(student1, ZonedDateTime.now().minusDays(1));
 
         // Programming exercise + local VC repositories, mirroring PyrisEventSystemIntegrationTest so that
         // toPyrisSubmissionDTO can read the (committed) repository contents off-thread.

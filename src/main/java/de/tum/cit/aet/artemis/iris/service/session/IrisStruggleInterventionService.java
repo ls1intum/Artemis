@@ -25,6 +25,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -110,6 +111,8 @@ public class IrisStruggleInterventionService {
 
     private final IrisAmbientDecisionRepository irisAmbientDecisionRepository;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final TransactionTemplate transactionTemplate;
 
     @Value("${artemis.iris.proactive.struggle.confidence-threshold:0.6}")
@@ -119,7 +122,7 @@ public class IrisStruggleInterventionService {
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
             IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, IrisMessageRepository irisMessageRepository,
-            IrisAmbientDecisionRepository irisAmbientDecisionRepository, PlatformTransactionManager transactionManager) {
+            IrisAmbientDecisionRepository irisAmbientDecisionRepository, PlatformTransactionManager transactionManager, UserAiPreferenceService userAiPreferenceService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -133,6 +136,7 @@ public class IrisStruggleInterventionService {
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.irisMessageRepository = irisMessageRepository;
         this.irisAmbientDecisionRepository = irisAmbientDecisionRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
@@ -229,7 +233,7 @@ public class IrisStruggleInterventionService {
         var user = userRepository.findByIdElseThrow(p.userId());
         // Re-check LLM consent on the async thread: the student may have revoked their opt-in between the 202 and now.
         // Bail BEFORE any egress to Pyris and release the reserved slot (no callback will then arrive).
-        if (!user.hasOptedIntoLLMUsage()) {
+        if (!userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())) {
             log.info("Struggle intervention skipped: user {} is no longer opted into LLM usage", p.userId());
             pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
             return;

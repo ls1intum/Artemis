@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -93,6 +94,9 @@ class IrisStruggleInterventionServiceTriggerTest {
     @Mock
     private PlatformTransactionManager transactionManager;
 
+    @Mock
+    private UserAiPreferenceService userAiPreferenceService;
+
     private IrisStruggleInterventionService service;
 
     private static final long EX = 42L;
@@ -119,7 +123,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
     }
 

@@ -49,14 +49,11 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         // opt-out case below.
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
 
-        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        userTestRepository.save(student1);
-
-        // The opted-out student: clear the default AI selection so hasOptedIntoLLMUsageElseThrow throws 403.
-        var studentNoAi = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        studentNoAi.setSelectedLLMUsage(null);
-        userTestRepository.save(studentNoAi);
+        // The AI decision moved out of jhi_user into its own table (#13546).
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), AiSelectionDecision.CLOUD_AI);
+        // The opted-out student: addUsers records CLOUD_AI by default, so NO_AI has to be set explicitly for
+        // the opt-in gate to reject them with 403.
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student2"), AiSelectionDecision.NO_AI);
 
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

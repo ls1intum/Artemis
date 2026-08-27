@@ -26,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -99,6 +100,9 @@ class IrisStruggleInterventionPrimitivesTest {
     @Mock
     private PlatformTransactionManager transactionManager;
 
+    @Mock
+    private UserAiPreferenceService userAiPreferenceService;
+
     private IrisStruggleInterventionService service;
 
     private User user;
@@ -114,7 +118,7 @@ class IrisStruggleInterventionPrimitivesTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 

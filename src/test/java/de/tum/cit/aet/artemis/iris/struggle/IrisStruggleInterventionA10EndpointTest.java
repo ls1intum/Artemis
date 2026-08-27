@@ -65,17 +65,11 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         // opt-in, so the foreign owner cannot be the opted-out student2).
         userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 1);
 
-        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        student1.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        userTestRepository.save(student1);
-
-        var student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        student2.setSelectedLLMUsage(null);
-        userTestRepository.save(student2);
-
-        var student3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
-        student3.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        userTestRepository.save(student3);
+        // The AI decision moved out of jhi_user into its own table (#13546), so it is set through the util service.
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), AiSelectionDecision.CLOUD_AI);
+        // student2 is opted out on purpose: addUsers records CLOUD_AI by default, so it has to be overridden.
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student2"), AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student3"), AiSelectionDecision.CLOUD_AI);
 
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

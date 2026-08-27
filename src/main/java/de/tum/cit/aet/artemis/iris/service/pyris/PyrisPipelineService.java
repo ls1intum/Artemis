@@ -246,7 +246,7 @@ public class PyrisPipelineService {
             PyrisProgrammingExerciseDTO exerciseDTO, @Nullable PyrisSubmissionDTO submissionDTO, PyrisCourseDTO courseDTO, List<PyrisMessageDTO> chatHistory, long exerciseId,
             @Nullable String intent, @Nullable StruggleEpisodeDTO episode, @Nullable String proactivityMode) {
         var pyrisUser = toPyrisUserDTO(user);
-        executePipeline("struggle-intervention", user.getSelectedLLMUsage(), variant, supportLevel, Optional.empty(), jobToken,
+        executePipeline("struggle-intervention", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, Optional.empty(), jobToken,
                 executionDto -> new PyrisStruggleInterventionPipelineExecutionDTO(signal, exerciseDTO, submissionDTO, chatHistory, courseDTO, pyrisUser, executionDto.settings(),
                         intent, episode, proactivityMode),
                 (runId, runState, error) -> {

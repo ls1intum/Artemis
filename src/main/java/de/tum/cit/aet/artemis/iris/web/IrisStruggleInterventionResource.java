@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -44,9 +45,13 @@ public class IrisStruggleInterventionResource {
 
     private final UserRepository userRepository;
 
-    public IrisStruggleInterventionResource(IrisStruggleInterventionService struggleInterventionService, UserRepository userRepository) {
+    private final UserAiPreferenceService userAiPreferenceService;
+
+    public IrisStruggleInterventionResource(IrisStruggleInterventionService struggleInterventionService, UserRepository userRepository,
+            UserAiPreferenceService userAiPreferenceService) {
         this.struggleInterventionService = struggleInterventionService;
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
     }
 
     /**
@@ -63,7 +68,7 @@ public class IrisStruggleInterventionResource {
             @Valid @RequestBody IrisStruggleInterventionRequestDTO requestDTO) {
         var user = userRepository.getUserWithAuthorities();
         // Explicit server-side AI opt-in gate (spec §10), before any pipeline work.
-        user.hasOptedIntoLLMUsageElseThrow();
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var outcome = struggleInterventionService.requestStruggleIntervention(exerciseId, requestDTO.struggleSignal(), requestDTO.uncommittedFiles(), requestDTO.intent(),
                 requestDTO.episode(), requestDTO.confirmReason(), requestDTO.requestToken(), requestDTO.proactivityMode(), user);
         return ResponseEntity.accepted().body(new StruggleInterventionAcceptedDTO(outcome.accepted(), outcome.courseDisabled(), exerciseId, outcome.jobToken()));
@@ -87,7 +92,7 @@ public class IrisStruggleInterventionResource {
     @AllowedTools(ToolTokenType.SCORPIO)
     public ResponseEntity<IrisMessageResponseDTO> revealAmbient(@PathVariable long exerciseId, @PathVariable String episodeId, @RequestBody RevealAmbientRequestDTO body) {
         var user = userRepository.getUserWithAuthorities();
-        user.hasOptedIntoLLMUsageElseThrow();
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var dto = struggleInterventionService.revealAmbient(user, exerciseId, episodeId);
         return ResponseEntity.ok(dto);
     }
