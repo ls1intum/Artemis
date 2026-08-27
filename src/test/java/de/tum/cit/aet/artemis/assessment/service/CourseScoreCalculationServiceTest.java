@@ -199,9 +199,13 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(0.0);
         }
         else {
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.6);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(26.4);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(132.0);
+            // The text participation contributes nothing because its results were deleted above. That deletion used to
+            // be a no-op: the results were an ordered list whose position column stayed at its database default for
+            // every result saved through the result repository, so the list came back with a null in it, and the null
+            // was filtered out before the delete. The expected values used to encode that.
+            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.0);
+            assertThat(studentScoresDTO.relativeScore()).isEqualTo(24.0);
+            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(120.0);
         }
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
