@@ -98,6 +98,15 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
             result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
         });
+
+        if (result.getTestCaseCount() > 0 && result.getTestCaseFeedbacks().isEmpty()) {
+            // Not a failed build: the tests ran, but Artemis cannot attribute any of them. This is what a failed or
+            // missing solution build looks like from here, because the solution result is what registers the test
+            // cases - without them no feedback can be stored and nothing counts towards the score. Worth a warning
+            // rather than a silent empty result, since only re-running the solution build fixes it.
+            log.warn("The build of exercise {} reported {} test(s), but none of them matches one of its {} active test case(s). The solution build has probably not registered "
+                    + "the test cases (yet).", programmingExercise.getId(), result.getTestCaseCount(), activeTestCases.size());
+        }
     }
 
     private void addStaticCodeAnalysisFeedbackToResult(Result result, BuildResultNotification buildResult, ProgrammingExercise programmingExercise) {

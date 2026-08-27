@@ -20,8 +20,14 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
  * <p>
  * The referencing columns carry no database foreign key (by design, to avoid an index over tens of
  * millions of rows), and feedback rows can be deleted by a database-level cascade without the application
- * running — so unreferenced messages must be collected by this scan, which runs as part of the scheduled
- * data cleanup.
+ * running — so unreferenced messages must be collected by this scan, which runs as part of the admin
+ * orphan cleanup (deliberately not scheduled: it is the one cleanup query that reads the whole of both
+ * referencing tables).
+ * <p>
+ * Both databases plan the anti-join as a single linear pass — PostgreSQL as a hash right anti join over two
+ * sequential scans, MySQL by materializing each subquery with deduplication once — so the cost is one
+ * sequential scan of each referencing table, not one per message. Measured at production scale (615k
+ * messages, 31.7M test-case and 2.5M SCA rows, 130k collected): 2.8 s on PostgreSQL 18, 15 s on MySQL 9.
  * THE FOLLOWING METHODS ARE USED FOR CLEANUP PURPOSES AND SHOULD NOT BE USED IN OTHER CASES
  */
 @Profile(PROFILE_CORE)

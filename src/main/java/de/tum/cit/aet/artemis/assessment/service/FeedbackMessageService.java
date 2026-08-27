@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackMessageRepository;
  * <p>
  * Messages are immutable — a text change means resolving a different message and re-pointing the
  * referencing row, never editing a (potentially shared) message. Unreferenced messages are removed by
- * the scheduled data cleanup.
+ * the admin orphan cleanup.
  */
 @Profile(PROFILE_CORE)
 @Lazy

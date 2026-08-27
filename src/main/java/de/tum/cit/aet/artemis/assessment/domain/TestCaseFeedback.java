@@ -55,7 +55,7 @@ public class TestCaseFeedback {
     /**
      * Deliberately no database foreign key: referential integrity to the immutable, content-addressed
      * {@link FeedbackMessage} is application-enforced, and unreferenced messages are garbage-collected by
-     * the scheduled data cleanup. A constraint would force an index over tens of millions of rows that no
+     * the admin orphan cleanup. A constraint would force an index over tens of millions of rows that no
      * query uses.
      */
     @ManyToOne(fetch = FetchType.LAZY)

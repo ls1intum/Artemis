@@ -218,13 +218,15 @@ public class ProgrammingExerciseGradingService {
             var latestSubmission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
 
             // Determine if the build failed based on whether tests were expected.
-            // When tests are expected: build failed if the build produced no test results at all
-            // (SCA-only feedback does not count - test results live in the typed collection).
+            // When tests are expected: build failed if the build reported no test results at all. What decides is
+            // the reported count, not the stored test-case feedback: feedback is only stored for tests the exercise
+            // knows, and it knows them from the solution build. If that build failed or has not run yet, this build
+            // still ran its tests - the student must not be told their build failed because of it.
             // When tests are NOT expected (compile-only phase): build failed if the script exited with non-zero.
-            final boolean noTestFeedbacks = newResult.getTestCaseFeedbacks().isEmpty();
+            final boolean noTestResults = newResult.getTestCaseCount() == 0;
             final Integer exitCode = buildResult.buildScriptExitCode();
             final boolean scriptFailed = exitCode != null && exitCode != 0;
-            final var buildFailed = testsExpected ? noTestFeedbacks : scriptFailed;
+            final var buildFailed = testsExpected ? noTestResults : scriptFailed;
             if (latestSubmission.isBuildFailed() != buildFailed) {
                 // Written directly. This is one boolean on a row that already exists, and it used to reach the database
                 // only through saving the whole submission at the end of this method.

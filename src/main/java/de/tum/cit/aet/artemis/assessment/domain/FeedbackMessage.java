@@ -25,7 +25,10 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * text and re-point the referencing row ({@code FeedbackMessageService#getOrCreate}). The referencing
  * columns intentionally carry no database foreign key and no index (an index over ~34M referencing rows
  * would cost ~0.6 GB and no query filters by message); unreferenced messages are garbage-collected by the
- * scheduled data cleanup with a scan-based query.
+ * admin orphan cleanup with a scan-based query. Both databases plan that scan as a single linear anti-join
+ * pass, so the missing index costs one sequential scan of each referencing table per cleanup run: measured
+ * at production scale (615k messages, 31.7M test-case and 2.5M SCA rows, 130k collected) at 2.8 s on
+ * PostgreSQL 18 and 15 s on MySQL 9.
  */
 @Entity
 @Table(name = "feedback_message")

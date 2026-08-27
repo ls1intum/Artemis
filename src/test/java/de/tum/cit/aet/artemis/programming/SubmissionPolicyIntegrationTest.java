@@ -523,6 +523,27 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_processResultWithOnlyUnknownTests_doesNotMarkSubmissionAsBuildFailed() {
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
+
+        // The reported test is not one of the exercise's test cases, which is what a failed or missing solution build
+        // looks like from here (the solution result is what registers them). The tests still ran, so the build did not
+        // fail - there is only nothing Artemis can attribute the results to.
+        var jobs = List.of(new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("aTestTheExerciseDoesNotKnow", List.of()))));
+        BuildResult buildResult = new BuildResult(defaultBranch, "commit0", null, true, ZonedDateTime.now(), jobs, List.of(), List.of(), false, 0);
+
+        Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, true);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTestCaseFeedbacks()).isEmpty();
+        assertThat(result.getSubmission()).isInstanceOf(ProgrammingSubmission.class);
+        assertThat(((ProgrammingSubmission) result.getSubmission()).isBuildFailed()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void test_processCompileOnlyResult_marksSubmissionAsBuildFailed_whenBuildScriptFails() {
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
                 TEST_PREFIX + "student1");
