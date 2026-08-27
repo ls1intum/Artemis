@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.dto.CourseBrowserDataDTO;
@@ -27,7 +27,10 @@ import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateRead
 
 /**
  * Admin-only, read-only endpoints for the per-course content browser: what the index holds for a course, and what it is
- * missing. Only available when Weaviate is enabled; every endpoint requires admin.
+ * missing. Only available when Weaviate is enabled.
+ * <p>
+ * TEMPORARY (revert before merge): relaxed from admin to instructor and moved out of the {@code /admin/} segment, for the same reason as the
+ * coverage resource beside it.
  * <p>
  * Opening a course is one request, because everything it renders derives from the same two id-sets and splitting it up
  * meant reloading those sets per part. The second endpoint is fetched only when an admin selects a collection under a
@@ -36,10 +39,9 @@ import de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateRead
  */
 @Profile(PROFILE_CORE)
 @Conditional(WeaviateEnabled.class)
-@EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/global-search/admin/")
+@RequestMapping("api/global-search/ingestion-dashboard/")
 public class IngestionBrowserResource {
 
     private static final String ENTITY_NAME = "ingestionBrowser";
@@ -64,6 +66,7 @@ public class IngestionBrowserResource {
      * @param courseId the course to inspect
      * @return the browser payload for the course
      */
+    @EnforceAtLeastInstructor
     @GetMapping("courses/{courseId}/browser")
     public ResponseEntity<CourseBrowserDataDTO> getCourseBrowserData(@PathVariable long courseId) {
         requireCourse(courseId);
@@ -79,6 +82,7 @@ public class IngestionBrowserResource {
      * @param type     the entity type to read
      * @return the stored records of that type
      */
+    @EnforceAtLeastInstructor
     @GetMapping("courses/{courseId}/entities")
     public ResponseEntity<List<IndexedEntityRecordDTO>> getIndexedEntityRecords(@PathVariable long courseId, @RequestParam String type) {
         requireCourse(courseId);
@@ -99,6 +103,7 @@ public class IngestionBrowserResource {
      *                     {@code segments})
      * @return the stored objects
      */
+    @EnforceAtLeastInstructor
     @GetMapping("courses/{courseId}/units/{unitId}/content")
     public ResponseEntity<List<IndexedContentObjectDTO>> getUnitContent(@PathVariable long courseId, @PathVariable long unitId, @RequestParam String key) {
         requireCourse(courseId);
