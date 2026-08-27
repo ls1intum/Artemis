@@ -10,6 +10,9 @@ import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 
+/** Box geometry is rounded per element, so an edge flush against another overshoots it by a fraction of a pixel. */
+const SUB_PIXEL_TOLERANCE = 1;
+
 const course = { id: SEED_COURSES.exerciseAssessment.id } as any;
 
 /**
@@ -67,16 +70,23 @@ test.describe.serial('Exam modeling summary', { tag: '@slow' }, () => {
         await expect(panel.locator('.feedback-row').first()).toBeVisible();
         await expect(panel).toContainText('Good');
 
-        // The panel floats over the canvas, so reserving rail width is not enough: the camera must
-        // also refit once the rail settles, or the nodes keep their old framing and sit underneath.
-        const panelBox = (await panel.locator('.apollon-rail-disclosure__panel').boundingBox())!;
+        // The panel floats over the canvas, so reserving rail width is not enough: the camera has to refit once the
+        // rail settles, or the nodes keep their old framing and sit underneath. That refit is what is polled for.
         const nodes = page.locator('jhi-modeling-exam-summary .react-flow__node');
-        const nodeCount = await nodes.count();
-        expect(nodeCount).toBeGreaterThan(0);
-        for (let index = 0; index < nodeCount; index++) {
-            const nodeBox = (await nodes.nth(index).boundingBox())!;
-            expect(nodeBox.x + nodeBox.width, `node ${index} must not sit under the feedback panel`).toBeLessThanOrEqual(panelBox.x + 1);
-        }
+        expect(await nodes.count()).toBeGreaterThan(0);
+        await expect
+            .poll(
+                async () => {
+                    const panelBox = await panel.locator('.apollon-rail-disclosure__panel').boundingBox();
+                    const nodeBoxes = await nodes.all().then((all) => Promise.all(all.map((node) => node.boundingBox())));
+                    if (!panelBox || nodeBoxes.some((box) => !box)) {
+                        return false;
+                    }
+                    return nodeBoxes.every((box) => box!.x + box!.width <= panelBox.x + SUB_PIXEL_TOLERANCE);
+                },
+                { message: 'every node must be framed clear of the feedback panel' },
+            )
+            .toBe(true);
     });
 
     test.afterAll('Delete exam', async ({ browser }) => {

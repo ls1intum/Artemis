@@ -907,11 +907,17 @@ describe('ModelingSubmissionComponent', () => {
             expect(rendered.startsWith('+')).toBe(signed);
         });
 
-        it('should soften the Apollon owner separator in an element name and stay silent without one', () => {
+        it('should name the element by its type, soften the Apollon owner separator, and stay silent without one', () => {
             createModelingSubmissionComponent();
             comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
 
-            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('Course › + title: String');
+            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('attribute Course › + title: String');
+            // A class and an attribute can carry the same name, so the type is what tells them apart.
+            comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: 'class' } });
+            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('class TestClass');
+            comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: '' } });
+            expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('TestClass');
+            comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
             // No reference, no entry for the reference, and an entry without a name all mean "nothing to show".
             expect(comp['feedbackElementName']({} as Feedback)).toBeUndefined();
             expect(comp['feedbackElementName']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();

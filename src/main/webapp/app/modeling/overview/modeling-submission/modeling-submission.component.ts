@@ -130,9 +130,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         const names = this.assessmentsNames();
         const referenceId = feedback.referenceId;
         const assessment = names && referenceId ? names[referenceId] : undefined;
-        // Apollon qualifies a member as `Owner::+ field: Type`; the name already identifies the element,
-        // so only the separator is softened for reading.
-        return assessment?.name ? assessment.name.replace('::', ' › ') : undefined;
+        if (!assessment?.name) {
+            return undefined;
+        }
+        // Apollon qualifies a member as `Owner::+ field: Type`; only the separator is softened for reading. The
+        // element type stays in front of the name, because a class, an interface and an attribute can share one.
+        const name = assessment.name.replace('::', ' › ');
+        return assessment.type ? `${assessment.type} ${name}` : name;
     }
 
     participationId = input<number>();

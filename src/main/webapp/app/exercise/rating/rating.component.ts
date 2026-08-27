@@ -34,11 +34,9 @@ export class RatingComponent {
     readonly layout = input<'stacked' | 'inline'>('stacked');
 
     constructor() {
-        // Replaces both ngOnInit and ngOnChanges: load the rating on the initial binding and reload it whenever the
-        // result changes to a *different* id. The effect's first run handles the initial load (so a separate ngOnInit
-        // is no longer needed — it would only duplicate the request). previousResultId guards against reloading when
-        // the result reference changes but its id does not (the same guard the former hook applied). The reload runs
-        // untracked so participation()/account reads inside loadRating() are not themselves triggers.
+        // Loads the rating on the first binding and again whenever the result changes to a *different* id: the
+        // reference alone changes on every refresh, and refetching then would only repeat the request. The reload is
+        // untracked so the participation and account reads inside `loadRating` do not become triggers of their own.
         effect(() => {
             const result = this.result();
             untracked(() => {
