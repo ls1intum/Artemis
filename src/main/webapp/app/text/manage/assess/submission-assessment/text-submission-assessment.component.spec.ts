@@ -258,8 +258,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         // round it holds has to be the one the resolver requested the participation for. Reading the parameter here a
         // second time would be a second fallback rule, and this component is reused for the next assessment, so a round
         // left over from the previous submission would index a round that was never loaded (#13396).
-        const firstRoundResult = { id: 111, feedbacks: [] } as unknown as Result;
-        const secondRoundResult = { id: 222, feedbacks: [] } as unknown as Result;
+        const firstRoundResult = { id: 111, correctionRound: 0, feedbacks: [] } as unknown as Result;
+        const secondRoundResult = { id: 222, correctionRound: 1, feedbacks: [] } as unknown as Result;
 
         beforeEach(() => {
             submission.results = [firstRoundResult, secondRoundResult];
