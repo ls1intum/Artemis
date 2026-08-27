@@ -150,6 +150,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             results: [
                 {
                     id: 2374,
+                    correctionRound: 0,
                     score: 8,
                     rated: true,
                     hasComplaint: true,
@@ -316,6 +317,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             component.result.set({
                 id: 2374,
+                correctionRound: 0,
                 score: 8,
                 rated: true,
                 hasComplaint: false,
@@ -459,6 +461,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         const changedResult = {
             id: 2374,
+            correctionRound: 0,
             score: 8,
             rated: true,
             hasComplaint: false,
