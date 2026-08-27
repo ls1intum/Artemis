@@ -225,7 +225,22 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.validateFeedback();
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission()!.id}`);
+                // Build the path through the router. Artemis uses path-based routing, so window.location.hash is empty
+                // and using it here rewrites the address to the application root once the submission has loaded.
+                const newUrl = this.router
+                    .createUrlTree(
+                        getLinkToSubmissionAssessment(
+                            ExerciseType.MODELING,
+                            this.courseId,
+                            this.exerciseId,
+                            submission.participation?.id,
+                            submission.id!,
+                            this.examId,
+                            this.exerciseGroupId,
+                        ),
+                        { queryParams: this.route.snapshot.queryParams },
+                    )
+                    .toString();
                 this.location.go(newUrl);
             },
             error: (error: HttpErrorResponse) => {
