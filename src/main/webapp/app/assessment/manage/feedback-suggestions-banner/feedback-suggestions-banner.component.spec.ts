@@ -20,6 +20,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
                 fixture.componentRef.setInput('hasAutomaticFeedback', false);
                 fixture.componentRef.setInput('isAssessor', false);
                 fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', false);
+                fixture.componentRef.setInput('requiresAiExperienceOptIn', false);
             });
     });
 
@@ -59,5 +60,31 @@ describe('FeedbackSuggestionsBannerComponent', () => {
 
         expect(fixture.debugElement.queryAll(By.directive(Message))).toHaveLength(0);
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
+    });
+
+    it('should show the AI Experience opt-in hint when the assessor has not accepted AI usage, instead of loading or generative AI banners', () => {
+        fixture.componentRef.setInput('hasAutomaticFeedback', false);
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
+        fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
+        fixture.detectChanges();
+
+        const messages = fixture.debugElement.queryAll(By.directive(Message));
+        expect(messages).toHaveLength(1);
+        expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint"]'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions'))).toBeTruthy();
+    });
+
+    it('should emit optIn when the opt-in hint button is clicked', () => {
+        fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
+        fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
+        fixture.detectChanges();
+
+        let emitted = false;
+        fixture.componentInstance.optIn.subscribe(() => (emitted = true));
+
+        fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions')).nativeElement.click();
+
+        expect(emitted).toBe(true);
     });
 });

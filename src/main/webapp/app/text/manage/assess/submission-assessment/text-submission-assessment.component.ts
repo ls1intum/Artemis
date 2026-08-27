@@ -47,6 +47,7 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { TextAssessmentRouteData } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
 
 @Component({
     selector: 'jhi-text-submission-assessment',
@@ -76,6 +77,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private athenaService = inject(AthenaService);
     private translateService = inject(TranslateService);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
 
     /*
      * The instance of this component is REUSED for multiple assessments if using the "Assess Next" button!
@@ -282,6 +284,14 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
     get isFeedbackSuggestionsEnabled(): boolean {
         return Boolean(this.exercise?.feedbackSuggestionModule);
+    }
+
+    get requiresAiExperienceOptIn(): boolean {
+        return this.isFeedbackSuggestionsEnabled && !this.aiExperienceOptInService.hasAcceptedAiUsage();
+    }
+
+    onOptInToAiFeedbackSuggestions(): void {
+        this.aiExperienceOptInService.promptForAiUsage(() => this.loadFeedbackSuggestions());
     }
 
     private checkPermissions(result?: Result): void {

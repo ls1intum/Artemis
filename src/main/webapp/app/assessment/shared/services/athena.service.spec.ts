@@ -11,11 +11,15 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AthenaService', () => {
     let service: AthenaService;
     let httpMock: HttpTestingController;
     let profileService: ProfileService;
+    let accountService: AccountService;
 
     const gradingCriteria = [
         {
@@ -40,13 +44,21 @@ describe('AthenaService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [AthenaService, provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
+            providers: [
+                AthenaService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         });
 
         service = TestBed.inject(AthenaService);
         httpMock = TestBed.inject(HttpTestingController);
         profileService = TestBed.inject(ProfileService);
+        accountService = TestBed.inject(AccountService);
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
     });
 
     afterEach(() => {
@@ -163,5 +175,50 @@ describe('AthenaService', () => {
         expect(feedback.text).toBe('FeedbackSuggestion:Model');
         expect(feedback.detailText).toBe('Needs work');
         expect(feedback.reference).toBeUndefined();
+    });
+
+    describe('assessor AI Experience gating', () => {
+        it('should not request text feedback suggestions when the assessor has not accepted AI usage', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as any);
+            const exercise = { ...exerciseBase, type: 'text' } as Exercise;
+            const submission = { id: 5, text: 'Hello World' } as TextSubmission;
+
+            const suggestions = await lastValueFrom(service.getTextFeedbackSuggestions(exercise, submission));
+
+            httpMock.expectNone('api/athena/text-exercises/10/submissions/5/feedback-suggestions');
+            expect(suggestions).toEqual([]);
+        });
+
+        it('should not request programming feedback suggestions when the assessor has no AI Experience decision yet', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: undefined } as any);
+            const exercise = { ...exerciseBase, type: 'programming' } as Exercise;
+
+            const suggestions = await lastValueFrom(service.getProgrammingFeedbackSuggestions(exercise, 9));
+
+            httpMock.expectNone('api/athena/programming-exercises/10/submissions/9/feedback-suggestions');
+            expect(suggestions).toEqual([]);
+        });
+
+        it('should not request modeling feedback suggestions when the assessor has not accepted AI usage', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as any);
+            const exercise = { ...exerciseBase, type: 'modeling' } as Exercise;
+            const submission = { id: 11 } as ModelingSubmission;
+
+            const suggestions = await lastValueFrom(service.getModelingFeedbackSuggestions(exercise, submission));
+
+            httpMock.expectNone('api/athena/modeling-exercises/10/submissions/11/feedback-suggestions');
+            expect(suggestions).toEqual([]);
+        });
+
+        it('should request feedback suggestions when the assessor has accepted local AI usage', async () => {
+            accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.LOCAL_AI } as any);
+            const exercise = { ...exerciseBase, type: 'text' } as Exercise;
+            const submission = { id: 5, text: 'Hello World' } as TextSubmission;
+
+            const suggestionsPromise = lastValueFrom(service.getTextFeedbackSuggestions(exercise, submission));
+            httpMock.expectOne('api/athena/text-exercises/10/submissions/5/feedback-suggestions').flush([]);
+
+            expect(await suggestionsPromise).toEqual([]);
+        });
     });
 });

@@ -40,6 +40,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -64,6 +65,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private modelingSubmissionService = inject(ModelingSubmissionService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private accountService = inject(AccountService);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
     private location = inject(Location);
     private translateService = inject(TranslateService);
     private complaintService = inject(ComplaintService);
@@ -147,6 +149,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      */
     get isFeedbackSuggestionsEnabled(): boolean {
         return Boolean(this.modelingExercise()?.feedbackSuggestionModule);
+    }
+
+    get requiresAiExperienceOptIn(): boolean {
+        return this.isFeedbackSuggestionsEnabled && !this.aiExperienceOptInService.hasAcceptedAiUsage();
+    }
+
+    onOptInToAiFeedbackSuggestions(): void {
+        this.aiExperienceOptInService.promptForAiUsage(() => void this.fetchAndApplyFeedbackSuggestions());
     }
 
     ngOnInit() {

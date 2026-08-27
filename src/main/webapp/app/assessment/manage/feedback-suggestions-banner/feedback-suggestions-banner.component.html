@@ -3,7 +3,7 @@
         <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable"></span>
     </p-message>
 }
-@if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled()) {
+@if (!isLoading() && hasAutomaticFeedback() && isAssessor() && !resultCompletionDate() && isFeedbackSuggestionsEnabled() && !requiresAiExperienceOptIn()) {
     <p-message severity="info" class="d-flex align-items-center gap-1">
         <span>{{ 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable' | artemisTranslate }}</span>
         <fa-icon
@@ -16,9 +16,17 @@
         />
     </p-message>
 }
-@if (isLoading() && isFeedbackSuggestionsEnabled()) {
+@if (isLoading() && isFeedbackSuggestionsEnabled() && !requiresAiExperienceOptIn()) {
     <p-message severity="secondary" class="d-flex align-items-center gap-1">
         <fa-icon [icon]="faCircleNotch" animation="spin" />
         <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"></span>
+    </p-message>
+}
+@if (requiresAiExperienceOptIn()) {
+    <p-message severity="info" class="d-flex align-items-center gap-2">
+        <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint"></span>
+        <button type="button" class="btn btn-sm btn-outline-primary" id="enable-ai-feedback-suggestions" (click)="optIn.emit()">
+            <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.enableAiExperience"></span>
+        </button>
     </p-message>
 }

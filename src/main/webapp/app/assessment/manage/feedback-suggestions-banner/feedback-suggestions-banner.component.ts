@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -18,6 +18,8 @@ export class FeedbackSuggestionsBannerComponent {
     readonly isAssessor = input.required<boolean>();
     readonly resultCompletionDate = input<dayjs.Dayjs | undefined>(undefined);
     readonly isFeedbackSuggestionsEnabled = input.required<boolean>();
+    readonly requiresAiExperienceOptIn = input.required<boolean>();
+    readonly optIn = output<void>();
 
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faQuestionCircle = faQuestionCircle;

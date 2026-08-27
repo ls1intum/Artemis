@@ -57,6 +57,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
 
 /**
  * Typed view onto the component's private members and methods the spec needs to reach,
@@ -907,6 +908,36 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
         comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
+    });
+
+    describe('assessor AI Experience opt-in hint', () => {
+        let aiExperienceOptInService: AiExperienceOptInService;
+
+        beforeEach(() => {
+            aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
+            comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
+        });
+
+        it('should require opt-in when the assessor has not accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(comp.requiresAiExperienceOptIn()).toBe(true);
+        });
+
+        it('should not require opt-in when the assessor has accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(true);
+            expect(comp.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should fetch feedback suggestions once the assessor opts in via the hint', () => {
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+            comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+            comp.onOptInToAiFeedbackSuggestions();
+
+            expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
     });
 
     it('should set loadingFeedbackSuggestions to true while fetching and false after', async () => {

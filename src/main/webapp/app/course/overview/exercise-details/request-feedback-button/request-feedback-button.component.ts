@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED, isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { isAthenaAIResult } from 'app/exercise/result/result.utils';
 import dayjs from 'dayjs/esm';
 
@@ -106,10 +106,6 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         });
     }
 
-    private isAcceptedLLMSelection(selection?: LLMSelectionDecision): boolean {
-        return selection === LLMSelectionDecision.CLOUD_AI || selection === LLMSelectionDecision.LOCAL_AI;
-    }
-
     ngOnInit() {
         this.athenaEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
         this.isExamExercise.set(isExamExercise(this.exercise()));
@@ -170,7 +166,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
 
     setUserAcceptedLLMUsage(): void {
         const selection = this.accountService.userIdentity()?.selectedLLMUsage;
-        this.hasUserAcceptedLLMUsage.set(this.isAcceptedLLMSelection(selection));
+        this.hasUserAcceptedLLMUsage.set(isAcceptedLLMSelection(selection));
     }
 
     async showLLMSelectionModal(): Promise<void> {
@@ -196,7 +192,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
         this.acceptSubscription?.unsubscribe();
 
         this.acceptSubscription = this.userService.updateLLMSelectionDecision(decision).subscribe(() => {
-            const hasAccepted = this.isAcceptedLLMSelection(decision);
+            const hasAccepted = isAcceptedLLMSelection(decision);
 
             this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);

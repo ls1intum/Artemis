@@ -56,6 +56,8 @@
             [isAssessor]="isAssessor()"
             [resultCompletionDate]="manualResult()?.completionDate"
             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
+            [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
+            (optIn)="onOptInToAiFeedbackSuggestions()"
         />
         @if (submission()) {
             <ng-container *ngTemplateOutlet="assessment" />

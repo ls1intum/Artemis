@@ -65,6 +65,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ASSESSMENT_NOT_POSSIBLE_EXAM_RUNNING } from 'app/assessment/shared/util/assessment-availability.util';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -750,5 +751,40 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should not invalidate assessment after saving', async () => {
         component.save();
         expect(component.assessmentsAreValid()).toBe(true);
+    });
+
+    describe('assessor AI Experience opt-in hint', () => {
+        let aiExperienceOptInService: AiExperienceOptInService;
+
+        beforeEach(() => {
+            aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
+            component.exercise = { ...exercise, feedbackSuggestionModule: 'module-A' } as TextExercise;
+        });
+
+        it('should require opt-in when the assessor has not accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn).toBe(true);
+        });
+
+        it('should not require opt-in when the assessor has accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(true);
+            expect(component.requiresAiExperienceOptIn).toBe(false);
+        });
+
+        it('should not require opt-in when the exercise has no feedback suggestion module', () => {
+            component.exercise = { ...exercise, feedbackSuggestionModule: undefined } as TextExercise;
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn).toBe(false);
+        });
+
+        it('should reload feedback suggestions once the assessor opts in via the hint', () => {
+            const loadFeedbackSuggestionsSpy = vi.spyOn(component, 'loadFeedbackSuggestions');
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+
+            component.onOptInToAiFeedbackSuggestions();
+
+            expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
+            expect(loadFeedbackSuggestionsSpy).toHaveBeenCalled();
+        });
     });
 });

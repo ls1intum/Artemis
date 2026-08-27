@@ -46,6 +46,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -694,5 +695,37 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         expect(component.unreferencedFeedbackSuggestions).toHaveLength(1);
         expect(component.unreferencedFeedbackSuggestions[0]?.id).toBe(unreferencedFeedback.id);
+    });
+
+    describe('assessor AI Experience opt-in hint', () => {
+        let aiExperienceOptInService: AiExperienceOptInService;
+
+        beforeEach(() => {
+            aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
+            component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
+            component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
+        });
+
+        it('should require opt-in when the assessor has not accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn).toBe(true);
+        });
+
+        it('should not require opt-in when the assessor has accepted AI usage', () => {
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(true);
+            expect(component.requiresAiExperienceOptIn).toBe(false);
+        });
+
+        it('should fetch feedback suggestions once the assessor opts in via the hint', () => {
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([]));
+            vi.spyOn(aiExperienceOptInService, 'promptForAiUsage').mockImplementation((onAccepted) => onAccepted());
+            component.submission.set(getSubmissionWithData());
+            component.result.set(getSubmissionWithData().results![0] as unknown as Result);
+
+            component.onOptInToAiFeedbackSuggestions();
+
+            expect(aiExperienceOptInService.promptForAiUsage).toHaveBeenCalled();
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
     });
 });
