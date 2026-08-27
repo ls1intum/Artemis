@@ -98,6 +98,9 @@ export class ExamExerciseGroupCreationPage {
             case ExerciseType.MODELING:
                 exercise = await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
                 break;
+            case ExerciseType.FILE_UPLOAD:
+                exercise = await this.exerciseAPIRequests.createFileUploadExercise({ exerciseGroup }, title);
+                break;
             case ExerciseType.QUIZ:
                 exercise = await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
                 break;
