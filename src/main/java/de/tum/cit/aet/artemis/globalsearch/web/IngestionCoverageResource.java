@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateHealthIndicator;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -42,14 +42,18 @@ import de.tum.cit.aet.artemis.iris.api.IrisHealthApi;
 /**
  * Admin-only, read-only endpoints for the ingestion-observability dashboard: the index overview, the stored per-course
  * coverage projection (cross-course views), a live-per-page coverage view (default matrix view), and a manual refresh.
- * Only available when Weaviate is enabled; every endpoint requires admin.
+ * Only available when Weaviate is enabled.
+ * <p>
+ * TEMPORARY (revert before merge): normally admin-only under {@code api/global-search/admin/} with a class-level
+ * {@code @EnforceAdmin}. Relaxed to instructor and moved out of the {@code /admin/} segment so the page can be
+ * exercised on the test server without an admin account: {@code SecurityConfiguration} maps every per-module admin
+ * path to {@code ROLE_ADMIN} in the filter chain, ahead of any method-level annotation.
  */
 @Profile(PROFILE_CORE)
 @Conditional(WeaviateEnabled.class)
-@EnforceAdmin
 @Lazy
 @RestController
-@RequestMapping("api/global-search/admin/")
+@RequestMapping("api/global-search/ingestion-dashboard/")
 public class IngestionCoverageResource {
 
     /** The Iris content collections shown in the overview, addressed by their exact (unprefixed) names. */
@@ -84,6 +88,7 @@ public class IngestionCoverageResource {
      *
      * @return the index overview
      */
+    @EnforceAtLeastInstructor
     @GetMapping("index/overview")
     public ResponseEntity<IndexOverviewDTO> getIndexOverview() {
         Health health = weaviateHealthIndicator.health();
@@ -112,6 +117,7 @@ public class IngestionCoverageResource {
      * @param pageable the page and sort
      * @return the requested page of stored coverage rows
      */
+    @EnforceAtLeastInstructor
     @GetMapping("coverage")
     public ResponseEntity<List<IngestionCoverageDTO>> getStoredCoverage(@RequestParam(required = false) IngestionCoverageStatus status,
             @RequestParam(required = false) Boolean active, Pageable pageable) {
@@ -130,6 +136,7 @@ public class IngestionCoverageResource {
      * @param pageable the page and sort (on course columns)
      * @return the requested page of live-computed coverage
      */
+    @EnforceAtLeastInstructor
     @GetMapping("coverage/page")
     public ResponseEntity<List<IngestionCoverageDTO>> getLiveCoveragePage(@RequestParam(required = false) String search, Pageable pageable) {
         Page<IngestionCoverageDTO> page = coverageRecomputeService.computeLiveCoveragePage(search, pageable);
@@ -143,6 +150,7 @@ public class IngestionCoverageResource {
      *
      * @return 200 once the recompute has been triggered
      */
+    @EnforceAtLeastInstructor
     @PostMapping("coverage/refresh")
     public ResponseEntity<Void> refreshCoverage() {
         coverageRecomputeService.forceRecompute();

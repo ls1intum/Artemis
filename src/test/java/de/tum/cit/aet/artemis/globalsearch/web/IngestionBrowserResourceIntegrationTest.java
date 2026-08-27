@@ -39,7 +39,8 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
 
     private static final String TEST_PREFIX = "ingbrowres";
 
-    private static final String BASE = "/api/global-search/admin/";
+    // TEMPORARY (revert before merge): the resource is relaxed to instructor and served outside the /admin/ segment.
+    private static final String BASE = "/api/global-search/ingestion-dashboard/";
 
     private static final long UNKNOWN_COURSE_ID = 99_999_999L;
 

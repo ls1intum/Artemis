@@ -11,7 +11,8 @@ describe('CourseIngestionDashboardService', () => {
     let service: CourseIngestionDashboardService;
     let httpMock: HttpTestingController;
 
-    const baseUrl = 'api/global-search/admin';
+    // TEMPORARY (revert before merge): matches the instructor-accessible path the resources are served under.
+    const baseUrl = 'api/global-search/ingestion-dashboard';
 
     const mockOverview: IndexOverview = {
         weaviateReachable: true,
