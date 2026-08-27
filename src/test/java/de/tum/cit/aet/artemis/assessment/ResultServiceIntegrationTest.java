@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -123,6 +124,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     private ParticipationUtilService participationUtilService;
 
     @Autowired
+    private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
+    @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
@@ -202,6 +206,21 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
         assertThat(feedbacks).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotSynthesizeFeedbackForAResultLoadedWithoutItsFeedback() {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
+
+        // Callers that do not need the feedback load the result without it (e.g. the non-locking variant of the
+        // submission-without-assessment endpoint, which the assessment dashboard polls). The collection is an
+        // uninitialized proxy on the detached result, so attaching the synthesized views must not try to add to it.
+        Result resultWithoutFeedback = resultRepository.findByIdElseThrow(result.getId());
+        assertThatCode(() -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultWithoutFeedback, programmingExercise, false)).doesNotThrowAnyException();
     }
 
     @Test

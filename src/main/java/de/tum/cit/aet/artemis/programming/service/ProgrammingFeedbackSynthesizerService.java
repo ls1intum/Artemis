@@ -238,6 +238,14 @@ public class ProgrammingFeedbackSynthesizerService {
         if (testCaseFeedbacks.isEmpty() && scaFeedbacks.isEmpty()) {
             return;
         }
+        if (!Hibernate.isInitialized(result.getFeedbacks())) {
+            // The result was loaded without its feedback (e.g. the non-locking variant of the
+            // submission-without-assessment endpoint, which only needs the submission id). Adding to the
+            // uninitialized collection would throw outside a session, and a caller that did not ask for the
+            // feedback does not serialize it either - so there is nothing to attach the views to.
+            log.debug("Skipping feedback synthesis for result {}: the feedback collection was not loaded", result.getId());
+            return;
+        }
         long resultId = result.getId();
         testCaseFeedbacks.forEach(feedback -> result.getFeedbacks().add(synthesizeTestCaseFeedback(feedback, resultId, pointsByTestCaseId)));
         scaFeedbacks.forEach(feedback -> result.getFeedbacks().add(synthesizeScaFeedback(feedback, resultId)));

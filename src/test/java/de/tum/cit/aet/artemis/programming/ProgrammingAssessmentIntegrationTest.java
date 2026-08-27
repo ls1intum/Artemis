@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
@@ -801,7 +802,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var latestCommitHash = gitService.getLastCommitHash(studentParticipation.getVcsRepositoryUri());
         // Ensure the existing submission matches the repository HEAD returned during locking
         final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, latestCommitHash);
-        participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
+        var thirdSubmissionWithResult = participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
+        // typed automatic feedback, so that the manual results of both rounds carry copies of it
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "correctionRoundTest");
+        participationUtilService.addTestCaseFeedbackToResult(thirdSubmissionWithResult.getLatestResult(), testCase, false, "correction round failure message");
 
         var submissionsOfParticipation = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
         assertThat(submissionsOfParticipation).hasSize(3);
@@ -863,6 +867,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // change the user here, so that for the next query the result will show up again.
         // set to true, if a tutor is only able to assess a submission if they have not assessed it any prior correction rounds
         firstSubmittedManualResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
+        // The response carries the synthesized views of the typed automatic feedback, which are read-only - saving
+        // the response object as-is would try to persist them as feedback rows (see ProgrammingFeedbackSynthesizerService).
+        firstSubmittedManualResult.setFeedbacks(firstSubmittedManualResult.getFeedbacks().stream()
+                .filter(feedback -> feedback.getId() == null || !ProgrammingFeedbackSynthesizerService.isSyntheticId(feedback.getId())).toList());
         resultRepository.save(firstSubmittedManualResult);
         assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "instructor1");
 
@@ -889,6 +897,16 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // it should contain the latest automatic result, and the lock for the manual result
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+
+        // The assessment dashboard asks for the same submission WITHOUT locking it, to find out whether it offers a
+        // second correction round at all. That variant loads the first round's result without its feedback, so
+        // nothing may try to attach the synthesized views of the typed automatic feedback to it - doing so answered
+        // 500 and the dashboard never offered the round.
+        LinkedMultiValueMap<String, String> paramsSecondCorrectionWithoutLock = new LinkedMultiValueMap<>();
+        paramsSecondCorrectionWithoutLock.add("correction-round", "1");
+        final var unlockedSubmissionForSecondRound = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
+                ProgrammingSubmission.class, paramsSecondCorrectionWithoutLock);
+        assertThat(unlockedSubmissionForSecondRound).isEqualTo(submissionWithoutFirstAssessment);
 
         // SECOND ROUND OF CORRECTION
         LinkedMultiValueMap<String, String> paramsSecondCorrection = new LinkedMultiValueMap<>();
