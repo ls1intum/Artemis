@@ -56,7 +56,24 @@ export class FormFooterComponent {
 
     isSubmitDisabled = computed<boolean>(() => !!this.invalidReasons().length || this.isDisabled() || this.isSaving() || this.isGeneratingWithAi());
 
+    /** Target of the submit buttons' aria-describedby; the reason list is rendered under this id. */
+    protected readonly invalidReasonsId = 'form-footer-invalid-reasons';
+
     onSwitchEditMode() {
         this.switchEditMode()?.();
+    }
+
+    // The submit buttons are aria-disabled rather than disabled, so they stay focusable and can explain
+    // themselves. That leaves them clickable, hence the guards.
+    onSave() {
+        if (!this.isSubmitDisabled()) {
+            this.save.emit();
+        }
+    }
+
+    onGenerateWithAi() {
+        if (!this.isSubmitDisabled()) {
+            this.generateWithAi.emit();
+        }
     }
 }

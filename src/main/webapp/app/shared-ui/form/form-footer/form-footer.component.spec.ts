@@ -116,13 +116,42 @@ describe('FormFooterComponent', () => {
         expect(findSubmitTooltipHost().injector.get(Tooltip).disabled).toBeTruthy();
     });
 
-    it('should disable the save button when there are invalid reasons', () => {
+    it('should mark the save button aria-disabled but keep it focusable when there are invalid reasons', () => {
         fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
         fixture.componentRef.setInput('isDisabled', false);
         fixture.detectChanges();
 
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeTruthy();
+        expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+        // a natively disabled button leaves the tab order, so keyboard users could never reach the reasons
+        expect(saveButton.disabled).toBeFalsy();
+        expect(saveButton.getAttribute('aria-describedby')).toBe('form-footer-invalid-reasons');
+        expect(document.getElementById('form-footer-invalid-reasons')).not.toBeNull();
+    });
+
+    it('should not emit save when the blocked button is clicked', () => {
+        fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
+        fixture.detectChanges();
+        const saveSpy = vi.fn();
+        fixture.componentInstance.save.subscribe(saveSpy);
+
+        (fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement).click();
+
+        expect(saveSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit save when the button is not blocked', () => {
+        fixture.componentRef.setInput('invalidReasons', []);
+        fixture.componentRef.setInput('isDisabled', false);
+        fixture.componentRef.setInput('isSaving', false);
+        fixture.componentRef.setInput('isGeneratingWithAi', false);
+        fixture.detectChanges();
+        const saveSpy = vi.fn();
+        fixture.componentInstance.save.subscribe(saveSpy);
+
+        (fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement).click();
+
+        expect(saveSpy).toHaveBeenCalledOnce();
     });
 
     it('should enable save button when form is valid', () => {
@@ -132,7 +161,8 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('isGeneratingWithAi', false);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeFalsy();
+        expect(saveButton.getAttribute('aria-disabled')).toBe('false');
+        expect(saveButton.getAttribute('aria-describedby')).toBeNull();
     });
 
     it('should disable save button when saving is in progress', () => {
@@ -141,7 +171,7 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('isSaving', true);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeTruthy();
+        expect(saveButton.getAttribute('aria-disabled')).toBe('true');
     });
 
     it('should disable save button while generating with AI', () => {
@@ -150,6 +180,6 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('isGeneratingWithAi', true);
         fixture.detectChanges();
         const saveButton = fixture.debugElement.query(By.css('#save-entity')).nativeElement as HTMLButtonElement;
-        expect(saveButton.disabled).toBeTruthy();
+        expect(saveButton.getAttribute('aria-disabled')).toBe('true');
     });
 });

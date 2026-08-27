@@ -106,6 +106,21 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
         this.quizExercise().quizQuestions = Array.from(this.quizExercise().quizQuestions!);
     }
 
+    /** Target of the save button's aria-describedby; the reason list is rendered under this id. */
+    protected readonly saveReasonsId = 'quiz-re-evaluate-invalid-reasons';
+
+    isSaveDisabled(): boolean {
+        return !this.pendingChanges() || !this.isValidQuiz() || this.isSaving();
+    }
+
+    // The save button is aria-disabled rather than disabled so it stays focusable and can explain itself,
+    // which leaves it clickable — hence the guard.
+    onSaveClick(): void {
+        if (!this.isSaveDisabled()) {
+            this.save();
+        }
+    }
+
     /**
      * @function save
      * @desc Open Warning-Modal

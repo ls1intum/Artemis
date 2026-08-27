@@ -406,15 +406,39 @@
                                     </ul>
                                 }
                             </ng-template>
-                            <!-- A disabled button emits no mouse events, so the tooltip has to live on this wrapper. -->
+                            <!-- PrimeNG's tooltip carries no ARIA, so the same text is exposed here for aria-describedby. -->
+                            @if (!isSaveTooltipDisabled()) {
+                                <div [id]="saveReasonsId" class="visually-hidden">
+                                    @if (uneditableReason()) {
+                                        <span>{{ uneditableReason() }}</span>
+                                    } @else {
+                                        <ul>
+                                            @for (reason of invalidReasons(); track $index) {
+                                                <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+                            }
+                            <!-- The button is aria-disabled rather than disabled so it stays focusable and can explain
+                                 itself; the wrapper carries the tooltip so hovering the button still reaches it. -->
                             <span
                                 class="submit-tooltip-host"
                                 [pTooltip]="saveTooltipContent"
                                 [tooltipDisabled]="isSaveTooltipDisabled()"
+                                tooltipEvent="both"
                                 tooltipPosition="top"
                                 tooltipStyleClass="invalid-reasons-tooltip"
                             >
-                                <button id="quiz-save" class="footer-save-btn" (click)="validateItemLimit()" [disabled]="isSaveDisabled()">
+                                <!-- p-component marks the tooltip's focus target: PrimeNG binds its focus listener to the
+                                     first .p-component inside the host, and the class itself carries no styling. -->
+                                <button
+                                    id="quiz-save"
+                                    class="footer-save-btn p-component"
+                                    (click)="onSaveClick()"
+                                    [attr.aria-disabled]="isSaveDisabled()"
+                                    [attr.aria-describedby]="isSaveTooltipDisabled() ? null : saveReasonsId"
+                                >
                                     <fa-icon [icon]="faFloppyDisk" class="me-1" />
                                     <span jhiTranslate="entity.action.save"></span>
                                 </button>

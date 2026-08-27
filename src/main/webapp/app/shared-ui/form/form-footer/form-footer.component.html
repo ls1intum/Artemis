@@ -28,6 +28,14 @@
             }
         </ul>
     </ng-template>
+    <!-- PrimeNG's tooltip carries no ARIA, so the reasons are also exposed here for aria-describedby. -->
+    @if (invalidReasons().length) {
+        <ul [id]="invalidReasonsId" class="visually-hidden">
+            @for (reason of invalidReasons(); track $index) {
+                <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
+            }
+        </ul>
+    }
     <div class="d-flex gap-2 text-end">
         @if (isSaving()) {
             <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
@@ -37,11 +45,13 @@
             <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
         </button>
         @if (showGenerateWithAi()) {
-            <!-- A disabled button emits no mouse events, so the tooltip has to live on this wrapper. -->
+            <!-- The button is aria-disabled rather than disabled so it stays focusable and can explain itself;
+                 the wrapper carries the tooltip because a p-disabled child emits no mouse events. -->
             <span
                 class="submit-tooltip-host"
                 [pTooltip]="invalidReasonsContent"
                 [tooltipDisabled]="!invalidReasons().length"
+                tooltipEvent="both"
                 tooltipPosition="top"
                 tooltipStyleClass="invalid-reasons-tooltip"
             >
@@ -50,10 +60,12 @@
                     type="button"
                     id="generate-with-ai"
                     class="footer-action-button d-flex align-items-center"
-                    [disabled]="isSubmitDisabled()"
+                    [class.p-disabled]="isSubmitDisabled()"
+                    [attr.aria-disabled]="isSubmitDisabled()"
+                    [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
                     [loading]="isGeneratingWithAi()"
                     size="small"
-                    (click)="generateWithAi.emit()"
+                    (click)="onGenerateWithAi()"
                 >
                     @if (!isGeneratingWithAi()) {
                         <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
@@ -66,6 +78,7 @@
             class="submit-tooltip-host"
             [pTooltip]="invalidReasonsContent"
             [tooltipDisabled]="!invalidReasons().length"
+            tooltipEvent="both"
             tooltipPosition="top"
             tooltipStyleClass="invalid-reasons-tooltip"
         >
@@ -74,10 +87,12 @@
                 type="button"
                 id="save-entity"
                 class="footer-action-button d-flex align-items-center"
-                [disabled]="isSubmitDisabled()"
+                [class.p-disabled]="isSubmitDisabled()"
+                [attr.aria-disabled]="isSubmitDisabled()"
+                [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
                 [loading]="isSaving()"
                 size="small"
-                (click)="save.emit()"
+                (click)="onSave()"
             >
                 @if (!isSaving()) {
                     <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />

@@ -144,12 +144,14 @@ jhi-quiz-question-list-edit {
         background 0.2s,
         box-shadow 0.2s;
 
-    &:disabled {
+    // aria-disabled, not disabled, so the button stays focusable and can explain why it is blocked
+    &:disabled,
+    &[aria-disabled='true'] {
         opacity: 0.55;
         cursor: not-allowed;
     }
 
-    &:hover:not(:disabled) {
+    &:hover:not(:disabled):not([aria-disabled='true']) {
         background: color-mix(in srgb, var(--success) 80%, black);
     }
 }

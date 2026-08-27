@@ -626,6 +626,17 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         });
     }
 
+    /** Target of the save button's aria-describedby; the tooltip text is mirrored under this id. */
+    protected readonly saveReasonsId = 'quiz-save-invalid-reasons';
+
+    // The save button is aria-disabled rather than disabled so it stays focusable and can explain itself,
+    // which leaves it clickable — hence the guard.
+    onSaveClick() {
+        if (!this.isSaveDisabled()) {
+            this.validateItemLimit();
+        }
+    }
+
     validateItemLimit() {
         const dragAndDropQuestions = this.quizExercise().quizQuestions?.filter((question) => {
             return question.type === this.DRAG_AND_DROP;
