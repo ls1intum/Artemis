@@ -8,6 +8,7 @@ import { Exercise, ExerciseType } from '../../support/constants';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
 import { POLLING_INTERVAL, RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
+import { Commands } from '../../support/commands';
 
 /**
  * Regression test for silent exam answer loss after a failed save.
@@ -37,6 +38,10 @@ const RESEND_TIMEOUT = 4 * RELOAD_RENDER_TIMEOUT;
 // forced failing save, and the final UI assertion. Measured at roughly 50s in CI; doubled so the per-test timeout
 // derived from it does not sit right on the measurement.
 const SETUP_AND_ASSERTION_ALLOWANCE = 120_000;
+
+// Deadline for the forced save to reach the interception. Matches the bound the page.route version had on its
+// waitForResponse, so switching to CDP does not quietly turn a missed injection into a four-minute timeout.
+const FAILED_SAVE_TIMEOUT = 30_000;
 
 test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, () => {
     // Block the Angular service worker so the request reaches the page network target intercepted below. The
@@ -68,9 +73,24 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         // Simulate a failed save (as during an outage) BEFORE touching the answer. CDP Fetch interception preserves the
         // HTTP cache; Playwright's page.route disables it for the page and made the production reload stall under
         // parallel CI load.
+        //
+        // Every matching save fails for as long as the outage lasts, not only the first one. Fetch.enable pauses every
+        // request matching the pattern, so a single-shot handler answers one and leaves a second - the 30s autosave, or
+        // a client retry after the 503 - paused with nothing to answer it. Lifting the outage releases that request,
+        // which can then reach the server for real and mark the answer synced before the reload. The recovery under test
+        // would have nothing left to restore, and the re-send awaited below could never happen.
         const cdpSession = await page.context().newCDPSession(page);
-        const failedSave = new Promise<void>((resolve, reject) => {
-            cdpSession.once('Fetch.requestPaused', async ({ requestId }) => {
+        let outageActive = true;
+        const failedSave = new Promise<void>((resolveFailedSave, rejectFailedSave) => {
+            // Bounded on purpose. Without a deadline, a save that never reaches the interception - a changed endpoint, a
+            // pattern that stops matching - leaves this pending until the per-test timeout, which reports the re-send as
+            // the failure and hides that no save was ever injected. The wait is for one request the click just issued,
+            // so it is either answered promptly or something is wrong.
+            const deadline = setTimeout(
+                () => rejectFailedSave(new Error(`No save request was intercepted within ${FAILED_SAVE_TIMEOUT}ms, so the outage under test was never injected`)),
+                FAILED_SAVE_TIMEOUT,
+            );
+            cdpSession.on('Fetch.requestPaused', async ({ requestId }) => {
                 try {
                     await cdpSession.send('Fetch.fulfillRequest', {
                         requestId,
@@ -78,9 +98,17 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
                         responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
                         body: 'e30=',
                     });
-                    resolve();
+                    // Settles on the first failed save; a promise ignores every later call.
+                    clearTimeout(deadline);
+                    resolveFailedSave();
                 } catch (error) {
-                    reject(error);
+                    // Lifting the outage detaches the session, and a request paused at that moment is released by
+                    // Fetch.disable rather than answered here, so only a failure during the outage means the injection
+                    // itself is broken.
+                    if (outageActive) {
+                        clearTimeout(deadline);
+                        rejectFailedSave(error as Error);
+                    }
                 }
             });
         });
@@ -95,7 +123,14 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         // Force a save attempt and wait deterministically until CDP has fulfilled it with 503.
         // The answer is written to local storage but the server submission stays empty.
         await getExercise(page, quizExercise.id!).locator('#save-exam').click();
-        await failedSave;
+        try {
+            await failedSave;
+        } catch (injectionFailed) {
+            // Leave no interception behind on the way out, or the paused request outlives the test.
+            outageActive = false;
+            await cdpSession.detach().catch(() => undefined);
+            throw injectionFailed;
+        }
 
         // Wait for the CLIENT to have recorded the failure, not merely for the 503 to appear on the wire.
         //
@@ -139,9 +174,23 @@ test.describe('Exam submission recovery after a failed save', { tag: '@slow' }, 
         });
 
         // Stop failing saves so the post-reload re-send can succeed.
+        // The route to come back to after the reload, read before it can drift.
+        const examUrl = page.url();
+
+        outageActive = false;
         await cdpSession.send('Fetch.disable');
         await cdpSession.detach();
-        await page.reload();
+        // Reload through the route-restoring helper rather than page.reload() directly.
+        //
+        // This is what the test was missing. A reload re-bootstraps the SPA, and when a lazy route chunk fails to
+        // resolve behind the multi-node HTTPS load balancer - an intermittent module-fetch failure the suite already
+        // recovers from elsewhere - the router drops to the /courses fallback and never returns. The exam is then not
+        // on screen, so the client never restores the answer and never re-sends it, and the poll below waits out its
+        // whole budget for something that can no longer happen. That is the failure this test kept hitting in CI, and
+        // no timeout is large enough to fix it. Restoring the route explicitly turns that dead end into one more
+        // attempt, and reports honestly when the SPA could not load the route at all.
+        const restoredExamRoute = await Commands.reloadAndRestoreRoute(page, examUrl);
+        expect(restoredExamRoute, 'the exam route did not survive the reload, so no recovery could be attempted').toBe(true);
 
         // The client re-sends the restored answer by itself while starting up, so the only thing to do is wait for it.
         // Nothing is clicked here on purpose: by the time the exercise is on screen the save button is already

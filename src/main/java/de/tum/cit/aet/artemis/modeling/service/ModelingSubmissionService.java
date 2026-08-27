@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -146,7 +146,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResults(new ArrayList<>());
+        modelingSubmission.setResults(new HashSet<>());
         if (modelingSubmission.getId() != null) {
             // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
             // Saving the detached entity would merge it, which reads the submission and its whole eager association graph

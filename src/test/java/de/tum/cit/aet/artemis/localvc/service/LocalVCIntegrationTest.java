@@ -60,13 +60,16 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     // The participation-token counts are the ones that matter for exam load: that is what students use. Password
     // authentication is more expensive because it falls through to the authentication manager, which re-reads the user,
     // writes an audit event and stamps the last login date. It is measured too so that path cannot rot unnoticed.
-    private static final int GIT_AUTH_QUERY_COUNT = 8;
+    // Each count below includes one query for the personal VCS access token, which lives in user_vcs_access_token and is
+    // compared before the other credentials. Raising any of these numbers means a new query on the git authentication path,
+    // which is exactly what this test exists to catch, so establish where it comes from before changing them.
+    private static final int GIT_AUTH_QUERY_COUNT = 9;
 
-    private static final int GIT_PUSH_AUTH_QUERY_COUNT = 8;
+    private static final int GIT_PUSH_AUTH_QUERY_COUNT = 9;
 
-    private static final int GIT_TOKEN_AUTH_QUERY_COUNT = 5;
+    private static final int GIT_TOKEN_AUTH_QUERY_COUNT = 6;
 
-    private static final int GIT_TOKEN_PUSH_QUERY_COUNT = 5;
+    private static final int GIT_TOKEN_PUSH_QUERY_COUNT = 6;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;

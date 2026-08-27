@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 // this would also simplify the logic in result.component.ts and and result.service.ts and make the experience more consistent among different clients (webapp, ios, android)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionDTO submission, ParticipationDTO participation,
-        List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
-        Integer codeIssueCount) implements Serializable {
+        List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Integer correctionRound, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount,
+        Integer passedTestCaseCount, Integer codeIssueCount) implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,
@@ -68,7 +68,7 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         }
         var feedbackDTOs = filteredFeedback.stream().map(FeedbackDTO::of).toList();
         return new ResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(), submissionDTO,
-                ParticipationDTO.of(result.getSubmission().getParticipation()), feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(),
-                result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
+                ParticipationDTO.of(result.getSubmission().getParticipation()), feedbackDTOs, result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(),
+                result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount());
     }
 }

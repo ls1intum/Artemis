@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 
 /**
@@ -65,6 +66,34 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @EntityGraph(type = LOAD, attributePaths = { "buildConfig", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
+
+    /**
+     * Returns the values of the exercise's submission policy, without the exercise the policy points back at.
+     * <p>
+     * Deliberately a projection. The policy's back reference to its exercise is an eager inverse one-to-one, so loading
+     * the policy as an entity, or loading the exercise again to read it off there, fetches the whole exercise and the
+     * course it eagerly brings along. Grading reads a limit, a flag and possibly a penalty. See
+     * {@link SubmissionPolicyValuesDTO}.
+     *
+     * @param exerciseId the exercise whose submission policy should be read
+     * @return the values of the policy, or empty if the exercise has none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO(
+                policy.id,
+                CASE
+                    WHEN TYPE(policy) = LockRepositoryPolicy THEN 'LOCK_REPOSITORY'
+                    WHEN TYPE(policy) = SubmissionPenaltyPolicy THEN 'SUBMISSION_PENALTY'
+                    ELSE 'UNKNOWN'
+                END,
+                policy.submissionLimit,
+                policy.active,
+                TREAT (policy AS SubmissionPenaltyPolicy).exceedingPenalty)
+            FROM ProgrammingExercise exercise
+                JOIN exercise.submissionPolicy policy
+            WHERE exercise.id = :exerciseId
+            """)
+    Optional<SubmissionPolicyValuesDTO> findSubmissionPolicyValuesByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Sets the flag that marks the exercise as having changed test cases, but only when it does not already hold that
