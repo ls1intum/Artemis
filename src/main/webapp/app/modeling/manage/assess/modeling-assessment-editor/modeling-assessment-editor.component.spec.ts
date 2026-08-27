@@ -221,6 +221,23 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, expectedRound, 0);
         });
 
+        it('should keep the round it loaded when only the correction round in the url changes', async () => {
+            // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+            // hand-editing the address bar — starts no new load. The round it shows must then stay the round the
+            // submission was requested with, because the same value indexes the results of that submission.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            expect(component.correctionRound()).toBe(1);
+
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '0' }));
+            await fixture.whenStable();
+
+            expect(component.correctionRound()).toBe(1);
+            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, 1, 0);
+        });
+
         it('should leave the loading state when there is no submission to assess', async () => {
             // Both loading flags start out set, and the empty state only renders once they are cleared, so returning
             // without clearing them left the page blank instead of saying that there is nothing to assess.

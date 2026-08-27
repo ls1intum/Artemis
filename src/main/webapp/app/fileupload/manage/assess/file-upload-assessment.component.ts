@@ -98,6 +98,13 @@ export class FileUploadAssessmentComponent implements OnInit {
     courseId!: number; // set in ngOnInit() from route params
     readonly hasAssessmentDueDatePassed = signal<boolean>(undefined!);
     readonly correctionRound = signal(0);
+    /**
+     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
+     * without a submission being loaded for it. That value must not become the round of the page on its own: the round
+     * is sent to the server as the round to request and then indexes the results that come back, and those two may not
+     * disagree. It therefore only reaches {@link correctionRound} when a load starts.
+     */
+    private correctionRoundFromUrl = 0;
     resultId!: number; // set in ngOnInit() from route params
     examId = 0;
     exerciseGroupId?: number;
@@ -138,9 +145,8 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
             // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
-            // Number() alone will not do. This component requests the submission with this signal and indexes the
-            // loaded results by it, so there is a single round either way.
-            this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
+            // Number() alone will not do. Only remembered here, not shown yet; see correctionRoundFromUrl.
+            this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
 
         this.route.params.subscribe((params) => {
@@ -160,6 +166,9 @@ export class FileUploadAssessmentComponent implements OnInit {
 
             const submissionValue = params['submissionId'];
             const submissionId = Number(submissionValue);
+            // Taken from the URL once per load, so that the round the submission is requested with is also the round
+            // its results are indexed by, even when the parameter has changed since the last load.
+            this.correctionRound.set(this.correctionRoundFromUrl);
             if (submissionValue === 'new') {
                 this.loadOptimalSubmission(this.exerciseId);
             } else {

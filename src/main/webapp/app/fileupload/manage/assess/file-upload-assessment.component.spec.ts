@@ -288,6 +288,23 @@ describe('FileUploadAssessmentComponent', () => {
             expect(getSpy).toHaveBeenLastCalledWith(8, 0, 0);
         });
 
+        it('should keep the round it loaded when only the correction round in the url changes', () => {
+            // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+            // hand-editing the address bar — starts no new load. The round it shows must then stay the round the
+            // submission was requested with, because the same value indexes the results of that submission.
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            component.ngOnInit();
+            expect(component.correctionRound()).toBe(1);
+
+            routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '0' }));
+
+            expect(component.correctionRound()).toBe(1);
+            expect(getSpy).toHaveBeenCalledExactlyOnceWith(7, 1, 0);
+        });
+
         it('should extract route params for course and exercise', () => {
             const submission = createSubmission();
             vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));

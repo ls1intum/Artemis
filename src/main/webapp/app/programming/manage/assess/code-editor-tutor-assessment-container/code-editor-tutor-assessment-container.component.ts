@@ -128,6 +128,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     showEditorInstructions = true;
     readonly hasAssessmentDueDatePassed = signal(false);
     readonly correctionRound = signal(0);
+    /**
+     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
+     * without a submission being locked for it. That value must not become the round of the page on its own: the round
+     * is sent to the server when the submission is locked and then indexes the results that come back, and those two may
+     * not disagree. It therefore only reaches {@link correctionRound} when a load starts.
+     */
+    private correctionRoundFromUrl = 0;
     courseId!: number; // set in ngOnInit() from route params
     examId = 0;
     exerciseId!: number; // set in ngOnInit() from route params
@@ -200,8 +207,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.isTestRun.set(queryParams.get('testRun') === 'true');
             // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
             // Number() alone will not do. This round is sent to the server when the submission is locked, so `NaN` from
-            // a hand-edited URL used to leave the tutor on an empty editor.
-            this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
+            // a hand-edited URL used to leave the tutor on an empty editor. Only remembered here, not shown yet; see
+            // correctionRoundFromUrl.
+            this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
         this.paramSub = this.route.params.subscribe((params) => {
             this.loadingParticipation.set(true);
@@ -221,6 +229,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             this.exerciseDashboardLink.set(getExerciseDashboardLink(this.courseId, this.exerciseId, this.examId, this.isTestRun()));
 
             const submissionId = params['submissionId'];
+            // Taken from the URL once per load, so that the round the submission is locked with is also the round its
+            // results are indexed by, even when the parameter has changed since the last load.
+            this.correctionRound.set(this.correctionRoundFromUrl);
             const submissionObservable = submissionId === 'new' ? this.loadRandomSubmission(this.exerciseId) : this.loadSubmission(Number(submissionId));
             submissionObservable
                 .pipe(

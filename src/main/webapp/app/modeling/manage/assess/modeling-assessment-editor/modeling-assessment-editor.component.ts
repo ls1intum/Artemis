@@ -103,6 +103,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly hasAutomaticFeedback = signal(false);
     readonly hasAssessmentDueDatePassed = signal<boolean>(false);
     readonly correctionRound = signal(0);
+    /**
+     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
+     * without a submission being loaded for it. That value must not become the round of the page on its own: the round
+     * is sent to the server as the round to request and then indexes the results that come back, and those two may not
+     * disagree. It therefore only reaches {@link correctionRound} when a load starts.
+     */
+    private correctionRoundFromUrl = 0;
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
     // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
@@ -159,9 +166,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
             // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
-            // Number() alone will not do. This component requests the submission with this signal and indexes the
-            // loaded results by it, so there is a single round either way.
-            this.correctionRound.set(parseCorrectionRound(queryParams.get('correction-round')));
+            // Number() alone will not do. Only remembered here, not shown yet; see correctionRoundFromUrl.
+            this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
         this.route.paramMap.subscribe((params) => {
             // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
@@ -178,6 +184,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
             const submissionId = params.get('submissionId');
             this.resultId.set(Number(params.get('resultId')) || 0);
+            // Taken from the URL once per load, so that the round the submission is requested with is also the round
+            // its results are indexed by, even when the parameter has changed since the last load.
+            this.correctionRound.set(this.correctionRoundFromUrl);
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
             } else {

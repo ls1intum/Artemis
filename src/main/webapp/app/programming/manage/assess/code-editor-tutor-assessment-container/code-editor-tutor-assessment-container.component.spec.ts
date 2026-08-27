@@ -439,6 +439,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, expectedRound);
     });
 
+    it('should keep the round it locked with when only the correction round in the url changes', () => {
+        // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+        // hand-editing the address bar — starts no new load. The round it shows must then stay the round the submission
+        // was locked with, because the same value indexes the results of that submission.
+        const queryParamMap$ = new BehaviorSubject(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { queryParamMap: Observable<ParamMap> };
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+
+        comp.ngOnInit();
+        expect(comp.correctionRound()).toBe(1);
+
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '0' }));
+
+        expect(comp.correctionRound()).toBe(1);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, 1);
+    });
+
     it('should not show complaint when participation contains no complaint', async () => {
         findBySubmissionIdStub.mockReturnValue(of({ body: undefined }));
         comp.ngOnInit();
