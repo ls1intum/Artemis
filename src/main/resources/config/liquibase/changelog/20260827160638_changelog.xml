@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    The complete schema for the Iris proactive struggle intervention (#350), in one migration.
+
+    Additive and non-destructive: three nullable columns on the existing iris_message table and one new table.
+    No drops, no alters of existing columns, no data backfill. Existing iris_message rows get NULL.
+
+    iris_message gains:
+      origin                 marks a row as proactive, so it can be excluded from the AI rate limit, included in
+                             the chat overview, and rendered differently in the history sent to Pyris
+      proactive_outcome      how the episode ended; the first terminal value wins and is never overwritten
+      proactive_episode_id   ties the rows of one episode together for the episode-scoped outcome endpoint
+
+    iris_ambient_decision records the ambient hints Artemis offers, so revealing one does not trust the client.
+    The ambient flow is a pull model: Artemis tells the client a hint exists and only writes the chat message when
+    the student clicks reveal. Without this table the reveal endpoint took the hint text from the caller, which let
+    a student post arbitrary text as an LLM / PROACTIVE_STRUGGLE message. Those rows are replayed to Pyris as
+    assistant history, so that was a way to put words in the tutor's mouth, and fresh ids minted unlimited rows.
+
+    Each row is the server's own copy of what it offered. Reveal looks it up by (user_id, exercise_id, episode_id),
+    persists hint_text rather than the caller's copy, and claims the row via consumed_at in the same transaction,
+    which makes a decision revealable exactly once.
+
+    The unique constraint on (user_id, exercise_id, episode_id) matches the flow's contract of one ambient offer per
+    episode and lets a repeated decision callback be recognised instead of duplicating the offer. episode_id is NOT
+    NULL on purpose: a decision without an episode cannot be addressed by a reveal, so those are never recorded and
+    no nullable column takes part in the uniqueness. Its width matches iris_message.proactive_episode_id, so an id
+    that can be recorded can always be persisted on the message too.
+
+    Every changeSet is precondition-guarded so a partially migrated database still gets the missing pieces.
+    -->
+
+    <changeSet id="20260827160638-1-add-origin-mysql" author="liam-berger" dbms="mysql,h2">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="origin"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="origin" type="ENUM('PROACTIVE_STRUGGLE')"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260827160638-1-add-origin-postgres" author="liam-berger" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="origin"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="origin" type="text"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260827160638-2-add-proactive-outcome-mysql" author="liam-berger" dbms="mysql,h2">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_outcome"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_outcome" type="ENUM('DISMISSED','RECOVERED','ABANDONED','INTERRUPTED')"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260827160638-2-add-proactive-outcome-postgres" author="liam-berger" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_outcome"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_outcome" type="text"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260827160638-3-add-proactive-episode-id" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_episode_id"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_episode_id" type="varchar(64)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260827160638-4-create-iris-ambient-decision" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="iris_ambient_decision"/></not>
+        </preConditions>
+        <createTable tableName="iris_ambient_decision">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="episode_id" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hint_text" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="consumed_at" type="datetime(3)"/>
+            <column name="consumed_message_id" type="BIGINT"/>
+        </createTable>
+        <addUniqueConstraint tableName="iris_ambient_decision" columnNames="user_id, exercise_id, episode_id"
+                             constraintName="ux_iris_ambient_decision_user_exercise_episode"/>
+        <createIndex tableName="iris_ambient_decision" indexName="idx_iris_ambient_decision_created_at">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
