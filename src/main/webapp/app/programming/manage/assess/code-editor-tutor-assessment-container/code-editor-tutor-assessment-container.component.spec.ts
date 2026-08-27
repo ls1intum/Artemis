@@ -114,63 +114,19 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     let findWithParticipationsStub: ReturnType<typeof vi.spyOn>;
 
     const user = <User>{ id: 99 };
-    const result: Result = {
-        feedbacks: [new Feedback()],
-        score: 80,
-        successful: true,
-        submission: new ProgrammingSubmission(),
-        assessor: user,
-        hasComplaint: true,
-        assessmentType: AssessmentType.SEMI_AUTOMATIC,
-        id: 2,
-    };
-    result.submission!.id = 1;
-
-    const complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
-    const exercise = {
-        id: 1,
-        templateParticipation: {
-            id: 3,
-            repositoryUri: 'test2',
-            results: [{ id: 9, submission: { id: 1, buildFailed: false } }],
-        },
-        maxPoints: 100,
-        gradingInstructions: 'Grading Instructions',
-        course: <Course>{},
-    } as unknown as ProgrammingExercise;
-
-    const participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-    participation.exercise = exercise;
-    participation.id = 1;
-    participation.student = { login: 'student1' } as User;
-    participation.repositoryUri = 'http://student1@artemis.tum.de/git/TEST/test-repo-student1.git';
-    result.submission!.participation = participation;
-
-    const submission: ProgrammingSubmission = new ProgrammingSubmission();
-    submission.results = [result];
-    submission.participation = participation;
-    submission.id = 1234;
-    submission.latestResult = result;
-    participation.submissions = [submission];
-
-    const unassessedSubmission = new ProgrammingSubmission();
-    unassessedSubmission.id = 12;
-
-    const afterComplaintResult = new Result();
-    afterComplaintResult.score = 100;
-
-    const afterOverrideResult: Result = new Result();
-    afterOverrideResult.feedbacks = [
-        {
-            type: FeedbackType.AUTOMATIC,
-            testCase: { testName: 'testCase1' },
-            detailText: 'testCase1 failed',
-            credits: 0,
-        },
-    ];
-    afterOverrideResult.assessor = user;
-
-    const overrideEntityResponse: EntityResponseType = new HttpResponse({ body: afterOverrideResult });
+    // Rebuilt fresh in beforeEach (not module-scope consts): `manualResult` now shares object identity with
+    // participation().submissions[0].results[0] (see the signal's declaration for why), so production code
+    // mutates this object in place. Module-scope consts would leak those mutations (feedbacks, rated, score,
+    // circular-reference stripping, ...) across unrelated tests.
+    let result: Result;
+    let complaint: Complaint;
+    let exercise: ProgrammingExercise;
+    let participation: ProgrammingExerciseStudentParticipation;
+    let submission: ProgrammingSubmission;
+    let unassessedSubmission: ProgrammingSubmission;
+    let afterComplaintResult: Result;
+    let afterOverrideResult: Result;
+    let overrideEntityResponse: EntityResponseType;
 
     const route = (): ActivatedRoute =>
         ({
@@ -181,6 +137,64 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
     beforeEach(async () => {
+        result = {
+            feedbacks: [new Feedback()],
+            score: 80,
+            successful: true,
+            submission: new ProgrammingSubmission(),
+            assessor: user,
+            hasComplaint: true,
+            assessmentType: AssessmentType.SEMI_AUTOMATIC,
+            id: 2,
+        };
+        result.submission!.id = 1;
+
+        complaint = <Complaint>{ id: 1, complaintText: 'Why only 80%?', result };
+        exercise = {
+            id: 1,
+            templateParticipation: {
+                id: 3,
+                repositoryUri: 'test2',
+                results: [{ id: 9, submission: { id: 1, buildFailed: false } }],
+            },
+            maxPoints: 100,
+            gradingInstructions: 'Grading Instructions',
+            course: <Course>{},
+        } as unknown as ProgrammingExercise;
+
+        participation = new ProgrammingExerciseStudentParticipation();
+        participation.exercise = exercise;
+        participation.id = 1;
+        participation.student = { login: 'student1' } as User;
+        participation.repositoryUri = 'http://student1@artemis.tum.de/git/TEST/test-repo-student1.git';
+        result.submission!.participation = participation;
+
+        submission = new ProgrammingSubmission();
+        submission.results = [result];
+        submission.participation = participation;
+        submission.id = 1234;
+        submission.latestResult = result;
+        participation.submissions = [submission];
+
+        unassessedSubmission = new ProgrammingSubmission();
+        unassessedSubmission.id = 12;
+
+        afterComplaintResult = new Result();
+        afterComplaintResult.score = 100;
+
+        afterOverrideResult = new Result();
+        afterOverrideResult.feedbacks = [
+            {
+                type: FeedbackType.AUTOMATIC,
+                testCase: { testName: 'testCase1' },
+                detailText: 'testCase1 failed',
+                credits: 0,
+            },
+        ];
+        afterOverrideResult.assessor = user;
+
+        overrideEntityResponse = new HttpResponse({ body: afterOverrideResult });
+
         await TestBed.configureTestingModule({
             imports: [CodeEditorMonacoComponent],
             providers: [
@@ -238,8 +252,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
-        result.assessor = user;
-        result.hasComplaint = true;
     });
 
     it('should highlight lines that were changed', async () => {
@@ -387,6 +399,41 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.hasAcceptedFeedbackSuggestions()).toBe(true);
         // Auto-accepted suggestions are unsaved changes: navigating away must warn like any other edit.
         expect(comp.hasPendingChanges).toBe(true);
+    });
+
+    it('should render newly auto-accepted AI feedback suggestions as inline widgets in the code editor', async () => {
+        // Reproduces the reported bug: AI feedback suggestions get merged into the editable feedback list, but
+        // never reach the Monaco editor's `feedbacks` input, so no inline widget appears on the line.
+        const getFilesWithContentStub = vi.spyOn(repositoryFileService, 'getFilesWithContent');
+        getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
+        const getFileStub = vi.spyOn(repositoryFileService, 'getFile');
+        getFileStub.mockReturnValue(new BehaviorSubject({ fileContent: 'new file text' }));
+
+        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
+        fixture.detectChanges();
+        await feedbackLoaded;
+        await flushMicrotasks();
+        fixture.changeDetectorRef.detectChanges();
+
+        const codeEditorMonacoComp: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
+        expect(codeEditorMonacoComp.feedbacks()).toEqual(result.feedbacks);
+
+        const suggestion = {
+            text: 'FeedbackSuggestion:accepted:new suggestion',
+            detailText: 'some detail',
+            reference: 'file:folder/file1_line:0',
+            type: FeedbackType.MANUAL,
+            credits: 1,
+        } as Feedback;
+        vi.spyOn(internals(comp).athenaService, 'getProgrammingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+        await internals(comp).loadFeedbackSuggestions();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(codeEditorMonacoComp.feedbacks()).toContainEqual(expect.objectContaining({ reference: 'file:folder/file1_line:0' }));
+
+        getFilesWithContentStub.mockRestore();
+        getFileStub.mockRestore();
     });
 
     it('should reset hasAcceptedFeedbackSuggestions when a new submission is received', async () => {

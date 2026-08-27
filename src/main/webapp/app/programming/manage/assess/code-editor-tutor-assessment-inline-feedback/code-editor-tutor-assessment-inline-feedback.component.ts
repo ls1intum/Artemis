@@ -18,6 +18,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
     templateUrl: './code-editor-tutor-assessment-inline-feedback.component.html',
+    styleUrl: './code-editor-tutor-assessment-inline-feedback.component.scss',
     imports: [TranslateDirective, FaIconComponent, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe, FeedbackContentPipe, QuotePipe, UnifiedFeedbackComponent],
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {

@@ -25,7 +25,7 @@
             (dragover)="$event.preventDefault()"
             (keydown)="handleKeydown($event)"
         >
-            <div unifiedFeedbackExtraControls>
+            <div unifiedFeedbackExtraControls class="inline-feedback-actions">
                 @if (feedback.type === MANUAL) {
                     <button
                         jhiDeleteButton

@@ -45,7 +45,6 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
@@ -99,7 +98,11 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly participation = signal<ProgrammingExerciseStudentParticipation>(undefined!);
     readonly exercise = signal<ProgrammingExercise>(undefined!);
     readonly submission = signal<ProgrammingSubmission | undefined>(undefined);
-    readonly manualResult = signal<Result | undefined>(undefined);
+    // `equal: () => false` so re-setting the same reference after an in-place mutation still notifies (see
+    // setAttributesForManualResult below) — CourseUpdateComponent.commitCourse uses the identical pattern. A
+    // clone-and-replace here would detach this object from the one reachable via participation().submissions[0].results[0],
+    // which is what feeds the code editor's inline feedback widgets; the two must stay the same object.
+    readonly manualResult = signal<Result | undefined>(undefined, { equal: () => false });
     userId!: number; // set async in ngOnInit() from accountService.identity()
     // for assessment-layout
     readonly isTestRun = signal(false);
@@ -759,8 +762,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.isFirstAssessment = false;
 
         manualResult.score = (totalScore / this.exercise().maxPoints!) * 100;
-        // This is done to update the result string in result.component.ts (the clone also gives the signal a new reference)
-        this.manualResult.set(deepClone(manualResult));
+        // Re-set the same reference to update the result string in result.component.ts: `manualResult` has
+        // `equal: () => false`, so this still notifies without cloning (see the signal's declaration for why a
+        // clone would break the code editor's inline feedback rendering).
+        this.manualResult.set(manualResult);
     }
 
     private avoidCircularStructure() {
