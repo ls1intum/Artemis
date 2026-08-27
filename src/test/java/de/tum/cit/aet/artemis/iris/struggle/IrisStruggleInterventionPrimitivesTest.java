@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -151,96 +150,76 @@ class IrisStruggleInterventionPrimitivesTest {
         offeredDecision("ep-1", "Re-check the loop.");
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
-        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-1", USER_ID)).thenReturn(Optional.empty());
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
             m.setId(101L);
             return m;
         });
 
-        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "cid-1");
+        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1");
 
         assertThat(dto.id()).isEqualTo(101L);
         assertThat(dto.proactiveEpisodeId()).isEqualTo("ep-1");
-        verify(irisMessageService).saveMessage(
-                argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE && "ep-1".equals(m.getProactiveEpisodeId()) && "cid-1".equals(m.getProactiveClientMessageId())),
-                eq(session), eq(IrisMessageSender.LLM));
+        verify(irisMessageService).saveMessage(argThat(m -> m.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE && "ep-1".equals(m.getProactiveEpisodeId())), eq(session),
+                eq(IrisMessageSender.LLM));
         // CRITICAL: reveal must NOT broadcast over the chat websocket (client owns the optimistic bubble)
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
     }
 
     @Test
-    void revealAmbient_retry_sameClientMessageId_returnsExistingRowNoDuplicate() {
-        var existingMessage = new IrisMessage();
-        existingMessage.setId(101L);
-        existingMessage.setProactiveEpisodeId("ep-1");
-        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-1", USER_ID)).thenReturn(Optional.of(existingMessage));
+    void revealAmbient_replay_returnsTheRowTheFirstRevealCreated_noDuplicate() {
+        // Contract test, not a red proof: idempotency is scoped to (user, exercise, episode) and enforced by the
+        // decision record. A replay finds the offer already consumed and resolves the row that reveal created.
+        var decision = offeredDecision("ep-1", "Re-check the loop.");
+        decision.setConsumedAt(ZonedDateTime.now());
+        decision.setConsumedMessageId(101L);
+        var firstReveal = new IrisMessage();
+        firstReveal.setId(101L);
+        firstReveal.setProactiveEpisodeId("ep-1");
+        when(irisMessageRepository.findById(101L)).thenReturn(Optional.of(firstReveal));
 
-        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "cid-1");
+        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1");
 
         assertThat(dto.id()).isEqualTo(101L);
-        // No new row created
+        // No second row: the consumed decision short-circuits before any insert.
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
     }
 
     @Test
-    void revealAmbient_concurrentRetry_catchesIntegrityViolation_andReSelects() {
-        offeredDecision("ep-1", "Re-check the loop.");
+    void revealAmbient_secondRevealOfTheSameEpisode_returnsTheSameRow() {
+        // The old design allowed two rows for one episode when the client varied its message id. The decision record
+        // makes the offer single-use, so the second call must resolve the FIRST reveal's row instead of inserting.
+        var decision = offeredDecision("ep-1", "Re-check the loop.");
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
-        // First findBy returns empty (no row yet), save throws on the unique constraint, second findBy returns the row
-        var concurrentRow = new IrisMessage();
-        concurrentRow.setId(202L);
-        concurrentRow.setProactiveEpisodeId("ep-1");
-        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-1", USER_ID)).thenReturn(Optional.empty())            // first check: row doesn't exist
-                .thenReturn(Optional.of(concurrentRow)); // re-select after IntegrityViolation
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("unique constraint violation"));
-
-        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "cid-1");
-
-        assertThat(dto.id()).isEqualTo(202L);
-    }
-
-    @Test
-    void revealAmbient_differentClientMessageId_doesNotCollideWithSameEpisodeOtherRow() {
-        offeredDecision("ep-1", "Same text as escalation.");
-        // Two reveals for the same episode with different clientMessageIds must result in two distinct rows
-        var session = exerciseSession(EXERCISE_ID);
-        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
-        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("cid-reveal", USER_ID)).thenReturn(Optional.empty());
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
             m.setId(303L);
             return m;
         });
 
-        var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1", "cid-reveal");
+        var first = service.revealAmbient(user, EXERCISE_ID, "ep-1");
 
-        assertThat(dto.id()).isEqualTo(303L);
-        verify(irisMessageService).saveMessage(argThat(m -> "cid-reveal".equals(m.getProactiveClientMessageId())), any(), any());
+        // The first call claimed the offer on the managed entity; the second call sees it consumed.
+        assertThat(decision.getConsumedAt()).isNotNull();
+        assertThat(decision.getConsumedMessageId()).isEqualTo(303L);
+        var firstRow = new IrisMessage();
+        firstRow.setId(303L);
+        firstRow.setProactiveEpisodeId("ep-1");
+        when(irisMessageRepository.findById(303L)).thenReturn(Optional.of(firstRow));
+
+        var second = service.revealAmbient(user, EXERCISE_ID, "ep-1");
+
+        assertThat(second.id()).isEqualTo(first.id());
+        // Exactly one insert across both calls.
+        verify(irisMessageService).saveMessage(any(), any(), any());
     }
 
     @Test
-    void revealAmbient_crossUserClientMessageId_neverReturnsForeignRow() {
-        offeredDecision("ep-1", "victim hint");
-        // IDOR guard (Fix 3): a replayed, globally-unique clientMessageId that belongs to ANOTHER user's row must not
-        // be readable. The user-scoped finder returns empty for this user, so the fast path falls through to an insert
-        // which hits the global unique index (DataIntegrityViolationException). The user-scoped re-select also returns
-        // empty (the colliding row is not this user's), so the foreign row is NEVER returned - it surfaces as an error.
-        var session = exerciseSession(EXERCISE_ID);
-        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
-        // foreign key: empty on both the fast-path read and the post-violation re-select (not this user's row).
-        when(irisMessageRepository.findByProactiveClientMessageIdAndUserId("foreign-cid", USER_ID)).thenReturn(Optional.empty());
-        when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("global unique violation"));
-
-        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", "foreign-cid")).isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void revealAmbient_blankClientMessageId_throwsBadRequest() {
-        // The idempotency key is mandatory: a null/blank clientMessageId cannot dedupe (NULLs are not unique in SQL).
-        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", "  ")).isInstanceOf(BadRequestException.class);
-        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1", null)).isInstanceOf(BadRequestException.class);
+    void revealAmbient_blankEpisodeId_throwsBadRequest() {
+        // The episode is what addresses the offer; without it there is nothing a reveal could resolve.
+        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "  ")).isInstanceOf(BadRequestException.class);
+        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, null)).isInstanceOf(BadRequestException.class);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
     }
 

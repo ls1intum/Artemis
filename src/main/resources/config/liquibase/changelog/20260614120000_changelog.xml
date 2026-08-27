@@ -51,21 +51,4 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="20260614120000-4-add-proactive-client-message-id" author="liam-berger">
-        <preConditions onFail="MARK_RAN">
-            <not><columnExists tableName="iris_message" columnName="proactive_client_message_id"/></not>
-        </preConditions>
-        <addColumn tableName="iris_message">
-            <column name="proactive_client_message_id" type="varchar(64)"/>
-        </addColumn>
-    </changeSet>
-
-    <changeSet id="20260614120000-5-add-proactive-client-message-id-index" author="liam-berger">
-        <preConditions onFail="MARK_RAN">
-            <not><indexExists tableName="iris_message" indexName="ux_iris_message_proactive_client_message_id"/></not>
-        </preConditions>
-        <createIndex tableName="iris_message" indexName="ux_iris_message_proactive_client_message_id" unique="true">
-            <column name="proactive_client_message_id"/>
-        </createIndex>
-    </changeSet>
 </databaseChangeLog>

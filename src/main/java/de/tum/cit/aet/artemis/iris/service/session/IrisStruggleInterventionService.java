@@ -427,13 +427,12 @@ public class IrisStruggleInterventionService {
      * reveals of the same offer could both read it as unconsumed and both insert a message; the guarded update alone
      * would then leave the loser's row orphaned.
      *
-     * @param user            the student performing the reveal
-     * @param exerciseId      the programming exercise id (session scope)
-     * @param episodeId       the client-allocated episode UUID to stamp on the row
-     * @param clientMessageId the client-generated UUID used as the message-level idempotency key
+     * @param user       the student performing the reveal
+     * @param exerciseId the programming exercise id (session scope)
+     * @param episodeId  the client-allocated episode UUID to stamp on the row
      * @return the persisted message as a DTO
      */
-    private IrisMessageResponseDTO revealAmbientInTransaction(User user, long exerciseId, String episodeId, String clientMessageId) {
+    private IrisMessageResponseDTO revealAmbientInTransaction(User user, long exerciseId, String episodeId) {
         var decision = irisAmbientDecisionRepository.findForReveal(user.getId(), exerciseId, episodeId)
                 .orElseThrow(() -> new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision"));
         if (decision.getConsumedAt() != null) {
@@ -451,7 +450,6 @@ public class IrisStruggleInterventionService {
         message.addContent(new IrisTextMessageContent(decision.getHintText()));
         message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         message.setProactiveEpisodeId(episodeId);
-        message.setProactiveClientMessageId(clientMessageId);
         var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
 
         // The locked entity is managed, so consuming it is part of this transaction's flush.
@@ -540,34 +538,20 @@ public class IrisStruggleInterventionService {
 
     /**
      * Persist a previously-hidden ambient hint as a {@code PROACTIVE_STRUGGLE} message with a server-assigned
-     * {@code sentAt} and an idempotency key on {@code proactiveClientMessageId}. Idempotent: a lost-response
-     * retry with the same {@code clientMessageId} returns the same persisted row without inserting a duplicate.
-     * Race-safe: if a concurrent retry wins the unique-index race, the {@code DataIntegrityViolationException}
-     * is caught and the now-existing row is re-selected.
+     * {@code sentAt}. Idempotency is scoped to {@code (user, exercise, episode)} and enforced by the ambient
+     * decision record, not by any client-supplied key: a replay finds the decision already consumed and returns
+     * the row that reveal created, rather than inserting a second one.
      *
      * <p>
      * Deliberately does NOT call {@code irisChatWebsocketService.sendMessage}: the client owns the single insert
      * (optimistic bubble), and broadcasting here would duplicate the bubble before the client can reconcile (C2).
      *
-     * @param user            the student performing the reveal
-     * @param exerciseId      the programming exercise id (session scope)
-     * @param episodeId       the client-allocated episode UUID to stamp on the row
-     * @param clientMessageId the client-generated UUID that serves as the unique idempotency key
+     * @param user       the student performing the reveal
+     * @param exerciseId the programming exercise id (session scope)
+     * @param episodeId  the client-allocated episode UUID to stamp on the row
      * @return the persisted message as a DTO (id + proactiveEpisodeId visible to the client for reconciliation)
      */
-    public IrisMessageResponseDTO revealAmbient(User user, long exerciseId, String episodeId, String clientMessageId) {
-        // The clientMessageId is the idempotency key: it MUST be present and non-blank, otherwise the unique index
-        // cannot dedupe (NULLs are not unique in SQL) and a lost-response retry would create duplicate rows.
-        if (clientMessageId == null || clientMessageId.isBlank()) {
-            throw new BadRequestException("A non-blank clientMessageId is required to reveal an ambient hint");
-        }
-        // Fast idempotency path: already persisted by THIS user (normal case on lost-response retry). The lookup is
-        // user-scoped so a replayed (client-supplied, globally-unique) clientMessageId can never read another
-        // student's persisted hint (IDOR fix): a foreign key returns empty here, never the foreign row.
-        var existing = irisMessageRepository.findByProactiveClientMessageIdAndUserId(clientMessageId, user.getId());
-        if (existing.isPresent()) {
-            return IrisMessageResponseDTO.of(existing.get());
-        }
+    public IrisMessageResponseDTO revealAmbient(User user, long exerciseId, String episodeId) {
         // Authoritative text: the reveal may only surface a hint Artemis actually offered for THIS episode, and it
         // persists the server's copy. Trusting the caller's hintText let a student post arbitrary content as an LLM
         // message - which is fed back into the Pyris prompt as assistant history - and mint unlimited rows with
@@ -575,20 +559,10 @@ public class IrisStruggleInterventionService {
         if (episodeId == null || episodeId.isBlank()) {
             throw new BadRequestException("An episode id is required to reveal an ambient hint");
         }
-        try {
-            // The insert and the claim have to commit together, otherwise a crash between them persists a message
-            // that no decision records as consumed, and the offer could be revealed a second time. TransactionTemplate
-            // rather than @Transactional on this method: a same-class helper would be self-invoked and bypass the proxy.
-            return transactionTemplate.execute(status -> revealAmbientInTransaction(user, exerciseId, episodeId, clientMessageId));
-        }
-        catch (DataIntegrityViolationException ex) {
-            // The global unique index on proactive_client_message_id rejected the insert. Re-select user-scoped: a
-            // same-user concurrent retry persisted first, so the now-existing row is returned (race-safe upsert). A
-            // cross-user key collision (the key belongs to another student's row) finds nothing here and surfaces as
-            // an error rather than leaking the foreign row - the user scope is preserved on the recovery path too.
-            return irisMessageRepository.findByProactiveClientMessageIdAndUserId(clientMessageId, user.getId()).map(IrisMessageResponseDTO::of)
-                    .orElseThrow(() -> new IllegalStateException("Row vanished after unique-index violation on proactive_client_message_id=" + clientMessageId, ex));
-        }
+        // The insert and the claim have to commit together, otherwise a crash between them persists a message that no
+        // decision records as consumed, and the offer could be revealed a second time. TransactionTemplate rather than
+        // @Transactional on this method: a same-class helper would be self-invoked and bypass the proxy.
+        return transactionTemplate.execute(status -> revealAmbientInTransaction(user, exerciseId, episodeId));
     }
 
     /**
@@ -615,7 +589,7 @@ public class IrisStruggleInterventionService {
      * Readers are episode-wide ({@code findEpisodeOutcomes}), so the physical row holding the outcome is immaterial.
      *
      * <p>
-     * SCOPED to the requesting user's own episode rows (IDOR guard, mirroring {@code findByProactiveClientMessageIdAndUserId}):
+     * SCOPED to the requesting user's own episode rows (IDOR guard):
      * {@code episodeId} is a client-generated UUID, so an unscoped write would let any student write an outcome onto
      * another student's (or another exercise's) episode by guessing/replaying the id. Both the target-row lookup and
      * the episode-wide outcome reads are scoped to {@code userId}, so a foreign episode id is indistinguishable from

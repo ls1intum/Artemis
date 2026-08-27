@@ -73,12 +73,13 @@ public class IrisStruggleInterventionResource {
      * POST exercises/{exerciseId}/episodes/{episodeId}/reveal : persist a previously-hidden ambient hint.
      *
      * <p>
-     * Idempotent on {@code clientMessageId}: a retry with the same UUID returns the same row. Does NOT broadcast
-     * over the chat websocket (the client owns the optimistic bubble; C2 reconciles via the returned DTO).
+     * Idempotent per {@code (user, exercise, episode)}: a retry finds the ambient decision already consumed and
+     * returns the row the first reveal created. Does NOT broadcast over the chat websocket (the client owns the
+     * optimistic bubble; C2 reconciles via the returned DTO).
      *
      * @param exerciseId the programming exercise id (session scope)
      * @param episodeId  the client-allocated episode UUID
-     * @param body       the reveal request; only its client idempotency key is read, the hint text is not trusted
+     * @param body       the reveal request; none of its fields are read, it is accepted for wire compatibility only
      * @return {@code 200 OK} with the persisted {@link IrisMessageResponseDTO} ({@code id} + {@code proactiveEpisodeId})
      */
     @PostMapping("exercises/{exerciseId}/episodes/{episodeId}/reveal")
@@ -87,7 +88,7 @@ public class IrisStruggleInterventionResource {
     public ResponseEntity<IrisMessageResponseDTO> revealAmbient(@PathVariable long exerciseId, @PathVariable String episodeId, @RequestBody RevealAmbientRequestDTO body) {
         var user = userRepository.getUserWithAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
-        var dto = struggleInterventionService.revealAmbient(user, exerciseId, episodeId, body.clientMessageId());
+        var dto = struggleInterventionService.revealAmbient(user, exerciseId, episodeId);
         return ResponseEntity.ok(dto);
     }
 

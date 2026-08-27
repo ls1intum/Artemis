@@ -92,16 +92,4 @@ public interface IrisAmbientDecisionRepository extends ArtemisJpaRepository<Iris
             """)
     int refreshIfUnconsumed(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId, @Param("hintText") String hintText,
             @Param("now") ZonedDateTime now);
-
-    /**
-     * Delete decisions that were recorded before the given cut-off, so offers the student never revealed do not
-     * accumulate. Consumed rows are removed by the same sweep: once claimed, the message row is the record that matters.
-     *
-     * @param cutoff decisions created before this instant are removed
-     * @return number of rows deleted
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("DELETE FROM IrisAmbientDecision d WHERE d.createdAt < :cutoff")
-    int deleteOlderThan(@Param("cutoff") ZonedDateTime cutoff);
 }

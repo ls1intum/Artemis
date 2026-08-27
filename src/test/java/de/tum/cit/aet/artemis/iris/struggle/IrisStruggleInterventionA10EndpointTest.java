@@ -160,6 +160,9 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         var body = new RevealAmbientRequestDTO("student1's hint.", "ambient", "client-foreign");
 
         request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-foreign/reveal", body, IrisMessageResponseDTO.class, HttpStatus.CONFLICT);
+
+        // Nothing was written for the foreign caller either: the refusal is not merely a status code.
+        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-foreign", userUtilService.getUserByLogin(TEST_PREFIX + "student3").getId())).isEmpty();
     }
 
     @Test
@@ -180,16 +183,20 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void reveal_retry_sameClientMessageId_returnsExistingDto() throws Exception {
+    void reveal_retry_withADifferentClientId_returnsTheSameRow() throws Exception {
+        // Contract test for the narrowed idempotency scope: the client id is varied deliberately, so the only thing
+        // that can make the second call resolve the first row is the episode's consumed decision record.
         offerAmbientHint("ep-retry", "Fix the loop.");
-        var body = new RevealAmbientRequestDTO("Fix the loop.", "ambient", "client-uuid-retry");
 
-        var dto1 = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-retry/reveal", body, IrisMessageResponseDTO.class, HttpStatus.OK);
+        var dto1 = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-retry/reveal",
+                new RevealAmbientRequestDTO("Fix the loop.", "ambient", "client-retry-a"), IrisMessageResponseDTO.class, HttpStatus.OK);
 
-        var dto2 = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-retry/reveal", body, IrisMessageResponseDTO.class, HttpStatus.OK);
+        var dto2 = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-retry/reveal",
+                new RevealAmbientRequestDTO("Fix the loop.", "ambient", "client-retry-b"), IrisMessageResponseDTO.class, HttpStatus.OK);
 
         assertThat(dto1.id()).isNotNull();
-        assertThat(dto2.id()).isEqualTo(dto1.id()); // same row, no duplicate
+        assertThat(dto2.id()).isEqualTo(dto1.id());
+        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-retry", userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId())).hasSize(1);
     }
 
     @Test
@@ -201,33 +208,16 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void reveal_blankClientMessageId_isBadRequest() throws Exception {
-        // The idempotency key is mandatory: a blank clientMessageId must be rejected (cannot dedupe on a NULL key).
+    void reveal_blankClientMessageId_isAcceptedAndIgnored() throws Exception {
+        // Deliberate relaxation: the client id is no longer read, so a blank one is simply ignored rather than
+        // rejected with 400. The offered decision is what the reveal resolves.
+        offerAmbientHint("ep-blank", "Fix the loop.");
         var body = new RevealAmbientRequestDTO("Fix the loop.", "ambient", "");
-        request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-blank/reveal", body, HttpStatus.BAD_REQUEST);
-    }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void reveal_clientMessageIdLookup_isUserScoped_noCrossUserRead() throws Exception {
-        // IDOR guard (Fix 3) at the data layer: a globally-unique clientMessageId is only resolvable by the OWNING
-        // user. student3 owns the row; the scoped finder returns it for student3 but NEVER for student1, so a replayed
-        // key can never read another student's persisted hint.
-        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var student3 = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
-        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student3);
-        var msg = new IrisMessage();
-        msg.addContent(new IrisTextMessageContent("student3 hint"));
-        msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
-        msg.setProactiveEpisodeId("ep-scope");
-        msg.setProactiveClientMessageId("scoped-cid");
-        var owned = irisMessageService.saveMessage(msg, session, IrisMessageSender.LLM);
+        var dto = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-blank/reveal", body, IrisMessageResponseDTO.class, HttpStatus.OK);
 
-        var ownerLookup = irisMessageRepository.findByProactiveClientMessageIdAndUserId("scoped-cid", student3.getId());
-        assertThat(ownerLookup).isPresent();
-        assertThat(ownerLookup.get().getId()).isEqualTo(owned.getId());
-        // The foreign user gets nothing back - the row is in none of student1's sessions.
-        assertThat(irisMessageRepository.findByProactiveClientMessageIdAndUserId("scoped-cid", student1.getId())).isEmpty();
+        var persisted = irisMessageRepository.findById(dto.id()).orElseThrow();
+        assertThat(persisted.getContent().getFirst().getContentAsString()).isEqualTo("Fix the loop.");
     }
 
     // ---- episode-outcome ----

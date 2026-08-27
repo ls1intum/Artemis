@@ -72,10 +72,6 @@ public class IrisMessage extends DomainObject {
     @Column(name = "proactive_episode_id")
     private String proactiveEpisodeId;
 
-    @Nullable
-    @Column(name = "proactive_client_message_id")
-    private String proactiveClientMessageId;
-
     @OrderColumn(name = "iris_message_content_order")
     @OneToMany(mappedBy = "message", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
@@ -160,15 +156,6 @@ public class IrisMessage extends DomainObject {
 
     public void setProactiveEpisodeId(@Nullable String proactiveEpisodeId) {
         this.proactiveEpisodeId = proactiveEpisodeId;
-    }
-
-    @Nullable
-    public String getProactiveClientMessageId() {
-        return proactiveClientMessageId;
-    }
-
-    public void setProactiveClientMessageId(@Nullable String proactiveClientMessageId) {
-        this.proactiveClientMessageId = proactiveClientMessageId;
     }
 
     public List<IrisMessageContent> getContent() {
