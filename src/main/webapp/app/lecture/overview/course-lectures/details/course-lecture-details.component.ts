@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
@@ -46,6 +46,11 @@ import { InformationBox, InformationBoxComponent, InformationBoxContent } from '
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
 import { LectureDeepLink, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+
+interface DeepLinkNavigationState {
+    readonly routeKey: string;
+    readonly hasLectureDeepLinkParams: boolean;
+}
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -155,6 +160,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     readonly deepLink = this.deepLinkState.asReadonly();
     /** A jump waiting for its lecture to load, with the lecture it arrived for — else another one could execute it. */
     private pendingDeepLink?: { readonly deepLink: LectureDeepLink; readonly lectureId: number };
+    private lastDeepLinkNavigationState?: DeepLinkNavigationState;
 
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
@@ -218,6 +224,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         // navigation — and therefore this event — is `onSameUrlNavigation: 'reload'` in app.config.ts. Remove that and
         // repeated jumps stop arriving here, silently.
         this.acceptDeepLinkFromRoute();
+        this.lastDeepLinkNavigationState = this.currentDeepLinkNavigationState();
         const initialNavigationId = this.router.currentNavigation()?.id;
         this.router.events
             .pipe(
@@ -225,7 +232,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 filter((event): event is NavigationEnd => event instanceof NavigationEnd && event.id !== initialNavigationId),
                 takeUntilDestroyed(this.destroyRef),
             )
-            .subscribe(() => this.acceptDeepLinkFromRoute());
+            .subscribe(() => {
+                if (this.shouldHandleNavigationEnd()) {
+                    this.acceptDeepLinkFromRoute();
+                }
+            });
     }
 
     private acceptDeepLinkFromRoute(): void {
@@ -239,6 +250,31 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         this.pendingDeepLink = { deepLink, lectureId: routeLectureId };
         this.publishDeepLink();
+    }
+
+    private shouldHandleNavigationEnd(): boolean {
+        const previous = this.lastDeepLinkNavigationState;
+        const current = this.currentDeepLinkNavigationState();
+        this.lastDeepLinkNavigationState = current;
+
+        return !previous || current.routeKey !== previous.routeKey || current.hasLectureDeepLinkParams || previous.hasLectureDeepLinkParams;
+    }
+
+    private currentDeepLinkNavigationState(): DeepLinkNavigationState {
+        return {
+            routeKey: this.currentRouteKey(),
+            hasLectureDeepLinkParams: this.hasLectureDeepLinkParams(this.activatedRoute.snapshot.queryParams),
+        };
+    }
+
+    private currentRouteKey(): string {
+        const courseId = this.activatedRoute.parent?.parent?.snapshot?.params?.['courseId'] ?? '';
+        const lectureId = this.activatedRoute.snapshot.params['lectureId'] ?? '';
+        return `${courseId}/${lectureId}`;
+    }
+
+    private hasLectureDeepLinkParams(params: Params): boolean {
+        return params['unit'] !== undefined || params['timestamp'] !== undefined || params['page'] !== undefined;
     }
 
     loadData() {

@@ -3,7 +3,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { DebugElement, ElementRef, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
+import { ActivatedRoute, Navigation, NavigationEnd, Params, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
@@ -191,7 +191,7 @@ describe('CourseLectureDetailsComponent', () => {
                     },
                 },
                 // currentNavigation is a signal property, which MockProvider does not stub on its own.
-                MockProvider(Router, { events: routerEvents, currentNavigation: signal(null) }),
+                MockProvider(Router, { events: routerEvents, currentNavigation: signal({ id: 1 } as Navigation) }),
                 MockProvider(ScienceService),
                 MockProvider(IrisSettingsService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -574,7 +574,7 @@ describe('CourseLectureDetailsComponent', () => {
 
     describe('deep-link query params', () => {
         const videoSource = 'https://example.com/video.mp4';
-        let navigationId = 0;
+        let navigationId = 1;
 
         const attachmentUnit = (id: number, link = '/path/to/slides.pdf', video = videoSource): AttachmentVideoUnit => {
             const unit = new AttachmentVideoUnit();
@@ -614,11 +614,11 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.ngOnInit();
         };
 
-        const emitNavigationWithQueryParams = (queryParams: Record<string, unknown>, lectureId = '1') => {
+        const emitNavigationWithQueryParams = (queryParams: Record<string, unknown>, lectureId = '1', eventId = ++navigationId) => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.snapshot.params = { lectureId };
             activatedRoute.snapshot.queryParams = queryParams as Params;
-            routerEvents.next(new NavigationEnd(++navigationId, `/courses/1/lectures/${lectureId}`, `/courses/1/lectures/${lectureId}`));
+            routerEvents.next(new NavigationEnd(eventId, `/courses/1/lectures/${lectureId}`, `/courses/1/lectures/${lectureId}`));
         };
 
         it.each([
@@ -667,6 +667,26 @@ describe('CourseLectureDetailsComponent', () => {
             expect(first).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
             expect(second).not.toBe(first);
             expect(second).toEqual(first);
+        });
+
+        it('should not publish the current activation NavigationEnd a second time', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit({ unit: '7', page: '4' });
+            const first = courseLecturesDetailsComponent.deepLink();
+
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 1);
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
+        });
+
+        it('should ignore query-only navigations unrelated to lecture deep-link parameters', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+            const acceptDeepLink = vi.spyOn(courseLecturesDetailsComponent as unknown as { acceptDeepLinkFromRoute: () => void }, 'acceptDeepLinkFromRoute');
+
+            emitNavigationWithQueryParams({ unrelated: 'value' });
+
+            expect(acceptDeepLink).not.toHaveBeenCalled();
         });
 
         it('should hold a jump back until the lecture it points at is loaded, across the switch to it', () => {
