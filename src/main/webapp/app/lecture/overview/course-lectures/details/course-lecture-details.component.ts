@@ -11,13 +11,13 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { filter, finalize, tap } from 'rxjs/operators';
+import { catchError, filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faChalkboardTeacher, faComment, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { ScienceEventType } from 'app/foundation/science/science.model';
-import { Subscription } from 'rxjs';
+import { EMPTY, Subject, Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -161,6 +161,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     /** A jump waiting for its lecture to load, with the lecture it arrived for — else another one could execute it. */
     private pendingDeepLink?: { readonly deepLink: LectureDeepLink; readonly lectureId: number };
     private lastDeepLinkNavigationState?: DeepLinkNavigationState;
+    private readonly lectureDetailsLoad$ = new Subject<number>();
+    private irisSettingsSubscription?: Subscription;
 
     // ViewChildren to access all attachment/video unit components
     private readonly attachmentVideoUnits = viewChildren(AttachmentVideoUnitComponent);
@@ -187,6 +189,24 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                 untracked(() => this.chatService.openChat(ChatServiceMode.LECTURE, lectureId));
             }
         });
+
+        this.lectureDetailsLoad$
+            .pipe(
+                switchMap((lectureId) => {
+                    this.irisSettingsSubscription?.unsubscribe();
+                    this.isLoading.set(true);
+                    return this.lectureService.findWithDetails(lectureId).pipe(
+                        tap((findLectureResult) => this.handleLectureDetails(findLectureResult.body!)),
+                        catchError((errorResponse: HttpErrorResponse) => {
+                            onError(this.alertService, errorResponse);
+                            return EMPTY;
+                        }),
+                        finalize(() => this.isLoading.set(false)),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe();
     }
 
     ngOnInit(): void {
@@ -278,68 +298,41 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     loadData() {
-        const requestedLectureId = this.lectureId;
-        if (requestedLectureId) {
-            this.isLoading.set(true);
-            this.lectureService
-                .findWithDetails(requestedLectureId)
-                .pipe(
-                    finalize(() => {
-                        if (requestedLectureId === this.lectureId) {
-                            this.isLoading.set(false);
-                        }
-                    }),
-                )
-                .subscribe({
-                    next: (findLectureResult) => {
-                        if (requestedLectureId !== this.lectureId) {
-                            return;
-                        }
-
-                        const lecture = findLectureResult.body!;
-                        this.lecture.set(lecture);
-                        lecture.attachments?.forEach((attachment) => {
-                            if (attachment.link) {
-                                attachment.linkUrl = addPublicFilePrefix(attachment.link);
-                            }
-                        });
-
-                        this.lectureUnits.set(lecture.lectureUnits ?? []);
-                        this.publishDeepLink();
-                        this.hasPdfLectureUnit.set(
-                            this.lectureUnits().some(
-                                (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
-                            ),
-                        );
-                        if (this.irisEnabled && lecture.course?.id) {
-                            this.irisSettingsService.getCourseSettingsWithRateLimit(lecture.course.id).subscribe((response) => {
-                                if (requestedLectureId !== this.lectureId) {
-                                    return;
-                                }
-
-                                this.irisSettings.set(response);
-                            });
-                        }
-                        const informationBoxData: InformationBox[] = [];
-                        if (lecture.startDate) {
-                            const startDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.startDate';
-                            informationBoxData.push(this.createDateInfoBox(lecture.startDate, startDateInfoBoxTitle));
-                        }
-                        if (lecture.endDate) {
-                            const endDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.endDate';
-                            informationBoxData.push(this.createDateInfoBox(lecture.endDate, endDateInfoBoxTitle));
-                        }
-                        this.informationBoxData.set(informationBoxData);
-                    },
-                    error: (errorResponse: HttpErrorResponse) => {
-                        if (requestedLectureId !== this.lectureId) {
-                            return;
-                        }
-
-                        onError(this.alertService, errorResponse);
-                    },
-                });
+        if (this.lectureId) {
+            this.lectureDetailsLoad$.next(this.lectureId);
+        } else {
+            this.irisSettingsSubscription?.unsubscribe();
         }
+    }
+
+    private handleLectureDetails(lecture: Lecture): void {
+        this.lecture.set(lecture);
+        lecture.attachments?.forEach((attachment) => {
+            if (attachment.link) {
+                attachment.linkUrl = addPublicFilePrefix(attachment.link);
+            }
+        });
+
+        this.lectureUnits.set(lecture.lectureUnits ?? []);
+        this.publishDeepLink();
+        this.hasPdfLectureUnit.set(
+            this.lectureUnits().some((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf')),
+        );
+        if (this.irisEnabled && lecture.course?.id) {
+            this.irisSettingsSubscription = this.irisSettingsService.getCourseSettingsWithRateLimit(lecture.course.id).subscribe((response) => {
+                this.irisSettings.set(response);
+            });
+        }
+        const informationBoxData: InformationBox[] = [];
+        if (lecture.startDate) {
+            const startDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.startDate';
+            informationBoxData.push(this.createDateInfoBox(lecture.startDate, startDateInfoBoxTitle));
+        }
+        if (lecture.endDate) {
+            const endDateInfoBoxTitle = 'artemisApp.courseOverview.lectureDetails.endDate';
+            informationBoxData.push(this.createDateInfoBox(lecture.endDate, endDateInfoBoxTitle));
+        }
+        this.informationBoxData.set(informationBoxData);
     }
 
     setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
@@ -417,6 +410,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
         this.courseParamsSubscription?.unsubscribe();
+        this.irisSettingsSubscription?.unsubscribe();
     }
 
     private isElementVisible(element: Element | null): boolean {

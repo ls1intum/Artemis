@@ -570,6 +570,34 @@ describe('CourseLectureDetailsComponent', () => {
             expect(errorSpy).toHaveBeenCalledWith('error.http.404');
             expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
         });
+
+        it('should ignore out-of-order responses for overlapping requests of the same lecture', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            activatedRoute.snapshot.queryParams = { unit: '7', page: '2' };
+
+            const firstResponse = new Subject<HttpResponse<Lecture>>();
+            const secondResponse = new Subject<HttpResponse<Lecture>>();
+            const staleLecture = cloneWith(lecture, { title: 'Stale lecture', lectureUnits: [getAttachmentVideoUnit(lecture, 7, dayjs())] });
+            const currentLecture = cloneWith(lecture, { title: 'Current lecture', lectureUnits: [getAttachmentVideoUnit(lecture, 8, dayjs())] });
+            vi.spyOn(lectureService, 'findWithDetails').mockReturnValueOnce(firstResponse).mockReturnValueOnce(secondResponse);
+
+            courseLecturesDetailsComponent.ngOnInit();
+            courseLecturesDetailsComponent.loadData();
+
+            firstResponse.next(new HttpResponse({ body: staleLecture, status: 200 }));
+            firstResponse.complete();
+
+            expect(courseLecturesDetailsComponent.lecture()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
+            expect(courseLecturesDetailsComponent.isLoading()).toBe(true);
+
+            secondResponse.next(new HttpResponse({ body: currentLecture, status: 200 }));
+            secondResponse.complete();
+
+            expect(courseLecturesDetailsComponent.lecture()).toBe(currentLecture);
+            expect(courseLecturesDetailsComponent.deepLink()).toEqual(expect.objectContaining({ unitId: 7, page: 2 }));
+            expect(courseLecturesDetailsComponent.isLoading()).toBe(false);
+        });
     });
 
     describe('deep-link query params', () => {
