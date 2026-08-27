@@ -16,5 +16,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationUpdateDTO(@NotNull Long id, @NotNull Long exerciseId, @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) Double presentationScore) {
+public record ParticipationUpdateDTO(@NotNull Long id, @NotNull Long exerciseId, @Nullable Double presentationScore) {
 }

@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * @param results                initialized lean results, or absent when results were not loaded
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationSubmissionDTO(Long id, @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) Boolean submitted, @Nullable ZonedDateTime submissionDate,
-        String submissionExerciseType, @Nullable String commitHash, @Nullable List<ParticipationSubmissionResultDTO> results) {
+public record ParticipationSubmissionDTO(Long id, @Nullable Boolean submitted, @Nullable ZonedDateTime submissionDate, String submissionExerciseType, @Nullable String commitHash,
+        @Nullable List<ParticipationSubmissionResultDTO> results) {
 
     /**
      * Creates a lean response DTO from a submission without initializing lazy results.

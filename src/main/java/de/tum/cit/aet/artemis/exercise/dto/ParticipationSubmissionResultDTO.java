@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
  * @param assessmentType the type of assessment that produced the result, if known
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationSubmissionResultDTO(Long id, @Nullable ZonedDateTime completionDate, @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) Boolean successful,
-        @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) Double score, @JsonInclude(JsonInclude.Include.ALWAYS) boolean rated, @Nullable AssessmentType assessmentType) {
+public record ParticipationSubmissionResultDTO(Long id, @Nullable ZonedDateTime completionDate, @Nullable Boolean successful, @Nullable Double score, boolean rated,
+        @Nullable AssessmentType assessmentType) {
 
     /**
      * Creates a lean response DTO from a result.
