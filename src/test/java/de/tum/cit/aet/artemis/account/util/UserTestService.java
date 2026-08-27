@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
@@ -53,6 +54,9 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
+import de.tum.cit.aet.artemis.lti.domain.UserLti;
+import de.tum.cit.aet.artemis.lti.repository.UserLtiRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -77,6 +81,9 @@ public class UserTestService {
     private PasswordService passwordService;
 
     @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
+
+    @Autowired
     private CourseTestRepository courseRepository;
 
     @Autowired
@@ -84,6 +91,13 @@ public class UserTestService {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    // Optional: the repository only exists where LTI is enabled, and this helper is shared with test classes that run without it.
+    @Autowired(required = false)
+    private UserLtiRepository userLtiRepository;
 
     @Autowired
     private TeamUtilService teamUtilService;
@@ -357,7 +371,7 @@ public class UserTestService {
     // Test
     public void createExternalUser_asAdmin_withVcsToken_isSuccessful() throws Exception {
         var user = this.createExternalUser_asAdmin_isSuccessful();
-        assertThat(user.getVcsAccessToken()).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
     }
 
     // Test
@@ -607,8 +621,11 @@ public class UserTestService {
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
-        repoUser.setLtiCreated(true);
+        markCreatedByLtiLaunch(repoUser);
         userTestRepository.save(repoUser);
+        // Seeded so the assertion below can fail: the key lives in user_recovery_key now, and an account that has none has
+        // nothing to clear.
+        userRecoveryKeyService.storeActivationKey(repoUser.getId(), "some-key");
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
@@ -620,6 +637,10 @@ public class UserTestService {
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+        // The key the factory generated for the internal account is unreachable state once the account is activated, and
+        // an activated account carrying one would break the invariant the data repair for wrongly unactivated accounts
+        // relies on.
+        assertThat(userRecoveryKeyService.findActivationKey(currentUser.getId())).as("activating through the LTI initialization clears the activation key").isNull();
     }
 
     // Test
@@ -629,7 +650,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
-        user.setLtiCreated(true);
+        markCreatedByLtiLaunch(user, true);
         userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
@@ -641,6 +662,53 @@ public class UserTestService {
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
+    }
+
+    /**
+     * The reason initialisation has its own marker. An LTI-provisioned account that an administrator deactivated is
+     * inactive, exactly like one that has never been initialised - and this endpoint needs only an authenticated session,
+     * which a token issued before the deactivation still provides. Deciding on {@code activated} therefore let a disabled
+     * account activate itself again and collect a working password.
+     */
+    // Test
+    public void initializeUserDeactivatedAfterInitialization() throws Exception {
+        String password = passwordService.hashPassword("ThisIsAPassword");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setPassword(password);
+        user.setInternal(true);
+        user.setActivated(false);
+        markCreatedByLtiLaunch(user, true);
+        userTestRepository.save(user);
+
+        UserInitializationDTO dto = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(dto.password()).as("a deactivated account must not be handed a password").isNull();
+
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(currentUser.getPassword()).isEqualTo(password);
+        assertThat(currentUser.getActivated()).as("a deactivated account must not activate itself here").isFalse();
+    }
+
+    /**
+     * Initialisation happens once. The marker is claimed in a single conditional statement, so a second call finds nothing
+     * to claim and gets no password - which also means two concurrent calls cannot both be served.
+     */
+    // Test
+    public void initializeUserOnlyOnce() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setPassword(passwordService.hashPassword("ThisIsAPassword"));
+        user.setInternal(true);
+        user.setActivated(false);
+        markCreatedByLtiLaunch(user, false);
+        userTestRepository.save(user);
+
+        UserInitializationDTO first = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+        UserInitializationDTO second = request.putWithResponseBody("/api/account/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
+
+        assertThat(first.password()).isNotEmpty();
+        assertThat(second.password()).as("the second call has nothing left to claim").isNull();
+        User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(passwordService.checkPasswordMatch(first.password(), currentUser.getPassword())).as("the first password stays valid").isTrue();
     }
 
     // Test
@@ -657,7 +725,9 @@ public class UserTestService {
 
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.getActivated()).isTrue();
+        // An account the LTI launch did not create is answered without being touched. It used to be activated here, which
+        // let it undo an administrator's deactivation.
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
         assertThat(currentUser.isInternal()).isTrue();
     }
 
@@ -677,7 +747,9 @@ public class UserTestService {
         User currentUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
-        assertThat(currentUser.getActivated()).isTrue();
+        // Same for an externally managed account: it has no Artemis password to initialise, and only an administrator may
+        // reverse a deactivation.
+        assertThat(currentUser.getActivated()).as("initialization must not activate an account").isFalse();
         assertThat(currentUser.isInternal()).isFalse();
     }
 
@@ -745,7 +817,7 @@ public class UserTestService {
     // Test
     public void createAndDeleteUserVcsAccessToken() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isNull();
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
         // Set expiry date to already past date -> Bad Request
         ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
@@ -756,14 +828,14 @@ public class UserTestService {
         expiryDate = ZonedDateTime.now().plusMonths(1);
         userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isEqualTo(userDTO.getVcsAccessToken());
-        assertThat(user.getVcsAccessTokenExpiryDate()).isEqualTo(userDTO.getVcsAccessTokenExpiryDate());
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo(userDTO.getVcsAccessToken());
+        assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNotNull();
 
         // Delete token
         request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(user.getVcsAccessToken()).isNull();
-        assertThat(user.getVcsAccessTokenExpiryDate()).isNull();
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
+        assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNull();
     }
 
     public UserRepository getUserTestRepository() {
@@ -1033,5 +1105,27 @@ public class UserTestService {
             result = request.getList("/api/account/admin/users", HttpStatus.OK, UserDTO.class, params);
             assertThat(result).extracting(UserDTO::getLogin).contains(admin.getLogin()).doesNotContain(user1.getLogin(), user2.getLogin());
         }
+    }
+
+    /**
+     * Marks the account as created by an LTI launch. The marker is a row in {@code user_lti} rather than a column on the
+     * user, so it cannot be set by mutating the entity.
+     *
+     * @param user the account to mark
+     */
+    private void markCreatedByLtiLaunch(User user) {
+        markCreatedByLtiLaunch(user, false);
+    }
+
+    /**
+     * Records that an LTI launch provisioned the account, and whether that account has already completed the one-time
+     * initialisation. The endpoint decides on this marker rather than on {@code activated}, so a test that wants an
+     * already-initialised account has to say so here.
+     */
+    private void markCreatedByLtiLaunch(User user, boolean initialized) {
+        userTestRepository.save(user);
+        UserLti marker = new UserLti(user.getId(), true);
+        marker.setInitialized(initialized);
+        userLtiRepository.save(marker);
     }
 }
