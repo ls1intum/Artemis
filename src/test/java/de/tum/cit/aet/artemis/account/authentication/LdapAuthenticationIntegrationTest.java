@@ -91,6 +91,32 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
         AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
     }
 
+    /**
+     * Correct LDAP credentials must not be enough on their own. This provider was the only one that did not consult the
+     * account state, so an account an administrator had deactivated could still obtain a web session here while being
+     * refused by every other provider and by both git paths.
+     */
+    @Test
+    @WithAnonymousUser
+    void testDeactivatedUserCannotAuthenticate() throws Exception {
+        // Sign in once so the account exists locally, then deactivate it and retry with the same correct credentials.
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(LOGIN);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+        request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+
+        User user = userRepository.findOneByLogin(LOGIN).orElseThrow();
+        user.setActivated(false);
+        userRepository.save(user);
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate", loginVM, HttpStatus.UNAUTHORIZED, httpHeaders);
+        assertThat(response.getCookie("jwt")).as("no session for a deactivated account").isNull();
+    }
+
     @Test
     @WithMockUser(username = "admin", roles = { "ADMIN" })
     void testImportUsers() throws Exception {

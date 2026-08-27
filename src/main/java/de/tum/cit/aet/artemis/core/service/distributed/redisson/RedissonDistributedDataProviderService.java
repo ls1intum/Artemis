@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -197,6 +198,26 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
     public Set<String> getConnectedClientNames() {
         var snapshot = redisClientListResolver.resolveClients();
         return snapshot.complete() ? snapshot.clientNames() : Set.of();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Redis reports the address it accepted each connection from in {@code CLIENT LIST}. Empty when that query failed or, in Redis Cluster mode, covered only part of the
+     * deployment: the caller concludes from a name's absence that the client disconnected, so a partial answer would clear the addresses of every agent attached to a node that
+     * did not answer. That must stay distinguishable from a complete answer that found no clients.
+     */
+    @Override
+    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
+        return redisClientListResolver.getClientAddressesByName();
+    }
+
+    @Override
+    public boolean clientsConnectDirectlyToCoreNodes() {
+        // Clients connect to Redis, not to a core node, so where Redis accepted a connection from says nothing about
+        // the route that client takes to the git server
+        return false;
     }
 
     @Override
