@@ -76,6 +76,12 @@ public class IrisStruggleInterventionService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisStruggleInterventionService.class);
 
+    /**
+     * Width of {@code iris_ambient_decision.episode_id} and {@code iris_message.proactive_episode_id}. Both columns
+     * are varchar(64); an episode id is a client-generated UUID, so 64 is generous.
+     */
+    private static final int MAX_EPISODE_ID_LENGTH = 64;
+
     private static final int PERSIST_MAX_ATTEMPTS = 3;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -479,7 +485,15 @@ public class IrisStruggleInterventionService {
         // here would be detached, and saving a detached aggregate merges EVERY column: a reveal committing between
         // the read and the save would be overwritten, resetting consumedAt and consumedMessageId to NULL and making
         // an already-revealed offer revealable a second time.
-        if (irisAmbientDecisionRepository.refreshIfUnconsumed(userId, exerciseId, episodeId, hintText, ZonedDateTime.now()) > 0) {
+        if (irisAmbientDecisionRepository.refreshIfUnconsumed(userId, exerciseId, episodeId, hintText) > 0) {
+            return;
+        }
+        // Reject an over-long episode id before the insert rather than after. Without this the insert fails on the
+        // column width, the catch below swallows it as "already present", and the client is still told an offer
+        // exists that was never recorded - a reveal would then 409.
+        if (episodeId.length() > MAX_EPISODE_ID_LENGTH) {
+            log.warn("Refusing to record an ambient decision for exercise={} user={}: episode id is {} characters, the limit is {}", exerciseId, userId, episodeId.length(),
+                    MAX_EPISODE_ID_LENGTH);
             return;
         }
         // Zero rows: either no offer exists for this episode yet, or the student already revealed the previous one.

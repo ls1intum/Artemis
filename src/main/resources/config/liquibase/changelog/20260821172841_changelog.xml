@@ -31,7 +31,7 @@
             <column name="exercise_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="episode_id" type="VARCHAR(255)">
+            <column name="episode_id" type="varchar(64)">
                 <constraints nullable="false"/>
             </column>
             <column name="hint_text" type="text">

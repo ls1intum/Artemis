@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import jakarta.persistence.LockModeType;
@@ -41,29 +40,6 @@ public interface IrisAmbientDecisionRepository extends ArtemisJpaRepository<Iris
     Optional<IrisAmbientDecision> findForReveal(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId);
 
     /**
-     * Row-scoped single-use claim: marks the decision consumed ONLY IF it is still unconsumed. Mirrors
-     * {@link IrisMessageRepository#setProactiveOutcomeIfNull}: the guard references only the target row, so it stays
-     * portable across H2, MySQL and PostgreSQL.
-     *
-     * <p>
-     * A return value of 1 means this caller won the claim and owns the reveal; 0 means another request consumed it
-     * first, and the caller must return that request's message rather than inserting a second one.
-     *
-     * @param id         the decision to claim
-     * @param consumedAt the claim timestamp
-     * @param messageId  the message this reveal created
-     * @return number of rows updated (1 = claimed, 0 = already consumed or gone)
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE IrisAmbientDecision d
-            SET d.consumedAt = :consumedAt, d.consumedMessageId = :messageId
-            WHERE d.id = :id AND d.consumedAt IS NULL
-            """)
-    int claimIfUnconsumed(@Param("id") long id, @Param("consumedAt") ZonedDateTime consumedAt, @Param("messageId") Long messageId);
-
-    /**
      * Refresh the hint of an offer that is still unconsumed, keyed by the natural key. Deliberately takes no
      * previously-loaded entity: the callback runs outside a transaction, so anything it read would be detached, and
      * saving a detached aggregate merges EVERY column. A reveal committing between that read and the save would be
@@ -75,21 +51,24 @@ public interface IrisAmbientDecisionRepository extends ArtemisJpaRepository<Iris
      * revealed the previous one. Both are normal, neither is an error: the caller falls through to an insert and
      * lets the unique constraint on (user, exercise, episode) decide.
      *
+     * <p>
+     * {@code createdAt} is deliberately left alone. It records when the offer was first made, and a later callback
+     * refining the wording does not make it a new offer. Moving it would also let repeated callbacks postpone the
+     * expiry of any age-based retention added later.
+     *
      * @param userId     the student the hint is offered to
      * @param exerciseId the exercise the hint belongs to
      * @param episodeId  the client-allocated episode id
      * @param hintText   the newest hint as authored by Pyris
-     * @param now        the refresh timestamp
      * @return number of rows updated (1 = refreshed, 0 = no unconsumed offer for this triple)
      */
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE IrisAmbientDecision d
-            SET d.hintText = :hintText, d.createdAt = :now
+            SET d.hintText = :hintText
             WHERE d.userId = :userId AND d.exerciseId = :exerciseId AND d.episodeId = :episodeId
               AND d.consumedAt IS NULL
             """)
-    int refreshIfUnconsumed(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId, @Param("hintText") String hintText,
-            @Param("now") ZonedDateTime now);
+    int refreshIfUnconsumed(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId, @Param("hintText") String hintText);
 }

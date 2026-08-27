@@ -98,7 +98,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
      * Record the ambient decision Artemis would have emitted, which a reveal now requires. Returns the stored,
      * server-authored text so a test can assert that it - and not the caller's copy - is what gets persisted.
      */
-    private String offerAmbientHint(String episodeId, String serverText) {
+    private long offerAmbientHint(String episodeId, String serverText) {
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var decision = new IrisAmbientDecision();
         decision.setUserId(student.getId());
@@ -106,8 +106,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         decision.setEpisodeId(episodeId);
         decision.setHintText(serverText);
         decision.setCreatedAt(ZonedDateTime.now());
-        irisAmbientDecisionRepository.save(decision);
-        return serverText;
+        return irisAmbientDecisionRepository.save(decision).getId();
     }
 
     @Test
@@ -156,13 +155,16 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         // The decision belongs to student1; the lookup is scoped by user, so nobody else can consume it.
         // student3 rather than student2 on purpose: student2 is AI-opted-out in setUp and would be rejected by
         // the opt-in gate before this guard is ever reached, which would make the test prove nothing.
-        offerAmbientHint("ep-foreign", "student1's hint.");
+        long offerId = offerAmbientHint("ep-foreign", "student1's hint.");
         var body = new RevealAmbientRequestDTO("student1's hint.", "ambient", "client-foreign");
 
         request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-foreign/reveal", body, IrisMessageResponseDTO.class, HttpStatus.CONFLICT);
 
         // Nothing was written for the foreign caller either: the refusal is not merely a status code.
         assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-foreign", userUtilService.getUserByLogin(TEST_PREFIX + "student3").getId())).isEmpty();
+        // And the owner's offer survives the attempt: a foreign call must not consume what it cannot read.
+        // findById rather than findForReveal: the latter takes a pessimistic lock and would need an active transaction.
+        assertThat(irisAmbientDecisionRepository.findById(offerId).orElseThrow().getConsumedAt()).isNull();
     }
 
     @Test
@@ -218,6 +220,25 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
         var persisted = irisMessageRepository.findById(dto.id()).orElseThrow();
         assertThat(persisted.getContent().getFirst().getContentAsString()).isEqualTo("Fix the loop.");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void reveal_sameClientIdAcrossTwoEpisodes_bothSucceed() throws Exception {
+        // This is the behaviour the removed global unique index deliberately gives up. Under the old schema the
+        // second reveal was rejected because the client id collided; idempotency is now scoped to the episode, so
+        // two distinct episodes carrying the same client id are two distinct offers and produce two rows.
+        offerAmbientHint("ep-dup-a", "Hint A.");
+        offerAmbientHint("ep-dup-b", "Hint B.");
+
+        var a = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-dup-a/reveal",
+                new RevealAmbientRequestDTO("Hint A.", "ambient", "same-client-id"), IrisMessageResponseDTO.class, HttpStatus.OK);
+        var b = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-dup-b/reveal",
+                new RevealAmbientRequestDTO("Hint B.", "ambient", "same-client-id"), IrisMessageResponseDTO.class, HttpStatus.OK);
+
+        assertThat(b.id()).isNotEqualTo(a.id());
+        assertThat(irisMessageRepository.findById(a.id()).orElseThrow().getContent().getFirst().getContentAsString()).isEqualTo("Hint A.");
+        assertThat(irisMessageRepository.findById(b.id()).orElseThrow().getContent().getFirst().getContentAsString()).isEqualTo("Hint B.");
     }
 
     // ---- episode-outcome ----

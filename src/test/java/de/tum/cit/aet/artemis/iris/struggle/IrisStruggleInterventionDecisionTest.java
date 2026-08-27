@@ -203,13 +203,13 @@ class IrisStruggleInterventionDecisionTest {
         // 1 = an unconsumed offer for this episode was refreshed in place. Stubbing this is load-bearing: Mockito's
         // default 0 would send the code down the insert fallback and the never()-check below would pass for the
         // wrong reason.
-        when(irisAmbientDecisionRepository.refreshIfUnconsumed(eq(3L), eq(42L), eq("ep-123"), eq("Re-check the logic."), any())).thenReturn(1);
+        when(irisAmbientDecisionRepository.refreshIfUnconsumed(3L, 42L, "ep-123", "Re-check the logic.")).thenReturn(1);
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
                 null, null);
 
         service.handleDecision(jobWithEpisode, update);
 
-        verify(irisAmbientDecisionRepository).refreshIfUnconsumed(eq(3L), eq(42L), eq("ep-123"), eq("Re-check the logic."), any());
+        verify(irisAmbientDecisionRepository).refreshIfUnconsumed(3L, 42L, "ep-123", "Re-check the logic.");
         verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
     }
 

@@ -145,6 +145,26 @@ class IrisStruggleInterventionPrimitivesTest {
         return decision;
     }
 
+    /**
+     * Build an unstubbed decision. Used where a test needs SEPARATE instances across two lookups, so one call's
+     * in-memory mutation cannot silently satisfy the next one.
+     *
+     * @param episodeId  the episode the offer belongs to
+     * @param serverText the hint text as authored by Pyris
+     * @return the decision, not wired into any stub
+     */
+    private IrisAmbientDecision decisionFor(String episodeId, String serverText) {
+        var decision = new IrisAmbientDecision();
+        decision.setId(900L);
+        decision.setUserId(USER_ID);
+        decision.setExerciseId(EXERCISE_ID);
+        decision.setEpisodeId(episodeId);
+        decision.setHintText(serverText);
+        decision.setCreatedAt(ZonedDateTime.now());
+        lenient().when(irisAmbientDecisionRepository.save(decision)).thenReturn(decision);
+        return decision;
+    }
+
     @Test
     void revealAmbient_createsRowWithServerSentAt_andReturnsDtoWithoutSendMessage() {
         offeredDecision("ep-1", "Re-check the loop.");
@@ -189,7 +209,14 @@ class IrisStruggleInterventionPrimitivesTest {
     void revealAmbient_secondRevealOfTheSameEpisode_returnsTheSameRow() {
         // The old design allowed two rows for one episode when the client varied its message id. The decision record
         // makes the offer single-use, so the second call must resolve the FIRST reveal's row instead of inserting.
-        var decision = offeredDecision("ep-1", "Re-check the loop.");
+        //
+        // Two DISTINCT decision instances on purpose. Returning one shared object would let the first call's in-memory
+        // mutation satisfy the second lookup, and the test would still pass if the persist of the claim were deleted.
+        var unconsumed = decisionFor("ep-1", "Re-check the loop.");
+        var consumed = decisionFor("ep-1", "Re-check the loop.");
+        consumed.setConsumedAt(ZonedDateTime.now());
+        consumed.setConsumedMessageId(303L);
+        when(irisAmbientDecisionRepository.findForReveal(USER_ID, EXERCISE_ID, "ep-1")).thenReturn(Optional.of(unconsumed), Optional.of(consumed));
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
@@ -197,20 +224,19 @@ class IrisStruggleInterventionPrimitivesTest {
             m.setId(303L);
             return m;
         });
-
-        var first = service.revealAmbient(user, EXERCISE_ID, "ep-1");
-
-        // The first call claimed the offer on the managed entity; the second call sees it consumed.
-        assertThat(decision.getConsumedAt()).isNotNull();
-        assertThat(decision.getConsumedMessageId()).isEqualTo(303L);
         var firstRow = new IrisMessage();
         firstRow.setId(303L);
         firstRow.setProactiveEpisodeId("ep-1");
         when(irisMessageRepository.findById(303L)).thenReturn(Optional.of(firstRow));
 
+        var first = service.revealAmbient(user, EXERCISE_ID, "ep-1");
         var second = service.revealAmbient(user, EXERCISE_ID, "ep-1");
 
         assertThat(second.id()).isEqualTo(first.id());
+        // The claim has to be persisted, not merely set in memory, or the offer would survive a restart unconsumed.
+        assertThat(unconsumed.getConsumedAt()).isNotNull();
+        assertThat(unconsumed.getConsumedMessageId()).isEqualTo(303L);
+        verify(irisAmbientDecisionRepository).save(unconsumed);
         // Exactly one insert across both calls.
         verify(irisMessageService).saveMessage(any(), any(), any());
     }
