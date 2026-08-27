@@ -190,10 +190,9 @@ export class ResultService implements IResultService {
 
         let resultString = this.getBaseResultStringProgrammingExercise(result, relativeScore, points, buildAndTestMessage, short);
 
-        // NOTE: this used to read `isStudentParticipation(result)`, which silently always evaluated to true: `Result`
-        // has no `type` property, and TypeScript's structural typing accepts it where a `Participation` is expected
-        // because both types consist of optional members. The template/solution participations of a programming
-        // exercise must not get the "(preliminary)" suffix, which is exactly what this guard is for.
+        // Only student participations get the "(preliminary)" suffix; a programming exercise's template and solution
+        // participations must not. Pass the participation, never the result: both types are all-optional members, so
+        // `isStudentParticipation(result)` type-checks and then always answers true.
         if (participation && isStudentParticipation(participation) && isResultPreliminary(result, participation, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
         }

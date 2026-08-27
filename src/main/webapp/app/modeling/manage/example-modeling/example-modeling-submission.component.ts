@@ -411,9 +411,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     /**
-     * The training-mode toggle lives beside the assessment, so a save from assessment mode has to carry it. Both save
-     * paths here put the object loaded from the server; without this the toggle silently snapped back while the user
-     * was told the save succeeded. Only `upsertExampleModelingSubmission` used to apply it.
+     * The training-mode toggle lives beside the assessment, so a save from assessment mode has to carry it too. Both
+     * save paths put the object loaded from the server, so the toggle has to reach that object before either runs.
      */
     private applySelectedModeToExampleSubmission(): void {
         this.exampleSubmission().usedForTutorial = this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY;

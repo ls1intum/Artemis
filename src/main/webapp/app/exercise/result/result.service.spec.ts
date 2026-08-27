@@ -363,7 +363,6 @@ describe('ResultService', () => {
         });
 
         it('builds the string for a result without a participation and does not report it to Sentry', () => {
-            // This used to hit the "result or exercise undefined" branch: empty score plus a Sentry event per CD pass.
             const captureExceptionSpy = vi.spyOn(Sentry, 'captureException');
             captureExceptionSpy.mockClear();
 

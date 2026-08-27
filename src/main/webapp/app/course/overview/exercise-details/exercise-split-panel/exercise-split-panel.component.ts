@@ -290,7 +290,6 @@ export class ExerciseSplitPanelComponent {
             return quizBatchStarted || quizHasStarted;
         }
         if (!studentParticipation) return false;
-        // A surface that has gone read-only withdraws the action; only components that can reach that state opt in.
         const canSubmitExercise = this._submissionComponent()?.canSubmitExercise;
         if (canSubmitExercise && !canSubmitExercise()) {
             return false;

@@ -79,14 +79,13 @@ export function synchronizeResizeObserverTargets(observer: ResizeObserver, obser
 export function applyBottomCenterPlacement(element: HTMLElement, shiftProperty: string, placement: BottomCenterPlacement): void {
     setPropertyIfChanged(element, shiftProperty, toPixelValue(placement.shift));
     setPropertyIfChanged(element, '--modeling-editor-explanation-panel-width', toPixelValue(placement.panelWidth));
-    setPropertyIfChanged(element, '--modeling-editor-explanation-panel-offset-x', '0px');
 }
 
 export function clearBottomCenterPlacement(element: HTMLElement | undefined, shiftProperty: string): void {
     if (!element) {
         return;
     }
-    for (const property of [shiftProperty, '--modeling-editor-explanation-panel-width', '--modeling-editor-explanation-panel-offset-x']) {
+    for (const property of [shiftProperty, '--modeling-editor-explanation-panel-width']) {
         if (element.style.getPropertyValue(property)) {
             element.style.removeProperty(property);
         }

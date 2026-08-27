@@ -185,9 +185,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(pane.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
     });
 
-    // Regression: the URL rewrite after locking a random submission read `window.location.hash`, which is empty in
-    // this path-routed app. `''.replace(...)` stayed empty, so `location.go('')` discarded the assessment URL — a
-    // reload then no longer landed on the locked submission. It has to rewrite the real path, and only the `new` segment.
+    // Artemis is path-routed, so the assessment URL lives in the path and `window.location.hash` is always empty.
     it('should rewrite only the new segment of the assessment path once a random submission is locked', async () => {
         const location = TestBed.inject(Location);
         vi.spyOn(location, 'path').mockReturnValue('/course-management/1/modeling-exercises/7/submissions/new/assessment?correction-round=0');

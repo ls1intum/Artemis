@@ -4,8 +4,8 @@ import { ExerciseUpdateTimelineComponent } from 'app/exercise/exercise-timeline/
 import { Dayjs } from 'dayjs/esm';
 
 /**
- * Modeling flavour of {@link ExerciseUpdateTimelineComponent}. Kept as a named component so the update form (and
- * the e2e page objects) address the timeline of an exercise type through a stable selector.
+ * Modeling flavour of {@link ExerciseUpdateTimelineComponent}: a named component so the update form and the e2e page
+ * objects address a modeling exercise's timeline through a stable selector.
  */
 @Component({
     selector: 'jhi-modeling-exercise-timeline',

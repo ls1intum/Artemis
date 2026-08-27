@@ -92,7 +92,6 @@ describe('bottom-center placement DOM updates', () => {
         expect(setProperty).toHaveBeenCalledTimes(initialWriteCount);
         expect(element.style.getPropertyValue('--test-shift')).toBe('-10.13px');
         expect(element.style.getPropertyValue('--modeling-editor-explanation-panel-width')).toBe('620.13px');
-        expect(element.style.getPropertyValue('--modeling-editor-explanation-panel-offset-x')).toBe('0px');
     });
 
     it('clears every property owned by the placement helper', () => {
@@ -103,7 +102,6 @@ describe('bottom-center placement DOM updates', () => {
 
         expect(element.style.getPropertyValue('--test-shift')).toBe('');
         expect(element.style.getPropertyValue('--modeling-editor-explanation-panel-width')).toBe('');
-        expect(element.style.getPropertyValue('--modeling-editor-explanation-panel-offset-x')).toBe('');
     });
 
     it('observes new targets, unobserves removed targets, and leaves retained targets alone', () => {

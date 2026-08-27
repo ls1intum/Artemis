@@ -71,7 +71,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     protected readonly faExitFullscreen = faDownLeftAndUpRightToCenter;
     protected readonly faProblemStatement = faAlignLeft;
     protected readonly farQuestionCircle = faQuestionCircle;
-    protected readonly fullscreenSupported = document.fullscreenEnabled !== false;
+    protected readonly fullscreenSupported = document.fullscreenEnabled;
 
     private readonly sanitizer = inject(DomSanitizer);
     private readonly elementRef = inject(ElementRef);
@@ -296,7 +296,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
      */
     private releaseHostRegion(region: Parameters<ApollonEditor['getRegionElement']>[0], element: HTMLElement | undefined): void {
         if (element) {
-            (this.editorFrame()?.nativeElement ?? this.elementRef.nativeElement).prepend(element);
+            this.editorFrame()?.nativeElement.prepend(element);
         }
         this.apollonEditor?.releaseRegionElement(region);
     }
@@ -410,7 +410,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     private observeChromeLayout(): void {
         const editorFrame = this.editorFrame()?.nativeElement;
-        if (!editorFrame || typeof ResizeObserver === 'undefined') {
+        if (!editorFrame) {
             return;
         }
 
@@ -507,6 +507,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         this.bottomCenterElevated.set(false);
     }
 
+    /**
+     * Apollon measures its overlay insets one frame behind a resize, and `fitView` snapshots them when it applies.
+     * Two frames is therefore the earliest a refit can see the inset this resize produced.
+     */
     private refitAfterFullscreenLayoutSettles(): void {
         window.requestAnimationFrame(() => window.requestAnimationFrame(() => this.apollonEditor?.fitView()));
     }

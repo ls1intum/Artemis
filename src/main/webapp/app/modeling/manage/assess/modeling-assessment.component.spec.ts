@@ -414,7 +414,7 @@ describe('ModelingAssessmentComponent', () => {
             const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
             suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
             comp.elementFeedback.set(PACKAGE_ID, suggestion);
-            // Only an edit against what Apollon last showed counts as adapting; without this the first sync would.
+            // Adapting is measured against what Apollon last showed, so seed that baseline before syncing.
             comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
 
             comp.generateFeedbackFromAssessment([assessmentFor({ feedback: 'Edited detail' })]);
@@ -594,9 +594,6 @@ describe('ModelingAssessmentComponent', () => {
         (comp as any).handleFeedback();
         expect(comp.referencedFeedbacks).toEqual([]);
     });
-    // Regression: Apollon bakes `readonly` in at construction. Submitting an assessment swaps in a fresh result and
-    // flips `readOnly`, but the live canvas kept accepting edits and updating the point tally, so the UI showed a lock
-    // that was not there. Nothing persisted, which made it worse: the tutor saw edits that silently went nowhere.
     it('should lock the live canvas when readOnly flips after submitting', async () => {
         fixture.componentRef.setInput('readOnly', false);
         fixture.detectChanges();
@@ -619,9 +616,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(editor.unsubscribe).toHaveBeenCalled();
     });
 
-    // Regression: the canvas reported the ids of the *assessments*, but every consumer matches the emitted ids against
-    // `Feedback.referenceId` — the id of the *element* the feedback references. Selecting an element therefore marked
-    // nothing in the feedback list, which made the selection ring on a read-only canvas look purely decorative.
+    // Consumers match these ids against `Feedback.referenceId`, which is the element's id, not the assessment's.
     it('should report the ids of the selected elements, not of their assessments', async () => {
         fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
@@ -634,7 +629,6 @@ describe('ModelingAssessmentComponent', () => {
         expect(editor.subscribeToSelectionChange).toHaveBeenCalledOnce();
         expect(editor.subscribeToAssessmentSelection).not.toHaveBeenCalled();
 
-        // Drive the element-selection channel the way Apollon does.
         for (const callback of editor._selectionChangeSubscriptions.values()) {
             callback([PACKAGE_ID]);
         }
@@ -900,6 +894,10 @@ describe('ModelingAssessmentComponent chrome regions', () => {
 
         const scheduleFitView = vi.spyOn(component as any, 'scheduleFitView');
         const reserve = () => (component as any).reserveRoomForPanel(panel);
+        // The component already reserved once as it rendered; rewind to before that so this drives the whole sequence.
+        editor.updateControl.mockClear();
+        (component as any).hasFramedForPanelInset = false;
+        (component as any).lastReservedPanelWidth = -1;
 
         panelWidth = 320;
         reserve();
@@ -908,11 +906,9 @@ describe('ModelingAssessmentComponent chrome regions', () => {
         panelWidth = 280; // reopened at a different width
         reserve();
 
-        // The inset follows the panel every time, so a fit the reader asks for still clears it.
         expect(editor.updateControl).toHaveBeenCalledTimes(3);
         expect(editor.updateControl).toHaveBeenLastCalledWith('apollon:host:right-rail', expect.objectContaining({ inset: { right: 280 } }));
 
-        // The camera is framed once and then left alone.
         expect(scheduleFitView).toHaveBeenCalledTimes(1);
     });
 });

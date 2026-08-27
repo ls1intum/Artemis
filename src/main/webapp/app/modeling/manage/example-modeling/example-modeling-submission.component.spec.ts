@@ -651,8 +651,6 @@ describe('Example Modeling Submission Component', () => {
         });
     });
     it('should persist a training-mode change made while assessing', () => {
-        // The toggle sits beside the assessment, but only the submission-mode save used to apply it. Saving from
-        // assessment mode put the object as loaded from the server, so the toggle snapped back — under a success toast.
         const exampleSubmission = { id: 42, usedForTutorial: false, assessmentExplanation: 'same' } as ExampleSubmission;
         comp.exercise.set(exercise);
         comp.exampleSubmission.set(exampleSubmission);

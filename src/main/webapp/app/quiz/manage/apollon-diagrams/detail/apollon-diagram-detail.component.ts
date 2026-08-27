@@ -71,37 +71,21 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     readonly selectedElementIds = signal<string[]>([]);
     readonly hasSelection = computed(() => this.selectedElementIds().length > 0);
 
-    /**
-     * Bumped on every Apollon model change. Apollon's model lives in its own store, so
-     * `hasInteractive` reads a plain object; computeds that depend on it have to declare
-     * this signal as their dependency or they would cache their first result forever.
-     */
-    private readonly modelRevision = signal(0);
+    /** Apollon's model lives in its own store, so it is mirrored here for anything derived from it. */
+    private readonly currentModel = signal<UMLModel | undefined>(undefined);
+
+    /** Whether the diagram holds at least one element a drag-and-drop quiz question can be generated from. */
+    readonly hasInteractive = computed(() => hasQuizRelevantElements(this.currentModel()));
 
     readonly downloadHint = computed(() =>
         this.translateService.instant(this.hasSelection() ? 'artemisApp.apollonDiagram.detail.help' : 'artemisApp.apollonDiagram.detail.downloadHint'),
     );
-    readonly canGenerate = computed(() => {
-        this.modelRevision();
-        return !!this.apollonDiagram() && this.isTitleValid() && this.hasInteractive;
-    });
-    readonly generateHint = computed(() => {
-        this.modelRevision();
-        return this.hasInteractive ? '' : this.translateService.instant('artemisApp.apollonDiagram.create.validationError');
-    });
+    readonly canGenerate = computed(() => !!this.apollonDiagram() && this.isTitleValid() && this.hasInteractive());
+    readonly generateHint = computed(() => (this.hasInteractive() ? '' : this.translateService.instant('artemisApp.apollonDiagram.create.validationError')));
 
     /** Auto-save interval handle and timer counter */
     autoSaveInterval: ReturnType<typeof setInterval> | undefined;
     autoSaveTimer = 0;
-
-    /**
-     * Whether some elements are interactive in the apollon editor.
-     * v3 format: model.interactive.elements/relationships (Record<id, boolean>)
-     * v4 format: model.nodes/edges are arrays - in v4 ALL elements are considered interactive
-     */
-    get hasInteractive(): boolean {
-        return hasQuizRelevantElements(this.apollonEditor?.model);
-    }
 
     // Icons
     faDownload = faDownload;
@@ -178,13 +162,13 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         // change detection under zoneless, so template bindings stay fresh.
         this.modelSubscription = this.apollonEditor.subscribeToModelChange((newModel) => {
             this.currentModelJson.set(JSON.stringify(newModel));
-            this.modelRevision.update((revision) => revision + 1);
+            this.currentModel.set(newModel);
         });
         this.selectionSubscription = this.apollonEditor.subscribeToSelectionChange((selectedElementIds) => {
             this.selectedElementIds.set(selectedElementIds);
         });
         this.selectedElementIds.set(this.apollonEditor.getSelectedElements());
-        this.modelRevision.update((revision) => revision + 1);
+        this.currentModel.set(this.apollonEditor.model);
         this.mountEditorActions();
     }
 
@@ -305,7 +289,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      * @async
      */
     async generateExercise() {
-        if (!this.hasInteractive) {
+        if (!this.hasInteractive()) {
             this.alertService.error('artemisApp.apollonDiagram.create.validationError');
             return;
         }

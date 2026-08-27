@@ -38,10 +38,10 @@ export const appConfig: ApplicationConfig = {
     providers: [
         ArtemisTranslatePipe,
         provideArtemisTumUiTranslator(),
-        // App-wide: CDK's default container is appended to <body>, which the browser hides while another element is
-        // fullscreen — so every CDK overlay (TUM UI dialogs, tooltips, selects) would vanish inside the modeling
-        // editor's fullscreen frame. FullscreenOverlayContainer re-parents the container into the fullscreen element
-        // for the duration of the session and restores it afterwards. See `global.scss` for the matching z-index rule.
+        // A browser paints nothing outside the fullscreen subtree, so wherever a single element goes fullscreen — the
+        // markdown and code editors do, via `TextEditorAction#toggleFullscreen` — CDK's <body>-appended overlay
+        // container falls outside it and every dialog, tooltip and select opened from there is invisible.
+        // FullscreenOverlayContainer moves the container into the fullscreen element and restores it on exit.
         { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
         DialogService,
         // CDK 22 puts overlays in the browser top layer, where no z-index can lift a body-appended PrimeNG panel above them.

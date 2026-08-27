@@ -61,13 +61,6 @@ let activeObserver: ResizeObserver | undefined;
  * re-creation during HMR, overlapping test fixtures) cannot silently disable a live observer.
  */
 export function observeShellMetrics(): () => void {
-    // Guard like the other ResizeObserver call sites: this runs during AppComponent init, so throwing here would
-    // take down the whole client on a browser/webview without the API. One measurement still gets the shells
-    // close; they only lose the follow-up updates when the navbar or footer changes height.
-    if (typeof ResizeObserver === 'undefined') {
-        measureShellMetrics();
-        return () => {};
-    }
     const observer = new ResizeObserver(() => measureShellMetrics());
     activeObserver = observer;
     reattachShellMetricsObserver();

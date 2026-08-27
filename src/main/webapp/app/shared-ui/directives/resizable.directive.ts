@@ -140,7 +140,7 @@ export class ResizableDirective {
     private observeHandleChanges(): void {
         this.handleMutationObserver?.disconnect();
         const root = this.handleSearchRoot();
-        if (!root || typeof MutationObserver === 'undefined' || !Object.values(this.resizableEdges()).some(Boolean)) {
+        if (!root || !Object.values(this.resizableEdges()).some(Boolean)) {
             this.handleMutationObserver = undefined;
             return;
         }
@@ -149,18 +149,11 @@ export class ResizableDirective {
     }
 
     /**
-     * Coalesces handle upkeep into one frame.
-     *
-     * The observer watches `childList` + `subtree`, so hosts with churny content — the markdown explanation editor,
-     * the code-editor grid, the discussion section — mutate it on every keystroke. Reacting per mutation meant a
-     * forced reflow per mutation, because the aria upkeep measures the host. One frame's worth of mutations now
-     * produces one measurement.
+     * Coalesces handle upkeep into one frame. The observer watches `childList` + `subtree`, so a host whose content
+     * churns mutates it on every keystroke, and the aria upkeep measures the host — reacting per mutation would force
+     * a reflow per keystroke.
      */
     private scheduleHandleStyles(): void {
-        if (typeof window.requestAnimationFrame === 'undefined') {
-            this.applyHandleStyles(this.resizableEdges());
-            return;
-        }
         if (this.handleStylesFrame !== undefined) {
             return;
         }

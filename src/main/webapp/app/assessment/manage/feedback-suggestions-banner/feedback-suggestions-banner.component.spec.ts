@@ -63,8 +63,6 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
 
-    // Text and programming assessment rely on the default appearance; the chrome
-    // variant must stay entirely opt-in, markup and host class alike.
     it('should keep the inline band appearance by default, with no chrome markup or host class', () => {
         fixture.componentRef.setInput('hasAutomaticFeedback', true);
         fixture.componentRef.setInput('isAssessor', true);

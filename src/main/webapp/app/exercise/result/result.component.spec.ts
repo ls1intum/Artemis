@@ -196,8 +196,7 @@ describe('ResultComponent', () => {
         });
 
         describe('results that belong to no participation', () => {
-            // The badge used to throw here: `resolvedParticipation()!` laundered the absent participation into
-            // getLatestSubmission. See the participation note in result.utils.ts.
+            // See the participation note in result.utils.ts.
             const exampleSubmissionResult: Result = {
                 id: 7,
                 score: 90,
@@ -219,8 +218,7 @@ describe('ResultComponent', () => {
                 expect(fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR)).toBeTruthy();
                 expect(comp.textColorClass()).toBe('text-state-success');
                 expect(comp.resultIconClass()).toBeDefined();
-                // The score must actually be rendered; it used to come back empty because getResultString treated a
-                // missing participation as a programmer error (and reported it to Sentry on every render).
+                // A missing participation is not a programmer error, so it must not blank the score.
                 expect(comp.resultString()).not.toBe('');
             });
 

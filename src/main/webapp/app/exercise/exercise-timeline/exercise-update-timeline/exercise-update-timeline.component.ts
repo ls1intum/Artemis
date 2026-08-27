@@ -9,8 +9,7 @@ import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/t
  *
  * Mirrors {@link ProgrammingExerciseUpdateTimelineComponent}: the example solution publication date is an opt-in step
  * of the timeline rather than a standalone field, so every exercise type configures and orders all of its dates in one
- * place. The opt-in is disabled rather than hidden while {@link hasExampleSolution} is false, with a hint that says
- * why, and turning it off clears the date so no exercise can be saved with a leftover publication date.
+ * place.
  */
 @Component({
     selector: 'jhi-exercise-update-timeline',
@@ -71,7 +70,6 @@ export class ExerciseUpdateTimelineComponent {
         });
     }
 
-    /** Closing the opt-in discards the date it was configuring. */
     protected onPublicationOptInChange(visible: boolean): void {
         this.isExampleSolutionPublicationDateVisible.set(visible);
         if (!visible) {
@@ -114,8 +112,8 @@ export class ExerciseUpdateTimelineComponent {
                 // Only the release and start dates are hard lower bounds server side
                 // (`BaseExercise.isValidExampleSolutionPublicationDate`). The due-date bound is conditional — an
                 // exercise not included in the score may publish its solution earlier — and the assessment due date is
-                // never a bound at all. Without this restriction the default "after every preceding item" check
-                // rejected schedules the server accepts.
+                // never a bound at all. The default "after every preceding item" check would reject schedules the
+                // server accepts.
                 orderCheckAgainst: [releaseDateItem, startDateItem],
             });
         }

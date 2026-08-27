@@ -211,7 +211,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
     }
 
-    /** Complaining is an action on a result, so it is rendered beside the result rather than as a strip under the canvas. */
+    /** Exam submissions are complained about from the exam summary, and the feedback view is already read-only. */
     protected showComplaintSection(): boolean {
         return !!this.result() && !this.examMode() && !this.isFeedbackView();
     }

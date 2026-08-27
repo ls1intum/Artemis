@@ -38,9 +38,6 @@ export class AssessmentWorkspaceComponent implements AfterViewInit, OnDestroy {
     protected readonly faDetails = faCommentDots;
 
     ngAfterViewInit(): void {
-        if (typeof ResizeObserver === 'undefined') {
-            return;
-        }
         this.resizeObserver = new ResizeObserver(([entry]) => this.width.set(entry.contentRect.width));
         this.resizeObserver.observe(this.elementRef.nativeElement);
     }

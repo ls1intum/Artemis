@@ -1,4 +1,20 @@
-import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, computed, contentChild, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    DestroyRef,
+    ElementRef,
+    OnDestroy,
+    afterRenderEffect,
+    computed,
+    contentChild,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { captureException } from '@sentry/angular';
 import {
@@ -61,7 +77,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
-    private readonly fullscreenSupported = document.fullscreenEnabled !== false;
+    private readonly fullscreenSupported = document.fullscreenEnabled;
     /** Public so a host can render the control in its own chrome cluster. */
     readonly fullscreenActive = signal(false);
 
@@ -109,7 +125,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private panelResizeObserver?: ResizeObserver;
     private fitViewFrame?: number;
     private lastReservedPanelWidth = -1;
-    /** Guards the one-off camera frame in {@link reserveRoomForPanel}. */
     private hasFramedForPanelInset = false;
     private readonly observedChromeResizeTargets = new Set<HTMLElement>();
     private chromeResizeFrame?: number;
@@ -118,6 +133,15 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     constructor() {
         super();
+        // The reservation measures the rendered panel, so it has to run after Angular has applied its `hidden`
+        // binding rather than off the toggle's own event, which fires before the DOM is written.
+        afterRenderEffect(() => {
+            this.panelVisible();
+            const panel = untracked(() => this.panelRegion()?.nativeElement);
+            if (panel) {
+                untracked(() => this.reserveRoomForPanel(panel));
+            }
+        });
         this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
             this.apollonEditor?.setLabels(createApollonLabels(this.translateService));
         });
@@ -275,8 +299,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
      * Deliberately `subscribeToSelectionChange` and not `subscribeToAssessmentSelection`: the two report different
      * identifiers. The latter reports the ids of the *assessments*, while consumers of `selectedElementIdsChanged`
      * match the emitted ids against `Feedback.referenceId`, which is the id of the *element* the feedback references
-     * (the `<type>:<elementId>` reference). Subscribing to the assessment ids meant the comparison never matched and
-     * selecting an element on the canvas marked nothing in the feedback list.
+     * (the `<type>:<elementId>` reference).
      */
     private synchronizeAssessmentSelectionSubscription(editor: ApollonEditor, readOnly: boolean): void {
         if (readOnly && this.assessmentSelectionSubscription === undefined) {
@@ -335,10 +358,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private observeChromeLayout(): void {
         const host = this.elementRef.nativeElement;
-        if (typeof ResizeObserver === 'undefined') {
-            return;
-        }
-
         this.chromeResizeObserver = new ResizeObserver(() => this.scheduleChromePlacement());
         const bottomCenter = this.bottomCenterRegion()?.nativeElement;
         synchronizeResizeObserverTargets(this.chromeResizeObserver, this.observedChromeResizeTargets, [host, bottomCenter]);
@@ -351,9 +370,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     /** The panel's width settles asynchronously as its content renders, so the reservation is watched, not taken once. */
     private observePanelWidth(panel: HTMLElement): void {
-        if (typeof ResizeObserver === 'undefined') {
-            return;
-        }
         this.panelResizeObserver?.disconnect();
         this.panelResizeObserver = new ResizeObserver(() => this.reserveRoomForPanel(panel));
         this.panelResizeObserver.observe(panel);
@@ -468,7 +484,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.fullscreenActive.set(false);
     }
 
-    /** Two frames out: the overlay engine measures a region on the frame after it resizes, so refitting sooner uses the previous inset. */
+    /**
+     * Apollon measures its overlay insets one frame behind a resize, and `fitView` snapshots them when it applies.
+     * Two frames is therefore the earliest a refit can see the inset this resize produced.
+     */
     private scheduleFitView(): void {
         if (this.fitViewFrame !== undefined) {
             window.cancelAnimationFrame(this.fitViewFrame);
@@ -479,14 +498,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 this.apollonEditor?.fitView({ respectInsets: true });
             });
         });
-    }
-
-    protected onPanelVisibilityChanged(): void {
-        const panel = this.panelRegion()?.nativeElement;
-        if (panel) {
-            // A frame out, so the rail is re-reserved against the panel's new visibility rather than its old one.
-            window.requestAnimationFrame(() => this.reserveRoomForPanel(panel));
-        }
     }
 
     protected scheduleChromePlacement(): void {

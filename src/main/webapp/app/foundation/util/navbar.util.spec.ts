@@ -225,19 +225,6 @@ describe('navbar util shell metrics', () => {
         expect(observed.size).toBe(0);
     });
 
-    it('still measures once when ResizeObserver is unavailable', () => {
-        addElement('jhi-navbar', 72);
-        addElement('jhi-footer', 36);
-        (globalThis as { ResizeObserver?: unknown }).ResizeObserver = undefined;
-
-        const teardown = observeShellMetrics();
-
-        // The fallback runs the same measurement, so both shell boundaries have to be written, not just the navbar.
-        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('72px');
-        expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('36px');
-        expect(() => teardown()).not.toThrow();
-    });
-
     it('updateHeaderHeight writes --header-height, which exam mode owns, not --navbar-height', () => {
         addElement('jhi-navbar', 44);
 

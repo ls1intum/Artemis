@@ -85,18 +85,6 @@ function setupCanvasAndImageMocks() {
     };
 }
 
-/**
- * Tests cover:
- * 1. Component initialization (ngOnInit)
- * 2. hasInteractive for v3 AND v4 formats
- * 3. hasSelection logic
- * 4. Save functionality with success and error paths
- * 5. Generate exercise functionality
- * 6. Download selection
- * 7. Auto-save timer logic
- * 8. Modal confirmation flow
- * 9. Cleanup (ngOnDestroy)
- */
 describe('ApollonDiagramDetail Component', () => {
     let apollonDiagramService: ApollonDiagramService;
     let fixture: ComponentFixture<ApollonDiagramDetailComponent>;
@@ -167,9 +155,6 @@ describe('ApollonDiagramDetail Component', () => {
         vi.useRealTimers();
     });
 
-    // ===========================================
-    // INITIALIZATION TESTS
-    // ===========================================
     describe('ngOnInit', () => {
         it('should load the diagram on initialization', () => {
             const response = new HttpResponse({ body: diagram });
@@ -191,9 +176,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // hasInteractive TESTS (v3 and v4)
-    // ===========================================
     describe('hasInteractive', () => {
         describe('v3 format (interactive.elements/relationships)', () => {
             it('should return true when v3 model has interactive elements', async () => {
@@ -207,7 +189,7 @@ describe('ApollonDiagramDetail Component', () => {
                     configurable: true,
                 });
 
-                expect(fixture.componentInstance.hasInteractive).toBe(true);
+                expect(fixture.componentInstance.hasInteractive()).toBe(true);
                 fixture.componentInstance.ngOnDestroy();
             });
 
@@ -226,7 +208,7 @@ describe('ApollonDiagramDetail Component', () => {
                     configurable: true,
                 });
 
-                expect(fixture.componentInstance.hasInteractive).toBe(false);
+                expect(fixture.componentInstance.hasInteractive()).toBe(false);
                 fixture.componentInstance.ngOnDestroy();
             });
 
@@ -248,7 +230,7 @@ describe('ApollonDiagramDetail Component', () => {
                     configurable: true,
                 });
 
-                expect(fixture.componentInstance.hasInteractive).toBe(true);
+                expect(fixture.componentInstance.hasInteractive()).toBe(true);
                 fixture.componentInstance.ngOnDestroy();
             });
         });
@@ -265,7 +247,7 @@ describe('ApollonDiagramDetail Component', () => {
                     configurable: true,
                 });
 
-                expect(fixture.componentInstance.hasInteractive).toBe(true);
+                expect(fixture.componentInstance.hasInteractive()).toBe(true);
                 fixture.componentInstance.ngOnDestroy();
             });
 
@@ -289,19 +271,16 @@ describe('ApollonDiagramDetail Component', () => {
                     configurable: true,
                 });
 
-                expect(fixture.componentInstance.hasInteractive).toBe(false);
+                expect(fixture.componentInstance.hasInteractive()).toBe(false);
                 fixture.componentInstance.ngOnDestroy();
             });
         });
 
         it('should return false when apollonEditor is not initialized', () => {
-            expect(fixture.componentInstance.hasInteractive).toBe(false);
+            expect(fixture.componentInstance.hasInteractive()).toBe(false);
         });
     });
 
-    // ===========================================
-    // hasSelection TESTS
-    // ===========================================
     describe('hasSelection', () => {
         it('should seed the selection from the editor when it is created', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -350,9 +329,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // SAVE DIAGRAM TESTS
-    // ===========================================
     describe('saveDiagram', () => {
         it('should save diagram and show success alert', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -398,9 +374,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // GENERATE EXERCISE TESTS
-    // ===========================================
     describe('generateExercise', () => {
         it('should show error when no interactive elements', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -472,9 +445,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // DOWNLOAD SELECTION TESTS
-    // ===========================================
     describe('downloadSelection', () => {
         it('should download PNG when elements are selected', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -530,9 +500,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // MODAL CONFIRMATION TESTS
-    // ===========================================
     /** `isSaved` is derived, so the tests drive the title it derives from rather than the flag. */
     const markSaved = (component: ApollonDiagramDetailComponent) => component.title.set(component.apollonDiagram()?.title ?? '');
     const markUnsaved = (component: ApollonDiagramDetailComponent) => component.title.set(`${component.apollonDiagram()?.title ?? ''} edited`);
@@ -575,9 +542,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // AUTO-SAVE TIMER TESTS
-    // ===========================================
     describe('Auto-save timer', () => {
         it('should set autoSaveInterval on initialization', () => {
             const response = new HttpResponse({ body: diagram, status: 200 });
@@ -614,9 +578,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // CLEANUP TESTS
-    // ===========================================
     describe('ngOnDestroy', () => {
         it('should clear interval and destroy editor', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -643,9 +604,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // TITLE EDITING
-    // ===========================================
     describe('title', () => {
         it('should seed the title from the loaded diagram', () => {
             const response = new HttpResponse({ body: diagram });
@@ -675,8 +633,6 @@ describe('ApollonDiagramDetail Component', () => {
             await fixture.whenStable();
             expect(fixture.componentInstance.isSaved()).toBe(false);
 
-            // Restoring the title clears the flag again. It used to stay stuck on "unsaved changes" until the model
-            // next changed, because the flag was pushed by an effect that only ever set it to false.
             fixture.componentInstance.title.set('Stored title');
             await fixture.whenStable();
             expect(fixture.componentInstance.isSaved()).toBe(true);
@@ -700,9 +656,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // GENERATE AVAILABILITY
-    // ===========================================
     describe('canGenerate', () => {
         it('should stay false while the diagram has no quiz-relevant elements', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -756,9 +709,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // ON-CANVAS CHROME
-    // ===========================================
     describe('editor chrome placement', () => {
         it('should hand the action cluster to Apollon top-right overlay region', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -790,9 +740,6 @@ describe('ApollonDiagramDetail Component', () => {
         });
     });
 
-    // ===========================================
-    // APOLLON EDITOR INITIALIZATION
-    // ===========================================
     describe('initializeApollonEditor', () => {
         it('should create new ApollonEditor with correct config', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});

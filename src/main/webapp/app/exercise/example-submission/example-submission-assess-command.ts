@@ -40,15 +40,13 @@ export class ExampleSubmissionAssessCommand {
 
         const correctionErrors = ExampleSubmissionAssessCommand.parseCorrectionErrors(error);
         if (!correctionErrors) {
-            // The verdict arrived but its payload did not, so we cannot say which feedback was wrong. Reporting a
-            // generic failure beats throwing out of the subscriber, which used to abort the handler and leave the
-            // tutor with a silently dead "Submit assessment" button.
+            // The verdict arrived but its payload did not, so there is nothing to mark. Report a generic failure
+            // rather than letting the parse throw out of the subscriber, which would abort the handler silently.
             onError(this.alertService, error);
             return;
         }
 
         this.feedbackMarker.markAllFeedbackToCorrect();
-        // Mark all wrongly made feedbacks accordingly.
         this.feedbackMarker.markWrongFeedback(correctionErrors);
 
         const msg = correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';

@@ -21,13 +21,8 @@ export class ModelingExplanationEditorComponent {
     maxCharacterCount = input(MAX_SUBMISSION_TEXT_LENGTH);
     notchWidth = input(104);
     autosizeMaxRows = input(3);
-    /**
-     * Rows the field shows before it has grown to its content. Assessment opens
-     * taller than authoring: the tutor is READING a student's explanation, and a
-     * one-row field hides it behind a scrollbar they have to notice first.
-     */
     autosizeMinRows = input(1);
-    /** Starting height of the surface, matched to {@link autosizeMinRows}. */
+    /** Smallest height the reader can drag the surface down to. */
     surfaceMinHeight = input(42);
 
     protected readonly textareaId = `modeling-explanation-${++nextExplanationEditorId}`;

@@ -27,7 +27,7 @@ export class RatingComponent {
     /** Star size in px; hosts embedded in dense chrome ask for a smaller one. */
     readonly starSize = input('24');
     /**
-     * `stacked` is the page-level callout every exercise type has always shown.
+     * `stacked` is the page-level callout used by the exercise result pages.
      * `inline` puts the prompt and the stars on one row for hosts with a column
      * to spare — a side panel, an editor's chrome — and wraps when there is not.
      */

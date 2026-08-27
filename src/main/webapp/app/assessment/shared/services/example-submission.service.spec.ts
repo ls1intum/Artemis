@@ -164,9 +164,6 @@ describe('Example Submission Service', () => {
             expect(result).toBe(3);
         });
 
-        // Apollon has persisted three different model shapes. Counting `elements.length + relationships.length`
-        // only ever worked for the v4 array form; the keyed v3 form and the v5 nodes/edges form both produced
-        // `undefined + undefined === NaN`, which the example-submission list rendered verbatim.
         it.each([
             {
                 shape: 'v3 keyed records',

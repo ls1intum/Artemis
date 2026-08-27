@@ -7,7 +7,6 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
-/** Which of the mutually exclusive notices the banner has to show. */
 export type FeedbackSuggestionsNotice = 'automaticAssessment' | 'suggestions' | 'loading';
 
 export interface FeedbackSuggestionsNoticeState {
@@ -19,9 +18,8 @@ export interface FeedbackSuggestionsNoticeState {
 }
 
 /**
- * The banner's visibility rule, exported so a host can ask "is there anything to show?" before it
- * makes room for the answer — a chrome host that reserves an overlay region for a silent banner
- * never releases it again.
+ * The banner's visibility rule, exported so a host can ask whether there is anything to show before it
+ * reserves space for the answer.
  */
 export function feedbackSuggestionsNotice(state: FeedbackSuggestionsNoticeState): FeedbackSuggestionsNotice | undefined {
     if (state.isLoading) {

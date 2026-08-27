@@ -61,8 +61,8 @@ describe('ExampleSubmissionAssessCommand', () => {
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exampleSubmission.submissionValidation.missing', { mistakeCount: 0 });
     });
 
-    // Regression: a 400 whose body lost the problem detail (e.g. because the container rejected the response) used to
-    // throw "undefined is not valid JSON" out of the subscriber, so the tutor saw nothing happen at all.
+    // A 400 can arrive without its problem detail — an intermediary may replace the body — and the tutor still needs
+    // to be told something happened.
     it.each([{ title: 'not json at all' }, { timestamp: 'x', status: 400, error: 'Bad Request' }, undefined])('should not throw when the error payload is %j', (body) => {
         vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => invalidAssessmentError(body)));
 

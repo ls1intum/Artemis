@@ -1021,10 +1021,6 @@ describe('ModelingSubmissionComponent', () => {
         });
     });
 
-    // Regression: the graded and the practice participation are both `participate/:participationId` on the same route,
-    // so switching between them only re-emits the route params and reuses this component. A result is assigned only
-    // when the loaded submission carries one, so without an explicit reset the practice attempt kept the graded result
-    // and opened on its assessment instead of on the editor.
     it('should open the editor when switching from the assessed graded participation to a practice participation', () => {
         const params = new BehaviorSubject<Params>({ courseId: 5, exerciseId: 22, participationId: 5 });
         createModelingSubmissionComponent({ params: params.asObservable() } as any as ActivatedRoute);

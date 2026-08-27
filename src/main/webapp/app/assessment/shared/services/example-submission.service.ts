@@ -130,8 +130,6 @@ export class ExampleSubmissionService {
         if (submission && exercise && exercise.type === ExerciseType.TEXT) {
             return this.stringCountService.countWords((submission as TextSubmission).text);
         } else if (submission && exercise && exercise.type === ExerciseType.MODELING) {
-            // Apollon has persisted three model shapes (v3 keyed records, v4 element/relationship arrays, v5 nodes/edges);
-            // counting `elements.length + relationships.length` only ever matched the middle one and produced NaN otherwise.
             const model = (submission as ModelingSubmission).model;
             return model ? countModelElements(parseJson<ApollonModelData>(model)) : 0;
         }

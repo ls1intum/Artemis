@@ -137,7 +137,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
-    /** Complete assessment used by the structured-grading score summary. */
     allAssessmentFeedbacks(): Feedback[] {
         return this.feedback;
     }
@@ -184,7 +183,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.correctionRound.set(Number(queryParams.get('correction-round')));
         });
         this.route.paramMap.subscribe((params) => {
-            // Param-only navigation reuses this component, so reset submission-specific state.
+            // Param-only navigation reuses this component; the not-possible-yet banner must not survive the switch.
             this.assessmentNotPossibleYet.set(undefined);
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
@@ -237,9 +236,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
 
-                // `window.location.hash` is empty in this path-routed app, so the old rewrite collapsed to
-                // `location.go('')` and threw the assessment URL away: a reload then landed somewhere else entirely
-                // instead of on the submission just locked. Rewrite the actual path, and only the `new` segment.
+                // Artemis is path-routed, so the assessment URL lives in `location.path()`, not `window.location.hash`.
+                // Rewrite only the `new` segment, so a reload lands on the submission this call just locked.
                 const newUrl = this.location.path().replace('/submissions/new/', `/submissions/${this.submission()!.id}/`);
                 this.location.go(newUrl);
             },

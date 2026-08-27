@@ -63,12 +63,10 @@ export class ModelingExplanationSurfaceComponent implements AfterViewInit, OnDes
             }
         };
         updateMeasurements();
-        if (typeof ResizeObserver !== 'undefined') {
-            this.resizeObserver = new ResizeObserver(updateMeasurements);
-            this.resizeObserver.observe(surface);
-        }
+        this.resizeObserver = new ResizeObserver(updateMeasurements);
+        this.resizeObserver.observe(surface);
         const notch = this.notch()?.nativeElement;
-        if (notch && typeof MutationObserver !== 'undefined') {
+        if (notch) {
             this.notchMutationObserver = new MutationObserver(updateMeasurements);
             this.notchMutationObserver.observe(notch, { childList: true, characterData: true, subtree: true });
         }
