@@ -1,9 +1,10 @@
 package de.tum.cit.aet.artemis.modeling.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -21,7 +22,6 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -53,10 +53,10 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
-            ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository,
-            FeedbackService feedbackService, Optional<AthenaApi> athenaSubmissionSelectionService) {
+            ExerciseDateService exerciseDateService, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
+            Optional<AthenaApi> athenaSubmissionSelectionService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
+                exerciseDateService, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
@@ -85,13 +85,20 @@ public class ModelingSubmissionService extends SubmissionService {
     /**
      * Saves the given submission and the corresponding model and creates the result if necessary. This method used for creating and updating modeling submissions.
      *
-     * @param modelingSubmission the submission that should be saved
-     * @param exercise           the exercise the submission belongs to
-     * @param user               the user who initiated the save
+     * @param modelingSubmission        the submission that should be saved
+     * @param exercise                  the exercise the submission belongs to
+     * @param user                      the user who initiated the save
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return the saved modelingSubmission entity
      */
-    public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user) {
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
+    public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user,
+            @Nullable StudentParticipation participationFromExamGate) {
+        // Reuse the participation the exam submission gate already resolved, when the caller passed one. It only does
+        // so for a single, non test run participation of an exam exercise, which is exactly the case where this lookup
+        // would return the same row. Every other caller passes null and the participation is resolved here.
+        final var optionalParticipation = participationFromExamGate != null ? Optional.of(participationFromExamGate)
+                : participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
@@ -133,12 +140,23 @@ public class ModelingSubmissionService extends SubmissionService {
 
         if (participation.getInitializationState() != InitializationState.FINISHED) {
             participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
+            // The participation was loaded from the database, so its row exists and only this one column changed. Saving
+            // the detached entity would merge it, reading the row back before writing it.
+            studentParticipationRepository.updateInitializationState(participation.getId(), InitializationState.FINISHED);
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResults(new ArrayList<>());
-        modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        modelingSubmission.setResults(new HashSet<>());
+        if (modelingSubmission.getId() != null) {
+            // Autosave of an existing submission: only the client-editable fields changed, and the row is already there.
+            // Saving the detached entity would merge it, which reads the submission and its whole eager association graph
+            // back before writing it.
+            modelingSubmissionRepository.updateExistingSubmission(modelingSubmission.getId(), modelingSubmission.getModel(), modelingSubmission.getExplanationText(),
+                    modelingSubmission.isSubmitted(), modelingSubmission.getSubmissionDate(), modelingSubmission.getType());
+        }
+        else {
+            modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        }
 
         // versioning of submission
         try {
@@ -146,7 +164,7 @@ public class ModelingSubmissionService extends SubmissionService {
                 submissionVersionService.saveVersionForTeam(modelingSubmission, user);
             }
             else if (modelingExercise.isExamExercise()) {
-                submissionVersionService.saveVersionForIndividual(modelingSubmission, user);
+                submissionVersionService.saveVersionForIndividualAsync(modelingSubmission, user);
             }
         }
         catch (Exception ex) {

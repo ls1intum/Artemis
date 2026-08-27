@@ -144,6 +144,14 @@ describe('FormDateTimePickerComponent', () => {
         });
     });
 
+    it('forwards the configured overlay target to the PrimeNG date picker', () => {
+        fixture.componentRef.setInput('appendTo', 'self');
+        fixture.detectChanges();
+
+        const picker = fixture.debugElement.query((de) => de.componentInstance instanceof DatePicker).componentInstance as DatePicker;
+        expect(picker.appendTo()).toBe('self');
+    });
+
     describe('time picker confirm/close affordance', () => {
         const innerPicker = () => fixture.debugElement.query((de) => de.componentInstance instanceof DatePicker).componentInstance as DatePicker;
 

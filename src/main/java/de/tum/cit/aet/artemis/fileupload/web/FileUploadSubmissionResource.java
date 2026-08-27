@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.fileupload.web;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -117,7 +118,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     private ResponseEntity<FileUploadSubmissionDTO> handleFileUploadSubmission(long exerciseId, FileUploadSubmissionInputDTO fileUploadSubmissionInput, MultipartFile file) {
         long start = System.currentTimeMillis();
         checkFileLength(file);
-        final var user = userRepository.getUserWithAuthorities();
+        // Course roles are loaded with the user so the course-membership checks on this path (the submission
+        // allowance check and the detail filtering) resolve in memory instead of each issuing its own query. This
+        // is the autosave path, so it runs repeatedly per student per exercise.
+        final var user = userRepository.getUserWithCourseRolesAndAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         FileUploadSubmission fileUploadSubmission = fileUploadSubmissionInput.toEntity();
 
@@ -136,15 +140,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
         validateSubmissionIdBelongsToExercise(fileUploadSubmissionInput.id(), exerciseId);
 
+        StudentParticipation participationFromExamGate = null;
         if (exercise.isExamExercise()) {
             ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
-            // Prevent multiple submissions (currently only for exam submissions)
-            fileUploadSubmission = (FileUploadSubmission) api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
+            // Prevent multiple submissions (currently only for exam submissions). The gate modifies the submission in
+            // place and returns the participation it resolved, so the save below does not have to read it again.
+            participationFromExamGate = api.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
         }
 
         final FileUploadSubmission submission;
         try {
-            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user);
+            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user, participationFromExamGate);
         }
         catch (IOException e) {
             throw new BadRequestAlertException("The uploaded file could not be saved on the server", ENTITY_NAME, "cantSaveFile");
@@ -366,7 +372,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
-                fileUploadSubmission.setResults(List.of());
+                fileUploadSubmission.setResults(Set.of());
             }
         }
 

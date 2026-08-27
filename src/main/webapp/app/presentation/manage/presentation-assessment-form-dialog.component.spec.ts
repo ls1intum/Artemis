@@ -51,6 +51,14 @@ describe('PresentationAssessmentFormDialogComponent', () => {
         expect(component.exercises()).toEqual([exercise]);
     });
 
+    it('should reject non-integer and excessive max points', () => {
+        component.editForm.controls.maxPoints.setValue(1.5);
+        expect(component.editForm.controls.maxPoints.hasError('wholeNumber')).toBe(true);
+
+        component.editForm.controls.maxPoints.setValue(10001);
+        expect(component.editForm.controls.maxPoints.hasError('max')).toBe(true);
+    });
+
     it('should close with the parent presentation data on save', () => {
         component.editForm.patchValue({ title: 'Updated presentation', exercise });
 

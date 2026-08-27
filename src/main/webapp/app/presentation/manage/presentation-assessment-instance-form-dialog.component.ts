@@ -24,6 +24,13 @@ const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl)
     return resultPoints !== null && resultPoints !== undefined && Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
 };
 
+const RESULT_POINTS_UPPER_BOUND = 10000;
+const MIN_PRESENTATION_DATE = dayjs('1970-01-01T00:00:00');
+const wholeNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+    control.value !== undefined && control.value !== null && !Number.isInteger(Number(control.value)) ? { wholeNumber: true } : null;
+const minimumPresentationDate: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+    control.value && dayjs(control.value).isBefore(MIN_PRESENTATION_DATE) ? { minDate: true } : null;
+
 @Component({
     selector: 'jhi-presentation-assessment-instance-form-dialog',
     templateUrl: './presentation-assessment-instance-form-dialog.component.html',
@@ -62,6 +69,8 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
     protected readonly DateTimePickerType = DateTimePickerType;
     protected readonly hiddenStudentColumnFields = ['id', 'visibleRegistrationNumber', 'email'];
+    protected readonly resultPointsUpperBound = RESULT_POINTS_UPPER_BOUND;
+    protected readonly minPresentationDate = MIN_PRESENTATION_DATE;
     readonly languageOptions = [
         { label: 'English', value: 'en' },
         { label: 'Deutsch', value: 'de' },
@@ -82,9 +91,9 @@ export class PresentationAssessmentInstanceFormDialogComponent {
 
     editForm = this.formBuilder.group(
         {
-            presentationDate: [undefined as dayjs.Dayjs | undefined, Validators.required],
+            presentationDate: [undefined as dayjs.Dayjs | undefined, [Validators.required, minimumPresentationDate]],
             presentationTime: [undefined as dayjs.Dayjs | undefined],
-            resultPoints: [undefined as number | undefined, [Validators.min(0)]],
+            resultPoints: [undefined as number | undefined, [wholeNumber, Validators.min(0), Validators.max(RESULT_POINTS_UPPER_BOUND)]],
             maxPoints: [0],
             language: ['en', Validators.required],
             mode: [PresentationAssessmentMode.IN_PERSON, Validators.required],

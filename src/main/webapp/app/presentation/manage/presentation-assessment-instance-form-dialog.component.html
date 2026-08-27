@@ -8,8 +8,10 @@
             <jhi-date-time-picker
                 inputId="presentation-instance-date"
                 [hideLabelName]="true"
-                [requiredField]="true"
+                [requiredField]="editForm.controls.presentationDate.touched"
                 [pickerType]="DateTimePickerType.CALENDAR"
+                [min]="minPresentationDate"
+                [appendTo]="'self'"
                 [shouldDisplayTimeZoneWarning]="false"
                 [error]="editForm.controls.presentationDate.touched && editForm.controls.presentationDate.invalid"
                 formControlName="presentationDate"
@@ -22,6 +24,7 @@
                 inputId="presentation-instance-time"
                 [hideLabelName]="true"
                 [pickerType]="DateTimePickerType.TIMER"
+                [appendTo]="'self'"
                 [shouldDisplayTimeZoneWarning]="false"
                 formControlName="presentationTime"
                 name="presentationTime"
@@ -29,7 +32,29 @@
         </div>
         <div class="flex flex-col gap-2">
             <label for="presentation-instance-result" jhiTranslate="artemisApp.presentationAssessment.resultPoints"></label>
-            <tum-ui-input-number inputId="presentation-instance-result" [fluid]="true" [min]="0" [step]="0.5" [maxFractionDigits]="2" formControlName="resultPoints" />
+            <tum-ui-input-number
+                inputId="presentation-instance-result"
+                [fluid]="true"
+                [min]="0"
+                [max]="resultPointsUpperBound"
+                [step]="1"
+                [maxFractionDigits]="0"
+                formControlName="resultPoints"
+            />
+            @if (editForm.controls.resultPoints.invalid && editForm.controls.resultPoints.touched) {
+                <tum-ui-message severity="error">
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.resultPoints.hasError('wholeNumber')
+                                ? 'artemisApp.presentationAssessment.validation.wholeNumber'
+                                : editForm.controls.resultPoints.hasError('max')
+                                  ? 'artemisApp.presentationAssessment.validation.pointsMax'
+                                  : 'artemisApp.presentationAssessment.validation.resultPointsMin'
+                        "
+                        [translateValues]="{ max: resultPointsUpperBound }"
+                    ></span>
+                </tum-ui-message>
+            }
             @if (editForm.hasError('resultPointsExceedMaxPoints')) {
                 <tum-ui-message severity="error"><span jhiTranslate="artemisApp.presentationAssessment.resultPointsExceedMaxPoints"></span></tum-ui-message>
             }

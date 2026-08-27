@@ -103,7 +103,7 @@ public class CourseArchiveService {
      *
      * @param course the course to archive
      */
-    @Async
+    @Async("longRunningJobExecutor")
     public void archiveCourse(Course course) {
         archiveCourseSynchronously(course);
     }

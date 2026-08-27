@@ -14,10 +14,18 @@
             "maxPoints": "Max. points",
             "resultPoints": "Result",
             "resultPointsExceedMaxPoints": "Result points must not exceed max. points.",
+            "placeholder": {
+                "title": "Title",
+                "maxPoints": "0",
+                "resultPoints": "0",
+                "description": "Enter a description"
+            },
             "validation": {
                 "numberRequired": "Please enter a number.",
-                "maxPointsMin": "Max. points must be at least 0.01.",
-                "resultPointsMin": "Result must be at least 0."
+                "wholeNumber": "Please enter a whole number.",
+                "maxPointsMin": "Max. points must be at least 1.",
+                "resultPointsMin": "Result must be at least 0.",
+                "pointsMax": "Points must not exceed {{ max }}."
             },
             "presentationDate": "Presentation date",
             "presentationTime": "Time",

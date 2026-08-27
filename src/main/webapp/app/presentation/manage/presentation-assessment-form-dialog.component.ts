@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output, signal } from '@angular/core';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -20,6 +20,10 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 export interface PresentationAssessmentFormDialogResult {
     presentationAssessment: PresentationAssessment;
 }
+
+const MAX_POINTS_UPPER_BOUND = 10000;
+const wholeNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+    control.value !== undefined && control.value !== null && !Number.isInteger(Number(control.value)) ? { wholeNumber: true } : null;
 
 @Component({
     selector: 'jhi-presentation-assessment-form-dialog',
@@ -52,12 +56,13 @@ export class PresentationAssessmentFormDialogComponent {
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
+    protected readonly maxPointsUpperBound = MAX_POINTS_UPPER_BOUND;
     readonly filteredExercises = signal<Exercise[]>([]);
 
     editForm = this.formBuilder.group({
         title: ['', [Validators.required, Validators.maxLength(255)]],
         description: ['', [Validators.maxLength(1000)]],
-        maxPoints: [0, [Validators.required, Validators.min(0.01)]],
+        maxPoints: [undefined as number | undefined, [Validators.required, wholeNumber, Validators.min(1), Validators.max(MAX_POINTS_UPPER_BOUND)]],
         exercise: [undefined as Exercise | undefined],
     });
 
@@ -69,7 +74,7 @@ export class PresentationAssessmentFormDialogComponent {
             this.editForm.reset({
                 title: presentationAssessment?.title ?? '',
                 description: presentationAssessment?.description ?? '',
-                maxPoints: presentationAssessment?.maxPoints ?? 20,
+                maxPoints: presentationAssessment?.maxPoints,
                 exercise: exercises.find((exercise) => exercise.id === presentationAssessment?.exerciseId),
             });
         });

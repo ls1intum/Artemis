@@ -241,6 +241,20 @@
                 "label": "Presentations Enabled",
                 "tooltip": "Shows the Presentations entry in the course sidebar and allows instructors to manage course presentations."
             },
+            "autoOrchestration": {
+                "label": "Atlas Auto-Orchestration Enabled",
+                "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
+                "overridePlaceholder": "Use default",
+                "overridePlaceholderWithValue": "Use default ({{ value }})",
+                "debounceWindowSecondsOverride": {
+                    "label": "Debounce Window Override (seconds)",
+                    "hint": "How long to wait after the last content change before running. Leave empty to use the global default."
+                },
+                "maxDailyOrchestrationOverride": {
+                    "label": "Daily Run Limit Override",
+                    "hint": "Maximum number of automatic runs per day for this course. Leave empty to use the global default."
+                }
+            },
             "restrictedAthenaModulesAccess": {
                 "label": "Access to Restricted Athena Modules Enabled",
                 "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.presentation.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +34,8 @@ import de.tum.cit.aet.artemis.presentation.repository.PresentationAssessmentRepo
 @Lazy
 @Service
 public class PresentationAssessmentService {
+
+    private static final LocalDate EARLIEST_PRESENTATION_DATE = LocalDate.of(1970, 1, 1);
 
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
@@ -159,6 +162,9 @@ public class PresentationAssessmentService {
         if (dto.resultPoints() != null && dto.resultPoints() > assessment.getMaxPoints()) {
             throw new BadRequestAlertException("The achieved result points cannot exceed the maximum points", PresentationAssessmentInstance.ENTITY_NAME,
                     "resultPointsExceedMaxPoints");
+        }
+        if (dto.presentationDate().toLocalDate().isBefore(EARLIEST_PRESENTATION_DATE)) {
+            throw new BadRequestAlertException("The presentation date cannot be before 1970-01-01", PresentationAssessmentInstance.ENTITY_NAME, "presentationDateBeforeUnixEpoch");
         }
         instance.setPresentationDate(dto.presentationDate());
         instance.setResultPoints(dto.resultPoints());

@@ -49,10 +49,27 @@ describe('PresentationAssessmentInstanceFormDialogComponent', () => {
     it('should require a presentation date', () => {
         component.editForm.controls.presentationDate.setValue(undefined);
 
+        expect(component.editForm.controls.presentationDate.touched).toBe(false);
+
         component.save();
 
         expect(saved).not.toHaveBeenCalled();
         expect(component.editForm.controls.presentationDate.invalid).toBe(true);
+        expect(component.editForm.controls.presentationDate.touched).toBe(true);
+    });
+
+    it('should reject presentation dates before 1970', () => {
+        component.editForm.controls.presentationDate.setValue(dayjs('1969-12-31T00:00:00'));
+
+        expect(component.editForm.controls.presentationDate.hasError('minDate')).toBe(true);
+    });
+
+    it('should reject non-integer and excessive result points', () => {
+        component.editForm.controls.resultPoints.setValue(1.5);
+        expect(component.editForm.controls.resultPoints.hasError('wholeNumber')).toBe(true);
+
+        component.editForm.controls.resultPoints.setValue(10001);
+        expect(component.editForm.controls.resultPoints.hasError('max')).toBe(true);
     });
 
     it('should combine the mandatory date with the optional time', () => {

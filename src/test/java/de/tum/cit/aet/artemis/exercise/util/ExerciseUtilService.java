@@ -243,7 +243,7 @@ public class ExerciseUtilService {
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
                     var user = userUtilService.getUserByLogin(userPrefix + "student" + j);
-                    modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user);
+                    modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user, null);
                     studentParticipationRepo.save(participation);
                 }
                 return course;

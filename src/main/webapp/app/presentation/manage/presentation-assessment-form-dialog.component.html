@@ -2,7 +2,14 @@
     <div class="presentation-assessment-form-grid">
         <div class="presentation-assessment-field presentation-assessment-title-field">
             <label for="presentation-assessment-title" jhiTranslate="artemisApp.presentationAssessment.title"></label>
-            <input id="presentation-assessment-title" tumUiInput class="w-full" type="text" formControlName="title" />
+            <input
+                id="presentation-assessment-title"
+                tumUiInput
+                class="w-full"
+                type="text"
+                formControlName="title"
+                [placeholder]="'artemisApp.presentationAssessment.placeholder.title' | artemisTranslate"
+            />
             @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
                 <tum-ui-message severity="error" data-testid="presentation-title-error">
                     <span jhiTranslate="entity.validation.required"></span>
@@ -12,10 +19,28 @@
 
         <div class="presentation-assessment-field">
             <label for="presentation-assessment-max-points" jhiTranslate="artemisApp.presentationAssessment.maxPoints"></label>
-            <tum-ui-input-number inputId="presentation-assessment-max-points" [fluid]="true" [min]="0.01" [step]="0.5" [maxFractionDigits]="2" formControlName="maxPoints" />
+            <tum-ui-input-number
+                inputId="presentation-assessment-max-points"
+                [fluid]="true"
+                [min]="1"
+                [max]="maxPointsUpperBound"
+                [step]="1"
+                [maxFractionDigits]="0"
+                formControlName="maxPoints"
+                [placeholder]="'artemisApp.presentationAssessment.placeholder.maxPoints' | artemisTranslate"
+            />
             @if (editForm.controls.maxPoints.invalid && editForm.controls.maxPoints.touched) {
                 <tum-ui-message severity="error" data-testid="presentation-max-points-error">
-                    <span jhiTranslate="entity.validation.min"></span>
+                    <span
+                        [jhiTranslate]="
+                            editForm.controls.maxPoints.hasError('wholeNumber')
+                                ? 'artemisApp.presentationAssessment.validation.wholeNumber'
+                                : editForm.controls.maxPoints.hasError('max')
+                                  ? 'artemisApp.presentationAssessment.validation.pointsMax'
+                                  : 'artemisApp.presentationAssessment.validation.maxPointsMin'
+                        "
+                        [translateValues]="{ max: maxPointsUpperBound }"
+                    ></span>
                 </tum-ui-message>
             }
         </div>
@@ -37,7 +62,14 @@
 
         <div class="presentation-assessment-field presentation-assessment-description-field">
             <label for="presentation-assessment-description" jhiTranslate="artemisApp.presentationAssessment.description"></label>
-            <textarea id="presentation-assessment-description" tumUiTextarea class="w-full" rows="4" formControlName="description"></textarea>
+            <textarea
+                id="presentation-assessment-description"
+                tumUiTextarea
+                class="w-full"
+                rows="4"
+                formControlName="description"
+                [placeholder]="'artemisApp.presentationAssessment.placeholder.description' | artemisTranslate"
+            ></textarea>
         </div>
     </div>
 

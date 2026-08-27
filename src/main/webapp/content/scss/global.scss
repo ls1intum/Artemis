@@ -249,13 +249,14 @@ Generic styles
     min-width: auto !important;
     width: max-content !important;
     max-width: calc(100vw - 2rem);
-    z-index: 10001 !important;
+    z-index: 1065 !important;
 }
 
 // PrimeNG date pickers render their own (rounded) invalid border via `[invalid]` / `.invalid-date-input`
 // above. Suppress the global JHipster 5px red `border-left` "stick" that otherwise lands on the
 // p-datepicker host (when bound via formControlName + a validator) — it doesn't follow the input's
 // rounded corners and looks detached (PR #13009 review).
+jhi-date-time-picker.ng-invalid,
 p-datepicker.ng-invalid {
     border-left-width: 0;
 }
