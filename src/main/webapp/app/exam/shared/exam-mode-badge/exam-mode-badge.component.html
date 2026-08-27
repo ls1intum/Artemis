@@ -1,0 +1,7 @@
+<tum-ui-tag severity="secondary" data-testid="exam-mode-tag">
+    @if (testExam()) {
+        <span jhiTranslate="artemisApp.examManagement.testExam.testExam" class="flex items-center font-bold text-primary text-xs"></span>
+    } @else {
+        <span jhiTranslate="artemisApp.examManagement.testExam.realExam" class="flex items-center font-bold text-success text-xs"></span>
+    }
+</tum-ui-tag>

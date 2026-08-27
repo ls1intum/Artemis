@@ -692,7 +692,7 @@
             },
             "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
-                "create": "Create new Exercise Group",
+                "create": "Create Exercise Group",
                 "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
                 "addExercise": "Add Exercise",

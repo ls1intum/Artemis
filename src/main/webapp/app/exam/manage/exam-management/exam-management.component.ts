@@ -16,13 +16,15 @@ import { ExamManagementNavigationSidebarComponent } from 'app/exam/manage/exam-m
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { NgTemplateOutlet } from '@angular/common';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 @Component({
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
-    imports: [ExamManagementNavigationSidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, NgTemplateOutlet, TranslateDirective],
+    imports: [ExamManagementNavigationSidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, NgTemplateOutlet, FaIconComponent, ExamModeBadgeComponent],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, PageTitleView {
     private route = inject(ActivatedRoute);
@@ -37,6 +39,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
     private eventSubscriber?: Subscription;
 
     readonly documentationType: DocumentationType = 'Exams';
+
+    readonly faChevronRight = faChevronRight;
 
     readonly course = signal<Course>(undefined!);
     readonly exams = signal<Exam[]>(undefined!);

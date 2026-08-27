@@ -2,11 +2,11 @@
     @if (course()?.isAtLeastInstructor) {
         <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="openImportModal()">
             <fa-icon [icon]="faFileImport" />
-            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.importExam"></span>
         </tum-ui-button>
         <a tumUiButton size="small" id="create-exam" [routerLink]="['new']">
             <fa-icon [icon]="faPlus" />
-            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.createExam"></span>
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.createExam"></span>
         </a>
     }
 </ng-template>
@@ -51,12 +51,7 @@
                                         {{ exam.title }}
                                     </span>
                                 }
-                                @if (!exam.testExam) {
-                                    <div class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></div>
-                                }
-                                @if (exam.testExam) {
-                                    <div class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></div>
-                                }
+                                <jhi-exam-mode-badge [testExam]="exam.testExam!" />
                             </ng-container>
                         </td>
                         <td class="d-md-table-cell">

@@ -23,6 +23,7 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
 import { ExamStatusComponent } from '../exam-status/exam-status.component';
 import { TumUiButtonComponent, TumUiButtonDirective } from '@tumaet/ui-angular';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
 
 @Component({
     selector: 'jhi-exam-management-overview',
@@ -38,6 +39,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
         TumUiButtonDirective,
         TumUiButtonComponent,
         CourseTitleBarActionsDirective,
+        ExamModeBadgeComponent,
     ],
 })
 export class ExamManagementOverviewComponent implements OnInit, OnDestroy {

@@ -20,19 +20,15 @@
                     }
                     <!-- Current exam title -->
                     @if (currentExam()) {
-                        <h5 class="flex align-items-center gap-1 mb-0">
-                            @if (!currentExam()!.testExam) {
-                                <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
-                            } @else {
-                                <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
-                            }
+                        <h5 class="flex align-items-center gap-2 mb-0">
+                            <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" />
                             {{ currentExam()!.title }}
                         </h5>
                     }
                     <!-- Inject page specific data -->
                     @if (courseTitleBarService.titleTemplate() || courseTitleBarService.actionsTemplate()) {
                         @if (courseTitleBarService.titleTemplate()) {
-                            <div class="vr bg-secondary"></div>
+                            <fa-icon class="text-secondary" [icon]="faChevronRight" />
                         }
                         <div class="flex flex-1 justify-between gap-3 items-center title-bar-actions-wrapper">
                             <!-- Inject title template -->

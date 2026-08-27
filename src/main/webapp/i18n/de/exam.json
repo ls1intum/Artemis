@@ -692,7 +692,7 @@
             },
             "exerciseGroups": "Aufgabengruppen",
             "exerciseGroup": {
-                "create": "Neue Aufgabengruppe erstellen",
+                "create": "Aufgabengruppe erstellen",
                 "import": "Aufgabengruppe importieren",
                 "selectExerciseGroup": "Aufgabengruppen auswählen",
                 "selectExerciseGroupExplanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit den Aufgabengruppen importiert werden sollen",

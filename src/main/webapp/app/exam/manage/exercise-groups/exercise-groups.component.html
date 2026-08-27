@@ -11,12 +11,12 @@
         @if (course()?.isAtLeastInstructor) {
             <tum-ui-button size="small" severity="secondary" variant="outlined" id="import-group" (clicked)="openExerciseGroupImportModal()">
                 <fa-icon [icon]="faFileImport" />
-                <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></span>
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></span>
             </tum-ui-button>
         }
         <tum-ui-button size="small" id="create-new-group" (clicked)="openCreateGroupModal()">
             <fa-icon [icon]="faPlus" />
-            <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"></span>
         </tum-ui-button>
     }
 </ng-template>
