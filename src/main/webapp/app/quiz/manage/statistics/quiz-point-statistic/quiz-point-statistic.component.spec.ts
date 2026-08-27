@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -24,6 +24,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 const route = { params: of({ courseId: 2, exerciseId: 42 }) };
 const question = { id: 1 } as QuizQuestion;
@@ -45,6 +46,7 @@ describe('QuizExercise Point Statistic Component', () => {
     let fixture: ComponentFixture<QuizPointStatisticComponent>;
     let quizService: QuizExerciseService;
     let accountService: AccountService;
+    let websocketService: MockWebsocketService;
     let accountSpy: any;
     let router: Router;
     let translateService: TranslateService;
@@ -72,6 +74,7 @@ describe('QuizExercise Point Statistic Component', () => {
         fixture = TestBed.createComponent(QuizPointStatisticComponent);
         comp = fixture.componentInstance;
         quizService = TestBed.inject(QuizExerciseService);
+        websocketService = TestBed.inject(WebsocketService) as MockWebsocketService;
         accountService = TestBed.inject(AccountService);
         router = TestBed.inject(Router);
         translateService = TestBed.inject(TranslateService);
@@ -108,6 +111,35 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
             expect(updateDisplayedTimesSpy).toHaveBeenCalled();
             vi.clearAllTimers();
+        });
+
+        it('should cancel superseded websocket refresh requests and active requests on destroy', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            comp.ngOnInit();
+            comp.waitingForQuizStart = true;
+
+            let nextRequestId = 0;
+            const cancelledRequestIds: number[] = [];
+            quizServiceFindSpy.mockImplementation(
+                () =>
+                    new Observable(() => {
+                        const requestId = nextRequestId++;
+                        return () => cancelledRequestIds.push(requestId);
+                    }),
+            );
+
+            const quizExerciseChannel = '/topic/courses/2/quizExercises';
+            websocketService.emit(quizExerciseChannel, { id: 42 } as QuizExercise);
+            websocketService.emit(quizExerciseChannel, { id: 42 } as QuizExercise);
+
+            const statisticChannel = '/topic/statistic/42';
+            websocketService.emit(statisticChannel, 42);
+            websocketService.emit(statisticChannel, 42);
+
+            expect(cancelledRequestIds).toEqual([0, 2]);
+
+            fixture.destroy();
+            expect(cancelledRequestIds).toEqual([0, 2, 1, 3]);
         });
 
         it('should not load QuizSuccess if not authorised', async () => {
