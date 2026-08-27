@@ -126,7 +126,6 @@ export interface FeatureTreeNode {
     errorCount: number;
     errorRate: number;
     durationSumMs: number;
-    activeDays: number;
     /** Features below this node that this version still offers. */
     featureCount: number;
     /** Of those, how many saw no usage. The reason to drill into a quiet branch. */
