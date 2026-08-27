@@ -18,7 +18,7 @@ public final class CourseServiceUtil {
      */
     static void removeUserVariables(Iterable<User> usersInGroup) {
         usersInGroup.forEach(user -> {
-            user.setActivationKey(null);
+            // The activation key lives in {@code user_recovery_key}, so there is nothing to strip off the user here.
             user.setLangKey(null);
             user.setCreatedDate(null);
         });
