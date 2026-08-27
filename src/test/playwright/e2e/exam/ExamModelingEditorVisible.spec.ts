@@ -8,6 +8,13 @@ import { expectNoScrollPastApollonCanvas } from '../../support/utils';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
+/** Below this the canvas is a strip rather than a working surface. */
+const MIN_USABLE_CANVAS_HEIGHT = 400;
+/** The canvas is the page's purpose, so it must take most of the room the exercise page offers. */
+const MIN_SHARE_OF_HOST = 0.6;
+/** Box geometry is rounded per element, so edges never line up exactly. */
+const SUB_PIXEL_TOLERANCE = 1;
+
 /**
  * A modeling canvas has no intrinsic height, so a content-sized ancestor collapses it to nothing.
  * The rest of the exam suite drives the editor through its API-shaped page object and would not
@@ -48,12 +55,9 @@ test.describe('Exam modeling editor', { tag: '@slow' }, () => {
         const host = page.locator('jhi-modeling-submission-exam');
         const [canvasBox, hostBox] = await Promise.all([canvas.boundingBox(), host.boundingBox()]);
 
-        // The canvas must fill the page, not sit in a collapsed box: a real height,
-        // and one that is most of what the exercise page offers it.
-        expect(canvasBox!.height).toBeGreaterThan(400);
-        expect(canvasBox!.height).toBeGreaterThan(hostBox!.height * 0.6);
-        // And it must be inside its host, which is what failed when the host collapsed.
-        expect(canvasBox!.y + canvasBox!.height).toBeLessThanOrEqual(hostBox!.y + hostBox!.height + 1);
+        expect(canvasBox!.height).toBeGreaterThan(MIN_USABLE_CANVAS_HEIGHT);
+        expect(canvasBox!.height).toBeGreaterThan(hostBox!.height * MIN_SHARE_OF_HOST);
+        expect(canvasBox!.y + canvasBox!.height).toBeLessThanOrEqual(hostBox!.y + hostBox!.height + SUB_PIXEL_TOLERANCE);
 
         // Edge to edge inside "Your Solution": no card padding, no row gutters.
         const cardBody = (await page.locator('.left-body').boundingBox())!;

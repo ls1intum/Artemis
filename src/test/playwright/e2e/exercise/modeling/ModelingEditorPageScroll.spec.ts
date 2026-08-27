@@ -46,29 +46,21 @@ test.describe('Apollon canvas is never scrolled past', { tag: '@fast' }, () => {
         await login(admin, `/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
         await expect(page.locator('.apollon-editor')).toBeVisible();
 
-        // This page IS a form: grading, dates and the footer live below the
-        // editor, so scrolling is the point rather than the bug.
         const pageScrolls = await page.evaluate(() => document.documentElement.scrollHeight > document.documentElement.clientHeight + 1);
         const containerScrolls = await page.locator('#course-body-container').evaluate((element) => element.scrollHeight > element.clientHeight + 1);
         expect(pageScrolls || containerScrolls).toBe(true);
 
-        // Which is why the wheel must reach the page: with scroll lock engaged, a wheel over the
-        // canvas scrolls past it instead of zooming. The editor starts below the fold here, so it
-        // has to be brought into view before the pointer can land on it.
-        const canvas = page.locator('.apollon-editor');
-        await canvas.scrollIntoViewIfNeeded();
-        const box = await canvas.boundingBox();
+        // With scroll lock engaged, a wheel over the canvas must scroll the page instead of zooming.
         const scroller = page.locator('#course-body-container');
         const before = await scroller.evaluate((element) => element.scrollTop);
         const zoom = page.locator('[data-apollon-control="apollon:zoom"]');
-        const zoomBefore = await zoom.textContent();
+        const zoomBefore = (await zoom.textContent()) ?? '';
 
-        await page.mouse.move(box!.x + box!.width / 2, box!.y + box!.height / 2);
+        await page.locator('.apollon-editor').hover();
         await page.mouse.wheel(0, 400);
 
         await expect.poll(() => scroller.evaluate((element) => element.scrollTop)).toBeGreaterThan(before);
-        // ...and it scrolls rather than zooming, which is the whole point of the lock.
-        expect(await zoom.textContent()).toBe(zoomBefore);
+        await expect(zoom).toHaveText(zoomBefore);
     });
 });
 
@@ -117,24 +109,13 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
         });
     }
 
-    async function canvasBox(page: Page) {
-        const canvas = page.locator('jhi-modeling-assessment .apollon-editor');
-        await expect(canvas).toBeVisible();
-        // The chrome mounts a frame after Apollon settles, so measure only once the box has stopped moving.
-        let previous: string | undefined;
-        await expect
-            .poll(
-                async () => {
-                    const current = JSON.stringify(await canvas.boundingBox());
-                    const settled = current === previous;
-                    previous = current;
-                    return settled;
-                },
-                { intervals: Array(12).fill(250) },
-            )
-            .toBe(true);
-        return (await canvas.boundingBox())!;
-    }
+    const canvasSize = async (page: Page) => {
+        const box = (await page.locator('jhi-modeling-assessment .apollon-editor').boundingBox())!;
+        return { width: Math.round(box.width), height: Math.round(box.height) };
+    };
+
+    /** Apollon lays the canvas out around its chrome, so a control being on screen is what makes a measurement final. */
+    const canvasIsLaidOut = (page: Page) => expect(page.locator('jhi-modeling-assessment [data-apollon-control="apollon:zoom"]')).toBeVisible();
 
     test('floats the notice over the canvas instead of taking height from it', async ({ login, page, exerciseAssessment }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
@@ -151,7 +132,8 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
         // ...and an unoccupied slot must leave the region unmounted: an empty region
         // still reserves an inset through `getRegionElement`.
         await expect(page.locator('jhi-modeling-assessment [data-apollon-region="top-left"]')).toHaveCount(0);
-        const without = await canvasBox(page);
+        await canvasIsLaidOut(page);
+        const without = await canvasSize(page);
         await expectNoScrollPastApollonCanvas(page);
 
         await showAutomaticAssessmentNotice(page);
@@ -161,11 +143,11 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
         // Chrome, not a band: inside the editor, in the canvas' top-left corner.
         await expect(page.locator('jhi-modeling-assessment [data-apollon-region="top-left"] .feedback-suggestions-chrome')).toBeVisible();
 
-        const withNotice = await canvasBox(page);
-        expect(Math.abs(withNotice.height - without.height)).toBeLessThanOrEqual(1);
-        expect(Math.abs(withNotice.width - without.width)).toBeLessThanOrEqual(1);
+        await canvasIsLaidOut(page);
+        await expect.poll(() => canvasSize(page)).toEqual(without);
 
         // It keeps the same edge gap as Apollon's own islands and clears them all.
+        const withNotice = (await page.locator('jhi-modeling-assessment .apollon-editor').boundingBox())!;
         const islandBox = (await island.boundingBox())!;
         expect(Math.round(islandBox.x - withNotice.x)).toBe(Math.round(islandBox.y - withNotice.y));
         for (const control of ['apollon:zoom', 'apollon:minimap']) {
