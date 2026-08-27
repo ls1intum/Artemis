@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -95,9 +96,12 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final Optional<LtiApi> ltiApi;
+
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, ResultRepository resultRepository, SubmissionVersionService submissionVersionService,
             QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, QuizBatchService quizBatchService,
-            QuizStatisticsService quizStatisticsService, StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService) {
+            QuizStatisticsService quizStatisticsService, StudentParticipationRepository studentParticipationRepository, WebsocketMessagingService websocketMessagingService,
+            Optional<LtiApi> ltiApi) {
         super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
@@ -107,6 +111,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         this.quizStatisticsService = quizStatisticsService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.websocketMessagingService = websocketMessagingService;
+        this.ltiApi = ltiApi;
     }
 
     /**
@@ -225,6 +230,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
             studentParticipationRepository.save(participation);
             quizSubmission.setResults(Set.of(result));
 
+            ltiApi.ifPresent(api -> api.onNewResult(participation));
             sendQuizResultToUser(quizExerciseId, participation);
         });
         quizStatisticsService.notifyStatisticsChanged(quizExercise.getId());

@@ -3517,6 +3517,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
         assertThat(results).hasSize(1);
         var result = results.getFirst();
         assertThat(result.getSubmission().getId()).isEqualTo(quizSubmissionId);
+        assertThat(result.getCompletionDate()).isNotNull();
 
         assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();

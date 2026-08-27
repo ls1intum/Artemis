@@ -94,6 +94,7 @@ public class ExamQuizService {
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
                     result.setExerciseId(quizExercise.getId());
+                    result.setCompletionDate(quizSubmission.getSubmissionDate());
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
                     if (studentExam.isTestExam()) {
@@ -120,6 +121,9 @@ public class ExamQuizService {
                     // calculate scores and update result and submission accordingly
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
+                    if (result.getCompletionDate() == null) {
+                        result.setCompletionDate(quizSubmission.getSubmissionDate());
+                    }
                     if (studentExam.isTestExam()) {
                         result.rated(true);
                     }

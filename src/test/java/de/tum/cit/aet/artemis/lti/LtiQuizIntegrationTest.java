@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -86,7 +87,7 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
 
         quizSubmissionService.calculateAllResults(quizExercise.getId());
 
-        await().atMost(2, SECONDS).untilAsserted(() -> lti13Service.onNewResult(any()));
+        await().atMost(2, SECONDS).untilAsserted(() -> verify(lti13Service).onNewResult(any()));
     }
 
     private QuizExercise createSimpleQuizExercise(ZonedDateTime releaseDate, int duration) {

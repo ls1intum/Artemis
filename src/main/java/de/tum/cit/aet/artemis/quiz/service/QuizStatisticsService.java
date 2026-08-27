@@ -73,6 +73,11 @@ public class QuizStatisticsService {
      */
     public QuizStatisticsOverviewDTO getOverview(QuizExercise quizExercise) {
         long quizExerciseId = quizExercise.getId();
+        long[] participantCounts = new long[2];
+        quizStatisticsRepository.findParticipantCounts(quizExerciseId).forEach(count -> {
+            int index = Boolean.TRUE.equals(count.getRated()) ? 0 : 1;
+            participantCounts[index] = count.getParticipantCount();
+        });
         Map<Long, long[]> countersByQuestion = new HashMap<>();
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             countersByQuestion.put(question.getId(), new long[4]);
@@ -91,7 +96,7 @@ public class QuizStatisticsService {
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             statisticsByQuestion.put(question.getId(), QuizQuestionStatisticDTO.of(question, countersByQuestion.get(question.getId()), null));
         }
-        return QuizStatisticsOverviewDTO.of(quizExercise, statisticsByQuestion);
+        return QuizStatisticsOverviewDTO.of(quizExercise, statisticsByQuestion, participantCounts[0], participantCounts[1]);
     }
 
     /**

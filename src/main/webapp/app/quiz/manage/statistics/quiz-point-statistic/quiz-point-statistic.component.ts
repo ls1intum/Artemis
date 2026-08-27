@@ -40,7 +40,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     readonly round = round;
 
     readonly quizExercise = signal<QuizPointStatisticsResponse | undefined>(undefined);
-    quizPointStatistic!: QuizPointStatistic; // set in loadQuizSuccess()/loadNewData() before the chart is rendered
+    quizPointStatistic!: QuizPointStatistic; // set in loadQuizSuccess() before the chart is rendered
 
     labels: string[] = [];
 
@@ -142,21 +142,6 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
         clearInterval(this.interval);
         this.quizExerciseSubscription?.unsubscribe();
         this.quizDataSubscription?.unsubscribe();
-    }
-
-    /**
-     * load the new quizPointStatistic from the server if the Websocket has been notified
-     *
-     * @param statistic the new quizPointStatistic from the server with the new Data.
-     */
-    loadNewData(statistic: QuizPointStatistic) {
-        // if the Student finds a way to the Website
-        //      -> the Student will be sent back to Courses
-        if (!this.accountService.isAtLeastTutor()) {
-            void this.router.navigate(['courses']);
-        }
-        this.quizPointStatistic = statistic;
-        this.loadData();
     }
 
     /**

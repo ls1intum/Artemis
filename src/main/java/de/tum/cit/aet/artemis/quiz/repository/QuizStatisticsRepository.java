@@ -11,6 +11,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.ParticipantCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.PointBucket;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.QuestionAggregate;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.QuizOverviewAggregate;
@@ -31,6 +32,35 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.RatedSele
 @Lazy
 @org.springframework.stereotype.Repository
 public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Long> {
+
+    /**
+     * Counts the latest completed result of every participation and rated/unrated bucket.
+     *
+     * @param exerciseId the quiz exercise id
+     * @return participant counts grouped by rating bucket
+     */
+    @Query("""
+            SELECT COALESCE(result.rated, false) AS rated,
+                COUNT(result.id) AS participantCount
+            FROM Result result
+                JOIN result.submission submission
+            WHERE result.exerciseId = :exerciseId
+                AND result.score IS NOT NULL
+                AND result.completionDate IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT newer.id
+                    FROM Result newer
+                        JOIN newer.submission newerSubmission
+                    WHERE newerSubmission.participation.id = submission.participation.id
+                        AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND newer.score IS NOT NULL
+                        AND newer.completionDate IS NOT NULL
+                        AND (newer.completionDate > result.completionDate
+                            OR (newer.completionDate = result.completionDate AND newer.id > result.id))
+                )
+            GROUP BY COALESCE(result.rated, false)
+            """)
+    List<ParticipantCount> findParticipantCounts(@Param("exerciseId") long exerciseId);
 
     /**
      * Groups the latest completed result of every participation and rated/unrated bucket by score.

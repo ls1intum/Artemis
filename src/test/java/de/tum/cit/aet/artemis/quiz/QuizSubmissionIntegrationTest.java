@@ -269,14 +269,20 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addSubmission(quizExercise, ratedSubmission, TEST_PREFIX + "student3");
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(2), ratedSubmission, true, true, 100);
 
+        QuizSubmission unansweredSubmission = new QuizSubmission();
+        unansweredSubmission.setSubmitted(true);
+        unansweredSubmission.setSubmissionDate(tiedCompletionDate.plusSeconds(3));
+        participationUtilService.addSubmission(quizExercise, unansweredSubmission, TEST_PREFIX + "student4");
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, tiedCompletionDate.plusSeconds(3), unansweredSubmission, true, true, 0);
+
         String statisticsPath = "/api/quiz/quiz-exercises/" + quizExercise.getId() + "/statistics";
         JsonNode pointResponse = request.get(statisticsPath + "/points", HttpStatus.OK, JsonNode.class);
         JsonNode pointStatistic = pointResponse.path("quizPointStatistic");
-        assertThat(pointStatistic.path("participantsRated").asInt()).isOne();
+        assertThat(pointStatistic.path("participantsRated").asInt()).isEqualTo(2);
         assertThat(pointStatistic.path("participantsUnrated").asInt()).isEqualTo(2);
 
         JsonNode zeroPointCounter = findNodeByDouble(pointStatistic.path("pointCounters"), "points", 0);
-        assertThat(zeroPointCounter.path("ratedCounter").asInt()).isZero();
+        assertThat(zeroPointCounter.path("ratedCounter").asInt()).isOne();
         assertThat(zeroPointCounter.path("unRatedCounter").asInt()).isOne();
         JsonNode fullPointCounter = findNodeByDouble(pointStatistic.path("pointCounters"), "points", quizExercise.getOverallQuizPoints());
         assertThat(fullPointCounter.path("ratedCounter").asInt()).isOne();
@@ -284,6 +290,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
         MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
         JsonNode overviewResponse = request.get(statisticsPath + "/overview", HttpStatus.OK, JsonNode.class);
+        assertThat(overviewResponse.path("participantsRated").asInt()).isEqualTo(2);
         JsonNode overviewQuestionStatistic = findNodeByLong(overviewResponse.path("quizQuestions"), "id", multipleChoiceQuestion.getId()).path("quizQuestionStatistic");
         assertThat(overviewQuestionStatistic.path("participantsRated").asInt()).isOne();
         assertThat(overviewQuestionStatistic.path("participantsUnrated").asInt()).isEqualTo(2);

@@ -238,20 +238,6 @@ describe('QuizExercise Point Statistic Component', () => {
         });
     });
 
-    describe('loadNewData', () => {
-        it('should route students back to courses', () => {
-            accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            const routerMock = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-            vi.spyOn(comp, 'loadData').mockImplementation(() => {});
-            const testData = new QuizPointStatistic();
-
-            comp.loadNewData(testData);
-
-            expect(routerMock).toHaveBeenCalledOnce();
-            expect(routerMock).toHaveBeenCalledWith(['courses']);
-        });
-    });
-
     describe('tooltip labels', () => {
         it('uses the point-range tooltip for every bar', () => {
             comp.data = [3, 0, 2];

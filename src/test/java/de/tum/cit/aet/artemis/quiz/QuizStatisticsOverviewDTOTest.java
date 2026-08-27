@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticsOverviewDTO;
 class QuizStatisticsOverviewDTOTest {
 
     @Test
-    void shouldUseMaximumParticipantCountAcrossQuestionStatistics() {
+    void shouldUseQuizParticipantCountsIndependentlyOfQuestionStatistics() {
         QuizExercise quizExercise = new QuizExercise();
         MultipleChoiceQuestion firstQuestion = questionWithId(1L);
         MultipleChoiceQuestion secondQuestion = questionWithId(2L);
@@ -24,10 +24,10 @@ class QuizStatisticsOverviewDTOTest {
         Map<Long, QuizQuestionStatisticDTO> statisticsByQuestion = Map.of(firstQuestion.getId(), QuizQuestionStatisticDTO.of(firstQuestion, new long[] { 1, 4, 0, 0 }, null),
                 secondQuestion.getId(), QuizQuestionStatisticDTO.of(secondQuestion, new long[] { 3, 2, 0, 0 }, null));
 
-        QuizStatisticsOverviewDTO overview = QuizStatisticsOverviewDTO.of(quizExercise, statisticsByQuestion);
+        QuizStatisticsOverviewDTO overview = QuizStatisticsOverviewDTO.of(quizExercise, statisticsByQuestion, 5, 6);
 
-        assertThat(overview.participantsRated()).isEqualTo(3);
-        assertThat(overview.participantsUnrated()).isEqualTo(4);
+        assertThat(overview.participantsRated()).isEqualTo(5);
+        assertThat(overview.participantsUnrated()).isEqualTo(6);
     }
 
     private static MultipleChoiceQuestion questionWithId(long id) {

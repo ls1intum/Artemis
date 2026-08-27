@@ -8,7 +8,7 @@
       Folds a drag-and-drop question's drop locations / drag items / correct mappings into a JSON column (quiz_question.content), and a submission's mappings into a JSON column
       (submitted_answer.selection), replacing the eager @OneToMany child tables. The old tables (drop_location, drag_item, drag_and_drop_mapping) are dropped in the cleanup section
       at the end of this changelog (step 17), after every question type has been backfilled.
-      Existing component ids are preserved verbatim (they become the question-scoped ids inside the JSON), so existing submitted answers keep resolving.
+      Existing component ids are preserved verbatim (they become the question-scoped ids inside the JSON), so existing submissions and statistics counters keep resolving.
     -->
 
     <!-- Step 1a: add the JSON columns (MySQL / H2).
@@ -140,14 +140,88 @@
         </sql>
     </changeSet>
 
+    <!-- Step 4: drop the drop-location counter's foreign key and unique index. Drop-location counters now reference the drop location by its question-scoped id (unique only within a
+         question), which no longer maps to a global drop_location row, so neither the FK to drop_location nor the table-wide uniqueness of drop_location_id can hold. -->
+    <changeSet id="20260707080319-4a" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FK2bses6ev8komaj0jw4gcyl8te"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="quiz_statistic_counter" constraintName="FK2bses6ev8komaj0jw4gcyl8te"/>
+    </changeSet>
+    <changeSet id="20260707080319-4b" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL"/>
+        </preConditions>
+        <dropIndex tableName="quiz_statistic_counter" indexName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL"/>
+    </changeSet>
+
+    <!-- Step 5: fold drag-and-drop statistics counters into a JSON column on quiz_statistic. quiz_statistic itself is kept because QuizPointStatistic / PointCounter are still
+         relational; only the per-drop-location rows (discriminator 'DD') and the now-unused counter columns are removed in the cleanup section (steps 15-16). New drag-and-drop
+         statistics no longer write counter rows. -->
+    <changeSet id="20260707080319-5a" author="krusche" dbms="mysql,h2">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="quiz_statistic" columnName="counters"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="quiz_statistic">
+            <column name="counters" type="json"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="20260707080319-5b" author="krusche" dbms="postgresql">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="quiz_statistic" columnName="counters"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="quiz_statistic">
+            <column name="counters" type="jsonb"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Step 6a: backfill quiz_statistic.counters for drag-and-drop question statistics (PostgreSQL) -->
+    <changeSet id="20260707080319-6a" author="krusche" dbms="postgresql">
+        <sql>
+            UPDATE quiz_statistic qs
+            SET counters = COALESCE((
+                SELECT jsonb_agg(jsonb_build_object('dropLocationId', c.drop_location_id, 'ratedCounter', COALESCE(c.rated_counter, 0), 'unRatedCounter', COALESCE(c.un_rated_counter, 0)))
+                FROM quiz_statistic_counter c WHERE c.drag_and_drop_question_statistic_id = qs.id), '[]'::jsonb)
+            WHERE qs.discriminator = 'DD';
+        </sql>
+    </changeSet>
+
+    <!-- Step 6b: backfill quiz_statistic.counters for drag-and-drop question statistics (MySQL) -->
+    <changeSet id="20260707080319-6b" author="krusche" dbms="mysql">
+        <sql>
+            UPDATE quiz_statistic qs
+            SET counters = COALESCE((
+                SELECT JSON_ARRAYAGG(JSON_OBJECT('dropLocationId', c.drop_location_id, 'ratedCounter', COALESCE(c.rated_counter, 0), 'unRatedCounter', COALESCE(c.un_rated_counter, 0)))
+                FROM quiz_statistic_counter c WHERE c.drag_and_drop_question_statistic_id = qs.id), JSON_ARRAY())
+            WHERE qs.discriminator = 'DD';
+        </sql>
+    </changeSet>
 
     <!--
-      Quiz JSON persistence, iteration 2 (Short-Answer). Reuses the quiz_question.content and submitted_answer.selection columns added above.
-      Folds a short-answer question's spots / solutions / correct mappings into quiz_question.content and a submission's submitted texts into submitted_answer.selection.
-      The old tables (short_answer_spot, short_answer_solution, short_answer_mapping, short_answer_submitted_text) are dropped in the cleanup section at the end of this
-      changelog (step 17). Existing component ids are preserved verbatim (they become the question-scoped ids inside the JSON).
+      Quiz JSON persistence, iteration 2 (Short-Answer). Reuses the columns added above (quiz_question.content, submitted_answer.selection, quiz_statistic.counters).
+      Folds a short-answer question's spots / solutions / correct mappings into quiz_question.content, a submission's submitted texts into submitted_answer.selection, and the
+      per-spot statistics counters into quiz_statistic.counters. The old tables (short_answer_spot, short_answer_solution, short_answer_mapping, short_answer_submitted_text) are
+      dropped in the cleanup section at the end of this changelog (step 17). Existing component ids are preserved verbatim (they become the question-scoped ids inside the JSON).
     -->
 
+    <!-- Step 7: drop the spot counter's foreign key and unique index. Short-answer spot counters now reference the spot by its question-scoped id (unique only within a question),
+         which no longer maps to a global short_answer_spot row, so neither the FK to short_answer_spot nor the table-wide uniqueness of spot_id can hold. -->
+    <changeSet id="20260707080319-7a" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKoqgu1clyd02qbo86silw1uhmk"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="quiz_statistic_counter" constraintName="FKoqgu1clyd02qbo86silw1uhmk"/>
+    </changeSet>
+    <changeSet id="20260707080319-7b" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="UC_STATISTIC_COUNTERSPOT_ID_COL"/>
+        </preConditions>
+        <dropIndex tableName="quiz_statistic_counter" indexName="UC_STATISTIC_COUNTERSPOT_ID_COL"/>
+    </changeSet>
 
     <!-- Step 8a: backfill quiz_question.content for short-answer questions (PostgreSQL) -->
     <changeSet id="20260707080319-8a" author="krusche" dbms="postgresql">
@@ -230,14 +304,49 @@
         </sql>
     </changeSet>
 
+    <!-- Step 10a: backfill quiz_statistic.counters for short-answer question statistics (PostgreSQL) -->
+    <changeSet id="20260707080319-10a" author="krusche" dbms="postgresql">
+        <sql>
+            UPDATE quiz_statistic qs
+            SET counters = COALESCE((
+                SELECT jsonb_agg(jsonb_build_object('spotId', c.spot_id, 'ratedCounter', COALESCE(c.rated_counter, 0), 'unRatedCounter', COALESCE(c.un_rated_counter, 0)))
+                FROM quiz_statistic_counter c WHERE c.short_answer_question_statistic_id = qs.id), '[]'::jsonb)
+            WHERE qs.discriminator = 'SA';
+        </sql>
+    </changeSet>
+
+    <!-- Step 10b: backfill quiz_statistic.counters for short-answer question statistics (MySQL) -->
+    <changeSet id="20260707080319-10b" author="krusche" dbms="mysql">
+        <sql>
+            UPDATE quiz_statistic qs
+            SET counters = COALESCE((
+                SELECT JSON_ARRAYAGG(JSON_OBJECT('spotId', c.spot_id, 'ratedCounter', COALESCE(c.rated_counter, 0), 'unRatedCounter', COALESCE(c.un_rated_counter, 0)))
+                FROM quiz_statistic_counter c WHERE c.short_answer_question_statistic_id = qs.id), JSON_ARRAY())
+            WHERE qs.discriminator = 'SA';
+        </sql>
+    </changeSet>
 
     <!--
-      Quiz JSON persistence, iteration 3 (Multiple-Choice). Reuses the quiz_question.content and submitted_answer.selection columns added above.
-      Folds a multiple-choice question's answer options into quiz_question.content and a submission's selected options into submitted_answer.selection.
-      The old table (answer_option) and the join table (multiple_choice_submitted_answer_selected_options) are dropped in the cleanup section at the end of this changelog
-      (step 17). Existing component ids are preserved verbatim (they become the question-scoped ids inside the JSON).
+      Quiz JSON persistence, iteration 3 (Multiple-Choice). Reuses the columns added above (quiz_question.content, submitted_answer.selection, quiz_statistic.counters).
+      Folds a multiple-choice question's answer options into quiz_question.content, a submission's selected options into submitted_answer.selection, and the per-answer statistics
+      counters into quiz_statistic.counters. The old table (answer_option) and the join table (multiple_choice_submitted_answer_selected_options) are dropped in the cleanup section
+      at the end of this changelog (step 17). Existing component ids are preserved verbatim (they become the question-scoped ids inside the JSON).
     -->
 
+    <!-- Step 11: drop the answer counter's foreign key and unique index. Multiple-choice answer counters now reference the answer option by its question-scoped id (unique only
+         within a question), which no longer maps to a global answer_option row, so neither the FK to answer_option nor the table-wide uniqueness of answer_id can hold. -->
+    <changeSet id="20260707080319-11a" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKg7hjug3wu6icklf6gbiqs4n18"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="quiz_statistic_counter" constraintName="FKg7hjug3wu6icklf6gbiqs4n18"/>
+    </changeSet>
+    <changeSet id="20260707080319-11b" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="UC_STATISTIC_COUNTERANSWER_ID_COL"/>
+        </preConditions>
+        <dropIndex tableName="quiz_statistic_counter" indexName="UC_STATISTIC_COUNTERANSWER_ID_COL"/>
+    </changeSet>
 
     <!-- Step 12a: backfill quiz_question.content for multiple-choice questions (PostgreSQL) -->
     <changeSet id="20260707080319-12a" author="krusche" dbms="postgresql">
@@ -300,90 +409,126 @@
         </sql>
     </changeSet>
 
+    <!-- Step 14a: backfill quiz_statistic.counters for multiple-choice question statistics (PostgreSQL) -->
+    <changeSet id="20260707080319-14a" author="krusche" dbms="postgresql">
+        <sql>
+            UPDATE quiz_statistic qs
+            SET counters = COALESCE((
+                SELECT jsonb_agg(jsonb_build_object('answerId', c.answer_id, 'ratedCounter', COALESCE(c.rated_counter, 0), 'unRatedCounter', COALESCE(c.un_rated_counter, 0)))
+                FROM quiz_statistic_counter c WHERE c.multiple_choice_question_statistic_id = qs.id), '[]'::jsonb)
+            WHERE qs.discriminator = 'MC';
+        </sql>
+    </changeSet>
+
+    <!-- Step 14b: backfill quiz_statistic.counters for multiple-choice question statistics (MySQL) -->
+    <changeSet id="20260707080319-14b" author="krusche" dbms="mysql">
+        <sql>
+            UPDATE quiz_statistic qs
+            SET counters = COALESCE((
+                SELECT JSON_ARRAYAGG(JSON_OBJECT('answerId', c.answer_id, 'ratedCounter', COALESCE(c.rated_counter, 0), 'unRatedCounter', COALESCE(c.un_rated_counter, 0)))
+                FROM quiz_statistic_counter c WHERE c.multiple_choice_question_statistic_id = qs.id), JSON_ARRAY())
+            WHERE qs.discriminator = 'MC';
+        </sql>
+    </changeSet>
 
     <!--
       ==========================================================================================================================================================================
-      Cleanup (DESTRUCTIVE, irreversible). Authored question content and submitted-answer selections have been backfilled into JSON above. Statistics are calculated on demand
-      from results and selections, so the persisted aggregate tables and their owning columns are removed instead of being migrated to temporary JSON counters. The legacy
-      relational child tables are then dropped. Validate the backfills on a staging copy first, especially on MySQL; see
-      documentation/docs/developer/guidelines/quiz-json-persistence-migration.mdx.
+      Cleanup (DESTRUCTIVE, irreversible). Every drag-and-drop / short-answer / multiple-choice question, submission and question-statistic has now been backfilled into the JSON
+      columns above, so the legacy relational child tables and the now-unused quiz_statistic_counter columns/rows are removed. This drops the source data, so it must only run
+      after the backfills above are trusted (validate on a staging copy first, especially on MySQL — see documentation/docs/developer/guidelines/quiz-json-persistence-migration.mdx).
+      quiz_statistic and quiz_statistic_counter themselves are intentionally KEPT: the QuizPointStatistic rows (quiz_statistic discriminator 'QP') and their PointCounter rows
+      (quiz_statistic_counter discriminator 'PC', columns points + quiz_point_statistic_id) are still relational. Only the per-question-type counter rows ('DD' / 'SA' / 'AC') and
+      their columns are removed.
       ==========================================================================================================================================================================
     -->
 
-    <!-- Step 15: remove the exercise/question references that own persisted statistics. PostgreSQL normalizes the historical Hibernate-generated constraint names to lower case;
-         MySQL retains the names used by the original schema. -->
-    <changeSet id="20260707080319-15a" author="krusche" dbms="mysql">
-        <preConditions onFail="MARK_RAN">
-            <foreignKeyConstraintExists foreignKeyName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
-        </preConditions>
-        <dropForeignKeyConstraint baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
-    </changeSet>
-    <changeSet id="20260707080319-15b" author="krusche" dbms="postgresql">
-        <preConditions onFail="MARK_RAN">
-            <foreignKeyConstraintExists foreignKeyName="fk1kyxexi1uqeu8pw3vcbulfi42"/>
-        </preConditions>
-        <dropForeignKeyConstraint baseTableName="exercise" constraintName="fk1kyxexi1uqeu8pw3vcbulfi42"/>
-    </changeSet>
-    <changeSet id="20260707080319-15c" author="krusche" dbms="mysql">
-        <preConditions onFail="MARK_RAN">
-            <foreignKeyConstraintExists foreignKeyName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
-        </preConditions>
-        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
-    </changeSet>
-    <changeSet id="20260707080319-15d" author="krusche" dbms="postgresql">
-        <preConditions onFail="MARK_RAN">
-            <foreignKeyConstraintExists foreignKeyName="fkoi0sqphft8m7f92qa7ui8i3ac"/>
-        </preConditions>
-        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="fkoi0sqphft8m7f92qa7ui8i3ac"/>
-    </changeSet>
-    <changeSet id="20260707080319-15e" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="exercise" indexName="uk_exercise_quiz_point_statistic"/>
-        </preConditions>
-        <dropUniqueConstraint tableName="exercise" constraintName="uk_exercise_quiz_point_statistic"/>
-    </changeSet>
-    <changeSet id="20260707080319-15f" author="krusche" dbms="mysql">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="quiz_question" indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
-        </preConditions>
-        <dropUniqueConstraint tableName="quiz_question" constraintName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
-    </changeSet>
-    <changeSet id="20260707080319-15g" author="krusche" dbms="postgresql">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="quiz_question" indexName="uc_questionquestion_statistic_id_col"/>
-        </preConditions>
-        <dropUniqueConstraint tableName="quiz_question" constraintName="uc_questionquestion_statistic_id_col"/>
-    </changeSet>
-    <changeSet id="20260707080319-15h" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <columnExists tableName="exercise" columnName="quiz_point_statistic_id"/>
-        </preConditions>
-        <dropColumn tableName="exercise" columnName="quiz_point_statistic_id"/>
-    </changeSet>
-    <changeSet id="20260707080319-15i" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <columnExists tableName="quiz_question" columnName="quiz_question_statistic_id"/>
-        </preConditions>
-        <dropColumn tableName="quiz_question" columnName="quiz_question_statistic_id"/>
+    <!-- Step 15: delete the folded statistics counter rows. Their data now lives in quiz_statistic.counters; these discriminators ('DD' drag-and-drop, 'SA' short-answer,
+         'AC' multiple-choice answer) no longer map to a JPA entity (those counters are plain JSON POJOs now), so the rows must be removed before their columns are dropped. Only
+         'PC' (point) counters remain in quiz_statistic_counter. -->
+    <changeSet id="20260707080319-15" author="krusche">
+        <sql>
+            DELETE FROM quiz_statistic_counter WHERE discriminator IN ('DD', 'SA', 'AC');
+        </sql>
     </changeSet>
 
-    <!-- Step 16: drop the obsolete aggregate tables after removing their owners. Dropping the counter table first also removes its foreign keys into the authored-content tables
-         before step 17 drops those tables. -->
+    <!-- Step 16: drop the now-unused quiz_statistic_counter foreign keys, their backing indexes and the folded counter columns. The drop_location_id / spot_id / answer_id foreign
+         keys and unique indexes were already dropped in steps 4 / 7 / 11. points and quiz_point_statistic_id are kept for PointCounter. -->
     <changeSet id="20260707080319-16a" author="krusche">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="quiz_statistic_counter"/>
+            <foreignKeyConstraintExists foreignKeyName="FK11jgyics37wyibhhpp866exa8"/>
         </preConditions>
-        <dropTable tableName="quiz_statistic_counter"/>
+        <dropForeignKeyConstraint baseTableName="quiz_statistic_counter" constraintName="FK11jgyics37wyibhhpp866exa8"/>
     </changeSet>
     <changeSet id="20260707080319-16b" author="krusche">
         <preConditions onFail="MARK_RAN">
-            <tableExists tableName="quiz_statistic"/>
+            <foreignKeyConstraintExists foreignKeyName="FKhascwjyvee25c0k3tay04ghog"/>
         </preConditions>
-        <dropTable tableName="quiz_statistic"/>
+        <dropForeignKeyConstraint baseTableName="quiz_statistic_counter" constraintName="FKhascwjyvee25c0k3tay04ghog"/>
+    </changeSet>
+    <changeSet id="20260707080319-16c" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKoh69hhnfcimvw7i1cwhepvt5g"/>
+        </preConditions>
+        <dropForeignKeyConstraint baseTableName="quiz_statistic_counter" constraintName="FKoh69hhnfcimvw7i1cwhepvt5g"/>
+    </changeSet>
+    <changeSet id="20260707080319-16d" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter"/>
+        </preConditions>
+        <dropIndex tableName="quiz_statistic_counter" indexName="FK11jgyics37wyibhhpp866exa8"/>
+    </changeSet>
+    <changeSet id="20260707080319-16e" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="FKhascwjyvee25c0k3tay04ghog" tableName="quiz_statistic_counter"/>
+        </preConditions>
+        <dropIndex tableName="quiz_statistic_counter" indexName="FKhascwjyvee25c0k3tay04ghog"/>
+    </changeSet>
+    <changeSet id="20260707080319-16f" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <indexExists indexName="FKoh69hhnfcimvw7i1cwhepvt5g" tableName="quiz_statistic_counter"/>
+        </preConditions>
+        <dropIndex tableName="quiz_statistic_counter" indexName="FKoh69hhnfcimvw7i1cwhepvt5g"/>
+    </changeSet>
+    <changeSet id="20260707080319-16g" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="quiz_statistic_counter" columnName="drag_and_drop_question_statistic_id"/>
+        </preConditions>
+        <dropColumn tableName="quiz_statistic_counter" columnName="drag_and_drop_question_statistic_id"/>
+    </changeSet>
+    <changeSet id="20260707080319-16h" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="quiz_statistic_counter" columnName="short_answer_question_statistic_id"/>
+        </preConditions>
+        <dropColumn tableName="quiz_statistic_counter" columnName="short_answer_question_statistic_id"/>
+    </changeSet>
+    <changeSet id="20260707080319-16i" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="quiz_statistic_counter" columnName="multiple_choice_question_statistic_id"/>
+        </preConditions>
+        <dropColumn tableName="quiz_statistic_counter" columnName="multiple_choice_question_statistic_id"/>
+    </changeSet>
+    <changeSet id="20260707080319-16j" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="quiz_statistic_counter" columnName="drop_location_id"/>
+        </preConditions>
+        <dropColumn tableName="quiz_statistic_counter" columnName="drop_location_id"/>
+    </changeSet>
+    <changeSet id="20260707080319-16k" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="quiz_statistic_counter" columnName="spot_id"/>
+        </preConditions>
+        <dropColumn tableName="quiz_statistic_counter" columnName="spot_id"/>
+    </changeSet>
+    <changeSet id="20260707080319-16l" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="quiz_statistic_counter" columnName="answer_id"/>
+        </preConditions>
+        <dropColumn tableName="quiz_statistic_counter" columnName="answer_id"/>
     </changeSet>
 
     <!-- Step 17: drop the legacy relational child tables, now fully represented in the quiz_question.content / submitted_answer.selection JSON columns. Referencing tables are
-         dropped before the tables they reference so no foreign key blocks the drop. -->
+         dropped before the tables they reference so no foreign key blocks the drop (the quiz_statistic_counter foreign keys into drop_location / short_answer_spot / answer_option
+         were already removed in steps 4 / 7 / 11, and the foreign keys these tables hold into quiz_question / submitted_answer are dropped together with each table). -->
     <changeSet id="20260707080319-17a" author="krusche">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="drag_and_drop_mapping"/>
