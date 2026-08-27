@@ -853,6 +853,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     resetQuestionTitle(): void {
         const question = this.question();
         question.title = this.backupQuestion.title;
+        this.questionUpdated.emit();
     }
 
     /**

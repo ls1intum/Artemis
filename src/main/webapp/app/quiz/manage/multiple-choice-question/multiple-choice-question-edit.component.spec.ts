@@ -368,10 +368,13 @@ describe('MultipleChoiceQuestionEditComponent', async () => {
     it('should reset question title', async () => {
         component.backupQuestion = { ...question, title: 'backup-title' };
         component.question().title = 'current-title';
+        const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
 
         component.resetQuestionTitle();
 
         expect(component.question().title).toBe('backup-title');
+        // re-evaluate caches its validity off this event; without it the save button disables unexplained
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should reset question', async () => {

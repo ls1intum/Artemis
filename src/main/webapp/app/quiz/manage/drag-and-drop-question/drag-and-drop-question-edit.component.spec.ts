@@ -576,10 +576,14 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         component.backupQuestion = new DragAndDropQuestion();
         component.backupQuestion.title = title;
+        const emitSpy = vi.spyOn(component.questionUpdated, 'emit');
 
         component.resetQuestionTitle();
 
         expect(component.question().title).toBe(title);
+        // re-evaluate caches its validity off this event; without it the save button disables unexplained.
+        // Not toHaveBeenCalledOnce: the rendered title input emits on its own, so this fires twice here.
+        expect(emitSpy).toHaveBeenCalled();
     });
 
     it('should reset question', () => {

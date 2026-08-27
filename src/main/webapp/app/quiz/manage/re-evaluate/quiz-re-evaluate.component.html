@@ -26,6 +26,7 @@
                                 type="text"
                                 class="form-control"
                                 [(ngModel)]="quizExercise().title"
+                                (ngModelChange)="cacheValidation()"
                                 placeholder="{{ 'artemisApp.quizExercise.placeholder.title' | artemisTranslate }}"
                             />
                         </div>
@@ -87,7 +88,13 @@
                         </div>
                         <div class="row">
                             <div class="form-group custom-control custom-checkbox">
-                                <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input" [(ngModel)]="quizExercise().randomizeQuestionOrder" />
+                                <input
+                                    type="checkbox"
+                                    id="cbRandomizeOrder"
+                                    class="form-check-input custom-control-input"
+                                    [(ngModel)]="quizExercise().randomizeQuestionOrder"
+                                    (ngModelChange)="cacheValidation()"
+                                />
                                 <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="artemisApp.quizExercise.randomizeQuestionOrder"></label>
                             </div>
                         </div>

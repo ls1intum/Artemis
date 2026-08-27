@@ -164,6 +164,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      */
     resetQuizTitle() {
         this.quizExercise().title = this.savedEntity.title;
+        this.cacheValidation();
     }
 
     /**
@@ -184,6 +185,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
          */
         this.quizExercise().quizQuestions!.splice(index, 1);
         this.quizExercise().quizQuestions!.splice(index - 1, 0, questionToMove);
+        this.cacheValidation();
     }
 
     /**
@@ -204,6 +206,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
          */
         this.quizExercise().quizQuestions!.splice(index, 1);
         this.quizExercise().quizQuestions!.splice(index + 1, 0, questionToMove);
+        this.cacheValidation();
     }
 
     ngOnDestroy(): void {
