@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisAmbientDecision;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -184,6 +185,32 @@ class IrisStruggleInterventionDecisionTest {
                 argThat(e -> "decide".equals(e.kind()) && "ambient".equals(e.action()) && Objects.equals(e.message(), "Re-check the logic.") && Objects.equals(e.sessionId(), 99L)
                         && e.messageId() == null && "Sort.java".equals(e.anchorFile()) && Objects.equals(e.anchorLine(), 42) && "off-by-one?".equals(e.inlineHint())
                         && Objects.equals(e.confidence(), 0.7)));
+    }
+
+    @Test
+    void ambient_withAnExistingOffer_refreshesItGuarded_neverMergesTheEntity() {
+        // Regression guard for a lost update. The callback runs outside a transaction, so anything it loads is
+        // detached, and saving a detached aggregate merges EVERY column. The old code read the decision, checked
+        // consumedAt, and saved that entity: a reveal committing in between was overwritten, consumedAt and
+        // consumedMessageId went back to NULL, and the already-revealed offer became revealable a second time.
+        //
+        // What this test proves: the production path never merges an existing aggregate. It does NOT prove
+        // Hibernate's merge semantics or the database race itself - reproducing that interleaving deterministically
+        // would need a @MockitoSpyBean seam, and AbstractIrisIntegrationTest is not in ALLOWED_BASE_CLASSES in
+        // SpringContextConfigurationArchitectureTest, so such a seam would break the ArchUnit rule.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        // 1 = an unconsumed offer for this episode was refreshed in place. Stubbing this is load-bearing: Mockito's
+        // default 0 would send the code down the insert fallback and the never()-check below would pass for the
+        // wrong reason.
+        when(irisAmbientDecisionRepository.refreshIfUnconsumed(eq(3L), eq(42L), eq("ep-123"), eq("Re-check the logic."), any())).thenReturn(1);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
+                null, null);
+
+        service.handleDecision(jobWithEpisode, update);
+
+        verify(irisAmbientDecisionRepository).refreshIfUnconsumed(eq(3L), eq(42L), eq("ep-123"), eq("Re-check the logic."), any());
+        verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
     }
 
     @Test

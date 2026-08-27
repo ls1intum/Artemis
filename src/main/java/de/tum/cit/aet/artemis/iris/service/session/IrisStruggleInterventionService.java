@@ -477,29 +477,29 @@ public class IrisStruggleInterventionService {
      * @param hintText   the hint as authored by Pyris
      */
     private void recordAmbientDecision(long userId, long exerciseId, String episodeId, String hintText) {
+        // Refresh in place without loading the row first. This callback runs outside a transaction, so anything read
+        // here would be detached, and saving a detached aggregate merges EVERY column: a reveal committing between
+        // the read and the save would be overwritten, resetting consumedAt and consumedMessageId to NULL and making
+        // an already-revealed offer revealable a second time.
+        if (irisAmbientDecisionRepository.refreshIfUnconsumed(userId, exerciseId, episodeId, hintText, ZonedDateTime.now()) > 0) {
+            return;
+        }
+        // Zero rows: either no offer exists for this episode yet, or the student already revealed the previous one.
+        // Try to insert and let the unique constraint on (user, exercise, episode) decide between the two.
+        var decision = new IrisAmbientDecision();
+        decision.setUserId(userId);
+        decision.setExerciseId(exerciseId);
+        decision.setEpisodeId(episodeId);
+        decision.setHintText(hintText);
+        decision.setCreatedAt(ZonedDateTime.now());
         try {
-            var existing = irisAmbientDecisionRepository.findByUserIdAndExerciseIdAndEpisodeId(userId, exerciseId, episodeId);
-            if (existing.isPresent()) {
-                var decision = existing.get();
-                if (decision.getConsumedAt() == null) {
-                    decision.setHintText(hintText);
-                    decision.setCreatedAt(ZonedDateTime.now());
-                    irisAmbientDecisionRepository.save(decision);
-                }
-                return;
-            }
-            var decision = new IrisAmbientDecision();
-            decision.setUserId(userId);
-            decision.setExerciseId(exerciseId);
-            decision.setEpisodeId(episodeId);
-            decision.setHintText(hintText);
-            decision.setCreatedAt(ZonedDateTime.now());
             irisAmbientDecisionRepository.save(decision);
         }
         catch (DataIntegrityViolationException ex) {
-            // A concurrent callback inserted the same (user, exercise, episode) first. Its row is equivalent for our
-            // purposes - the student gets an offer either way - so losing this race is not an error.
-            log.debug("Ambient decision for episode {} already recorded concurrently", episodeId);
+            // Either a concurrent callback inserted first, or a consumed row already occupies this triple. Both are
+            // correct outcomes: the student gets an offer either way, and a revealed offer must never be resurrected.
+            // The catch stays on the insert alone so a constraint failure elsewhere cannot be misreported as this case.
+            log.debug("Ambient decision for episode {} not recorded: already present", episodeId);
         }
     }
 
