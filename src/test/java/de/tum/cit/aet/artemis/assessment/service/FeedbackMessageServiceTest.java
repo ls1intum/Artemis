@@ -2,7 +2,11 @@ package de.tum.cit.aet.artemis.assessment.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.time.ZonedDateTime;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +34,40 @@ class FeedbackMessageServiceTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
+    void getOrCreateResolvesEmptyInputToNoMessageRow() {
+        // pass markers and successful tests without output have no message at all - the row must not be created
+        assertThat(feedbackMessageService.getOrCreate(null)).isNull();
+        assertThat(feedbackMessageService.getOrCreate("")).isNull();
+    }
+
+    @Test
+    void getOrCreateReusesTheRowOfAConcurrentWriterThatWonTheHashRace() {
+        // Two nodes processing build results can insert the same text at the same time. The loser of the unique
+        // hash race must return the winner's row instead of failing the build-result processing. The lookup is
+        // made blind exactly once, which is what a writer sees whose competitor commits right after it looked.
+        var winner = feedbackMessageService.getOrCreate("concurrently inserted message");
+
+        var loser = new FeedbackMessageService(blindOnFirstLookup(feedbackMessageRepository)).getOrCreate("concurrently inserted message");
+
+        assertThat(loser.getId()).isEqualTo(winner.getId());
+        assertThat(feedbackMessageRepository.findAll()).filteredOn(message -> "concurrently inserted message".equals(message.getText())).hasSize(1);
+    }
+
+    @Test
+    void getOrCreateRecreatesAMessageThatLostTheRefreshAgainstACollection() {
+        // The reuse refreshes the grace timestamp; if that refresh finds no row because a concurrent collection
+        // already removed it, the message has to be created again rather than referenced as a deleted row.
+        var collected = feedbackMessageService.getOrCreate("collected message");
+        feedbackMessageRepository.deleteById(collected.getId());
+        assertThat(feedbackMessageRepository.refreshCreatedDate(collected.getId(), ZonedDateTime.now())).isZero();
+
+        var recreated = feedbackMessageService.getOrCreate("collected message");
+
+        assertThat(recreated.getId()).isNotEqualTo(collected.getId());
+        assertThat(recreated.getText()).isEqualTo("collected message");
+    }
+
+    @Test
     void garbageCollectionHonorsRefreshedGraceTimestamp() {
         var message = feedbackMessageService.getOrCreate("gc grace message");
 
@@ -44,5 +82,26 @@ class FeedbackMessageServiceTest extends AbstractSpringIntegrationIndependentBat
         feedbackMessageRepository.refreshCreatedDate(message.getId(), ZonedDateTime.now().minusDays(30));
         assertThat(feedbackMessageCleanupRepository.deleteUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(29))).isEqualTo(1);
         assertThat(feedbackMessageRepository.findById(message.getId())).isEmpty();
+    }
+
+    /**
+     * The repository, but the first {@code findByHash} answers empty: what a writer sees whose competitor commits
+     * between that lookup and its own insert. Everything else, the failing insert above all, stays real.
+     */
+    private static FeedbackMessageRepository blindOnFirstLookup(FeedbackMessageRepository repository) {
+        var firstLookup = new AtomicBoolean(true);
+        return (FeedbackMessageRepository) Proxy.newProxyInstance(FeedbackMessageRepository.class.getClassLoader(), new Class<?>[] { FeedbackMessageRepository.class },
+                (proxy, method, args) -> {
+                    if ("findByHash".equals(method.getName()) && firstLookup.getAndSet(false)) {
+                        return Optional.empty();
+                    }
+                    try {
+                        return method.invoke(repository, args);
+                    }
+                    catch (InvocationTargetException exception) {
+                        // the service reacts to the unique-constraint violation, so it has to reach it unwrapped
+                        throw exception.getCause();
+                    }
+                });
     }
 }
