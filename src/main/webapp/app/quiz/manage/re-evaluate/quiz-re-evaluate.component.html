@@ -195,7 +195,7 @@
                         </ng-template>
                         <!-- PrimeNG's tooltip carries no ARIA, so the reasons are also exposed here for aria-describedby. -->
                         @if (!quizIsValid()) {
-                            <ul [id]="saveReasonsId" class="visually-hidden">
+                            <ul [id]="saveReasonsId" class="sr-only">
                                 @for (reason of invalidReasons(); track $index) {
                                     <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
                                 }

@@ -408,7 +408,7 @@
                             </ng-template>
                             <!-- PrimeNG's tooltip carries no ARIA, so the same text is exposed here for aria-describedby. -->
                             @if (!isSaveTooltipDisabled()) {
-                                <div [id]="saveReasonsId" class="visually-hidden">
+                                <div [id]="saveReasonsId" class="sr-only">
                                     @if (uneditableReason()) {
                                         <span>{{ uneditableReason() }}</span>
                                     } @else {

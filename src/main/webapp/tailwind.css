@@ -97,6 +97,10 @@
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/unreferenced-feedback';
+/* The submit-button forms describe why they are blocked with an sr-only element, but they are still Bootstrap-heavy,
+   so scanning them would also emit .col-11/.col-12/.bg-primary as Tailwind utilities on top of Bootstrap's own. Emit
+   just the one utility instead. */
+@source inline("sr-only");
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
