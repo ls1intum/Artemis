@@ -24,11 +24,18 @@
         removing one belongs in the exam deletion service, not in a changelog. An exam without a course cannot be
         created through the application, so the expectation is that the precondition simply passes.
 
-        Four further columns were considered and left out. feedback.result_id, lecture.course_id, exercise_group.exam_id
-        and grading_criterion.exercise_id are all held by their parent in a mapped-by collection that cascades, and
-        Hibernate inserts such a child before it writes the key, filling it in with a later update. That is invisible
-        while the column allows null and fails immediately once it does not. Requiring these columns means giving every
-        place that adds to one of those collections the back reference first, which is a change of its own.
+        Three further columns were tried and left out. feedback.result_id, exercise_group.exam_id and
+        grading_criterion.exercise_id are held by their parent in a mapped-by collection that cascades, and Hibernate
+        inserts such a child before it writes the key, filling it in with a later update. That is invisible while the
+        column allows null and fails immediately once it does not. Requiring these columns means giving every place that
+        adds to one of those collections the back reference first, the way Submission.addResult now does, which is a
+        change of its own. Around fifty owning associations sit behind a cascading collection like this, so the same
+        applies well beyond the three.
+
+        lecture.course_id was tried too and fails for a different reason: two tests write a lecture without a course on
+        purpose to check that the attachment endpoints reject it, and a course fixture nulls the column so it can save
+        the lecture early and read its id. Nothing in the mapping stands in the way, so this one only needs those three
+        places reworked.
 
         submission.participation_id is left out as well: an example submission is stored as a submission without a
         participation, so that column can only be required once example submissions have their own participation.

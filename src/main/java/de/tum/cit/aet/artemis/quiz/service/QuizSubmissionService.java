@@ -169,8 +169,10 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         quizSubmission.addResult(result);
         quizSubmission.setParticipation(participation);
 
-        quizSubmissionRepository.save(quizSubmission);
+        // Save the result before the submission. The submission holds it in a collection that cascades, so saving the
+        // submission while the result is still unsaved would let the cascade write one row and this save another.
         result = resultRepository.save(result);
+        quizSubmissionRepository.save(quizSubmission);
 
         // Update the quiz statistics asynchronously: statistics are only relevant for instructors, so the student must
         // not wait for them. Previously this ran a full recalculation synchronously, iterating every participation of
