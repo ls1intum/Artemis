@@ -783,9 +783,10 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
             expect(rationaleBox).not.toBeNull();
             expect(submissionBox).not.toBeNull();
             expect(legendBox).not.toBeNull();
-            expect(rationaleBox!.x).toBeGreaterThanOrEqual(assessmentBox!.x + assessmentBox!.width);
-            expect(submissionBox!.x + submissionBox!.width).toBeLessThanOrEqual(assessmentBox!.x + assessmentBox!.width);
-            expect(legendBox!.x + legendBox!.width).toBeLessThanOrEqual(assessmentBox!.x + assessmentBox!.width);
+            const assessmentRight = assessmentBox!.x + assessmentBox!.width;
+            expect(rationaleBox!.x).toBeGreaterThanOrEqual(assessmentRight - SUB_PIXEL_TOLERANCE);
+            expect(submissionBox!.x + submissionBox!.width).toBeLessThanOrEqual(assessmentRight + SUB_PIXEL_TOLERANCE);
+            expect(legendBox!.x + legendBox!.width).toBeLessThanOrEqual(assessmentRight + SUB_PIXEL_TOLERANCE);
         };
 
         await expectSeparated();
