@@ -110,7 +110,7 @@ export class Competency extends CourseCompetency {
 export class CompetencyLearningObjectLink {
     competency?: CourseCompetency;
     weight: number;
-    generatedByAi: boolean;
+    generatedByAi?: boolean;
 
     constructor(competency: CourseCompetency | undefined, weight: number, generatedByAi = false) {
         this.competency = competency;

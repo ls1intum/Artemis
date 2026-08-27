@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.dto;
+package de.tum.cit.aet.artemis.atlas;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,6 +12,12 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyExerciseLinkDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyExerciseLinkResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyLectureUnitLinkResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
