@@ -237,6 +237,49 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(textAssessmentArea).not.toBeNull();
     });
 
+    describe('automatic feedback suggestion loading on submission received', () => {
+        function buildNewAssessmentParticipation(): StudentParticipation {
+            const guardExercise = { id: 55, type: ExerciseType.TEXT, feedbackSuggestionModule: 'module_text_llm', course: {} } as unknown as TextExercise;
+            const guardSubmission = {
+                submissionExerciseType: SubmissionExerciseType.TEXT,
+                id: 9999,
+                submitted: true,
+                type: SubmissionType.MANUAL,
+                text: 'Some text',
+            } as unknown as TextSubmission;
+            const guardResult = { id: 9998, correctionRound: 0, feedbacks: [], submission: guardSubmission } as unknown as Result;
+            guardSubmission.results = [guardResult];
+            const guardParticipation = {
+                type: ParticipationType.STUDENT,
+                id: 9997,
+                exercise: guardExercise,
+                submissions: [guardSubmission],
+            } as unknown as StudentParticipation;
+            guardSubmission.participation = guardParticipation;
+            return guardParticipation;
+        }
+
+        it('should not automatically load feedback suggestions when the assessor has not accepted AI usage', () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions');
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should automatically load feedback suggestions once Athena is active and the assessor has accepted AI usage', () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const suggestionsSpy = vi.spyOn(athenaService, 'getTextFeedbackSuggestions').mockReturnValue(of([]));
+
+            component['setPropertiesFromServerResponse']({ participation: buildNewAssessmentParticipation(), correctionRound: 0 });
+
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
+    });
+
     it('should use jhi-assessment-layout', () => {
         const sharedLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(sharedLayout).not.toBeNull();

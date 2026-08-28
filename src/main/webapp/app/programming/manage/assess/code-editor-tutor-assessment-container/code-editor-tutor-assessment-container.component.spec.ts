@@ -745,6 +745,43 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.assessmentsAreValid()).toBe(true);
     });
 
+    describe('automatic feedback suggestion loading on submission received', () => {
+        function buildNewAssessmentSubmission(): ProgrammingSubmission {
+            const guardExercise = { id: 55, maxPoints: 100, feedbackSuggestionModule: 'module_text_programming', course: {} } as unknown as ProgrammingExercise;
+            const guardParticipation = new ProgrammingExerciseStudentParticipation();
+            guardParticipation.exercise = guardExercise;
+            guardParticipation.id = 555;
+            const guardSubmission = new ProgrammingSubmission();
+            guardSubmission.id = 557;
+            const guardResult: Result = { id: 556, feedbacks: [], submission: guardSubmission } as Result;
+            guardSubmission.results = [guardResult];
+            guardSubmission.latestResult = guardResult;
+            guardSubmission.participation = guardParticipation;
+            guardParticipation.submissions = [guardSubmission];
+            return guardSubmission;
+        }
+
+        it('should not automatically fetch feedback suggestions when the assessor has not accepted AI usage', async () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(false);
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
+        it('should automatically fetch feedback suggestions once Athena is active and the assessor has accepted AI usage', async () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            vi.spyOn(TestBed.inject(AiExperienceOptInService), 'hasAcceptedAiUsage').mockReturnValue(true);
+            const suggestionsSpy = vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(of([]));
+
+            await internals(comp).onSubmissionReceived('557', buildNewAssessmentSubmission());
+
+            expect(suggestionsSpy).toHaveBeenCalled();
+        });
+    });
+
     it('should not invalidate assessment after saving', async () => {
         vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
 

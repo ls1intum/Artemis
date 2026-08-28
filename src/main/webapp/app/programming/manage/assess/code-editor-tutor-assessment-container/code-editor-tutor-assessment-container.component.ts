@@ -359,7 +359,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if ((this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
+        if (this.isFeedbackSuggestionsEnabled() && !this.requiresAiExperienceOptIn() && (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
             await this.loadFeedbackSuggestions();
         }
     }
