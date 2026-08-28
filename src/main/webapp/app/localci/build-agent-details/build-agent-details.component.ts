@@ -77,6 +77,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     /** Current build agent information including status and configuration */
     buildAgent = signal<BuildAgentInformation | undefined>(undefined);
 
+    /** The addresses this agent is registered to connect from, undefined while unknown or unavailable. */
+    registeredAddressInfo = signal<BuildAgentAddressInfo | undefined>(undefined);
+
     /** Whether the build agent was not found (offline/removed) */
     agentNotFound = signal(false);
 
@@ -127,6 +130,9 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
 
     /** Subscription for initial agent details REST API load */
     agentDetailsSubscription?: Subscription;
+
+    /** Subscription for the registered network addresses of this agent */
+    registeredAddressesSubscription?: Subscription;
 
     /** Interval timer for updating running build job durations every second */
     buildDurationInterval!: ReturnType<typeof setInterval>; // set in ngOnInit() before any read
@@ -412,6 +418,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 // Initialize filter with this agent's address to show only its finished jobs
                 this.finishedBuildJobFilter.set(new FinishedBuildJobFilter(buildAgent.buildAgent?.memberAddress));
                 this.loadFinishedBuildJobs();
+                this.loadRegisteredAddresses();
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status === 404) {
@@ -597,7 +604,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
             if (buildJob.buildStartDate && buildJob.buildCompletionDate) {
                 const start = dayjs(buildJob.buildStartDate);
                 const end = dayjs(buildJob.buildCompletionDate);
-                return { ...buildJob, buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' };
+                return cloneWith(buildJob, { buildDuration: (end.diff(start, 'milliseconds') / 1000).toFixed(3) + 's' });
             }
             return buildJob;
         });
@@ -658,7 +665,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
             // This is necessary to update the view when the build job duration is updated
-            return { ...buildJob };
+            return deepClone(buildJob);
         });
     }
 

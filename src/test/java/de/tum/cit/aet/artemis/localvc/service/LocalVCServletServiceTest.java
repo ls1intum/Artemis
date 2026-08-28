@@ -114,6 +114,9 @@ class LocalVCServletServiceTest {
     @Mock
     private VcsAccessLogService vcsAccessLogService;
 
+    @Mock
+    private UserVcsAccessTokenService userVcsAccessTokenService;
+
     @InjectMocks
     private LocalVCServletService localVCServletService;
 
@@ -252,7 +255,7 @@ class LocalVCServletServiceTest {
         String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("user:" + token).getBytes());
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
 
-        testUser.setVcsAccessToken(token);
+        when(userVcsAccessTokenService.findToken(testUser.getId())).thenReturn(token);
 
         AuthenticationContext.Request context = new AuthenticationContext.Request(request);
 

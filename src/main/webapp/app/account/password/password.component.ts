@@ -2,13 +2,14 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 
+import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { CredentialRevocationChoice, PasswordService } from './password.service';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { PasswordStrengthBarComponent } from './password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { CheckboxModule } from 'primeng/checkbox';
+import { TumUiCheckboxComponent } from '@tumaet/ui-angular';
 
 /**
  * Type definition for the password change form controls.
@@ -28,11 +29,12 @@ interface PasswordForm {
 @Component({
     selector: 'jhi-password',
     templateUrl: './password.component.html',
-    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe, CheckboxModule],
+    imports: [TranslateDirective, FormsModule, ReactiveFormsModule, PasswordStrengthBarComponent, ArtemisTranslatePipe, TumUiCheckboxComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PasswordComponent implements OnInit {
     private readonly passwordService = inject(PasswordService);
+    private readonly credentialRevocationConfirmationService = inject(CredentialRevocationConfirmationService);
     private readonly accountService = inject(AccountService);
 
     /** Minimum allowed password length exposed for template validation messages */
@@ -125,7 +127,7 @@ export class PasswordComponent implements OnInit {
      * Validates that new password and confirmation match before submitting.
      * Resets all status signals before attempting the change.
      */
-    changePassword() {
+    async changePassword(): Promise<void> {
         // Reset status signals before attempting password change
         this.error.set(false);
         this.success.set(false);
@@ -135,11 +137,19 @@ export class PasswordComponent implements OnInit {
 
         if (newPassword.value !== confirmPassword.value) {
             this.doNotMatch.set(true);
-        } else {
-            this.passwordService.changePassword(newPassword.value, currentPassword.value, this.revocationChoice()).subscribe({
-                next: () => this.success.set(true),
-                error: () => this.error.set(true),
-            });
+            return;
         }
+
+        // Deleting the authenticators and keys is irreversible, so it is confirmed first. A routine change that revokes
+        // nothing is not interrupted: the service resolves immediately when the choice is empty.
+        const revocationChoice = this.revocationChoice();
+        if (!(await this.credentialRevocationConfirmationService.confirm(revocationChoice))) {
+            return;
+        }
+
+        this.passwordService.changePassword(newPassword.value, currentPassword.value, revocationChoice).subscribe({
+            next: () => this.success.set(true),
+            error: () => this.error.set(true),
+        });
     }
 }

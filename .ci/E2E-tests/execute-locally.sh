@@ -58,6 +58,10 @@ echo "Compose file: $COMPOSE_FILE"
 # port 7921 is not exposed on the local machine.
 export HOST_HOSTNAME="nginx"
 
+# The prod-profile stacks need a JWT signing key. A key committed to the repository would be one anyone can use to forge
+# a token, so it is generated per run and shared by every service that reads docker/artemis/config/playwright.env.
+export ARTEMIS_E2E_JWT_SECRET="${ARTEMIS_E2E_JWT_SECRET:-$(openssl rand -base64 64 | tr -d '\n')}"
+
 # Set Docker tag (required by compose file, but we build locally so value doesn't matter)
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 # Admin credentials configure the Artemis server (via docker/artemis/config/playwright.env)
@@ -94,12 +98,16 @@ if [ -n "$TEST_FILTER" ]; then
 # AUTO-GENERATED - DO NOT COMMIT
 services:
     artemis-playwright:
+        # Both installs are required: specs load src/main/webapp models, which resolve their own dependencies from the
+        # repository root upwards, so a Playwright-only install leaves them unresolvable and collection finds no tests.
         command: >
             sh -c '
-            cd /app/artemis/src/test/playwright &&
+            cd /app/artemis &&
             chmod 777 /root &&
-            rm -f test-reports/results*.xml &&
             corepack enable &&
+            pnpm install --frozen-lockfile &&
+            cd /app/artemis/src/test/playwright &&
+            rm -f test-reports/results*.xml &&
             pnpm install --frozen-lockfile &&
             pnpm run playwright:setup &&
             if env | grep -qx HYPERION_LLM_MODE=mock; then

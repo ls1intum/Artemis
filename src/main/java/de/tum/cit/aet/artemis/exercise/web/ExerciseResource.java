@@ -35,11 +35,13 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
@@ -50,6 +52,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTitleDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -126,6 +129,29 @@ public class ExerciseResource {
         this.secondCorrectionService = secondCorrectionService;
         this.examAccessApi = examAccessApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
+    }
+
+    /**
+     * GET /courses/{courseId}/exercise-titles : the id, title and type of the course exercises visible to the user.
+     * <p>
+     * For callers that only have to name exercises rather than show them, such as the Iris chat context picker, which
+     * previously loaded the full course exercise payload — participations, submissions, results and scores included —
+     * to fill a dropdown with these three fields.
+     * <p>
+     * Visibility matches the course overview's release and online-course LTI-launch rules. The repository evaluates the
+     * rules while projecting the three returned scalars, so neither course nor exercise entities are hydrated.
+     *
+     * @param courseId the id of the course
+     * @return the exercises of the course the user may see, as id, title and type
+     */
+    @GetMapping("courses/{courseId}/exercise-titles")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<Set<ExerciseTitleDTO>> getExerciseTitlesForCourse(@PathVariable long courseId) {
+        log.debug("REST request to get the exercise titles of course {}", courseId);
+        boolean seesUnreleased = authCheckService.isAtLeastTeachingAssistantInCourse(courseId);
+        String userLogin = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        Set<ExerciseTitleDTO> titles = exerciseRepository.findTitlesVisibleToUser(courseId, ZonedDateTime.now(), seesUnreleased, userLogin);
+        return ResponseEntity.ok(titles);
     }
 
     /**

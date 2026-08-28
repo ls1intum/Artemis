@@ -1,6 +1,10 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
@@ -27,12 +31,16 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 
 class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "progextestcase";
+
+    @Autowired
+    private ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -158,5 +166,56 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractProgrammingIntegrat
                 .collect(Collectors.toSet());
         Set<ProgrammingExerciseTestCase> updated = testCaseService.update(programmingExercise.getId(), testCaseDTOs);
         assertThat(updated).hasSize(3).allMatch(testCase -> testCase.getWeight() == 0.0);
+    }
+
+    /**
+     * Clearing the flag is what an instructor's "build all" does when the run finishes. It is written with a guarded
+     * statement rather than by saving the exercise, so this checks the value really lands in the database, which for
+     * this column means in the exercise's secondary table.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldClearTestCasesChanged() {
+        participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isTrue();
+
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), false);
+
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isFalse();
+        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", false);
+    }
+
+    /**
+     * Setting the flag to the value it already holds must change nothing and must not notify anybody. The guard lives
+     * in the statement, so its row count is what decides this.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotNotifyWhenTestCasesChangedAlreadyHasThatValue() {
+        participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
+        verify(websocketMessagingService).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
+
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isTrue();
+        // Still exactly the one message from the first call.
+        verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
+    }
+
+    /**
+     * Marking an exercise dirty only means something when there are results to update, so without any the request is
+     * dropped and the flag stays where it was.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotSetTestCasesChangedWithoutAnyResult() {
+        assertThat(resultRepository.existsByExerciseId(programmingExercise.getId())).isFalse();
+
+        programmingExerciseTestCaseChangedService.setTestCasesChanged(programmingExercise.getId(), true);
+
+        assertThat(programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId()).getTestCasesChanged()).isFalse();
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed"), any(Boolean.class));
     }
 }

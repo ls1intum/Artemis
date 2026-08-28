@@ -17,6 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportProgressDialogComponent } from 'app/exam/manage/exams/exam-import/exam-import-progress-dialog.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface ExamImportDialogData {
     subsequentExerciseGroupSelection?: boolean;
@@ -112,7 +113,7 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
             this.isImportingExercises.set(true);
             // The child component provides us with the selected exercise groups and exercises
             const exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
-            this.exam.set({ ...currentExam, exerciseGroups });
+            this.exam.set(cloneWith(currentExam, { exerciseGroups }));
             // Run the import behind a progress dialog that shows live websocket progress and a persistent, must-dismiss
             // summary of any skipped or incomplete exercises (so the editor cannot overlook them).
             const totalExercises = (exerciseGroups ?? []).reduce((sum, group) => sum + (group.exercises?.length ?? 0), 0);
@@ -130,13 +131,13 @@ export class ExamImportComponent extends ImportComponent<Exam> implements OnInit
                     const errorKey = httpErrorResponse.error?.errorKey;
                     if (errorKey === 'invalidKey') {
                         // The Server sends back all the exercise groups and exercises and removed the shortName / title for all conflicting programming exercises
-                        this.exam.update((exam) => ({ ...exam!, exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
+                        this.exam.update((exam) => cloneWith(exam!, { exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
                         // The updateMapsAfterRejectedImport Method is called to update the displayed exercises in the child component
                         this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey();
                         const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
                     } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
-                        this.exam.update((exam) => ({ ...exam!, exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
+                        this.exam.update((exam) => cloneWith(exam!, { exerciseGroups: httpErrorResponse.error.params.exerciseGroups! }));
                         this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
                         this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
                     } else {

@@ -277,6 +277,29 @@ describe('ProgrammingExerciseProblemComponent', () => {
         expect(emitSpy).toHaveBeenCalled();
     });
 
+    it('should run the competency links handler once per selection change (regression: infinite valueChange loop)', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.detectChanges();
+
+        const selection = fixture.debugElement.query(By.directive(CompetencySelectionComponent)).componentInstance as CompetencySelectionComponent;
+        const competency = { id: 1, title: 'Test' } as Competency;
+        selection.setCompetencyLinks([competency]);
+
+        const handlerSpy = vi.spyOn(comp, 'onCompetencyLinksChange');
+        const valueChangeSpy = vi.spyOn(selection.valueChange, 'emit');
+        const refreshSpy = vi.spyOn(selection, 'refreshWithLinks');
+
+        // a single user click on the competency checkbox
+        selection.toggleCompetency(new CompetencyLearningObjectLink(competency, 1));
+
+        expect(valueChangeSpy).toHaveBeenCalledOnce();
+        expect(handlerSpy).toHaveBeenCalledOnce();
+        expect(refreshSpy).toHaveBeenCalledOnce();
+        expect(programmingExercise.competencyLinks).toHaveLength(1);
+        expect(selection.checkboxStates()).toEqual({ 1: true });
+    });
+
     it('should handle handleProblemStatementAction for generate', () => {
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
         programmingExercise.course = { id: 42 } as any;

@@ -25,9 +25,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -39,10 +41,12 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExamGradeScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 
 /**
@@ -90,6 +94,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             student.id,
             exercise.id,
             result.score,
+            result.rated,
             participation.presentationScore,
             de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)
             FROM StudentParticipation participation
@@ -122,7 +127,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: we add a minimal grace period of 1 second because processing a commit can take a bit of time
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore,
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
                 CASE TYPE(ex)
                     WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
@@ -151,7 +156,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // Quizzes do not support team exercises, so we can safely ignore them here
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore,
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
                 CASE TYPE(ex)
                     WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
@@ -178,9 +183,101 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Set<CourseGradeScoreDTO> findTeamGradesByCourseIdAndStudentId(@Param("courseIds") Collection<Long> courseIds, @Param("studentId") long studentId);
 
+    /**
+     * Projects the latest rated result for each visible individual non-quiz participation in the course overview.
+     * Unlike the shared course-score query, a newer submission without a result does not suppress the preceding grade.
+     *
+     * @param exerciseIds the visible non-quiz exercise ids
+     * @param studentId   the requesting student
+     * @return one latest relevant grade per participation
+     */
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
+                CASE TYPE(ex)
+                    WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
+                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
+                    WHEN TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
+                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
+                    ELSE de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
+                END)
+            FROM StudentParticipation p
+                JOIN p.student u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.id IN :exerciseIds
+                AND TYPE(ex) <> QuizExercise
+                AND p.testRun = FALSE
+                AND u.id = :studentId
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT newerResult
+                    FROM Result newerResult
+                    WHERE newerResult.submission.participation = p
+                        AND newerResult.rated = TRUE
+                        AND newerResult.completionDate IS NOT NULL
+                        AND newerResult.score IS NOT NULL
+                        AND newerResult.submission.submissionDate IS NOT NULL
+                        AND (ex.dueDate IS NULL OR newerResult.submission.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                        AND (newerResult.completionDate > r.completionDate
+                            OR (newerResult.completionDate = r.completionDate AND newerResult.id > r.id))
+                )
+            """)
+    Set<CourseGradeScoreDTO> findIndividualGradesForCourseOverview(@Param("exerciseIds") Collection<Long> exerciseIds, @Param("studentId") long studentId);
+
+    /**
+     * Projects the latest rated result for each visible team participation in the course overview, independently of
+     * any newer resultless submission.
+     *
+     * @param exerciseIds the visible team exercise ids
+     * @param studentId   the requesting student
+     * @return one latest relevant grade per participation
+     */
+    @Query("""
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
+                CASE TYPE(ex)
+                    WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
+                    WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
+                    WHEN TextExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT
+                    WHEN FileUploadExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.FILE_UPLOAD
+                    ELSE de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ
+                END)
+            FROM StudentParticipation p
+                JOIN p.team t
+                JOIN t.students u
+                JOIN p.exercise ex
+                JOIN p.submissions s
+                JOIN s.results r
+            WHERE ex.id IN :exerciseIds
+                AND p.testRun = FALSE
+                AND u.id = :studentId
+                AND (ex.dueDate IS NULL OR s.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                AND r.rated = TRUE
+                AND r.completionDate IS NOT NULL
+                AND r.score IS NOT NULL
+                AND s.submissionDate IS NOT NULL
+                AND NOT EXISTS (
+                    SELECT newerResult
+                    FROM Result newerResult
+                    WHERE newerResult.submission.participation = p
+                        AND newerResult.rated = TRUE
+                        AND newerResult.completionDate IS NOT NULL
+                        AND newerResult.score IS NOT NULL
+                        AND newerResult.submission.submissionDate IS NOT NULL
+                        AND (ex.dueDate IS NULL OR newerResult.submission.submissionDate <= FUNCTION('timestampadd', SECOND, de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS, COALESCE(p.individualDueDate, ex.dueDate)))
+                        AND (newerResult.completionDate > r.completionDate
+                            OR (newerResult.completionDate = r.completionDate AND newerResult.id > r.id))
+                )
+            """)
+    Set<CourseGradeScoreDTO> findTeamGradesForCourseOverview(@Param("exerciseIds") Collection<Long> exerciseIds, @Param("studentId") long studentId);
+
     // NOTE: we have an edge case for quizzes where we need to take the first submission and not the last one
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore, de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore, de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ)
             FROM StudentParticipation p
                 JOIN p.student u
                 JOIN p.exercise ex
@@ -200,7 +297,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // NOTE: we add a minimal grace period of 1 second because processing a commit can take a bit of time
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore,
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
                 CASE TYPE(ex)
                     WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
@@ -229,7 +326,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     // Quizzes do not support team exercises, so we can safely ignore them here
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, p.presentationScore,
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO(p.id, u.id, ex.id, r.score, r.rated, p.presentationScore,
                 CASE TYPE(ex)
                     WHEN ProgrammingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING
                     WHEN ModelingExercise THEN de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING
@@ -341,6 +438,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
             """)
@@ -366,6 +469,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.login = :username
                 AND p.testRun = :testRun
@@ -551,6 +660,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
             """)
@@ -871,11 +986,83 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByStudentIdAndIndividualExercisesWithLatestSubmissionLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises, @Param("includeTestRuns") boolean includeTestRuns);
 
+    /**
+     * Projects the requesting user's individual participations and each latest submission's visible-result candidates
+     * for the course overview. The result side is bounded to the latest result and latest automatic fallback. Unlike the
+     * entity fetch used by the deprecated dashboard, this selects only the programming participation's clone URL from
+     * subtype-specific data and selects no student, team, feedback, or exercise entity.
+     *
+     * @param studentId       the requesting user
+     * @param exerciseIds     the visible individual exercises
+     * @param includeTestRuns whether practice participations should be included
+     * @return flat rows grouped by the overview service
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO(
+                participation.exercise.id,
+                participation.id,
+                TYPE(participation),
+                participation.initializationState,
+                participation.initializationDate,
+                participation.testRun,
+                participation.individualDueDate,
+                participation.presentationScore,
+                TREAT(participation AS ProgrammingExerciseStudentParticipation).repositoryUri,
+                submission.id,
+                submission.submissionDate,
+                submission.submitted,
+                submission.type,
+                programmingSubmission.buildFailed,
+                result.id,
+                result.completionDate,
+                result.score,
+                result.rated,
+                result.successful,
+                result.assessmentType,
+                result.codeIssueCount,
+                result.testCaseCount,
+                result.passedTestCaseCount)
+            FROM StudentParticipation participation
+                LEFT JOIN participation.submissions submission
+                LEFT JOIN ProgrammingSubmission programmingSubmission ON programmingSubmission.id = submission.id
+                LEFT JOIN submission.results result
+            WHERE participation.student.id = :studentId
+                AND participation.exercise.id IN :exerciseIds
+                AND (participation.testRun = FALSE OR :includeTestRuns = TRUE)
+                AND (submission.submissionDate IS NULL OR submission.submissionDate = (
+                    SELECT MAX(innerSubmission.submissionDate)
+                    FROM Submission innerSubmission
+                    WHERE innerSubmission.participation = participation
+                ))
+                AND (result.id IS NULL
+                    OR result.id = (
+                        SELECT MAX(latestResult.id)
+                        FROM Result latestResult
+                        WHERE latestResult.submission = submission
+                    )
+                    OR result.id = (
+                        SELECT MAX(latestAutomaticResult.id)
+                        FROM Result latestAutomaticResult
+                        WHERE latestAutomaticResult.submission = submission
+                            AND latestAutomaticResult.assessmentType IN (
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                    ))
+            """)
+    List<ParticipationOverviewRowDTO> findIndividualRowsForCourseOverview(@Param("studentId") long studentId, @Param("exerciseIds") Collection<Long> exerciseIds,
+            @Param("includeTestRuns") boolean includeTestRuns);
+
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.exercise ex
+                LEFT JOIN FETCH ex.course
+                LEFT JOIN FETCH ex.exerciseGroup exerciseGroup
+                LEFT JOIN FETCH exerciseGroup.exam exam
+                LEFT JOIN FETCH exam.course
+                LEFT JOIN FETCH p.student
             WHERE p.testRun = FALSE
                 AND p.student.id = :studentId
                 AND p.exercise IN :exercises
@@ -990,6 +1177,67 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     Set<StudentParticipation> findByStudentIdAndTeamExercisesWithLatestSubmissionsLatestResult(@Param("studentId") long studentId,
             @Param("exercises") Collection<Exercise> exercises);
 
+    /**
+     * Team counterpart of {@link #findIndividualRowsForCourseOverview(long, Collection, boolean)}.
+     *
+     * @param studentId   the requesting user
+     * @param exerciseIds the visible team exercises
+     * @return flat rows grouped by the overview service
+     */
+    @Query("""
+            SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ParticipationOverviewRowDTO(
+                participation.exercise.id,
+                participation.id,
+                TYPE(participation),
+                participation.initializationState,
+                participation.initializationDate,
+                participation.testRun,
+                participation.individualDueDate,
+                participation.presentationScore,
+                TREAT(participation AS ProgrammingExerciseStudentParticipation).repositoryUri,
+                submission.id,
+                submission.submissionDate,
+                submission.submitted,
+                submission.type,
+                programmingSubmission.buildFailed,
+                result.id,
+                result.completionDate,
+                result.score,
+                result.rated,
+                result.successful,
+                result.assessmentType,
+                result.codeIssueCount,
+                result.testCaseCount,
+                result.passedTestCaseCount)
+            FROM StudentParticipation participation
+                JOIN participation.team.students student
+                LEFT JOIN participation.submissions submission
+                LEFT JOIN ProgrammingSubmission programmingSubmission ON programmingSubmission.id = submission.id
+                LEFT JOIN submission.results result
+            WHERE student.id = :studentId
+                AND participation.exercise.id IN :exerciseIds
+                AND (submission.submissionDate IS NULL OR submission.submissionDate = (
+                    SELECT MAX(innerSubmission.submissionDate)
+                    FROM Submission innerSubmission
+                    WHERE innerSubmission.participation = participation
+                ))
+                AND (result.id IS NULL
+                    OR result.id = (
+                        SELECT MAX(latestResult.id)
+                        FROM Result latestResult
+                        WHERE latestResult.submission = submission
+                    )
+                    OR result.id = (
+                        SELECT MAX(latestAutomaticResult.id)
+                        FROM Result latestAutomaticResult
+                        WHERE latestAutomaticResult.submission = submission
+                            AND latestAutomaticResult.assessmentType IN (
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC,
+                                de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
+                    ))
+            """)
+    List<ParticipationOverviewRowDTO> findTeamRowsForCourseOverview(@Param("studentId") long studentId, @Param("exerciseIds") Collection<Long> exerciseIds);
+
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
@@ -1042,6 +1290,43 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     default StudentParticipation findByIdWithResultsElseThrow(long participationId) {
         return getValueElseThrow(findWithEagerResultsById(participationId), participationId);
     }
+
+    /**
+     * Updates the initialization state of a single participation without loading it first.
+     * <p>
+     * Prefer this over {@code save} on a detached participation whose only change is its state: Spring Data routes a
+     * detached entity through {@code merge}, which reads the row back before writing it, so the save costs a SELECT and
+     * an UPDATE where one UPDATE does.
+     *
+     * @param participationId the id of the participation to update
+     * @param state           the new initialization state
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentParticipation p
+            SET p.initializationState = :state
+            WHERE p.id = :participationId
+            """)
+    void updateInitializationState(@Param("participationId") long participationId, @Param("state") InitializationState state);
+
+    /**
+     * Updates the initialization state and the initialization date of a single participation without loading it first.
+     *
+     * @param participationId    the id of the participation to update
+     * @param state              the new initialization state
+     * @param initializationDate the new initialization date
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE StudentParticipation p
+            SET p.initializationState = :state,
+                p.initializationDate = :initializationDate
+            WHERE p.id = :participationId
+            """)
+    void updateInitializationStateAndDate(@Param("participationId") long participationId, @Param("state") InitializationState state,
+            @Param("initializationDate") ZonedDateTime initializationDate);
 
     @NonNull
     default StudentParticipation findByIdWithLatestSubmissionsResultsFeedbackElseThrow(long participationId) {

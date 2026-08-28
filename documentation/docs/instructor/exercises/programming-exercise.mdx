@@ -918,11 +918,26 @@ Could not GET 'https://repo.maven.apache.org/maven2/de/tum/in/ase/artemis-java-t
 Received status code 429 from server: Too Many Requests
 ```
 
-Only **Java** and **Kotlin** exercises are affected, because their builds resolve dependencies via Maven Central. There is currently no central Artemis-side solution, so instructors must configure the mirror in each exercise's **test repository**.
+Only **Java** and **Kotlin** exercises are affected, because their builds resolve dependencies via Maven Central. Whether you have to do anything depends on your Artemis instance: if its administrators configured a mirror centrally, every newly created Java and Kotlin exercise already resolves through it and you can skip this section. Otherwise you configure the mirror in the exercise's **test repository** yourself, as described below - which is also how you add a mirror to exercises that were created before your instance configured one.
 
 When Artemis detects a build that failed due to Maven Central rate limiting, it automatically notifies the instructors of the affected course by email (at most once per day per exercise), including a link to this section and to the online editor of the affected exercise.
 
 For Artemis instances operated by TUM, the Artemis team provides a [Reposilite](https://reposilite.com/) mirror at [https://reposilite.aet.cit.tum.de](https://reposilite.aet.cit.tum.de) that proxies and caches all required artifacts. Other institutions can operate their own mirror and configure it in the same way.
+
+#### For Administrators: Configure the Mirror Once for the Whole Instance
+
+Administrators can point every newly created Java and Kotlin test repository at a mirror by setting a single property, so
+instructors do not have to touch individual exercises:
+
+```yaml
+artemis:
+    programming:
+        maven-central-mirror-url: https://reposilite.aet.cit.tum.de/releases
+```
+
+Artemis then declares this mirror as the first repository for both dependencies and plugins in the test repository of every
+Java and Kotlin exercise it creates. Leave the property unset to keep resolving from Maven Central directly. Exercises that
+already exist are not modified - use the instructions below for those.
 
 #### Recommended: Add the Mirror to the Test Repository
 
@@ -970,6 +985,18 @@ repositories {
         <url>https://reposilite.aet.cit.tum.de/releases</url>
     </repository>
 </repositories>
+```
+
+Maven resolves plugins through a separate list of repositories, so add the mirror there as well:
+
+```xml
+<pluginRepositories>
+    <pluginRepository>
+        <id>reposilite-repository-releases</id>
+        <name>Reposilite Repository</name>
+        <url>https://reposilite.aet.cit.tum.de/releases</url>
+    </pluginRepository>
+</pluginRepositories>
 ```
 
 <Callout variant={CalloutVariant.warning}>

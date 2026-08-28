@@ -353,7 +353,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
             const start = dayjs(buildJob.buildStartDate);
             const end = dayjs(buildJob.buildCompletionDate);
             const durationSeconds = end.diff(start, 'milliseconds') / 1000;
-            return { ...buildJob, buildDuration: this.formatFinishedDuration(durationSeconds) };
+            return cloneWith(buildJob, { buildDuration: this.formatFinishedDuration(durationSeconds) });
         }
         return buildJob;
     }
@@ -642,7 +642,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                 buildJob.jobTimingInfo.buildDuration = now.diff(start, 'seconds');
             }
             // This is necessary to update the view when the build job duration is updated
-            return { ...buildJob };
+            return deepClone(buildJob);
         });
     }
 

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,36 @@ public class ExerciseVersionService {
 
     private static final Set<RepositoryType> REPO_TYPES_TRIGGERING_EXERCISE_VERSIONING = EnumSet.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS,
             RepositoryType.AUXILIARY);
+
+    /**
+     * Single source of truth for the exercise-snapshot fields whose change is <em>content-bearing</em>
+     * — i.e. capable of altering what a student must learn and therefore the exercise-to-competency
+     * mapping. The Atlas auto-orchestration recorder
+     * ({@link de.tum.cit.aet.artemis.atlas.service.AutonomousCompetencyExerciseEventListener})
+     * records a change only when the {@link ExerciseVersionCreatedEvent}'s changed-field set
+     * intersects this allowlist, so purely administrative edits (dates, points, assessment / grading
+     * configuration, complaint and feedback flags, team / plagiarism / feedback-suggestion config,
+     * and programming-infrastructure flags such as the online-editor toggles, build config or
+     * static-code-analysis penalty) never trigger an orchestration run.
+     * <p>
+     * Field identifiers match those produced by {@link #collectChangedFieldsForEvent} /
+     * {@link #collectChangedFields} / {@link #collectProgrammingChanges}.
+     * <p>
+     * Deliberate exclusion: {@code competencyLinks} is <strong>not</strong> content-bearing. An
+     * instructor (or the orchestrator itself) editing the competency links does not change the
+     * exercise's learning content, so re-triggering on it would create a feedback loop where the
+     * orchestrator's own writes re-arm the pipeline.
+     * <p>
+     * The type-specific entries mirror what {@code ContentExtractionService} actually feeds into
+     * orchestration. Text and file-upload snapshots qualify as a whole (every field is extracted:
+     * the example solutions, and the file pattern as metadata), whereas modeling and quiz carry
+     * fields the extractor ignores — the modeling example-solution model, and the quiz delivery
+     * settings (question order, attempts, mode, duration) — so only their extracted components
+     * ({@code exampleSolutionExplanation}, {@code diagramType}, {@code quizQuestions}) arm a run.
+     */
+    public static final Set<String> COMPETENCY_RELEVANT_FIELDS = Set.of("title", "shortName", "difficulty", "categories", "problemStatement",
+            "programmingData.templateParticipation", "programmingData.solutionParticipation", "programmingData.testsCommitId", "programmingData.auxiliaryRepositoriesCommit",
+            "textData", "fileUploadData", "modelingData.exampleSolutionExplanation", "modelingData.diagramType", "quizData.quizQuestions");
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseVersionService.class);
 
@@ -144,7 +175,52 @@ public class ExerciseVersionService {
      * @param author         The user who created the version
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
-        exerciseVersionExecutor.execute(() -> createExerciseVersionInternal(targetExercise, author));
+        createExerciseVersion(targetExercise, author, null, null, null);
+    }
+
+    /**
+     * Requests the (asynchronous) creation of an exercise version for a repository commit, identifying that commit.
+     * <p>
+     * The repository and the commit together are what let the resulting new commit alert be attributed to the client that made
+     * the commit, so that client can filter its own alert out instead of being warned about its own submit. Callers that do
+     * not create a commit pass nothing and no alert is ever attributed to them.
+     *
+     * @param targetExercise                  The exercise to create a version of
+     * @param author                          The user who created the version
+     * @param triggeringRepositoryType        The repository this request committed to, or null when it committed to none
+     * @param triggeringAuxiliaryRepositoryId The id of that repository when it is an auxiliary one, null otherwise
+     * @param triggeringCommitHash            The commit this request created, or null when the request created no commit
+     */
+    public void createExerciseVersion(Exercise targetExercise, User author, @Nullable RepositoryType triggeringRepositoryType, @Nullable Long triggeringAuxiliaryRepositoryId,
+            @Nullable String triggeringCommitHash) {
+        // Read on the calling thread for the same reason the author is: the client session id lives in the request, and the
+        // executor thread has no request context.
+        String clientSessionId = ExerciseEditorSyncService.getClientSessionId();
+        ExerciseEditorSyncTarget triggeringTarget = attributableTarget(triggeringRepositoryType);
+        exerciseVersionExecutor
+                .execute(() -> createExerciseVersionInternal(targetExercise, author, clientSessionId, triggeringTarget, triggeringAuxiliaryRepositoryId, triggeringCommitHash));
+    }
+
+    /**
+     * Maps a committed repository to the synchronization target an alert about it would carry, for the repositories an alert
+     * can be attributed to.
+     * <p>
+     * An auxiliary repository maps to the auxiliary target; which of the exercise's auxiliary repositories it is has to be
+     * settled separately, by the id, because one target covers all of them.
+     */
+    @Nullable
+    private static ExerciseEditorSyncTarget attributableTarget(@Nullable RepositoryType repositoryType) {
+        if (repositoryType == null) {
+            return null;
+        }
+        return switch (repositoryType) {
+            case TEMPLATE -> ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY;
+            case SOLUTION -> ExerciseEditorSyncTarget.SOLUTION_REPOSITORY;
+            case TESTS -> ExerciseEditorSyncTarget.TESTS_REPOSITORY;
+            case AUXILIARY -> ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY;
+            // a student repository has no editor to warn and never produces a version
+            case USER -> null;
+        };
     }
 
     public void createExerciseVersionSynchronously(Exercise targetExercise, User author) {
@@ -160,8 +236,12 @@ public class ExerciseVersionService {
      * surface to the caller. Runs on the {@code exerciseVersionExecutor} thread when reached through {@link #createExerciseVersion(Exercise, User)}, and on the caller's thread
      * through {@code createExerciseVersionSynchronously}.
      *
-     * @param targetExercise The exercise to create a version of
-     * @param author         The user who created the version
+     * @param targetExercise                  The exercise to create a version of
+     * @param author                          The user who created the version
+     * @param clientSessionId                 the session of the client that triggered this version, or null when no request did
+     * @param triggeringTarget                the repository that client committed to, or null when it committed to none
+     * @param triggeringAuxiliaryRepositoryId the id of that repository when it is an auxiliary one, null otherwise
+     * @param triggeringCommitHash            the commit that client created, or null when it created none
      */
     private void createExerciseVersionInternal(Exercise targetExercise, User author) {
         createExerciseVersionInternal(targetExercise, author, Map.of());
@@ -333,9 +413,16 @@ public class ExerciseVersionService {
      * @param previousSnapshot     the previous snapshot (optional)
      * @param author               the author of the new version
      * @param newExerciseVersionId the id of the new exercise version
+     * @param clientSessionId      the session of the client that triggered this version, so its own editor can filter the
+     *                                 alert out again, or null when no request triggered it
+     * @param triggeringTarget     the repository that client committed to, checked against the repository this alert is
+     *                                 about before attributing it
+     * @param triggeringCommitHash the commit that client created, used to check that the alert really is about its own
+     *                                 commit before attributing it
      */
     private void determineSynchronizationForActiveEditors(Long exerciseId, ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot, User author,
-            Long newExerciseVersionId) {
+            Long newExerciseVersionId, @Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget, @Nullable Long triggeringAuxiliaryRepositoryId,
+            @Nullable String triggeringCommitHash) {
         if (previousSnapshot == null || newSnapshot == null) {
             return;
         }
@@ -429,6 +516,95 @@ public class ExerciseVersionService {
     }
 
     /**
+     * Collects the changed-field set carried on the {@link ExerciseVersionCreatedEvent}. This is a
+     * superset of {@link #collectChangedFields}: it additionally detects the content-bearing fields
+     * that the editor-metadata-sync path deliberately omits — {@code problemStatement} (synchronized
+     * to active editors via Yjs rather than a metadata alert) and the template / solution / test
+     * repository commit changes (surfaced to editors as a separate "new commit" alert). These are
+     * exactly the fields the Atlas auto-orchestration allowlist
+     * ({@link #COMPETENCY_RELEVANT_FIELDS}) needs in order to react to a content change, while the
+     * narrower editor-sync set used by {@link #determineSynchronizationForActiveEditors} is left
+     * untouched so its broadcast behaviour does not change.
+     *
+     * @param newSnapshot      the new snapshot
+     * @param previousSnapshot the previous snapshot
+     * @return the content-relevant changed-field identifiers for event consumers
+     */
+    // Package-private so ExerciseVersionServiceTest can assert the exact changed-field set the event carries.
+    Set<String> collectChangedFieldsForEvent(ExerciseSnapshotDTO newSnapshot, ExerciseSnapshotDTO previousSnapshot) {
+        Set<String> changedFields = collectChangedFields(newSnapshot, previousSnapshot);
+        // problemStatement is the primary learning-content field; it is excluded from the editor-sync
+        // set (Yjs handles it) but is exactly what Atlas must react to.
+        addIfChanged(changedFields, "problemStatement", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::problemStatement);
+        collectRepositoryCommitChanges(changedFields, newSnapshot.programmingData(), previousSnapshot.programmingData());
+        // The type-specific blocks carry the learning content of the non-programming exercise types.
+        // Editor metadata sync does not diff them (type-specific sync is not implemented), so the event
+        // path has to, or an example-solution or quiz-question edit would never reach Atlas. Text and
+        // file-upload snapshots are tracked whole because ContentExtractionService consumes every one of
+        // their fields; modeling and quiz carry fields it ignores, so those are tracked per component.
+        addIfChanged(changedFields, "textData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::textData);
+        addIfChanged(changedFields, "fileUploadData", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::fileUploadData);
+        addIfChanged(changedFields, "modelingData.exampleSolutionExplanation", newSnapshot, previousSnapshot,
+                snapshot -> snapshot.modelingData() == null ? null : snapshot.modelingData().exampleSolutionExplanation());
+        addIfChanged(changedFields, "modelingData.diagramType", newSnapshot, previousSnapshot,
+                snapshot -> snapshot.modelingData() == null ? null : snapshot.modelingData().diagramType());
+        addIfChanged(changedFields, "quizData.quizQuestions", newSnapshot, previousSnapshot, snapshot -> snapshot.quizData() == null ? null : snapshot.quizData().quizQuestions());
+        return changedFields;
+    }
+
+    /**
+     * Detects template / solution / test / auxiliary repository commit changes between two programming
+     * snapshots and records them under {@code programmingData.templateParticipation} /
+     * {@code programmingData.solutionParticipation} / {@code programmingData.testsCommitId} /
+     * {@code programmingData.auxiliaryRepositoriesCommit}. These are tracked for the
+     * {@link ExerciseVersionCreatedEvent} but not for editor metadata sync, which surfaces them via a
+     * dedicated commit alert instead. The auxiliary entry intentionally tracks only commit-hash changes
+     * (keyed by repository id) rather than the broad {@code programmingData.auxiliaryRepositories} field
+     * emitted by {@link #collectProgrammingChanges}, so that metadata-only edits (name, description,
+     * checkout directory) do not arm Atlas auto-orchestration and consume the daily cap.
+     *
+     * @param changedFields the set to update with changed repository-commit field identifiers
+     * @param newData       the new programming snapshot data
+     * @param previousData  the previous programming snapshot data
+     */
+    private void collectRepositoryCommitChanges(Set<String> changedFields, ProgrammingExerciseSnapshotDTO newData, ProgrammingExerciseSnapshotDTO previousData) {
+        if (newData == null || previousData == null) {
+            return;
+        }
+        if (participationCommitChanged(previousData.templateParticipation(), newData.templateParticipation())) {
+            changedFields.add("programmingData.templateParticipation");
+        }
+        if (participationCommitChanged(previousData.solutionParticipation(), newData.solutionParticipation())) {
+            changedFields.add("programmingData.solutionParticipation");
+        }
+        if (!Objects.equals(previousData.testsCommitId(), newData.testsCommitId())) {
+            changedFields.add("programmingData.testsCommitId");
+        }
+        if (!auxiliaryRepositoryCommitsById(previousData.auxiliaryRepositories()).equals(auxiliaryRepositoryCommitsById(newData.auxiliaryRepositories()))) {
+            changedFields.add("programmingData.auxiliaryRepositoriesCommit");
+        }
+    }
+
+    /**
+     * Maps each auxiliary repository's id to its current commit hash, so commit changes can be compared
+     * without reacting to metadata-only edits. Adding or removing a repository changes the key set and
+     * is therefore also treated as a commit-relevant change.
+     *
+     * @param auxiliaryRepositories the auxiliary repository snapshots, may be {@code null}
+     * @return a map of repository id to commit hash (commit hash may be {@code null} for an uninitialised repository)
+     */
+    private Map<Long, String> auxiliaryRepositoryCommitsById(List<ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO> auxiliaryRepositories) {
+        if (auxiliaryRepositories == null) {
+            return Map.of();
+        }
+        Map<Long, String> commitsById = new HashMap<>();
+        for (ProgrammingExerciseSnapshotDTO.AuxiliaryRepositorySnapshotDTO repository : auxiliaryRepositories) {
+            commitsById.put(repository.id(), repository.commitId());
+        }
+        return commitsById;
+    }
+
+    /**
      * Collects changed fields for programming exercise snapshot data.
      *
      * @param changedFields the set to update with changed fields
@@ -485,6 +661,54 @@ public class ExerciseVersionService {
      * @param newParticipation      the new participation snapshot
      * @return true if the commit id changed
      */
+    /**
+     * The session an alert may be attributed to, which is only the session whose own commit the alert describes.
+     * <p>
+     * Version jobs run asynchronously on several workers and read the repository refs when they execute, not when they were
+     * queued. So a job queued by one client can snapshot a commit another client pushed in the meantime. Attributing that
+     * alert to the queueing client would make its editor filter out a warning about somebody else's commit, and a missing
+     * warning is worse than the duplicate warning this attribution exists to remove. Whenever the identity cannot be
+     * established the alert goes out unattributed, which warns everyone, including the committer.
+     *
+     * The repository has to match as well as the commit. A commit id identifies an object, not a place: repositories of one
+     * exercise are seeded from each other, so the same commit legitimately exists in more than one of them, and an empty
+     * commit made in two of them by the same author in the same second is byte-identical and therefore has the same id.
+     * Matching on the id alone would let an alert about one repository be attributed to a client that committed to another.
+     *
+     * For an auxiliary repository the id has to match as well, because one target covers every auxiliary repository of the
+     * exercise. An auxiliary commit whose id could not be resolved stays unattributed rather than matching all of them.
+     *
+     * @param clientSessionId                 the session that queued this version, or null if no request did
+     * @param triggeringTarget                the repository that session committed to, or null if it committed to none
+     * @param triggeringAuxiliaryRepositoryId the id of that repository when it is an auxiliary one, null otherwise
+     * @param triggeringCommitHash            the commit that session created, or null if it created none
+     * @param alertedTarget                   the repository this alert is about
+     * @param alertedAuxiliaryRepositoryId    the auxiliary repository this alert is about, null for the other targets
+     * @param changedCommitId                 the commit the alerted repository now stands at
+     * @return the session to attribute the alert to, or null to attribute it to nobody
+     */
+    @Nullable
+    static String sessionOwningCommit(@Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget, @Nullable Long triggeringAuxiliaryRepositoryId,
+            @Nullable String triggeringCommitHash, @Nullable ExerciseEditorSyncTarget alertedTarget, @Nullable Long alertedAuxiliaryRepositoryId,
+            @Nullable String changedCommitId) {
+        if (clientSessionId == null || triggeringTarget == null || triggeringCommitHash == null || alertedTarget == null || changedCommitId == null) {
+            return null;
+        }
+        if (triggeringTarget != alertedTarget || !triggeringCommitHash.equals(changedCommitId)) {
+            return null;
+        }
+        if (alertedTarget == ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY
+                && (triggeringAuxiliaryRepositoryId == null || !triggeringAuxiliaryRepositoryId.equals(alertedAuxiliaryRepositoryId))) {
+            return null;
+        }
+        return clientSessionId;
+    }
+
+    @Nullable
+    private static String participationCommitId(ProgrammingExerciseSnapshotDTO.@Nullable ParticipationSnapshotDTO participation) {
+        return participation == null ? null : participation.commitId();
+    }
+
     private boolean participationCommitChanged(ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO previousParticipation,
             ProgrammingExerciseSnapshotDTO.ParticipationSnapshotDTO newParticipation) {
         if (previousParticipation == null && newParticipation == null) {

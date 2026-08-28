@@ -40,6 +40,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FileService } from 'app/foundation/service/file.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     providers: [FileUploadAssessmentService],
@@ -121,6 +122,8 @@ export class FileUploadAssessmentComponent implements OnInit {
     get assessments(): Feedback[] {
         return [...this.unreferencedFeedback()];
     }
+
+    readonly getTotalMaxPoints = getTotalMaxPoints;
 
     public ngOnInit(): void {
         this.busy.set(true);
@@ -276,9 +279,10 @@ export class FileUploadAssessmentComponent implements OnInit {
         this.course.set(getCourseFromExercise(exercise));
         this.hasAssessmentDueDatePassed.set(!!exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isBefore(dayjs()));
         if (this.resultId > 0) {
-            const foundIndex = submission.results?.findIndex((result) => result.id === this.resultId);
-            this.correctionRound.set(foundIndex !== undefined && foundIndex >= 0 ? foundIndex : 0);
-            this.result.set(getSubmissionResultById(submission, this.resultId));
+            const resultForId = getSubmissionResultById(submission, this.resultId);
+            // Read off the result, not off its position in the results array.
+            this.correctionRound.set(resultForId?.correctionRound ?? 0);
+            this.result.set(resultForId);
         } else {
             this.result.set(getLatestSubmissionResult(submission));
         }
@@ -460,7 +464,7 @@ export class FileUploadAssessmentComponent implements OnInit {
             return;
         }
         // Commit a new submission reference so the change propagates under zoneless OnPush.
-        this.submission.update((submission) => ({ ...submission!, results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
+        this.submission.update((submission) => cloneWith(submission!, { results: [this.result()!, ...(submission!.results?.slice(1) ?? [])] }));
     }
 
     getComplaint(): void {

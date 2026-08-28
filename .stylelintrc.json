@@ -42,6 +42,9 @@
                 "src/main/webapp/app/exercise/review/adapt-exercise-dialog/**/*.scss",
                 "src/main/webapp/app/core/navbar/global-search/components/modal/global-search-modal.component.scss",
                 "src/main/webapp/app/shared-ui/components/buttons/copy-to-clipboard-button/**/*.scss",
+                "src/main/webapp/app/exam/manage/exercise-groups/**/*.scss",
+                "src/main/webapp/app/exercise/exercise-action-bar/**/*.scss",
+                "src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.scss",
                 "packages/tum-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",

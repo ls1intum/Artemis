@@ -148,13 +148,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercises")
     private ExerciseVariantGroup exerciseVariantGroup;
 
-    // No @Cache: instructors edit grading criteria while assessors read them during assessment; NONSTRICT produced
-    // stale cross-node reads, same class of bug as #12574 / #12584.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
     private Set<GradingCriterion> gradingCriteria = new HashSet<>();
 
-    // No @Cache: grows every time a student starts / submits the exercise; NONSTRICT caused stale reads for instructors and scoring paths, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<StudentParticipation> studentParticipations = new HashSet<>();
@@ -167,12 +164,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
 
-    // No @Cache: instructors edit attachments while students are viewing the exercise page; NONSTRICT caused stale cross-node reads, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("exercise")
     private Set<Attachment> attachments = new HashSet<>();
 
-    // No @Cache: plagiarism cases are appended by detection runs while instructors read the list, same class of bug as #12574.
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
@@ -528,7 +523,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
 
         participation.getSubmissions().forEach(submission -> {
-            List<Result> results = submission.getResults();
+            Set<Result> results = submission.getResults();
             if (results != null && !results.isEmpty()) {
                 if (!isAssessmentOver) {
                     // For assessment that's not over yet

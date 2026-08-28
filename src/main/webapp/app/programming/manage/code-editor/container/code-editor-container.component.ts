@@ -435,7 +435,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         if (syncService?.isInitialized() && syncService.isFileOpen(fileName) && syncService.isFileAwaitingInitialSync(fileName)) {
             return;
         }
-        this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
+        this.unsavedFiles = cloneWith(this.unsavedFiles, { [fileName]: text });
         this.onFileChanged.emit();
     }
 

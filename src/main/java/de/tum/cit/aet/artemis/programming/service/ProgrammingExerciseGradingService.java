@@ -5,9 +5,9 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission.cr
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Precision;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -39,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -63,6 +63,8 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPena
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
@@ -189,7 +191,7 @@ public class ProgrammingExerciseGradingService {
             Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
-            var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+            var latestSubmission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
 
             // Determine if the build failed based on whether tests were expected.
             // When tests are expected: build failed if all feedbacks are SCA (no test results at all).
@@ -198,6 +200,11 @@ public class ProgrammingExerciseGradingService {
             final Integer exitCode = buildResult.buildScriptExitCode();
             final boolean scriptFailed = exitCode != null && exitCode != 0;
             final var buildFailed = testsExpected ? noTestFeedbacks : scriptFailed;
+            if (latestSubmission.isBuildFailed() != buildFailed) {
+                // Written directly. This is one boolean on a row that already exists, and it used to reach the database
+                // only through saving the whole submission at the end of this method.
+                programmingSubmissionRepository.updateBuildFailed(latestSubmission.getId(), buildFailed);
+            }
             latestSubmission.setBuildFailed(buildFailed);
 
             if (buildResult.hasLogs()) {
@@ -213,7 +220,7 @@ public class ProgrammingExerciseGradingService {
                     var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
                     // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-                    latestSubmission.setBuildLogEntries(savedBuildLogs);
+                    latestSubmission.setBuildLogEntries(new LinkedHashSet<>(savedBuildLogs));
                 }
             }
 
@@ -275,16 +282,20 @@ public class ProgrammingExerciseGradingService {
      * @param buildResult     The build result
      * @return The submission or empty if no submissions exist
      */
-    protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, BuildResultNotification buildResult) {
-        var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
-        if (submissions.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return submissions.stream().filter(theSubmission -> {
-            var commitHash = buildResult.commitHash(theSubmission.getType());
-            return !ObjectUtils.isEmpty(commitHash) && commitHash.equals(theSubmission.getCommitHash());
-        }).max(Comparator.naturalOrder());
+    protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(ProgrammingExerciseParticipation participation, BuildResultNotification buildResult) {
+        // Matching a commit hash needs the hash, the submission type and a way to order candidates, so only those are
+        // read. Loading the submissions themselves means loading each one's participation, exercise and course, because
+        // those are eager associations, so a student who pushed ten times used to make the database ship the exercise's
+        // problem statement ten times over to find one commit hash.
+        var candidates = programmingSubmissionRepository.findCommitHashesByParticipationId(participation.getId());
+        return candidates.stream().filter(candidate -> {
+            var commitHash = buildResult.commitHash(candidate.type());
+            return !ObjectUtils.isEmpty(commitHash) && commitHash.equals(candidate.commitHash());
+        }).max(ProgrammingSubmissionCommitHashDTO.NEWEST_FIRST)
+                // The matching submission is read the same way, for the same reason. The participation it belongs to is
+                // the one the caller already has, so it does not have to come back from the database with it.
+                .flatMap(match -> programmingSubmissionRepository.findBuildResultSubmissionById(match.id()))
+                .map(submission -> submission.toDetachedSubmission((Participation) participation));
     }
 
     @NonNull
@@ -328,7 +339,11 @@ public class ProgrammingExerciseGradingService {
             // Only lock the repository and the participation if the participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
             // test run repository).
             // Student test exam participations will still be locked by this.
-            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).orElseThrow().getSubmissionPolicy();
+            // Already resolved: calculateScoreForResult above loads the submission policy for a student participation
+            // and sets it on this very exercise instance. Loading it again meant a second fetch of the whole exercise
+            // and the course it eagerly brings with it, problem statement and code of conduct included, for every
+            // result.
+            SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
             if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
@@ -336,22 +351,22 @@ public class ProgrammingExerciseGradingService {
             if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
-                // Adding back dropped submission
+                // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
+                // submission itself did not change.
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-                programmingSubmissionRepository.save(programmingSubmission);
                 resultRepository.save(updatedLatestSemiAutomaticResult);
 
                 return updatedLatestSemiAutomaticResult;
             }
         }
 
-        // Finally, save the new result once and make sure the order column between submission and result is maintained
-        // workaround to avoid scheduling the participant score update twice. The update will only run when a submission is present.
-        processedResult.setSubmission(null);
-        processedResult = resultRepository.save(processedResult);
-        processedResult.setSubmission(programmingSubmission);
+        // One insert. The result owns the foreign key to its submission, so setting it before saving writes it with the
+        // insert; the participant score cron picks the result up from there. This used to insert the result without its
+        // submission and then save the submission so that its cascade filled the column in, which meant selecting the
+        // submission together with its participation, exercise and course for every result.
         programmingSubmission.addResult(processedResult);
-        programmingSubmissionRepository.save(programmingSubmission);
+        processedResult.setSubmission(programmingSubmission);
+        processedResult = resultRepository.save(processedResult);
 
         return processedResult;
     }
@@ -653,7 +668,10 @@ public class ProgrammingExerciseGradingService {
         feedbackCreationService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
 
         if (applySubmissionPolicy) {
-            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exercise.getId()).getSubmissionPolicy();
+            // Only the policy's own values are read. Loading the exercise again to reach them, which is what this used
+            // to do, fetched the problem statement and the course's code of conduct a second time for every result.
+            SubmissionPolicy submissionPolicy = programmingExerciseRepository.findSubmissionPolicyValuesByExerciseId(exercise.getId())
+                    .map(SubmissionPolicyValuesDTO::toDetachedPolicy).orElse(null);
             exercise.setSubmissionPolicy(submissionPolicy);
         }
 
@@ -889,7 +907,7 @@ public class ProgrammingExerciseGradingService {
     private double calculatePointsForTestCase(final ProgrammingExerciseTestCase testCase, ScoreCalculationData scoreCalculationData) {
         final int totalTestCaseCount = scoreCalculationData.testCases().size();
 
-        final boolean isWeightSumZero = Precision.equals(scoreCalculationData.weightSum(), 0, 1E-8);
+        final boolean isWeightSumZero = RoundingUtil.equalsWithinEpsilon(scoreCalculationData.weightSum(), 0, 1E-8);
         final double testPoints;
         double exerciseMaxPoints = scoreCalculationData.exercise().getMaxPoints();
 

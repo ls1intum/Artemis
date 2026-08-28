@@ -4,11 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -22,9 +25,14 @@ import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.service.AuditEventService;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.config.audit.AuditLogType;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -51,11 +59,25 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
     private static final String TEST_PREFIX = "credentialrevocation";
 
+    private static final Instant RESET_ISSUED_AT = Instant.parse("2026-01-02T03:04:05Z");
+
     @Autowired
     private AccountCredentialRevocationService accountCredentialRevocationService;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private SecurityAuditEventRepository securityAuditEventRepository;
+
+    @Autowired
+    private AuditEventService auditEventService;
+
+    @Autowired
+    private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    @Autowired
+    private UserRecoveryKeyService userRecoveryKeyService;
 
     @Autowired
     private UserCreationService userCreationService;
@@ -140,6 +162,109 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     /**
      * Gives the account one of each persisted credential category this service revokes.
      */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void revokingThroughTheEndpointRemovesOnlyTheSelectedTypes() throws Exception {
+        giveUserCredentials();
+
+        request.postWithoutLocation("/api/account/revoke-credentials", new CredentialRevocationChoiceDTO(false, true, false), HttpStatus.OK, null);
+
+        assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
+        assertVcsAccessTokensKept();
+        assertPasskeyKept();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void anExternalUserCanRevokeTheirOwnCredentials() throws Exception {
+        // The reason this endpoint exists. An external user cannot change their password here at all, so the revocation
+        // offered alongside a password change is unreachable for them and this is their only route to it.
+        giveUserCredentials();
+        user.setInternal(false);
+        userRepository.save(user);
+
+        request.postWithoutLocation("/api/account/revoke-credentials", new CredentialRevocationChoiceDTO(true, true, true), HttpStatus.OK, null);
+
+        assertAllCredentialsRevoked();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void revokingNothingIsRejected() throws Exception {
+        // A request that selects nothing is a client defect rather than a no-op worth accepting silently.
+        giveUserCredentials();
+
+        request.postWithoutLocation("/api/account/revoke-credentials", CredentialRevocationChoiceDTO.none(), HttpStatus.BAD_REQUEST, null);
+
+        assertAllCredentialsKept();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void revokingThroughTheEndpointIsRecordedForAdministrators() throws Exception {
+        giveUserCredentials();
+        securityAuditEventRepository.deleteAll();
+
+        request.postWithoutLocation("/api/account/revoke-credentials", new CredentialRevocationChoiceDTO(true, false, false), HttpStatus.OK, null);
+
+        // The audit event is how an administrator reconstructs afterwards that the owner did this to their own account.
+        // Only the type and the principal are asserted here: `data` is a lazy element collection that cannot be read
+        // outside a session, and AccountSecurityNotificationServiceTest already pins its contents exactly.
+        assertThat(securityAuditEventRepository.findAll()).anySatisfy(event -> {
+            assertThat(event.getAuditEventType()).isEqualTo(Constants.REVOKE_OWN_CREDENTIALS);
+            assertThat(event.getPrincipal()).isEqualTo(user.getLogin());
+        });
+    }
+
+    /**
+     * Deactivation takes control of the account away, so it must not leave a way back in. An account still awaiting
+     * self-activation holds an activation key, and that key flips {@code activated} back on when redeemed - so the keys go
+     * with the other credentials.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void deactivatingAnAccountDropsItsOutstandingRecoveryKeys() {
+        userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-1");
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-1", RESET_ISSUED_AT);
+
+        userCreationService.deactivateUser(user);
+
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).isNull();
+        assertThat(userRecoveryKeyService.findResetKey(user.getId())).isNull();
+        // And the key can no longer be redeemed, which is the point of clearing it.
+        assertThat(userRecoveryKeyService.findUserIdByActivationKey("activation-key-1")).isEmpty();
+    }
+
+    /**
+     * A password change made by an administrator revokes credentials too, but an administrator-created account is handed
+     * its activation and reset keys precisely so its owner can get in for the first time. Those must survive.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void anAdministrativePasswordChangeKeepsTheInvitationKeys() {
+        userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-2");
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-2", RESET_ISSUED_AT);
+
+        accountCredentialRevocationService.revokeAllCredentials(user, "password changed by an administrator");
+
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).isEqualTo("activation-key-2");
+        assertThat(userRecoveryKeyService.findResetKey(user.getId())).isEqualTo("reset-key-2");
+    }
+
+    /**
+     * Presenting no key at all must match nothing. A derived query turns a null argument into {@code IS NULL}, which
+     * would otherwise match the row of an account that holds only the other key.
+     */
+    @Test
+    void anAbsentKeyMatchesNothing() {
+        userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-3");
+
+        assertThat(userRecoveryKeyService.findByResetKey(null)).isEmpty();
+        assertThat(userRecoveryKeyService.findByResetKey("")).isEmpty();
+        assertThat(userRecoveryKeyService.findUserIdByActivationKey(null)).isEmpty();
+        assertThat(userRecoveryKeyService.findUserIdByActivationKey("  ")).isEmpty();
+    }
+
     private void giveUserCredentials() {
         // Cleared first: the fixture user is reused across the tests in this class, so a test that deliberately leaves a
         // credential in place would otherwise make a later test see two of them.
@@ -150,10 +275,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         passkeyCredentialId = passkeyCredentialUtilService.createAndSavePasskeyCredential(user).getCredentialId();
 
-        user.setVcsAccessToken("vcs-token-" + user.getId());
         vcsAccessTokenExpiryDate = ZonedDateTime.now().plusMonths(6).withNano(0);
-        user.setVcsAccessTokenExpiryDate(vcsAccessTokenExpiryDate);
-        userRepository.save(user);
+        // Seeded through the service: the personal token lives in user_vcs_access_token, not on the user row.
+        userVcsAccessTokenService.store(user.getId(), "vcs-token-" + user.getId(), vcsAccessTokenExpiryDate);
 
         UserSshPublicKey sshKey = new UserSshPublicKey();
         sshKey.setUserId(user.getId());
@@ -204,16 +328,17 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
      *                     because it can no longer be looked up by login
      */
     private void assertVcsAccessTokensRevoked(User reloaded) {
-        assertThat(reloaded.getVcsAccessToken()).isNull();
-        assertThat(reloaded.getVcsAccessTokenExpiryDate()).isNull();
+        // Revocation deletes the row, so "no token" is the absence of a row rather than nulled columns.
+        assertThat(userVcsAccessTokenService.findToken(reloaded.getId())).isNull();
+        assertThat(userVcsAccessTokenService.findExpiryDate(reloaded.getId())).isNull();
         assertThat(participationVCSAccessTokenRepository.findOverviewsByUserId(user.getId())).isEmpty();
         assertThat(repositoryVCSAccessTokenRepository.findOverviewsByUserId(user.getId())).isEmpty();
     }
 
     private void assertVcsAccessTokensKept() {
         User reloaded = reloadUser();
-        assertThat(reloaded.getVcsAccessToken()).isEqualTo("vcs-token-" + user.getId());
-        assertThat(reloaded.getVcsAccessTokenExpiryDate()).isEqualTo(vcsAccessTokenExpiryDate);
+        assertThat(userVcsAccessTokenService.findToken(reloaded.getId())).isEqualTo("vcs-token-" + user.getId());
+        assertThat(userVcsAccessTokenService.findExpiryDate(reloaded.getId())).isNotNull();
         assertThat(participationVCSAccessTokenRepository.findByUserIdAndParticipationId(user.getId(), participationId)).hasValueSatisfying(token -> {
             assertThat(token.getVcsAccessToken()).isEqualTo("participation-token-" + user.getId());
             assertThat(token.getUser().getId()).isEqualTo(user.getId());
@@ -321,8 +446,9 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     }
 
     private void prepareResetKey() {
-        user.setResetKey("reset-key-" + user.getId());
-        user.setResetDate(Instant.now());
+        // Deliberately clock-relative, unlike the fixed dates elsewhere in this class: completePasswordReset only accepts a
+        // key issued within the last 24 hours, so a fixed date would expire and the reset would be refused.
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-" + user.getId(), Instant.now());
         userRepository.save(user);
     }
 
@@ -336,6 +462,94 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(reloadUser().getActivated()).isFalse();
         assertAllCredentialsRevoked();
+    }
+
+    /**
+     * Deactivation cuts off every form of access, so the log has to say who did it and to whom. Asserted for both routes
+     * that write the flag, because they are separate code paths: the dedicated endpoint calls deactivateUser, while the
+     * admin edit form writes it inside updateUser.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAUserIsRecordedInTheAuditLog() {
+        securityAuditEventRepository.deleteAll();
+
+        userCreationService.deactivateUser(user);
+
+        assertAccountStateAudited(Constants.DEACTIVATE_USER);
+        assertThat(deactivationEvents()).as("one deactivation produces one audit entry").hasSize(1);
+    }
+
+    /**
+     * Once, not once per thing the deactivation does. {@code updateUser} both revokes the credentials and audits, and an
+     * entry written on either side of the revocation reads the same in the log - so only counting catches the case where
+     * both happen.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deactivatingAUserThroughTheAdminUpdateIsRecordedExactlyOnce() {
+        securityAuditEventRepository.deleteAll();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(false);
+        update.setPassword(null);
+        userCreationService.updateUser(userWithAuthorities, update);
+
+        assertAccountStateAudited(Constants.DEACTIVATE_USER);
+        assertThat(deactivationEvents()).as("one deactivation produces one audit entry").hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activatingAUserIsRecordedInTheAuditLog() {
+        userCreationService.deactivateUser(user);
+        securityAuditEventRepository.deleteAll();
+
+        userCreationService.activateUser(reloadUser());
+
+        assertAccountStateAudited(Constants.ACTIVATE_USER);
+    }
+
+    /**
+     * The admin edit form and the dedicated activate action both run for one activation through the resource, so the
+     * transition has to be recorded once rather than by each of them.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void activatingThroughTheAdminUpdateIsRecordedExactlyOnce() {
+        userCreationService.deactivateUser(user);
+        securityAuditEventRepository.deleteAll();
+
+        // Mirrors AdminUserResource.updateUser, which follows an activating update with userService.activateUser.
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(true);
+        update.setPassword(null);
+        User updated = userCreationService.updateUser(userWithAuthorities, update);
+        userService.activateUser(updated);
+
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
+                .as("one activation produces one audit entry").hasSize(1);
+    }
+
+    private List<AuditEvent> deactivationEvents() {
+        return auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.DEACTIVATE_USER.equals(event.getType())).toList();
+    }
+
+    /**
+     * Read through AuditEventService rather than the repository, because it loads {@code data} through an entity graph
+     * while the repository's findAll() leaves that collection lazy and unreadable outside a session. The log to read from
+     * is the security one: an account-state change is a change to what the account can authenticate with, and a
+     * deactivation is the only record of the credential revocation it performs (see
+     * {@code AuditEventConstants.SECURITY_EVENT_TYPES}).
+     */
+    private void assertAccountStateAudited(String expectedType) {
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+            assertThat(event.getType()).isEqualTo(expectedType);
+            assertThat(event.getPrincipal()).as("the administrator who performed it, not the affected account").isEqualTo("admin");
+            assertThat(event.getData()).containsEntry("user", user.getLogin());
+        });
     }
 
     @Test
@@ -424,6 +638,35 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(reloadUser().getActivated()).isFalse();
         assertAllCredentialsRevoked();
+    }
+
+    /**
+     * Regression test: deactivating and changing the password in one update revokes everything through the deactivation
+     * branch, so the notification has to say so. Keying the message off the revoke-credentials checkbox alone told the
+     * user their keys and tokens had been kept while they had in fact just been deleted.
+     */
+    @Test
+    void deactivatingWhileChangingThePasswordReportsThatEverythingWasRevoked() {
+        giveUserCredentials();
+        securityAuditEventRepository.deleteAll();
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(user.getLogin()).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities);
+        update.setActivated(false);
+        update.setPassword("new-Password-123");
+        // Deliberately not selected: the deactivation is what revokes here, and the report must follow the effect rather
+        // than the checkbox.
+        update.setRevokeCredentials(false);
+        userCreationService.updateUser(userWithAuthorities, update);
+
+        assertAllCredentialsRevoked();
+        // Read through AuditEventService: it loads `data` through an entity graph, while findAll() leaves that collection
+        // lazy and unreadable outside a session. The log to read from is the security one, because a password change is
+        // a credential change (see AuditEventConstants.SECURITY_EVENT_TYPES).
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+            assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
+            assertThat(event.getData()).containsEntry("revokedPasskeys", "true").containsEntry("revokedSshKeys", "true").containsEntry("revokedVcsAccessTokens", "true");
+        });
     }
 
     /**

@@ -29,9 +29,13 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.FilePathType;
+import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -45,6 +49,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 
 /**
  * REST controller for managing the current user's account.
@@ -62,19 +67,33 @@ public class AccountResource {
 
     private final UserRepository userRepository;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final UserService userService;
 
     private final AccountService accountService;
 
     private final FileService fileService;
 
+    private final AccountCredentialRevocationService accountCredentialRevocationService;
+
+    private final AccountSecurityNotificationService accountSecurityNotificationService;
+
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
-    public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService) {
+    public AccountResource(UserRepository userRepository, UserService userService, AccountService accountService, FileService fileService,
+            AccountCredentialRevocationService accountCredentialRevocationService, AccountSecurityNotificationService accountSecurityNotificationService,
+            UserVcsAccessTokenService userVcsAccessTokenService, UserAiPreferenceService userAiPreferenceService) {
         this.userRepository = userRepository;
+        this.userAiPreferenceService = userAiPreferenceService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userService = userService;
         this.accountService = accountService;
         this.fileService = fileService;
+        this.accountCredentialRevocationService = accountCredentialRevocationService;
+        this.accountSecurityNotificationService = accountSecurityNotificationService;
     }
 
     /**
@@ -115,6 +134,35 @@ public class AccountResource {
     }
 
     /**
+     * {@code POST /account/revoke-credentials} : revokes the selected credentials of the current user, without changing their password.
+     * <p>
+     * Deliberately available to external users as well. They cannot change their password here at all -- it lives in their identity provider -- so tying revocation to a
+     * password change left them with no way to withdraw a passkey, SSH key or access token in one step; they had to delete each one individually across three settings
+     * pages. The credentials being revoked are stored by Artemis either way, so who owns the password does not change what can be revoked.
+     * <p>
+     * Guarded like the per-credential delete endpoints it replaces in bulk ({@code DELETE passkey/{id}}, {@code DELETE user-vcs-access-token},
+     * {@code DELETE public-keys/{id}}), which require a session and nothing more. This endpoint therefore grants nobody a capability they did not already have; it only
+     * saves the owner from doing it one credential at a time.
+     *
+     * @param choice which credential types to revoke
+     * @return the ResponseEntity with status 200 (OK) when the selected credentials have been revoked
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the request selects no credential type
+     */
+    @PostMapping("revoke-credentials")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> revokeCredentials(@RequestBody CredentialRevocationChoiceDTO choice) {
+        if (!choice.revokesAnything()) {
+            throw new BadRequestAlertException("At least one credential type must be selected for revocation", ENTITY_NAME, "noCredentialTypeSelected");
+        }
+        User user = userRepository.getUser();
+        log.info("REST request to revoke the credentials of user {}: passkeys={}, sshKeys={}, vcsAccessTokens={}", user.getLogin(), choice.passkeys(), choice.sshKeys(),
+                choice.vcsAccessTokens());
+        accountCredentialRevocationService.revokeSelectedCredentials(user, choice, "revoked by the user");
+        accountSecurityNotificationService.credentialsRevoked(user, choice);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * PUT user-vcs-access-token : creates a vcsAccessToken for a user
      *
      * @param expiryDate The expiry date which should be set for the token
@@ -129,13 +177,14 @@ public class AccountResource {
             throw new BadRequestException("Invalid expiry date provided");
         }
 
-        userRepository.updateUserVcsAccessToken(user.getId(), LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken(), expiryDate);
+        String token = LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken();
+        userVcsAccessTokenService.store(user.getId(), token, expiryDate);
         log.debug("Successfully created a VCS access token for user {}", user.getLogin());
-        user = userRepository.getUser();
         UserDTO userDTO = new UserDTO();
         userDTO.setLogin(user.getLogin());
-        userDTO.setVcsAccessToken(user.getVcsAccessToken());
-        userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
+        // Returned from what was just generated rather than read back: the plaintext exists only here.
+        userDTO.setVcsAccessToken(token);
+        userDTO.setVcsAccessTokenExpiryDate(expiryDate);
         return ResponseEntity.ok(userDTO);
     }
 
@@ -149,7 +198,7 @@ public class AccountResource {
     public ResponseEntity<Void> deleteVcsAccessToken() {
         User user = userRepository.getUser();
         log.debug("REST request to remove VCS access token key of user {}", user.getLogin());
-        userRepository.updateUserVcsAccessToken(user.getId(), null, null);
+        userVcsAccessTokenService.revoke(user.getId());
         log.debug("Successfully deleted VCS access token of user {}", user.getLogin());
         return ResponseEntity.ok().build();
     }
@@ -251,7 +300,7 @@ public class AccountResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setMemirisEnabled(@RequestBody boolean memirisEnabled) {
         User user = userRepository.getUser();
-        userRepository.updateMemirisEnabled(user.getId(), memirisEnabled);
+        userAiPreferenceService.setMemirisEnabled(user.getId(), memirisEnabled);
         return ResponseEntity.ok().build();
     }
 }

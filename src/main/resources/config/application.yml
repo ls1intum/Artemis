@@ -292,6 +292,11 @@ spring: #disabled by default, you must enable it
             hibernate.order_updates: true
             hibernate.query.fail_on_pagination_over_collection_fetch: true  # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
             hibernate.query.in_clause_parameter_padding: true
+            # Compiled HQL plans are expensive to build and Artemis has more distinct queries than the 2048 default
+            # holds, so plans were being evicted and recompiled under load. A heap histogram taken during a 2000
+            # student exam found 762k ANTLR parser objects live, which is the recompilation showing up as garbage.
+            hibernate.query.plan_cache_max_size: 4096
+            hibernate.query.plan_parameter_metadata_max_size: 256
             # Hibernate L2 cache is intentionally disabled cluster-wide. See documentation/docs/developer/guidelines/caching.mdx.
             # Spring @Cacheable continues to use HazelcastCacheManager directly, independent of L2.
             hibernate.cache.use_second_level_cache: false
@@ -317,9 +322,14 @@ spring: #disabled by default, you must enable it
         execution:
             thread-name-prefix: artemis-task-
             pool:
-                core-size: 2
+                # A ThreadPoolExecutor only creates a thread beyond the core size once the queue is full, so a large
+                # queue in front of a small core pool means the pool never grows: core-size 2 with a 10000 queue ran
+                # every @Async task in Artemis on two threads and let a 10000-deep backlog build before the third was
+                # created. Sizing the core pool for the work and keeping the queue short is the way round that
+                # actually uses the pool.
+                core-size: 16
                 max-size: 50
-                queue-capacity: 10000
+                queue-capacity: 500
         scheduling:
             thread-name-prefix: artemis-scheduling-
             pool:

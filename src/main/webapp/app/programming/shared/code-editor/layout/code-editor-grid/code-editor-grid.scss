@@ -111,6 +111,31 @@
 }
 
 /* ==========================================================================
+   Shared secondary header (file browser, instructions, Monaco editor, build output)
+   ========================================================================== */
+
+.code-editor-panel-header {
+    align-items: center;
+    min-height: 42px;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--code-editor-panel-header-background);
+    color: var(--code-editor-panel-header-color);
+    border-bottom: 1px solid var(--code-editor-panel-header-border);
+    cursor: pointer;
+
+    h3,
+    h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    fa-icon {
+        color: inherit;
+    }
+}
+
+/* ==========================================================================
    Shared secondary header (used by file browser, Monaco editor, and build output)
    ========================================================================== */
 

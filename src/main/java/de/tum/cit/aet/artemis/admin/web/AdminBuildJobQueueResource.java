@@ -3,9 +3,13 @@ package de.tum.cit.aet.artemis.admin.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.admin.config.LegacyAdminRestPaths;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -69,6 +74,8 @@ public class AdminBuildJobQueueResource {
     private final AuditEventRepository auditEventRepository;
 
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
+
+    private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
     public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
             DistributedDataAccessService distributedDataAccessService, Optional<RemoteInteractiveSandboxClient> sandboxClient, Optional<GenerationJobService> generationJobService,
@@ -249,6 +256,36 @@ public class AdminBuildJobQueueResource {
         log.debug("REST request to get information on available build agents");
         List<BuildAgentInformation> buildAgentSummary = distributedDataAccessService.getBuildAgentInformation();
         return ResponseEntity.ok(buildAgentSummary);
+    }
+
+    /**
+     * Returns the network addresses each build agent is observed to connect from, and whether they lie inside the
+     * configured build agent networks.
+     * <p>
+     * Kept out of {@code BuildAgentInformation} on purpose: that record is shared with the build agent nodes, so adding
+     * to it would require migrating or clearing the distributed structures on upgrade. These addresses are also written
+     * by the core nodes rather than by the agents, which is what makes them usable for authorizing git requests.
+     *
+     * @return the registered addresses of all build agents
+     */
+    @GetMapping("build-agent-addresses")
+    public ResponseEntity<List<BuildAgentAddressInfo>> getBuildAgentAddresses() {
+        log.debug("REST request to get the registered network addresses of all build agents");
+        // The union of both sources, because that is what actually authorizes a clone. Showing only the addresses core
+        // nodes observed would display nothing at all wherever the middleware cannot observe them - every Redis
+        // installation - while the binding is in force, which is precisely the state an admin needs to be able to see.
+        Map<String, BuildAgentAddressInfo> merged = new HashMap<>(distributedDataAccessService.getBuildAgentReportedAddressMap());
+        distributedDataAccessService.getBuildAgentAddressMap()
+                .forEach((agentName, observed) -> merged.merge(agentName, observed,
+                        (reported, alsoObserved) -> new BuildAgentAddressInfo(agentName,
+                                Stream.concat(reported.addresses().stream(), alsoObserved.addresses().stream()).collect(Collectors.toCollection(LinkedHashSet::new)),
+                                alsoObserved.observedAt(), true)));
+        // The allowlist verdict is recomputed rather than taken from the entry: an agent reporting its own address
+        // cannot evaluate the core nodes' allowlist, so it stores a placeholder, and showing that would tell an admin
+        // an agent outside the configured networks is inside them.
+        List<BuildAgentAddressInfo> addresses = merged.values().stream().map(info -> new BuildAgentAddressInfo(info.agentName(), info.addresses(), info.observedAt(),
+                info.addresses().stream().allMatch(buildAgentNetworkPolicy::isWithinAllowedRanges))).toList();
+        return ResponseEntity.ok(addresses);
     }
 
     /**

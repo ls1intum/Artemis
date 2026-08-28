@@ -15,6 +15,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +35,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
@@ -46,10 +48,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
@@ -259,6 +261,49 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         assertThat(retrievedAgents).hasSize(1);
     }
 
+    /**
+     * The admin view has to show what actually authorizes a clone, which is the union of both sources: the addresses
+     * core nodes observed, and the ones the agents measured for themselves. Returning only the observed half would show
+     * an empty <i>Connects from</i> everywhere the middleware cannot observe an origin - every Redis installation -
+     * while the binding is in force, which is exactly the state an admin needs to be able to see.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildAgentAddresses_mergesObservedAndReported() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        distributedDataAccessService.getDistributedBuildAgentAddresses().put(agentName, new BuildAgentAddressInfo(agentName, Set.of("10.0.0.5"), ZonedDateTime.now(), true));
+        distributedDataAccessService.getDistributedBuildAgentReportedAddresses().put(agentName,
+                new BuildAgentAddressInfo(agentName, Set.of("192.168.1.7"), ZonedDateTime.now(), true));
+        try {
+            var addresses = request.getList("/api/core/admin/build-agent-addresses", HttpStatus.OK, BuildAgentAddressInfo.class);
+
+            assertThat(addresses).singleElement().satisfies(info -> assertThat(info.addresses()).containsExactlyInAnyOrder("10.0.0.5", "192.168.1.7"));
+        }
+        finally {
+            distributedDataAccessService.getDistributedBuildAgentAddresses().remove(agentName);
+            distributedDataAccessService.getDistributedBuildAgentReportedAddresses().remove(agentName);
+        }
+    }
+
+    /**
+     * An agent known only from its own report - the Redis shape, where nothing can be observed - must still appear.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetBuildAgentAddresses_showsAReportedOnlyAgent() throws Exception {
+        String agentName = agent1.buildAgent().name();
+        distributedDataAccessService.getDistributedBuildAgentReportedAddresses().put(agentName,
+                new BuildAgentAddressInfo(agentName, Set.of("192.168.1.7"), ZonedDateTime.now(), true));
+        try {
+            var addresses = request.getList("/api/core/admin/build-agent-addresses", HttpStatus.OK, BuildAgentAddressInfo.class);
+
+            assertThat(addresses).singleElement().satisfies(info -> assertThat(info.addresses()).containsExactly("192.168.1.7"));
+        }
+        finally {
+            distributedDataAccessService.getDistributedBuildAgentReportedAddresses().remove(agentName);
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildAgentDetails_returnsAgent() throws Exception {
@@ -403,6 +448,52 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
                 pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().id()).isEqualTo(finishedJob1.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFinishedBuildJobsForCourse_excludesQueuedAndRunningJobs() throws Exception {
+        buildJobRepository.save(finishedJob1);
+
+        // A job that is still running must never show up in the finished-jobs list, not even when a filter is applied. The previous implementation only excluded
+        // QUEUED/BUILDING on the unfiltered code path, so applying any filter (here: the course) leaked unfinished jobs into the result.
+        BuildJob runningJob = buildJobRepository.save(buildJobForStatus(BuildStatus.BUILDING, "running-job"));
+        BuildJob queuedJob = buildJobRepository.save(buildJobForStatus(BuildStatus.QUEUED, "queued-job"));
+
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+        var result = request.getList("/api/localci/courses/" + course.getId() + "/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
+                pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
+
+        assertThat(result).extracting(FinishedBuildJobDTO::id).containsExactly(finishedJob1.getBuildJobId()).doesNotContain(runningJob.getBuildJobId(), queuedJob.getBuildJobId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetFinishedBuildJobs_filtersByBuildAgentAddress() throws Exception {
+        buildJobRepository.save(finishedJob1);
+
+        PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
+
+        LinkedMultiValueMap<String, String> matching = pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable");
+        matching.add("buildAgentAddress", finishedJob1.getBuildAgentAddress());
+        var matched = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, matching);
+        assertThat(matched).extracting(FinishedBuildJobDTO::id).contains(finishedJob1.getBuildJobId());
+
+        LinkedMultiValueMap<String, String> nonMatching = pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable");
+        nonMatching.add("buildAgentAddress", "no-such-agent:0000");
+        var unmatched = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class, nonMatching);
+        assertThat(unmatched).isEmpty();
+    }
+
+    /**
+     * Builds an unfinished build job for the course under test, so that the finished-jobs filtering can be asserted against it.
+     */
+    private BuildJob buildJobForStatus(BuildStatus status, String buildJobId) {
+        JobTimingInfo timingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), null, null, 0);
+        BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
+        RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
+        var queueItem = new BuildJobQueueItem(buildJobId, "job-" + buildJobId, buildAgent, 1, course.getId(), 1, 1, 1, status, repositoryInfo, timingInfo, buildConfig, null);
+        return new BuildJob(queueItem, status, null);
     }
 
     @Test

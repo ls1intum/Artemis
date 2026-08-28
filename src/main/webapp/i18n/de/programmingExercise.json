@@ -630,7 +630,9 @@
                 "includeTestsIntoExampleSolution": "Tests zusammen mit Lösungsvorschlag veröffentlichen",
                 "includeTestsIntoExampleSolutionTooltip": "Die automatischen Tests können zusätzlich zu dem Lösungsvorschlag bereitgestellt werden. Nur auswählbar, wenn ein Veröffentlichungsdatum für den Lösungsvorschlag konfiguriert ist.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Testergebnisse erst nach Veröffentlichung der Ergebnisse sichtbar machen",
-                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "Während der Klausur sehen Studierende nur, ob ihr Code kompiliert. Details zu den Testergebnissen werden erst nach dem Veröffentlichungsdatum der Ergebnisse angezeigt."
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "Während der Klausur sehen Studierende nur, ob ihr Code kompiliert. Details zu den Testergebnissen werden erst nach dem Veröffentlichungsdatum der Ergebnisse angezeigt.",
+                "warningLeakFeedbackHeader": "Warnung: Mögliches Leaken von Feedback",
+                "warningLeakFeedback": "Wenn du diese Option deaktivierst, können Testergebnisse und Feedback während der Prüfung für Studierende sichtbar werden. Bist du sicher, dass du fortfahren möchtest?"
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",

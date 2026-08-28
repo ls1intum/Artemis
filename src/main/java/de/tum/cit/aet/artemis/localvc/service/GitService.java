@@ -462,16 +462,21 @@ public class GitService extends AbstractGitService {
      * @param message     Commit Message
      * @param emptyCommit whether the git service should also produce an empty commit
      * @param user        The user who should initiate the commit. If the user is null, the artemis user will be used
+     * @return the id of the commit that was created
      * @throws GitAPIException if the commit failed.
      */
-    public void commitAndPush(Repository repo, String message, boolean emptyCommit, @Nullable User user) throws GitAPIException {
+    public String commitAndPush(Repository repo, String message, boolean emptyCommit, @Nullable User user) throws GitAPIException {
         String name = user != null ? user.getName() : artemisGitName;
         String email = user != null ? user.getEmail() : artemisGitEmail;
         try (Git git = new Git(repo)) {
-            GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
+            RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
             log.debug("commitAndPush -> Push {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pushCommand(git).call();
+            // Returned rather than discarded so callers can identify the commit they just created. Reading the repository head
+            // afterwards is not equivalent: the online editor shares one working copy per repository, so a concurrent commit
+            // to the same repository can move the head between the commit and the read.
+            return commit.getName();
         }
     }
 

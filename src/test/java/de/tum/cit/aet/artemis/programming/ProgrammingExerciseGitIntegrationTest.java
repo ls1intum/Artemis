@@ -155,7 +155,14 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
             Files.createDirectories(localFile.getParent());
             FileUtils.writeStringToFile(localFile.toFile(), "hello world", java.nio.charset.StandardCharsets.UTF_8);
             gitService.stageAllChanges(checkedOut);
-            gitService.commitAndPush(checkedOut, "Add hello.txt", true, null);
+            String createdCommitHash = gitService.commitAndPush(checkedOut, "Add hello.txt", true, null);
+
+            // The returned id has to be the commit just created, because that identity is what attributes a new commit alert
+            // to the client that made the commit. Re-reading the head instead would be a race: the online editor shares one
+            // working copy per repository, so a concurrent commit can move the head before it is read.
+            assertThat(createdCommitHash).as("commitAndPush should return the id of the commit it created").isNotNull().hasSize(40);
+            assertThat(createdCommitHash).as("the created commit must be the new head, not the commit it replaced").isNotEqualTo(lastHash);
+            assertThat(gitService.getLastCommitHash(repoUri)).as("the created commit must be what the remote now stands at").isEqualTo(createdCommitHash);
 
             // Pull and reset operations should not throw
             gitService.pullIgnoreConflicts(checkedOut);

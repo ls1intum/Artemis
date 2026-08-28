@@ -54,6 +54,7 @@
         "submissionPolicyActiveNull": "Abgaberichtlinien müssen aktiviert oder deaktiviert sein. Dieser Status darf nicht null sein.",
         "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!",
         "oneActivePlagiarismCheck": "Bitte warte bis die aktuelle Plagiatskontrolle in diesem Kurs abgeschlossen ist, bevor du eine weitere startest.",
+        "notEnoughSubmissions": "Es gibt in dieser Aufgabe nicht genügend gültige Abgaben zum Vergleichen. Es werden mindestens zwei Abgaben benötigt, die die konfigurierte Mindestpunktzahl und Mindestgröße erfüllen.",
         "incorrectPassword": "Das aktuelle Passwort ist falsch.",
         "invalidActivationKey": "Der Aktivierungsschlüssel ist ungültig. Bitte benutze die Registrierungsmaske, um dich zu registrieren.",
         "internalServerError": "Interner Serverfehler",
