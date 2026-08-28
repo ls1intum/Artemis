@@ -18,9 +18,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 
-// The content child renders math through KaTeX; jsdom cannot lay it out.
-vi.mock('katex', () => ({ default: { render: vi.fn() } }));
-
 const RENDER_URL_MATCHER = (request: { url: string }) => request.url.endsWith('exercise/problem-statement/render');
 
 const taskSpan = (name: string, testIds: string, status = 'success', notExecutedCount = '0') =>
@@ -161,7 +158,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
                 '<table><tbody><tr><td>cell</td></tr></tbody></table>' +
                 '<pre><code class="language-java">int x;</code></pre>' +
                 '<a href="https://example.org">link</a><img src="https://example.org/i.png">' +
-                '<span class="katex-formula" data-formula="x^2" data-display-mode="false"></span>';
+                '<math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>x</mi><mn>2</mn></msup></math>';
             fixture.componentRef.setInput('exercise', exercise);
             fixture.detectChanges();
             flushRender(renderedWith(body));
@@ -175,7 +172,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
             expect(root.querySelector('pre code')?.className).toContain('language-java');
             expect(root.querySelector('a')?.getAttribute('href')).toBe('https://example.org');
             expect(root.querySelector('img')?.getAttribute('src')).toBe('https://example.org/i.png');
-            expect(root.querySelector('.katex-formula')?.getAttribute('data-formula')).toBe('x^2');
+            expect(root.querySelector('math')?.querySelector('msup')).toBeTruthy();
             // The task metadata is read from the parsed document, so it has to survive the pass as well.
             expect(comp.tasks()).toHaveLength(1);
         });

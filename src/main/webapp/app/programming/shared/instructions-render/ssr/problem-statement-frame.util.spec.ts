@@ -1,17 +1,16 @@
 import { assembleShadowContent, isCssValueSafe, resolveFrameLink, sanitizeFragment } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
 
 /** Wraps a body in the document shape the render endpoint returns, including the stylesheet it prepends. */
-const serverDocument = (body: string, options: { katex?: boolean; dark?: boolean } = {}): string =>
+const serverDocument = (body: string, options: { dark?: boolean } = {}): string =>
     `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head>` +
     `<body class="artemis-ssr-body${options.dark ? ' artemis-ssr-body--dark' : ''}">` +
-    (options.katex ? '<link rel="stylesheet" href="http://localhost/assets/katex/katex.min.css">' : '') +
     '<style>.artemis-task{color:red}</style>' +
     `<div class="artemis-problem-statement">${body}</div></body></html>`;
 
-const assemble = (body: string, options?: { katex?: boolean; dark?: boolean }) => assembleShadowContent(serverDocument(body, options), 'Image unavailable');
+const assemble = (body: string, options?: { dark?: boolean }) => assembleShadowContent(serverDocument(body, options), 'Image unavailable');
 
 /** The assembled statement, parsed so its markup can be inspected the way a browser would see it once injected. */
-const contentOf = (body: string, options?: { katex?: boolean; dark?: boolean }): Document => new DOMParser().parseFromString(assemble(body, options).html, 'text/html');
+const contentOf = (body: string, options?: { dark?: boolean }): Document => new DOMParser().parseFromString(assemble(body, options).html, 'text/html');
 
 /** The statement fragment alone, for assertions about what the statement itself does or does not contain. */
 const statementOf = (document_: Document): string => document_.querySelector('.artemis-problem-statement')?.outerHTML ?? '';
@@ -235,10 +234,9 @@ describe('problem statement shadow content assembly', () => {
         });
 
         it('keeps the stylesheets the server ships with the statement', () => {
-            const content = contentOf('<p>x</p>', { katex: true });
+            const content = contentOf('<p>x</p>');
 
             expect(content.querySelector('style')?.textContent).toContain('.artemis-task');
-            expect(content.querySelector('link[rel="stylesheet"]')?.getAttribute('href')).toContain('katex.min.css');
         });
 
         it('lists the links it contains, so the content component can tell a real one from an unexpected click', () => {
@@ -274,37 +272,51 @@ describe('problem statement shadow content assembly', () => {
         });
     });
 
-    describe('formulas and code, precomputed here rather than in the browser at display time', () => {
-        it('renders a katex placeholder into real markup', () => {
-            const content = contentOf('<span class="katex-formula" data-formula="x^2" data-display-mode="false"></span>');
+    describe('MathML hardening, the client boundary that mirrors the server allowlist', () => {
+        // Formulas arrive as server-generated Presentation MathML. These assert the second, defense-in-depth boundary:
+        // it must keep valid MathML and strip the constructs that DOMPurify alone would leave behind.
+        const MATHML_NS = 'http://www.w3.org/1998/Math/MathML';
 
-            expect(content.querySelector('.katex-formula')?.innerHTML).toContain('katex');
+        it('keeps a valid presentation-MathML formula, in the MathML namespace', () => {
+            const math = contentOf('<math xmlns="' + MATHML_NS + '"><msup><mi>x</mi><mn>2</mn></msup></math>').querySelector('math');
+
+            expect(math).not.toBeNull();
+            expect(math!.namespaceURI).toBe(MATHML_NS);
+            expect(math!.querySelector('msup')).not.toBeNull();
         });
 
-        it('passes the display mode through for a block formula', () => {
-            const content = contentOf('<span class="katex-formula" data-formula="x^2" data-display-mode="true"></span>');
+        it('drops a resource attribute such as href from a MathML element', () => {
+            const assembled = assemble('<math xmlns="' + MATHML_NS + '" href="https://evil.example/x"><mi>x</mi></math>');
 
-            expect(content.querySelector('.katex-formula')?.innerHTML).toContain('katex-display');
+            expect(assembled.html).not.toContain('evil.example');
+            expect(assembled.html).not.toContain('href');
         });
 
-        it('falls back to the source when a formula cannot be rendered', () => {
-            const content = contentOf('<span class="katex-formula" data-formula="\\unknowncommand{" data-display-mode="false"></span>');
+        it('removes an HTML element smuggled through a MathML integration point, so it is never a link target', () => {
+            // `<mtext><a href>` / `<mtext><img>` become HTML-namespace descendants of <math>; both must be removed, and
+            // the anchor must not reach linkTargets.
+            const assembled = assemble('<math xmlns="' + MATHML_NS + '"><mtext><a href="https://evil.example/x">x</a><img src="https://evil.example/y"></mtext></math>');
 
-            // throwOnError is off, so KaTeX renders an error node rather than throwing; either way the reader is
-            // never shown an empty placeholder.
-            expect(content.querySelector('.katex-formula')?.textContent).not.toBe('');
+            expect(assembled.html).not.toContain('evil.example');
+            expect(assembled.linkTargets).not.toContain('https://evil.example/x');
         });
 
-        it('caps the size a formula may ask for, which KaTeX itself leaves unbounded', () => {
-            const content = contentOf('<span class="katex-formula" data-formula="\\rule{1000000000em}{1000000000em}" data-display-mode="false"></span>');
-            const sizes = [...(content.querySelector('.katex-formula')?.querySelectorAll<HTMLElement>('[style*="em"]') ?? [])].flatMap((element) =>
-                [...element.getAttribute('style')!.matchAll(/([\d.]+)em/g)].map((match) => Number(match[1])),
-            );
+        it('removes a disallowed MathML element that is not presentation markup', () => {
+            const assembled = assemble('<math xmlns="' + MATHML_NS + '"><maction actiontype="statusline"><mi>x</mi></maction></math>');
 
-            expect(sizes.length).toBeGreaterThan(0);
-            expect(Math.max(...sizes)).toBeLessThanOrEqual(100);
+            expect(assembled.html).not.toContain('maction');
+            expect(assembled.html).not.toContain('actiontype');
         });
 
+        it('renders the escaped source the server emits for a formula it could not convert', () => {
+            // The server injects this span when SnuggleTeX fails; it is plain text, so it must survive untouched.
+            const content = contentOf('<span class="artemis-formula-source">$\\unknown{x}$</span>');
+
+            expect(content.querySelector('.artemis-formula-source')?.textContent).toBe('$\\unknown{x}$');
+        });
+    });
+
+    describe('code highlighting, precomputed here rather than in the browser at display time', () => {
         it('highlights a code block whose language is registered', () => {
             const content = contentOf('<pre><code class="language-java">int x = 1;</code></pre>');
             const code = content.querySelector('pre code');

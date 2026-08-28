@@ -1,5 +1,4 @@
 import DOMPurify from 'dompurify';
-import katex from 'katex';
 import hljs from 'app/foundation/util/highlight-languages.util';
 import { SSR_TASK_STATUSES, SsrTask, SsrTaskStatus } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 
@@ -103,11 +102,66 @@ const IMAGE_FUNCTIONS = /(^|[^a-z-])(-webkit-)?(image-set|cross-fade|image|eleme
 
 const URL_REFERENCE = /url\s*\(/gi;
 
-/** Largest explicitly authored dimension a formula may ask for, in ems. See the KaTeX options in `renderFormulas`. */
-const MAX_FORMULA_SIZE_EM = 100;
+const MATHML_NAMESPACE = 'http://www.w3.org/1998/Math/MathML';
 
-/** Macro expansions a single formula may perform. KaTeX's own default, pinned here rather than inherited. */
-const MAX_FORMULA_MACRO_EXPANSIONS = 1000;
+/**
+ * Presentation-MathML elements the client keeps, mirroring the server allowlist in `LatexToMathmlConverter`. Kept in
+ * sync with it so the two boundaries agree on what valid formula output looks like.
+ */
+const MATHML_ELEMENTS = new Set([
+    'math',
+    'mrow',
+    'mi',
+    'mo',
+    'mn',
+    'ms',
+    'mtext',
+    'mspace',
+    'msup',
+    'msub',
+    'msubsup',
+    'mfrac',
+    'msqrt',
+    'mroot',
+    'mstyle',
+    'mpadded',
+    'mphantom',
+    'mfenced',
+    'mtable',
+    'mtr',
+    'mtd',
+    'munder',
+    'mover',
+    'munderover',
+    'merror',
+]);
+
+/** Safe presentation attributes on a MathML element; everything else (href, src, width, …) is dropped. */
+const MATHML_ATTRIBUTES = new Set([
+    'mathvariant',
+    'display',
+    'displaystyle',
+    'scriptlevel',
+    'dir',
+    'mathsize',
+    'mathcolor',
+    'accent',
+    'accentunder',
+    'stretchy',
+    'fence',
+    'separator',
+    'form',
+    'largeop',
+    'movablelimits',
+    'symmetric',
+    'columnalign',
+    'rowalign',
+    'columnspan',
+    'rowspan',
+    'open',
+    'close',
+    'notation',
+]);
 
 /** Marks a code block that has already been highlighted, so a second pass over retained markup is a no-op. */
 const HIGHLIGHTED_MARKER = 'data-highlighted';
@@ -307,32 +361,39 @@ export function rewriteSameOriginImages(root: Element, applicationOrigin: string
 }
 
 /**
- * Renders the inert `<span class="katex-formula" data-formula data-display-mode>` placeholders the server emits.
+ * Enforces the server's Presentation-MathML allowlist a second time, as defense in depth.
  *
- * Uses the public `renderToString`, which builds the same tree `katex.render` appends (`render` is
- * `node.appendChild(renderToDomTree(expr, options).toNode())`, `renderToString` is the same builder via
- * `toMarkup()`); the corpus specs pin that equivalence rather than assume it.
+ * The formulas are server-generated MathML (see `LatexToMathmlConverter`), already sanitized against the same
+ * allowlist before injection, so in practice this pass changes nothing. It exists because the render endpoint can be
+ * served directly with `includeJs=true`, in which case this DOMPurify path is the only client-side sanitizer, and
+ * because DOMPurify keeps MathML `href`/`src` and does not restrict the MathML element set to a presentation-only one.
+ *
+ * Three rules, all namespace-aware:
+ * - a descendant of a `<math>` that is not itself in the MathML namespace is removed (the `<mtext><img>` /
+ *   `<mtext><a>` integration-point escape: such an `<a>` would otherwise be collected into `linkTargets` and opened);
+ * - a MathML-namespace element not on {@link MATHML_ELEMENTS} is removed;
+ * - every attribute not on {@link MATHML_ATTRIBUTES} is dropped from a MathML element (this removes `href`, `src`, …).
  */
-export function renderFormulas(root: Element): void {
-    root.querySelectorAll<HTMLElement>('.katex-formula').forEach((element) => {
-        const formula = element.getAttribute('data-formula') ?? '';
-        try {
-            // nosemgrep -- KaTeX output over an inert DOMParser document; see the note below
-            element.innerHTML = katex.renderToString(formula, {
-                displayMode: element.getAttribute('data-display-mode') === 'true',
-                throwOnError: false,
-                output: 'html',
-                // KaTeX defaults this to Infinity, which lets `\rule{1000000000em}{1000000000em}` ask for a box no
-                // layout engine can afford. Nothing legitimate approaches this bound: the largest size a real
-                // statement uses is a few ems, and the cap only clips explicitly authored dimensions.
-                maxSize: MAX_FORMULA_SIZE_EM,
-                // Likewise explicit rather than implied. It is KaTeX's own default, but it is the limit that stops
-                // a macro from expanding into an exponential blowup, so it should not rest on a library default.
-                maxExpand: MAX_FORMULA_MACRO_EXPANSIONS,
+export function hardenMathml(root: Element): void {
+    root.querySelectorAll('math').forEach((math) => {
+        const walk = (element: Element): void => {
+            // Depth first, over a snapshot: the checks below may remove the element, so its children are visited first.
+            [...element.children].forEach(walk);
+            if (element.namespaceURI !== MATHML_NAMESPACE) {
+                element.remove();
+                return;
+            }
+            if (element !== math && !MATHML_ELEMENTS.has(element.localName)) {
+                element.remove();
+                return;
+            }
+            [...element.attributes].forEach((attribute) => {
+                if (!MATHML_ATTRIBUTES.has(attribute.localName ?? attribute.name)) {
+                    element.removeAttribute(attribute.name);
+                }
             });
-        } catch {
-            element.textContent = formula;
-        }
+        };
+        walk(math);
     });
 }
 
@@ -435,8 +496,9 @@ export function assembleShadowContent(serverDocument: string, unavailableLabel: 
     const tasks = extractTasks(sanitizedFragment);
 
     stripSensitiveAttributes(sanitizedFragment);
+    // Before linkTargets is built, so a link smuggled through a MathML integration point cannot be collected.
+    hardenMathml(sanitizedFragment);
     rewriteSameOriginImages(sanitizedFragment, window.location.origin, unavailableLabel);
-    renderFormulas(sanitizedFragment);
     highlightCodeBlocks(sanitizedFragment);
 
     // The dark palette keys off this class. `body.artemis-ssr-body*` selectors do not match inside a shadow root,
@@ -454,7 +516,7 @@ export function assembleShadowContent(serverDocument: string, unavailableLabel: 
     const styles = styleNodes.map((node) => node.outerHTML).join('');
     // Built as a string for the shadow root's `innerHTML`. Every part is trusted by construction: `styles` are the
     // server's own document-level stylesheets, `bodyClass` is escaped, and the fragment is DOMPurify output run
-    // through the safe producers above (strip, rewrite, KaTeX, highlight), each of which emits escaped markup.
+    // through the safe producers above (strip, MathML harden, image rewrite, highlight), each of which emits escaped markup.
     // nosemgrep -- DOMPurify output plus the server's own stylesheets; see the note above
     const html = `${styles}<div class="${escapeAttribute(bodyClass)}">${sanitizedFragment.outerHTML}</div>`;
 

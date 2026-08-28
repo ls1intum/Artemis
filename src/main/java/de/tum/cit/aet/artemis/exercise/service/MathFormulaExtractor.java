@@ -1,20 +1,24 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Extracts LaTeX math formulas from markdown and restores them as KaTeX-renderable placeholders.
+ * Extracts LaTeX math formulas from markdown and, after sanitization, injects server-generated MathML.
  * <p>
- * Three responsibilities:
+ * Responsibilities:
  * <ul>
  * <li>{@link #applyCompatibility(String)}: ports the Angular {@code FormulaCompatibilityPlugin} so authors
  * can write lines that mix inline math with surrounding text using {@code $$...$$}.</li>
- * <li>{@link #extract(String, List)}: replaces display and inline formulas with opaque placeholders so
+ * <li>{@link #extract(String, List)}: replaces display and inline formulas with opaque NUL placeholders so
  * downstream CommonMark rendering does not mangle them.</li>
- * <li>{@link #restore(String, List)}: replaces placeholders with {@code <span class="katex-formula">} elements
- * that the client-side KaTeX script picks up.</li>
+ * <li>{@link #restore(String, List, String)}: replaces those with a token-guarded marker span that survives
+ * CommonMark and the jsoup safelist, exactly like the PlantUML SVG placeholder.</li>
+ * <li>{@link #injectMathml(String, List, String)}: after jsoup, replaces each marker with the sanitized MathML
+ * from {@link LatexToMathmlConverter}, or the escaped source when conversion fails or a limit is exceeded. This
+ * runs post-jsoup and independent of {@code includeJs}: native MathML needs no client script.</li>
  * </ul>
  */
 public final class MathFormulaExtractor {
@@ -29,6 +33,19 @@ public final class MathFormulaExtractor {
     private static final String PLACEHOLDER_PREFIX = "\u0000MATH_";
 
     private static final String PLACEHOLDER_SUFFIX = "\u0000";
+
+    /**
+     * Marker that survives CommonMark and the jsoup safelist ({@code data-formula-index} is on the span safelist),
+     * carrying the per-render token so an author cannot forge it. Distinct from the SVG placeholder's prefix and
+     * attribute even though it shares the same per-render token, so the two indexed lists cannot be confused. The
+     * MathML itself is injected only afterwards, so unlike the old KaTeX span this marker carries no formula source.
+     */
+    private static final String MARKER_PREFIX = "<span class=\"artemis-formula-placeholder\" data-formula-index=\"";
+
+    private static final String MARKER_SUFFIX = "\"></span>";
+
+    /** Above this many formulas in one statement, none are converted (all fall back to source) to bound per-request cost. */
+    private static final int MAX_FORMULAS_TO_CONVERT = 500;
 
     /** Parsed formula held between extraction and restoration. */
     public record Formula(String latex, boolean displayMode) {
@@ -228,62 +245,47 @@ public final class MathFormulaExtractor {
     }
 
     /**
-     * Matches a rendered but still empty formula placeholder, capturing its attributes as written.
-     * <p>
-     * Deliberately indifferent to attribute order and to whitespace between the tags: the element is written by
-     * {@link #restore} but reaches this point through CommonMark and jsoup, and a serializer that reordered the attributes
-     * or inserted whitespace would otherwise turn the fallback off silently rather than visibly.
-     */
-    private static final Pattern EMPTY_FORMULA_SPAN = Pattern.compile("<span([^>]*\\bclass=\"katex-formula\"[^>]*)>\\s*</span>");
-
-    /** Reads the escaped formula source out of the attributes captured by {@link #EMPTY_FORMULA_SPAN}. */
-    private static final Pattern DATA_FORMULA_ATTRIBUTE = Pattern.compile("\\bdata-formula=\"([^\"]*)\"");
-
-    /**
-     * Copies each formula's source into its placeholder as visible text, so that a document rendered without JavaScript
-     * shows the formula source instead of nothing.
-     * <p>
-     * This deliberately runs <em>after</em> CommonMark rather than in {@link #restore}: inside the markdown the text would
-     * be parsed as markdown, which strips the backslashes (turning {@code x\,dx} into {@code x,dx}) and reads underscores
-     * as emphasis. The escaped attribute value is copied verbatim rather than unescaped and re-escaped, because HTML
-     * attribute escaping is already valid as element text.
-     * <p>
-     * KaTeX replaces the element's content when it renders, so this text is only ever seen when no script runs.
+     * Replaces the NUL placeholders produced by {@link #extract} with a token-guarded marker span (see
+     * {@link #MARKER_PREFIX}). The marker survives CommonMark and jsoup; the MathML is injected only afterwards by
+     * {@link #injectMathml}.
      *
-     * @param html the rendered HTML
-     * @return the HTML with every formula placeholder carrying its own source as text
+     * @param html     the HTML containing NUL placeholders
+     * @param formulas the list of formulas indexed by placeholder position
+     * @param token    the per-render token that makes the marker unforgeable
+     * @return the HTML with placeholders replaced by marker spans
      */
-    public static String fillFormulaSourceAsFallback(String html) {
-        Matcher matcher = EMPTY_FORMULA_SPAN.matcher(html);
-        StringBuilder result = new StringBuilder();
-        while (matcher.find()) {
-            String attributes = matcher.group(1);
-            Matcher source = DATA_FORMULA_ATTRIBUTE.matcher(attributes);
-            if (!source.find()) {
-                // No source to show. Left as it is, which the next appendReplacement copies over unchanged.
-                continue;
-            }
-            String escapedSource = source.group(1);
-            // The opening tag is reproduced as written, so nothing depends on how the attributes were spelled.
-            matcher.appendReplacement(result, Matcher.quoteReplacement("<span" + attributes + ">" + escapedSource + "</span>"));
-        }
-        matcher.appendTail(result);
-        return result.toString();
+    public static String restore(String html, List<Formula> formulas, String token) {
+        return IndexedPlaceholders.replaceAll(html, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX, formulas.size(), index -> MARKER_PREFIX + token + "-" + index + MARKER_SUFFIX);
     }
 
     /**
-     * Replaces the placeholders produced by {@link #extract} with {@code <span class="katex-formula">}
-     * elements that client-side KaTeX can render. The LaTeX source is HTML-escaped for attribute context.
+     * Replaces each marker span with its sanitized MathML, or with the escaped LaTeX source when
+     * {@link LatexToMathmlConverter} could not convert it (unsupported command, limit exceeded, disallowed element).
+     * A marker not carrying this render's token was written by the author, not by {@link #restore}, and is left as the
+     * inert empty span it is. Runs after jsoup and independent of {@code includeJs}.
      *
-     * @param html     the HTML containing placeholders
-     * @param formulas the list of formulas indexed by placeholder position
-     * @return the HTML with placeholders replaced by KaTeX-ready span elements
+     * @param html     the sanitized HTML containing marker spans
+     * @param formulas the list of formulas indexed by marker position
+     * @param token    the per-render token the markers carry
+     * @return the HTML with every marker replaced by MathML or escaped source
      */
-    public static String restore(String html, List<Formula> formulas) {
-        return IndexedPlaceholders.replaceAll(html, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX, formulas.size(), index -> {
+    public static String injectMathml(String html, List<Formula> formulas, String token) {
+        // A statement with an unreasonable number of formulas renders them all as source rather than paying for that
+        // many conversions; it bounds the per-request cost and only ever triggers on pathological input.
+        boolean tooManyToConvert = formulas.size() > MAX_FORMULAS_TO_CONVERT;
+        return IndexedPlaceholders.replaceAll(html, MARKER_PREFIX + token + "-", MARKER_SUFFIX, formulas.size(), index -> {
             Formula formula = formulas.get(index);
-            return "<span class=\"katex-formula\" data-formula=\"" + HtmlEscaper.escapeAttribute(formula.latex()) + "\" data-display-mode=\"" + formula.displayMode()
-                    + "\"></span>";
+            Optional<String> mathml = tooManyToConvert ? Optional.empty() : LatexToMathmlConverter.toMathml(formula.latex(), formula.displayMode());
+            return mathml.orElseGet(() -> sourceFallback(formula));
         });
+    }
+
+    /**
+     * The readable fallback for a formula that could not be converted: its source between delimiters, HTML-escaped.
+     * Attribute escaping is a valid superset of text escaping, so {@link HtmlEscaper#escapeAttribute} is reused.
+     */
+    private static String sourceFallback(Formula formula) {
+        String delimiter = formula.displayMode() ? "$$" : "$";
+        return "<span class=\"artemis-formula-source\">" + HtmlEscaper.escapeAttribute(delimiter + formula.latex() + delimiter) + "</span>";
     }
 }

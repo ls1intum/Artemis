@@ -74,7 +74,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<h1>Hello</h1>");
         assertThat(result.html()).contains("<strong>bold</strong>");
         assertThat(result.html()).contains("artemis-problem-statement");
-        assertThat(result.rendererVersion()).isEqualTo("1.6.0");
+        assertThat(result.rendererVersion()).isEqualTo("2.0.0-mathml-spike");
         assertThat(result.contentHash()).isNotBlank();
         assertThat(result.interactiveScript()).isNotNull();
     }
@@ -748,17 +748,16 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldRenderInlineAndDisplayMathFormulas() throws Exception {
+    void shouldRenderInlineAndDisplayMathFormulasAsMathml() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("Inline $E = mc^2$ and display:\n$$\\int_0^1 x\\,dx$$", null, null, "en", false, true, null, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).contains("class=\"katex-formula\"");
-        assertThat(result.html()).contains("data-formula=\"E = mc^2\"");
-        assertThat(result.html()).contains("data-display-mode=\"false\"");
-        assertThat(result.html()).contains("data-display-mode=\"true\"");
-        assertThat(result.html()).contains("/assets/katex/katex.min.css");
-        assertThat(result.html()).contains("/assets/katex/katex.min.js");
+        // Inline math is native MathML at the surrounding size; display math carries display="block".
+        assertThat(result.html()).contains("<math xmlns=\"http://www.w3.org/1998/Math/MathML\">").contains("<msup><mi>c</mi><mn>2</mn></msup>");
+        assertThat(result.html()).contains("display=\"block\"");
+        // No KaTeX stylesheet or script is shipped any more, and no formula source is exposed for a convertible formula.
+        assertThat(result.html()).doesNotContain("katex.min.css").doesNotContain("katex.min.js").doesNotContain("katex-formula");
     }
 
     @Test
@@ -795,75 +794,57 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).contains("data-display-mode=\"true\"");
-        assertThat(result.html()).contains(formula);
+        // Over the length limit, so it degrades to its source rather than being converted.
+        assertThat(result.html()).contains("artemis-formula-source").contains(formula);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldLeaveTheFormulaPlaceholderEmptyWithJavaScript() throws Exception {
-        // With KaTeX in the document it overwrites the element as soon as it runs, so putting the source inside would only
-        // show raw LaTeX until then. The source is the fallback for a document without script, not an addition to both.
-        var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$ today", null, null, "en", false, true, false, null);
+    void shouldRenderMathmlWithoutJavaScript() throws Exception {
+        // Native MathML needs no client script, so a convertible formula renders as <math> even with includeJs=false.
+        // The display formula is on its own line, or applyCompatibility would rewrite the mixed-line `$$` to inline math.
+        var body = new ProblemStatementRenderRequestDTO("Area:\n$$\\int_0^1 x\\,dx$$", null, null, "en", false, false, false, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).contains("data-formula=\"\\int_0^1 x\\,dx\"");
-        assertThat(result.html()).contains("></span>");
-        assertThat(result.html()).doesNotContain("\\,dx</span>");
+        assertThat(result.html()).contains("<math").contains("display=\"block\"");
+        assertThat(result.html()).doesNotContain("<script").doesNotContain("katex.min.js");
+        assertThat(result.html()).doesNotContain("artemis-formula-source");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldBoundTheSizeAFormulaMayAskForInTheShippedScript() throws Exception {
-        // KaTeX leaves maxSize at Infinity, so `\rule{1000000000em}{1000000000em}` asks the consumer for a box no
-        // engine can lay out. The Angular client sets the bound in its own render call, but a consumer that asks
-        // for the document with JavaScript (the default) gets this script instead, and it is the only limit it has.
-        var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$", null, null, "en", false, true, false, null);
+    void shouldBoundTheInputAFormulaMaySubmit() throws Exception {
+        // Server-side limits replace KaTeX's maxSize/maxExpand: an over-long formula body is not converted at all and
+        // degrades to its source, so no pathological layout is ever emitted.
+        String longFormula = "x".repeat(6_000);
+        var body = new ProblemStatementRenderRequestDTO("$" + longFormula + "$", null, null, "en", false, true, true, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).contains("maxSize: 100").contains("maxExpand: 1000");
+        assertThat(result.html()).contains("artemis-formula-source").doesNotContain("<math");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotShipKatexWhenTheCallerAsksForNoJavaScript() throws Exception {
-        // KaTeX is JavaScript, so includeJs=false has to exclude it too, however much math the statement contains.
-        var body = new ProblemStatementRenderRequestDTO("Display:\n$$\\int_0^1 x\\,dx$$", null, null, "en", false, false, true, null);
+    void shouldRenderTheSourceWhenAFormulaCannotBeConverted() throws Exception {
+        // An unknown command cannot be converted, so the reader gets the readable source between delimiters instead.
+        var body = new ProblemStatementRenderRequestDTO("Broken $\\thiscommanddoesnotexist{y}$ here", null, null, "en", false, false, false, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.html()).doesNotContain("<script");
-        assertThat(result.html()).doesNotContain("katex.min.js");
-        // The stylesheet is a separate switch and stays, so the formula is still styled if the caller wants CSS.
-        assertThat(result.html()).contains("/assets/katex/katex.min.css");
+        assertThat(result.html()).contains("class=\"artemis-formula-source\"").contains("thiscommanddoesnotexist");
+        assertThat(result.html()).doesNotContain("<math");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldKeepTheFormulaSourceVisibleWithoutJavaScript() throws Exception {
-        // Without a script nothing replaces the placeholder, so its own text is all the reader gets. The source is at
-        // least readable, where an empty span would show nothing at all.
-        var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$ today", null, null, "en", false, false, false, null);
-
-        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
-
-        assertThat(result.html()).contains("class=\"katex-formula\"");
-        assertThat(result.html()).doesNotContain("></span>");
-        assertThat(result.html()).contains("\\int_0^1 x\\,dx</span>");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotIncludeKatexResourcesWhenNoFormulas() throws Exception {
+    void shouldNotIncludeMathMarkupWhenNoFormulas() throws Exception {
         var body = new ProblemStatementRenderRequestDTO("# No math here", null, null, "en", false, true, null, null);
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        // Unrelated mentions of the word "katex" in source comments are fine; only the stylesheet/script
-        // loads are what this test is about.
-        assertThat(result.html()).doesNotContain("katex.min.css").doesNotContain("katex.min.js").doesNotContain("katex-formula");
+        assertThat(result.html()).doesNotContain("katex.min.css").doesNotContain("katex.min.js").doesNotContain("<math");
     }
 
     @Test
@@ -1404,7 +1385,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result1 = request.postWithResponseBody(POST_URL, body1, RenderedProblemStatementDTO.class, HttpStatus.OK);
         RenderedProblemStatementDTO result2 = request.postWithResponseBody(POST_URL, body2, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result1.rendererVersion()).isEqualTo("1.6.0");
+        assertThat(result1.rendererVersion()).isEqualTo("2.0.0-mathml-spike");
         assertThat(result2.rendererVersion()).isEqualTo(result1.rendererVersion());
     }
 

@@ -86,15 +86,7 @@ public class ProblemStatementRenderingService {
      * sanitization/escaping. The value itself does not need to follow strict semver; any distinct string is
      * enough to invalidate the cache.
      */
-    private static final String RENDERER_VERSION = "1.6.0";
-
-    /**
-     * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
-     * {@code node_modules} by the Angular build. There is deliberately no server-side webjar: it would ship a second
-     * version of the same library, and its generated POM carries an npm version range that Gradle cannot resolve
-     * without asking the repository for a version list on every build.
-     */
-    private static final String KATEX_BASE_PATH = "/assets/katex";
+    private static final String RENDERER_VERSION = "2.0.0-mathml-spike";
 
     private static final int MAX_PLANTUML_DIAGRAMS = 10;
 
@@ -103,8 +95,6 @@ public class ProblemStatementRenderingService {
     private static final @Nullable String EMBEDDED_CSS = loadClasspathResource("problem-statement-css/embedded.css");
 
     private static final @Nullable String DARK_MODE_CSS = loadClasspathResource("problem-statement-css/dark-mode.css");
-
-    private static final @Nullable String KATEX_AUTO_RENDER_JS = loadClasspathResource("problem-statement-js/katex-auto-render.js");
 
     private static final int MAX_INLINE_IMAGES = 20;
 
@@ -255,18 +245,11 @@ public class ProblemStatementRenderingService {
 
         // 6. Restore masked content.
         processed = restoreCodeBlocks(processed, codeBlocks);
-        processed = MathFormulaExtractor.restore(processed, mathFormulas);
+        // Restore formulas as token-guarded marker spans; the MathML is injected after jsoup (step 8), like the SVGs.
+        processed = MathFormulaExtractor.restore(processed, mathFormulas, placeholderToken);
 
         // 7. CommonMark → sanitized HTML.
         String html = renderWithCommonMark(processed);
-
-        // 7a. Give each formula its source as visible text, for readers whose document carries no script. It has to happen
-        // here rather than in restore(): inside the markdown the source would be parsed as markdown and mangled.
-        // Only without JavaScript: where KaTeX runs it overwrites the element anyway, and the source would be visible for
-        // as long as the script takes to get there.
-        if (!includeJs && !mathFormulas.isEmpty()) {
-            html = MathFormulaExtractor.fillFormulaSourceAsFallback(html);
-        }
 
         // 7b. Process images based on requested mode.
         if (inlineImages) {
@@ -278,6 +261,8 @@ public class ProblemStatementRenderingService {
         // A marker that does not carry this render's token was written by the author, not by step 2, and is left
         // exactly as it is. The token is gone from the output either way, so the content hash stays stable.
         html = IndexedPlaceholders.replaceAll(html, SVG_PLACEHOLDER_PREFIX + placeholderToken + "-", SVG_PLACEHOLDER_SUFFIX, inlineSvgs.size(), inlineSvgs::get);
+        // Inject sanitized MathML (or escaped source on failure) at the formula markers, also token-guarded and post-jsoup.
+        html = MathFormulaExtractor.injectMathml(html, mathFormulas, placeholderToken);
         html = GitHubAlertExtension.injectIcons(html);
 
         String containerClass = darkMode ? "artemis-problem-statement artemis-problem-statement--dark" : "artemis-problem-statement";
@@ -287,9 +272,7 @@ public class ProblemStatementRenderingService {
 
         if (includeCss) {
             StringBuilder css = new StringBuilder();
-            if (!mathFormulas.isEmpty()) {
-                css.append("<link rel=\"stylesheet\" href=\"").append(HtmlEscaper.escapeAttribute(serverUrl)).append(KATEX_BASE_PATH).append("/katex.min.css\">");
-            }
+            // Formulas are native MathML now, so no KaTeX stylesheet is shipped; embedded.css styles <math> directly.
             if (EMBEDDED_CSS != null) {
                 css.append("<style>").append(EMBEDDED_CSS).append("</style>");
             }
@@ -297,16 +280,6 @@ public class ProblemStatementRenderingService {
                 css.append("<style>").append(DARK_MODE_CSS).append("</style>");
             }
             html = css + html;
-        }
-
-        // Gated by includeJs like every other script: KaTeX is JavaScript, so a caller asking for a document without
-        // JavaScript has to get one. Without these scripts the formulas display as the source text the placeholder
-        // carries rather than as nothing.
-        if (includeJs && !mathFormulas.isEmpty()) {
-            html += "<script src=\"" + HtmlEscaper.escapeAttribute(serverUrl) + KATEX_BASE_PATH + "/katex.min.js\"></script>";
-            if (KATEX_AUTO_RENDER_JS != null) {
-                html += "<script>" + KATEX_AUTO_RENDER_JS + "</script>";
-            }
         }
 
         String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
@@ -787,7 +760,7 @@ public class ProblemStatementRenderingService {
         // Without this the tag is dropped and the text renders unmarked instead of struck through.
         safelist.addTags("del");
         safelist.addAttributes("div", "class", "data-diagram-id", "data-result", "data-feedback");
-        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode",
+        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula-index",
                 "data-authored-count", "data-not-executed-count", "data-alert-type");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");
@@ -871,7 +844,6 @@ public class ProblemStatementRenderingService {
         catch (IOException e) {
             String consequence = switch (path) {
                 case "problem-statement-js/interactive.js" -> "interactive feedback modal will not be injected";
-                case "problem-statement-js/katex-auto-render.js" -> "client-side KaTeX auto-rendering will not run; formulas will appear as empty placeholders";
                 case "problem-statement-css/embedded.css" -> "embedded styling is missing; rendered output will inherit the consumer's CSS only";
                 case "problem-statement-css/dark-mode.css" -> "dark mode overrides are unavailable; dark-mode requests will fall back to light styling";
                 default -> "asset not loaded";

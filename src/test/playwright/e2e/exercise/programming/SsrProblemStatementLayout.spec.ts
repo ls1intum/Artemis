@@ -152,9 +152,9 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
     });
 
     test('toggle ON: formulas and code are rendered and coloured inside the shadow root', async ({ login, page, exerciseAPIRequests }) => {
-        // KaTeX and highlight.js run in the client and the result is injected into the shadow root together with the
-        // server stylesheet. Neither the formula markup nor the highlight palette can be seen server-side or in jsdom,
-        // so a real browser reading computed styles inside the shadow root is the only guard that both arrived.
+        // Formulas are server-generated native MathML the browser lays out itself; highlight.js runs in the client. Neither
+        // the MathML layout nor the highlight palette can be seen server-side or in jsdom, so a real browser reading the
+        // shadow root is the only guard that both arrived.
         await login(admin);
         const richExercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
@@ -177,9 +177,10 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
         const host = page.locator('jhi-programming-exercise-instruction-ssr-content');
         await expect(host).toBeVisible({ timeout: 60_000 });
 
-        // Playwright locators pierce the open shadow root.
-        await expect(host.locator('.katex').first()).toBeVisible({ timeout: 30_000 });
-        expect(await host.locator('.katex').count(), 'both the inline and the display formula rendered').toBeGreaterThanOrEqual(2);
+        // Playwright locators pierce the open shadow root. Native MathML renders as <math> elements.
+        await expect(host.locator('math').first()).toBeVisible({ timeout: 30_000 });
+        expect(await host.locator('math').count(), 'both the inline and the display formula rendered').toBeGreaterThanOrEqual(2);
+        await expect(host.locator('math[display="block"]').first(), 'the display formula carries display=block').toBeVisible();
 
         const code = host.locator('pre code.hljs');
         await expect(code).toBeVisible();

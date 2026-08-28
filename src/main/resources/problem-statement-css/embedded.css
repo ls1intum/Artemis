@@ -735,3 +735,23 @@ i.fa.artemis-icon-no-result {
     font-style: italic;
     color: var(--secondary, #6c757d);
 }
+
+/* Native MathML (SPIKE: feature/programming/ssr-mathml-spike). Formulas are server-generated Presentation MathML that
+ * the browser renders natively, so there is no KaTeX stylesheet. Display math is set apart on its own line; inline math
+ * flows with the text at the surrounding font size. */
+math {
+    font-size: inherit;
+}
+
+math[display='block'] {
+    display: block;
+    overflow-x: auto;
+    margin: 0.5em 0;
+    text-align: center;
+}
+
+/* Shown when a formula could not be converted to MathML: its LaTeX source between delimiters. */
+.artemis-formula-source {
+    font-family: var(--artemis-ssr-code-font, monospace);
+    white-space: pre-wrap;
+}

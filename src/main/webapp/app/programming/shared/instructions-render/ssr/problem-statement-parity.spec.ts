@@ -14,7 +14,7 @@ import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/pro
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { highlightCodeBlocks, renderFormulas, sanitizeFragment } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
+import { highlightCodeBlocks, sanitizeFragment } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
 import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -279,43 +279,21 @@ function canonicalizeCodeBlocks(root: Element): void {
     });
 }
 
-function formulaToken(latex: string, displayMode: boolean): string {
-    return `#formula(display=${displayMode}, tex=${latex.trim()})`;
-}
-
 /**
- * The TeX source KaTeX keeps in its MathML annotation. DOMPurify drops the `<annotation>` element but keeps its text,
- * so the source survives as the direct text content of the `<math>` element. Taking it from there rather than from the
- * rendered `textContent` is what makes the comparison about the authored formula instead of about KaTeX's layout.
+ * Canonicalizer "formula": the two renderers deliberately diverge here (SPIKE feature/programming/ssr-mathml-spike).
+ * The legacy pipeline renders KaTeX markup; the SSR renderer emits native Presentation MathML, or an escaped-source
+ * span when SnuggleTeX cannot convert the formula. There is no cross-engine markup parity to assert any more, so both
+ * sides collapse to a single opaque token: a formula is canonicalized to "a formula is here", not to its content.
  */
-function renderedFormulaTex(element: Element): string {
-    const math = element.querySelector('math');
-    if (!math) {
-        return '';
-    }
-    return [...math.childNodes]
-        .filter((node) => node.nodeType === Node.TEXT_NODE)
-        .map((node) => node.textContent ?? '')
-        .join('');
-}
+const FORMULA_SENTINEL = '#formula';
 
-/**
- * Canonicalizer "formula": the legacy pipeline renders KaTeX during markdown conversion and emits its full markup;
- * the server emits an inert `.katex-formula` placeholder that the content component renders later. Both collapse to
- * the authored TeX plus the display mode.
- */
 function canonicalizeFormulas(root: Element): void {
-    root.querySelectorAll('span.katex-formula').forEach((placeholder) => {
-        const token = formulaToken(placeholder.getAttribute('data-formula') ?? '', placeholder.getAttribute('data-display-mode') === 'true');
-        placeholder.replaceWith(createSentinel(placeholder.ownerDocument, token));
-    });
+    root.querySelectorAll('.artemis-formula-source').forEach((source) => source.replaceWith(createSentinel(source.ownerDocument, FORMULA_SENTINEL)));
+    root.querySelectorAll('math').forEach((math) => math.replaceWith(createSentinel(math.ownerDocument, FORMULA_SENTINEL)));
     // `.katex-display` wraps a `.katex`, so the inner one must not be canonicalized a second time.
     [...root.querySelectorAll('.katex-display, .katex')]
         .filter((element) => !element.parentElement?.closest('.katex-display'))
-        .forEach((element) => {
-            const token = formulaToken(renderedFormulaTex(element), element.classList.contains('katex-display'));
-            element.replaceWith(createSentinel(element.ownerDocument, token));
-        });
+        .forEach((element) => element.replaceWith(createSentinel(element.ownerDocument, FORMULA_SENTINEL)));
 }
 
 /**
@@ -549,7 +527,7 @@ describe('problem statement rendering parity', () => {
         if (!sanitized) {
             return '';
         }
-        renderFormulas(sanitized);
+        // Formulas are server-generated MathML already present in the fragment; only code still needs client rendering.
         highlightCodeBlocks(sanitized);
         return sanitized.outerHTML;
     };
@@ -647,20 +625,9 @@ describe('problem statement rendering parity', () => {
         expect(renderedCode?.innerHTML).toBe(legacyCode?.innerHTML);
     });
 
-    it('renders the same math as the legacy pipeline, once the content component has run', () => {
-        // The server emits inert `.katex-formula` placeholders (MathFormulaExtractor.restore) and strips its own KaTeX
-        // script, so the math only exists after the content component has rendered it.
-        const placeholder = '<div class="artemis-problem-statement"><p><span class="katex-formula" data-formula="a^2 + b^2" data-display-mode="false"></span></p></div>';
-        const legacy = problemStatementRoot(htmlForMarkdown('$a^2 + b^2$'));
-        const rendered = problemStatementRoot(afterClientRendering(placeholder));
-
-        // Without these two, the comparison passes when *neither* side renders math: two empty node lists have the
-        // same length, and `undefined` equals `undefined`. The neighbouring highlighting tests guard the same way.
-        expect(legacy.querySelectorAll('.katex').length).toBeGreaterThan(0);
-        expect(legacy.querySelector('.katex-html')?.textContent).toBeTruthy();
-        expect(rendered.querySelectorAll('.katex')).toHaveLength(legacy.querySelectorAll('.katex').length);
-        expect(rendered.querySelector('.katex-html')?.textContent).toBe(legacy.querySelector('.katex-html')?.textContent);
-    });
+    // Formula rendering parity is intentionally not asserted (SPIKE feature/programming/ssr-mathml-spike): the SSR
+    // renderer now emits native MathML while the legacy pipeline emits KaTeX markup, so there is no shared markup to
+    // compare. The dedicated LatexToMathmlConverter and integration tests cover the MathML output instead.
 
     // -----------------------------------------------------------------------------------------------------------
     // Layer 4: alerts, link destinations and image sources on their own, so the signal stays visible even where a
@@ -825,25 +792,20 @@ describe('problem statement parity canonicalizers', () => {
     });
 
     describe('formula', () => {
-        it('hides the rendered KaTeX markup against the inert server placeholder', () => {
+        it('canonicalizes both the legacy KaTeX markup and the server MathML to the same opaque token', () => {
+            // No cross-engine content parity is asserted: both sides collapse to a single "a formula is here" token, so
+            // a statement whose only difference is a formula is treated as equal regardless of the rendering engine.
             const legacy = htmlForMarkdown('Inline $a^2 + b^2$ math.');
-            const rendered = server('<p>Inline <span class="katex-formula" data-formula="a^2 + b^2" data-display-mode="false"></span> math.</p>');
+            const rendered = server('<p>Inline <math xmlns="http://www.w3.org/1998/Math/MathML"><msup><mi>a</mi><mn>2</mn></msup></math> math.</p>');
 
             expect(canonicalTokens(rendered)).toEqual(canonicalTokens(legacy));
         });
 
-        it('hides the display-mode wrapper the legacy pipeline adds', () => {
-            const legacy = htmlForMarkdown('$$\n\\frac{1}{2}\n$$');
-            const rendered = server('<p><span class="katex-formula" data-formula="\\frac{1}{2}" data-display-mode="true"></span></p>');
+        it('canonicalizes the escaped-source fallback the server emits for an unconvertible formula', () => {
+            const legacy = htmlForMarkdown('Inline $a^2$ math.');
+            const rendered = server('<p>Inline <span class="artemis-formula-source">$a^2$</span> math.</p>');
 
             expect(canonicalTokens(rendered)).toEqual(canonicalTokens(legacy));
-        });
-
-        it('fails when the formula or its display mode differs', () => {
-            const rendered = server('<p><span class="katex-formula" data-formula="a^2" data-display-mode="false"></span></p>');
-
-            expect(canonicalTokens(rendered)).not.toEqual(canonicalTokens(htmlForMarkdown('$b^2$')));
-            expect(canonicalTokens(rendered)).not.toEqual(canonicalTokens(server(rendered.replace('data-display-mode="false"', 'data-display-mode="true"'))));
         });
     });
 

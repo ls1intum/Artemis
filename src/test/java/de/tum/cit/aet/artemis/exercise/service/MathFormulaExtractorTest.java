@@ -171,22 +171,48 @@ class MathFormulaExtractorTest {
         assertThat(result).isEqualTo("before\rThe area $x^2$ is known\rafter");
     }
 
-    // --- Restoring ---
+    // --- Restoring and injecting ---
+
+    private static final String TOKEN = "testtoken";
 
     @Test
-    void shouldRestoreEveryPlaceholder() {
+    void shouldRestoreEveryPlaceholderAsAMarker() {
         List<Formula> formulas = new ArrayList<>();
         String extracted = MathFormulaExtractor.extract("$$a^2$$\ntext $b^2$ text", formulas);
 
-        String restored = MathFormulaExtractor.restore(extracted, formulas);
+        String restored = MathFormulaExtractor.restore(extracted, formulas, TOKEN);
 
-        assertThat(restored).contains("data-formula=\"a^2\" data-display-mode=\"true\"").contains("data-formula=\"b^2\" data-display-mode=\"false\"");
+        assertThat(restored).contains("data-formula-index=\"" + TOKEN + "-0\"").contains("data-formula-index=\"" + TOKEN + "-1\"");
         // The placeholders are NUL-delimited, so a leftover one would still be in there.
         assertThat(restored).doesNotContain("\0");
     }
 
     @Test
     void shouldLeaveTextWithoutPlaceholdersUntouched() {
-        assertThat(MathFormulaExtractor.restore("plain text", List.of())).isEqualTo("plain text");
+        assertThat(MathFormulaExtractor.restore("plain text", List.of(), TOKEN)).isEqualTo("plain text");
+    }
+
+    @Test
+    void shouldInjectMathmlForConvertibleFormulaAndSourceForTheRest() {
+        List<Formula> formulas = new ArrayList<>();
+        String extracted = MathFormulaExtractor.extract("$x^2$ and $\\thiscommanddoesnotexist{y}$", formulas);
+        String restored = MathFormulaExtractor.restore(extracted, formulas, TOKEN);
+
+        String injected = MathFormulaExtractor.injectMathml(restored, formulas, TOKEN);
+
+        assertThat(injected).contains("<math xmlns=\"http://www.w3.org/1998/Math/MathML\">").contains("<msup><mi>x</mi><mn>2</mn></msup>");
+        assertThat(injected).contains("<span class=\"artemis-formula-source\">");
+        assertThat(injected).doesNotContain("data-formula-index");
+    }
+
+    @Test
+    void shouldNotInjectIntoAForgedMarkerCarryingAnotherToken() {
+        List<Formula> formulas = List.of(new Formula("x^2", false));
+        // A marker an author could have written: it carries a different token, so it is left as the inert span it is.
+        String forged = "<span class=\"artemis-formula-placeholder\" data-formula-index=\"otherToken-0\"></span>";
+
+        String injected = MathFormulaExtractor.injectMathml(forged, formulas, TOKEN);
+
+        assertThat(injected).isEqualTo(forged).doesNotContain("<math");
     }
 }
