@@ -116,9 +116,16 @@ artemis:
     jwtBase64Secret: ""
 
     versionControl:
-      # LocalVC git username/password Artemis and Hades use to clone repos.
+      # LocalVC git username/password the Hades clone container uses to clone the assignment/test repos.
+      # A Hades node runs `localvc,hades` (not `localci`), so - like the Jenkins-with-LocalVC setup - it
+      # authenticates build clones with this shared credential pair. Since ls1intum/Artemis#13515 the node
+      # REFUSES TO START without both set (LocalVCBuildAgentCredentialsValidator), and the password is what
+      # authorizes every Hades clone. Keep buildAgentUseSsh false so this HTTPS credential path stays active.
       buildAgentGitUsername: "buildjob_user"
-      buildAgentGitPassword: ""  # REQUIRED
+      buildAgentGitPassword: ""  # REQUIRED (node fails startup if empty)
+      # Must stay false for Hades: the clone container authenticates over HTTPS with the credentials above.
+      # true would switch build agents to ssh-key auth, which Hades does not use.
+      buildAgentUseSsh: false
 
     # External Hades build system (runs OUTSIDE this chart).
     hades:
@@ -141,9 +148,12 @@ artemis:
       # MUST be at least 12 characters (validated at startup) and match the
       # value configured in the hades-artemis-adapter. Change in production.
       artemisAuthenticationTokenValue: "change-me-artemis-token"
-      # Container images for the Hades pipeline steps (public defaults).
-      cloneImage: "ghcr.io/ls1intum/hades/hades-clone-container:latest"
-      resultParserImage: "ghcr.io/ls1intum/hades/junit-result-parser:latest"
+      # Container images for the Hades pipeline steps (released, version-pinned images from the
+      # Hades-Scheduler org; these override the app's application-hades.yml defaults). git-container:1.1.0
+      # provides the exact-commit checkout used by HADES_ASSIGNMENT_COMMIT / HADES_TEST_COMMIT; an older
+      # clone image would build the branch HEAD instead of the scheduled commit.
+      cloneImage: "ghcr.io/hades-scheduler/git-container:1.1.0"
+      resultParserImage: "ghcr.io/hades-scheduler/hades/junit-result-parser:1.0.0"
 
 # -----------------------------------------------------------------------------
 # Shared storage (ReadWriteMany) mounted at /opt/artemis/data on all nodes.

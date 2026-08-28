@@ -44,6 +44,8 @@ data:
 
   # ---- LocalVC build-agent git identity (Hades clones repos with these) ----
   ARTEMIS_VERSIONCONTROL_BUILDAGENTGITUSERNAME: {{ .Values.artemis.config.versionControl.buildAgentGitUsername | quote }}
+  # Must stay false for Hades: the clone container authenticates over HTTPS with the shared credential above.
+  ARTEMIS_VERSIONCONTROL_BUILDAGENTUSESSH: {{ .Values.artemis.config.versionControl.buildAgentUseSsh | quote }}
 
   # ---- User management ----
   ARTEMIS_USERMANAGEMENT_USEEXTERNAL: "false"

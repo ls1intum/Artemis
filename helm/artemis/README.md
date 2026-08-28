@@ -167,10 +167,20 @@ deployment via:
 | `artemis.config.hades.authKey` | `...hades.auth-key` | Basic-Auth password Artemis sends (username `hades`). |
 | `artemis.config.hades.adapterEndpoint` | `...hades.adapter.endpoint` | Where Hades' result parser posts results. **Leave empty** to auto-target the bundled adapter (below). |
 | `artemis.config.hades.artemisAuthenticationTokenValue` | `...artemis-authentication-token-value` | Token the adapter presents on Artemis' `new-result` callback (≥ 12 chars). |
-| `artemis.config.hades.cloneImage` / `resultParserImage` | `...hades.images.*` | Public Hades pipeline images (defaults are fine). |
+| `artemis.config.hades.cloneImage` / `resultParserImage` | `...hades.images.*` | Pinned Hades pipeline images. Default clone image `ghcr.io/hades-scheduler/git-container:1.1.0` performs the exact-commit checkout; an older image builds branch HEAD instead of the scheduled commit. |
+| `artemis.config.versionControl.buildAgentUseSsh` | `...build-agent-use-ssh` | **Must stay `false`** - the Hades clone container authenticates over HTTPS with the shared credential below. |
 
-Even with Hades, LocalVC still hosts the exercise repositories, so `artemis.config.versionControl.buildAgentGitUsername`
-/ `buildAgentGitPassword` must be set - Hades uses them to clone. See `documentation/docs/admin/hades-setup.mdx`.
+### Repository clone authentication
+
+Even with Hades, LocalVC still hosts the exercise repositories, and the Hades clone container clones them over HTTPS
+with the shared `artemis.config.versionControl.buildAgentGitUsername` / `buildAgentGitPassword`. A Hades node runs
+`localvc,hades` (not `localci`), so - exactly like the Jenkins-with-LocalVC setup - it uses this shared credential pair
+rather than the per-build-job clone tokens that LocalCI build agents use.
+
+Since [ls1intum/Artemis#13515](https://github.com/ls1intum/Artemis/pull/13515) this is enforced at startup: the node
+**refuses to start** unless both `buildAgentGitUsername` and `buildAgentGitPassword` are set and `buildAgentUseSsh` is
+`false`. The password is what authorizes every Hades clone. (Artemis marks this shared-credential path as deprecated but
+keeps it supported for non-LocalCI nodes.) See `documentation/docs/admin/hades-setup.mdx`.
 
 ### hades-artemis-adapter (bundled)
 
