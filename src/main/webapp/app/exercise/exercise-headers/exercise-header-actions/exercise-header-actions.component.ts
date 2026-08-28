@@ -55,7 +55,7 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
-import { TumUiCheckboxChangeEvent, TumUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent } from '@tumaet/ui-angular';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -86,7 +86,7 @@ export const AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY = 'artemisApp.aiFee
         RequestFeedbackButtonComponent,
         NgbPopover,
         TranslatePipe,
-        TumUiCheckboxComponent,
+        TumUiButtonComponent,
     ],
     providers: [ExternalCloningService],
 })
@@ -516,12 +516,10 @@ export class ExerciseHeaderActionsComponent {
         this.submitPopoverRef()?.open();
     }
 
-    onDontShowAiFeedbackPopoverAgainChange(event: TumUiCheckboxChangeEvent) {
-        this.aiFeedbackPopoverDismissed.set(event.checked);
-        this.localStorageService.store(AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY, event.checked);
-        if (event.checked) {
-            this.closeSubmitPopover();
-        }
+    dismissAiFeedbackPopoverPermanently() {
+        this.aiFeedbackPopoverDismissed.set(true);
+        this.localStorageService.store(AI_FEEDBACK_POPOVER_DISMISSED_LOCAL_STORAGE_KEY, true);
+        this.closeSubmitPopover();
     }
 
     @HostListener('document:click', ['$event'])

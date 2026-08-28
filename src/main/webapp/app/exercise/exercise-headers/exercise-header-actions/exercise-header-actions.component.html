@@ -285,19 +285,15 @@
     } @else {
         <p class="mb-2" jhiTranslate="artemisApp.exerciseActions.aiFeedbackAvailableHint"></p>
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-2">
-                <tum-ui-checkbox
-                    inputId="ai-feedback-popover-dont-show-again"
-                    name="ai-feedback-popover-dont-show-again"
-                    [checked]="aiFeedbackPopoverDismissed()"
-                    (changed)="onDontShowAiFeedbackPopoverAgainChange($event)"
-                />
-                <label
-                    for="ai-feedback-popover-dont-show-again"
-                    class="mb-0 small text-muted cursor-pointer"
-                    jhiTranslate="artemisApp.exercise.aiFeedbackPopover.dontShowAgain"
-                ></label>
-            </div>
+            <tum-ui-button
+                variant="outlined"
+                severity="secondary"
+                size="small"
+                [id]="'ai-feedback-popover-dont-show-again-' + exercise().id"
+                (clicked)="dismissAiFeedbackPopoverPermanently()"
+            >
+                <span jhiTranslate="artemisApp.exercise.aiFeedbackPopover.dontShowAgain"></span>
+            </tum-ui-button>
             <span (click)="closeSubmitPopover()">
                 <jhi-request-feedback-button
                     [exercise]="exercise()"
