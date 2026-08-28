@@ -180,8 +180,17 @@ public class BuildAgentInformationService {
                 // Add/update
                 BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
 
-                log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(),
-                        info.buildAgent().memberAddress(), info.buildAgent().displayName());
+                // The status is logged because it is the field this map is consulted for, and it was the one field this
+                // line omitted. Every caller passes the pause state in as an argument that it read before taking the
+                // lock, so a publish that was already in flight can carry a stale value and overwrite a pause another
+                // thread has just written. testBuildAgentPausesAfterConsecutiveFailures times out waiting for
+                // SELF_PAUSED in about 3 of 71 runs, and the run that was investigated made 1826 publishes through
+                // here - so an overwrite is entirely plausible and was impossible to confirm, because no log line said
+                // what any of those publishes actually stored.
+                log.debug(
+                        "Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}', status='{}', isPaused={}, isPausedDueToFailures={}, consecutiveFailures={}",
+                        agentKey, info.buildAgent().name(), info.buildAgent().memberAddress(), info.buildAgent().displayName(), info.status(), isPaused, isPausedDueToFailures,
+                        consecutiveFailures);
 
                 // Use the agent's short name as key for stable identification
                 distributedDataAccessService.getDistributedBuildAgentInformation().put(agentKey, info);
