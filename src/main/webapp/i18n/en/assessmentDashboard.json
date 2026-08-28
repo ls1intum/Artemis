@@ -10,7 +10,7 @@
             "assessmentInformation": "Assessment Information",
             "submissions": "Submissions",
             "pageHeader": "Assessment Dashboard for course",
-            "pageHeaderExam": "Assessment Dashboard for exam",
+            "pageHeaderExam": "Assessment Dashboard",
             "pageHeaderExamTestRun": "Test Run Assessment Dashboard",
             "assessments": "Assessments",
             "assessmentsChartAriaLabel": "Pie chart showing how the submissions are distributed across assessment states",
