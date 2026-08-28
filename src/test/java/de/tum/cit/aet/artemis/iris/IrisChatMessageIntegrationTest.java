@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -101,6 +102,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     private IrisMessageService irisMessageService;
 
     @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
+
+    @Autowired
     private IrisSessionRepository irisSessionRepository;
 
     @Autowired
@@ -139,7 +143,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     void initMessageTestState() {
         pipelineDone = new AtomicBoolean(false);
         memirisFeatureEnabledBeforeTest = featureToggleService.isFeatureEnabled(Feature.Memiris);
-        student1MemirisEnabledBeforeTest = userUtilService.getUserByLogin(TEST_PREFIX + "student1").isMemirisEnabled();
+        student1MemirisEnabledBeforeTest = userAiPreferenceService.isMemirisEnabled(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId());
     }
 
     @AfterEach
@@ -151,7 +155,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
             featureToggleService.disableFeature(Feature.Memiris);
         }
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        userTestRepository.updateMemirisEnabled(user.getId(), student1MemirisEnabledBeforeTest);
+        userAiPreferenceService.setMemirisEnabled(user.getId(), student1MemirisEnabledBeforeTest);
     }
 
     // =========================================================================
@@ -203,8 +207,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessage_disablesMemirisInPyrisDtoWhenFeatureDisabled() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        user.setMemirisEnabled(true);
-        userTestRepository.saveAndFlush(user);
+        userUtilService.setMemirisEnabled(user, true);
         featureToggleService.disableFeature(Feature.Memiris);
 
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
@@ -217,7 +220,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         request.postWithoutResponseBody(messagesUrl(session), messageToSend, HttpStatus.CREATED);
         await().until(pipelineDone::get);
-        assertThat(userTestRepository.findByIdElseThrow(user.getId()).isMemirisEnabled()).isTrue();
+        // the toggle suppresses Memiris for this request without touching what the account itself chose
+        assertThat(userAiPreferenceService.isMemirisEnabled(user.getId())).isTrue();
     }
 
     @Test

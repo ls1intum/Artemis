@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -64,6 +65,8 @@ public class PyrisPipelineService {
 
     private final IrisChatWebsocketService irisChatWebsocketService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final CourseLoadService courseLoadService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -80,8 +83,9 @@ public class PyrisPipelineService {
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            CourseLoadService courseLoadService, FeatureToggleService featureToggleService) {
+            CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService) {
         this.pyrisConnectorService = pyrisConnectorService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -154,7 +158,7 @@ public class PyrisPipelineService {
         var pyrisUser = toPyrisUserDTO(user);
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
-        executePipeline("chat", user.getSelectedLLMUsage(), variant, supportLevel, eventVariant,
+        executePipeline("chat", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, eventVariant,
             pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId, clientId),
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error));
@@ -195,14 +199,14 @@ public class PyrisPipelineService {
         // @formatter:off
         executePipeline(
             "tutor-suggestion",
-            user.getSelectedLLMUsage(),
+            userAiPreferenceService.findDecision(user.getId()),
             variant,
             supportLevel,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                new PyrisPostDTO(post),
+                new PyrisPostDTO(post, userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post))),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 toPyrisUserDTO(user),
                 executionDto.settings(),
@@ -217,7 +221,7 @@ public class PyrisPipelineService {
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {
-        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && user.isMemirisEnabled());
+        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && userAiPreferenceService.isMemirisEnabled(user.getId()));
     }
 
     /**

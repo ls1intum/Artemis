@@ -54,7 +54,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry1", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry2", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
-        submission.setBuildLogEntries(buildLogEntries);
+        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
 
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
 

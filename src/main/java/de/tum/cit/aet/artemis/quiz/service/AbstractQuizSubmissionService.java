@@ -3,8 +3,9 @@ package de.tum.cit.aet.artemis.quiz.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.HashSet;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -33,34 +35,38 @@ public abstract class AbstractQuizSubmissionService<T extends QuizSubmission> {
     /**
      * Save the given submission to the database.
      *
-     * @param quizExercise the QuizExercise of which the given submission belongs to
-     * @param submission   the QuizSubmission to be saved
-     * @param user         the User that made the given submission
+     * @param quizExercise              the QuizExercise of which the given submission belongs to
+     * @param submission                the QuizSubmission to be saved
+     * @param user                      the User that made the given submission
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return saved QuizSubmission
      */
-    protected abstract T save(QuizExercise quizExercise, T submission, User user);
+    protected abstract T save(QuizExercise quizExercise, T submission, User user, @Nullable StudentParticipation participationFromExamGate);
 
     /**
      * Updates a submission for the exam mode
      *
-     * @param quizExercise   the quiz exercise for which the submission for the exam mode should be done
-     * @param quizSubmission the quiz submission includes the submitted answers by the student
-     * @param user           the student who wants to submit the quiz during the exam
+     * @param quizExercise              the quiz exercise for which the submission for the exam mode should be done
+     * @param quizSubmission            the quiz submission includes the submitted answers by the student
+     * @param user                      the student who wants to submit the quiz during the exam
+     * @param participationFromExamGate the participation the exam submission gate already resolved, or null when the
+     *                                      caller has none and it has to be looked up here
      * @return the updated quiz submission after it has been saved to the database
      */
-    public T saveSubmissionForExamMode(QuizExercise quizExercise, T quizSubmission, User user) {
+    public T saveSubmissionForExamMode(QuizExercise quizExercise, T quizSubmission, User user, @Nullable StudentParticipation participationFromExamGate) {
         // update submission properties
         quizSubmission.setSubmitted(true);
         quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        quizSubmission.setResults(new ArrayList<>());
-        T savedQuizSubmission = this.save(quizExercise, quizSubmission, user);
+        quizSubmission.setResults(new HashSet<>());
+        T savedQuizSubmission = this.save(quizExercise, quizSubmission, user, participationFromExamGate);
 
         // versioning of submission
         try {
-            submissionVersionService.saveVersionForIndividual(quizSubmission, user);
+            submissionVersionService.saveVersionForIndividualAsync(quizSubmission, user);
         }
         catch (Exception ex) {
             log.error("Quiz submission version could not be saved", ex);

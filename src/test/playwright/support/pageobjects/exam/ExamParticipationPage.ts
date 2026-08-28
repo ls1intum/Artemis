@@ -9,6 +9,7 @@ import { ExamStartEndPage } from './ExamStartEndPage';
 import { ModelingEditor } from '../exercises/modeling/ModelingEditor';
 import { MultipleChoiceQuiz } from '../exercises/quiz/MultipleChoiceQuiz';
 import { TextEditorPage } from '../exercises/text/TextEditorPage';
+import { FileUploadEditorPage } from '../exercises/file-upload/FileUploadEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
@@ -21,6 +22,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
     private readonly programmingExerciseEditor: OnlineEditorPage;
     private readonly quizExerciseMultipleChoice: MultipleChoiceQuiz;
     private readonly textExerciseEditor: TextEditorPage;
+    private readonly fileUploadExerciseEditor: FileUploadEditorPage;
 
     constructor(
         examNavigation: ExamNavigationBar,
@@ -30,6 +32,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
         quizExerciseMultipleChoice: MultipleChoiceQuiz,
         textExerciseEditor: TextEditorPage,
         page: Page,
+        fileUploadExerciseEditor: FileUploadEditorPage = new FileUploadEditorPage(page),
     ) {
         super(page);
         this.examNavigation = examNavigation;
@@ -38,6 +41,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
         this.programmingExerciseEditor = programmingExerciseEditor;
         this.quizExerciseMultipleChoice = quizExerciseMultipleChoice;
         this.textExerciseEditor = textExerciseEditor;
+        this.fileUploadExerciseEditor = fileUploadExerciseEditor;
     }
 
     async makeSubmission(exerciseID: number, exerciseType: ExerciseType, additionalData?: AdditionalData) {
@@ -50,6 +54,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
                 break;
             case ExerciseType.QUIZ:
                 await this.makeQuizExerciseSubmission(exerciseID);
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                await this.makeFileUploadExerciseSubmission(additionalData!.fileUploadFixture!);
                 break;
             case ExerciseType.PROGRAMMING:
                 await this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode, additionalData!.skipBuildResultCheck);
@@ -82,6 +89,12 @@ export class ExamParticipationPage extends ExamParticipationActions {
                 timeout: BUILD_RESULT_TIMEOUT * 2,
             });
         }
+    }
+
+    private async makeFileUploadExerciseSubmission(fileUploadFixture: string) {
+        // The exam variant attaches the file and confirms it right away; there is no separate save step, the exam's
+        // own "save and continue" is what persists the submission.
+        await this.fileUploadExerciseEditor.attachFileExam(Fixtures.getAbsoluteFilePath(fileUploadFixture));
     }
 
     private async makeModelingExerciseSubmission(exerciseID: number) {

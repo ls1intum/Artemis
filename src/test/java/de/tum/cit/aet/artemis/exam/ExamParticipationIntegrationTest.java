@@ -863,7 +863,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
                         var submittedAnswer = QuizExerciseFactory.generateSubmittedAnswerFor(quizQuestion, true);
                         var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
                         quizSubmission.addSubmittedAnswers(submittedAnswer);
-                        quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow());
+                        quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().orElseThrow(), null);
                     }
                 }
 
@@ -997,9 +997,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
             assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(epsilon));
 
             double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
-            if (!withSecondCorrectionAndStarted) {
-                assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
-            }
+            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(epsilon));
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;

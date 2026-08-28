@@ -33,7 +33,11 @@ public class SubmissionVersionService {
 
     private final ObjectMapper objectMapper;
 
-    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, ObjectMapper objectMapper) {
+    private final AsyncSubmissionVersionService asyncSubmissionVersionService;
+
+    public SubmissionVersionService(SubmissionVersionRepository submissionVersionRepository, UserRepository userRepository, ObjectMapper objectMapper,
+            AsyncSubmissionVersionService asyncSubmissionVersionService) {
+        this.asyncSubmissionVersionService = asyncSubmissionVersionService;
         this.submissionVersionRepository = submissionVersionRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
@@ -73,6 +77,27 @@ public class SubmissionVersionService {
         version.setSubmission(submission);
         version.setContent(getSubmissionContent(submission));
         return submissionVersionRepository.save(version);
+    }
+
+    /**
+     * Saves a version for the given individual submission without making the caller wait for the write.
+     * <p>
+     * The content is serialized here, on the calling thread, so only identifiers and a finished {@code String} cross
+     * the thread boundary. Handing the entities themselves to another thread would mean touching them outside the
+     * session that loaded them, which is what usually makes this kind of change go wrong.
+     * <p>
+     * Nothing in the request reads the version back, so the student does not need to wait for it. If the executor is
+     * saturated the write happens on the calling thread instead, which is no worse than the previous behaviour: this is
+     * the student's own work and must not be dropped.
+     *
+     * @param submission Submission for which to save a version
+     * @param user       Author of the submission update
+     */
+    public void saveVersionForIndividualAsync(Submission submission, User user) {
+        long submissionId = submission.getId();
+        long userId = user.getId();
+        String content = getSubmissionContent(submission);
+        asyncSubmissionVersionService.write(submissionId, userId, content);
     }
 
     private SubmissionVersion updateExistingVersion(SubmissionVersion version, Submission submission) {
