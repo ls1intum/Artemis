@@ -207,13 +207,6 @@ describe('NavbarComponent', () => {
     });
 
     describe('perspective switch links', () => {
-        const studentCourse = {
-            id: 123,
-            title: 'Course1',
-            isAtLeastTutor: false,
-            isAtLeastEditor: false,
-            isAtLeastInstructor: false,
-        } as Course;
         const tutorCourse = {
             id: 123,
             title: 'Course1',
@@ -236,8 +229,41 @@ describe('NavbarComponent', () => {
             isAtLeastInstructor: true,
         } as Course;
 
-        beforeEach(() => {
+        it.each(['/courses/123', '/courses/123/exercises/1/problem-statement', '/course-management/123/exams/1'])(
+            'should show the perspective switch in course context for %s',
+            (url) => {
+                router.setUrl(url);
+
+                expect(component.perspectiveSwitchLinks()).toBeDefined();
+            },
+        );
+
+        it.each(['/courses', '/course-management', '/admin/user-management', '/courses/archive'])('should hide the perspective switch outside course context for %s', (url) => {
+            router.setUrl(url);
+
+            expect(component.perspectiveSwitchLinks()).toBeUndefined();
+        });
+
+        it('should hide the perspective switch without management access in the course', () => {
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isAtLeastTutorInCourseWithId').mockReturnValue(false);
+            router.setUrl('/courses/123/exercises');
+
+            expect(component.perspectiveSwitchLinks()).toBeUndefined();
+        });
+
+        it('should derive perspective links from the route even when another course is in the shared context', () => {
+            const accountService = TestBed.inject(AccountService);
+            const tutorAccessSpy = vi.spyOn(accountService, 'isAtLeastTutorInCourseWithId');
+            const editorAccessSpy = vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId');
+            const instructorAccessSpy = vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId');
             currentCourseContextService.setCourse(instructorCourse);
+            router.setUrl('/courses/456/exercises');
+
+            expect(component.perspectiveSwitchLinks()).toBeDefined();
+            expect(tutorAccessSpy).toHaveBeenCalledWith(456);
+            expect(editorAccessSpy).toHaveBeenCalledWith(456);
+            expect(instructorAccessSpy).toHaveBeenCalledWith(456);
         });
 
         it.each([
@@ -254,24 +280,20 @@ describe('NavbarComponent', () => {
         ])('should link from management route %s to corresponding student route', (url, expectedLink) => {
             router.setUrl(url);
 
-            expect(component.studentViewLink()).toEqual(expectedLink);
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(expectedLink);
         });
 
         it('should default student view link to the course overview when route has no student equivalent', () => {
             router.setUrl('/course-management/123/build-overview');
 
-            expect(component.studentViewLink()).toEqual(['/courses', '123']);
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123']);
         });
 
-        it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])(
-            'should default perspective links to their overviews outside course routes for %s',
-            (url) => {
-                router.setUrl(url);
+        it.each(['/admin/upcoming-exams-and-exercises', '/exams/rooms', '/lti/exercises/123'])('should not provide perspective links outside course routes for %s', (url) => {
+            router.setUrl(url);
 
-                expect(component.studentViewLink()).toEqual(['/courses']);
-                expect(component.managementViewLink()).toEqual(['/course-management']);
-            },
-        );
+            expect(component.perspectiveSwitchLinks()).toBeUndefined();
+        });
 
         it.each([
             { url: '/courses/123/exams/1', course: tutorCourse, expected: ['/course-management', '123', 'exams'] },
@@ -284,36 +306,38 @@ describe('NavbarComponent', () => {
             { url: '/courses/123/tutorial-groups', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups'] },
             { url: '/courses/123/statistics', course: tutorCourse, expected: ['/course-management', '123', 'course-statistics'] },
         ])('should link from student route $url to corresponding management route', ({ url, course, expected }) => {
-            currentCourseContextService.setCourse(course);
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(course.isAtLeastEditor ?? false);
+            vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId').mockReturnValue(course.isAtLeastInstructor ?? false);
             router.setUrl(url);
 
-            expect(component.managementViewLink()).toEqual(expected);
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(expected);
         });
 
         it('should default management view link to the course management overview when route has no management equivalent', () => {
             router.setUrl('/courses/123/settings');
 
-            expect(component.managementViewLink()).toEqual(['/course-management', '123']);
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123']);
         });
 
         it.each([
-            { course: studentCourse, url: '/courses/123/exercises', expected: ['/course-management'] },
             { course: tutorCourse, url: '/courses/123/lectures/1', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/learning-path', expected: ['/course-management', '123'] },
             { course: editorCourse, url: '/courses/123/competencies', expected: ['/course-management', '123'] },
         ])('should default management view link when access is missing for $url', ({ course, url, expected }) => {
-            currentCourseContextService.setCourse(course);
+            const accountService = TestBed.inject(AccountService);
+            vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId').mockReturnValue(course.isAtLeastEditor ?? false);
+            vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId').mockReturnValue(course.isAtLeastInstructor ?? false);
             router.setUrl(url);
 
-            expect(component.managementViewLink()).toEqual(expected);
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(expected);
         });
 
-        it('should omit the course id from base perspective links when no current course is available', () => {
+        it('should provide perspective links without a current course', () => {
             currentCourseContextService.clearCourse();
-            router.setUrl('/courses');
+            router.setUrl('/courses/123');
 
-            expect(component.studentViewLink()).toEqual(['/courses']);
-            expect(component.managementViewLink()).toEqual(['/course-management']);
+            expect(component.perspectiveSwitchLinks()).toBeDefined();
         });
     });
 

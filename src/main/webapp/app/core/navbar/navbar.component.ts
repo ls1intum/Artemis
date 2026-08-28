@@ -41,7 +41,6 @@ import { CurrentCourseContextService } from 'app/course/shared/services/current-
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
 import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
-import { Course } from 'app/course/shared/entities/course.model';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
 
 @Component({
@@ -135,8 +134,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly currentRoute = getCurrentRouteSignal(this.router);
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
-    readonly studentViewLink = computed(() => this.getStudentViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
-    readonly managementViewLink = computed(() => this.getManagementViewLinkFromRoute(this.currentRoute(), this.currentCourse()));
+    readonly perspectiveSwitchLinks = computed(() => this.computePerspectiveSwitchLinks());
 
     courseTitle = signal<string | undefined>(undefined);
     exerciseTitle = signal<string | undefined>(undefined);
@@ -754,12 +752,32 @@ export class NavbarComponent implements OnInit, OnDestroy {
         return /(^|\/)course-management(\/|$)/.test(url.split('?')[0]);
     }
 
-    private getStudentViewLinkFromRoute(url: string, course: Course | undefined): string[] {
-        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/courses'];
+    private computePerspectiveSwitchLinks(): PerspectiveSwitchLinks | undefined {
+        const currentRoute = this.currentRoute();
+        const path = currentRoute.split(/[?#]/)[0];
+        const coursePathMatch = /^\/(?:courses|course-management)\/(\d+)(?:\/|$)/.exec(path);
+        if (!coursePathMatch) {
+            return undefined;
+        }
 
-        const courseId = course?.id?.toString();
+        const courseId = Number(coursePathMatch[1]);
+        const isAtLeastTutor = this.accountService.isAtLeastTutorInCourseWithId(courseId);
+        if (!isAtLeastTutor) {
+            return undefined;
+        }
 
-        const baseStudentPath = courseId ? ['/courses', courseId] : ['/courses'];
+        const isAtLeastEditor = this.accountService.isAtLeastEditorInCourseWithId(courseId);
+        const isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourseWithId(courseId);
+        const courseIdAsString = courseId.toString();
+        return {
+            studentViewLink: this.getStudentViewLinkFromRoute(currentRoute, courseIdAsString),
+            managementViewLink: this.getManagementViewLinkFromRoute(currentRoute, courseIdAsString, isAtLeastEditor, isAtLeastInstructor),
+        };
+    }
+
+    private getStudentViewLinkFromRoute(url: string, courseId: string): string[] {
+        const baseStudentPath = ['/courses', courseId];
+
         const routeMappings = [
             { urlParts: ['exams'], targetPath: [...baseStudentPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseStudentPath, 'exercises'] },
@@ -771,7 +789,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['tutorial-groups', 'tutorial-groups-checklist'], targetPath: [...baseStudentPath, 'tutorial-groups'] },
             { urlParts: ['course-statistics'], targetPath: [...baseStudentPath, 'statistics'] },
         ];
-
         const matchedRoute = routeMappings.find((route) => {
             return route.urlParts.some((urlPart) => url.includes(urlPart));
         });
@@ -782,17 +799,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         return baseStudentPath;
     }
 
-    private getManagementViewLinkFromRoute(url: string, course: Course | undefined): string[] {
-        if (!this.isStudentCourseViewRoute(url) && !this.isCourseManagementViewRoute(url)) return ['/course-management'];
-
-        const courseId = course?.id?.toString();
-        const isAtLeastTutorInCourse = !!course?.isAtLeastTutor;
-        const isAtLeastEditorInCourse = !!course?.isAtLeastEditor;
-        const isAtLeastInstructorInCourse = !!course?.isAtLeastInstructor;
-
-        if (!isAtLeastTutorInCourse) return ['/course-management'];
-
-        const baseManagementPath = courseId ? ['/course-management', courseId] : ['/course-management'];
+    private getManagementViewLinkFromRoute(url: string, courseId: string, isAtLeastEditor: boolean, isAtLeastInstructor: boolean): string[] {
+        const baseManagementPath = ['/course-management', courseId];
         const routeMappings = [
             { urlParts: ['exams'], targetPath: [...baseManagementPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },
@@ -813,9 +821,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return baseManagementPath;
         }
 
-        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditorInCourse;
-        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructorInCourse;
-        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructorInCourse;
+        const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
+        const targetIsLearningPathButUserNotAllowed = matchedRoute.urlParts.includes('learning-path') && !isAtLeastInstructor;
+        const targetIsCompetenciesButUserNotAllowed = matchedRoute.urlParts.includes('competencies') && !isAtLeastInstructor;
 
         if (targetIsLecturesButUserNotAllowed || targetIsLearningPathButUserNotAllowed || targetIsCompetenciesButUserNotAllowed) {
             return baseManagementPath;
@@ -970,4 +978,9 @@ class Breadcrumb {
     label!: string;
     uri!: string;
     translate!: boolean;
+}
+
+interface PerspectiveSwitchLinks {
+    studentViewLink: string[];
+    managementViewLink: string[];
 }
