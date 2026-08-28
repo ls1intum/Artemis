@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -28,6 +29,7 @@ public class ConversationParticipant extends DomainObject {
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "firstName", "lastName" })
+    @JoinColumn(nullable = false)
     @NonNull
     private User user;
 
