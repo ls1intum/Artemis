@@ -54,6 +54,9 @@ import { ExamStudentDTO, ExamStudentSearch } from 'app/exam/manage/students/exam
 import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
+import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 interface MenuCommandEvent {
     originalEvent?: Event;
@@ -85,6 +88,8 @@ interface MenuCommandEvent {
         TableViewComponent,
         ConfirmDialog,
         FilterDropdownComponent,
+        CourseTitleBarActionsDirective,
+        CourseTitleBarTitleDirective,
     ],
     providers: [DialogService, ConfirmationService],
 })
