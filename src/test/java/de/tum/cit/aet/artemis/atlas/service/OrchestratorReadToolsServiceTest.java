@@ -10,6 +10,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,11 +53,15 @@ class OrchestratorReadToolsServiceTest {
 
     private ToolContext toolContext;
 
+    private AtomicInteger workerReadCount;
+
     @BeforeEach
     void setUp() {
         service = new OrchestratorReadToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, contentExtractionService);
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
+        workerReadCount = new AtomicInteger();
+        ctx.put(OrchestratorToolContextKeys.WORKER_READ_COUNT_KEY, workerReadCount);
         toolContext = new ToolContext(ctx);
     }
 
@@ -73,6 +78,7 @@ class OrchestratorReadToolsServiceTest {
         String result = service.getCompetencyDetails(5L, toolContext);
 
         assertThat(result).contains("\"title\":\"Hash Maps in Practice\"").contains("\"weight\":0.5");
+        assertThat(workerReadCount).hasValue(1);
     }
 
     @Test
@@ -93,6 +99,7 @@ class OrchestratorReadToolsServiceTest {
         String result = service.getExerciseContent(20L, toolContext);
 
         assertThat(result).contains("Implement Quicksort").contains("Sort an array in O(n log n).").contains("programming");
+        assertThat(workerReadCount).hasValue(1);
     }
 
     @Test
