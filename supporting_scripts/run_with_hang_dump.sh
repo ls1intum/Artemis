@@ -8,7 +8,7 @@ set -euo pipefail
 
 # The window this watchdog works in, all of it inside the 55-minute Gradle Test task timeout:
 #   - nothing happens before EARLIEST_DUMP_MINUTES, so a normal run is never touched
-#   - between then and LATEST_DUMP_MINUTES a dump happens as soon as the run goes quiet
+#   - between then and LATEST_DUMP_MINUTES a dump starts as soon as the run goes quiet
 #   - after LATEST_DUMP_MINUTES no dump is started, leaving DUMP_PHASE_SECONDS for the dump itself
 readonly EARLIEST_DUMP_MINUTES=45
 readonly LATEST_DUMP_MINUTES=50
@@ -20,64 +20,92 @@ readonly POLL_SECONDS=30
 # Budget for the whole dump phase across every JVM, not per JVM: with a per-JVM timeout one unreachable
 # process could eat the entire remaining window and the JVMs that mattered would never be dumped.
 readonly DUMP_PHASE_SECONDS=240
+# `timeout` only sends TERM, which a jcmd wedged in an attach can ignore, so every bounded call gets a
+# --kill-after grace as well. The grace is reserved out of the shared budget rather than added to it, so
+# the last KILL still lands inside DUMP_PHASE_SECONDS.
+readonly DUMP_GRACE_SECONDS=15
+readonly JVM_LIST_SECONDS=30
 readonly DUMP_DIR=build/hang-thread-dumps
 readonly LOG_FILE=tests.log
+
+now() { date +%s; }
 
 log_size() {
     [ -f "$LOG_FILE" ] && wc -c < "$LOG_FILE" || echo 0
 }
 
 dump_all_jvms() {
-    local deadline=$(( $(date +%s) + DUMP_PHASE_SECONDS ))
+    local deadline=$(( $(now) + DUMP_PHASE_SECONDS ))
     mkdir -p "$DUMP_DIR"
-    # A dump only happens once the run is already hung and therefore already lost to the Gradle timeout, so
-    # a dump cut short here costs nothing. What must not happen is dumping a *healthy* JVM and wedging it,
-    # which is what the silence gate above prevents.
-    jcmd -l | awk '{print $1}' | while read -r pid; do
-        local remaining=$(( deadline - $(date +%s) ))
-        if [ "$remaining" -le 0 ]; then
+
+    # Bounded as well: `jcmd -l` attaches to every JVM to read its name and can hang on the very process
+    # this is here to diagnose. Captured into a variable rather than piped, so the loop below runs in this
+    # shell and its deadline check can actually stop it.
+    local pids=''
+    # Only numeric first fields: jcmd can emit a warning or an attach diagnostic, and passing one of those on as a
+    # pid would create a junk dump file and waste part of the shared budget.
+    pids=$(timeout --kill-after="$DUMP_GRACE_SECONDS" "$JVM_LIST_SECONDS" jcmd -l 2>/dev/null | awk '$1 ~ /^[0-9]+$/ {print $1}') || true
+    if [ -z "$pids" ]; then
+        echo "::warning::Could not list JVMs within ${JVM_LIST_SECONDS}s; no thread dumps captured."
+        return
+    fi
+
+    local pid remaining budget
+    for pid in $pids; do
+        remaining=$(( deadline - $(now) ))
+        # Needs room for TERM plus the KILL grace, or the dump cannot finish inside the shared budget.
+        if [ "$remaining" -le $(( DUMP_GRACE_SECONDS + 1 )) ]; then
             echo "::warning::Dump budget of ${DUMP_PHASE_SECONDS}s exhausted; skipping the remaining JVMs."
             break
         fi
+        budget=$(( remaining - DUMP_GRACE_SECONDS ))
         # `jcmd Thread.print -l` rather than `jstack -l`: same deadlock and lock information, and it is the
         # supported way to ask a live JVM for a dump.
-        timeout "$remaining" jcmd "$pid" Thread.print -l > "$DUMP_DIR/threaddump-${pid}.txt" 2>&1 || true
+        timeout --kill-after="$DUMP_GRACE_SECONDS" "$budget" jcmd "$pid" Thread.print -l > "$DUMP_DIR/threaddump-${pid}.txt" 2>&1 || true
     done
 }
 
 watch_for_hang() {
-    local elapsed=0 silent_for=0 last_size
-    local earliest=$(( EARLIEST_DUMP_MINUTES * 60 ))
-    local latest=$(( LATEST_DUMP_MINUTES * 60 ))
-    local silence=$(( SILENCE_MINUTES * 60 ))
+    local started_at earliest latest silence last_size last_change_at elapsed silent_for
+    started_at=$(now)
+    earliest=$(( EARLIEST_DUMP_MINUTES * 60 ))
+    latest=$(( LATEST_DUMP_MINUTES * 60 ))
+    silence=$(( SILENCE_MINUTES * 60 ))
     last_size=$(log_size)
+    last_change_at=$started_at
 
-    while [ "$elapsed" -lt "$latest" ]; do
+    while :; do
         # `|| return`: when the watchdog is reaped on a normal finish the sleep is interrupted, so stop
         # watching — only a wait that runs its course means the command is still going.
         sleep "$POLL_SECONDS" || return
-        elapsed=$(( elapsed + POLL_SECONDS ))
+
+        # Both windows are measured against the clock, not by counting polls. A loaded runner can resume a
+        # sleep late, and accumulating POLL_SECONDS would then under-count real time - enough drift and a
+        # dump could start after the real deadline and still be running when Gradle kills the task at 55 min.
+        elapsed=$(( $(now) - started_at ))
 
         local size
         size=$(log_size)
-        if [ "$size" = "$last_size" ]; then
-            silent_for=$(( silent_for + POLL_SECONDS ))
-        else
-            silent_for=0
+        if [ "$size" != "$last_size" ]; then
             last_size=$size
+            last_change_at=$(now)
         fi
+        silent_for=$(( $(now) - last_change_at ))
 
-        # Keep watching until BOTH conditions hold, rather than testing silence once at a fixed moment: a
+        # Both conditions are checked every poll rather than silence being tested once at a fixed moment: a
         # run that goes quiet at minute 44 has only a minute of silence at minute 45, and checking there and
         # then would let exactly the hang this exists to catch go undumped.
         if [ "$elapsed" -ge "$earliest" ] && [ "$silent_for" -ge "$silence" ]; then
-            echo "::warning::No output for ${SILENCE_MINUTES} min after ${elapsed}s — dumping JVM threads (likely hang); see the Server Test Thread Dumps artifact."
+            echo "::warning::No output for ${silent_for}s after ${elapsed}s — dumping JVM threads (likely hang); see the Server Test Thread Dumps artifact."
             dump_all_jvms
             return
         fi
-    done
 
-    echo "::notice::Still running after ${LATEST_DUMP_MINUTES} min but producing output; not dumping (a dump this late would not finish before the Gradle timeout)."
+        if [ "$elapsed" -ge "$latest" ]; then
+            echo "::notice::Still running after ${elapsed}s; last output ${silent_for}s ago, short of the ${silence}s of silence a dump needs. Not dumping: one started this late could not finish before the Gradle timeout."
+            return
+        fi
+    done
 }
 
 watch_for_hang &
