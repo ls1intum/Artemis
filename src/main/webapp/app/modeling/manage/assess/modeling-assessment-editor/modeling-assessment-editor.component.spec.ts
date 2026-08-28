@@ -299,6 +299,27 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.assessmentNotPossibleYet()).toBeUndefined();
             expect(component.submission()).toBeDefined();
         });
+
+        it('should clear feedback when the next submission has no feedback', async () => {
+            const firstSubmission = getSubmissionWithData();
+            const secondSubmission = {
+                ...firstSubmission,
+                id: 2,
+                results: [{ id: 2375, correctionRound: 0, feedbacks: [] } as unknown as Result],
+            } as ModelingSubmission;
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValueOnce(of(firstSubmission)).mockReturnValueOnce(of(secondSubmission));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.referencedFeedback).toHaveLength(1);
+
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.referencedFeedback).toHaveLength(0);
+            expect(component.unreferencedFeedback()).toHaveLength(0);
+        });
+
         it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
                 convertToParamMap({
