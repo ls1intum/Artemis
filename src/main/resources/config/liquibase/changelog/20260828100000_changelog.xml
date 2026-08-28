@@ -242,13 +242,6 @@
         <addNotNullConstraint tableName="team" columnName="exercise_id" columnDataType="bigint"/>
     </changeSet>
 
-    <changeSet id="20260828100000-36-post-author-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM post WHERE author_id IS NULL</sqlCheck>
-        </preConditions>
-        <addNotNullConstraint tableName="post" columnName="author_id" columnDataType="bigint"/>
-    </changeSet>
-
     <changeSet id="20260828100000-37-answer-post-author-not-null" author="krusche">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM answer_post WHERE author_id IS NULL</sqlCheck>

@@ -72,14 +72,17 @@ public class ExampleSubmissionService {
      */
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
         Submission submission = exampleSubmission.getSubmission();
-        if (submission != null) {
-            submission.setExampleSubmission(true);
-            // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-            if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
-                submission.getLatestResult().setSubmission(submission);
-            }
-            submissionRepository.save(submission);
+        if (submission == null) {
+            // An example submission is the submission it shows, so one without a submission says nothing. The column
+            // requires it, and answering the request tells the caller what is wrong instead of failing on the insert.
+            throw new BadRequestAlertException("An example submission must reference a submission", "exampleSubmission", "submissionMissing");
         }
+        submission.setExampleSubmission(true);
+        // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
+        if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
+            submission.getLatestResult().setSubmission(submission);
+        }
+        submissionRepository.save(submission);
         return exampleSubmissionRepository.save(exampleSubmission);
     }
 

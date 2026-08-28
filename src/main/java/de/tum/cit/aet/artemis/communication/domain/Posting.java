@@ -4,7 +4,6 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Transient;
@@ -34,7 +33,6 @@ public abstract class Posting extends DomainObject {
     @ManyToOne
     // Avoid to leak too much information, only the name + image (for display) and the id (for comparison) is needed)
     @JsonIncludeProperties({ "id", "name", "imageUrl", "bot" })
-    @JoinColumn(nullable = false)
     private User author;
 
     @CreatedDate

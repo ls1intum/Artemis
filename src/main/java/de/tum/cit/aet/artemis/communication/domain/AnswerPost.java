@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.AssociationOverride;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -27,6 +28,9 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * An AnswerPost.
  */
 @Entity
+// The author is required here but not on a Post: the continuous plagiarism control writes a plagiarism case post that
+// nobody authored, so the column stays nullable for posts and is overridden to be required for answers.
+@AssociationOverride(name = "author", joinColumns = @JoinColumn(name = "author_id", nullable = false))
 @Table(name = "answer_post")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AnswerPost extends Posting {
