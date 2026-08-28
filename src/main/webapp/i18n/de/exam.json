@@ -571,7 +571,7 @@
             },
             "testRun": {
                 "testRun": "Testlauf",
-                "title": "Testlaufverwaltung: ",
+                "title": "Testlaufverwaltung",
                 "setup": "Testlauf Erstellen",
                 "author": "Autor:in",
                 "setWorkingTime": "Lege eine Bearbeitungszeit fest (Minuten und Sekunden):",

@@ -40,6 +40,7 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
+import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -68,6 +69,7 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
         CourseTitleBarActionsDirective,
         CourseTitleBarTitleComponent,
         CourseTitleBarTitleDirective,
+        TumUiButtonDirective,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {

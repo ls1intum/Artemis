@@ -1,47 +1,36 @@
-<div class="mx-n1 mt-0">
-    <div class="row align-items-center justify-content-end">
-        <div class="col-12 col-lg-7 general-info">
-            <div *titleBarTitle class="d-flex align-items-center">
-                @if (!isExamMode()) {
-                    <jhi-course-title-bar-title title="artemisApp.assessmentDashboard.title" />
-                }
-                @if (isExamMode()) {
-                    <h5 class="mb-0">
-                        {{
-                            !isTestRun()
-                                ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate)
-                                : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate)
-                        }}
-                    </h5>
-                }
-                <jhi-documentation-button [type]="documentationType" />
-            </div>
-        </div>
-        <div *titleBarActions>
-            @if (!isExamMode()) {
-                <div class="d-flex justify-content-lg-end">
-                    @if (course() && course().isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course().id, 'scores']" class="tab-item btn btn-sm btn-info">
-                            <fa-icon [icon]="faTable" />
-                            <span jhiTranslate="entity.action.scores"></span>
-                        </a>
-                    }
-                    @if (course()?.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course().id, 'grading']" class="tab-item btn btn-sm btn-info ms-1 me-1">
-                            <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
-                        </a>
+<div *titleBarTitle class="flex items-center">
+    @if (!isExamMode()) {
+        <jhi-course-title-bar-title title="artemisApp.assessmentDashboard.title" />
+    } @else {
+        <h5 class="mb-0">
+            {{ !isTestRun() ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate) : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate) }}
+        </h5>
+    }
+    <jhi-documentation-button [type]="documentationType" />
+</div>
 
-                        <jhi-feature-overlay [enabled]="plagiarismEnabled()">
-                            <a [routerLink]="['/course-management', course().id, 'plagiarism-cases']" class="tab-item btn btn-sm btn-info">
-                                <fa-icon [icon]="faHeartBroken" />
-                                <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
-                            </a>
-                        </jhi-feature-overlay>
-                    }
-                </div>
-            }
-        </div>
-    </div>
+<ng-template titleBarActions>
+    @if (!isExamMode()) {
+        @if (course()?.isAtLeastInstructor) {
+            <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'scores']">
+                <fa-icon [icon]="faTable" />
+                <span class="title-bar-collapsible-label" jhiTranslate="entity.action.scores"></span>
+            </a>
+            <jhi-feature-overlay [enabled]="plagiarismEnabled()">
+                <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'plagiarism-cases']">
+                    <fa-icon [icon]="faHeartBroken" />
+                    <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
+                </a>
+            </jhi-feature-overlay>
+        }
+    } @else {
+        @if (!isTestRun() && course()?.isAtLeastInstructor) {
+            <jhi-exam-assessment-buttons />
+        }
+    }
+</ng-template>
+
+<div>
     @if (isExamMode() && !isTestRun()) {
         <div class="row justify-content-between">
             <div class="col-md-8">
@@ -52,9 +41,6 @@
                     <span class="me-2">{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}: {{ exam()?.publishResultsDate | artemisDate }}</span>
                 </h4>
             </div>
-            @if (course()?.isAtLeastInstructor) {
-                <jhi-exam-assessment-buttons class="assessment-button-row" />
-            }
         </div>
     }
 </div>

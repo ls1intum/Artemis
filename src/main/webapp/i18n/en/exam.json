@@ -571,7 +571,7 @@
             },
             "testRun": {
                 "testRun": "Test Run",
-                "title": "Test Run Management: ",
+                "title": "Test Run Management",
                 "setup": "Create a Test Run",
                 "author": "Author",
                 "setWorkingTime": "Set a working time (minutes and seconds):",
