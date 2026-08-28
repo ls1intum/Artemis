@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -80,6 +80,19 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     readonly currentFeedback = linkedSignal<Feedback>(() => this.feedback() ?? new Feedback());
 
+    /**
+     * Bumped when {@link currentFeedback} content changes in place (textarea / instruction link) so {@link saveEnabled}
+     * re-evaluates — a plain method read of the same object identity would stay stale under signal CD.
+     */
+    private readonly contentRevision = signal(0);
+
+    /** Reactive stand-in for {@link canSave} in the template. */
+    readonly saveEnabled = computed(() => {
+        this.contentRevision();
+        this.currentFeedback();
+        return this.canSave();
+    });
+
     readonly selectedFile = input.required<string>();
 
     readonly codeLine = input.required<number>();
@@ -156,10 +169,15 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     /**
      * Save needs student-facing text (own comment and/or linked instruction feedback). Points may be zero.
-     * Plain method: the textarea mutates {@link currentFeedback} in place without a new signal identity.
+     * Live read for {@link updateFeedback}; the template uses {@link saveEnabled} instead.
      */
-    protected canSave(): boolean {
+    private canSave(): boolean {
         return Feedback.hasContent(this.currentFeedback());
+    }
+
+    /** Textarea writes through ngModel in place — bump {@link contentRevision} so save enablement tracks it. */
+    protected onDetailTextChange(): void {
+        this.contentRevision.update((revision) => revision + 1);
     }
 
     /**
@@ -253,11 +271,13 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        this.contentRevision.update((revision) => revision + 1);
         this.notifyInstructionLinkChange(feedback);
     }
 
     /** Unlink via {@link GradingInstructionLinkIconComponent} — refresh parent usage counts. */
     protected onInstructionLinkRemoved(): void {
+        this.contentRevision.update((revision) => revision + 1);
         this.notifyInstructionLinkChange(this.currentFeedback());
     }
 

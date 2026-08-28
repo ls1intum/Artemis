@@ -116,6 +116,7 @@
                         class="inline-feedback__textarea"
                         rows="3"
                         [(ngModel)]="feedback.detailText"
+                        (ngModelChange)="onDetailTextChange()"
                         #detailText
                         [attr.aria-labelledby]="'feedback-label-' + codeLine()"
                         [placeholder]="
@@ -132,7 +133,7 @@
                         <fa-icon [icon]="faBan" />
                         <span jhiTranslate="entity.action.cancel"></span>
                     </button>
-                    <button id="feedback-save" type="submit" tumUiButton severity="primary" size="small" [disabled]="!canSave()" (click)="updateFeedback()">
+                    <button id="feedback-save" type="submit" tumUiButton severity="primary" size="small" [disabled]="!saveEnabled()" (click)="updateFeedback()">
                         <fa-icon [icon]="faSave" />
                         <span jhiTranslate="entity.action.save"></span>
                     </button>
