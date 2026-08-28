@@ -28,8 +28,8 @@ Whole-exercise generation and adaptation additionally require:
 - The `localci` and `localvc` profiles on the same node. Generation drives a resource-bounded, network-isolated sandbox on a LocalCI build agent, persists through LocalVC with a LocalCI trigger, and verifies with the production LocalCI test and static-code-analysis parsers. There is no equivalent path for external CI systems, so on a Jenkins deployment the endpoints are never registered and the client hides the entry points.
 - At least one LocalCI build agent with generation capacity allocated, as described under [Allocate generation capacity](#allocate-generation-capacity).
 - A **Java** exercise whose project type is Maven (`MAVEN_MAVEN` or `PLAIN_MAVEN`), Gradle (`GRADLE_GRADLE` or `PLAIN_GRADLE`), or unset. Every other language is rejected with `400 unsupportedGenerationLanguage`.
-- The LocalCI image selected for that project type must contain its complete offline build toolchain and dependency cache. In particular, configure
-  `artemis.continuous-integration.build.images.java.gradle` for Gradle exercises; the sandbox has no network and cannot download a Gradle distribution or missing dependencies.
+- The LocalCI image selected for that project type must contain its complete offline build toolchain and dependency cache. Configure
+  `artemis.continuous-integration.build.images.java.gradle` only when the default Java image does not contain the required Gradle distribution or dependencies; the sandbox has no network and cannot download them.
   Hyperion copies an image-provided Gradle home into bounded writable storage before verification because the container root filesystem remains read-only.
 
 Consistency checks and problem-statement rewriting have neither requirement and work with any supported CI system.

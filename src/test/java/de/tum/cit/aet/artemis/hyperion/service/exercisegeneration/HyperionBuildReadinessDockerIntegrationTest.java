@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-/** Executes the pre-provider readiness probe against the currently supported real Maven harnesses. */
+/** Executes the pre-provider readiness probe against the supported real Java build harnesses. */
 @EnabledIf("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.HyperionMockedLlmE2eSupport#isReadinessMatrixConfigured")
 @Execution(ExecutionMode.SAME_THREAD)
 @Isolated
@@ -59,7 +59,8 @@ class HyperionBuildReadinessDockerIntegrationTest extends AbstractHyperionMocked
     }
 
     private static Stream<Arguments> buildConfigurations() {
-        return Stream.of(ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN).flatMap(projectType -> Stream.of(Arguments.of(projectType, false), Arguments.of(projectType, true)));
+        return Stream.of(ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE)
+                .flatMap(projectType -> Stream.of(Arguments.of(projectType, false), Arguments.of(projectType, true)));
     }
 
     @ParameterizedTest

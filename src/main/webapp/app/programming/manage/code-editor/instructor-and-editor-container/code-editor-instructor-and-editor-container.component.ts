@@ -33,6 +33,7 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DomainChange, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -591,7 +592,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * drop the marker and leave the reload unguarded against repeating itself.
      */
     private persistNavigationStateEntry(key: string, value: unknown): void {
-        const historyState: Record<string, unknown> = Object.assign({}, window.history.state ?? {});
+        const historyState: Record<string, unknown> = deepClone(window.history.state ?? {});
         historyState[key] = value;
         window.history.replaceState(historyState, '');
     }

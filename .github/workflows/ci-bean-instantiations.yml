@@ -26,11 +26,11 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      # Raised from 142 by one edge: LocalVCServletService consults the Hyperion mutation guard before accepting a push, so a
-      # git push cannot land while a generation is rewriting the same repositories. The guard is @Lazy, but the servlet service is
-      # reachable during startup, so the dependency shows up in the graph. Breaking the edge would require ObjectProvider or a
+      # develop's 151 plus two edges: LocalVCServletService consults the Hyperion mutation guard before accepting a push, so a
+      # git push cannot land while generation is rewriting the same repositories. The servlet service is reachable during startup,
+      # which also brings in the guard's distributed-data dependency. Deferring either edge would require ObjectProvider or a
       # @Lazy parameter, both of which ArchitectureTest forbids.
-      MAX_INSTANTIATED_BEANS: 143
+      MAX_INSTANTIATED_BEANS: 153
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

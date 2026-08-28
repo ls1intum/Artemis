@@ -14,6 +14,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { EMPTY, Observable, Subject, catchError, exhaustMap, map, merge, takeUntil, tap, timer } from 'rxjs';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { elapsedSecondsSince, generationModeLabelKey, serverTimeSignal } from 'app/localci/hyperion-generation-job.utils';
 
 @Component({
@@ -163,7 +164,7 @@ export class HyperionGenerationDetailComponent implements OnInit {
     private applyJobs(jobs: GenerationSandboxJob[]): void {
         const job = jobs.find((candidate) => candidate.jobId === this.jobId);
         if (job) {
-            this.job.set({ ...job, agentName: this.agentName });
+            this.job.set(cloneWith(job, { agentName: this.agentName }));
             this.notFound.set(false);
             this.initialLoadResolved = true;
         } else if (!this.initialLoadResolved) {

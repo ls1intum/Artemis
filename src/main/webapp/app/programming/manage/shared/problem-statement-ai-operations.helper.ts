@@ -1,7 +1,7 @@
 import { DestroyRef, Injector, Signal, afterNextRender, computed, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
-import { cloneDeep } from 'lodash-es';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
@@ -153,7 +153,7 @@ export class ProblemStatementAiOperationsHelper {
                         exercise.problemStatement = draftContent;
                         this.generationBrief.set(prompt.trim());
                         const metadataPrefill = deriveDraftMetadataPrefill(exercise, draftContent);
-                        const updatedExercise = metadataPrefill ? Object.assign(cloneDeep(exercise), metadataPrefill) : exercise;
+                        const updatedExercise = metadataPrefill ? cloneWith(exercise, metadataPrefill) : exercise;
                         this.currentProblemStatement.set(draftContent);
                         this.userPrompt.set('');
                         this.changeHandler?.onContentChanged(draftContent, updatedExercise);
