@@ -178,6 +178,31 @@ describe('GlobalSearchLectureResultsComponent', () => {
             expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
         });
 
+        it('should normalize lecture deep-link query params before keyboard navigation', () => {
+            const result: LectureSearchResult = {
+                course: mockResult.course,
+                lecture: mockResult.lecture,
+                lectureUnit: {
+                    id: mockResult.lectureUnit.id,
+                    name: mockResult.lectureUnit.name,
+                    link: mockResult.lectureUnit.link,
+                    pageNumber: mockResult.lectureUnit.pageNumber,
+                    sourceType: mockResult.lectureUnit.sourceType,
+                    queryParams: { unit: '1', timestamp: '-1', page: '3', unrelated: 'kept' },
+                },
+                snippet: mockResult.snippet,
+            };
+            (component as any).lectureResults.set([result]);
+            fixture.componentRef.setInput('selectedIndex', 0);
+            fixture.detectChanges();
+
+            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
+
+            component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: { unrelated: 'kept', unit: 1, page: 3 } });
+        });
+
         it('should not navigate when Enter is pressed with no selection', () => {
             (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', -1);

@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, injec
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
-import { RouterLink } from '@angular/router';
+import { Params, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -13,6 +13,8 @@ import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iri
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { normalizeLectureDeepLinkQueryParams } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 /** Number of lines shown before the answer is clamped. Must match the CSS `max-height` on `.iris-answer-text.is-clamped`. */
 const CLAMP_LINE_COUNT = 4;
@@ -141,5 +143,9 @@ export class GlobalSearchIrisAnswerComponent {
 
     collapse(): void {
         this.isExpanded.set(false);
+    }
+
+    protected lectureUnitQueryParams(source: LectureSearchResult): Params {
+        return normalizeLectureDeepLinkQueryParams(source.lectureUnit.queryParams);
     }
 }

@@ -39,3 +39,24 @@ export function lectureDeepLinkQueryParams(deepLink: LectureDeepLink): Params {
 
     return params;
 }
+
+/** Normalizes lecture deep-link query parameters while preserving unrelated query parameters. */
+export function normalizeLectureDeepLinkQueryParams(params: Params): Params {
+    const deepLink = parseLectureDeepLink(params);
+    if (!deepLink) {
+        return params;
+    }
+
+    const normalizedParams: Params = {};
+    Object.entries(params).forEach(([key, value]) => {
+        if (key !== 'unit' && key !== 'timestamp' && key !== 'page') {
+            normalizedParams[key] = value;
+        }
+    });
+
+    Object.entries(lectureDeepLinkQueryParams(deepLink)).forEach(([key, value]) => {
+        normalizedParams[key] = value;
+    });
+
+    return normalizedParams;
+}
