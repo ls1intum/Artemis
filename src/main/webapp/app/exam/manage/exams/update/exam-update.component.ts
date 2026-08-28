@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Dialog } from 'primeng/dialog';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -71,6 +72,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private calendarService = inject(CalendarService);
     private router = inject(Router);
+    private eventManager = inject(EventManager);
 
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
@@ -342,6 +344,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     private async onSaveSuccess(exam: Exam) {
         this.isSaving.set(false);
+        this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
         this.calendarService.reloadEvents();
         await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);

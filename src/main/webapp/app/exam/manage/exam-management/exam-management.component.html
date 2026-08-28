@@ -27,7 +27,7 @@
                     }
                     <!-- Inject page specific data -->
                     @if (courseTitleBarService.titleTemplate() || courseTitleBarService.actionsTemplate()) {
-                        @if (courseTitleBarService.titleTemplate()) {
+                        @if (currentExam() && courseTitleBarService.titleTemplate()) {
                             <fa-icon class="text-secondary" [icon]="faChevronRight" />
                         }
                         <div class="flex flex-1 justify-between gap-3 items-center title-bar-actions-wrapper">

@@ -30,6 +30,7 @@ import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overla
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -59,6 +60,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private gradingService = inject(GradingService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
     private profileService = inject(ProfileService);
+    private eventManager = inject(EventManager);
 
     readonly exam = signal<Exam>(undefined!);
     formattedStartText?: SafeHtml;
@@ -187,6 +189,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         this.examManagementService.delete(this.exam().course!.id!, examId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
+                this.eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
                 void this.router.navigate(['/course-management', this.exam().course!.id!, 'exams']);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
