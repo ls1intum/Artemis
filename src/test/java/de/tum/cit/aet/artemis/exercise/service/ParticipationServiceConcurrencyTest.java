@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -104,5 +106,24 @@ class ParticipationServiceConcurrencyTest {
         when(fixture.participationRepository().saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("not-null constraint violated"));
 
         assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> fixture.service().startExercise(exercise, team(), false));
+    }
+
+    @Test
+    void aTeammateLosingTheRaceDoesNotAddASecondInitialSubmission() {
+        var fixture = fixture();
+        ModelingExercise exercise = exercise();
+        StudentParticipation winners = existingParticipation(exercise);
+        when(fixture.participationRepository().findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(EXERCISE_ID, TEAM_ID)).thenReturn(Optional.empty(),
+                Optional.of(winners));
+        when(fixture.participationRepository().saveAndFlush(any())).thenThrow(new DataIntegrityViolationException("duplicate key value violates unique constraint"))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        // The winning request has already created the initial submission on the participation the loser now receives.
+        when(submissionRepository.existsByParticipationId(winners.getId())).thenReturn(true);
+
+        fixture.service().startExercise(exercise, team(), true);
+
+        // The loser found no participation of its own, so without consulting the submission it would write a second
+        // initial submission onto its teammate's participation.
+        verify(submissionRepository, never()).initializeSubmission(any(), any(), any());
     }
 }

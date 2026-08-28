@@ -157,6 +157,9 @@ public class ParticipationService {
         InitializationState persistedState = null;
         ZonedDateTime persistedInitializationDate = null;
         boolean loadedWithSubmissions = false;
+        // Set when a concurrent request won the race to create the participation and this call only re-read it. Such a
+        // participation can already carry an initial submission, so it must not be treated as freshly created below.
+        boolean participationCreatedConcurrently = false;
 
         // In case of a test exam we don't try to find an existing participation, because students can participate multiple times
         // Instead, all previous participations are marked as finished and a new one is created
@@ -186,7 +189,9 @@ public class ParticipationService {
             }
             // Check if participation already exists
             if (optionalStudentParticipation.isEmpty()) {
-                participation = createParticipationOrFetchConcurrentlyCreatedOne(exercise, participant);
+                StartedParticipation started = createParticipationOrFetchConcurrentlyCreatedOne(exercise, participant);
+                participation = started.participation();
+                participationCreatedConcurrently = !started.createdHere();
             }
             else {
                 // make sure participation and exercise are connected
@@ -209,7 +214,9 @@ public class ParticipationService {
             // TODO: load submission with exercise for exam edge case:
             // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
             // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
-            if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
+            // Only a participation this call created is certain to have no submission yet. One that a concurrent
+            // request created has to be checked, or the initial submission would be written a second time.
+            if ((optionalStudentParticipation.isEmpty() && !participationCreatedConcurrently) || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text, file upload or quiz submission
                 if (createInitialSubmission) {
                     submissionRepository.initializeSubmission(participation, exercise, null);
@@ -256,17 +263,29 @@ public class ParticipationService {
      *
      * @param exercise    the exercise the participation belongs to
      * @param participant the student or team starting it
-     * @return the newly created participation, or the one that already exists
+     * @return the newly created participation, or the one a concurrent request created, together with which of the two
+     *         it is
      */
-    private StudentParticipation createParticipationOrFetchConcurrentlyCreatedOne(Exercise exercise, Participant participant) {
+    private StartedParticipation createParticipationOrFetchConcurrentlyCreatedOne(Exercise exercise, Participant participant) {
         try {
-            return createNewParticipation(exercise, participant);
+            return new StartedParticipation(createNewParticipation(exercise, participant), true);
         }
         catch (DataIntegrityViolationException concurrentStart) {
             // Only a lost race explains this: re-read, and if nothing is there the violation was something else and has
             // to reach the caller rather than be reported as a participation that could not be found.
-            return findOneGradedByExerciseAndParticipant(exercise, participant).orElseThrow(() -> concurrentStart);
+            StudentParticipation concurrentlyCreated = findOneGradedByExerciseAndParticipant(exercise, participant).orElseThrow(() -> concurrentStart);
+            return new StartedParticipation(concurrentlyCreated, false);
         }
+    }
+
+    /**
+     * A participation to start with, and whether this call is the one that created it.
+     *
+     * @param participation the participation for the exercise and participant
+     * @param createdHere   {@code true} when this call created the participation, so it cannot have a submission yet;
+     *                          {@code false} when a concurrent request created it and this call only re-read it
+     */
+    private record StartedParticipation(StudentParticipation participation, boolean createdHere) {
     }
 
     /**
