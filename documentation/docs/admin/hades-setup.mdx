@@ -51,6 +51,10 @@ artemis:
 You also still need `artemis.version-control` (LocalVC) configured, since builds are triggered against exercise repositories hosted there — see the
 `version-control` section in [Jenkins and LocalVC Setup](/admin/jenkins-localvc#artemis-configuration) for the relevant fields.
 
+The Hades clone container clones the exercise repositories from LocalVC over HTTPS using `artemis.version-control.build-agent-git-username` and `build-agent-git-password`.
+A Hades node runs the `localvc` and `hades` profiles (not `localci`), so - like a Jenkins-with-LocalVC setup - it authenticates clones with this shared credential pair rather than the per-build-job clone tokens that Integrated Code Lifecycle build agents use.
+Both must be set and `artemis.version-control.build-agent-use-ssh` must stay `false`: since [#13515](https://github.com/ls1intum/Artemis/pull/13515) the node refuses to start otherwise, and the password is what authorizes every Hades clone.
+
 In addition, you have to start Artemis with the profiles `hades` and `localvc` so that the correct adapters will be used, e.g.:
 
 ```
