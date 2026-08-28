@@ -163,9 +163,7 @@ export class CodeButtonComponent implements OnInit {
 
         return this.participationService.getSpecificStudentParticipation(participations, this.isPractice()) ?? participations[0];
     });
-    selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(
-        this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state') ?? this.authenticationMechanisms()[0],
-    );
+    selectedAuthenticationMechanism = signal<RepositoryAuthenticationMethod>(RepositoryAuthenticationMethod.Token);
     useToken = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token);
     useSsh = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH);
     usePassword = computed(() => this.selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password);
@@ -297,7 +295,10 @@ export class CodeButtonComponent implements OnInit {
     }
 
     onClick() {
-        const storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
+        let storedState = this.localStorageService.retrieve<RepositoryAuthenticationMethod>('code-button-state');
+        if (storedState === RepositoryAuthenticationMethod.Password) {
+            storedState = RepositoryAuthenticationMethod.Token;
+        }
         const selectedMechanism = storedState && this.authenticationMechanisms().includes(storedState) ? storedState : this.authenticationMechanisms()[0];
         this.selectedAuthenticationMechanism.set(selectedMechanism);
 

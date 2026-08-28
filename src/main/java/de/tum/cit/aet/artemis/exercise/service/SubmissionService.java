@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -46,13 +47,12 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -72,8 +72,6 @@ public class SubmissionService {
     private static final String ENTITY_NAME = "submission";
 
     private final ExerciseDateService exerciseDateService;
-
-    private final CourseRepository courseRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -99,7 +97,7 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
             ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
@@ -109,7 +107,6 @@ public class SubmissionService {
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
         this.exerciseDateService = exerciseDateService;
-        this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
         this.feedbackService = feedbackService;
@@ -124,9 +121,9 @@ public class SubmissionService {
      * @param currentUser the current user with groups and authorities
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
-        // Fetch course from database to make sure client didn't change groups
-        final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        final var course = courseRepository.findByIdElseThrow(courseId);
+        // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
+        // the client could have tampered with. Re-reading it by id would only repeat a row we are already holding.
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException();
         }
@@ -135,22 +132,15 @@ public class SubmissionService {
         // user of the participation is the same as the user who executes this call (or student in the team).
         // This prevents injecting submissions to other users.
         if (submission.getId() != null) {
-            Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
-            if (existingSubmission.isEmpty()) {
+            // Ask the database who owns the submission instead of loading it: the entity drags in its participation,
+            // exercise, exercise group, exam and course through eager associations, which is several statements to
+            // compare a login. This runs on every autosave.
+            SubmissionOwnerDTO owner = submissionRepository.findOwnerBySubmissionId(submission.getId()).orElseThrow(AccessForbiddenException::new);
+            if (owner.studentLogin() != null && !owner.studentLogin().equals(currentUser.getLogin())) {
                 throw new AccessForbiddenException();
             }
-
-            StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
-            if (participation != null) {
-                Optional<User> user = participation.getStudent();
-                if (user.isPresent() && !user.get().equals(currentUser)) {
-                    throw new AccessForbiddenException();
-                }
-
-                Optional<Team> team = participation.getTeam();
-                if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
-                    throw new AccessForbiddenException();
-                }
+            if (owner.teamShortName() != null && !authCheckService.isStudentInTeam(course, owner.teamShortName(), currentUser)) {
+                throw new AccessForbiddenException();
             }
         }
     }
@@ -194,8 +184,7 @@ public class SubmissionService {
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toCollection(ArrayList::new));
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
@@ -373,7 +362,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.setResults(new ArrayList<>());
+                    submission.setResults(new HashSet<>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -640,6 +629,10 @@ public class SubmissionService {
             result.setAssessor(userRepository.getUser());
         }
 
+        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
+        // for a correction round is created or claimed, so it is also where a result that predates the column gets its
+        // round the first time a tutor opens it.
+        result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
         // Workaround to prevent the assessor turning into a proxy object after saving
         var assessor = result.getAssessor();
