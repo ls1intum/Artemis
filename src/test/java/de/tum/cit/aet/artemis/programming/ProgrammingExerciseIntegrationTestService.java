@@ -755,8 +755,8 @@ public class ProgrammingExerciseIntegrationTestService {
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
         assertThat(programmingExerciseServer.getStudentParticipations()).hasSize(1);
-        // Two participations were created above (instructor1, student1).
-        assertThat(programmingExerciseServer.getNumberOfParticipations()).isEqualTo(2L);
+        // Setup already created student1 and student2; the instructor participation above adds a third distinct participation.
+        assertThat(programmingExerciseServer.getNumberOfParticipations()).isEqualTo(3L);
     }
 
     void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(boolean withSubmissionResults) throws Exception {

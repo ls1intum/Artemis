@@ -92,7 +92,7 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
         "artemis.continuous-integration.build.images.c.default=ls1tum/artemis-c-minimal-docker:1.0.0",
         "artemis.continuous-integration.build.images.c.fact=ls1tum/artemis-fact-minimal-docker:1.1.0", "artemis.continuous-integration.image-cleanup.enabled=true",
         "artemis.continuous-integration.image-cleanup.disk-space-threshold-mb=1000000000", "spring.liquibase.enabled=true", "artemis.iris.enabled=true",
-        "artemis.iris.health-ttl=500", "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc",
+        "artemis.iris.health-ttl=500", "info.contact=test@localhost", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc_${random.uuid}",
         "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys",
         "artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasml.enabled=true",
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
