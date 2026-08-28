@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, signal, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faFileLines } from '@fortawesome/free-solid-svg-icons';
-import { Params, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SkeletonModule } from 'primeng/skeleton';
-import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { normalizeLectureDeepLinkQueryParams } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { normalizeLectureSearchResultQueryParams } from 'app/core/navbar/global-search/services/lecture-search-result-normalization.util';
 
 @Component({
     selector: 'jhi-global-search-lecture-results',
@@ -69,7 +69,7 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
                 takeUntilDestroyed(),
             )
             .subscribe((results) => {
-                this.lectureResults.set(results);
+                this.lectureResults.set(results.map(normalizeLectureSearchResultQueryParams));
                 this.isLoading.set(false);
             });
     }
@@ -82,11 +82,7 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
         const result = this.lectureResults()[index];
         if (result) {
             event.preventDefault();
-            void this.router.navigate([result.lectureUnit.link], { queryParams: this.lectureUnitQueryParams(result) });
+            void this.router.navigate([result.lectureUnit.link], { queryParams: result.lectureUnit.queryParams });
         }
-    }
-
-    protected lectureUnitQueryParams(result: LectureSearchResult): Params {
-        return normalizeLectureDeepLinkQueryParams(result.lectureUnit.queryParams);
     }
 }
