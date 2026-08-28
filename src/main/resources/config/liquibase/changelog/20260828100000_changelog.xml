@@ -242,6 +242,32 @@
         <addNotNullConstraint tableName="team" columnName="exercise_id" columnDataType="bigint"/>
     </changeSet>
 
+    <changeSet id="20260828100000-36-backfill-plagiarism-case-post-author" author="krusche">
+        <comment>
+            The continuous plagiarism control used to write its plagiarism case post without an author. It now writes it
+            in the name of a course instructor, and the posts it left behind get the same treatment: the instructor of
+            the post's course with the lowest id. A post whose course has no instructor keeps its empty author, and the
+            precondition on the next changeset then leaves the column as it is.
+        </comment>
+        <sql>
+            UPDATE post SET author_id = (
+                SELECT MIN(ucr.user_id)
+                FROM user_course_role ucr
+                    JOIN exercise e ON e.course_id = ucr.course_id
+                    JOIN plagiarism_case pc ON pc.exercise_id = e.id
+                WHERE pc.id = post.plagiarism_case_id
+                    AND ucr.course_role = 'INSTRUCTOR'
+            )
+            WHERE author_id IS NULL AND plagiarism_case_id IS NOT NULL;
+        </sql>
+    </changeSet>
+    <changeSet id="20260828100000-38-post-author-not-null" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM post WHERE author_id IS NULL</sqlCheck>
+        </preConditions>
+        <addNotNullConstraint tableName="post" columnName="author_id" columnDataType="bigint"/>
+    </changeSet>
+
     <changeSet id="20260828100000-37-answer-post-author-not-null" author="krusche">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM answer_post WHERE author_id IS NULL</sqlCheck>
