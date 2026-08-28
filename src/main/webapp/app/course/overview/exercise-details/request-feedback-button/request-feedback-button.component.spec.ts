@@ -809,7 +809,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id + ' button'));
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
             expect(button).not.toBeNull();
             button.nativeElement.click();
             await vi.advanceTimersByTimeAsync(0);
@@ -830,7 +830,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id + ' button'));
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
             button.nativeElement.click();
             await vi.advanceTimersByTimeAsync(0);
 
@@ -846,7 +846,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id + ' button'));
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
             expect(button.nativeElement.getAttribute('aria-label')).toBeTruthy();
         });
 
@@ -873,7 +873,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id + ' button'));
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
             expect(button.nativeElement.disabled).toBe(true);
         });
 

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -45,7 +45,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [NgbTooltipModule, TumUiButtonComponent, TumUiTooltipDirective, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective, NgTemplateOutlet],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -87,6 +87,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     smallButtons = input<boolean>(false);
     exercise = input.required<Exercise>();
     readonly participationId = input<number>();
+    /** Whether the "enable AI feedback" hint text is rendered next to the button, or just the bare button. */
+    readonly showHint = input<boolean>(true);
 
     private athenaResultUpdateListener?: Subscription;
     private acceptSubscription?: Subscription;

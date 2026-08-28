@@ -24,21 +24,28 @@
             </button>
         }
     } @else if (athenaEnabled()) {
-        <div class="ai-feedback-hint flex items-center gap-2" [id]="'ai-feedback-hint-' + exercise().id">
-            <span class="text-muted" jhiTranslate="artemisApp.exerciseActions.aiFeedbackAvailableHint"></span>
-            <tum-ui-button
-                variant="outlined"
-                [size]="smallButtons() ? 'small' : 'default'"
-                [icon]="faPenSquare"
+        @if (showHint()) {
+            <div class="ai-feedback-hint flex items-center gap-2" [id]="'ai-feedback-hint-' + exercise().id">
+                <span class="text-muted" jhiTranslate="artemisApp.exerciseActions.aiFeedbackAvailableHint"></span>
+                <ng-container [ngTemplateOutlet]="enableAiFeedbackButton" />
+            </div>
+        } @else {
+            <ng-container [ngTemplateOutlet]="enableAiFeedbackButton" />
+        }
+        <ng-template #enableAiFeedbackButton>
+            <button
+                class="btn btn-primary"
+                (click)="showLLMSelectionModal()"
+                [class.btn-sm]="smallButtons()"
                 [disabled]="isFeedbackRequestBlocked()"
                 [id]="'enable-ai-feedback-' + exercise().id"
-                [ariaLabel]="'artemisApp.exerciseActions.enableAiFeedback' | artemisTranslate"
-                [tumUiTooltip]="'artemisApp.exerciseActions.enableAiFeedbackTooltip' | artemisTranslate"
-                (clicked)="showLLMSelectionModal()"
+                [attr.aria-label]="'artemisApp.exerciseActions.enableAiFeedback' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.exerciseActions.enableAiFeedbackTooltip' | artemisTranslate"
             >
-                <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseActions.enableAiFeedback"></span>
-            </tum-ui-button>
-        </div>
+                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.enableAiFeedback"></span>
+            </button>
+        </ng-template>
     } @else {
         <a
             class="btn btn-primary"
