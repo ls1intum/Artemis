@@ -510,7 +510,11 @@ export class ExerciseHeaderActionsComponent {
 
     submitAndShowPopover() {
         this.onSubmitExercise()?.();
-        if (this.aiFeedbackPopoverDismissed() || countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+        if (countSuccessfulAthenaFeedbackRequests(this.activeParticipationForCode()) >= DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT) {
+            return;
+        }
+        // "Don't show this again" only suppresses the AI-disabled recommendation; once AI is enabled, the popover should reappear.
+        if (!this.hasUserAcceptedLLM() && this.aiFeedbackPopoverDismissed()) {
             return;
         }
         this.submitPopoverRef()?.open();
