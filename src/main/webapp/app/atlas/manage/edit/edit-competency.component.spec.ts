@@ -103,7 +103,7 @@ describe('EditCompetencyComponent', () => {
             description: competencyOfResponse.description,
             optional: competencyOfResponse.optional,
         });
-        expect(competencyFormComponent.formData).toEqual(editCompetencyComponent.formData());
+        expect(competencyFormComponent.formData()).toEqual(editCompetencyComponent.formData());
     });
 
     it('should send PUT request upon form submission and navigate', () => {

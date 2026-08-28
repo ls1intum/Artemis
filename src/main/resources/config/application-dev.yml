@@ -83,7 +83,7 @@ jhipster:
                 base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
-                token-validity-in-seconds-for-remember-me: 2592000
+                token-validity-in-seconds-for-remember-me: 604800 # 7 days of inactivity; an active session is silently extended, up to 30 days from the login
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: artemis@localhost
         base-url: http://127.0.0.1:8080
@@ -95,7 +95,8 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        retention-period: 365 # Number of days before audit events are deleted.
+        # Nothing reads this key (see application-prod.yml); the audit logs are pruned via artemis.audit-events.*.
+        retention-period: 365
 
 # Properties to be exposed on the /info management endpoint
 info:
@@ -130,10 +131,11 @@ theia:
 
 artemis:
     audit-events:
-        # The audit table is pruned on two schedules: the login record is high-volume and short-lived, while deliberate
-        # actions on courses, exercises, exams and accounts may still be needed years later (e.g. an exam dispute).
-        general-retention-period: 365 # Days before login/logout audit events are deleted (one year).
-        application-retention-period: 1825 # Days before all other audit events are deleted (five years).
+        # The audit log is split into three tables, each pruned on its own schedule: login records are high-volume and
+        # short-lived, while security and application records may be needed years later (e.g. to resolve an exam dispute).
+        general-retention-period: 365 # Days before general/authentication audit events are deleted (one year).
+        security-retention-period: 1825 # Days before security audit events are deleted (five years).
+        application-retention-period: 1825 # Days before application audit events are deleted (five years).
     push-notification-relay: https://hermes-staging.artemis.cit.tum.de
     # Telemetry service: disabled for development
     telemetry:

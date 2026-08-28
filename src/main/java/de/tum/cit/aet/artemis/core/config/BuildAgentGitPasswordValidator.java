@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_AGENT_USE_SSH_PROPERTY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -20,7 +21,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 
 /**
- * Refuses to start a production node whose build-agent git password is a value Artemis ships as an example, or is blank.
+ * Refuses to start a production node whose build-agent git password is a value Artemis ships as an example.
  * <p>
  * This lives outside {@link ConfigurationValidator} because of which nodes have to run it. That validator is
  * {@code @Profile(PROFILE_CORE)}, while a build agent is a supported topology on its own: the multi-node setup runs a
@@ -61,10 +62,13 @@ public class BuildAgentGitPasswordValidator {
     }
 
     /**
-     * Rejects a shipped example or blank build-agent git password under the production profile.
+     * Rejects a shipped example or blank build-agent git password under the production profile, unless the build agents
+     * authenticate with an ssh key, in which case the value no longer opens the shortcut this check protects.
      * <p>
      * Matching credentials let a caller read every repository in the installation: {@code LocalVCServletService}
      * returns early on a match, ahead of the rate limit, the repository authorization checks and the VCS access log.
+     * That shortcut is the only thing the property closes; the credentials are still processed as ordinary Basic
+     * credentials afterwards, which grants only whatever the named account may access.
      * <p>
      * This throws rather than warning, because a warning in a startup log is routinely missed and the whole point is
      * that the unsafe state must not reach a running production system.
@@ -76,6 +80,18 @@ public class BuildAgentGitPasswordValidator {
             return;
         }
 
+        if (environment.getProperty(BUILD_AGENT_USE_SSH_PROPERTY_NAME, Boolean.class, false)) {
+            // The build agents authenticate with an ssh key, so LocalVCServletService no longer lets this credential
+            // pair read every repository, which is the shortcut this check protects. The pair still reaches ordinary
+            // Basic authentication afterwards, but there it opens only what the named account may access, and the
+            // shipped example username is not an Artemis account. Refusing to start over a password that can no longer
+            // grant repository-wide read would only push operators to invent one. The check re-arms by itself, because
+            // it runs on every startup and therefore also on the one that follows setting the property back to false.
+            log.info("Skipping build-agent git password validation: {} is true, so the build-agent git credentials no longer grant read access to every repository",
+                    BUILD_AGENT_USE_SSH_PROPERTY_NAME);
+            return;
+        }
+
         String buildAgentGitPassword = environment.getProperty(BUILD_AGENT_GIT_PASSWORD_PROPERTY);
         if (buildAgentGitPassword == null) {
             // Only the localvc and buildagent profiles define the property at all, so an instance running neither has
@@ -83,14 +99,19 @@ public class BuildAgentGitPasswordValidator {
             return;
         }
         if (!StringUtils.hasText(buildAgentGitPassword)) {
-            // A configured but blank value is worse than a shipped default: LocalVCServletService compares the supplied
-            // Basic credentials against it directly, so the published build-agent username with an empty password would
-            // pass, again ahead of the rate limit, the authorization checks and the access log.
-            throw new InsecureDefaultCredentialException(BUILD_AGENT_GIT_PASSWORD_PROPERTY,
-                    "the build-agent git password is configured but blank, and a caller presenting the build-agent username with an empty password can then read every "
-                            + "repository without any authorization check or access-log entry",
-                    "Set a unique, non-blank password and keep it in sync with the build agents' configuration. The property has to carry a value even when the agents "
-                            + "authenticate with an ssh key, because the localvc and buildagent profiles require it to resolve.");
+            // Blank is not a security problem, and is now the state worth aiming for. LocalVCServletService requires
+            // hasText on *both* credentials before it compares them, so a blank pair can never match: there is no
+            // shortcut for an empty password to open. What blank does mean is that the pair cannot authenticate
+            // anything, which is exactly right on a node whose build agents use per-build-job clone tokens or ssh keys,
+            // and which only matters for a client that has neither - Jenkins with LocalVC.
+            //
+            // This used to fail startup, on the reasoning that an empty configured password would be matched by an
+            // empty supplied one. The hasText guard in the servlet makes that unreachable, and failing here refused the
+            // configuration with no shared secret anywhere - the opposite of what this validator exists to encourage.
+            log.info("The build-agent git password is blank, so the shared credential pair is not accepted at all. That is expected where build agents authenticate with a "
+                    + "per-build-job clone token or an ssh key. Configure both credentials only if a client that is not an Artemis build agent, such as Jenkins with LocalVC, "
+                    + "clones from this installation.");
+            return;
         }
 
         // Non-short-circuiting on purpose, so that every candidate is compared regardless of where the match sits.

@@ -22,7 +22,7 @@ export class ExamExerciseGroupCreationPage {
     }
 
     async typeTitle(title: string) {
-        const titleField = this.page.locator('#title');
+        const titleField = this.page.locator('#exam-group-edit-title');
         await titleField.clear();
         await titleField.fill(title);
     }
@@ -40,7 +40,7 @@ export class ExamExerciseGroupCreationPage {
     }
 
     private getMandatoryBoxLocator() {
-        return this.page.locator('#isMandatory');
+        return this.page.locator('#exam-group-edit-mandatory');
     }
 
     async clickSave(): Promise<ExerciseGroup> {
@@ -97,6 +97,9 @@ export class ExamExerciseGroupCreationPage {
                 break;
             case ExerciseType.MODELING:
                 exercise = await this.exerciseAPIRequests.createModelingExercise({ exerciseGroup }, title);
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                exercise = await this.exerciseAPIRequests.createFileUploadExercise({ exerciseGroup }, title);
                 break;
             case ExerciseType.QUIZ:
                 exercise = await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
