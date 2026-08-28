@@ -140,10 +140,16 @@ public class ExampleSubmissionService {
 
             newExampleSubmission.setSubmission(api.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
-        if (exercise instanceof TextExercise) {
+        else if (exercise instanceof TextExercise) {
             var api = textSubmissionImportApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class));
             TextSubmission textSubmission = api.importStudentSubmission(submissionId, exercise.getId(), gradingInstructionCopyTracker);
             newExampleSubmission.setSubmission(textSubmission);
+        }
+        else {
+            // Only modeling and text exercises can copy a student submission into an example submission. For anything
+            // else there is nothing to copy, and the example submission would be stored without the submission it is
+            // supposed to show.
+            throw new BadRequestAlertException("Example submissions cannot be imported for this exercise type", "exampleSubmission", "exerciseTypeNotSupported");
         }
         return exampleSubmissionRepository.save(newExampleSubmission);
     }
