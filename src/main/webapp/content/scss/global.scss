@@ -1879,8 +1879,8 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
 
 // Fixed width (not just max-width) so the AI-enabled and AI-disabled variants of this popover render at the same size.
 .ai-feedback-popover {
-    width: 360px;
-    max-width: 360px;
+    width: 400px;
+    max-width: 400px;
 }
 
 // Compact metadata layout for the narrow left panel in Iris split view

@@ -273,7 +273,13 @@
                 [translateValues]="{ type: ('artemisApp.exercise.aiFeedbackPopover.aiType.' + userLLMSelection() | translate) }"
             ></p>
             <span (click)="closeSubmitPopover()">
-                <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="true" [participationId]="activeParticipationForCode()?.id" />
+                <jhi-request-feedback-button
+                    [exercise]="exercise()"
+                    [isSubmitted]="true"
+                    [participationId]="activeParticipationForCode()?.id"
+                    [asTumUiButton]="true"
+                    [alwaysShowLabel]="true"
+                />
             </span>
         </div>
     } @else {
@@ -293,7 +299,14 @@
                 ></label>
             </div>
             <span (click)="closeSubmitPopover()">
-                <jhi-request-feedback-button [exercise]="exercise()" [isSubmitted]="true" [participationId]="activeParticipationForCode()?.id" [showHint]="false" />
+                <jhi-request-feedback-button
+                    [exercise]="exercise()"
+                    [isSubmitted]="true"
+                    [participationId]="activeParticipationForCode()?.id"
+                    [showHint]="false"
+                    [asTumUiButton]="true"
+                    [alwaysShowLabel]="true"
+                />
             </span>
         </div>
     }
