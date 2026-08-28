@@ -438,6 +438,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         // change with it.
         ThreadMXBean threadCpu = ManagementFactory.getThreadMXBean();
         assertThat(threadCpu.isCurrentThreadCpuTimeSupported()).as("this JVM must expose per-thread CPU time for this test to mean anything").isTrue();
+        // Supported is not the same as switched on. While it is off getCurrentThreadCpuTime returns -1, so both samples
+        // below would read -1, their difference would be 0, and the budget would pass without measuring anything.
+        assertThat(threadCpu.isThreadCpuTimeEnabled()).as("per-thread CPU time must be enabled, or the measurement below reads -1 and always passes").isTrue();
 
         for (String markdown : pathological) {
             var body = new ProblemStatementRenderRequestDTO(markdown, null, null, "en", false, false, false, null);

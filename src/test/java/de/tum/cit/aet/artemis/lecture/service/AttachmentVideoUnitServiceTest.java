@@ -95,6 +95,9 @@ class AttachmentVideoUnitServiceTest {
         // so leaving it pointed at this class's @TempDir made every later integration test resolve uploads into a
         // directory JUnit had already deleted.
         originalFileUploadPath = FilePathConverter.getFileUploadPath();
+        // Fail here rather than in some later test: with nothing to put back, the restore below would leave this
+        // class's @TempDir in the process-wide static, which is exactly the leak this setup exists to avoid.
+        assertThat(originalFileUploadPath).as("the file upload path has to be configured before this test can swap it").isNotNull();
         FilePathConverter.setFileUploadPath(tempDir);
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
                 lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository,
@@ -105,9 +108,7 @@ class AttachmentVideoUnitServiceTest {
 
     @AfterEach
     void restoreFileUploadPath() {
-        if (originalFileUploadPath != null) {
-            FilePathConverter.setFileUploadPath(originalFileUploadPath);
-        }
+        FilePathConverter.setFileUploadPath(originalFileUploadPath);
     }
 
     @Test
