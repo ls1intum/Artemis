@@ -84,13 +84,16 @@ public class ProgrammingExerciseImportBasicService {
 
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
+    private final ProgrammingExerciseValidationService programmingExerciseValidationService;
+
     public ProgrammingExerciseImportBasicService(Optional<VersionControlService> versionControlService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, UriService uriService, ChannelService channelService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService) {
         this.versionControlService = versionControlService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -106,6 +109,7 @@ public class ProgrammingExerciseImportBasicService {
         this.channelService = channelService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.programmingExerciseValidationService = programmingExerciseValidationService;
     }
 
     /**
@@ -144,6 +148,8 @@ public class ProgrammingExerciseImportBasicService {
         if (newExercise.getBuildConfig().getBuildPlanConfiguration() == null) {
             newExercise.getBuildConfig().setBuildPlanConfiguration(sourceExercise.getBuildConfig().getBuildPlanConfiguration());
         }
+        // Validate the resolved build config, including values inherited from the source exercise, before it is persisted
+        programmingExerciseValidationService.validateBuildConfigSize(newExercise);
         newExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(newExercise.getBuildConfig()));
 
         // Persist the submission policy (as a fresh entity) up front for the same reason.
