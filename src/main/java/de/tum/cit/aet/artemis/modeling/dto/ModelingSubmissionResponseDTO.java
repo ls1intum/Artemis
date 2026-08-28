@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling.dto;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
 
@@ -62,10 +63,9 @@ public record ModelingSubmissionResponseDTO(Long id, String submissionExerciseTy
 
         List<ResultDTO> results = null;
         if (submission.getResults() != null && Hibernate.isInitialized(submission.getResults())) {
-            // Preserve the list structure verbatim, INCLUDING null padding: when a submission is fetched for a specific
-            // assessor the results collection is padded with nulls to keep the @OrderColumn index stable, and the client
-            // reads results[correctionRound]. Dropping the null slots would shift the indices. ResultDTO.of(null) is null.
-            results = submission.getResults().stream().map(ResultDTO::of).toList();
+            // No null slots: the results used to be an ordered list padded with nulls so that the client could read
+            // results[correctionRound], and the round now lives on the result itself, so the client matches on it.
+            results = submission.getResults().stream().filter(Objects::nonNull).map(ResultDTO::of).toList();
         }
 
         ModelingParticipationDTO participation = null;

@@ -61,12 +61,14 @@ describe('ModelingAssessmentEditorComponent', () => {
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
     let paramMapSubject: BehaviorSubject<ParamMap>;
+    let queryParamMapSubject: BehaviorSubject<ParamMap>;
 
     beforeEach(() => {
         // jsdom's ApollonEditor fires modelChange with empty assessments on every model update under
         // signal-driven rendering, which would wipe the parent's referencedFeedback mid-test.
         vi.spyOn(ApollonEditor.prototype, 'subscribeToModelChange').mockReturnValue(undefined as any);
         paramMapSubject = new BehaviorSubject(convertToParamMap({}));
+        queryParamMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([]),
@@ -82,7 +84,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         paramMap: paramMapSubject.asObservable(),
-                        queryParamMap: of(convertToParamMap({})),
+                        queryParamMap: queryParamMapSubject.asObservable(),
                         params: of({}),
                         queryParams: of({}),
                         snapshot: {
@@ -150,6 +152,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             results: [
                 {
                     id: 2374,
+                    correctionRound: 0,
                     score: 8,
                     rated: true,
                     hasComplaint: true,
@@ -193,6 +196,59 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(handleFeedbackSpy).toHaveBeenCalledTimes(2);
             expect(verifyFeedbackSpy).toHaveBeenCalledOnce();
             expect(component.assessmentsAreValid()).toBe(true);
+        });
+
+        it.each([
+            { param: '1', expectedRound: 1, description: 'a usable round' },
+            { param: undefined, expectedRound: 0, description: 'an absent round' },
+            { param: '   ', expectedRound: 0, description: 'a whitespace only round' },
+            { param: 'abc', expectedRound: 0, description: 'a round that is not a number' },
+            { param: '1.5', expectedRound: 0, description: 'a fractional round' },
+            { param: '-1', expectedRound: 0, description: 'a negative round' },
+            { param: '1e3', expectedRound: 0, description: 'an exponential round' },
+        ])('should request the submission for $description', async ({ param, expectedRound }) => {
+            // The round is requested from the server and then used to index the loaded results, so an unusable value must
+            // not travel on as NaN, a fraction or a negative number. The URL decides, and no usable value means the
+            // first round, so the same URL always opens the same round (#13396).
+            // The component is already initialized by the fixture, so the route is driven instead of calling ngOnInit
+            // again, which would subscribe a second time and load twice.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            queryParamMapSubject.next(convertToParamMap(param === undefined ? {} : { 'correction-round': param }));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.correctionRound()).toBe(expectedRound);
+            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, expectedRound, 0);
+        });
+
+        it('should keep the round it loaded when only the correction round in the url changes', async () => {
+            // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+            // hand-editing the address bar — starts no new load. The round it shows must then stay the round the
+            // submission was requested with, because the same value indexes the results of that submission.
+            const getSubmissionSpy = vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '1' }));
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+            expect(component.correctionRound()).toBe(1);
+
+            queryParamMapSubject.next(convertToParamMap({ 'correction-round': '0' }));
+            await fixture.whenStable();
+
+            expect(component.correctionRound()).toBe(1);
+            expect(getSubmissionSpy).toHaveBeenCalledExactlyOnceWith(2, 1, 0);
+        });
+
+        it('should leave the loading state when there is no submission to assess', async () => {
+            // Both loading flags start out set, and the empty state only renders once they are cleared, so returning
+            // without clearing them left the page blank instead of saying that there is nothing to assess.
+            vi.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(undefined));
+
+            paramMapSubject.next(convertToParamMap({ submissionId: 'new', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.submission()).toBeUndefined();
+            expect(component.loadingInitialSubmission()).toBe(false);
+            expect(component.isLoading()).toBe(false);
         });
 
         it('wrongly call ngOnInit and throw exception', async () => {
@@ -316,6 +372,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             component.result.set({
                 id: 2374,
+                correctionRound: 0,
                 score: 8,
                 rated: true,
                 hasComplaint: false,
@@ -459,6 +516,7 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         const changedResult = {
             id: 2374,
+            correctionRound: 0,
             score: 8,
             rated: true,
             hasComplaint: false,
