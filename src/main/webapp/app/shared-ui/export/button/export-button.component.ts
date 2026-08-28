@@ -3,19 +3,22 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { CsvExportOptions, ExportDialogCloseResult, ExportModalComponent, isExportDialogCancelledResult } from 'app/shared-ui/export/modal/export-modal.component';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumUiButtonDirective, TumUiButtonSize } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-csv-export-button',
-    template: ` <jhi-button
-        [btnType]="ButtonType.PRIMARY"
-        [btnSize]="buttonSize()"
-        [icon]="icon()"
-        [disabled]="disabled()"
-        [title]="title()"
-        (onClick)="openExportModal($event)"
-    />`,
-    imports: [ButtonComponent],
+    template: ` <button tumUiButton severity="secondary" variant="outlined" [size]="getTumUiSize()" [disabled]="disabled()" (click)="openExportModal($event)">
+        @if (icon()) {
+            <fa-icon [icon]="icon()!" />
+        }
+        @if (title()) {
+            <span class="title-bar-collapsible-label" [jhiTranslate]="title()"></span>
+        }
+    </button>`,
+    imports: [TumUiButtonDirective, FontAwesomeModule, TranslateDirective],
 })
 export class ExportButtonComponent {
     private dialogService = inject(DialogService);
@@ -29,6 +32,17 @@ export class ExportButtonComponent {
     icon = input<IconProp>();
 
     onExport = output<CsvExportOptions | undefined>();
+
+    getTumUiSize(): TumUiButtonSize {
+        switch (this.buttonSize()) {
+            case ButtonSize.SMALL:
+                return 'small';
+            case ButtonSize.LARGE:
+                return 'large';
+            default:
+                return 'default';
+        }
+    }
 
     /**
      * Open up export option modal

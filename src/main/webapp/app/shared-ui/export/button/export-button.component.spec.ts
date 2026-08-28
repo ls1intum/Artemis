@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject } from 'rxjs';
@@ -19,7 +17,7 @@ describe('ExportButtonComponent', () => {
     beforeEach(async () => {
         dialogClose = new Subject<ExportDialogCloseResult>();
         await TestBed.configureTestingModule({
-            imports: [ExportButtonComponent, MockComponent(ButtonComponent)],
+            imports: [ExportButtonComponent],
             providers: [
                 { provide: DialogService, useValue: { open: vi.fn().mockReturnValue({ onClose: dialogClose } as unknown as DynamicDialogRef) } },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -40,7 +38,7 @@ describe('ExportButtonComponent', () => {
 
         fixture.detectChanges();
         comp.openExportModal(new MouseEvent('click'));
-        const csvExportButton = fixture.debugElement.query(By.css('jhi-button'));
+        const csvExportButton = fixture.debugElement.query(By.css('button[tumUiButton]'));
         expect(csvExportButton).not.toBeNull();
         expect(dialogOpenStub).toHaveBeenCalledOnce();
     });
