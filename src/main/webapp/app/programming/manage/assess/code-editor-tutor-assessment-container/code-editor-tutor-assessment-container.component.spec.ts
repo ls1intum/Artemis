@@ -746,7 +746,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     describe('automatic feedback suggestion loading on submission received', () => {
-        function buildNewAssessmentSubmission(): ProgrammingSubmission {
+        const buildNewAssessmentSubmission = (): ProgrammingSubmission => {
             const guardExercise = { id: 55, maxPoints: 100, feedbackSuggestionModule: 'module_text_programming', course: {} } as unknown as ProgrammingExercise;
             const guardParticipation = new ProgrammingExerciseStudentParticipation();
             guardParticipation.exercise = guardExercise;
@@ -759,7 +759,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             guardSubmission.participation = guardParticipation;
             guardParticipation.submissions = [guardSubmission];
             return guardSubmission;
-        }
+        };
 
         it('should not automatically fetch feedback suggestions when the assessor has not accepted AI usage', async () => {
             vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);

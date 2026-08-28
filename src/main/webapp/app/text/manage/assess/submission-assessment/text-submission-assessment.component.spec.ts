@@ -238,7 +238,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     });
 
     describe('automatic feedback suggestion loading on submission received', () => {
-        function buildNewAssessmentParticipation(): StudentParticipation {
+        const buildNewAssessmentParticipation = (): StudentParticipation => {
             const guardExercise = { id: 55, type: ExerciseType.TEXT, feedbackSuggestionModule: 'module_text_llm', course: {} } as unknown as TextExercise;
             const guardSubmission = {
                 submissionExerciseType: SubmissionExerciseType.TEXT,
@@ -257,7 +257,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             } as unknown as StudentParticipation;
             guardSubmission.participation = guardParticipation;
             return guardParticipation;
-        }
+        };
 
         it('should not automatically load feedback suggestions when the assessor has not accepted AI usage', () => {
             vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
