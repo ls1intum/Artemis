@@ -47,6 +47,7 @@ export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
 # It is enabled for full-suite and Hyperion-filtered runs and can be overridden with
 # RUN_HYPERION=true/false.
 RUN_HYPERION_REQUESTED="${RUN_HYPERION:-}"
+HYPERION_LLM_MODE_REQUESTED="${HYPERION_LLM_MODE:-}"
 HYPERION_LLM_MOCK_PORT="${HYPERION_LLM_MOCK_PORT:-1234}"
 export HYPERION_LLM_MOCK_PORT
 
@@ -101,7 +102,19 @@ else
 fi
 
 if [ "$RUN_HYPERION" = true ]; then
-    export HYPERION_LLM_MODE="mock"
+    export HYPERION_LLM_MODE="${HYPERION_LLM_MODE_REQUESTED:-mock}"
+    if [[ "$HYPERION_LLM_MODE" != "mock" && "$HYPERION_LLM_MODE" != "live" ]]; then
+        echo -e "${RED}ERROR: HYPERION_LLM_MODE must be 'mock' or 'live' when RUN_HYPERION=true.${NC}"
+        exit 1
+    fi
+    if [ "$HYPERION_LLM_MODE" = "live" ]; then
+        : "${SPRING_AI_OPENAI_BASE_URL:?SPRING_AI_OPENAI_BASE_URL is required for live Hyperion runs}"
+        : "${SPRING_AI_OPENAI_API_KEY:?SPRING_AI_OPENAI_API_KEY is required for live Hyperion runs}"
+        : "${SPRING_AI_OPENAI_CHAT_MODEL:?SPRING_AI_OPENAI_CHAT_MODEL is required for live Hyperion runs}"
+        # A live checkpoint must be reproducible. SDK retries are invisible in the
+        # returned usage, so Hyperion deliberately refuses to persist when they are enabled.
+        export SPRING_AI_OPENAI_MAX_RETRIES="${SPRING_AI_OPENAI_MAX_RETRIES:-0}"
+    fi
 else
     export HYPERION_LLM_MODE="disabled"
 fi
@@ -218,7 +231,9 @@ if [ "$STOP" = true ]; then
             kill_tree "$HYPERION_LLM_PID"
         fi
     fi
-    check_port_available "$HYPERION_LLM_MOCK_PORT" "Hyperion LLM mock"
+    if [ "$HYPERION_LLM_MODE" = "mock" ]; then
+        check_port_available "$HYPERION_LLM_MOCK_PORT" "Hyperion LLM mock"
+    fi
 
     # Stop Postgres
     echo "Stopping Postgres..."
@@ -326,7 +341,7 @@ if [ "$SKIP_SERVER" = false ]; then
     check_port_available 8080 "Artemis server"
     check_port_available 7921 "local VC SSH server"
 
-    if [ "$RUN_HYPERION" = true ]; then
+    if [ "$HYPERION_LLM_MODE" = "mock" ]; then
         echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting local OpenAI-compatible LLM mock...${NC}"
         check_port_available "$HYPERION_LLM_MOCK_PORT" "Hyperion LLM mock"
         HYPERION_LLM_MOCK_PORT="$HYPERION_LLM_MOCK_PORT" node src/test/playwright/support/hyperion-llm-mock/server.mjs > "$LOCAL_DIR/hyperion-llm-mock.log" 2>&1 &
@@ -443,10 +458,14 @@ if [ "$SKIP_SERVER" = false ]; then
         export ARTEMIS_HYPERION_ENABLED="true"
         export ARTEMIS_HYPERION_EXERCISEGENERATION_ENABLED="true"
         export ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_MAXGENERATIONSANDBOXSLOTS="1"
-        export SPRING_AI_OPENAI_BASE_URL="http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/v1"
-        export SPRING_AI_OPENAI_API_KEY="hyperion-e2e-dummy-key"
-        export SPRING_AI_OPENAI_CHAT_MODEL="hyperion-e2e-mock"
-        export SPRING_AI_OPENAI_TIMEOUT="2m"
+        if [ "$HYPERION_LLM_MODE" = "mock" ]; then
+            export SPRING_AI_OPENAI_BASE_URL="http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/v1"
+            export SPRING_AI_OPENAI_API_KEY="hyperion-e2e-dummy-key"
+            export SPRING_AI_OPENAI_CHAT_MODEL="hyperion-e2e-mock"
+            export SPRING_AI_OPENAI_TIMEOUT="2m"
+        else
+            export SPRING_AI_OPENAI_TIMEOUT="${SPRING_AI_OPENAI_TIMEOUT:-5m}"
+        fi
         export SPRING_AI_OPENAI_MICROSOFT_FOUNDRY="false"
         export SPRING_AI_OPENAI_CHAT_TEMPERATURE="1"
     fi
@@ -479,15 +498,15 @@ else
             echo -e "${RED}ERROR: Cannot reuse server for Hyperion generation: management info does not enable exercise generation.${NC}"
             exit 1
         fi
-        if ! HYPERION_HEALTH=$(curl -sf "http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/health"); then
+        if [ "$HYPERION_LLM_MODE" = "mock" ] && ! HYPERION_HEALTH=$(curl -sf "http://127.0.0.1:${HYPERION_LLM_MOCK_PORT}/health"); then
             echo -e "${RED}ERROR: Cannot reuse server for Hyperion: the LLM mock is unavailable on port ${HYPERION_LLM_MOCK_PORT}.${NC}"
             exit 1
         fi
-        if ! grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' <<< "$HYPERION_HEALTH" || ! grep -Eq '"requestCount"[[:space:]]*:[[:space:]]*[0-9]+' <<< "$HYPERION_HEALTH"; then
+        if [ "$HYPERION_LLM_MODE" = "mock" ] && { ! grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' <<< "$HYPERION_HEALTH" || ! grep -Eq '"requestCount"[[:space:]]*:[[:space:]]*[0-9]+' <<< "$HYPERION_HEALTH"; }; then
             echo -e "${RED}ERROR: Cannot reuse server for Hyperion: the service on port ${HYPERION_LLM_MOCK_PORT} is not the compatible LLM mock.${NC}"
             exit 1
         fi
-        echo -e "${GREEN}Reusing Hyperion-enabled server and compatible LLM mock.${NC}"
+        echo -e "${GREEN}Reusing Hyperion-enabled server (${HYPERION_LLM_MODE} provider mode).${NC}"
     elif ! curl -sf http://localhost:8080/management/health >/dev/null 2>&1; then
         echo -e "${RED}WARNING: Server does not appear to be running at http://localhost:8080${NC}"
     fi

@@ -390,7 +390,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
         if (restricted) {
-            dockerRunConfig = new DockerRunConfig(List.of(), "none", dockerRunConfig.cpuCount(), dockerRunConfig.memory(), dockerRunConfig.memorySwap());
+            dockerRunConfig = dockerRunConfig == null ? new DockerRunConfig(List.of(), "none", 0, 0, 0)
+                    : new DockerRunConfig(List.of(), "none", dockerRunConfig.cpuCount(), dockerRunConfig.memory(), dockerRunConfig.memorySwap());
         }
 
         programmingExercise.setBuildConfig(buildConfig);
