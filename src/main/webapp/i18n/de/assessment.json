@@ -137,7 +137,7 @@
                 "generativeAIAssessmentAvailable": "Feedback-Vorschläge wurden von KI generiert und können Fehler enthalten. Überprüfe wichtige Informationen.",
                 "generativeAIAssessmentInfo": "Vorschläge prüfen und bei Bedarf anpassen — die Verantwortung für die Bewertung liegt weiterhin bei dir.",
                 "loading": "KI-Feedback-Vorschläge werden generiert…",
-                "aiExperienceOptInHint": "Diese Aufgabe unterstützt KI-generierte Feedback-Vorschläge, aber deine KI-Erfahrung ist derzeit auf Keine KI eingestellt.",
+                "aiExperienceOptInHint": "Diese Aufgabe unterstützt KI-generierte Feedback-Vorschläge, aber die KI-Nutzung ist für dein Konto noch nicht aktiviert.",
                 "enableAiExperience": "KI-Feedback-Vorschläge aktivieren"
             },
             "locks": {

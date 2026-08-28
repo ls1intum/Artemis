@@ -23,10 +23,10 @@
     </p-message>
 }
 @if (requiresAiExperienceOptIn()) {
-    <p-message severity="info" class="d-flex align-items-center gap-2">
+    <p-message severity="info" class="flex items-center gap-2">
         <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.aiExperienceOptInHint"></span>
-        <button type="button" class="btn btn-sm btn-outline-primary" id="enable-ai-feedback-suggestions" (click)="optIn.emit()">
+        <tum-ui-button id="enable-ai-feedback-suggestions" size="small" variant="outlined" (clicked)="optIn.emit()">
             <span jhiTranslate="artemisApp.assessment.feedbackSuggestions.enableAiExperience"></span>
-        </button>
+        </tum-ui-button>
     </p-message>
 }

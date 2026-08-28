@@ -58,6 +58,9 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Typed view onto the component's private members and methods the spec needs to reach,
@@ -940,12 +943,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     });
 
     it('should return true for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is set', () => {
-        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+        comp.exercise.set(cloneWith(exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(true);
     });
 
     it('should return false for isFeedbackSuggestionsEnabled when feedbackSuggestionModule is absent', () => {
-        comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise);
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+        comp.exercise.set(cloneWith(exercise, { feedbackSuggestionModule: undefined }) as unknown as ProgrammingExercise);
+        expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
+    });
+
+    it('should return false for isFeedbackSuggestionsEnabled when the Athena module is not active on this instance', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+        comp.exercise.set(cloneWith(exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
         expect(comp.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
@@ -954,7 +965,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         beforeEach(() => {
             aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
-            comp.exercise.set(Object.assign({}, exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
+            comp.exercise.set(cloneWith(exercise, { feedbackSuggestionModule: 'module_text_programming' }) as unknown as ProgrammingExercise);
         });
 
         it('should require opt-in when the assessor has not accepted AI usage', () => {

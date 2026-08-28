@@ -83,7 +83,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         let emitted = false;
         fixture.componentInstance.optIn.subscribe(() => (emitted = true));
 
-        fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions')).nativeElement.click();
+        fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions button')).nativeElement.click();
 
         expect(emitted).toBe(true);
     });

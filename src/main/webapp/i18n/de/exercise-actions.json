@@ -16,7 +16,7 @@
             "requestAutomaticFeedback": "AI Feedback anfragen",
             "aiFeedbackAvailableHint": "Diese Aufgabe unterstützt KI-generiertes Feedback.",
             "enableAiFeedback": "KI-Feedback aktivieren",
-            "enableAiFeedbackTooltip": "Wählen Sie Ihre KI-Erfahrung aus, um KI-generiertes Feedback für diese Aufgabe anzufordern.",
+            "enableAiFeedbackTooltip": "Wähle deine KI-Erfahrung aus, um KI-generiertes Feedback für diese Aufgabe anzufordern.",
             "resumeExercisePractice": "Üben von Aufgabe fortführen",
             "resumeExerciseError": "Fehler beim Versuch die Aufgabe fortzuführen",
             "openCodeEditor": "Programmiereditor öffnen",

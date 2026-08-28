@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -44,7 +45,7 @@ function isPendingAthenaFeedbackResult(result: Result | undefined): boolean {
 
 @Component({
     selector: 'jhi-request-feedback-button',
-    imports: [NgbTooltipModule, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
+    imports: [NgbTooltipModule, TumUiButtonComponent, TumUiTooltipDirective, FontAwesomeModule, ArtemisTranslatePipe, TranslateDirective],
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
@@ -72,6 +73,12 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     readonly feedbackRequestLimit = DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT;
     readonly isFeedbackLimitReached = computed(() => this.currentFeedbackRequestCount() >= this.feedbackRequestLimit);
     private readonly isFeedbackRequestPending = signal(false);
+    // Mirrors the disabled condition of the primary feedback-request button, so the AI-experience opt-in flow (which
+    // requests feedback directly from acceptLLMUsage(), bypassing that button) cannot start a request the button itself
+    // would have blocked: an incomplete submission, a request already pending, or the request limit already reached.
+    readonly isFeedbackRequestBlocked = computed(
+        () => (this.exercise().type !== ExerciseType.PROGRAMMING && !this.isSubmitted()) || this.isFeedbackGenerationInProgress() || this.isFeedbackLimitReached(),
+    );
 
     isSubmitted = input<boolean>();
     pendingChanges = input<boolean>(false);
@@ -197,8 +204,8 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
             this.hasUserAcceptedLLMUsage.set(hasAccepted);
             this.accountService.setUserLLMSelectionDecision(decision);
 
-            // Proceed with feedback request only when an AI option was accepted
-            if (hasAccepted && this.assureConditionsSatisfied()) {
+            // Proceed with feedback request only when an AI option was accepted and the normal eligibility checks pass
+            if (hasAccepted && !this.isFeedbackRequestBlocked() && this.assureConditionsSatisfied()) {
                 this.processFeedbackRequest();
             }
         });

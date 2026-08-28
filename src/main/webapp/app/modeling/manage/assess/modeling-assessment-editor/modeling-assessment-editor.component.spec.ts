@@ -47,6 +47,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -723,16 +725,26 @@ describe('ModelingAssessmentEditorComponent', () => {
     });
 
     it('should report feedback suggestions not enabled', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
         component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
         component.ngOnInit();
-        expect(component.isFeedbackSuggestionsEnabled).toBe(false);
+        expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
     it('should report feedback suggestions enabled', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
         component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
         component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
         component.ngOnInit();
-        expect(component.isFeedbackSuggestionsEnabled).toBe(true);
+        expect(component.isFeedbackSuggestionsEnabled()).toBe(true);
+    });
+
+    it('should report feedback suggestions not enabled when the Athena module is not active on this instance', () => {
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+        component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
+        component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
+        component.ngOnInit();
+        expect(component.isFeedbackSuggestionsEnabled()).toBe(false);
     });
 
     it('should return unreferenced feedback only', () => {
@@ -757,18 +769,25 @@ describe('ModelingAssessmentEditorComponent', () => {
 
         beforeEach(() => {
             aiExperienceOptInService = TestBed.inject(AiExperienceOptInService);
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATHENA] } as ProfileInfo);
             component.modelingExercise.set(new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined));
             component.modelingExercise()!.feedbackSuggestionModule = 'module_text_llm';
         });
 
         it('should require opt-in when the assessor has not accepted AI usage', () => {
             vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
-            expect(component.requiresAiExperienceOptIn).toBe(true);
+            expect(component.requiresAiExperienceOptIn()).toBe(true);
         });
 
         it('should not require opt-in when the assessor has accepted AI usage', () => {
             vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(true);
-            expect(component.requiresAiExperienceOptIn).toBe(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
+        });
+
+        it('should not require opt-in when the Athena module is not active on this instance', () => {
+            vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [] } as unknown as ProfileInfo);
+            vi.spyOn(aiExperienceOptInService, 'hasAcceptedAiUsage').mockReturnValue(false);
+            expect(component.requiresAiExperienceOptIn()).toBe(false);
         });
 
         it('should fetch feedback suggestions once the assessor opts in via the hint', () => {

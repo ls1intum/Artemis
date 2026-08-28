@@ -29,8 +29,8 @@
             [hasAutomaticFeedback]="hasAutomaticFeedback()"
             [isAssessor]="isAssessor()"
             [resultCompletionDate]="result()?.completionDate"
-            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
-            [requiresAiExperienceOptIn]="requiresAiExperienceOptIn"
+            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
+            [requiresAiExperienceOptIn]="requiresAiExperienceOptIn()"
             (optIn)="onOptInToAiFeedbackSuggestions()"
         />
         @if (submission()) {

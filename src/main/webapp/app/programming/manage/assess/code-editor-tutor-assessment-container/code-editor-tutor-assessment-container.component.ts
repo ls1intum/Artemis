@@ -52,6 +52,8 @@ import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAsse
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -90,6 +92,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private athenaService = inject(AthenaService);
     private datePipe = inject(ArtemisDatePipe);
     private aiExperienceOptInService = inject(AiExperienceOptInService);
+    private profileService = inject(ProfileService);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
@@ -189,7 +192,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
 
     readonly hasAutomaticFeedback = computed(() => this.automaticFeedback().length > 0 || this.feedbackSuggestions().length > 0);
 
-    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(this.exercise()?.feedbackSuggestionModule));
+    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(this.exercise()?.feedbackSuggestionModule) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA));
 
     readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
 

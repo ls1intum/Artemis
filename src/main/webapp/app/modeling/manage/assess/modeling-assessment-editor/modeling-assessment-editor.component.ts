@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
@@ -42,6 +42,8 @@ import { ModelingAssessmentComponent } from '../modeling-assessment.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -67,6 +69,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private accountService = inject(AccountService);
     private aiExperienceOptInService = inject(AiExperienceOptInService);
+    private profileService = inject(ProfileService);
     private location = inject(Location);
     private translateService = inject(TranslateService);
     private complaintService = inject(ComplaintService);
@@ -155,13 +158,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
      * Retrieve whether feedback suggestions are enabled based on whether a feedback suggestions module is set on the
      * current modeling exercise.
      */
-    get isFeedbackSuggestionsEnabled(): boolean {
-        return Boolean(this.modelingExercise()?.feedbackSuggestionModule);
-    }
+    readonly isFeedbackSuggestionsEnabled = computed(
+        () => Boolean(this.modelingExercise()?.feedbackSuggestionModule) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA),
+    );
 
-    get requiresAiExperienceOptIn(): boolean {
-        return this.isFeedbackSuggestionsEnabled && !this.aiExperienceOptInService.hasAcceptedAiUsage();
-    }
+    readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
 
     onOptInToAiFeedbackSuggestions(): void {
         this.aiExperienceOptInService.promptForAiUsage(() => void this.fetchAndApplyFeedbackSuggestions());

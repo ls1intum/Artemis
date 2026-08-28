@@ -809,7 +809,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id + ' button'));
             expect(button).not.toBeNull();
             button.nativeElement.click();
             await vi.advanceTimersByTimeAsync(0);
@@ -830,11 +830,84 @@ describe('RequestFeedbackButtonComponent', () => {
 
             await initAndTick();
 
-            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id));
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id + ' button'));
             button.nativeElement.click();
             await vi.advanceTimersByTimeAsync(0);
 
             expect(requestSpy).toHaveBeenCalledWith(exercise.id, participation.id);
+        });
+
+        it('should provide an accessible name for the hint button independent of the tooltip', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation = createParticipation();
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id + ' button'));
+            expect(button.nativeElement.getAttribute('aria-label')).toBeTruthy();
+        });
+
+        it('should disable the hint button once the feedback limit is reached', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation: StudentParticipation = {
+                id: 1,
+                submissions: [
+                    {
+                        id: 1,
+                        submitted: true,
+                        results: Array.from({ length: DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT }, (_, index) => ({
+                            id: index + 1,
+                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                            successful: true,
+                        })) as Result[],
+                    },
+                ],
+                testRun: false,
+            } as StudentParticipation;
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+
+            await initAndTick();
+
+            const button = debugElement.query(By.css('#enable-ai-feedback-' + exercise.id + ' button'));
+            expect(button.nativeElement.disabled).toBe(true);
+        });
+
+        it('should not request feedback after accepting AI usage when the feedback limit was already reached', async () => {
+            vi.useFakeTimers();
+            setAthenaEnabled(true);
+            const participation: StudentParticipation = {
+                id: 1,
+                submissions: [
+                    {
+                        id: 1,
+                        submitted: true,
+                        results: Array.from({ length: DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT }, (_, index) => ({
+                            id: index + 1,
+                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                            successful: true,
+                        })) as Result[],
+                    },
+                ],
+                testRun: false,
+            } as StudentParticipation;
+            const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
+            setupComponentInputs(exercise, true);
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
+            const requestSpy = vi.spyOn(courseExerciseService, 'requestFeedback');
+
+            await initAndTick();
+
+            // Bypasses the disabled button to verify the guard inside acceptLLMUsage() itself, not just the disabled attribute.
+            await component.showLLMSelectionModal();
+            await vi.advanceTimersByTimeAsync(0);
+
+            expect(requestSpy).not.toHaveBeenCalled();
         });
     });
 

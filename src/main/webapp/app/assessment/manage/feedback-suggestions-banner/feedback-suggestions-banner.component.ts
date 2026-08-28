@@ -4,13 +4,14 @@ import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-ico
 import dayjs from 'dayjs/esm';
 import { Message } from 'primeng/message';
 import { TooltipModule } from 'primeng/tooltip';
+import { TumUiButtonComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
     templateUrl: './feedback-suggestions-banner.component.html',
-    imports: [Message, TooltipModule, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [Message, TooltipModule, TumUiButtonComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackSuggestionsBannerComponent {
     readonly isLoading = input.required<boolean>();
