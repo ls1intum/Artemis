@@ -36,6 +36,16 @@ public final class Constants {
     public static final int MAX_PACKAGE_NAME_LENGTH = 100;
 
     /**
+     * The maximum allowed length (in characters) of the build plan configuration stored for a programming exercise build config.
+     */
+    public static final int MAX_BUILD_PLAN_CONFIGURATION_LENGTH = 1024 * 1024;
+
+    /**
+     * The maximum allowed length (in characters) of the docker flags stored for a programming exercise build config.
+     */
+    public static final int MAX_DOCKER_FLAGS_LENGTH = 8 * 1024;
+
+    /**
      * The default REST/URL-path prefix for accessing file uploads.
      * Don't use this constant elsewhere than in the Presentation-Layer to reduce
      * coupling between the persistence layer {@link de.tum.cit.aet.artemis.core.domain.DomainObject }) and the
