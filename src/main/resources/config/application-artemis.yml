@@ -68,6 +68,13 @@ artemis:
     ssh-port: 7921
     #        ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
     #        ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
+    # Build agent authentication, in the order you should prefer it. Neither of the first two needs a secret from you:
+    #   1. ssh keys (recommended): set build-agent-use-ssh: true on the build agents AND on every core node, plus the two ssh properties above on the agents.
+    #      Each agent generates its own key pair at startup and publishes only the public key - nothing to distribute or rotate.
+    #   2. build job clone tokens: the automatic fallback over https when build-agent-use-ssh is false, and it needs no configuration at all.
+    #   3. build-agent-git-username / build-agent-git-password: Jenkins with LocalVC only. A node running local CI refuses to start with either set.
+    # See documentation/docs/admin/production-setup/security.mdx#build-agent-authentication.
+    # build-agent-use-ssh: true
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
     repository-authentication-mechanisms: token,ssh,password # the order of authentication mechanisms in the code button pop up. Removing parts removes them from the drop-down
   continuous-integration:
