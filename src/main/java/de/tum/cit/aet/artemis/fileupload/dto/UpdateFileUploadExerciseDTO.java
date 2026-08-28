@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,8 +43,8 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * <ul>
  * <li>{@code courseId} / {@code exerciseGroupId}: Identifies whether this is a course exercise or exam exercise.
  * These are validated but not used to change the exercise's course/exam association.</li>
- * <li>{@code gradingCriteria}: Full replacement semantics - the provided set replaces all existing criteria.</li>
- * <li>{@code competencyLinks}: Full replacement semantics - the provided set replaces all existing links.</li>
+ * <li>{@code gradingCriteria}: A provided list replaces all existing criteria; an empty list removes all criteria, while omission leaves them unchanged.</li>
+ * <li>{@code competencyLinks}: A provided set replaces all existing links; an empty set removes all links, while omission leaves them unchanged.</li>
  * </ul>
  *
  * @param id                                     the exercise ID (must match the path variable)
@@ -81,7 +82,7 @@ public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable Strin
         @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String feedbackSuggestionModule, @Nullable String gradingInstructions,
         @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate,
         @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable String exampleSolution, @Nullable String filePattern, @Nullable Long courseId,
-        @Nullable Long exerciseGroupId, @Nullable Set<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
+        @Nullable Long exerciseGroupId, @Nullable List<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a DTO from a {@link FileUploadExercise} entity.
@@ -101,14 +102,14 @@ public record UpdateFileUploadExerciseDTO(long id, String title, @Nullable Strin
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        List<GradingCriterionDTO> gradingCriterionDTOs;
         Set<CompetencyLinkDTO> competencyLinkDTOs;
 
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+            gradingCriterionDTOs = criteria.stream().map(GradingCriterionDTO::of).toList();
         }
         else {
             gradingCriterionDTOs = null;

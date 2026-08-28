@@ -126,12 +126,12 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         return association != null && Hibernate.isInitialized(association);
     }
 
-    private static Set<GradingCriterionDTO> mapGradingCriteria(Exercise exercise) {
+    private static List<GradingCriterionDTO> mapGradingCriteria(Exercise exercise) {
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         if (!initialized(criteria) || criteria.stream().map(GradingCriterion::getStructuredGradingInstructions).anyMatch(instructions -> !Hibernate.isInitialized(instructions))) {
             return null;
         }
-        return criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        return criteria.stream().map(GradingCriterionDTO::of).toList();
     }
 
     @BeforeEach
@@ -216,8 +216,46 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
 
         assertThat(channelFromDB).isNotNull();
         assertThat(channelFromDB.getName()).isEqualTo("exercise-new-fileupload-exerci");
+        assertThat(receivedFileUploadExercise.channelName()).isEqualTo(channelFromDB.getName());
 
         assertFileUploadExerciseExistsInWeaviate(weaviateService, fileUploadExerciseRepository.findByIdElseThrow(receivedFileUploadExercise.id()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createFileUploadExercise_preservesIdenticalGradingCriteriaFromRawJson() throws Exception {
+        fileUploadExercise.setFilePattern(creationFilePattern);
+        fileUploadExercise.setTitle("new fileupload exercise");
+        fileUploadExercise.setId(null);
+
+        ObjectNode requestBody = request.getObjectMapper().valueToTree(inputDTO(fileUploadExercise));
+        ObjectNode criterion = request.getObjectMapper().createObjectNode();
+        criterion.put("title", "identical criterion");
+        criterion.putArray("structuredGradingInstructions");
+        requestBody.putArray("gradingCriteria").add(criterion).add(criterion.deepCopy());
+
+        FileUploadExerciseDTO createdExercise = request.postWithResponseBody("/api/fileupload/file-upload-exercises", requestBody, FileUploadExerciseDTO.class, HttpStatus.CREATED);
+
+        assertThat(createdExercise.gradingCriteria()).hasSize(2);
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(createdExercise.id())).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createFileUploadExercise_withGradingCriterionId_badRequest() throws Exception {
+        fileUploadExercise.setFilePattern(creationFilePattern);
+        fileUploadExercise.setTitle("new fileupload exercise");
+        fileUploadExercise.setId(null);
+
+        ObjectNode requestBody = request.getObjectMapper().valueToTree(inputDTO(fileUploadExercise));
+        ObjectNode criterion = request.getObjectMapper().createObjectNode();
+        criterion.put("id", 123L);
+        criterion.put("title", "criterion with id");
+        requestBody.putArray("gradingCriteria").add(criterion);
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/fileupload/file-upload-exercises", requestBody, HttpStatus.BAD_REQUEST, null);
+
+        assertErrorKey(response, "idExists");
     }
 
     @Test
@@ -507,7 +545,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExerciseDTO receivedFileUploadExercise = assertThatDb(
                 () -> request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "?notificationText=notification",
                         UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK))
-                .hasBeenCalledAtMostTimes(60);
+                // Includes the four fixed queries used to reload and enrich the response DTO and one lookup for the new competency link.
+                .hasBeenCalledAtMostTimes(52);
         assertThat(receivedFileUploadExercise.dueDate()).isCloseTo(dueDate, HalfSecond());
         assertThat(receivedFileUploadExercise.course()).as("course was set for normal exercise").isNotNull();
         assertThat(receivedFileUploadExercise.exerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
@@ -562,22 +601,22 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(updatedExercise.exerciseGroup().id()).isEqualTo(examExercise.getExerciseGroup().getId());
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateFileUploadExerciseForExam_withChangedTargetIds_badRequest() throws Exception {
+    void updateFileUploadExerciseForExam_withChangedTargetIds_badRequest(boolean reEvaluate) throws Exception {
         FileUploadExercise examExercise = fileUploadExerciseUtilService.addEnrolledCourseExamExerciseGroupWithOneFileUploadExercise(TEST_PREFIX, true);
         UpdateFileUploadExerciseDTO originalDTO = UpdateFileUploadExerciseDTO.of(examExercise);
+        String endpoint = "/api/fileupload/file-upload-exercises/" + examExercise.getId() + (reEvaluate ? "/re-evaluate?deleteFeedback=false" : "");
 
         Course otherCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         UpdateFileUploadExerciseDTO dtoWithForeignCourseId = createDtoWithTargetIds(originalDTO, otherCourse.getId(), examExercise.getExerciseGroup().getId());
-        MockHttpServletResponse foreignCourseResponse = request.putWithoutResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(), dtoWithForeignCourseId,
-                HttpStatus.BAD_REQUEST);
+        MockHttpServletResponse foreignCourseResponse = request.putWithoutResponseBody(endpoint, dtoWithForeignCourseId, HttpStatus.BAD_REQUEST);
         assertErrorKey(foreignCourseResponse, "courseIdInvalid");
 
         ExerciseGroup otherExerciseGroup = examUtilService.addEnrolledExerciseGroupWithExamAndCourse(true, TEST_PREFIX);
         UpdateFileUploadExerciseDTO dtoWithForeignExerciseGroupId = createDtoWithTargetIds(originalDTO, null, otherExerciseGroup.getId());
-        MockHttpServletResponse foreignExerciseGroupResponse = request.putWithoutResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(),
-                dtoWithForeignExerciseGroupId, HttpStatus.CONFLICT);
+        MockHttpServletResponse foreignExerciseGroupResponse = request.putWithoutResponseBody(endpoint, dtoWithForeignExerciseGroupId, HttpStatus.CONFLICT);
         assertErrorKey(foreignExerciseGroupResponse, "exerciseGroupCannotChange");
     }
 
@@ -594,18 +633,27 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
-        // Test case 1: Exam exercise - send DTO with neither courseId nor exerciseGroupId set
+        // Test case 1: Exam exercise - send DTO with courseId but without exerciseGroupId
         FileUploadExercise examExercise = fileUploadExerciseUtilService.addCourseExamExerciseGroupWithOneFileUploadExercise(false);
+        UpdateFileUploadExerciseDTO originalExamDTO = UpdateFileUploadExerciseDTO.of(examExercise);
+        UpdateFileUploadExerciseDTO examDtoWithoutExerciseGroupId = createDtoWithTargetIds(originalExamDTO, originalExamDTO.courseId(), null);
+        MockHttpServletResponse missingExerciseGroupResponse = request.putWithoutResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(),
+                examDtoWithoutExerciseGroupId, HttpStatus.BAD_REQUEST);
+        assertErrorKey(missingExerciseGroupResponse, "exerciseGroupIdMissing");
+
+        // Test case 2: Exam exercise - send DTO with neither courseId nor exerciseGroupId set
         UpdateFileUploadExerciseDTO dtoWithNeitherSet = createDtoWithNeitherCourseNorExerciseGroup(examExercise);
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + examExercise.getId(), dtoWithNeitherSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
-        // Test case 2: Course exercise - send DTO with both courseId and exerciseGroupId set
+        // Test case 3: Course exercise - send DTO with both courseId and exerciseGroupId set
         Course testCourse = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
         FileUploadExercise courseExercise = ExerciseUtilService.findFileUploadExerciseWithTitle(testCourse.getExercises(), "released");
         UpdateFileUploadExerciseDTO courseDtoWithBothSet = createDtoWithBothCourseAndExerciseGroup(courseExercise);
-        request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + courseExercise.getId(), courseDtoWithBothSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        MockHttpServletResponse ambiguousCourseResponse = request.putWithoutResponseBody("/api/fileupload/file-upload-exercises/" + courseExercise.getId(), courseDtoWithBothSet,
+                HttpStatus.BAD_REQUEST);
+        assertErrorKey(ambiguousCourseResponse, "courseOrExerciseGroupRequired");
 
-        // Test case 3: Course exercise - send DTO with neither courseId nor exerciseGroupId set
+        // Test case 4: Course exercise - send DTO with neither courseId nor exerciseGroupId set
         UpdateFileUploadExerciseDTO courseDtoWithNeitherSet = createDtoWithNeitherCourseNorExerciseGroup(courseExercise);
         request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + courseExercise.getId(), courseDtoWithNeitherSet, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
@@ -753,7 +801,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         FileUploadExerciseDTO updatedFileUploadExerciseDTO = assertThatDb(
                 () -> request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + fileUploadExercise.getId() + "/re-evaluate" + "?deleteFeedback=false",
                         UpdateFileUploadExerciseDTO.of(fileUploadExercise), FileUploadExerciseDTO.class, HttpStatus.OK))
-                .hasBeenCalledAtMostTimes(60);
+                // Includes the four fixed queries used to reload and enrich the response DTO.
+                .hasBeenCalledAtMostTimes(51);
         FileUploadExercise updatedFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(updatedFileUploadExerciseDTO.id());
         List<Result> updatedResults = participationUtilService.getResultsForExercise(updatedFileUploadExercise);
         assertThat(GradingCriterionUtil.findAnyInstructionWhere(gradingCriteria, instruction -> instruction.getId().equals(usedInstruction.getId())).orElseThrow().getCredits())
@@ -794,6 +843,24 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         assertThat(response.competencyLinks()).isNullOrEmpty();
         assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId())).isEmpty();
         assertThat(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(exercise.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateFileUploadExercise_withOmittedGradingCriteria_preservesExistingCriteria() throws Exception {
+        Course testCourse = fileUploadExerciseUtilService.addEnrolledCourseWithThreeFileUploadExercise(TEST_PREFIX);
+        FileUploadExercise exercise = ExerciseUtilService.findFileUploadExerciseWithTitle(testCourse.getExercises(), "released");
+        Set<GradingCriterion> existingCriteria = exerciseUtilService.addGradingInstructionsToExercise(exercise);
+        gradingCriterionRepository.saveAll(existingCriteria);
+
+        ObjectNode updateBody = request.getObjectMapper().valueToTree(UpdateFileUploadExerciseDTO.of(exercise));
+        updateBody.remove("gradingCriteria");
+
+        FileUploadExerciseDTO response = request.putWithResponseBody("/api/fileupload/file-upload-exercises/" + exercise.getId(), updateBody, FileUploadExerciseDTO.class,
+                HttpStatus.OK);
+
+        assertThat(response.gradingCriteria()).hasSameSizeAs(existingCriteria);
+        assertThat(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId())).hasSameSizeAs(existingCriteria);
     }
 
     @Test

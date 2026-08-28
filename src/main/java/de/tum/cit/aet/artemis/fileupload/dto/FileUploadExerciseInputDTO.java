@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload.dto;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,8 +61,9 @@ public record FileUploadExerciseInputDTO(@Nullable Long id, @Nullable String tit
         @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests, @Nullable Boolean presentationScoreEnabled,
         @Nullable Boolean secondCorrectionEnabled, @Nullable String feedbackSuggestionModule, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
-        @Nullable String exampleSolution, @Nullable String filePattern, @Nullable Long courseId, @Nullable Long exerciseGroupId, @Nullable Set<GradingCriterionDTO> gradingCriteria,
-        @Nullable Set<CompetencyLinkDTO> competencyLinks, @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CompetencyLinksHolderDTO {
+        @Nullable String exampleSolution, @Nullable String filePattern, @Nullable Long courseId, @Nullable Long exerciseGroupId,
+        @Nullable List<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks,
+        @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CompetencyLinksHolderDTO {
 
     private static final String ENTITY_NAME = "fileUploadExercise";
 

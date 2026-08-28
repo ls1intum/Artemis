@@ -190,6 +190,7 @@ public class FileUploadExerciseResource {
         if (inputDTO.id() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idExists")).body(null);
         }
+        validateNoGradingCriterionIds(inputDTO);
         FileUploadExercise fileUploadExercise = inputDTO.toEntity();
         // File upload exercises are always assessed manually.
         fileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
@@ -229,7 +230,18 @@ public class FileUploadExerciseResource {
 
         exerciseVersionService.createExerciseVersion(result);
 
-        return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(FileUploadExerciseDTO.of(result));
+        return ResponseEntity.created(new URI("/api/fileupload/file-upload-exercises/" + result.getId())).body(loadFileUploadExerciseDTOForResponse(result.getId()));
+    }
+
+    private void validateNoGradingCriterionIds(FileUploadExerciseInputDTO inputDTO) {
+        if (inputDTO.gradingCriteria() == null) {
+            return;
+        }
+        boolean containsId = inputDTO.gradingCriteria().stream().anyMatch(criterion -> criterion.id() != null
+                || criterion.structuredGradingInstructions() != null && criterion.structuredGradingInstructions().stream().anyMatch(instruction -> instruction.id() != null));
+        if (containsId) {
+            throw new BadRequestAlertException("A new file upload exercise cannot contain grading criterion or grading instruction IDs.", ENTITY_NAME, "idExists");
+        }
     }
 
     /**
@@ -374,14 +386,7 @@ public class FileUploadExerciseResource {
 
         // Retrieve the course over the exerciseGroup or the given courseId
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExerciseBeforeUpdate);
-
-        if (fileUploadExerciseBeforeUpdate.isCourseExercise() && !Objects.equals(course.getId(), updateFileUploadExerciseDTO.courseId())) {
-            throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
-        }
-        if (fileUploadExerciseBeforeUpdate.isExamExercise() && updateFileUploadExerciseDTO.courseId() != null
-                && !Objects.equals(course.getId(), updateFileUploadExerciseDTO.courseId())) {
-            throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
-        }
+        validateCourseId(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, course);
 
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithAuthorities();
@@ -517,6 +522,15 @@ public class FileUploadExerciseResource {
             if (!Objects.equals(existingExercise.getExerciseGroup().getId(), dto.exerciseGroupId())) {
                 throw new ConflictException("The exercise group cannot be changed here.", ENTITY_NAME, "exerciseGroupCannotChange");
             }
+        }
+    }
+
+    private void validateCourseId(UpdateFileUploadExerciseDTO dto, FileUploadExercise existingExercise, Course course) {
+        if (existingExercise.isCourseExercise() && !Objects.equals(course.getId(), dto.courseId())) {
+            throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
+        }
+        if (existingExercise.isExamExercise() && dto.courseId() != null && !Objects.equals(course.getId(), dto.courseId())) {
+            throw new BadRequestAlertException("The course can not be changed.", ENTITY_NAME, "courseIdInvalid");
         }
     }
 
@@ -687,6 +701,13 @@ public class FileUploadExerciseResource {
         final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
+        validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, existingExercise);
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(existingExercise);
+        validateCourseId(updateFileUploadExerciseDTO, existingExercise, course);
+
+        var user = userRepository.getUserWithAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
         // Capture ALL original values BEFORE update() mutates the entity via L1 cache.
         final Double originalMaxPoints = existingExercise.getMaxPoints();
         final Double originalBonusPoints = existingExercise.getBonusPoints();
@@ -698,11 +719,8 @@ public class FileUploadExerciseResource {
                 ? existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet())
                 : Set.of();
 
-        var user = userRepository.getUserWithAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
-        var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
@@ -739,15 +757,17 @@ public class FileUploadExerciseResource {
     /**
      * Replaces the grading criteria of the given exercise according to PUT semantics.
      * <p>
-     * If {@code dto.gradingCriteria()} is {@code null} or empty, all existing criteria are removed (if initialized).
+     * If {@code dto.gradingCriteria()} is {@code null}, existing criteria remain unchanged. An empty list removes all criteria.
      * Otherwise, existing criteria are updated by id and new ones are created for DTOs without id.
      *
      * @param dto      the update DTO containing grading criteria
      * @param exercise the exercise to mutate
      */
     private void updateGradingCriteria(UpdateFileUploadExerciseDTO dto, FileUploadExercise exercise) {
-        // Empty or null means "remove all criteria"
-        if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
+        if (dto.gradingCriteria() == null) {
+            return;
+        }
+        if (dto.gradingCriteria().isEmpty()) {
             clearInitializedCollection(exercise.getGradingCriteria());
             return;
         }
@@ -787,7 +807,7 @@ public class FileUploadExerciseResource {
      * <li>All fields in the DTO represent the new state.</li>
      * <li>Required attributes (e.g. title) are validated here and must not be {@code null} or blank.</li>
      * <li>Nullable attributes are explicitly overwritten, i.e. {@code null} means "clear existing value".</li>
-     * <li>Collections (grading criteria, competency links) are fully replaced; {@code null} or empty means "remove all".</li>
+     * <li>Provided collections (grading criteria, competency links) are fully replaced; empty means "remove all", while {@code null} leaves them unchanged.</li>
      * </ul>
      *
      * @param updateFileUploadExerciseDTO the DTO containing the updated state for the exercise
