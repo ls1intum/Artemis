@@ -78,12 +78,13 @@ pnpm run vitest -- path/to/spec.ts   # Single Vitest file
 ./run-e2e-tests-local-fast.sh --filter "ExamAssessment|SystemHealth"  # Multiple patterns
 ./run-e2e-tests-local-fast.sh --stop                       # Stop all services
 
-# Multi-node E2E (catches Hazelcast cluster / L2 cache coherence regressions)
+# Multi-node E2E (catches cluster / cache coherence regressions)
 # Boots the full production-faithful stack: Postgres, JHipster Registry (Eureka),
 # ActiveMQ, 3 Artemis nodes, nginx LB, containerised Playwright. Slower than the
 # single-node fast script, but the only way to reproduce multi-node bugs locally.
 ./run-e2e-tests-local-multinode.sh                         # Full multi-node run (build WAR + image + stack + tests)
 ./run-e2e-tests-local-multinode.sh --filter "Quiz"         # Multi-node, filtered
+./run-e2e-tests-local-multinode.sh --middleware redis      # Run the same suite on Redis instead of Hazelcast
 ./run-e2e-tests-local-multinode.sh --skip-build --skip-up  # Quick re-run against an already-running stack
 ./run-e2e-tests-local-multinode.sh --stop                  # Tear everything down
 
@@ -93,14 +94,19 @@ pnpm run vitest -- path/to/spec.ts   # Single Vitest file
 # containers. Use this for server-side iteration on multi-node bugs. Cold ~1–2 min, warm ~30 s.
 ./run-e2e-tests-local-multinode-fast.sh                       # Full run (build WAR + infra + 3 host JVMs + tests)
 ./run-e2e-tests-local-multinode-fast.sh --filter "Quiz"       # Filter to a subset of tests
+./run-e2e-tests-local-multinode-fast.sh --middleware redis    # Same suite, Redis instead of Hazelcast
 ./run-e2e-tests-local-multinode-fast.sh --skip-build --skip-up  # Re-run tests against the running stack
 ./run-e2e-tests-local-multinode-fast.sh --stop                # Tear everything down
 ```
 
+**Which middleware?** Both multi-node runners take `--middleware hazelcast|redis`. Hazelcast is the default because it is
+what production runs; Redis is the supported alternative and has to pass the same suite. With `redis` no Hazelcast
+instance is created at all, which is what makes the run a genuine check of the abstraction.
+
 **Which E2E runner should I use?**
 
 - `run-e2e-tests-local-fast.sh` — single node, Angular dev server. Best for client (UI) iteration.
-- `run-e2e-tests-local-multinode-fast.sh` — multi-node, WAR run from host. Best for server iteration that needs the cluster (Hazelcast, ActiveMQ STOMP, LB).
+- `run-e2e-tests-local-multinode-fast.sh` — multi-node, WAR run from host. Best for server iteration that needs the cluster (distributed data, ActiveMQ STOMP, LB).
 - `run-e2e-tests-local-multinode.sh` — full Docker image build, prod-faithful. Use this to reproduce a CI-only failure or before pushing a multi-node-sensitive change.
 
 ## Project Structure
@@ -179,9 +185,17 @@ Organized by feature module:
 ### Caching
 
 - **Do not add `@Cache` (Hibernate L2) annotations on entities or associations.** Hibernate second-level cache is disabled cluster-wide and an ArchUnit rule (`ArchitectureTest.testNoHibernateSecondLevelCacheAnnotation`) fails the build if any reappears. Reason: `@Modifying @Query` repository methods bypass L2 invalidation, and the absence of service-level `@Transactional` leaves no clean place to coordinate eviction within a REST call — both produced cross-node stale-read bugs in the multi-node cluster (issue #12574, fixed in PR #12578; further cleanup in PR #12579).
-- **For DTO / projection caching, use Spring `@Cacheable` with the `HazelcastCacheManager`** (defined in `HazelcastConfiguration.cacheManager`). Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService` for the canonical pattern.
+- **For DTO / projection caching, use Spring `@Cacheable`.** It resolves against the `RoutingCacheManager` in `core/config/cache/CacheManagerConfiguration`, which serves blob caches (`files`, `plantUmlPng`, `plantUmlSvg`) from a bounded per-node Caffeine cache and every other cache from the distributed data provider. Always pair `@Cacheable` with explicit eviction — `@CacheEvict` on the writer service, or a Hibernate `PostUpdateEventListener` / `PostDeleteEventListener`. See `TitleCacheEvictionService` for the canonical pattern, and `BlobCacheEvictionService` for evicting a per-node blob cache across the cluster.
 - The bar for adding a new cache: a measured performance gain that justifies the eviction-correctness work. The default answer is: do not cache.
 - Full rationale, history, and patterns: `documentation/docs/developer/guidelines/caching.mdx`.
+
+### Distributed data (cross-node state)
+
+- **Never use Hazelcast or Redis directly.** All cross-node state — build job queue, feature toggles, scheduling messages, websocket broker status, LTI state, Pyris jobs, `@Cacheable` caches — goes through `DistributedDataProvider` (`core/service/distributed`). An ArchUnit rule (`DistributedDataProviderArchitectureTest`) fails the build if a production class outside a small, explicitly named set of backend adapters depends on `com.hazelcast..`, `org.redisson..` or `org.springframework.data.redis..`.
+- The backend is selected by `artemis.distributed-data.provider` (`Hazelcast` default, `Redis`, `Local`). With `Redis` no Hazelcast instance is created at all, so any direct usage silently loses that state instead of failing.
+- Request entry lifetimes at the call site with `getExpiringMap(name, ttl)`; a backend map configuration only applies to that backend. `getMap(name)` rejects a per-entry TTL for exactly this reason.
+- Missing capability? Add it to `DistributedDataProvider`, implement it for all three backends, and add a case to `AbstractDistributedDataTest` — that suite is what keeps the backends in agreement.
+- Full rationale and patterns: `documentation/docs/developer/guidelines/distributed-data.mdx`.
 
 ### TypeScript/Angular
 

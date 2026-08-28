@@ -204,25 +204,36 @@ Inactivity for the not-enrolled-user cleanup is measured by the user's last logi
 
 ## Audit event retention
 
-The audit table (`jhi_persistent_audit_event`) is pruned by its own nightly job, independently of the operations above and with no kill switch: it holds no personal data beyond the acting user's login, and letting it grow without bound is not a useful default.
+Audit events are pruned by their own nightly job, independently of the operations above and with no kill switch: they hold no personal data beyond the acting user's login, and letting them grow without bound is not a useful default.
 
-Two retention periods apply, because the table mixes records with opposite characteristics:
+They are split across three tables, because they mix records with opposite characteristics and one table would force a single retention period on all of them:
 
-| What | Event types | Default | Property |
-| --- | --- | --- | --- |
-| The login record | `AUTHENTICATION_SUCCESS`, `AUTHENTICATION_FAILURE`, `AUTHENTICATION_PASSKEY_SUCCESS`, `SAML2_AUTHENTICATION_SUCCESS`, `LOGOUT_SUCCESS` | 365 days | `artemis.audit-events.general-retention-period` |
-| Everything else | Deliberate actions such as `DELETE_EXERCISE` or `RESET_EXAM`, plus any unrecognised or missing type | 1825 days | `artemis.audit-events.application-retention-period` |
+| Log | Table | Event types | Default | Property |
+| --- | --- | --- | --- | --- |
+| General | `jhi_persistent_audit_event` | `AUTHENTICATION_SUCCESS`, `AUTHENTICATION_FAILURE`, `AUTHENTICATION_PASSKEY_SUCCESS`, `SAML2_AUTHENTICATION_SUCCESS`, `LOGOUT_SUCCESS` | 365 days | `artemis.audit-events.general-retention-period` |
+| Security | `security_audit_event` | Credential and identity changes, such as `CHANGE_OWN_PASSWORD`, `COMPLETE_PASSWORD_RESET`, `ADMIN_CHANGE_USER_PASSWORD`, `REVOKE_OWN_CREDENTIALS`, `ACCOUNT_EMAIL_CHANGED`, `ACCOUNT_REGISTERED` | 1825 days | `artemis.audit-events.security-retention-period` |
+| Application | `application_audit_event` | Deliberate domain actions such as `DELETE_EXERCISE` or `RESET_EXAM`, plus any unrecognised or missing type | 1825 days | `artemis.audit-events.application-retention-period` |
 
-One row is written per login attempt, so the login record is the bulk of the table and tells you little a few weeks later.
-The remaining rows are rare and are what has to be reconstructed when a question is raised long after the fact, an exam dispute in particular.
-Anything not recognised as a login gets the long retention, so an event type added in a later version is over-retained rather than silently dropped.
+One row is written per login attempt, so the general log is the bulk of the data and tells you little a few weeks later.
+The other two are rare and are what has to be reconstructed when a question is raised long after the fact, an exam dispute in particular.
+Anything not recognised gets the long application retention, so an event type added in a later version is over-retained rather than silently dropped.
 
-Both values must be positive and are validated when the configuration is bound, so a typo such as `0` or a negative number fails startup instead of being applied.
+`AuditEventTypeClassifier` decides which log an event is written to, and the admin audit view shows one tab per log, so each tab queries only its own table.
+
+All three values must be positive and are validated when the configuration is bound, so a typo such as `0` or a negative number fails startup instead of being applied.
 This job has no kill switch and its deletions are irreversible, so a cutoff in the future would delete records written minutes ago.
 
 The job runs at 03:10 every night on the node with the scheduling profile active.
-It deletes in batches of 5000 rows, up to 200 batches per retention period per night, so a backlog that has accumulated over years is drained over several nights rather than in one very long transaction.
-The log line reports how many rows each period removed, and says explicitly when the per-run cap was reached and rows remain.
+It deletes in batches of 5000 rows, up to 200 batches per log per night, so a backlog that has accumulated over years is drained over several nights rather than in one very long transaction.
+Each log is pruned independently: a failure on one is logged and the other two still run.
+The log line reports how many rows each retention period removed, and says explicitly when the per-run cap was reached and rows remain.
+
+:::caution
+The upgrade that introduces the split moves every non-login row out of `jhi_persistent_audit_event` into the table its type now belongs to, and first deletes what is already expired according to the two default retention periods (365 and 1825 days).
+A changelog cannot read Spring configuration, so those cutoffs are literals. An instance configured with *shorter* retention loses nothing, since this deletes a subset of what its own nightly job already deletes. An instance that has *widened* either period beyond the defaults would lose the rows between the two horizons, irreversibly, and should review the migration before upgrading.
+Logins dominate the volume, so the moved subset is comparatively small, but on a long-running installation it is worth checking beforehand with `SELECT event_type, COUNT(*) FROM jhi_persistent_audit_event GROUP BY event_type ORDER BY 2 DESC;`.
+Rows written by nodes still running the previous version while the migration runs are left in the general log rather than moved, so during a rolling upgrade a few domain events can end up on the shorter retention.
+:::
 
 ### Testing and assurance
 

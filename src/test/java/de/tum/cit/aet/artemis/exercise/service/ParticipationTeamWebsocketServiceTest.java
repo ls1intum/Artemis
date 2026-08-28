@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.RETURNS_MOCKS;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -92,8 +93,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
     void testSubscribeToParticipationTeamWebsocketTopic() {
         participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock("fakeSessionId"));
         verify(websocketMessagingService).sendMessage(websocketTopic(participation), List.of());
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was added to destination tracker.").hasSize(1);
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was added to destination tracker.").hasSize(1);
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Destination in tracker is correct.").containsValue(websocketTopic(participation));
     }
 
     @Test
@@ -114,8 +115,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         participationTeamWebsocketService.unsubscribe(stompHeaderAccessor1.getSessionId());
 
         verify(websocketMessagingService, timeout(2000).times(3)).sendMessage(websocketTopic(participation), List.of());
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Session was removed from destination tracker.").hasSize(1);
-        assertThat(participationTeamWebsocketService.getDestinationTracker()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Session was removed from destination tracker.").hasSize(1);
+        assertThat(participationTeamWebsocketService.getDestinationTracker().getMapCopy()).as("Correct session was removed.").containsKey(stompHeaderAccessor2.getSessionId());
     }
 
     @Test
@@ -148,7 +149,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a new modeling submission ...
         participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student1"));
         // the submission should be handled by the service (i.e. saved), ...
-        verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any());
+        verify(modelingSubmissionService, timeout(2000).times(1)).handleModelingSubmission(any(), any(), any(), isNull());
         // but it should NOT be broadcast (sync is handled with patches only).
         verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(participation), List.of());
     }
@@ -161,7 +162,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a new modeling submission with the wrong user ...
         participationTeamWebsocketService.updateModelingSubmission(participation.getId(), submission, getPrincipalMock("student2"));
         // the submission is NOT saved ...
-        verify(modelingSubmissionService, after(1000).never()).handleModelingSubmission(any(), any(), any());
+        verify(modelingSubmissionService, after(1000).never()).handleModelingSubmission(any(), any(), any(), isNull());
         // it is also not broadcast.
         verify(websocketMessagingService, after(1000).never()).sendMessage(websocketTopic(participation), List.of());
     }
@@ -174,7 +175,7 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationInd
         // when we submit a new text submission ...
         participationTeamWebsocketService.updateTextSubmission(textParticipation.getId(), submission, getPrincipalMock("student1"));
         // the submission should be handled by the service (i.e. saved), ...
-        verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any());
+        verify(textSubmissionService, timeout(2000).times(1)).handleTextSubmission(any(), any(), any(), isNull());
         // and it should be broadcast (unlike modeling exercises).
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(websocketTopic(textParticipation), List.of());
     }
