@@ -95,14 +95,17 @@ watch_for_hang() {
         # Both conditions are checked every poll rather than silence being tested once at a fixed moment: a
         # run that goes quiet at minute 44 has only a minute of silence at minute 45, and checking there and
         # then would let exactly the hang this exists to catch go undumped.
-        if [ "$elapsed" -ge "$earliest" ] && [ "$silent_for" -ge "$silence" ]; then
+        if [ "$elapsed" -ge "$earliest" ] && [ "$elapsed" -le "$latest" ] && [ "$silent_for" -ge "$silence" ]; then
             echo "::warning::No output for ${silent_for}s after ${elapsed}s — dumping JVM threads (likely hang); see the Server Test Thread Dumps artifact."
             dump_all_jvms
             return
         fi
 
-        if [ "$elapsed" -ge "$latest" ]; then
-            echo "::notice::Still running after ${elapsed}s; last output ${silent_for}s ago, short of the ${silence}s of silence a dump needs. Not dumping: one started this late could not finish before the Gradle timeout."
+        # Past the deadline a dump can no longer finish before Gradle kills the task, so report and stop watching. The
+        # deadline is also part of the condition above rather than only here: a poll can arrive late on a loaded runner,
+        # and without it a run that had gone quiet would start a full dump phase after the deadline had already passed.
+        if [ "$elapsed" -gt "$latest" ]; then
+            echo "::notice::Still running after ${elapsed}s; last output ${silent_for}s ago. Not dumping: one started this late could not finish before the Gradle timeout."
             return
         fi
     done
