@@ -1,6 +1,6 @@
 import type { User, UserPublicInfoDTO } from 'app/account/user/user.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import type { Course } from 'app/course/shared/entities/course.model';
+import type { Course, Language } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -25,6 +25,9 @@ export interface ParticipationSubmissionResultDTO {
     score?: number;
     rated: boolean;
     assessmentType?: AssessmentType;
+    testCaseCount?: number;
+    passedTestCaseCount?: number;
+    codeIssueCount?: number;
 }
 
 export interface ParticipationSubmissionDTO {
@@ -33,6 +36,11 @@ export interface ParticipationSubmissionDTO {
     submissionDate?: string;
     submissionExerciseType: SubmissionExerciseType;
     commitHash?: string;
+    text?: string;
+    language?: Language;
+    model?: string;
+    explanationText?: string;
+    filePath?: string;
     results?: ParticipationSubmissionResultDTO[];
 }
 
@@ -173,6 +181,14 @@ function fromParticipationSubmissionDTO(dto: ParticipationSubmissionDTO): Submis
     submission.results = dto.results?.map(fromParticipationSubmissionResultDTO);
     if (submission instanceof ProgrammingSubmission) {
         submission.commitHash = dto.commitHash;
+    } else if (submission instanceof TextSubmission) {
+        submission.text = dto.text;
+        submission.language = dto.language;
+    } else if (submission instanceof ModelingSubmission) {
+        submission.model = dto.model;
+        submission.explanationText = dto.explanationText;
+    } else if (submission instanceof FileUploadSubmission) {
+        submission.filePath = dto.filePath;
     }
     return submission;
 }
@@ -200,5 +216,8 @@ function fromParticipationSubmissionResultDTO(dto: ParticipationSubmissionResult
     result.score = dto.score;
     result.rated = dto.rated;
     result.assessmentType = dto.assessmentType;
+    result.testCaseCount = dto.testCaseCount;
+    result.passedTestCaseCount = dto.passedTestCaseCount;
+    result.codeIssueCount = dto.codeIssueCount;
     return result;
 }

@@ -421,6 +421,32 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation.student().getId()).isEqualTo(user.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExercise_retryReturnsExistingSubmissionContent() throws Exception {
+        TextExercise examTextExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+
+        StudentParticipationDTO initialParticipation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
+        TextSubmission existingSubmission = (TextSubmission) submissionRepository.findAllByParticipationId(initialParticipation.id()).getFirst();
+        existingSubmission.setText("Existing exam answer");
+        existingSubmission.setLanguage(Language.ENGLISH);
+        submissionRepository.saveAndFlush(existingSubmission);
+
+        StudentParticipationDTO retriedParticipation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
+                StudentParticipationDTO.class, HttpStatus.CREATED);
+
+        assertThat(retriedParticipation.id()).isEqualTo(initialParticipation.id());
+        assertThat(retriedParticipation.submissions()).singleElement().satisfies(submission -> {
+            assertThat(submission.id()).isEqualTo(existingSubmission.getId());
+            assertThat(submission.text()).isEqualTo("Existing exam answer");
+            assertThat(submission.language()).isEqualTo(Language.ENGLISH);
+        });
+    }
+
     /**
      * Students cannot start participations after the working time of the exam.
      */

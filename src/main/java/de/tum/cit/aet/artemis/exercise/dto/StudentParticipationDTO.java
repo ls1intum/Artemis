@@ -67,23 +67,23 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     }
 
     /**
-     * Maps a newly started participation including its visible participant, exercise, and initialized submissions.
+     * Maps a newly started participation including its visible participant, exercise, and initialized submissions with subtype content.
      *
      * @param participation the newly started participation
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterStart(StudentParticipation participation) {
-        return of(participation, true, true, true);
+        return of(participation, true, true, true, true);
     }
 
     /**
-     * Maps a resumed programming participation including its exercise context.
+     * Maps a resumed programming participation including its visible participant and exercise context.
      *
      * @param participation the resumed programming participation
      * @return the participation response
      */
     public static StudentParticipationDTO ofAfterResume(ProgrammingExerciseStudentParticipation participation) {
-        return of(participation, false, true, false);
+        return of(participation, true, true, false);
     }
 
     /**
@@ -127,6 +127,11 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
     }
 
     private static StudentParticipationDTO of(StudentParticipation participation, boolean includeParticipant, boolean includeExercise, boolean includeSubmissions) {
+        return of(participation, includeParticipant, includeExercise, includeSubmissions, false);
+    }
+
+    private static StudentParticipationDTO of(StudentParticipation participation, boolean includeParticipant, boolean includeExercise, boolean includeSubmissions,
+            boolean includeSubmissionContent) {
         UserPublicInfoDTO studentDTO = null;
         ParticipationTeamDTO teamDTO = null;
         if (includeParticipant) {
@@ -147,7 +152,7 @@ public record StudentParticipationDTO(Long id, @Nullable InitializationState ini
 
         List<ParticipationSubmissionDTO> submissionDTOs = null;
         if (includeSubmissions && Hibernate.isInitialized(participation.getSubmissions())) {
-            submissionDTOs = participation.getSubmissions().stream().map(ParticipationSubmissionDTO::of).toList();
+            submissionDTOs = participation.getSubmissions().stream().map(submission -> ParticipationSubmissionDTO.of(submission, includeSubmissionContent)).toList();
         }
 
         String repositoryUri = null;
