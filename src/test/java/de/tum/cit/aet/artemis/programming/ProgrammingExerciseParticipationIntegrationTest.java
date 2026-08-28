@@ -742,10 +742,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         Map<String, Object> body = getJsonMap(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks?withSubmission=" + withSubmission);
 
         assertThat(body).containsOnlyKeys("id", "exerciseId", "completionDate", "successful", "score", "rated", "hasComplaint", "exampleResult", "submission", "feedbacks",
-                "assessmentType", "testCaseCount", "passedTestCaseCount", "codeIssueCount");
+                "assessmentType", "correctionRound", "testCaseCount", "passedTestCaseCount", "codeIssueCount");
         assertThat(body.get("id")).isEqualTo(result.getId().intValue());
         assertThat(body.get("hasComplaint")).isEqualTo(true);
         assertThat(body.get("exampleResult")).isEqualTo(true);
+        assertThat(body.get("correctionRound")).isEqualTo(1);
         // exerciseId is a non-nullable column with a plain getter, so it was on the entity wire for every result
         assertThat(body.get("exerciseId")).isEqualTo(programmingExercise.getId().intValue());
         assertThat(body.get("assessmentType")).isEqualTo(AssessmentType.AUTOMATIC.name());
@@ -826,8 +827,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         // visibleRegistrationNumber is the one component missing here: it is a transient that only the exam and course
         // management read paths unmask, so it was absent from the entity payload of this route as well.
         Map<String, Object> student = mapOf(participationJson, "student");
-        assertThat(student).containsOnlyKeys("id", "login", "name", "firstName", "lastName", "email", "imageUrl", "langKey", "activated", "deleted", "internal", "testUser",
-                "ltiCreated", "memirisEnabled", "bot", "participantIdentifier", "selectedLLMUsage", "selectedLLMUsageTimestamp", "createdDate");
+        assertThat(student).containsOnlyKeys("id", "login", "name", "firstName", "lastName", "email", "imageUrl", "langKey", "activated", "deleted", "internal", "testUser", "bot",
+                "participantIdentifier", "createdDate");
         assertThat(student.get("login")).isEqualTo(TEST_PREFIX + "student1");
         assertThat(student.get("participantIdentifier")).isEqualTo(TEST_PREFIX + "student1");
         assertThat(student.get("imageUrl")).isEqualTo(SCORPIO_STUDENT_IMAGE_URL);
@@ -945,6 +946,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusDays(1));
         result.setHasComplaint(true);
         result.setExampleResult(true);
+        // Synthetic for an automatic result, but the key-set assertion needs every component non-empty so no key can
+        // hide behind NON_EMPTY.
+        result.setCorrectionRound(1);
         var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
         // Truncate to milliseconds so durationInMinutes stays deterministic across the datetime(3) round trip.
         participation.setInitializationDate(ZonedDateTime.now().minusMinutes(30).truncatedTo(ChronoUnit.MILLIS));

@@ -23,7 +23,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getFirstResultWithComplaint, getLatestSubmissionResult, getNewestResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercise/result/result.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -44,6 +44,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -200,7 +201,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 const changedParticipation = updatedParticipation as StudentParticipation;
                 const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 const oldResults = this.participation().submissions?.flatMap((submission) => submission.results ?? []) || [];
-                const lastResult = results?.last();
+                // By id, not by position: the server holds a submission's results in a set, so the response order is arbitrary.
+                const lastResult = getNewestResult(results);
                 const isNewAthenaResult =
                     !!results &&
                     ((results?.length || 0) > (oldResults.length || 0) || lastResult?.completionDate === undefined) &&
@@ -492,7 +494,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     private submissionForAnswer(answer: string): TextSubmission {
-        return { ...this.submission(), text: answer, language: this.textService.predictLanguage(answer) };
+        // The submission signal starts out unset (`undefined!`), which the previous spread tolerated by yielding a
+        // bare object; fall back to a fresh submission so the behaviour is unchanged.
+        return cloneWith(this.submission() ?? new TextSubmission(), { text: answer, language: this.textService.predictLanguage(answer) });
     }
 
     onReceiveSubmissionFromTeam(submission: TextSubmission) {

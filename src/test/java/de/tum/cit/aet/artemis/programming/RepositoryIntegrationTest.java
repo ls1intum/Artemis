@@ -1044,7 +1044,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testBuildLogsWithManualResult() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
         var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
-        submission.setBuildLogEntries(buildLogEntries);
+        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
         participationUtilService.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
@@ -1056,7 +1056,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     void testBuildLogs() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
         var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
-        submission.setBuildLogEntries(buildLogEntries);
+        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
@@ -1072,7 +1072,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs_keepsTheScorpioKeySet() throws Exception {
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true);
-        submission.setBuildLogEntries(buildLogEntryService.saveBuildLogs(logs, submission));
+        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntryService.saveBuildLogs(logs, submission)));
         participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
 
         String response = request.get(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, String.class);
@@ -1115,7 +1115,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry1", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry2", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
-        submission.setBuildLogEntries(buildLogEntries);
+        submission.setBuildLogEntries(new java.util.LinkedHashSet<>(buildLogEntries));
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
 
         var receivedLogs = request.getList(participationsBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
@@ -1137,7 +1137,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 1", submission1));
         submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 2", submission1));
 
-        submission1.setBuildLogEntries(submission1Logs);
+        submission1.setBuildLogEntries(new java.util.LinkedHashSet<>(submission1Logs));
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission1, TEST_PREFIX + "student1");
         var result1 = participationUtilService.addResultToSubmission(submission1, AssessmentType.AUTOMATIC).getFirstResult();
 
@@ -1153,7 +1153,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 1", submission2));
         submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 2", submission2));
 
-        submission2.setBuildLogEntries(submission2Logs);
+        submission2.setBuildLogEntries(new java.util.LinkedHashSet<>(submission2Logs));
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student1");
         var result2 = participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
 

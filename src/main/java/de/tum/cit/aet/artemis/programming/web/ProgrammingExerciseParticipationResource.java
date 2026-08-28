@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -170,7 +171,7 @@ public class ProgrammingExerciseParticipationResource {
         boolean hideResults = shouldHideExamExerciseResults(participation);
         ProgrammingSubmission submission = participation.getSubmissions().isEmpty() ? null : (ProgrammingSubmission) participation.getSubmissions().iterator().next();
         // hide details that should not be shown to the students; masking happens by mapping fewer DTOs, never by mutating the loaded (possibly managed) submission
-        List<Result> results = submission == null ? List.of() : (hideResults ? List.of() : submission.getResults());
+        Collection<Result> results = submission == null || hideResults ? List.of() : submission.getResults();
         resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
 
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submission == null ? List.of()
@@ -179,8 +180,8 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
     }
 
-    private static List<ResultDTO> mapResults(List<Result> results) {
-        return results.stream().map(ResultDTO::ofNested).toList();
+    private static List<ResultDTO> mapResults(Collection<Result> results) {
+        return results.stream().filter(Objects::nonNull).map(ResultDTO::ofNested).toList();
     }
 
     /**
@@ -210,8 +211,8 @@ public class ProgrammingExerciseParticipationResource {
             resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         }
 
-        List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submissions.stream().map(submission -> ProgrammingSubmissionWithResultsDTO.of(submission,
-                hideResults ? List.of() : mapResults(submission.getResults().stream().filter(Objects::nonNull).toList()))).toList();
+        List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submissions.stream()
+                .map(submission -> ProgrammingSubmissionWithResultsDTO.of(submission, hideResults ? List.of() : mapResults(submission.getResults()))).toList();
         ProgrammingExerciseResponseDTO exerciseDTO = ProgrammingExerciseResponseDTO.of(participation.getProgrammingExercise());
         return ResponseEntity.ok(ProgrammingExerciseStudentParticipationDTO.of(participation, exerciseDTO, submissionDTOs));
     }

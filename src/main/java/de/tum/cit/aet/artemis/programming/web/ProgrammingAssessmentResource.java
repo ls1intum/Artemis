@@ -155,6 +155,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         existingManualResult = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(existingManualResult.getId());
 
         newManualResult.setSubmission(existingManualResult.getSubmission());
+        // The correction round is server-owned state stamped at lock time; the entity binding used to smuggle it back
+        // in from the client echo. Copy it from the stored result so the replace-by-id save cannot wipe it.
+        newManualResult.setCorrectionRound(existingManualResult.getCorrectionRound());
 
         var programmingExercise = (ProgrammingExercise) participation.getExercise();
         checkAuthorization(programmingExercise, user);

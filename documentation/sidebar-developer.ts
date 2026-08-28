@@ -38,6 +38,7 @@ const sidebars: SidebarsConfig = {
                         'guidelines/server-tests',
                         'guidelines/database',
                         'guidelines/caching',
+                        'guidelines/distributed-data',
                         'guidelines/performance',
                         'guidelines/criteria-builder',
                     ],
@@ -57,7 +58,6 @@ const sidebars: SidebarsConfig = {
         'e2e-testing-playwright',
         'spring-ai',
         'ai-pipelines',
-        'aeolus',
         'openapi',
         'docker-compose',
         'mailpit-setup',
@@ -69,7 +69,7 @@ const sidebars: SidebarsConfig = {
         {
             type: 'category',
             label: 'Hyperion',
-            items: ['hyperion/consistency-check'],
+            items: ['hyperion/consistency-check', 'hyperion/quiz-generation'],
         },
     ],
 };

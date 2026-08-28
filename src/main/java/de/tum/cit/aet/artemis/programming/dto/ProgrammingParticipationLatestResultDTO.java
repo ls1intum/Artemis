@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentNoteDTO;
-import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -63,6 +62,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
  * @param submission          the submission the result belongs to
  * @param feedbacks           the feedback items of this result
  * @param assessmentType      automatic, semi-automatic or manual assessment
+ * @param correctionRound     which correction round this result belongs to; {@code null} for automatic results
  * @param hasComplaint        whether the result has a complaint
  * @param exampleResult       whether this is an example result
  * @param testCaseCount       the total number of test cases
@@ -73,8 +73,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated,
-        SubmissionRefDTO submission, List<FeedbackRefDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount,
-        Integer passedTestCaseCount, Integer codeIssueCount, UserNameDTO assessor, AssessmentNoteDTO assessmentNote) implements Serializable {
+        SubmissionRefDTO submission, List<FeedbackRefDTO> feedbacks, AssessmentType assessmentType, Integer correctionRound, Boolean hasComplaint, Boolean exampleResult,
+        Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount, UserNameDTO assessor, AssessmentNoteDTO assessmentNote) implements Serializable {
 
     /**
      * Converts a {@link Result} into a {@link ProgrammingParticipationLatestResultDTO}.
@@ -95,8 +95,8 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
         UserNameDTO assessor = assessorEntity != null && Hibernate.isInitialized(assessorEntity) ? UserNameDTO.of(assessorEntity) : null;
         AssessmentNoteDTO assessmentNote = AssessmentNoteDTO.of(result.getAssessmentNote());
         return new ProgrammingParticipationLatestResultDTO(result.getId(), result.getExerciseId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(),
-                result.isRated(), submissionDTO, feedbackDTOs, result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(),
-                result.getPassedTestCaseCount(), result.getCodeIssueCount(), assessor, assessmentNote);
+                result.isRated(), submissionDTO, feedbackDTOs, result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(),
+                result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount(), assessor, assessmentNote);
     }
 
     /**
@@ -255,7 +255,7 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
             if (!(submission instanceof ProgrammingSubmission programmingSubmission)) {
                 return null;
             }
-            List<BuildLogEntry> entries = programmingSubmission.getBuildLogEntries();
+            Set<BuildLogEntry> entries = programmingSubmission.getBuildLogEntries();
             List<BuildLogEntryDTO> buildLogEntries = entries != null && Hibernate.isInitialized(entries) ? entries.stream().map(BuildLogEntryDTO::of).toList() : null;
             Participation participation = programmingSubmission.getParticipation();
             // getDurationInMinutes() reads the participation's initialization date, so it must not run on a proxy.
@@ -367,9 +367,9 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
      * The components are the scalar properties {@link User} serialized at this position. Its association slots
      * ({@code authorities}, {@code organizations}, {@code savedPosts}, {@code tutorialGroupRegistrations} and
      * {@code learnerProfile}) are absent because they are all lazy and this route's fetch graph never initializes
-     * them, so the entity payload dropped them under {@code NON_EMPTY} as well. {@code resetDate} is the one
-     * serializable scalar deliberately left out: it is a password-recovery timestamp with no meaning to an IDE
-     * plugin, and copying it into a new participation-facing record would widen the account data this route exposes.
+     * them, so the entity payload dropped them under {@code NON_EMPTY} as well. The special-case scalars
+     * ({@code ltiCreated}, {@code memirisEnabled}, {@code resetDate}, {@code selectedLLMUsage} and its timestamp)
+     * moved off the entity into their own tables (#13546) and left the wire with them.
      *
      * @param id                        the user id
      * @param login                     the login
@@ -383,19 +383,15 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
      * @param deleted                   whether the account is soft-deleted
      * @param internal                  whether the account is managed by Artemis rather than by an external system
      * @param testUser                  whether this is a test user
-     * @param ltiCreated                whether the account was created through LTI
-     * @param memirisEnabled            whether the memory feature is enabled for this user
      * @param bot                       whether this is the Iris bot account
      * @param participantIdentifier     the login, under the name the participant interface uses
      * @param visibleRegistrationNumber the registration number, when a caller was allowed to unmask it
-     * @param selectedLLMUsage          the AI usage decision
-     * @param selectedLLMUsageTimestamp when the AI usage decision was made
      * @param createdDate               when the account was created
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ParticipantRefDTO(Long id, String login, String name, String firstName, String lastName, String email, String imageUrl, String langKey, boolean activated,
-            boolean deleted, boolean internal, boolean testUser, boolean ltiCreated, boolean memirisEnabled, boolean bot, String participantIdentifier,
-            String visibleRegistrationNumber, AiSelectionDecision selectedLLMUsage, ZonedDateTime selectedLLMUsageTimestamp, Instant createdDate) implements Serializable {
+            boolean deleted, boolean internal, boolean testUser, boolean bot, String participantIdentifier, String visibleRegistrationNumber, Instant createdDate)
+            implements Serializable {
 
         /**
          * Converts a {@link User} into a {@link ParticipantRefDTO}.
@@ -408,8 +404,8 @@ public record ProgrammingParticipationLatestResultDTO(Long id, Long exerciseId, 
                 return null;
             }
             return new ParticipantRefDTO(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getImageUrl(),
-                    user.getLangKey(), user.getActivated(), user.isDeleted(), user.isInternal(), user.isTestUser(), user.isLtiCreated(), user.isMemirisEnabled(), user.isBot(),
-                    user.getParticipantIdentifier(), user.getVisibleRegistrationNumber(), user.getSelectedLLMUsage(), user.getSelectedLLMUsageTimestamp(), user.getCreatedDate());
+                    user.getLangKey(), user.getActivated(), user.isDeleted(), user.isInternal(), user.isTestUser(), user.isBot(), user.getParticipantIdentifier(),
+                    user.getVisibleRegistrationNumber(), user.getCreatedDate());
         }
     }
 

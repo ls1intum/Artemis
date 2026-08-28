@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.programming.dto;
 
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import org.hibernate.Hibernate;
 
@@ -54,7 +56,7 @@ public record ProgrammingSubmissionForAssessmentDTO(Long id, String submissionEx
             return null;
         }
         // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
-        List<Result> results = submission.getResults() != null && Hibernate.isInitialized(submission.getResults()) ? submission.getResults() : null;
+        Collection<Result> results = submission.getResults() != null && Hibernate.isInitialized(submission.getResults()) ? submission.getResults() : null;
         return of(submission, exercise, results);
     }
 
@@ -67,10 +69,10 @@ public record ProgrammingSubmissionForAssessmentDTO(Long id, String submissionEx
      *
      * @param submission the submission to convert (may be {@code null})
      * @param exercise   the already-mapped nested exercise (may be {@code null})
-     * @param results    the results to nest under the submission; entries may be {@code null} (positional slots)
+     * @param results    the results to nest under the submission; null elements are skipped
      * @return the converted DTO, or {@code null} if the input was {@code null}
      */
-    public static ProgrammingSubmissionForAssessmentDTO of(ProgrammingSubmission submission, ProgrammingExerciseResponseDTO exercise, List<Result> results) {
+    public static ProgrammingSubmissionForAssessmentDTO of(ProgrammingSubmission submission, ProgrammingExerciseResponseDTO exercise, Collection<Result> results) {
         if (submission == null) {
             return null;
         }
@@ -78,7 +80,7 @@ public record ProgrammingSubmissionForAssessmentDTO(Long id, String submissionEx
         if (submission.getParticipation() instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             participation = ProgrammingExerciseStudentParticipationDTO.of(studentParticipation, exercise, null);
         }
-        List<ProgrammingAssessmentResultDTO> resultDTOs = results == null ? null : results.stream().map(ProgrammingAssessmentResultDTO::of).toList();
+        List<ProgrammingAssessmentResultDTO> resultDTOs = results == null ? null : results.stream().filter(Objects::nonNull).map(ProgrammingAssessmentResultDTO::of).toList();
         return new ProgrammingSubmissionForAssessmentDTO(submission.getId(), SUBMISSION_EXERCISE_TYPE, submission.getType(), submission.isSubmitted(),
                 submission.getSubmissionDate(), submission.getCommitHash(), submission.isBuildFailed(), participation, resultDTOs);
     }

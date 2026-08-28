@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
  * @param score               the relative score in percent
  * @param rated               whether the result counts towards the student's score
  * @param assessmentType      automatic, semi-automatic or manual
+ * @param correctionRound     which correction round this result belongs to; {@code null} for automatic results
  * @param hasComplaint        whether a complaint exists for this result
  * @param exampleResult       whether this result belongs to an example submission
  * @param testCaseCount       the number of executed test cases
@@ -52,7 +53,7 @@ import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingAssessmentResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, AssessmentType assessmentType,
-        Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount, UserNameDTO assessor,
+        Integer correctionRound, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount, UserNameDTO assessor,
         AssessmentNoteDTO assessmentNote, List<ProgrammingAssessmentFeedbackDTO> feedbacks) implements Serializable {
 
     /**
@@ -120,7 +121,7 @@ public record ProgrammingAssessmentResultDTO(Long id, ZonedDateTime completionDa
         // Result#getAssessmentNote already guards the lazy backing list itself.
         AssessmentNoteDTO assessmentNote = AssessmentNoteDTO.of(result.getAssessmentNote());
         return new ProgrammingAssessmentResultDTO(result.getId(), result.getCompletionDate(), result.isSuccessful(), result.getScore(), result.isRated(),
-                result.getAssessmentType(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(), result.getPassedTestCaseCount(), result.getCodeIssueCount(),
-                assessor, assessmentNote, feedbacks);
+                result.getAssessmentType(), result.getCorrectionRound(), result.hasComplaint(), result.isExampleResult(), result.getTestCaseCount(),
+                result.getPassedTestCaseCount(), result.getCodeIssueCount(), assessor, assessmentNote, feedbacks);
     }
 }

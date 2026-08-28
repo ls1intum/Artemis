@@ -103,6 +103,8 @@ public class PlantUmlService {
      * @return The generated PNG as a byte array
      * @throws IOException if generateImage can't create the PNG
      */
+    // Cached per node (see BlobCacheConfiguration): a rendered diagram is a pure function of its source, so nodes cannot
+    // disagree and no cross-node eviction is needed.
     @Cacheable(value = "plantUmlPng", unless = "#result == null || #result.length == 0")
     public byte[] generatePng(final String plantUml, final boolean useDarkTheme) throws IOException {
         var input = validateInputAndApplyTheme(plantUml, useDarkTheme);

@@ -5,7 +5,6 @@ import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
@@ -23,6 +22,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.
@@ -310,7 +310,7 @@ export class CourseExercisesComponent implements SidebarView {
             const updatedParticipations = currentParticipation
                 ? participations.map((participation) => (this.isSameParticipationSlot(participation, sidebarParticipation) ? sidebarParticipation : participation))
                 : participations.concat(sidebarParticipation);
-            return { ...exercise, studentParticipations: updatedParticipations };
+            return cloneWith(exercise, { studentParticipations: updatedParticipations });
         });
         return didUpdate ? updatedExercises : exercises;
     }
@@ -362,10 +362,8 @@ export class CourseExercisesComponent implements SidebarView {
             return;
         }
         // A different object has to be set: a signal only notifies when the reference changes. The exercise objects
-        // themselves are carried over by the assignment below, so live updates keep reaching what the cards render.
-        const updatedCourse = deepClone(course);
-        updatedCourse.exercises = updatedCourseExercises;
-        this._course.set(updatedCourse);
+        // themselves are carried over, so live updates keep reaching what the cards render.
+        this._course.set(cloneWith(course, { exercises: updatedCourseExercises }));
     }
 
     private updateExercisesWithParticipation(exercises: Exercise[] | undefined, changedParticipation: StudentParticipation): Exercise[] | undefined {
@@ -386,7 +384,7 @@ export class CourseExercisesComponent implements SidebarView {
             const updatedParticipations = hasParticipation
                 ? participations.map((participation) => (this.isSameParticipationSlot(participation, changedParticipation) ? changedParticipation : participation))
                 : participations.concat(changedParticipation);
-            return { ...exercise, studentParticipations: updatedParticipations };
+            return cloneWith(exercise, { studentParticipations: updatedParticipations });
         });
         return didUpdate ? updatedExercises : exercises;
     }

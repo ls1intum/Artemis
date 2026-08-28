@@ -18,6 +18,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { CourseAccessStorageService } from 'app/course/shared/services/course-access-storage.service';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course',
@@ -270,9 +271,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
      * Toggles the collapsed state of a semester section
      */
     toggleSemesterCollapsed(semester: string) {
-        this.semesterCollapsed.update((collapsed) => ({
-            ...collapsed,
-            [semester]: !collapsed[semester],
-        }));
+        this.semesterCollapsed.update((collapsed) => cloneWith(collapsed, { [semester]: !collapsed[semester] }));
     }
 }
