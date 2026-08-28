@@ -14,6 +14,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import uk.ac.ed.ph.snuggletex.DOMOutputOptions;
+import uk.ac.ed.ph.snuggletex.SessionConfiguration;
 import uk.ac.ed.ph.snuggletex.SnuggleEngine;
 import uk.ac.ed.ph.snuggletex.SnuggleInput;
 import uk.ac.ed.ph.snuggletex.SnuggleSession;
@@ -55,6 +56,9 @@ public final class LatexToMathmlConverter {
 
     private static final int MAX_MATHML_OUTPUT_LENGTH = 100_000;
 
+    /** Explicit macro-expansion budget for the parse, so a recursive macro is bounded before it produces output. */
+    private static final int MAX_MACRO_EXPANSIONS = 1_000;
+
     /** Macro-definition/expansion primitives are rejected: a small self-referential macro expands recursively and the depth preflight does not bound it. */
     private static final Pattern MACRO_PRIMITIVES = Pattern.compile("\\\\(def|newcommand|renewcommand|providecommand|let|csname|expandafter|newenvironment|input|include)\\b");
 
@@ -85,7 +89,11 @@ public final class LatexToMathmlConverter {
             return Optional.empty();
         }
         try {
-            SnuggleSession session = ENGINE.createSession();
+            // Bound macro expansion explicitly rather than trusting the library default, so a small recursive macro
+            // cannot burn CPU/heap during the parse before any output exists.
+            SessionConfiguration configuration = new SessionConfiguration();
+            configuration.setExpansionLimit(MAX_MACRO_EXPANSIONS);
+            SnuggleSession session = ENGINE.createSession(configuration);
             // `\[...\]` sets display="block" on the <math> element; `$...$` leaves it inline.
             String wrapped = displayMode ? "\\[" + latex + "\\]" : "$" + latex + "$";
             session.parseInput(new SnuggleInput(wrapped));
@@ -137,7 +145,8 @@ public final class LatexToMathmlConverter {
      * outside the MathML namespace or not on {@link #ALLOWED_ELEMENTS}.
      */
     private static boolean serialize(Element element, StringBuilder out, boolean isRoot) {
-        if (!isMathml(element) || !ALLOWED_ELEMENTS.contains(element.getLocalName())) {
+        // Abort as soon as the output budget is exceeded, rather than building the whole string first.
+        if (out.length() > MAX_MATHML_OUTPUT_LENGTH || !isMathml(element) || !ALLOWED_ELEMENTS.contains(element.getLocalName())) {
             return false;
         }
         out.append('<').append(element.getLocalName());
