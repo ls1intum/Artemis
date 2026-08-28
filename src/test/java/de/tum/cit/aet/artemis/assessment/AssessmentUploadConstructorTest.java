@@ -16,8 +16,6 @@ import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
@@ -67,7 +65,7 @@ class AssessmentUploadConstructorTest {
     @Test
     void shouldRejectNullAssessmentUploadResultServiceDependencies() {
         final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), Optional.<LtiApi>empty(), mock(ResultWebsocketService.class),
-                mock(RatingRepository.class), mock(ParticipantScoreRepository.class), mock(SubmissionRepository.class) };
+                mock(SubmissionRepository.class) };
 
         for (int dependencyIndex = 0; dependencyIndex < dependencies.length; dependencyIndex++) {
             final Object[] dependenciesWithNull = dependencies.clone();
@@ -79,7 +77,7 @@ class AssessmentUploadConstructorTest {
     @SuppressWarnings("unchecked")
     private AssessmentUploadResultService createAssessmentUploadResultService(final Object[] dependencies) {
         return new AssessmentUploadResultService((UserRepository) dependencies[0], (AssessmentUploadResultRepository) dependencies[1], (Optional<LtiApi>) dependencies[2],
-                (ResultWebsocketService) dependencies[3], (RatingRepository) dependencies[4], (ParticipantScoreRepository) dependencies[5], (SubmissionRepository) dependencies[6]);
+                (ResultWebsocketService) dependencies[3], (SubmissionRepository) dependencies[4]);
     }
 
     @Test

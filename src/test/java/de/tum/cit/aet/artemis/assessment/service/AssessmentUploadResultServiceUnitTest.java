@@ -21,8 +21,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -41,12 +39,6 @@ class AssessmentUploadResultServiceUnitTest {
     private ResultWebsocketService resultWebsocketService;
 
     @Mock
-    private RatingRepository ratingRepository;
-
-    @Mock
-    private ParticipantScoreRepository participantScoreRepository;
-
-    @Mock
     private SubmissionTestRepository submissionRepository;
 
     private AssessmentUploadResultService assessmentUploadResultService;
@@ -54,7 +46,7 @@ class AssessmentUploadResultServiceUnitTest {
     @BeforeEach
     void setUp() {
         assessmentUploadResultService = new AssessmentUploadResultService(userRepository, assessmentUploadResultRepository, Optional.empty(), resultWebsocketService,
-                ratingRepository, participantScoreRepository, submissionRepository);
+                submissionRepository);
         TransactionSynchronizationManager.initSynchronization();
     }
 
@@ -75,7 +67,7 @@ class AssessmentUploadResultServiceUnitTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(assessor);
         when(assessmentUploadResultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(List.of(1L))).thenReturn(List.of(result));
 
-        assessmentUploadResultService.createNewManualResults(List.of(result), true);
+        assessmentUploadResultService.saveManualResults(List.of(result), List.of(), true);
 
         verifyNoInteractions(resultWebsocketService);
         final List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();

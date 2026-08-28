@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -200,6 +201,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         textFiles.put(identifier1 + ".txt", "First feedback");
         assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), textFiles));
         assertManualAssessment(participation1.getId(), 40.0, "First feedback");
+        final long firstManualResultId = getManualResults(participation1.getId()).getFirst().getId();
 
         final Map<String, String> newTextFiles = new LinkedHashMap<>();
         newTextFiles.put(identifier1 + ".txt", "Corrected feedback");
@@ -210,6 +212,8 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         // Still exactly one manual result, now with the corrected score and feedback.
         assertThat(getManualResults(participation1.getId())).hasSize(1);
         assertManualAssessment(participation1.getId(), 90.0, "Corrected feedback");
+        // The existing assessment is edited in place instead of being deleted and re-created, so its identity survives the overwrite.
+        assertThat(getManualResults(participation1.getId()).getFirst().getId()).isEqualTo(firstManualResultId);
         assertThat(resultRepository.findById(automaticResult.getId())).isPresent().get().extracting(Result::getAssessmentType).isEqualTo(AssessmentType.AUTOMATIC);
     }
 
@@ -226,18 +230,19 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
                 buildZip("Identifier,Overall points\n%s,75\n".formatted(identifier1), Map.of(identifier1 + ".txt", "uploaded feedback")));
 
         assertThat(result.errors()).isEmpty();
-        // Exactly one manual result remains, now the uploaded MANUAL one; the SEMI_AUTOMATIC result was replaced, not duplicated.
+        // Exactly one manual result remains: the existing SEMI_AUTOMATIC one, overwritten in place with the uploaded MANUAL assessment instead of being duplicated.
         final List<Result> manualResults = getManualResults(participation1.getId());
         assertThat(manualResults).hasSize(1);
+        assertThat(manualResults.getFirst().getId()).isEqualTo(semiAutomaticResult.getId());
         assertThat(manualResults.getFirst().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
         assertManualAssessment(participation1.getId(), 75.0, "uploaded feedback");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldReplaceManualAssessmentThatHasARating() {
-        // A student who rated an uploaded manual assessment must still be replaceable. The upload clears the rating before orphan removal deletes the old result, so the
-        // rating's foreign key to that result is not violated when the deletion is flushed.
+    void shouldKeepTheRatingOfAnOverwrittenManualAssessment() {
+        // The upload overwrites an existing manual assessment in place instead of deleting and re-creating it, so a student's rating of that assessment is neither destroyed nor
+        // left dangling.
         assessmentUploadService.importAssessments(programmingExercise,
                 buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
         final Result ratedManualResult = getManualResults(participation1.getId()).getFirst();
@@ -248,9 +253,10 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
                 buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
 
         assertThat(result.errors()).isEmpty();
-        // Exactly one manual result remains with the new score, and the rating that referenced the replaced result was removed instead of violating its foreign key.
+        // Exactly one manual result remains, it is still the same one, and the rating that referenced it survived the overwrite.
         assertManualAssessment(participation1.getId(), 90.0, "second");
-        assertThat(ratingRepository.findRatingByResultId(ratedManualResult.getId())).isEmpty();
+        assertThat(getManualResults(participation1.getId())).singleElement().extracting(Result::getId).isEqualTo(ratedManualResult.getId());
+        assertThat(ratingRepository.findRatingByResultId(ratedManualResult.getId())).isPresent();
     }
 
     @Test
@@ -336,10 +342,11 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         // The superseded result and its complaint are left untouched.
         assertThat(resultRepository.findById(supersededManualResult.getId())).isPresent();
         assertThat(complaintRepo.findByResultId(supersededManualResult.getId())).isPresent();
-        // The latest submission's manual result was replaced with the uploaded score; the previous latest result is gone.
-        assertThat(resultRepository.findById(latestManualResult.getId())).isEmpty();
-        assertThat(getLatestSubmissionResults(participation1.getId()).stream().filter(Result::isManual).toList()).singleElement()
-                .satisfies(manualResult -> assertThat(manualResult.getScore()).isCloseTo(80.0, within(0.01)));
+        // Only the latest submission's manual result was overwritten, in place and with the uploaded score.
+        assertThat(getLatestSubmissionResults(participation1.getId()).stream().filter(Result::isManual).toList()).singleElement().satisfies(manualResult -> {
+            assertThat(manualResult.getId()).isEqualTo(latestManualResult.getId());
+            assertThat(manualResult.getScore()).isCloseTo(80.0, within(0.01));
+        });
     }
 
     @Test
@@ -560,8 +567,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldMaintainContiguousResultOrderWhenReplacingManualAssessment() {
-        // An existing automatic result occupies results_order 0 on the submission.
+    void shouldNotAccumulateResultsWhenUploadingRepeatedly() {
         final Result automaticResult = participationUtilService.createSubmissionAndResult(participation1, 25, true);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
         resultRepository.saveAndFlush(automaticResult);
@@ -571,12 +577,11 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assessmentUploadService.importAssessments(programmingExercise,
                 buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
 
-        // The submission's ordered results list must contain exactly the automatic result and the single manual result, without null padding (which a broken results_order,
-        // e.g. from persisting the result outside the ordered collection, would introduce).
-        final List<Result> orderedResults = getLatestSubmissionResults(participation1.getId());
-        assertThat(orderedResults).doesNotContainNull().hasSize(2);
-        assertThat(orderedResults).anyMatch(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
-        assertThat(orderedResults.stream().filter(Result::isManual).toList()).singleElement()
+        // Repeated uploads overwrite the same manual assessment instead of appending a new one, so the submission still holds exactly the automatic result and one manual result.
+        final Set<Result> submissionResults = getLatestSubmissionResults(participation1.getId());
+        assertThat(submissionResults).doesNotContainNull().hasSize(2);
+        assertThat(submissionResults).anyMatch(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
+        assertThat(submissionResults.stream().filter(Result::isManual).toList()).singleElement()
                 .satisfies(manualResult -> assertThat(manualResult.getScore()).isCloseTo(90.0, within(0.01)));
     }
 
@@ -607,7 +612,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assertThat(getManualResults(participation1.getId())).isEmpty();
     }
 
-    private List<Result> getLatestSubmissionResults(final long participationId) {
+    private Set<Result> getLatestSubmissionResults(final long participationId) {
         final var participation = studentParticipationRepository.findWithEagerSubmissionsResultsFeedbacksById(participationId).orElseThrow();
         final Submission latestSubmission = participation.getSubmissions().stream().max(Comparator.comparing(Submission::getId)).orElseThrow();
         return latestSubmission.getResults();

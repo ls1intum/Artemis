@@ -108,4 +108,27 @@ public interface ResultTestRepository extends ResultRepository {
     @Transactional // ok because of delete
     @Query("DELETE FROM ComplaintResponse cr WHERE cr.complaint.id IN (SELECT c.id FROM Complaint c WHERE c.result.id IN :resultIds)")
     void deleteComplaintResponsesByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM Rating rating WHERE rating.result.id IN :resultIds")
+    void deleteRatingsByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE ParticipantScore p
+            SET p.lastResult = NULL, p.lastPoints = NULL, p.lastScore = NULL
+            WHERE p.lastResult.id IN :resultIds
+            """)
+    void clearParticipantScoreLastResultByResultIds(@Param("resultIds") Collection<Long> resultIds);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE ParticipantScore p
+            SET p.lastRatedResult = NULL, p.lastRatedPoints = NULL, p.lastRatedScore = NULL
+            WHERE p.lastRatedResult.id IN :resultIds
+            """)
+    void clearParticipantScoreLastRatedResultByResultIds(@Param("resultIds") Collection<Long> resultIds);
 }

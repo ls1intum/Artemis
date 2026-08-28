@@ -117,28 +117,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
         this.clearLastRatedResultByResultId(resultId);
     }
 
-    /**
-     * Clears all participant-score references to a collection of results before those results are deleted.
-     * <p>
-     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains only non-{@code null} persisted result ids.
-     * <p>
-     * <b>Postcondition:</b> no participant score references any of the supplied results as its last or last rated result.
-     *
-     * @param resultIds result ids that are about to be replaced
-     * @throws IllegalArgumentException if a precondition is violated
-     */
-    @Transactional // ok because of delete
-    default void clearAllByResultIds(final Collection<Long> resultIds) {
-        if (resultIds == null || resultIds.isEmpty()) {
-            throw new IllegalArgumentException("The result ids must not be null or empty");
-        }
-        if (resultIds.stream().anyMatch(resultId -> resultId == null || resultId <= 0)) {
-            throw new IllegalArgumentException("The result ids must identify persisted results");
-        }
-        this.clearLastResultByResultIds(resultIds);
-        this.clearLastRatedResultByResultIds(resultIds);
-    }
-
     @Query("""
             SELECT MAX(ps.lastModifiedDate) AS latestModifiedDate
             FROM ParticipantScore ps
@@ -195,42 +173,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
             """)
     // Do not update last modified date
     void clearLastRatedResultByResultId(@Param("lastResultId") Long lastResultId);
-
-    /**
-     * Clears last-result references to the supplied results.
-     * <p>
-     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains persisted result ids.
-     * <p>
-     * <b>Postcondition:</b> no participant score references a supplied id as its last result.
-     *
-     * @param resultIds result ids to clear
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE ParticipantScore p
-            SET p.lastResult = NULL, p.lastPoints = NULL, p.lastScore = NULL
-            WHERE p.lastResult.id IN :resultIds
-            """)
-    void clearLastResultByResultIds(@Param("resultIds") final Collection<Long> resultIds);
-
-    /**
-     * Clears last-rated-result references to the supplied results.
-     * <p>
-     * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains persisted result ids.
-     * <p>
-     * <b>Postcondition:</b> no participant score references a supplied id as its last rated result.
-     *
-     * @param resultIds result ids to clear
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE ParticipantScore p
-            SET p.lastRatedResult = NULL, p.lastRatedPoints = NULL, p.lastRatedScore = NULL
-            WHERE p.lastRatedResult.id IN :resultIds
-            """)
-    void clearLastRatedResultByResultIds(@Param("resultIds") final Collection<Long> resultIds);
 
     /**
      * Sets the average for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>

@@ -10,16 +10,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 
 /**
  * Deletes manual results and every row that references them — feedback, long feedback text, assessment notes, complaints, complaint responses, ratings and participant scores — in
  * foreign-key-safe order. Used by tests to remove uploaded manual assessments together with their dependent rows.
  * <p>
- * Ratings and participant scores are cleared through their production repositories, which have no test repository of their own; the remaining rows go through
- * {@link ResultTestRepository}.
+ * All cleanup queries live on {@link ResultTestRepository}: the upload itself never deletes a result — it overwrites an existing manual assessment in place — so production code
+ * needs none of them.
  */
 @Lazy
 @Service
@@ -28,12 +26,6 @@ public class AssessmentUploadResultTestService {
 
     @Autowired
     private ResultTestRepository resultTestRepository;
-
-    @Autowired
-    private RatingRepository ratingRepository;
-
-    @Autowired
-    private ParticipantScoreRepository participantScoreRepository;
 
     /**
      * Bulk-deletes the given results and every dependent row in foreign-key-safe order.
@@ -87,7 +79,8 @@ public class AssessmentUploadResultTestService {
     private void deleteNonCascadedResultReferences(final Collection<Long> resultIds) {
         resultTestRepository.deleteComplaintResponsesByResultIds(resultIds);
         resultTestRepository.deleteComplaintsByResultIds(resultIds);
-        ratingRepository.deleteByResultIds(resultIds);
-        participantScoreRepository.clearAllByResultIds(resultIds);
+        resultTestRepository.deleteRatingsByResultIds(resultIds);
+        resultTestRepository.clearParticipantScoreLastResultByResultIds(resultIds);
+        resultTestRepository.clearParticipantScoreLastRatedResultByResultIds(resultIds);
     }
 }

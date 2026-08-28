@@ -63,7 +63,7 @@ public enum AssessmentUploadErrorType {
     IDENTIFIER_MISMATCH,
 
     /**
-     * The participation already has a manual assessment that is referenced by a complaint. Overwriting it would delete the student's complaint and any instructor response, so the
+     * The participation already has a manual assessment that is referenced by an open complaint. Overwriting it would change the very assessment the student is contesting, so the
      * whole upload is rejected instead.
      */
     EXISTING_COMPLAINT,

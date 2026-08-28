@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
- * Repository for loading and replacing results during manual assessment uploads.
+ * Repository for loading and updating results during manual assessment uploads.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -24,38 +24,17 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface AssessmentUploadResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
-     * Write-locks the given result rows for the remainder of the caller's transaction. Used by the upload to lock the manual results it is about to replace before checking for
-     * complaints, so that creating a complaint concurrently — which updates its result row and inserts the complaint — serializes behind the upload instead of slipping in between
-     * the complaint check and the reference cleanup (which would silently delete it). The ids are locked in ascending order to give concurrent uploads a consistent lock order.
-     * <p>
-     * <b>Preconditions:</b> {@code resultIds} is non-{@code null}, non-empty, contains persisted result ids, and the caller has an active transaction.
-     * <p>
-     * <b>Postcondition:</b> the matching result rows remain write-locked until the caller's transaction completes.
-     *
-     * @param resultIds ids of the results to lock
-     * @return the ids of the locked results in ascending order
-     */
-    @Query(value = """
-            SELECT r.id
-            FROM result r
-            WHERE r.id IN (:resultIds)
-            ORDER BY r.id
-            FOR UPDATE
-            """, nativeQuery = true)
-    List<Long> lockResultsForReplacement(@Param("resultIds") final Collection<Long> resultIds);
-
-    /**
-     * Finds the participations that own one of the given results and whose result carries a complaint. Replacing such a result would delete the student's complaint and any
-     * instructor response, so the upload must reject these participations instead of overwriting them. The query is scoped to the exact results an upload would delete (the manual
-     * results on each participation's latest submission, see {@code replacedResultIds}); a complaint on a superseded submission's result — which the upload leaves untouched — is
-     * therefore intentionally not reported.
+     * Finds the participations that own one of the given results and whose result carries a complaint. Overwriting such a result would change the assessment a student is
+     * complaining about while the complaint is still open, so the upload rejects these participations instead. The query is scoped to the exact results an upload would overwrite
+     * (the manual results on each participation's latest submission, see {@code overwrittenResultIds}); a complaint on a superseded submission's result — which the upload leaves
+     * untouched — is therefore intentionally not reported.
      * <p>
      * <b>Precondition:</b> {@code resultIds} is non-{@code null}, non-empty, and contains persisted result ids.
      * <p>
      * <b>Postcondition:</b> read-only; every returned id is the participation of a supplied result that has a complaint.
      *
-     * @param resultIds ids of the results that would be replaced
-     * @return ids of participations that must not be overwritten because a complaint exists on a result being replaced
+     * @param resultIds ids of the results that would be overwritten
+     * @return ids of participations that must not be overwritten because a complaint exists on a result being overwritten
      */
     @Query("""
             SELECT r.submission.participation.id

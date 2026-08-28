@@ -8,6 +8,8 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +64,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * named after the exported repository folder of the participant (e.g. {@code Course-Exercise-<participationId>-<login>.txt}) and its content becomes the manual feedback.
  * <p>
  * The upload is processed all-or-nothing: the whole zip is validated first and, only if no {@link AssessmentUploadErrorType error} is found, the assessments are
- * created. An existing manual assessment of a participant is overwritten.
+ * created. An existing manual assessment of a participant is overwritten in place — its score and feedback are replaced while the assessment itself is kept, so ratings,
+ * participant scores and complaints that reference it stay valid. A participant whose current manual assessment has an open complaint is rejected instead of overwritten.
  *
  * @see AssessmentUploadResultDTO
  */
@@ -223,11 +226,11 @@ public class AssessmentUploadService {
      * via
      * {@code getCourseViaExerciseGroupOrCourseMember()} and a positive {@code maxPoints}).
      * <p>
-     * <b>Postconditions:</b> if the returned result has no {@link AssessmentUploadResultDTO#errors() errors}, then for every CSV row a rated manual result with
-     * {@code score = overallPoints / maxPoints * 100} and a single {@code MANUAL_UNREFERENCED} feedback carrying the text-file content has been created on the participant's latest
-     * submission, replacing any previous manual result there while automatic results are kept; a manual result on an older, superseded submission is left untouched (it never
-     * contributes to the score, which is always taken from the latest submission, mirroring the assessment editor). No other persistent state changed. If the result has errors,
-     * the persistent state is left completely unchanged (all-or-nothing).
+     * <b>Postconditions:</b> if the returned result has no {@link AssessmentUploadResultDTO#errors() errors}, then for every CSV row the participant's latest submission carries a
+     * rated manual result with {@code score = overallPoints / maxPoints * 100} and a single {@code MANUAL_UNREFERENCED} feedback carrying the text-file content — an existing
+     * manual result there was overwritten in place, otherwise a new one was created — while automatic results are kept; a manual result on an older, superseded submission is left
+     * untouched (it never contributes to the score, which is always taken from the latest submission, mirroring the assessment editor). No other persistent state changed. If the
+     * result has errors, the persistent state is left completely unchanged (all-or-nothing).
      *
      * @param exercise the programming exercise the assessments belong to; must not be {@code null}
      * @param zipFile  the uploaded zip file containing {@code assessment-scores.csv} and one {@code .txt} file per participant; must not be {@code null}
@@ -438,22 +441,21 @@ public class AssessmentUploadService {
      * <b>Preconditions:</b> {@code exercise} is persisted and belongs to a course, {@code validatedRows} is non-empty, every row passed validation (participation resolved and
      * belonging to {@code exercise}, points parsed, matching text file present), and the upload as a whole was error-free.
      * <p>
-     * <b>Postcondition:</b> if assessment is possible and no target participation has a complaint on its current manual assessment, a manual assessment has been created (or
-     * overwritten) for each row — attached to the submission's ordered results collection so {@code results_order} stays unique and contiguous — and the returned result lists the
-     * stored identifiers and carries no errors. Otherwise nothing is stored at all (missing submissions are created only after the complaint gate passes, so a structured failure
-     * return commits no new submission either): a complaint yields one {@code EXISTING_COMPLAINT} error per affected participation (all-or-nothing), and a closed assessment window
-     * propagates an exception.
+     * <b>Postcondition:</b> if assessment is possible and no target participation has an open complaint on its current manual assessment, every row has a manual assessment — the
+     * participant's existing manual assessment edited in place (score, feedback, assessor and completion date), or a new one attached to the submission's results collection —
+     * and the returned result lists the stored identifiers and carries no errors. Otherwise nothing is stored at all (missing submissions are created only after the complaint gate
+     * passes, so a structured failure return commits no new submission either): a complaint yields one
+     * {@code EXISTING_COMPLAINT} error per affected participation (all-or-nothing), and a closed assessment window propagates an exception.
      *
      * @param exercise      the programming exercise the assessments belong to
      * @param validatedRows the fully validated rows to store
-     * @return a success result listing the created assessments, or a failure result if a complaint blocks the upload
+     * @return a success result listing the stored assessments, or a failure result if a complaint blocks the upload
      * @throws org.springframework.web.server.ResponseStatusException if assessment of the exercise is not currently possible (e.g. the exam is still running)
      */
     private AssessmentUploadResultDTO storeValidatedRows(final ProgrammingExercise exercise, final List<ValidatedRow> validatedRows) {
         assert exercise != null && exercise.getId() != null : "exercise must be persisted";
         assert validatedRows != null && !validatedRows.isEmpty() : "validatedRows must not be null or empty";
         final List<Long> participationIds = validatedRows.stream().map(ValidatedRow::participationId).toList();
-        assessmentUploadParticipationRepository.lockAllForAssessmentUpload(exercise.getId(), participationIds);
 
         final Map<Long, StudentParticipation> participationsById = assessmentUploadParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
@@ -462,54 +464,59 @@ public class AssessmentUploadService {
 
         final Map<Long, Submission> latestSubmissionsByParticipationId = submissionRepository.findLatestSubmissionsForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
-        // First pass: collect the ids of the manual results that will be replaced, reading only the already existing latest submissions and without mutating any managed collection
-        // or creating anything yet. Only the latest submission is assessed; a manual result on an older, superseded submission is intentionally left untouched — it never
-        // contributes to the score (the grade is always taken from the latest submission) and is not the participation's latest result, exactly as the normal assessment editor
-        // behaves. A participation without a submission contributes no result to replace here; its submission is created only in the second pass, so a complaint-blocked upload
-        // that returns a structured failure below persists nothing.
-        final List<Long> replacedResultIds = new ArrayList<>();
+        // First pass: find the manual assessment that already exists for each row, reading only the already existing latest submissions and without mutating anything yet. Only
+        // the latest submission is assessed; a manual result on an older, superseded submission is intentionally left untouched — it never contributes to the score (the grade is
+        // always taken from the latest submission) and is not the participation's latest result, exactly as the normal assessment editor behaves. A participation without a
+        // submission has no assessment to overwrite; its submission is created only in the second pass, so a complaint-blocked upload that returns a structured failure below
+        // persists nothing.
+        final Map<Long, Result> existingManualResultsByParticipationId = new HashMap<>();
         for (final ValidatedRow row : validatedRows) {
             final Submission existingSubmission = latestSubmissionsByParticipationId.get(row.participationId());
-            if (existingSubmission != null) {
-                existingSubmission.getResults().stream().filter(result -> result != null && result.isManual()).map(Result::getId).filter(Objects::nonNull)
-                        .forEach(replacedResultIds::add);
+            if (existingSubmission == null) {
+                continue;
             }
+            // The upload is limited to exercises with a single correction round, so there is at most one manual result here; picking the latest keeps the behavior well defined if
+            // a submission ever carries several.
+            existingSubmission.getResults().stream().filter(result -> result != null && result.isManual() && result.getId() != null).max(Comparator.comparing(Result::getId))
+                    .ifPresent(result -> existingManualResultsByParticipationId.put(row.participationId(), result));
         }
 
-        // Reject (instead of silently destroying) participations whose manual result being replaced is referenced by a complaint. The check is scoped to replacedResultIds — the
-        // manual results on the latest submission that will actually be deleted — so a complaint on a superseded submission's result, which the upload leaves untouched, does not
-        // block the upload. Those results are write-locked first, so a complaint being created concurrently — which updates its result row and inserts the complaint — serializes
-        // behind this upload: one committed before the lock is seen by the check below and rejects the whole upload (all-or-nothing), and one attempted after the lock blocks until
-        // this transaction commits and its result is gone. Locking before Submission.results is mutated also keeps the pending orphan removal from being auto-flushed ahead of the
-        // reference cleanup.
-        assessmentUploadResultService.lockResultsForReplacement(replacedResultIds);
-        final Set<Long> participationsWithComplaint = assessmentUploadResultService.findParticipationsWithComplaintOnResults(replacedResultIds);
+        // Reject (instead of silently changing) participations whose current manual assessment is referenced by a complaint: the student is contesting exactly that assessment, so
+        // overwriting its score and feedback while the complaint is open would leave the complaint and any response referring to an assessment that no longer exists in that form.
+        // The check is scoped to the results that would actually be overwritten (the manual results on the latest submission), so a complaint on a superseded submission's result,
+        // which the upload leaves untouched, does not block the upload.
+        final List<Long> overwrittenResultIds = existingManualResultsByParticipationId.values().stream().map(Result::getId).toList();
+        final Set<Long> participationsWithComplaint = assessmentUploadResultService.findParticipationsWithComplaintOnResults(overwrittenResultIds);
         if (!participationsWithComplaint.isEmpty()) {
             return AssessmentUploadResultDTO.failure(buildComplaintErrors(validatedRows, participationsWithComplaint));
         }
 
-        // Second pass, reached only once the upload is guaranteed to succeed (so a rejected upload persists nothing): resolve the latest submission to assess
-        // per row, creating and persisting a submitted external submission for a participant without one, then replace the manual result on that submission
-        // through its ordered results collection so Hibernate deletes the old result via orphan removal and keeps results_order unique and contiguous, and
-        // attach the replacement to the same collection.
-        final List<Result> manualResults = new ArrayList<>(validatedRows.size());
+        // Second pass, reached only once the upload is guaranteed to succeed (so a rejected upload persists nothing): edit the participant's existing manual assessment in place,
+        // or — for a participant assessed for the first time — create one on the latest submission, creating and persisting a submitted external submission for a participant
+        // without one. Editing instead of deleting and re-creating keeps everything that references the assessment (ratings, participant scores, complaints on superseded
+        // results) intact and mirrors how the assessment editor updates an existing assessment.
+        final List<Result> newResults = new ArrayList<>();
+        final List<Result> updatedResults = new ArrayList<>();
         for (final ValidatedRow row : validatedRows) {
+            final Result existingManualResult = existingManualResultsByParticipationId.get(row.participationId());
+            if (existingManualResult != null) {
+                updateManualResult(existingManualResult, exercise, row);
+                updatedResults.add(existingManualResult);
+                continue;
+            }
             final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
                     .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
             final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
                     .orElseGet(() -> initializeSubmittedExternalSubmission(participation, exercise));
-            final List<Result> existingManualResults = submission.getResults().stream().filter(result -> result != null && result.isManual()).toList();
-            submission.getResults().removeAll(existingManualResults);
             final Result manualResult = buildManualResult(exercise, submission, row);
             submission.addResult(manualResult);
-            manualResults.add(manualResult);
+            newResults.add(manualResult);
         }
-        // Remove the references Hibernate cannot cascade-delete from a Result (ratings and participant scores) before the orphan removal is flushed.
-        assessmentUploadResultService.deleteNonCascadedResultReferences(replacedResultIds);
-        assessmentUploadResultService.createNewManualResults(manualResults, true);
+        assessmentUploadResultService.saveManualResults(newResults, updatedResults, true);
 
         final List<String> createdIdentifiers = validatedRows.stream().map(ValidatedRow::identifier).toList();
-        log.info("Stored {} manual assessments for programming exercise {} from an upload", createdIdentifiers.size(), exercise.getId());
+        log.info("Stored {} manual assessments ({} newly created, {} overwritten) for programming exercise {} from an upload", createdIdentifiers.size(), newResults.size(),
+                updatedResults.size(), exercise.getId());
         return AssessmentUploadResultDTO.success(createdIdentifiers);
     }
 
@@ -578,6 +585,35 @@ public class AssessmentUploadService {
         result.setScore(row.points(), exercise.getMaxPoints(), course);
         result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
         return result;
+    }
+
+    /**
+     * Overwrites an existing manual assessment with the uploaded score and feedback instead of deleting and re-creating it.
+     * <p>
+     * The previous feedback is cleared from the result's own feedback collection, which cascades and orphan-removes it (including its long feedback text). Everything that
+     * references the result itself — ratings, participant scores and complaints on it — keeps pointing at a valid assessment, and the {@code @PostUpdate}
+     * {@link de.tum.cit.aet.artemis.assessment.ResultListener} schedules the participant-score recomputation.
+     * <p>
+     * <b>Preconditions:</b> all parameters are non-{@code null}, {@code result} is a persisted manual result of {@code exercise} whose submission belongs to the row's
+     * participation, and {@code row} contains validated assessment data for the exercise.
+     * <p>
+     * <b>Postcondition:</b> the result carries the uploaded score and exactly one manual unreferenced feedback; its identity and everything referencing it are preserved.
+     *
+     * @param result   the existing manual result to overwrite
+     * @param exercise the programming exercise the result belongs to
+     * @param row      the validated assessment data
+     */
+    private void updateManualResult(final Result result, final ProgrammingExercise exercise, final ValidatedRow row) {
+        assert result != null && result.getId() != null : "result must be persisted";
+        assert exercise != null && row != null : "exercise and row must not be null";
+        assert exercise.getMaxPoints() != null && exercise.getMaxPoints() > 0 : "exercise must have positive maximum points";
+        final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        result.setExerciseId(exercise.getId());
+        result.setScore(row.points(), exercise.getMaxPoints(), course);
+        // Mutate the managed collection instead of replacing it: Hibernate rejects a swapped reference on an attached entity whose collection uses orphan removal, and the
+        // in-place clear is what deletes the previous feedback (and its long feedback text) as an orphan.
+        result.getFeedbacks().clear();
+        result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
     }
 
     /**
