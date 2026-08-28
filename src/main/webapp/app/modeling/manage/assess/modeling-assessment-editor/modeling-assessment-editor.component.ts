@@ -258,6 +258,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.unreferencedFeedback.set([]);
         this.feedbackSuggestions = [];
         this.hasAutomaticFeedback.set(false);
+        this.loadingFeedbackSuggestions.set(false);
+        this.highlightedElements.set(undefined!);
         this.submission.set(submission);
         const studentParticipation = this.submission()!.participation as StudentParticipation;
         this.modelingExercise.set(studentParticipation.exercise);
