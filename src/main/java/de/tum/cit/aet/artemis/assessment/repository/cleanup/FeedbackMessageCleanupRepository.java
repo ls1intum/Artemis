@@ -54,4 +54,20 @@ public interface FeedbackMessageCleanupRepository extends ArtemisJpaRepository<F
                 AND NOT EXISTS (SELECT 1 FROM ScaFeedback f2 WHERE f2.message = m)
             """)
     int deleteUnreferencedFeedbackMessages(@Param("createdBefore") ZonedDateTime createdBefore);
+
+    /**
+     * Counts what {@link #deleteUnreferencedFeedbackMessages} would delete. The admin cleanup page disables its
+     * execute button while every count is zero, so without this the garbage collection could never be triggered.
+     *
+     * @param createdBefore only messages created before this timestamp are counted, see the delete above
+     * @return the number of entities that would be deleted
+     */
+    @Query("""
+            SELECT COUNT(m)
+            FROM FeedbackMessage m
+            WHERE m.createdDate < :createdBefore
+                AND NOT EXISTS (SELECT 1 FROM TestCaseFeedback f WHERE f.message = m)
+                AND NOT EXISTS (SELECT 1 FROM ScaFeedback f2 WHERE f2.message = m)
+            """)
+    int countUnreferencedFeedbackMessages(@Param("createdBefore") ZonedDateTime createdBefore);
 }

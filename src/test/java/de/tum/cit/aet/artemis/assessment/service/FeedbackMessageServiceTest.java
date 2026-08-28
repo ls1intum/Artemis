@@ -68,6 +68,22 @@ class FeedbackMessageServiceTest extends AbstractSpringIntegrationIndependentBat
     }
 
     @Test
+    void garbageCollectionCountMatchesWhatItDeletes() {
+        // The admin cleanup page disables its execute button while every count is zero, so a message the collection
+        // would delete has to be counted too - otherwise the collection can never be triggered.
+        var message = feedbackMessageService.getOrCreate("gc count message");
+        var cutoff = ZonedDateTime.now().minusDays(1);
+
+        // still inside the grace period: neither counted nor collected
+        assertThat(feedbackMessageCleanupRepository.countUnreferencedFeedbackMessages(cutoff)).isZero();
+
+        feedbackMessageRepository.refreshCreatedDate(message.getId(), ZonedDateTime.now().minusDays(30));
+        assertThat(feedbackMessageCleanupRepository.countUnreferencedFeedbackMessages(cutoff)).isEqualTo(1);
+        assertThat(feedbackMessageCleanupRepository.deleteUnreferencedFeedbackMessages(cutoff)).isEqualTo(1);
+        assertThat(feedbackMessageCleanupRepository.countUnreferencedFeedbackMessages(cutoff)).isZero();
+    }
+
+    @Test
     void garbageCollectionHonorsRefreshedGraceTimestamp() {
         var message = feedbackMessageService.getOrCreate("gc grace message");
 

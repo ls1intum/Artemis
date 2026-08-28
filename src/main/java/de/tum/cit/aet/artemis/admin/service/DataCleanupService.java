@@ -74,6 +74,13 @@ public class DataCleanupService {
 
     private final FeedbackMessageCleanupRepository feedbackMessageCleanupRepository;
 
+    /**
+     * A message row is committed before the feedback rows that reference it (there is no surrounding transaction), so
+     * only messages that have been unreferenced for longer than this are collected. The count preview uses the same
+     * window, otherwise it would offer to delete rows the deletion then spares.
+     */
+    private static final int FEEDBACK_MESSAGE_GRACE_PERIOD_DAYS = 1;
+
     private final TextBlockCleanupRepository textBlockCleanupRepository;
 
     private final LongFeedbackTextCleanupRepository longFeedbackTextCleanupRepository;
@@ -175,7 +182,8 @@ public class DataCleanupService {
 
         // the one-day grace period protects messages created by an in-flight build-result transaction
         // whose referencing feedback rows are not committed yet (the columns carry no foreign key)
-        int deletedUnreferencedFeedbackMessages = feedbackMessageCleanupRepository.deleteUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(1));
+        int deletedUnreferencedFeedbackMessages = feedbackMessageCleanupRepository
+                .deleteUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(FEEDBACK_MESSAGE_GRACE_PERIOD_DAYS));
         log.info("Deleted {} unreferenced feedback messages", deletedUnreferencedFeedbackMessages);
 
         int deletedOrphanRatings = ratingCleanupRepository.deleteOrphanRating();
@@ -301,10 +309,11 @@ public class DataCleanupService {
                 + testCaseFeedbackCleanupRepository.countTestCaseFeedbackForOrphanResults() + scaFeedbackCleanupRepository.countScaFeedbackForOrphanResults();
         int orphanRatingCount = ratingCleanupRepository.countOrphanRating();
         int orphanResultsWithoutParticipationCount = resultCleanupRepository.countResultWithoutParticipationAndSubmission();
+        int orphanFeedbackMessageCount = feedbackMessageCleanupRepository.countUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(FEEDBACK_MESSAGE_GRACE_PERIOD_DAYS));
 
         return new OrphanCleanupCountDTO(orphanFeedbackCount, orphanLongFeedbackTextCount, orphanTextBlockCount, orphanStudentScoreCount, orphanTeamScoreCount,
                 orphanFeedbackForOrphanResultsCount, orphanLongFeedbackTextForOrphanResultsCount, orphanTextBlockForOrphanResultsCount, orphanRatingCount,
-                orphanResultsWithoutParticipationCount);
+                orphanResultsWithoutParticipationCount, orphanFeedbackMessageCount);
     }
 
     /**
