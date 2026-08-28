@@ -520,32 +520,35 @@ Do one of these:
 
 ### Rendering untrusted markup
 
-Markup the application did not author itself is rendered inside a **sandboxed iframe**, never into this document. The
-server-side problem statement renderer is the case this exists for: a problem statement is authored by course staff,
-passes a jsoup safelist on the server and DOMPurify in the browser, and is then put into a frame that makes a bypass of
-either one harmless rather than merely unlikely.
+Markup the application did not author itself is rendered inside a **shadow root**, never directly into this document.
+The server-side problem statement renderer is the case this exists for: a problem statement is authored by course
+staff, passes a jsoup safelist on the server and DOMPurify in the browser, and is then injected into the shadow root of
+the content component.
 
-The rules, all of them load-bearing:
+The shadow root isolates the statement's **CSS**, not its scripts: it is same-origin, so it is not a security boundary.
+What keeps a sanitizer bypass from reaching the application is the sanitization itself, not any origin barrier. The
+statement is therefore protected by two independent sanitizers, and the client assembly (`assembleShadowContent` in
+`app/programming/shared/instructions-render/ssr/problem-statement-frame.util.ts`) lets nothing executable through:
 
-- The frame's `sandbox` is **`allow-scripts` and nothing else**. Adding `allow-same-origin` hands the markup back the
-  cookies, the storage and the parent DOM the frame exists to keep it away from, and voids every other guarantee here.
-  Angular refuses to let `sandbox` be a binding at all (NG0910), so it is always a static attribute.
-- The frame carries **its own CSP** with a per-render nonce, written as a `<meta http-equiv>` as the first element in
-  its `<head>`. This is not defence in depth. A `srcdoc` document inherits the embedder's policy, and the application
-  policy carries `'unsafe-inline'`, so the inherited one stops nothing; and the sandbox alone is not enough in every
-  engine (WebKit sends the `SameSite=Lax` JWT cookie from a sandboxed opaque-origin frame, where Chromium and Firefox
-  send none). `connect-src 'none'`, `default-src 'none'` and the absent `'unsafe-eval'` are what close that.
-- **Nothing about the viewer goes into the frame.** Attributes describing the reader's own results are stripped before
-  assembly, because observable data is the only thing worth exfiltrating.
-- **No same-origin URL may remain** in the frame's markup. A request from an opaque origin carries no credentials, so
-  an authenticated asset would not load anyway; it is inlined by the server or replaced by its alt text.
-- The frame talks to the application only over `postMessage`, over a small closed protocol with a per-render
-  generation token, and the parent bounds-checks everything it accepts.
+- **The fragment is sanitized with DOMPurify** after the server's jsoup safelist, which also covers the SVG a diagram
+  emits that the server safelist deliberately does not see. Every `<script>` is removed, and no event-handler attribute
+  survives, so no author markup runs.
+- **Nothing about the viewer goes into the shadow root.** `data-feedback` and `data-result` (the reader's own results)
+  are stripped before injection: without an origin boundary the statement shares the page's credentials, so observable
+  data must not sit in a DOM a bypass could read.
+- **Same-origin images the server could not inline are replaced by their alt text**, and retained external images get
+  `referrerpolicy="no-referrer"`. The client requests `inlineImages: true`, so local files arrive as `data:` URIs.
+- **Clicks and keyboard activation are handled by the content component**, not by native navigation: every statement
+  anchor (HTML and SVG) has its default cancelled and is opened only if it is one of the hrefs the render actually
+  contained, so a click can never navigate the application away or open an arbitrary URL.
 
-Because these guarantees differ between engines, the tests that assert them run in Chromium, Firefox **and** WebKit,
-under the `@cross-engine` tag in the Playwright configuration. jsdom implements neither sandboxing nor CSP, so a Vitest
-spec would report all of them as passing whatever the code did. See
-`app/programming/shared/instructions-render/ssr/problem-statement-frame-policy.ts`.
+An earlier version of this renderer put the statement in a sandboxed iframe for script and origin isolation on top of
+the sanitization. That was dropped in favour of the double jsoup + DOMPurify sanitization: the iframe added a
+cross-document `postMessage` protocol and a per-engine cookie caveat of its own, and the same attack surface (a single
+sanitizer bypass equals a compromise) already exists in the legacy `[innerHtml]` renderer that ships today. The
+trade-off is deliberate and documented in the pull request. jsdom implements no layout and its shadow-root focus
+handling is incomplete, so the rendering, highlighting and interactivity are asserted in the Playwright layout spec
+rather than in Vitest.
 
 ### Cloning objects
 

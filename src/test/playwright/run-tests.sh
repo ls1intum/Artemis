@@ -75,10 +75,10 @@ run_playwright() {
     # project, a changed grep, a spec that moved out of range) would otherwise stop a suite from running while CI
     # stays green.
     #
-    # The assertion is per project, not per invocation, because several projects share one report: the cross-engine
-    # invocation runs three browser engines at once, so WebKit going silent while Chromium still reports would leave
-    # the aggregate non-empty. Playwright's JUnit reporter records each testsuite's project in its `hostname`
-    # attribute, which is where that per-project fact survives.
+    # The assertion is per project, not per invocation, because an invocation may name several projects that share
+    # one report: one project going silent while another still reports would leave the aggregate non-empty.
+    # Playwright's JUnit reporter records each testsuite's project in its `hostname` attribute, which is where that
+    # per-project fact survives.
     if [ "$FILTERED" -eq 0 ]; then
         local argument
         local project
@@ -127,9 +127,6 @@ if [ ${#TEST_PATHS[@]} -gt 0 ]; then
     # Then the tests that mutate global server state, alone.
     echo "--- Running sequential tests ---"
     run_playwright sequential --project=sequential-tests --workers 1 "${TEST_PATHS[@]}"
-
-    echo "--- Running cross-engine tests ---"
-    run_playwright cross-engine --project=cross-engine-chromium --project=cross-engine-firefox --project=cross-engine-webkit "${TEST_PATHS[@]}"
 else
     echo "Running all tests"
 
@@ -141,12 +138,6 @@ else
     # page loads. It therefore runs in its own invocation, single-worker, once nothing else is in flight.
     echo "--- Running sequential tests ---"
     run_playwright sequential e2e --project=sequential-tests --workers 1
-
-    # A handful of assertions whose answer differs per browser engine, so a Chromium-only run cannot make them.
-    # Deliberately its own invocation rather than a second browser for the whole suite: running everything three
-    # times over would be unaffordable, and almost nothing else here depends on the engine.
-    echo "--- Running cross-engine tests ---"
-    run_playwright cross-engine e2e --project=cross-engine-chromium --project=cross-engine-firefox --project=cross-engine-webkit
 fi
 
 # Run the @multi-node project only when the surrounding stack opts in via env var. The multi-node

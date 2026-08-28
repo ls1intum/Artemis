@@ -18,7 +18,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProblemStatementSsrRenderService } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr-render.service';
 import { ProblemStatementResultHydrationService } from 'app/programming/shared/instructions-render/ssr/problem-statement-result-hydration.service';
 import { ProblemStatementRenderRequest, RenderedProblemStatement, SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
-import { assembleFrameDocument } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
+import { assembleShadowContent } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
 import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-step-wizard.component';
 
@@ -35,7 +35,7 @@ import { ProgrammingExerciseInstructionSsrStepWizardComponent } from 'app/progra
  */
 export type SsrLiveUpdates = 'none' | 'personal' | 'shared';
 
-/** Prefix of every translation key this component and its frame use. */
+/** Prefix of every translation key this component and its content child use. */
 const TRANSLATION_BASE = 'artemisApp.programmingExercise.problemStatement.';
 
 /**
@@ -67,9 +67,10 @@ interface RenderEnvelope {
  * Read-only problem statement rendered by the server.
  *
  * This component owns the state: hydration of the effective result, the render request lifecycle, the failure states
- * and the feedback dialog. The server-rendered markup itself never touches this document: it is assembled into a
- * self-contained document by `assembleFrameDocument` and handed to the child component, which puts it in a sandboxed
- * iframe. That is what makes a sanitizer bypass unable to reach the application (see the child's class comment).
+ * and the feedback dialog. The server-rendered markup is turned into a renderable string by `assembleShadowContent`
+ * and handed to the child component, which injects it into a shadow root. The shadow root isolates the statement's
+ * CSS, not its scripts: what keeps a sanitizer bypass from reaching the application is that `assembleShadowContent`
+ * lets no script or event handler survive, on top of the server's jsoup safelist (see the child's class comment).
  */
 @Component({
     selector: 'jhi-programming-exercise-instruction-ssr',
@@ -109,11 +110,9 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
 
     readonly onNoInstructionsAvailable = output<void>();
 
-    /** The sandboxed document currently on screen; `undefined` while nothing has been rendered. */
-    readonly frameSrcdoc = signal<string | undefined>(undefined);
-    /** Token of that document, so the frame's messages can be told apart from a superseded frame's. */
-    readonly frameGeneration = signal('');
-    /** The hrefs in that document; the frame may only ask for one of these to be opened. */
+    /** The renderable statement currently on screen; `undefined` while nothing has been rendered. */
+    readonly renderedHtml = signal<string | undefined>(undefined);
+    /** The hrefs in that statement; the content component may only open one of these. */
     readonly linkTargets = signal<readonly string[]>([]);
     readonly tasks = signal<SsrTask[]>([]);
     readonly isLoading = signal(false);
@@ -175,7 +174,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
                     // errorStatus describes the last *render* (HTTP) error. A hydration failure must not inherit it,
                     // or the banner would claim e.g. rate limiting for an entirely unrelated failure.
                     this.errorStatus.set(undefined);
-                    if (this.frameSrcdoc() === undefined) {
+                    if (this.renderedHtml() === undefined) {
                         this.initialLoadFailed.set(true);
                     } else {
                         this.refreshFailed.set(true);
@@ -331,8 +330,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             this.initialLoadFailed.set(false);
             this.refreshFailed.set(false);
             this.errorStatus.set(undefined);
-            this.frameSrcdoc.set(undefined);
-            this.frameGeneration.set('');
+            this.renderedHtml.set(undefined);
             this.linkTargets.set([]);
             this.tasks.set([]);
             // Cleared alongside the html: otherwise a statement that goes blank and later returns to a previously
@@ -360,7 +358,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
      * the reader must never see.
      */
     private enterPendingState(): void {
-        const hasContent = this.frameSrcdoc() !== undefined;
+        const hasContent = this.renderedHtml() !== undefined;
         this.isLoading.set(!hasContent);
         this.isRefreshing.set(hasContent);
         this.initialLoadFailed.set(false);
@@ -390,11 +388,10 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
             return;
         }
         this.contentHash = rendered.contentHash;
-        const frame = assembleFrameDocument(rendered.html, this.locale(), this.translateService.instant(TRANSLATION_BASE + 'imageUnavailable'));
-        this.frameSrcdoc.set(frame.srcdoc);
-        this.frameGeneration.set(frame.generation);
-        this.linkTargets.set(frame.linkTargets);
-        this.tasks.set(frame.tasks);
+        const content = assembleShadowContent(rendered.html, this.translateService.instant(TRANSLATION_BASE + 'imageUnavailable'));
+        this.renderedHtml.set(content.html);
+        this.linkTargets.set(content.linkTargets);
+        this.tasks.set(content.tasks);
     }
 
     private applyError(error: HttpErrorResponse): void {
@@ -402,7 +399,7 @@ export class ProgrammingExerciseInstructionSsrComponent implements OnDestroy {
         this.isRefreshing.set(false);
         this.errorStatus.set(error.status);
         // Never blank an already rendered statement because a refresh failed: show a stale hint instead.
-        if (this.frameSrcdoc() === undefined) {
+        if (this.renderedHtml() === undefined) {
             this.initialLoadFailed.set(true);
         } else {
             this.refreshFailed.set(true);

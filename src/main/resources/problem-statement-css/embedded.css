@@ -1,9 +1,12 @@
 /* Base problem-statement styling (light theme defaults). Variables are overridden in dark-mode.css. */
 
-/* Standalone SSR body layout. Identical in light and dark so padding/margin
- * do not flip between modes. Consumers can override --artemis-ssr-body-padding
- * to customize the gutter. Dark-mode.css adds a body background on top. */
-body.artemis-ssr-body {
+/* SSR body layout. Identical in light and dark so padding/margin do not flip between modes. Consumers can override
+ * --artemis-ssr-body-padding to customize the gutter. Dark-mode.css adds a background on top.
+ *
+ * A class selector rather than `body.artemis-ssr-body`: the standalone consumer puts the class on the document
+ * `<body>`, but the Angular client renders the statement inside a shadow root where no `body` exists, so it carries
+ * the same class on a wrapper element instead. A class selector matches both. */
+.artemis-ssr-body {
     margin: 0;
     padding: var(--artemis-ssr-body-padding, 16px);
 }
@@ -719,7 +722,11 @@ i.fa.artemis-icon-no-result {
  * class is how that client says "this one is still clickable"; the standalone consumer keeps using the
  * attribute and never sets it.
  */
-.artemis-task--interactive {
+
+/* Two classes, not one, so the pointer wins the cascade: `.artemis-task:not([data-feedback])` above sets the
+ * default cursor at (0,2,0) specificity, which a single-class rule cannot override. `.artemis-task.artemis-task--interactive`
+ * ties that specificity and, coming later in the file, takes it. */
+.artemis-task.artemis-task--interactive {
     cursor: pointer;
 }
 

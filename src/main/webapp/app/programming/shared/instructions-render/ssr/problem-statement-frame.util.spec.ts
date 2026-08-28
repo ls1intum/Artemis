@@ -1,4 +1,4 @@
-import { assembleFrameDocument, isCssValueSafe, resolveFrameLink, sanitizeFragment } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
+import { assembleShadowContent, isCssValueSafe, resolveFrameLink, sanitizeFragment } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
 
 /** Wraps a body in the document shape the render endpoint returns, including the stylesheet it prepends. */
 const serverDocument = (body: string, options: { katex?: boolean; dark?: boolean } = {}): string =>
@@ -8,75 +8,16 @@ const serverDocument = (body: string, options: { katex?: boolean; dark?: boolean
     '<style>.artemis-task{color:red}</style>' +
     `<div class="artemis-problem-statement">${body}</div></body></html>`;
 
-const assemble = (body: string, options?: { katex?: boolean; dark?: boolean }) => assembleFrameDocument(serverDocument(body, options), 'en', 'Image unavailable');
+const assemble = (body: string, options?: { katex?: boolean; dark?: boolean }) => assembleShadowContent(serverDocument(body, options), 'Image unavailable');
 
-/** The assembled frame, parsed so its markup can be inspected the way a browser would see it. */
-const frameOf = (body: string, options?: { katex?: boolean; dark?: boolean }): Document => new DOMParser().parseFromString(assemble(body, options).srcdoc, 'text/html');
+/** The assembled statement, parsed so its markup can be inspected the way a browser would see it once injected. */
+const contentOf = (body: string, options?: { katex?: boolean; dark?: boolean }): Document => new DOMParser().parseFromString(assemble(body, options).html, 'text/html');
 
-/**
- * The statement markup alone. Assertions about what the statement does or does not contain have to use this
- * rather than the whole body: the body also holds the frame script, whose 32-character hex generation token
- * contains any given two-digit string often enough to make such an assertion fail at random.
- */
+/** The statement fragment alone, for assertions about what the statement itself does or does not contain. */
 const statementOf = (document_: Document): string => document_.querySelector('.artemis-problem-statement')?.outerHTML ?? '';
 
-const cspOf = (document_: Document): string => document_.querySelector('meta[http-equiv="Content-Security-Policy"]')?.getAttribute('content') ?? '';
-
-describe('problem statement frame assembly', () => {
-    describe('content security policy', () => {
-        it('is the first element in the head, because a policy only governs what the parser sees after it', () => {
-            const head = frameOf('<p>x</p>').head;
-            const elements = [...head.children];
-
-            // charset has to come first for the parser; the policy is the first thing after it and, crucially,
-            // before any stylesheet or script.
-            expect(elements[0].getAttribute('charset')).toBe('UTF-8');
-            expect(elements[1].getAttribute('http-equiv')).toBe('Content-Security-Policy');
-            expect(head.querySelector('style, link')).not.toBe(elements[1]);
-        });
-
-        it('denies everything by default and opens only what the statement genuinely needs', () => {
-            const csp = cspOf(frameOf('<p>x</p>'));
-
-            expect(csp).toContain("default-src 'none'");
-            // The three that make a smuggled payload useless even if it were allowed to run.
-            expect(csp).toContain("connect-src 'none'");
-            expect(csp).toContain("form-action 'none'");
-            expect(csp).toContain("object-src 'none'");
-            expect(csp).toContain("base-uri 'none'");
-            // Never: it would let an injected script execute the moment the sandbox is the only barrier left.
-            expect(csp).not.toContain('unsafe-eval');
-            expect(csp).not.toContain("script-src 'unsafe-inline'");
-        });
-
-        it('admits scripts only by nonce, and gives that nonce to exactly one element', () => {
-            const document_ = frameOf('<p>x</p><script>window.__x = 1;</script>');
-            const scripts = [...document_.querySelectorAll('script')];
-            const nonce = scripts[0].getAttribute('nonce');
-
-            expect(scripts).toHaveLength(1);
-            expect(nonce).toMatch(/^[0-9a-f]{32}$/);
-            expect(cspOf(document_)).toContain(`script-src 'nonce-${nonce}'`);
-        });
-
-        it('gives every frame its own nonce and generation, so neither can be predicted from an earlier render', () => {
-            const first = assemble('<p>x</p>');
-            const second = assemble('<p>x</p>');
-
-            expect(first.generation).toMatch(/^[0-9a-f]{32}$/);
-            expect(first.generation).not.toBe(second.generation);
-            expect(first.srcdoc).not.toBe(second.srcdoc);
-        });
-
-        it('allows the stylesheet and fonts from the server that shipped them', () => {
-            const csp = cspOf(frameOf('<p>x</p>', { katex: true }));
-
-            expect(csp).toContain('font-src http://localhost');
-            expect(csp).toContain("style-src 'unsafe-inline' http://localhost");
-        });
-    });
-
-    describe('what the frame may see', () => {
+describe('problem statement shadow content assembly', () => {
+    describe('what may reach the shadow root', () => {
         it("strips the feedback payload, which carries the student's own test results", () => {
             const body = '<span class="artemis-task" data-task-name="A" data-test-ids="1" data-feedback="1">A</span>';
             const server = serverDocument(body).replace(
@@ -84,19 +25,19 @@ describe('problem statement frame assembly', () => {
                 'class="artemis-problem-statement" data-feedback="{&quot;1&quot;:{&quot;name&quot;:&quot;testA&quot;}}"',
             );
 
-            const frame = new DOMParser().parseFromString(assembleFrameDocument(server, 'en', 'Image unavailable').srcdoc, 'text/html');
+            const content = new DOMParser().parseFromString(assembleShadowContent(server, 'Image unavailable').html, 'text/html');
 
-            expect(frame.querySelectorAll('[data-feedback]')).toHaveLength(0);
-            expect(statementOf(frame)).not.toContain('testA');
+            expect(content.querySelectorAll('[data-feedback]')).toHaveLength(0);
+            expect(statementOf(content)).not.toContain('testA');
         });
 
         it('strips the result summary, which carries score, points and commit metadata', () => {
             const server = serverDocument('<p>x</p>').replace('class="artemis-problem-statement"', 'class="artemis-problem-statement" data-result="{&quot;score&quot;:42}"');
 
-            const frame = new DOMParser().parseFromString(assembleFrameDocument(server, 'en', 'Image unavailable').srcdoc, 'text/html');
+            const content = new DOMParser().parseFromString(assembleShadowContent(server, 'Image unavailable').html, 'text/html');
 
-            expect(frame.querySelectorAll('[data-result]')).toHaveLength(0);
-            expect(statementOf(frame)).not.toContain('42');
+            expect(content.querySelectorAll('[data-result]')).toHaveLength(0);
+            expect(statementOf(content)).not.toContain('42');
         });
 
         it('keeps the task metadata the client itself needs', () => {
@@ -110,33 +51,56 @@ describe('problem statement frame assembly', () => {
         it('degrades an unknown task status to "no result" rather than trusting it', () => {
             expect(assemble('<span class="artemis-task" data-test-status="something-new">A</span>').tasks[0].status).toBe('no-result');
         });
+
+        it('reads tasks after sanitization, so a task inside a forbidden element does not drift the index', () => {
+            // The template is denied by DOMPurify, so its task must not be counted: were it read before sanitization,
+            // the index of the real task after it would be off by one against the markup that reaches the shadow root.
+            const assembled = assemble('<template><span class="artemis-task" data-task-name="ghost">g</span></template><span class="artemis-task" data-task-name="real">r</span>');
+
+            expect(assembled.tasks).toHaveLength(1);
+            expect(assembled.tasks[0]).toMatchObject({ index: 0, taskName: 'real' });
+        });
     });
 
     describe('images', () => {
-        it('replaces an Artemis-hosted image by its alt text, because the frame cannot authenticate for it', () => {
-            const frame = frameOf('<img src="/api/core/files/markdown/diagram.png" alt="Class diagram">');
+        it('replaces an Artemis-hosted image the server could not inline by its alt text', () => {
+            const content = contentOf('<img src="/api/core/files/markdown/diagram.png" alt="Class diagram">');
 
-            expect(frame.querySelector('img')).toBeNull();
-            expect(frame.querySelector('.artemis-image-unavailable')?.textContent).toBe('Class diagram');
+            expect(content.querySelector('img')).toBeNull();
+            expect(content.querySelector('.artemis-image-unavailable')?.textContent).toBe('Class diagram');
+        });
+
+        it('replaces a server-hosted image the server rewrote to an absolute URL on a different origin, without a formula to reveal it', () => {
+            // The server rewrites a local markdown image to `${server.url}/api/core/files/markdown/…`, and `server.url`
+            // need not be the page origin. There is no formula here, so no KaTeX <link> carries the server origin: the
+            // leftover has to be recognised by its file-API path, or it would be kept as an external image and issue a
+            // second, credential-mismatched request instead of showing its alt text.
+            const content = contentOf('<img src="https://artemis.example.com/api/core/files/markdown/diagram.png" alt="Class diagram">');
+
+            expect(content.querySelector('img')).toBeNull();
+            expect(content.querySelector('.artemis-image-unavailable')?.textContent).toBe('Class diagram');
         });
 
         it('removes an Artemis-hosted image that is marked decorative instead of announcing it', () => {
-            const frame = frameOf('<img src="/api/core/files/markdown/spacer.png" alt="">');
+            const content = contentOf('<img src="/api/core/files/markdown/spacer.png" alt="">');
 
-            expect(frame.querySelector('img')).toBeNull();
-            expect(frame.querySelector('.artemis-image-unavailable')).toBeNull();
+            expect(content.querySelector('img')).toBeNull();
+            expect(content.querySelector('.artemis-image-unavailable')).toBeNull();
         });
 
-        it('falls back to the localized label when a blocked image carries no alt text at all', () => {
-            expect(frameOf('<img src="/api/core/files/markdown/x.png">').querySelector('.artemis-image-unavailable')?.textContent).toBe('Image unavailable');
+        it('falls back to the localized label when a replaced image carries no alt text at all', () => {
+            expect(contentOf('<img src="/api/core/files/markdown/x.png">').querySelector('.artemis-image-unavailable')?.textContent).toBe('Image unavailable');
         });
 
         it('keeps an inlined data URI, which is what the server sends once inlineImages is on', () => {
-            expect(frameOf('<img src="data:image/png;base64,AAAA" alt="d">').querySelector('img')?.getAttribute('src')).toBe('data:image/png;base64,AAAA');
+            expect(contentOf('<img src="data:image/png;base64,AAAA" alt="d">').querySelector('img')?.getAttribute('src')).toBe('data:image/png;base64,AAAA');
         });
 
-        it('keeps a genuinely external image, which both existing renderers also show', () => {
-            expect(frameOf('<img src="https://img.example.org/badge.svg" alt="badge">').querySelector('img')).not.toBeNull();
+        it('keeps a genuinely external image but stops it leaking the referrer', () => {
+            const image = contentOf('<img src="https://img.example.org/badge.svg" alt="badge">').querySelector('img');
+
+            expect(image).not.toBeNull();
+            expect(image?.getAttribute('referrerpolicy')).toBe('no-referrer');
         });
 
         it.each([
@@ -151,32 +115,28 @@ describe('problem statement frame assembly', () => {
             { case: 'an SVG pattern image', markup: '<svg><pattern id="p"><image href="/api/core/files/markdown/x.png"/></pattern></svg>' },
         ])('leaves no same-origin reference behind for $case', ({ markup }) => {
             // `img[src]` is not the only attribute a browser fetches, and each of these was observed issuing a real
-            // request in Chromium, Firefox and WebKit. A request from the frame carries no credentials, so a
-            // same-origin reference could never load anyway; what it could still do is announce that it was tried.
-            expect(frameOf(markup).body.innerHTML).not.toContain('/api/core/files');
+            // request in Chromium, Firefox and WebKit. The statement never needs them, so a same-origin reference is
+            // dropped as the backstop for anything the element list lets through.
+            expect(contentOf(markup).body.innerHTML).not.toContain('/api/core/files');
         });
 
         it('leaves an internal link alone, because a link is not a fetch', () => {
-            // The frame cannot follow it either way: it reports the click and the parent decides.
-            expect(frameOf('<a href="/courses/1">course</a>').querySelector('a')?.getAttribute('href')).toBe('/courses/1');
+            // The content component resolves the click against `linkTargets`; the href itself stays in the markup.
+            expect(contentOf('<a href="/courses/1">course</a>').querySelector('a')?.getAttribute('href')).toBe('/courses/1');
         });
 
         it('drops srcset, a second fetch path with no legitimate source here', () => {
-            expect(frameOf('<img src="https://img.example.org/a.png" srcset="https://img.example.org/a2.png 2x" alt="a">').querySelector('img')?.hasAttribute('srcset')).toBe(
+            expect(contentOf('<img src="https://img.example.org/a.png" srcset="https://img.example.org/a2.png 2x" alt="a">').querySelector('img')?.hasAttribute('srcset')).toBe(
                 false,
             );
         });
 
         it('denies a template, whose children no later pass can reach', () => {
-            // A template's children live in a separate document fragment, so `rewriteSameOriginImages` walks past
-            // them: neither `querySelectorAll('*')` nor `querySelectorAll('img')` descends into `content`. The markup
-            // survives in all three engines and Firefox fetches the image, so denying the element is the only place
-            // this can be closed.
-            const frame = frameOf('<template><img src="/api/core/files/markdown/x.png"><img src="https://img.example.org/a.png"></template>');
+            const content = contentOf('<template><img src="/api/core/files/markdown/x.png"><img src="https://img.example.org/a.png"></template>');
 
-            expect(frame.querySelector('template')).toBeNull();
-            expect(statementOf(frame)).not.toContain('/api/core/files');
-            expect(statementOf(frame)).not.toContain('img.example.org');
+            expect(content.querySelector('template')).toBeNull();
+            expect(statementOf(content)).not.toContain('/api/core/files');
+            expect(statementOf(content)).not.toContain('img.example.org');
         });
     });
 
@@ -193,8 +153,6 @@ describe('problem statement frame assembly', () => {
             { case: '@import', value: '@import url(#local)' },
             { case: 'expression()', value: 'width:expression(alert(1))' },
             { case: '-moz-binding', value: '-moz-binding:url(#local)' },
-            // image-set takes a bare string as its source, so there is no url( token to find. Verified fetching in
-            // Chromium, Firefox and WebKit, which is why it is rejected by function name rather than by argument.
             { case: 'image-set with a bare string', value: 'background-image:image-set("https://evil.example/x" 1x)' },
             { case: 'the -webkit-prefixed image-set', value: 'background-image:-webkit-image-set("https://evil.example/x" 1x)' },
             { case: 'image-set in border-image', value: 'border-image-source:image-set("https://evil.example/x" 1x)' },
@@ -209,9 +167,7 @@ describe('problem statement frame assembly', () => {
             { case: 'a local fragment reference', value: 'fill:url(#gradient)' },
             { case: 'plain typography, which PlantUML emits', value: 'font-family:sans-serif;font-size:14px' },
             { case: 'nothing at all', value: '' },
-            // PlantUML quotes font names; the rule must not reject a declaration merely for containing a string.
             { case: 'a quoted font family, which PlantUML emits', value: 'font-family:"Helvetica Neue",sans-serif' },
-            // Nothing here is a function call, so the substring must not trip the rule.
             { case: 'a property whose name merely contains the word image', value: 'background-image:none' },
         ])('keeps $case', ({ value }) => {
             expect(isCssValueSafe(value)).toBe(true);
@@ -249,14 +205,14 @@ describe('problem statement frame assembly', () => {
         });
     });
 
-    describe('the link bridge', () => {
+    describe('links', () => {
         const targets = ['https://example.org/docs', '/courses/1', 'mailto:tutor@example.org'];
 
         it('opens a link that is actually in the statement', () => {
             expect(resolveFrameLink('https://example.org/docs', targets, 'http://localhost')).toBe('https://example.org/docs');
         });
 
-        it('ignores a link that is not in the statement, which is what a forged message looks like', () => {
+        it('ignores a link that is not in the statement, which is what an unexpected anchor looks like', () => {
             expect(resolveFrameLink('https://evil.example/steal', targets, 'http://localhost')).toBeUndefined();
         });
 
@@ -273,81 +229,93 @@ describe('problem statement frame assembly', () => {
         });
     });
 
-    describe('the document it produces', () => {
-        it('carries the dark body class over, or the frame would render a white page inside a dark application', () => {
-            expect(frameOf('<p>x</p>', { dark: true }).body.className).toContain('artemis-ssr-body--dark');
+    describe('the content it produces', () => {
+        it('carries the dark body class onto the wrapper, or the statement would render light inside a dark application', () => {
+            expect(contentOf('<p>x</p>', { dark: true }).querySelector('.artemis-ssr-body--dark')).not.toBeNull();
         });
 
         it('keeps the stylesheets the server ships with the statement', () => {
-            const frame = frameOf('<p>x</p>', { katex: true });
+            const content = contentOf('<p>x</p>', { katex: true });
 
-            expect(frame.querySelector('style')?.textContent).toContain('.artemis-task');
-            expect(frame.querySelector('link[rel="stylesheet"]')?.getAttribute('href')).toContain('katex.min.css');
+            expect(content.querySelector('style')?.textContent).toContain('.artemis-task');
+            expect(content.querySelector('link[rel="stylesheet"]')?.getAttribute('href')).toContain('katex.min.css');
         });
 
-        it('lists the links it contains, so the parent can tell a real one from a forged request', () => {
+        it('lists the links it contains, so the content component can tell a real one from an unexpected click', () => {
             expect(assemble('<a href="https://example.org">a</a><a href="https://example.org">again</a><a href="/x">b</a>').linkTargets).toEqual(['https://example.org', '/x']);
+        });
+
+        it('lists an SVG anchor too, so a click on a diagram link is validated like any other', () => {
+            // PlantUML emits inline SVG; an SVG `<a>` is not an HTMLAnchorElement, so it is collected explicitly.
+            expect(assemble('<svg><a href="https://example.org/svg">x</a></svg>').linkTargets).toContain('https://example.org/svg');
+        });
+
+        it('keeps a same-origin SVG anchor href, which the URL rewrite must not strip', () => {
+            // An SVG `<a>` has the lowercase tag name `a`, so the URL-rewrite exemption has to match by `localName`
+            // or the relative href would be dropped and the link would resolve against nothing.
+            const assembled = assemble('<svg><a href="/courses/1"><text>x</text></a></svg>');
+
+            expect(assembled.html).toContain('/courses/1');
+            expect(assembled.linkTargets).toContain('/courses/1');
         });
 
         it('does not hoist a style element out of the statement, which would hand back the css the sanitizer emptied', () => {
             // PlantUML ships diagram CSS in an SVG `<style>`, so this element really does occur inside a statement.
-            const frame = frameOf('<svg><style>.a{background:url(https://attacker.example/b.png)}@import url(https://attacker.example/x.css);</style></svg>');
+            const assembled = assemble('<svg><style>.a{background:url(https://attacker.example/b.png)}@import url(https://attacker.example/x.css);</style></svg>');
 
-            expect(frame.head.innerHTML).not.toContain('attacker.example');
-            expect(frame.head.innerHTML).not.toContain('@import');
-            // The server's own stylesheet still has to survive the filter, or the frame loses its typography.
-            expect(frame.head.innerHTML).toContain('.artemis-task');
+            expect(assembled.html).not.toContain('attacker.example');
+            expect(assembled.html).not.toContain('@import');
+            // The server's own stylesheet still has to survive the filter, or the statement loses its typography.
+            expect(assembled.html).toContain('.artemis-task');
         });
 
         it('produces nothing at all when the response carries no statement', () => {
-            expect(assembleFrameDocument('<html><body><p>no statement here</p></body></html>', 'en', 'x')).toEqual({ srcdoc: '', generation: '', tasks: [], linkTargets: [] });
+            expect(assembleShadowContent('<html><body><p>no statement here</p></body></html>', 'x')).toEqual({ html: '', tasks: [], linkTargets: [] });
         });
     });
 
-    describe('formulas and code, which are precomputed here rather than inside the frame', () => {
+    describe('formulas and code, precomputed here rather than in the browser at display time', () => {
         it('renders a katex placeholder into real markup', () => {
-            const frame = frameOf('<span class="katex-formula" data-formula="x^2" data-display-mode="false"></span>');
+            const content = contentOf('<span class="katex-formula" data-formula="x^2" data-display-mode="false"></span>');
 
-            expect(frame.querySelector('.katex-formula')?.innerHTML).toContain('katex');
+            expect(content.querySelector('.katex-formula')?.innerHTML).toContain('katex');
         });
 
         it('passes the display mode through for a block formula', () => {
-            const frame = frameOf('<span class="katex-formula" data-formula="x^2" data-display-mode="true"></span>');
+            const content = contentOf('<span class="katex-formula" data-formula="x^2" data-display-mode="true"></span>');
 
-            expect(frame.querySelector('.katex-formula')?.innerHTML).toContain('katex-display');
+            expect(content.querySelector('.katex-formula')?.innerHTML).toContain('katex-display');
         });
 
         it('falls back to the source when a formula cannot be rendered', () => {
-            const frame = frameOf('<span class="katex-formula" data-formula="\\unknowncommand{" data-display-mode="false"></span>');
+            const content = contentOf('<span class="katex-formula" data-formula="\\unknowncommand{" data-display-mode="false"></span>');
 
             // throwOnError is off, so KaTeX renders an error node rather than throwing; either way the reader is
             // never shown an empty placeholder.
-            expect(frame.querySelector('.katex-formula')?.textContent).not.toBe('');
+            expect(content.querySelector('.katex-formula')?.textContent).not.toBe('');
         });
 
         it('caps the size a formula may ask for, which KaTeX itself leaves unbounded', () => {
-            const frame = frameOf('<span class="katex-formula" data-formula="\\rule{1000000000em}{1000000000em}" data-display-mode="false"></span>');
-            const sizes = [...(frame.querySelector('.katex-formula')?.querySelectorAll<HTMLElement>('[style*="em"]') ?? [])].flatMap((element) =>
+            const content = contentOf('<span class="katex-formula" data-formula="\\rule{1000000000em}{1000000000em}" data-display-mode="false"></span>');
+            const sizes = [...(content.querySelector('.katex-formula')?.querySelectorAll<HTMLElement>('[style*="em"]') ?? [])].flatMap((element) =>
                 [...element.getAttribute('style')!.matchAll(/([\d.]+)em/g)].map((match) => Number(match[1])),
             );
 
-            // maxSize defaults to Infinity, so without the cap this renders a box of a billion ems and the frame
-            // asks the application to lay out something no engine can afford.
             expect(sizes.length).toBeGreaterThan(0);
             expect(Math.max(...sizes)).toBeLessThanOrEqual(100);
         });
 
         it('highlights a code block whose language is registered', () => {
-            const frame = frameOf('<pre><code class="language-java">int x = 1;</code></pre>');
-            const code = frame.querySelector('pre code');
+            const content = contentOf('<pre><code class="language-java">int x = 1;</code></pre>');
+            const code = content.querySelector('pre code');
 
             expect(code?.className).toContain('hljs');
             expect(code?.innerHTML).toContain('<span class="hljs-type">int</span>');
         });
 
         it('leaves a block with an unregistered language escaped, but still marks it', () => {
-            const frame = frameOf('<pre><code class="language-notalanguage">int x = 1;</code></pre>');
-            const code = frame.querySelector('pre code');
+            const content = contentOf('<pre><code class="language-notalanguage">int x = 1;</code></pre>');
+            const code = content.querySelector('pre code');
 
             expect(code?.className).toContain('hljs');
             expect(code?.innerHTML).not.toContain('hljs-');
@@ -355,7 +323,7 @@ describe('problem statement frame assembly', () => {
         });
 
         it('auto-detects the language of a block that declares none', () => {
-            expect(frameOf('<pre><code>public class A { }</code></pre>').querySelector('pre code')?.innerHTML).toContain('hljs-');
+            expect(contentOf('<pre><code>public class A { }</code></pre>').querySelector('pre code')?.innerHTML).toContain('hljs-');
         });
     });
 });

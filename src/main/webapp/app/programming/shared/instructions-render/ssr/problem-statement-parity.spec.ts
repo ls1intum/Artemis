@@ -15,7 +15,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { highlightCodeBlocks, renderFormulas, sanitizeFragment } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
-import { interactiveMessage, runFrameScript } from 'test/helpers/problem-statement-frame.helper';
+import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
 import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -958,16 +958,17 @@ describe('problem statement rendering: deliberate divergences from the legacy ta
         `<span class="artemis-task artemis-task-success" data-task-name="${name}" data-test-ids="${testIds}" data-test-status="success">${name}</span>`;
 
     /**
-     * The statement fragment inside the sandboxed frame, with interactivity switched on.
-     *
-     * Runs the real frame script against the markup, then sends it the same `interactive` message the content
-     * component sends, so what is asserted below is the shipped behaviour rather than a stand-in for it. The
-     * parent only ever names tasks that carry test ids, which is the gate this divergence is about.
+     * The statement rendered by the real content component with interactivity switched on, returned as the shadow
+     * root so its task markup can be inspected. The component only marks tasks that carry test ids as interactive,
+     * which is the gate this divergence is about.
      */
-    const renderSsrContent = (body: string, tasks: SsrTask[]): Document => {
-        const harness = runFrameScript(`<div class="artemis-problem-statement">${body}</div>`);
-        harness.sendFromParent(interactiveMessage(tasks.filter((task) => task.testIds.length).map((task) => ({ index: task.index, label: `${task.taskName}: ${task.status}` }))));
-        return harness.document;
+    const renderSsrContent = (body: string, tasks: SsrTask[]): ShadowRoot => {
+        const fixture = TestBed.createComponent(ProgrammingExerciseInstructionSsrContentComponent);
+        fixture.componentRef.setInput('html', `<div class="artemis-problem-statement">${body}</div>`);
+        fixture.componentRef.setInput('tasks', tasks);
+        fixture.componentRef.setInput('interactive', true);
+        fixture.detectChanges();
+        return fixture.nativeElement.shadowRoot as ShadowRoot;
     };
 
     const ssrTask = (index: number, taskName: string, testIds: number[]): SsrTask => ({

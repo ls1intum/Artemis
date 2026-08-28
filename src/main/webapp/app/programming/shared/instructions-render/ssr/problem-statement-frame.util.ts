@@ -2,29 +2,24 @@ import DOMPurify from 'dompurify';
 import katex from 'katex';
 import hljs from 'app/foundation/util/highlight-languages.util';
 import { SSR_TASK_STATUSES, SsrTask, SsrTaskStatus } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
-import { FRAME_SCRIPT, GENERATION_PLACEHOLDER } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame-script';
-import { contentSecurityPolicy } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame-policy';
 
 /**
- * Turns the server's rendered document into the single HTML string that goes into the sandboxed frame.
+ * Turns the server's rendered document into the single HTML string that is injected into the statement's shadow root.
  *
- * The frame is what makes a sanitizer bypass harmless: it has an opaque origin, so the markup inside it reaches
- * no cookie, no storage, no parent DOM and no authenticated API response, and it carries a CSP of its own whose
- * nonce only the trusted frame script has.
+ * There is no origin boundary any more: the statement shares this document's origin, so the sanitization below is
+ * the whole defense, not defense in depth. The server has already run its jsoup safelist; this pass runs DOMPurify
+ * over the fragment again (it covers the PlantUML SVG the server safelist deliberately does not see) and then a
+ * series of safe producers before the markup reaches the shadow root.
  *
  * The order below is fixed and pinned by specs, because each step assumes the previous one:
  *
- *   extract fragment -> DOMPurify -> strip sensitive attributes -> block URL references
+ *   extract fragment -> DOMPurify -> read tasks -> strip sensitive attributes -> block URL references
  *   -> rewrite same-origin images -> KaTeX -> highlight.js -> serialize
  *
- * KaTeX and highlight.js run in the parent rather than inside the frame. Both are pure string producers
- * (`renderToString`, `highlight().value`), so they need no live document, and keeping them here means the frame
- * needs no library and no second script.
- *
- * The three `innerHTML` assignments below write into a `DOMParser` document, which is attached to nothing: no
- * script in it runs and no resource in it is fetched, and the markup leaves only as the string that goes into
- * the sandboxed frame. The values are KaTeX's own output and highlight.js' output over text read back from
- * `textContent`, both of which escape what they emit.
+ * KaTeX and highlight.js run here as pure string producers (`renderToString`, `highlight().value`), on an inert
+ * `DOMParser` document attached to nothing: no script in it runs and no resource in it is fetched, and the markup
+ * leaves only as the string injected into the shadow root. Their values are KaTeX's own output and highlight.js'
+ * output over text read back from `textContent`, both of which escape what they emit.
  */
 
 /** The `data-*` attributes the server writes that carry information about the viewer rather than the statement. */
@@ -32,13 +27,13 @@ const SENSITIVE_ATTRIBUTES = ['data-feedback', 'data-result'];
 
 /**
  * SVG presentation attributes that accept a `url(...)` reference, mirroring `SvgSanitizer.URL_BEARING_ATTRIBUTES`.
- * An external reference in them issues a real network request: inside the frame with its CSP active, `fill`,
- * `stroke`, `clip-path` and `mask` fetch in Chromium, and `mask` fetches in Firefox and WebKit as well.
+ * An external reference in them issues a real network request: `fill`, `stroke`, `clip-path` and `mask` fetch in
+ * Chromium, and `mask` fetches in Firefox and WebKit as well.
  */
 const URL_BEARING_SVG_ATTRIBUTES = ['fill', 'stroke', 'filter', 'clip-path', 'mask', 'marker-start', 'marker-mid', 'marker-end'];
 
 /**
- * Elements that may not appear in the frame.
+ * Elements that may not appear in the statement.
  *
  * The first group is what `SvgSanitizer` denies outright, forbidden here again in case the server safelist is
  * bypassed. `feimage` joins them for the same reason it is guarded there: an `feImage` inside a filter fetches its
@@ -51,7 +46,8 @@ const URL_BEARING_SVG_ATTRIBUTES = ['fill', 'stroke', 'filter', 'clip-path', 'ma
  * `template` is the one element here that no later pass can cover. Its children live in a separate document
  * fragment, so neither `querySelectorAll('*')` nor `querySelectorAll('img')` in `rewriteSameOriginImages` reaches
  * them: a `<template><img src="https://…"></template>` walks through the URL rewriting untouched in all three
- * engines, and Firefox goes on to fetch the image. Denying the element is the only way to close that.
+ * engines, and Firefox goes on to fetch the image. Denying the element is the only way to close that. It also keeps
+ * a task inside a template from being counted by `extractTasks` but never appearing in the injected DOM.
  */
 const DENIED_ELEMENTS = [
     'script',
@@ -84,6 +80,12 @@ const DENIED_ELEMENTS = [
  */
 const URL_BEARING_ATTRIBUTES = ['src', 'srcset', 'href', 'xlink:href', 'poster', 'data', 'action', 'formaction'];
 
+/**
+ * Path prefix of the server's file API. A local markdown image is rewritten to `${server.url}${SERVER_FILE_API_PATH}…`
+ * (server-side `MARKDOWN_FILE_API_PATH`); `rewriteSameOriginImages` recognises such a leftover by this path.
+ */
+const SERVER_FILE_API_PATH = '/api/core/files/';
+
 /** Matches a CSS comment, non-greedy across lines, as `SvgSanitizer.CSS_COMMENT_PATTERN` does. */
 const CSS_COMMENT = /\/\*[\s\S]*?\*\//g;
 
@@ -113,29 +115,23 @@ const HIGHLIGHTED_MARKER = 'data-highlighted';
 /** The class CommonMark puts on a fenced code block, and the only place the authored language survives. */
 const LANGUAGE_CLASS_PREFIX = 'language-';
 
-export interface AssembledFrame {
-    /** The complete document for `iframe.srcdoc`. */
-    srcdoc: string;
-    /** Per-render token; a message that does not carry it belongs to a superseded frame and is dropped. */
-    generation: string;
+/** The renderable statement, ready to be injected into a shadow root. */
+export interface ShadowContent {
+    /**
+     * The server's document-level stylesheets, a wrapper carrying the body class, and the sanitized statement
+     * fragment, concatenated as one string for the shadow root's `innerHTML`.
+     */
+    html: string;
     /** The tasks of this document, in document order; index i belongs to the i-th `.artemis-task` element. */
     tasks: SsrTask[];
     /**
-     * Every `href` that survived sanitization into the frame.
+     * Every `href` that survived sanitization into the statement.
      *
-     * The frame cannot open a link itself (no `allow-popups`, no `allow-top-navigation`), so it asks the parent
-     * to. This list is what keeps that from being an open navigation primitive: the parent honours a request
-     * only for a link that is actually in the document the reader is looking at, so the worst a forged message
-     * can do is what the reader could have done by clicking.
+     * The content component honours a click on an anchor only for a link that is actually in this list, which is
+     * what keeps a forged or unexpected anchor from becoming an open navigation primitive: the worst a click can
+     * do is what the reader could have done by clicking a link that is really there.
      */
     linkTargets: string[];
-}
-
-/** 128 bits of randomness as lowercase hex. Hex only, so it never needs escaping into an attribute or a policy. */
-function randomToken(): string {
-    const bytes = new Uint8Array(16);
-    window.crypto.getRandomValues(bytes);
-    return [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -212,7 +208,8 @@ export function sanitizeFragment(fragmentHtml: string): string {
  * container's `data-result` (score, points, commit hash, submission date, assessment type).
  *
  * None of it is needed here: this client renders with `includeJs: false` and opens the Angular feedback dialog
- * from the `Result` it already holds. Stripping it keeps it out of reach of a sanitizer bypass inside the frame.
+ * from the `Result` it already holds. Stripping it keeps it out of reach of a sanitizer bypass: without an origin
+ * boundary the statement shares the page's credentials, so this data must not sit in a DOM a bypass could read.
  * The server keeps emitting all of it, because the standalone consumer's `interactive.js` reads it.
  */
 export function stripSensitiveAttributes(root: Element): void {
@@ -225,28 +222,39 @@ export function stripSensitiveAttributes(root: Element): void {
 }
 
 /**
- * Replaces every image the frame could only fetch with credentials by its alt text.
+ * Replaces every same-origin image the server did not inline by its alt text, and keeps external images from
+ * leaking the page's referrer.
  *
- * Artemis-hosted markdown images are authenticated (`/api/core/files/**` is not `permitAll`). Inside the frame
- * the request is anonymous, so the image would simply fail to load in Chromium and Firefox. The client asks the
- * server for `inlineImages: true`, which turns local files into `data:` URIs, but that pass leaves the original
- * URL in place whenever the file is missing, oversized or past its limits, which is the case handled here.
+ * The client asks the server for `inlineImages: true`, which turns Artemis-hosted markdown images into `data:`
+ * URIs, but that pass leaves the original `/api/core/files/**` URL in place whenever the file is missing,
+ * oversized or past its count limit. That leftover URL is what is handled here: it is dropped in favour of the
+ * alt text so the statement never shows a broken-image icon (the file is missing or was rejected) and never
+ * issues a second authenticated request for content that was meant to arrive inlined. This is consistent with the
+ * behaviour when the statement still rendered inside a credential-less sandboxed frame, where such a request could
+ * not have succeeded at all.
  *
  * The replacement is the alt text rather than a blank placeholder: a placeholder would silently hide a diagram
  * the instructor deliberately put there. A decorative image (`alt=""`) is removed, and one without any alt text
  * falls back to the caller's localized string.
  *
+ * A retained external image keeps its `src` but gets `referrerpolicy="no-referrer"`, which the sandboxed iframe
+ * used to provide for the whole document: without it the image request would announce which statement was viewed.
+ *
  * `srcset`, `<picture><source>` and SVG `href` cannot reach this point through the current server sanitization
  * (`Safelist.relaxed()` permits neither `srcset` nor `picture`/`source`, and `SvgSanitizer` denies the `image`
  * and `use` elements), and are covered anyway, because this layer exists for the case where it was bypassed.
  */
-export function rewriteSameOriginImages(root: Element, applicationOrigin: string, assetOrigin: string, unavailableLabel: string): void {
-    // Both origins count as "ours": the application the reader is on, and wherever the server said its own assets
-    // live. They are usually the same host and need not be.
-    const ourOrigins = [...new Set([applicationOrigin, assetOrigin])];
+export function rewriteSameOriginImages(root: Element, applicationOrigin: string, unavailableLabel: string): void {
     const isSameOrigin = (value: string): boolean => {
         try {
-            return ourOrigins.includes(new URL(value, applicationOrigin).origin);
+            const url = new URL(value, applicationOrigin);
+            // "Ours" means either the application the reader is on, or a server file-API reference. The latter is
+            // matched by path, not by origin: the server rewrites a local markdown image to an absolute
+            // `${server.url}${SERVER_FILE_API_PATH}…` (MarkdownRelativeToAbsolutePathAttributeProvider), and
+            // `server.url` need not be the origin the client is served from. Keying off the path catches that
+            // leftover whether it is relative or absolute, without having to learn the server origin from an
+            // optional KaTeX <link> that is only present when the statement has a formula.
+            return url.origin === applicationOrigin || url.pathname.startsWith(SERVER_FILE_API_PATH);
         } catch {
             // An unparseable reference cannot be shown to be safe, so it is treated as one to replace.
             return true;
@@ -259,10 +267,11 @@ export function rewriteSameOriginImages(root: Element, applicationOrigin: string
     root.querySelectorAll('source[srcset], img[srcset]').forEach((element) => element.removeAttribute('srcset'));
 
     // The backstop. `img[src]` gets the alt-text treatment below because it is the one the reader was meant to
-    // see; every other same-origin reference is simply dropped, since it can only ever fail to load in here.
-    // Anchors are exempt: a link is not a fetch, and the frame hands its clicks to the parent instead.
+    // see; every other same-origin reference is simply dropped, since it can only ever fail to load. Anchors are
+    // exempt: a link is not a fetch, and the content component resolves its clicks against `linkTargets`. Matched by
+    // `localName`, not `tagName`, so an SVG `<a>` (whose `tagName` is lowercase `a`) keeps its href like an HTML one.
     root.querySelectorAll('*').forEach((element) => {
-        if (element.tagName === 'A' || element.tagName === 'IMG') {
+        if (element.localName === 'a' || element.localName === 'img') {
             return;
         }
         for (const attribute of URL_BEARING_ATTRIBUTES) {
@@ -275,7 +284,13 @@ export function rewriteSameOriginImages(root: Element, applicationOrigin: string
 
     root.querySelectorAll('img').forEach((image) => {
         const source = image.getAttribute('src') ?? '';
-        if (source.startsWith('data:') || !isSameOrigin(source)) {
+        if (source.startsWith('data:')) {
+            return;
+        }
+        if (!isSameOrigin(source)) {
+            // Retained external image. The sandboxed frame carried `referrerpolicy="no-referrer"` for the whole
+            // document; without an iframe it has to be set per image so the fetch does not announce the viewer.
+            image.setAttribute('referrerpolicy', 'no-referrer');
             return;
         }
         const alt = image.getAttribute('alt');
@@ -307,9 +322,9 @@ export function renderFormulas(root: Element): void {
                 displayMode: element.getAttribute('data-display-mode') === 'true',
                 throwOnError: false,
                 output: 'html',
-                // KaTeX defaults this to Infinity, which lets `\rule{1000000000em}{1000000000em}` ask the frame
-                // for a box no layout engine can afford. Nothing legitimate approaches this bound: the largest
-                // size a real statement uses is a few ems, and the cap only clips explicitly authored dimensions.
+                // KaTeX defaults this to Infinity, which lets `\rule{1000000000em}{1000000000em}` ask for a box no
+                // layout engine can afford. Nothing legitimate approaches this bound: the largest size a real
+                // statement uses is a few ems, and the cap only clips explicitly authored dimensions.
                 maxSize: MAX_FORMULA_SIZE_EM,
                 // Likewise explicit rather than implied. It is KaTeX's own default, but it is the limit that stops
                 // a macro from expanding into an exponential blowup, so it should not rest on a library default.
@@ -362,7 +377,13 @@ function parseStatus(value: string | null): SsrTaskStatus {
     return SSR_TASK_STATUSES.find((status) => status === value) ?? 'no-result';
 }
 
-/** Reads the task metadata off the fragment. Must run before the sensitive attributes are stripped. */
+/**
+ * Reads the task metadata off the fragment.
+ *
+ * Run against the sanitized fragment, not the raw one: a task DOMPurify removed (for example inside a forbidden
+ * `<template>`) must not be counted, or the index of every following task would drift out of step with the
+ * `.artemis-task` elements that actually reach the shadow root.
+ */
 function extractTasks(fragment: Element): SsrTask[] {
     return [...fragment.querySelectorAll('.artemis-task')].map((element, index) => ({
         index,
@@ -378,32 +399,28 @@ function extractTasks(fragment: Element): SsrTask[] {
 }
 
 /**
- * Builds the sandboxed frame document from the server's rendered document.
+ * Builds the renderable statement from the server's rendered document.
  *
- * @param serverDocument the full document returned by the render endpoint
- * @param locale         the document language, for the `lang` attribute
+ * @param serverDocument   the full document returned by the render endpoint
  * @param unavailableLabel localized fallback for an image that cannot be shown and carries no alt text
  */
-export function assembleFrameDocument(serverDocument: string, locale: string, unavailableLabel: string): AssembledFrame {
+export function assembleShadowContent(serverDocument: string, unavailableLabel: string): ShadowContent {
     const parsed = new DOMParser().parseFromString(serverDocument, 'text/html');
-    // The frame script added below is the only script the frame may carry. `includeJs: false` already keeps the
-    // server from emitting any, so this only guards against a document that arrived with one anyway.
+    // The statement carries no script: `includeJs: false` already keeps the server from emitting any, and this
+    // removes one that arrived anyway before it could reach the shadow root.
     parsed.querySelectorAll('script').forEach((script) => script.remove());
 
     const fragment = parsed.querySelector('.artemis-problem-statement');
     if (!fragment) {
-        return { srcdoc: '', generation: '', tasks: [], linkTargets: [] };
+        return { html: '', tasks: [], linkTargets: [] };
     }
 
     // Document-level stylesheets only, which is what the filter is for. A `<style>` inside the statement is not
     // hypothetical: PlantUML puts its diagram CSS in one, and an SVG `<style>` matches this selector like any
-    // other. That copy is sanitized as part of the fragment and travels with it into the body, so hoisting the
-    // pre-sanitization original into the head would hand the statement its `@import` and `url()` back unchecked
-    // and defeat the emptying rule in `sanitizeFragment`.
+    // other. That copy is sanitized as part of the fragment and travels with it, so hoisting the pre-sanitization
+    // original out here would hand the statement its `@import` and `url()` back unchecked and defeat the emptying
+    // rule in `sanitizeFragment`.
     const styleNodes = [...parsed.querySelectorAll('style, link[rel="stylesheet"]')].filter((node) => !fragment.contains(node));
-
-    // Read before stripping: the task metadata lives in the same attributes some of which are about to go.
-    const tasks = extractTasks(fragment);
 
     // The stylesheets are classpath resources plus the configured server URL, none of it derived from the
     // statement, and DOMPurify would strip the KaTeX <link> because no sanitizer allows a stylesheet reference
@@ -411,61 +428,52 @@ export function assembleFrameDocument(serverDocument: string, locale: string, un
     const sanitized = new DOMParser().parseFromString(sanitizeFragment(fragment.outerHTML), 'text/html');
     const sanitizedFragment = sanitized.querySelector('.artemis-problem-statement');
     if (!sanitizedFragment) {
-        return { srcdoc: '', generation: '', tasks: [], linkTargets: [] };
+        return { html: '', tasks: [], linkTargets: [] };
     }
 
-    // Two different origins, deliberately not the same value. The asset origin is wherever the server said its
-    // stylesheet and fonts live (`artemis.server-url`, which need not be the origin the client is served from), and
-    // only the CSP needs it. Whether an image is "ours" is a question about the application's own origin: an
-    // absolute URL back to the app would otherwise be judged cross-origin whenever the two differ, and would be
-    // left in the frame to fail as an uncredentialed request.
-    const katexLink = styleNodes.find((node) => node.tagName === 'LINK') as HTMLLinkElement | undefined;
-    const assetOrigin = originOf(katexLink?.getAttribute('href')) ?? window.location.origin;
-    const applicationOrigin = window.location.origin;
+    // Read after sanitization so a task DOMPurify removed cannot drift the index against the injected DOM.
+    const tasks = extractTasks(sanitizedFragment);
 
     stripSensitiveAttributes(sanitizedFragment);
-    rewriteSameOriginImages(sanitizedFragment, applicationOrigin, assetOrigin, unavailableLabel);
+    rewriteSameOriginImages(sanitizedFragment, window.location.origin, unavailableLabel);
     renderFormulas(sanitizedFragment);
     highlightCodeBlocks(sanitizedFragment);
 
-    // Carried over from the server's own document rather than hardcoded: it is what selects the dark palette
-    // (`body.artemis-ssr-body--dark` in dark-mode.css), and a frame that lost it would render a white page
-    // inside a dark application.
+    // The dark palette keys off this class. `body.artemis-ssr-body*` selectors do not match inside a shadow root,
+    // so the server's body class goes on a wrapper element and the statement stylesheets match it as
+    // `.artemis-ssr-body*` (see embedded.css / dark-mode.css). A statement that lost the class would render a
+    // white page inside a dark application.
     const bodyClass = parsed.body?.getAttribute('class') || 'artemis-ssr-body';
 
-    const nonce = randomToken();
-    const generation = randomToken();
-    const script = FRAME_SCRIPT.replace(GENERATION_PLACEHOLDER, generation);
+    // The server generates these nodes from trusted CSS and configuration, so they are not sanitized like the
+    // fragment. Event-handler attributes are stripped anyway as cheap defence: a `<link onload=...>` set through
+    // innerHTML would otherwise fire, and nothing legitimate the server emits carries one.
+    styleNodes.forEach((node) =>
+        [...node.attributes].filter((attribute) => attribute.name.toLowerCase().startsWith('on')).forEach((attribute) => node.removeAttribute(attribute.name)),
+    );
     const styles = styleNodes.map((node) => node.outerHTML).join('');
+    // Built as a string for the shadow root's `innerHTML`. Every part is trusted by construction: `styles` are the
+    // server's own document-level stylesheets, `bodyClass` is escaped, and the fragment is DOMPurify output run
+    // through the safe producers above (strip, rewrite, KaTeX, highlight), each of which emits escaped markup.
+    // nosemgrep -- DOMPurify output plus the server's own stylesheets; see the note above
+    const html = `${styles}<div class="${escapeAttribute(bodyClass)}">${sanitizedFragment.outerHTML}</div>`;
 
-    // The policy is the first element in the head, before any stylesheet or script, because a policy only
-    // governs what the parser sees after it.
-    //
-    // Built as a string because `srcdoc` is one by definition. Every interpolation is closed: `escapeAttribute`
-    // for the attribute values, DOMPurify output for the fragment, the server's own document-level stylesheets
-    // for `styles`, and hex tokens from `randomToken`.
-    const srcdoc =
-        // nosemgrep -- interpolations are escaped attribute values; see the note above
-        `<!DOCTYPE html><html lang="${escapeAttribute(locale)}"><head><meta charset="UTF-8">` +
-        // nosemgrep -- interpolations are escaped attribute values; see the note above
-        `<meta http-equiv="Content-Security-Policy" content="${escapeAttribute(contentSecurityPolicy(nonce, assetOrigin))}">` +
-        `<meta name="viewport" content="width=device-width, initial-scale=1.0">` +
-        `${styles}</head><body class="${escapeAttribute(bodyClass)}">${sanitizedFragment.outerHTML}` +
-        // nosemgrep -- the nonce is a hex token from `randomToken`, the script a module constant; see the note above
-        `<script nonce="${nonce}">${script}</script></body></html>`;
+    // Both HTML `<a href>` and SVG `<a href>` / `<a xlink:href>` (PlantUML emits inline SVG, and SvgSanitizer keeps a
+    // safe anchor URL), so the content component can validate a click on either against this list.
+    const linkTargets = [
+        ...new Set([...sanitizedFragment.querySelectorAll('a')].map((anchor) => anchor.getAttribute('href') ?? anchor.getAttribute('xlink:href') ?? '').filter((href) => href)),
+    ];
 
-    const linkTargets = [...new Set([...sanitizedFragment.querySelectorAll('a[href]')].map((anchor) => anchor.getAttribute('href') ?? ''))];
-
-    return { srcdoc, generation, tasks, linkTargets };
+    return { html, tasks, linkTargets };
 }
 
 /**
- * Resolves a link the frame reported into a URL the parent may open, or `undefined` to ignore the request.
+ * Resolves a clicked anchor's href into a URL the content component may open, or `undefined` to ignore it.
  *
  * Two independent conditions, both required. The scheme must be one a document may reasonably link to, which
  * excludes `javascript:`, `data:` and `blob:`. And the href must be one that is actually present in the
- * rendered statement, which is what stops the bridge from being a general "open any URL" capability: a message
- * the frame did not derive from a real anchor names a target that is not in the list.
+ * rendered statement, which is what stops a click from being a general "open any URL" capability: an href that
+ * was not derived from a real anchor in the statement names a target that is not in the list.
  */
 export function resolveFrameLink(href: string, linkTargets: readonly string[], origin: string): string | undefined {
     if (!linkTargets.includes(href)) {
@@ -481,18 +489,6 @@ export function resolveFrameLink(href: string, linkTargets: readonly string[], o
         return undefined;
     }
     return url.href;
-}
-
-/** The origin of an absolute URL, or undefined when it is relative or unparseable. */
-function originOf(href: string | null | undefined): string | undefined {
-    if (!href) {
-        return undefined;
-    }
-    try {
-        return new URL(href, window.location.origin).origin;
-    } catch {
-        return undefined;
-    }
 }
 
 /** Escapes a value for an HTML attribute delimited by double quotes. */

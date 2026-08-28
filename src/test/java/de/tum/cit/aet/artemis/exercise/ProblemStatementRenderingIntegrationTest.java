@@ -817,7 +817,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldBoundTheSizeAFormulaMayAskForInTheShippedScript() throws Exception {
         // KaTeX leaves maxSize at Infinity, so `\rule{1000000000em}{1000000000em}` asks the consumer for a box no
-        // engine can lay out. The sandboxed frame sets the bound in its own render call, but a consumer that asks
+        // engine can lay out. The Angular client sets the bound in its own render call, but a consumer that asks
         // for the document with JavaScript (the default) gets this script instead, and it is the only limit it has.
         var body = new ProblemStatementRenderRequestDTO("Area is $$\\int_0^1 x\\,dx$$", null, null, "en", false, true, false, null);
 
@@ -881,16 +881,15 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     void shouldAllowAnonymousCrossOriginReadsOfKatexResources() throws Exception {
-        // The Angular client shows the statement inside a sandboxed iframe, which the browser gives an opaque origin. A
-        // stylesheet may be fetched cross-origin without CORS, but the @font-face rules inside katex.min.css may not:
-        // font fetches are always CORS-aware, so without this header every formula falls back to a system font.
-        //
-        // "null" is the literal Origin a sandboxed frame sends, so it is the case that actually matters here.
-        var response = request.performMvcRequest(get("/assets/katex/katex.min.css").header(HttpHeaders.ORIGIN, "null")).andReturn().getResponse();
+        // The statement loads katex.min.css from the configured server URL, which need not be the origin the client
+        // is served from. A stylesheet may be fetched cross-origin without CORS, but the @font-face rules inside it
+        // may not: font fetches are always CORS-aware, so on any deployment where the asset origin differs from the
+        // page origin every formula would fall back to a system font without this header.
+        var response = request.performMvcRequest(get("/assets/katex/katex.min.css").header(HttpHeaders.ORIGIN, "https://client.example")).andReturn().getResponse();
 
         // As above, a missing client build is an acceptable outcome; a served asset without the header is not.
         if (response.getStatus() == HttpStatus.OK.value()) {
-            assertThat(response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).as("the KaTeX assets must be readable from an opaque origin").isEqualTo("*");
+            assertThat(response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).as("the KaTeX assets must be readable cross-origin").isEqualTo("*");
             assertThat(response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS)).as("public assets must never be fetched with credentials").isNull();
         }
     }
@@ -1328,16 +1327,17 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(darkResult.html()).contains("<body class=\"artemis-ssr-body artemis-ssr-body--dark\">");
 
         // The shared layout rule lives in embedded.css and fires in both modes. This locks the
-        // invariant "light and dark differ in colors only, never in body layout".
-        assertThat(lightResult.html()).contains("body.artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
-        assertThat(darkResult.html()).contains("body.artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
+        // invariant "light and dark differ in colors only, never in body layout". A class selector rather than
+        // `body.artemis-ssr-body`, so it matches both the standalone consumer's <body> and the Angular client's
+        // shadow-root wrapper.
+        assertThat(lightResult.html()).contains(".artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
+        assertThat(darkResult.html()).contains(".artemis-ssr-body {").contains("padding: var(--artemis-ssr-body-padding, 16px);");
 
-        // Dark mode keeps a body rule of its own for the backdrop colour only; the layout lives in the base rule in
-        // embedded.css. The literal is the assertion that matters: custom properties do not cross into the sandboxed
-        // frame, so the variable never resolves there and this fallback is what actually paints. It has to stay equal
-        // to $module-bg / $card-bg ($neutral-dark in themes/_dark-variables.scss), the surface the frame is placed on
-        // in both hosts, otherwise the frame draws a differently coloured rectangle inside its panel.
-        assertThat(darkResult.html()).contains("body.artemis-ssr-body--dark {").contains("background: var(--module-bg, #16191d);");
+        // Dark mode keeps a rule of its own for the backdrop colour only; the layout lives in the base rule in
+        // embedded.css. The literal is the assertion that matters: where the host does not define --module-bg this
+        // fallback is what paints, so it has to stay equal to $module-bg / $card-bg ($neutral-dark in
+        // themes/_dark-variables.scss), the surface the statement is placed on in both hosts.
+        assertThat(darkResult.html()).contains(".artemis-ssr-body--dark {").contains("background: var(--module-bg, #16191d);");
     }
 
     @Test

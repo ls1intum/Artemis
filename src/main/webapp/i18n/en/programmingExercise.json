@@ -331,7 +331,6 @@
                 "renderRejected": "The problem statement could not be rendered because the exercise data is too large or inconsistent.",
                 "renderRateLimited": "Too many rendering requests. Please wait a moment and reload.",
                 "renderStale": "Showing the last loaded version; the update could not be fetched.",
-                "frameTitle": "Problem statement",
                 "imageUnavailable": "Image unavailable",
                 "taskStatus": {
                     "success": "all tests passing",

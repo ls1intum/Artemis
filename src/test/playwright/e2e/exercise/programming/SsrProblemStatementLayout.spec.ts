@@ -99,12 +99,12 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
         expect(wizardInsideScrollArea, 'the step wizard is inside the scroll area and would scroll away').toBe(0);
     });
 
-    test('toggle ON: the frame restates the application typography', async ({ login, page, exerciseAPIRequests }) => {
-        // Read inside the frame, which is the only place this is visible. The frame is a separate document with an
-        // opaque origin: no application stylesheet and no theme variable reaches it, so every size has to be restated
-        // in embedded.css, and a missing declaration falls back to the browser default and renders the statement at a
-        // visibly different scale from the rest of the page. No server-side assertion can see that, and the parity
-        // gate renders with includeCss=false and diffs markup, so the computed values are the only guard.
+    test('toggle ON: the statement restates the application typography', async ({ login, page, exerciseAPIRequests }) => {
+        // Read inside the shadow root, which is the only place this is visible. The statement lives in a shadow root
+        // that no application stylesheet crosses, so every size has to be restated in embedded.css, and a missing
+        // declaration falls back to the browser default and renders the statement at a visibly different scale from
+        // the rest of the page. No server-side assertion can see that, and the parity gate renders with
+        // includeCss=false and diffs markup, so the computed values are the only guard.
         await login(admin);
         const headingExercise = await exerciseAPIRequests.createProgrammingExercise({
             course,
@@ -114,11 +114,9 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
 
         await login(studentOne, `/courses/${course.id}/exercises/${headingExercise.id}`);
 
-        const frame = page.locator('jhi-programming-exercise-instruction-ssr-content iframe');
-        await expect(frame).toBeVisible({ timeout: 60_000 });
-
-        const statement = page.frameLocator('jhi-programming-exercise-instruction-ssr-content iframe').locator('.artemis-problem-statement');
-        await expect(statement).toBeVisible({ timeout: 30_000 });
+        // Playwright locators pierce the open shadow root, so the statement is reachable directly.
+        const statement = page.locator('jhi-programming-exercise-instruction-ssr-content').locator('.artemis-problem-statement');
+        await expect(statement).toBeVisible({ timeout: 60_000 });
 
         const typography = await statement.evaluate((root) => {
             const of = (selector: string) => {
@@ -153,35 +151,45 @@ test.describe('SSR problem statement layout', { tag: '@sequential' }, () => {
         expect(typography.h6).toEqual({ size: '14.4px', weight: '500', ...box });
     });
 
-    test('toggle ON: the statement is isolated in a sandboxed frame', async ({ login, page }) => {
-        // Asserted against the frame the application actually built, not one the test assembled. Bound as
-        // `[attr.srcdoc]`, Angular's sanitizer reduces the document to a few characters and drops the policy and the
-        // script, while every unit assertion about the string still passes. Only reading the element back sees it.
+    test('toggle ON: formulas and code are rendered and coloured inside the shadow root', async ({ login, page, exerciseAPIRequests }) => {
+        // KaTeX and highlight.js run in the client and the result is injected into the shadow root together with the
+        // server stylesheet. Neither the formula markup nor the highlight palette can be seen server-side or in jsdom,
+        // so a real browser reading computed styles inside the shadow root is the only guard that both arrived.
         await login(admin);
+        const richExercise = await exerciseAPIRequests.createProgrammingExercise({
+            course,
+            problemStatement: [
+                '# Rich',
+                '',
+                'Inline $O(n \\log n)$ and display:',
+                '',
+                '$$\\sum_{k=1}^{n} k^2$$',
+                '',
+                '```java',
+                'public int add(int a, int b) { return a + b; }',
+                '```',
+            ].join('\n'),
+        });
         await setSsrToggle(page, true);
 
-        await login(studentOne, `/courses/${course.id}/exercises/${programmingExercise.id}`);
+        await login(studentOne, `/courses/${course.id}/exercises/${richExercise.id}`);
 
-        const frame = page.locator('jhi-programming-exercise-instruction-ssr-content iframe');
-        await expect(frame).toBeVisible({ timeout: 60_000 });
+        const host = page.locator('jhi-programming-exercise-instruction-ssr-content');
+        await expect(host).toBeVisible({ timeout: 60_000 });
 
-        // No allow-same-origin: this single attribute is what denies the statement the cookies, the storage and
-        // the parent DOM.
-        expect(await frame.getAttribute('sandbox')).toBe('allow-scripts');
+        // Playwright locators pierce the open shadow root.
+        await expect(host.locator('.katex').first()).toBeVisible({ timeout: 30_000 });
+        expect(await host.locator('.katex').count(), 'both the inline and the display formula rendered').toBeGreaterThanOrEqual(2);
 
-        const document_ = await frame.evaluate((element) => (element as HTMLIFrameElement).srcdoc);
-        const nonce = /<script nonce="([0-9a-f]{32})">/.exec(document_)?.[1];
-
-        expect(nonce, 'the frame carries no nonced script, so it cannot report its height either').toBeDefined();
-        expect(document_).toContain(`script-src 'nonce-${nonce}'`);
-        expect(document_).toContain("default-src 'none'");
-        expect(document_).toContain("connect-src 'none'");
-        // The statement itself made it in, so the assertions above are about a real document.
-        expect(document_).toContain('artemis-problem-statement');
-
-        // And the frame really did size itself, which only happens if its script ran.
-        await expect(async () => {
-            expect((await frame.boundingBox())!.height).toBeGreaterThan(200);
-        }).toPass({ timeout: 30_000 });
+        const code = host.locator('pre code.hljs');
+        await expect(code).toBeVisible();
+        // The highlight.js palette lives in the server's embedded.css, which is injected into the shadow root. If it
+        // did not reach the shadow tree the token would fall back to the statement's plain text colour.
+        const keywordColor = await host
+            .locator('pre code.hljs .hljs-keyword')
+            .first()
+            .evaluate((element) => getComputedStyle(element).color);
+        const textColor = await host.locator('.artemis-problem-statement').evaluate((element) => getComputedStyle(element).color);
+        expect(keywordColor, 'the highlight.js palette did not reach the shadow root').not.toBe(textColor);
     });
 });

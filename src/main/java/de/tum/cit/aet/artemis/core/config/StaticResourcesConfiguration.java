@@ -84,9 +84,10 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
     /**
      * Allows anonymous cross-origin reads of the KaTeX assets.
      * <p>
-     * The server-rendered problem statement is displayed inside a sandboxed iframe, which the browser gives an opaque origin. A stylesheet may be loaded cross-origin without
-     * CORS, but the {@code @font-face} rules inside {@code katex.min.css} may not: font fetches are always CORS-aware, so without this header the browser blocks them and every
-     * formula falls back to a system font. Verified against a real browser, not only against this configuration.
+     * The server-rendered problem statement loads {@code katex.min.css} from the configured server URL, which need not be the origin the client is served from. A stylesheet
+     * may be loaded cross-origin without CORS, but the {@code @font-face} rules inside it may not: font fetches are always CORS-aware, so on any deployment where the asset
+     * origin differs from the page origin the browser would block them without this header and every formula would fall back to a system font. Verified against a real browser,
+     * not only against this configuration.
      * <p>
      * These are public, unauthenticated, static assets (see the {@code permitAll} entry for {@code /assets/katex/**} in {@code SecurityConfiguration}), so the wildcard is
      * appropriate. Credentials are deliberately not allowed, which also keeps the wildcard legal.

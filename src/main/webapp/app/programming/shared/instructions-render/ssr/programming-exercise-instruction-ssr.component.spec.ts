@@ -1,4 +1,3 @@
-import { FRAME_PROTOCOL_VERSION } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame-script';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -49,7 +48,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
     const exercise = { id: 42, problemStatement: '[task][A](<testid>1</testid>)' } as ProgrammingExercise;
 
     // The script below sits inside `.artemis-problem-statement` on purpose: a script reaching the client within the
-    // rendered fragment must never survive into the frame, whatever put it there.
+    // rendered fragment must never survive into the shadow root, whatever put it there.
     const renderResponse = (status = 'success', extra = '', notExecutedCount = '0') => ({
         html: `<!DOCTYPE html><html><head><style>.artemis-task{color:red}</style></head><body><div class="artemis-problem-statement">${taskSpan('A', '1', status, notExecutedCount)}${extra}<script>window.x=1</script></div></body></html>`,
         contentHash: status + extra + notExecutedCount,
@@ -92,35 +91,23 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
 
     afterEach(() => httpMock.verify({ ignoreCancelled: true }));
 
-    /** The shadow root of the content child. The outer component itself deliberately has none. */
-    const frameElement = (): HTMLIFrameElement => fixture.nativeElement.querySelector('iframe');
-
-    /** The document the component put into the sandboxed frame, parsed so it can be inspected. */
-    const frameDocument = (): Document => new DOMParser().parseFromString(comp.frameSrcdoc() ?? '', 'text/html');
+    /** The renderable statement the component produced, parsed so it can be inspected. */
+    const frameDocument = (): Document => new DOMParser().parseFromString(comp.renderedHtml() ?? '', 'text/html');
 
     /**
-     * The task indices the component currently declares interactive to its frame.
+     * The task indices the component currently declares interactive to the content child.
      *
-     * Interactivity is not an attribute this document can read: it is a message the parent sends to the frame, and
-     * the frame applies. Asking for it here means replaying that transport (announce the frame as ready, capture
-     * what the component answers with), which is what happens in a browser minus the frame itself. The frame's half
-     * of the contract is covered against the real script in `problem-statement-frame.helper.ts`.
+     * Interactivity is the `[interactive]` input the child receives, which the parent drives from
+     * `canOpenFeedback()`, applied only to tasks that carry test ids. The content component's own handling of that
+     * input is covered in its spec.
      */
-    const interactiveTaskIndices = (): number[] => {
-        const frameWindow = frameElement().contentWindow!;
-        const posted: { tasks?: { index: number }[] }[] = [];
-        const spy = vi.spyOn(frameWindow, 'postMessage').mockImplementation((message) => {
-            posted.push(message as { tasks?: { index: number }[] });
-        });
-        sendFromFrame({ type: 'ready' });
-        spy.mockRestore();
-        return (posted.at(-1)?.tasks ?? []).map((task) => task.index);
-    };
-
-    /** Delivers a message to the component as if its own frame had sent it. */
-    const sendFromFrame = (data: Record<string, unknown>): void => {
-        window.dispatchEvent(new MessageEvent('message', { data: { v: FRAME_PROTOCOL_VERSION, gen: comp.frameGeneration(), ...data }, source: frameElement().contentWindow }));
-    };
+    const interactiveTaskIndices = (): number[] =>
+        comp.canOpenFeedback()
+            ? comp
+                  .tasks()
+                  .filter((task) => task.testIds.length)
+                  .map((task) => task.index)
+            : [];
 
     const flushRender = (response = renderResponse()) => {
         httpMock.expectOne(RENDER_URL_MATCHER).flush(response);
@@ -162,7 +149,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
             fixture.detectChanges();
             flushRender(renderedWith(body));
 
-            expect(comp.frameSrcdoc()).not.toContain(gone);
+            expect(comp.renderedHtml()).not.toContain(gone);
             expect(frameDocument().querySelector('[' + gone + ']')).toBeNull();
         });
 
@@ -194,20 +181,17 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         });
     });
 
-    it('drops the server scripts and leaves only the nonced frame script', () => {
+    it('drops every server script before the statement reaches the shadow root', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
         flushRender();
 
-        expect(comp.frameSrcdoc()).toContain('artemis-task');
-        const scripts = [...frameDocument().querySelectorAll('script')];
-
-        // Exactly one script survives into the frame, and it is ours: the nonce is what stops anything an attacker
-        // smuggles in from executing beside it.
-        expect(scripts).toHaveLength(1);
-        expect(scripts[0].getAttribute('nonce')).toMatch(/^[0-9a-f]{32}$/);
+        expect(comp.renderedHtml()).toContain('artemis-task');
+        // No script survives: without an origin boundary the statement shares the page's credentials, so a script in
+        // it would run with them. The server's own `<script>` in the fixture is what this guards against.
+        expect(frameDocument().querySelectorAll('script')).toHaveLength(0);
         expect(frameDocument().querySelector('.artemis-task')).toBeTruthy();
-        // The chrome stays in this document; only the statement goes into the frame.
+        // The chrome lives in this component (default encapsulation); only the content child owns a shadow root.
         expect(fixture.nativeElement.shadowRoot).toBeNull();
     });
 
@@ -276,11 +260,11 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
         flushRender();
-        expect(comp.frameSrcdoc()).toContain('artemis-task');
+        expect(comp.renderedHtml()).toContain('artemis-task');
 
         fixture.componentRef.setInput('exercise', { id: 42, problemStatement: '' } as ProgrammingExercise);
         fixture.detectChanges();
-        expect(comp.frameSrcdoc()).toBeUndefined();
+        expect(comp.renderedHtml()).toBeUndefined();
 
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
@@ -288,7 +272,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         // Served from the render service cache, so the response carries the identical contentHash. Without clearing
         // the retained hash the component would early-return here and stay blank forever.
         httpMock.expectNone(RENDER_URL_MATCHER);
-        expect(comp.frameSrcdoc()).toContain('artemis-task');
+        expect(comp.renderedHtml()).toContain('artemis-task');
         expect(frameDocument().querySelector('.artemis-task')).toBeTruthy();
     });
 
@@ -374,13 +358,13 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.componentRef.setInput('liveUpdates', 'personal');
         fixture.detectChanges();
         flushRender();
-        const before = comp.frameSrcdoc();
+        const before = comp.renderedHtml();
 
         resultSubject.next({ id: 9, feedbacks: [{ testCase: { id: 1, testName: 'testA' }, positive: false }] } as Result);
         fixture.detectChanges();
         failRenderWithNetworkError();
 
-        expect(comp.frameSrcdoc()).toBe(before);
+        expect(comp.renderedHtml()).toBe(before);
         expect(comp.refreshFailed()).toBe(true);
         expect(comp.initialLoadFailed()).toBe(false);
         // The banner is a tum-ui-message in the light DOM: styles injected into document.head never cross a shadow
@@ -519,7 +503,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.detectChanges();
         flushRender(bodyStyleResponse(taskSpan('A', '1'), 'body-style'));
 
-        expect(comp.frameSrcdoc()).toContain('<style>.artemis-task{color:red}</style>');
+        expect(comp.renderedHtml()).toContain('<style>.artemis-task{color:red}</style>');
         expect(frameDocument().querySelector('style')).toBeTruthy();
     });
 
@@ -591,7 +575,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         const requests = httpMock.match(RENDER_URL_MATCHER);
         expect(requests).toHaveLength(1);
         expect(requests[0].cancelled).toBe(true);
-        expect(comp.frameSrcdoc()).toBeUndefined();
+        expect(comp.renderedHtml()).toBeUndefined();
         expect(comp.isLoading()).toBe(true);
         expect(comp.isRefreshing()).toBe(false);
     });
@@ -600,7 +584,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
         flushRender();
-        const before = comp.frameSrcdoc();
+        const before = comp.renderedHtml();
 
         // The theme switch starts a second render, which is still open when the exercise disappears.
         currentTheme.set(Theme.DARK);
@@ -611,7 +595,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         const requests = httpMock.match(RENDER_URL_MATCHER);
         expect(requests).toHaveLength(1);
         expect(requests[0].cancelled).toBe(true);
-        expect(comp.frameSrcdoc()).toBe(before);
+        expect(comp.renderedHtml()).toBe(before);
         expect(comp.isLoading()).toBe(false);
         expect(comp.isRefreshing()).toBe(true);
     });
@@ -697,7 +681,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         expect(requests[0].cancelled).toBe(true);
         expect(comp.isLoading()).toBe(false);
         expect(comp.isRefreshing()).toBe(false);
-        expect(comp.frameSrcdoc()).toBeUndefined();
+        expect(comp.renderedHtml()).toBeUndefined();
         expect(comp.tasks()).toEqual([]);
         // The result and the participation are still bound, so only the cleared render context stops the removed
         // markup's tasks from still claiming that they can open a dialog.
@@ -740,7 +724,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         const requests = httpMock.match(RENDER_URL_MATCHER);
         expect(requests).toHaveLength(1);
         expect(requests[0].cancelled).toBe(true);
-        expect(comp.frameSrcdoc()).toBeUndefined();
+        expect(comp.renderedHtml()).toBeUndefined();
         expect(comp.isLoading()).toBe(true);
         expect(comp.isRefreshing()).toBe(false);
     });
@@ -760,7 +744,7 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
         const requests = httpMock.match(RENDER_URL_MATCHER);
         expect(requests).toHaveLength(1);
         expect(requests[0].cancelled).toBe(true);
-        expect(comp.frameSrcdoc()).toBeUndefined();
+        expect(comp.renderedHtml()).toBeUndefined();
         expect(comp.initialLoadFailed()).toBe(true);
     });
 
@@ -779,11 +763,10 @@ describe('ProgrammingExerciseInstructionSsrComponent', () => {
 
         // The stale statement stays on screen, but it was rendered for participation 7 and must not act for 8.
         expect(comp.refreshFailed()).toBe(true);
-        expect(comp.frameSrcdoc()).toBeDefined();
+        expect(comp.renderedHtml()).toBeDefined();
         expect(comp.canOpenFeedback()).toBe(false);
         expect(interactiveTaskIndices()).toEqual([]);
-        // Both activation paths: the retained markup stays clickable in the browser, and the parent guards itself.
-        sendFromFrame({ type: 'task', index: 0 });
+        // The retained markup stays clickable in the browser, so the parent has to guard the activation itself.
         comp.onTaskActivated(0);
         expect(open).not.toHaveBeenCalled();
     });
@@ -950,7 +933,7 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
         httpMock.expectNone(RENDER_URL_MATCHER);
         expect(comp.initialLoadFailed()).toBe(true);
         expect(comp.isLoading()).toBe(false);
-        expect(comp.frameSrcdoc()).toBeUndefined();
+        expect(comp.renderedHtml()).toBeUndefined();
     });
 
     it('reports a load failure when the latest result of the participation cannot be fetched', () => {
@@ -964,7 +947,7 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
         httpMock.expectNone(RENDER_URL_MATCHER);
         expect(comp.initialLoadFailed()).toBe(true);
         expect(comp.isLoading()).toBe(false);
-        expect(comp.frameSrcdoc()).toBeUndefined();
+        expect(comp.renderedHtml()).toBeUndefined();
     });
 
     it('keeps an already rendered statement when a later latest-result fetch fails', () => {
@@ -988,7 +971,7 @@ describe('ProgrammingExerciseInstructionSsrComponent with the real hydration ser
         httpMock.expectNone(RENDER_URL_MATCHER);
         expect(comp.refreshFailed()).toBe(true);
         expect(comp.initialLoadFailed()).toBe(false);
-        expect(comp.frameSrcdoc()).toBeDefined();
+        expect(comp.renderedHtml()).toBeDefined();
         expect(comp.tasks()[0].status).toBe('success');
     });
 });

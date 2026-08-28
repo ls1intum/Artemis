@@ -1,224 +1,204 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, ViewEncapsulation, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
-import { FRAME_PROTOCOL_VERSION } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame-script';
 import { resolveFrameLink } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame.util';
-import { FRAME_SANDBOX } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame-policy';
 
 /**
- * Above this the reported height is treated as hostile rather than long. The tallest statement in the corpus is
- * two orders of magnitude below it, so nothing legitimate reaches it. A document that did would keep this box
- * and scroll inside the frame, which is a worse reading experience but never a clipped statement.
+ * The class the client sets on a task it has declared interactive.
+ *
+ * `stripSensitiveAttributes` removes `data-feedback` (it carries the student's own feedback), and the server
+ * stylesheet keys the default cursor off `.artemis-task:not([data-feedback])`, so without this class every task
+ * would show the default cursor. `embedded.css` gives `.artemis-task.artemis-task--interactive` the pointer back.
  */
-const MAX_FRAME_HEIGHT_PX = 50_000;
+const INTERACTIVE_TASK_CLASS = 'artemis-task--interactive';
 
 /**
- * Holds the server-rendered problem statement inside a sandboxed iframe, and owns the conversation with it.
+ * Holds the server-rendered problem statement inside a shadow root, and owns everything that touches that DOM.
  *
- * The frame's `sandbox` carries `allow-scripts` and nothing else (see `problem-statement-frame-policy.ts` for
- * what that buys and why), so the document inside has an opaque origin. Together with the per-frame CSP that
- * `problem-statement-frame.util.ts` writes into it, a bypass of the server safelist and of DOMPurify is a
- * defaced pane rather than a session compromise.
+ * Shadow DOM is used because the render endpoint returns a self-contained stylesheet: the encapsulation scopes it to
+ * this component and shields the statement from Artemis' global styles in both directions. It is CSS isolation, not a
+ * security boundary: the shadow root is same-origin, so the markup here shares the page's credentials. What keeps a
+ * sanitizer bypass from being a session compromise is that `assembleShadowContent` never lets a script or an
+ * event handler survive into this DOM, not any origin boundary. That is the trade the project accepted when it
+ * dropped the sandboxed frame in favour of the double jsoup + DOMPurify sanitization.
  *
- * All chrome (spinner, banners, step wizard) stays in the parent component. The frame is a separate document
- * and none of the application's styles reach into it, which is why the server ships the statement's stylesheet
- * with it.
+ * Nothing but the server's own markup and its own stylesheets may live in here. Other components' styles, Tailwind
+ * utilities and the UI kit's CSS are injected into `document.head` and none of that crosses a shadow boundary, so an
+ * Angular UI component placed inside this shadow root would render completely unstyled. All chrome (spinner, banners,
+ * step wizard) therefore stays in the parent component, which uses default encapsulation.
  */
 @Component({
     selector: 'jhi-programming-exercise-instruction-ssr-content',
-    template: `<iframe
-        #frame
-        class="artemis-statement-frame"
-        sandbox="allow-scripts"
-        allow=""
-        referrerpolicy="no-referrer"
-        [attr.title]="'artemisApp.programmingExercise.problemStatement.frameTitle' | artemisTranslate"
-    ></iframe>`,
+    template: '<div #renderTarget class="artemis-problem-statement-host"></div>',
     styleUrls: ['./programming-exercise-instruction-ssr-content.component.scss'],
-    imports: [ArtemisTranslatePipe],
+    encapsulation: ViewEncapsulation.ShadowDom,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    host: {
+        '(click)': 'onActivate($event)',
+        '(keydown.enter)': 'onActivate($event)',
+        '(keydown.space)': 'onActivate($event)',
+    },
 })
-export class ProgrammingExerciseInstructionSsrContentComponent implements OnDestroy {
+export class ProgrammingExerciseInstructionSsrContentComponent {
     private translateService = inject(TranslateService);
 
-    /**
-     * The value the template's static `sandbox` attribute must carry.
-     *
-     * Angular refuses to let `sandbox` be a binding at all (NG0910), which is the right call: it means the frame's
-     * privileges cannot be changed at runtime. The constant is kept beside it so the browser tests assert the
-     * shipped value rather than a copy, and a unit test pins the two together.
-     */
-    readonly expectedSandbox = FRAME_SANDBOX;
-
-    /** The complete sandboxed document, as assembled by `assembleFrameDocument`. */
-    readonly srcdoc = input<string>();
-    /** Token of the current document; a message not carrying it belongs to a frame that has been replaced. */
-    readonly generation = input<string>('');
-    /** The tasks of the current document, in document order. */
+    /** The renderable statement (server stylesheets + wrapper + sanitized fragment) from `assembleShadowContent`. */
+    readonly html = input<string>();
+    /** The tasks of the current html, in document order; index i belongs to the i-th `.artemis-task` element. */
     readonly tasks = input<SsrTask[]>([]);
-    /** Whether a task can currently open a feedback dialog. Drives `role` / `tabindex` / `aria-label`. */
+    /** Whether a task can currently open a feedback dialog. Drives `role` / `tabindex` / `aria-label` / cursor. */
     readonly interactive = input(false);
-    /** The hrefs present in the current document; the frame may only ask the parent to open one of these. */
+    /** The hrefs present in the current statement; a click may only open one of these. */
     readonly linkTargets = input<readonly string[]>([]);
 
     /** Emits the document position of an activated task. */
     readonly taskActivated = output<number>();
 
-    private readonly frame = viewChild.required<ElementRef<HTMLIFrameElement>>('frame');
+    private readonly renderTarget = viewChild.required<ElementRef<HTMLElement>>('renderTarget');
 
-    /** Set once the current frame's script has announced itself; reset whenever the document is replaced. */
-    private readonly frameReady = signal(false);
-
-    private lastAppliedHeight = 0;
-
-    /**
-     * The task the reader last focused inside the frame, carried across a reload.
-     *
-     * Replacing `srcdoc` loads a new document, so focus is lost exactly when the statement is re-rendered, which
-     * for a keyboard reader is every time a result arrives. Deliberately not reset when the document changes:
-     * carrying it over is the whole point.
-     */
-    private lastFocusedTaskIndex?: number;
+    /** The html currently in the shadow root, so an unchanged render only refreshes the task attributes. */
+    private currentHtml?: string;
 
     constructor() {
-        window.addEventListener('message', this.onFrameMessage);
-
         effect(() => {
-            const srcdoc = this.srcdoc() ?? '';
-            untracked(() => {
-                // Assigned imperatively, never as a template binding. Angular treats `iframe.srcdoc` as an HTML
-                // security context and runs its sanitizer over a bound value, which strips the `<meta>` policy and
-                // the nonced script and leaves a document of a few characters. That silently disables the entire
-                // isolation design while every string-level assertion still passes, so the value has to reach the
-                // element untouched. It is safe by construction: this component assembled it, and it is destined
-                // for a frame that may do nothing with it.
-                this.frame().nativeElement.srcdoc = srcdoc;
-                // Loading a new document takes the old one's script with it, and everything it had been told.
-                this.frameReady.set(false);
-                this.lastAppliedHeight = 0;
-            });
-        });
-
-        effect(() => {
+            const html = this.html();
             const tasks = this.tasks();
             const interactive = this.interactive();
-            const ready = this.frameReady();
-            if (ready) {
-                untracked(() => this.sendInteractiveState(tasks, interactive));
+            untracked(() => this.applyToDom(html, tasks, interactive));
+        });
+    }
+
+    private applyToDom(html: string | undefined, tasks: SsrTask[], interactive: boolean): void {
+        const host = this.renderTarget().nativeElement;
+        if (html === this.currentHtml) {
+            // Only the interactivity gating changed, for example because a participation arrived while the server
+            // output stayed byte-identical. Refreshing just the task attributes keeps scroll position, focus and the
+            // already rendered formulas untouched.
+            this.applyTaskAccessibility(host, tasks, interactive);
+            return;
+        }
+        // Captured before the swap: replacing the markup detaches the focused node and resets the scroll position.
+        const focusedTaskIndex = this.focusedTaskIndex(host);
+        const scrollParent = this.scrollParent();
+        const scrollTop = scrollParent?.scrollTop;
+        this.currentHtml = html;
+        // The value is `assembleShadowContent` output: the server's own document-level stylesheets plus a DOMPurify
+        // fragment run through the safe producers in problem-statement-frame.util.ts (strip, image rewrite, KaTeX,
+        // highlight), each of which emits escaped markup. That is the same trust decision a `bypassSecurityTrustHtml`
+        // binding would encode, written imperatively rather than through `[innerHTML]` because a template binding is
+        // applied during this component's view refresh, which Angular runs before the view's effects; the focus and
+        // scroll capture above would then already be looking at the replaced DOM.
+        // nosemgrep -- the value is assembleShadowContent output; see problem-statement-frame.util.ts
+        host.innerHTML = html ?? '';
+        this.applyTaskAccessibility(host, tasks, interactive);
+        if (scrollTop !== undefined && scrollParent) {
+            scrollParent.scrollTop = scrollTop;
+        }
+        if (focusedTaskIndex !== undefined) {
+            this.taskElements(host)[focusedTaskIndex]?.focus();
+        }
+    }
+
+    /**
+     * Marks tasks as buttons only while a feedback dialog can actually be opened. `aria-label` and the interactive
+     * class are set exclusively on that branch: ARIA prohibits `aria-label` on `role=generic`, and a non-interactive
+     * task must keep the default cursor.
+     */
+    private applyTaskAccessibility(host: HTMLElement, tasks: SsrTask[], interactive: boolean): void {
+        this.taskElements(host).forEach((element, index) => {
+            const task = tasks[index];
+            if (interactive && task?.testIds.length) {
+                element.setAttribute('role', 'button');
+                element.setAttribute('tabindex', '0');
+                element.setAttribute('aria-label', this.taskAriaLabel(task));
+                element.classList.add(INTERACTIVE_TASK_CLASS);
+            } else {
+                element.removeAttribute('role');
+                element.removeAttribute('tabindex');
+                element.removeAttribute('aria-label');
+                element.classList.remove(INTERACTIVE_TASK_CLASS);
             }
         });
     }
 
-    ngOnDestroy(): void {
-        window.removeEventListener('message', this.onFrameMessage);
-    }
-
     /**
-     * Bound rather than a method so it can be removed again, and so `this` is the component when the browser
-     * calls it.
+     * Resolves a click or keyboard activation inside the shadow root to a task or a link.
      *
-     * The frame's origin is `"null"`, which authenticates nothing, so the sender is identified by comparing
-     * against this component's own frame instead, and the payload is checked field by field. A message that
-     * passes all of it can still only do what a reader could: open a feedback dialog for a task that exists,
-     * resize the box, or follow a link that is in the document.
+     * Events are retargeted at the shadow boundary, so `event.target` is this host element seen from the outside;
+     * `composedPath()` still contains the real node inside the shadow tree. A task takes precedence over a link
+     * nested inside it. Links work regardless of the interactivity gating, and every statement anchor has its
+     * default navigation cancelled before validation, so an anchor that is not a known link target simply does
+     * nothing rather than navigating the whole application away.
      */
-    private readonly onFrameMessage = (event: MessageEvent): void => {
-        const contentWindow = this.frame().nativeElement.contentWindow;
-        if (!contentWindow || event.source !== contentWindow) {
-            return;
-        }
-        const data = event.data;
-        if (!data || typeof data !== 'object' || data.v !== FRAME_PROTOCOL_VERSION || data.gen !== this.generation()) {
-            return;
-        }
-        switch (data.type) {
-            case 'ready':
-                this.frameReady.set(true);
-                this.sendInteractiveState(this.tasks(), this.interactive());
-                break;
-            case 'height':
-                this.applyHeight(data.px);
-                break;
-            case 'task':
-                this.activateTask(data.index);
-                break;
-            case 'link':
-                this.openLink(data.href);
-                break;
-            case 'focus':
-                if (Number.isInteger(data.index) && data.index >= 0) {
-                    this.lastFocusedTaskIndex = data.index;
-                }
-                break;
-        }
-    };
+    onActivate(event: Event): void {
+        const path = event.composedPath();
 
-    /**
-     * Emits an activation only for a task this component currently declares interactive.
-     *
-     * A bounds check alone would let a hostile frame ask for a task the reader is not being offered. The parent
-     * refuses such an activation as well, but the guarantee belongs here, where the message arrives, rather than
-     * resting on what a caller happens to check further down.
-     */
-    private activateTask(index: unknown): void {
-        if (!Number.isInteger(index)) {
-            return;
+        const taskElement = path.find((target): target is HTMLElement => target instanceof HTMLElement && target.classList.contains('artemis-task'));
+        if (taskElement && this.interactive()) {
+            // Resolve by document position, not by name: task names are not guaranteed to be unique.
+            const index = this.taskElements(this.renderTarget().nativeElement).indexOf(taskElement);
+            if (index !== -1 && this.tasks()[index]?.testIds.length) {
+                event.preventDefault();
+                this.taskActivated.emit(index);
+                return;
+            }
         }
-        const task = this.tasks()[index as number];
-        if (this.interactive() && task?.testIds.length) {
-            this.taskActivated.emit(index as number);
-        }
-    }
 
-    private applyHeight(px: unknown): void {
-        if (typeof px !== 'number' || !Number.isFinite(px) || px <= 0) {
+        // Keyboard activation of an anchor already arrives as a synthesized click, so links are handled on click only.
+        if (event.type !== 'click') {
             return;
         }
-        const height = Math.min(Math.ceil(px), MAX_FRAME_HEIGHT_PX);
-        // A ResizeObserver fires for every layout pass; re-assigning the same height would only invalidate
-        // layout again and, on a bounded host, fight the parent's scroll position for no gain.
-        if (height === this.lastAppliedHeight) {
+        // Matched by `localName`, not `tagName === 'A'` on an `HTMLElement`: an SVG `<a>` (PlantUML emits inline SVG)
+        // is an `SVGElement` and would otherwise slip through, keep its default, and navigate the whole application
+        // away. Its href may live in `xlink:href` rather than `href`.
+        const anchor = path.find(
+            (target): target is Element => target instanceof Element && target.localName === 'a' && (target.hasAttribute('href') || target.hasAttribute('xlink:href')),
+        );
+        if (!anchor) {
             return;
         }
-        this.lastAppliedHeight = height;
-        this.frame().nativeElement.style.height = `${height}px`;
-    }
-
-    private openLink(href: unknown): void {
-        if (typeof href !== 'string') {
-            return;
-        }
+        // Cancel native navigation for every statement anchor before validating it: an unknown or unexpected href
+        // must not fall through to navigating the application.
+        event.preventDefault();
+        const href = anchor.getAttribute('href') ?? anchor.getAttribute('xlink:href') ?? '';
         const target = resolveFrameLink(href, this.linkTargets(), window.location.origin);
         if (target) {
             window.open(target, '_blank', 'noopener,noreferrer');
         }
     }
 
-    /**
-     * Tells the frame which tasks are interactive, with their labels already translated: the frame has no
-     * translation service and must not have one.
-     */
-    private sendInteractiveState(tasks: SsrTask[], interactive: boolean): void {
-        const contentWindow = this.frame().nativeElement.contentWindow;
-        if (!contentWindow) {
-            return;
-        }
-        const payload = interactive ? tasks.filter((task) => task.testIds.length).map((task) => ({ index: task.index, label: this.taskAriaLabel(task) })) : [];
-        // Only offered while the index still exists: a shorter statement would otherwise focus nothing and, worse,
-        // silently move the reader somewhere they never were.
-        const focusIndex = this.lastFocusedTaskIndex !== undefined && this.lastFocusedTaskIndex < tasks.length ? this.lastFocusedTaskIndex : undefined;
-        // The frame has an opaque origin, so there is no origin to address it by: a targetOrigin other than `*`
-        // would never match and the message would simply be dropped. The frame validates that the message came
-        // from its parent instead. Nothing sensitive travels this way either, only task indices and labels that
-        // are already rendered in the statement.
-        // nosemgrep -- wildcard targetOrigin is forced by the sandboxed frame's opaque origin; see above
-        contentWindow.postMessage({ type: 'interactive', tasks: payload, focusIndex }, '*');
-    }
-
     private taskAriaLabel(task: SsrTask): string {
         // Own key set: artemisApp.editor.testStatusLabels only defines noResult, noTests, testPassing and
         // totalTestsPassing, so there is no existing key for "failed" or "not executed".
         return `${task.taskName}: ${this.translateService.instant('artemisApp.programmingExercise.problemStatement.taskStatus.' + task.status)}`;
+    }
+
+    private taskElements(host: HTMLElement): HTMLElement[] {
+        return [...host.querySelectorAll<HTMLElement>('.artemis-task')];
+    }
+
+    /** Index of the currently focused task inside the shadow root, so focus can be restored after a re-render. */
+    private focusedTaskIndex(host: HTMLElement): number | undefined {
+        const active = (host.getRootNode() as ShadowRoot | undefined)?.activeElement;
+        // The nearest containing task, not the exact element: focus may sit on a link or another focusable node
+        // inside a task, and that reader is still "on" the task and must land back on it after the re-render.
+        const task = active?.closest('.artemis-task') as HTMLElement | null;
+        if (!task) {
+            return undefined;
+        }
+        const index = this.taskElements(host).indexOf(task);
+        return index === -1 ? undefined : index;
+    }
+
+    /** The nearest scrollable ancestor outside the shadow root, whose position must survive a full re-render. */
+    private scrollParent(): HTMLElement | undefined {
+        let node = (this.renderTarget().nativeElement.getRootNode() as ShadowRoot | undefined)?.host?.parentElement ?? undefined;
+        while (node) {
+            if (node.scrollHeight > node.clientHeight && ['auto', 'scroll'].includes(getComputedStyle(node).overflowY)) {
+                return node;
+            }
+            node = node.parentElement ?? undefined;
+        }
+        return undefined;
     }
 }

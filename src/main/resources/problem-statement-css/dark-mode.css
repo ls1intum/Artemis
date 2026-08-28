@@ -28,14 +28,16 @@
  * fragments in their own page are unaffected (this rule only matches when the
  * server emits <body class="... artemis-ssr-body--dark">).
  *
- * The fallback is what actually paints inside the frame: custom properties do not cross a document boundary, so no
- * application variable ever arrives here and var() always resolves to the literal below. It therefore has to match
- * whatever the frame is placed on. That is a panel surface in both hosts - the split panel on the exercise details
- * page and the card body in the code editor - and not the page backdrop, so the value is $module-bg / $card-bg
- * (both $neutral-dark in themes/_dark-variables.scss, the app-wide dark surface token) rather than $body-bg. The
- * var() is named after the token it stands for and is kept for consumers that embed the fragment in a document of
- * their own, where it can be set. */
-body.artemis-ssr-body--dark {
+ * A class selector rather than `body.artemis-ssr-body--dark`: the Angular client renders the statement inside a
+ * shadow root that has no `body`, and carries the class on a wrapper element instead; the standalone consumer still
+ * matches it on its document `<body>`.
+ *
+ * Unlike the sandboxed iframe this replaced, a shadow root is part of the same document, so custom properties DO
+ * inherit across the boundary: where the application defines --module-bg / --body-color, the statement now follows
+ * the app's own dark surface token, which is the panel surface the statement sits on in both hosts (the split panel
+ * on the exercise details page, the card body in the code editor). The literal fallback below is used only where the
+ * token is not defined, and matches $module-bg / $card-bg ($neutral-dark in themes/_dark-variables.scss). */
+.artemis-ssr-body--dark {
     background: var(--module-bg, #16191d);
     color: var(--body-color, #e0e0e0);
 }

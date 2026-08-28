@@ -14,8 +14,7 @@
 }
 <div class="ssr-scroll-area">
     <jhi-programming-exercise-instruction-ssr-content
-        [srcdoc]="frameSrcdoc()"
-        [generation]="frameGeneration()"
+        [html]="renderedHtml()"
         [tasks]="tasks()"
         [interactive]="canOpenFeedback()"
         [linkTargets]="linkTargets()"

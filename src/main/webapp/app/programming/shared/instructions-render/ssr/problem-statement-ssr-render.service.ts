@@ -72,10 +72,10 @@ export class ProblemStatementSsrRenderService {
             darkMode: request.darkMode,
             includeJs: false,
             includeCss: true,
-            // The statement is displayed inside a sandboxed frame with an opaque origin, where a request for an
-            // Artemis-hosted image carries no credentials and `/api/core/files/**` is authenticated. Inlining turns
-            // those local files into `data:` URIs, which is the only way they render at all in there. The server
-            // bounds this by count and by total size, and it leaves genuinely remote images untouched.
+            // Local Artemis-hosted images are inlined as `data:` URIs so the statement carries them itself: the
+            // client replaces any `/api/core/files/**` URL the server could not inline (see rewriteSameOriginImages)
+            // rather than issuing a second authenticated request for it. The server bounds this by count and by
+            // total size, and it leaves genuinely remote images untouched.
             inlineImages: true,
         };
         return this.http.post<RenderedProblemStatement>(RENDER_URL, body).pipe(

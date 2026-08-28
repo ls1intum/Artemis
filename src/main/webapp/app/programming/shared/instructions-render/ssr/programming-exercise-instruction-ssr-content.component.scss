@@ -3,27 +3,9 @@
 }
 
 /*
- * The statement lives in a sandboxed iframe, which is a separate document: none of this application's styles
- * reach into it. Everything the statement itself needs, the highlight.js palette included, ships with the
- * document in the server's own problem-statement stylesheet. Only the box is styled here.
+ * The statement lives in this component's shadow root, and the render endpoint ships its own self-contained
+ * stylesheet (embedded.css / dark-mode.css) into that shadow root along with the markup, the highlight.js palette
+ * included. Nothing else is styled here: the global themes and the UI kit's CSS do not cross the shadow boundary,
+ * so all statement styling has to come from the server's stylesheet, and duplicating any of it here would create a
+ * second source of truth that could drift.
  */
-.artemis-statement-frame {
-    display: block;
-    width: 100%;
-    border: 0;
-    /*
-     * Starts collapsed, not at the browser's default 150px: the frame reports its content height as soon as its
-     * script runs, and a default-sized box would make the pane jump on every render before that happens.
-     */
-    height: 0;
-    /*
-     * The frame paints its own background through `body.artemis-ssr-body`, so the element behind it must not
-     * paint a second, differently-themed one.
-     */
-    background: transparent;
-    /*
-     * The frame is sized to its content on every host, so it never scrolls internally. The exception is a
-     * document past the height clamp, which is a hostile height rather than a long statement.
-     */
-    overflow: hidden;
-}

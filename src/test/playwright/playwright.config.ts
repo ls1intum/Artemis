@@ -102,7 +102,7 @@ export default defineConfig({
         {
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
-            grepInvert: /@multi-node|@cross-engine/,
+            grepInvert: /@multi-node/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 60) * 1000,
             use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
@@ -111,7 +111,7 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
-            grepInvert: /@multi-node|@cross-engine/,
+            grepInvert: /@multi-node/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',
@@ -124,41 +124,15 @@ export default defineConfig({
         {
             name: 'sequential-tests',
             grep: /@sequential/,
-            grepInvert: /@multi-node|@cross-engine/,
+            grepInvert: /@multi-node/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
-        // Tests with @cross-engine tag, run once per browser engine.
-        //
-        // Deliberately a tiny, separate project rather than a second browser for the whole suite: running ~300 E2E
-        // tests three times over would be unaffordable, and almost none of them depend on the engine. These do. The
-        // sandboxed problem-statement frame's guarantees are not uniform across engines (WebKit sends the
-        // SameSite=Lax JWT cookie from a sandboxed opaque-origin frame where Chromium and Firefox send none), so a
-        // Chromium-only assertion about that frame proves nothing about Safari.
-        //
-        // Excluded from the other projects by the grepInvert entries above, so they run here and nowhere else.
-        ...(['chromium', 'firefox', 'webkit'] as const).map((browserName) => ({
-            name: `cross-engine-${browserName}`,
-            grep: /@cross-engine/,
-            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 60) * 1000,
-            use: {
-                browserName,
-                viewport: { width: 1920, height: 1080 },
-                // The shared `launchOptions.args` above are Chromium command-line flags, and this is the only
-                // place where a non-Chromium browser would inherit them. The Linux WebKit build refuses to start
-                // on an unrecognised one ("Cannot parse arguments: Unknown option --disable-features=..."), which
-                // fails every WebKit test at launch in the container; the macOS build ignores the flag, so this is
-                // invisible locally. Nothing is lost by dropping them: the certificate handling they provide for
-                // Chromium is covered for the other engines by the context-level `ignoreHTTPSErrors` above.
-                ...(browserName === 'chromium' ? {} : { launchOptions: { args: [] } }),
-            },
-        })),
         // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and
         // are skipped by the single-node fast pipeline. The multi-node runner opts in explicitly.
         {
             name: 'multi-node-tests',
             grep: /@multi-node/,
-            grepInvert: /@cross-engine/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',

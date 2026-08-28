@@ -1,12 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { FRAME_PROTOCOL_VERSION, INTERACTIVE_TASK_CLASS } from 'app/programming/shared/instructions-render/ssr/problem-statement-frame-script';
 import { ProgrammingExerciseInstructionSsrContentComponent } from 'app/programming/shared/instructions-render/ssr/programming-exercise-instruction-ssr-content.component';
 import { SsrTask } from 'app/programming/shared/instructions-render/ssr/problem-statement-ssr.model';
-import { runFrameScript } from 'test/helpers/problem-statement-frame.helper';
 
-const GENERATION = 'generation-1';
+const INTERACTIVE_TASK_CLASS = 'artemis-task--interactive';
 
 const task = (index: number, testIds: number[] = [1]): SsrTask => ({
     index,
@@ -17,418 +15,272 @@ const task = (index: number, testIds: number[] = [1]): SsrTask => ({
     notExecutedCount: 0,
 });
 
+/** Wraps statement markup the way `assembleShadowContent` would, minus the stylesheets a test does not need. */
+const content = (body: string): string => `<div class="artemis-ssr-body"><div class="artemis-problem-statement">${body}</div></div>`;
+const taskSpan = (name: string): string => `<span class="artemis-task" data-task-name="${name}">${name}</span>`;
+
 /**
- * jsdom implements neither iframe sandboxing nor layout, so what the frame *is* cannot be asserted here; that is
- * what the Playwright specs are for, and they run in three engines because the guarantees differ per engine.
- * What can be asserted here is every decision on either side of the boundary: what the component sends, what it
- * accepts back, and what the real frame script does with it.
+ * jsdom performs no layout and its focus handling inside a shadow root is incomplete, so scroll and focus retention
+ * across a re-render are asserted in the Playwright specs instead. What can be asserted here is everything the
+ * component decides: what it injects, which task it marks interactive, and what a click or key resolves to.
  */
 describe('ProgrammingExerciseInstructionSsrContentComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInstructionSsrContentComponent>;
     let comp: ProgrammingExerciseInstructionSsrContentComponent;
 
-    const frame = (): HTMLIFrameElement => fixture.nativeElement.querySelector('iframe');
-
-    /** Everything the component has told its frame. */
-    let posted: Record<string, unknown>[];
-
-    /** Delivers a message as if the component's own frame had sent it. */
-    const sendFromFrame = (data: Record<string, unknown>, overrides: { source?: unknown } = {}): void => {
-        window.dispatchEvent(
-            new MessageEvent('message', {
-                data: { v: FRAME_PROTOCOL_VERSION, gen: GENERATION, ...data },
-                source: (overrides.source ?? frame().contentWindow) as MessageEventSource,
-            }),
-        );
-    };
-
-    /** Announces the frame as loaded, which is what makes the component start talking to it. */
-    const announceReady = (): void => sendFromFrame({ type: 'ready' });
+    const shadow = (): ShadowRoot => fixture.nativeElement.shadowRoot as ShadowRoot;
+    const taskElements = (): HTMLElement[] => [...shadow().querySelectorAll<HTMLElement>('.artemis-task')];
 
     beforeEach(() => {
         TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] });
         fixture = TestBed.createComponent(ProgrammingExerciseInstructionSsrContentComponent);
         comp = fixture.componentInstance;
-        fixture.componentRef.setInput('srcdoc', '<!DOCTYPE html><html><body><span class="artemis-task">A</span></body></html>');
-        fixture.componentRef.setInput('generation', GENERATION);
+        fixture.componentRef.setInput('html', content(taskSpan('A')));
         fixture.detectChanges();
-        posted = [];
-        vi.spyOn(frame().contentWindow!, 'postMessage').mockImplementation((message) => {
-            posted.push(message as Record<string, unknown>);
-        });
     });
 
     afterEach(() => vi.restoreAllMocks());
 
-    describe('the sandbox, which is the whole point of the frame', () => {
-        it('permits scripts and nothing else', () => {
-            // Any addition here is a security decision. `allow-same-origin` in particular would hand the statement
-            // back the cookies, storage and parent DOM this component exists to keep it away from.
-            expect(frame().getAttribute('sandbox')).toBe('allow-scripts');
+    describe('injection', () => {
+        it('renders the statement markup into its shadow root', () => {
+            expect(shadow().querySelector('.artemis-problem-statement')).not.toBeNull();
+            expect(taskElements()).toHaveLength(1);
         });
 
-        it('carries the same sandbox the browser tests assert, which they cannot read out of the template', () => {
-            // Angular forbids binding `sandbox`, so the template holds a literal and the browser tests import the
-            // constant. This is what keeps the two from drifting apart unnoticed.
-            expect(frame().getAttribute('sandbox')).toBe(comp.expectedSandbox);
-        });
-
-        it('grants no browser features and sends no referrer', () => {
-            expect(frame().getAttribute('allow')).toBe('');
-            expect(frame().getAttribute('referrerpolicy')).toBe('no-referrer');
-        });
-
-        it('hands the document to the element byte for byte', () => {
-            // Bound as `[attr.srcdoc]`, Angular's sanitizer treats the value as an HTML security context and reduces
-            // a full document to a few characters, dropping the `<meta>` policy and the nonced script. Every
-            // string-level assertion still passes while the isolation is gone, so only an assertion against the
-            // element itself catches it.
-            const document_ =
-                '<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src \'none\'"></head><body><p>x</p><script nonce="abc">window.x=1;</script></body></html>';
-            fixture.componentRef.setInput('srcdoc', document_);
+        it('replaces the markup when a new render arrives', () => {
+            fixture.componentRef.setInput('html', content(taskSpan('X') + taskSpan('Y')));
             fixture.detectChanges();
 
-            expect(frame().srcdoc).toBe(document_);
-        });
-
-        it('is named, so it is reachable for a screen reader', () => {
-            expect(frame().getAttribute('title')).toBeTruthy();
+            expect(taskElements()).toHaveLength(2);
         });
     });
 
-    describe('what it accepts from the frame', () => {
-        it('ignores a message from a window that is not its frame', () => {
-            fixture.componentRef.setInput('tasks', [task(0)]);
-            fixture.componentRef.setInput('interactive', true);
-            const activated = vi.fn();
-            comp.taskActivated.subscribe(activated);
-
-            sendFromFrame({ type: 'task', index: 0 }, { source: window });
-
-            expect(activated).not.toHaveBeenCalled();
-        });
-
-        it('ignores a message carrying a superseded generation', () => {
-            fixture.componentRef.setInput('tasks', [task(0)]);
-            const activated = vi.fn();
-            comp.taskActivated.subscribe(activated);
-
-            window.dispatchEvent(
-                new MessageEvent('message', { data: { v: FRAME_PROTOCOL_VERSION, gen: 'an-older-frame', type: 'task', index: 0 }, source: frame().contentWindow }),
-            );
-
-            expect(activated).not.toHaveBeenCalled();
-        });
-
-        it('ignores a message from a protocol it does not speak', () => {
-            fixture.componentRef.setInput('tasks', [task(0)]);
-            const activated = vi.fn();
-            comp.taskActivated.subscribe(activated);
-
-            window.dispatchEvent(new MessageEvent('message', { data: { v: 99, gen: GENERATION, type: 'task', index: 0 }, source: frame().contentWindow }));
-
-            expect(activated).not.toHaveBeenCalled();
-        });
-
-        it('refuses an activation for a task it does not currently offer', () => {
-            // A bounds check alone would let a hostile frame ask for a task the reader is not being offered.
-            fixture.componentRef.setInput('tasks', [task(0), task(1, [])]);
-            fixture.componentRef.setInput('interactive', true);
-            const activated = vi.fn();
-            comp.taskActivated.subscribe(activated);
-
-            sendFromFrame({ type: 'task', index: 1 });
-
-            expect(activated).not.toHaveBeenCalled();
-        });
-
-        it('refuses an activation while no feedback dialog can be opened at all', () => {
-            fixture.componentRef.setInput('tasks', [task(0)]);
-            fixture.componentRef.setInput('interactive', false);
-            const activated = vi.fn();
-            comp.taskActivated.subscribe(activated);
-
-            sendFromFrame({ type: 'task', index: 0 });
-
-            expect(activated).not.toHaveBeenCalled();
-        });
-
-        it('emits the position of an activated task', () => {
-            fixture.componentRef.setInput('interactive', true);
-            fixture.componentRef.setInput('tasks', [task(0), task(1)]);
-            const activated = vi.fn();
-            comp.taskActivated.subscribe(activated);
-
-            sendFromFrame({ type: 'task', index: 1 });
-
-            expect(activated).toHaveBeenCalledWith(1);
-        });
-
-        it.each([
-            { case: 'an index past the end', index: 5 },
-            { case: 'a negative index', index: -1 },
-            { case: 'a fractional index', index: 0.5 },
-            { case: 'something that is not a number', index: '0' },
-        ])('drops a task activation with $case', ({ index }) => {
-            fixture.componentRef.setInput('interactive', true);
-            fixture.componentRef.setInput('tasks', [task(0)]);
-            const activated = vi.fn();
-            comp.taskActivated.subscribe(activated);
-
-            sendFromFrame({ type: 'task', index });
-
-            expect(activated).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('height', () => {
-        it('sizes the frame to the height it reports', () => {
-            sendFromFrame({ type: 'height', px: 842 });
-
-            expect(frame().style.height).toBe('842px');
-        });
-
-        it('clamps a height that is hostile rather than long', () => {
-            sendFromFrame({ type: 'height', px: 10_000_000 });
-
-            expect(frame().style.height).toBe('50000px');
-        });
-
-        it.each([
-            { case: 'not a number', px: 'tall' },
-            { case: 'infinite', px: Number.POSITIVE_INFINITY },
-            { case: 'NaN', px: Number.NaN },
-            { case: 'negative', px: -100 },
-            { case: 'zero', px: 0 },
-        ])('ignores a height that is $case', ({ px }) => {
-            sendFromFrame({ type: 'height', px });
-
-            expect(frame().style.height).toBe('');
-        });
-
-        it('starts collapsed rather than at the browser default, so the pane does not jump', () => {
-            expect(frame().style.height).toBe('');
-        });
-    });
-
-    describe('links', () => {
-        it('opens a link that is in the statement, without handing over the opener', () => {
-            const open = vi.spyOn(window, 'open').mockReturnValue(null);
-            fixture.componentRef.setInput('linkTargets', ['https://example.org/docs']);
-
-            sendFromFrame({ type: 'link', href: 'https://example.org/docs' });
-
-            expect(open).toHaveBeenCalledWith('https://example.org/docs', '_blank', 'noopener,noreferrer');
-        });
-
-        it('refuses a link the statement does not contain', () => {
-            const open = vi.spyOn(window, 'open').mockReturnValue(null);
-            fixture.componentRef.setInput('linkTargets', ['https://example.org/docs']);
-
-            sendFromFrame({ type: 'link', href: 'https://evil.example/steal' });
-
-            expect(open).not.toHaveBeenCalled();
-        });
-
-        it('refuses a javascript url even when the statement contains it', () => {
-            const open = vi.spyOn(window, 'open').mockReturnValue(null);
-            fixture.componentRef.setInput('linkTargets', ['javascript:alert(1)']);
-
-            sendFromFrame({ type: 'link', href: 'javascript:alert(1)' });
-
-            expect(open).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('what it tells the frame', () => {
-        it('says nothing until the frame reports that it is loaded', () => {
+    describe('task accessibility', () => {
+        it('marks an interactive task as a button with a translated label and the interactive class', () => {
             fixture.componentRef.setInput('tasks', [task(0)]);
             fixture.componentRef.setInput('interactive', true);
             fixture.detectChanges();
 
-            expect(posted).toHaveLength(0);
+            const element = taskElements()[0];
+            expect(element.getAttribute('role')).toBe('button');
+            expect(element.getAttribute('tabindex')).toBe('0');
+            expect(element.getAttribute('aria-label')).toContain('Task 0');
+            expect(element.classList.contains(INTERACTIVE_TASK_CLASS)).toBe(true);
         });
 
-        it('names the interactive tasks with their labels already translated', () => {
-            fixture.componentRef.setInput('tasks', [task(0)]);
-            fixture.componentRef.setInput('interactive', true);
-            fixture.detectChanges();
-
-            announceReady();
-
-            expect(posted.at(-1)).toMatchObject({ type: 'interactive', tasks: [{ index: 0, label: expect.stringContaining('Task 0') }] });
-        });
-
-        it('names no task while a feedback dialog cannot be opened', () => {
+        it('leaves a task plain while no feedback dialog can be opened', () => {
             fixture.componentRef.setInput('tasks', [task(0)]);
             fixture.componentRef.setInput('interactive', false);
             fixture.detectChanges();
 
-            announceReady();
-
-            expect(posted.at(-1)).toMatchObject({ tasks: [] });
+            const element = taskElements()[0];
+            expect(element.getAttribute('role')).toBeNull();
+            expect(element.hasAttribute('aria-label')).toBe(false);
+            expect(element.classList.contains(INTERACTIVE_TASK_CLASS)).toBe(false);
         });
 
-        it('leaves out a task that has no test ids, because there is no feedback to show', () => {
+        it('does not mark a task that has no test ids, because there is no feedback to show', () => {
+            fixture.componentRef.setInput('html', content(taskSpan('A') + taskSpan('B')));
             fixture.componentRef.setInput('tasks', [task(0, []), task(1, [2])]);
             fixture.componentRef.setInput('interactive', true);
             fixture.detectChanges();
 
-            announceReady();
-
-            expect((posted.at(-1)?.tasks as { index: number }[]).map((entry) => entry.index)).toEqual([1]);
+            expect(taskElements()[0].getAttribute('role')).toBeNull();
+            expect(taskElements()[1].getAttribute('role')).toBe('button');
         });
 
-        it('updates the gating without reloading the frame when only the interactivity changes', () => {
+        it('refreshes the gating without re-injecting when only the interactivity changes', () => {
             fixture.componentRef.setInput('tasks', [task(0)]);
             fixture.componentRef.setInput('interactive', false);
             fixture.detectChanges();
-            announceReady();
-            const srcdocBefore = frame().srcdoc;
+            const elementBefore = taskElements()[0];
 
             fixture.componentRef.setInput('interactive', true);
             fixture.detectChanges();
 
-            expect(frame().srcdoc).toBe(srcdocBefore);
-            expect((posted.at(-1)?.tasks as unknown[]).length).toBe(1);
+            // The same element node, so the markup was not replaced, only its attributes updated.
+            expect(taskElements()[0]).toBe(elementBefore);
+            expect(elementBefore.getAttribute('role')).toBe('button');
         });
+    });
 
-        it('hands the focused task back after the document is replaced', () => {
+    describe('task activation', () => {
+        const clickTask = (element: Element): void => {
+            element.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }));
+        };
+
+        it('emits the position of a clicked interactive task', () => {
+            fixture.componentRef.setInput('html', content(taskSpan('A') + taskSpan('B')));
             fixture.componentRef.setInput('tasks', [task(0), task(1)]);
             fixture.componentRef.setInput('interactive', true);
             fixture.detectChanges();
-            announceReady();
-            sendFromFrame({ type: 'focus', index: 1 });
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
 
-            // A result arrives, the statement is re-rendered, and the new document announces itself.
-            announceReady();
+            clickTask(taskElements()[1]);
 
-            expect(posted.at(-1)).toMatchObject({ focusIndex: 1 });
+            expect(activated).toHaveBeenCalledWith(1);
         });
 
-        it('does not offer a focus index the new statement no longer has', () => {
-            fixture.componentRef.setInput('tasks', [task(0), task(1)]);
-            fixture.componentRef.setInput('interactive', true);
-            fixture.detectChanges();
-            announceReady();
-            sendFromFrame({ type: 'focus', index: 1 });
-
+        it('activates on a click inside a task, not only on the task element itself', () => {
+            fixture.componentRef.setInput('html', content('<span class="artemis-task" data-task-name="A"><em>nested</em></span>'));
             fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', true);
             fixture.detectChanges();
-            announceReady();
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
 
-            expect(posted.at(-1)?.focusIndex).toBeUndefined();
+            clickTask(shadow().querySelector('em')!);
+
+            expect(activated).toHaveBeenCalledWith(0);
+        });
+
+        it('emits nothing while no feedback dialog can be opened', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', false);
+            fixture.detectChanges();
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            clickTask(taskElements()[0]);
+
+            expect(activated).not.toHaveBeenCalled();
+        });
+
+        it('emits nothing for a task that carries no test ids', () => {
+            fixture.componentRef.setInput('tasks', [task(0, [])]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            clickTask(taskElements()[0]);
+
+            expect(activated).not.toHaveBeenCalled();
+        });
+
+        it('activates on an Enter key on a focused task', () => {
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
+
+            taskElements()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true, cancelable: true }));
+
+            expect(activated).toHaveBeenCalledWith(0);
         });
     });
-});
 
-/**
- * The other half of the contract, executed as the string that actually ships rather than a stand-in for it.
- */
-describe('the sandboxed frame script', () => {
-    const statement = (body: string) => `<div class="artemis-problem-statement">${body}</div>`;
-    const taskSpan = (name: string) => `<span class="artemis-task" data-task-name="${name}">${name}</span>`;
+    describe('links', () => {
+        const clickAnchor = (): Event => {
+            const event = new MouseEvent('click', { bubbles: true, composed: true, cancelable: true });
+            shadow().querySelector('a')!.dispatchEvent(event);
+            return event;
+        };
 
-    it('announces itself so the parent knows when it may start talking', () => {
-        const harness = runFrameScript(statement('<p>x</p>'));
+        it('opens a link that is in the statement, without handing over the opener', () => {
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            fixture.componentRef.setInput('html', content('<a href="https://example.org/docs">docs</a>'));
+            fixture.componentRef.setInput('linkTargets', ['https://example.org/docs']);
+            fixture.detectChanges();
 
-        expect(harness.posted.map((message) => message.type)).toContain('ready');
+            const event = clickAnchor();
+
+            expect(event.defaultPrevented).toBe(true);
+            expect(open).toHaveBeenCalledWith('https://example.org/docs', '_blank', 'noopener,noreferrer');
+        });
+
+        it('cancels navigation but opens nothing for a link the statement does not list', () => {
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            fixture.componentRef.setInput('html', content('<a href="https://evil.example/steal">x</a>'));
+            fixture.componentRef.setInput('linkTargets', ['https://example.org/docs']);
+            fixture.detectChanges();
+
+            const event = clickAnchor();
+
+            expect(event.defaultPrevented).toBe(true);
+            expect(open).not.toHaveBeenCalled();
+        });
+
+        it('opens a link even while the statement is not interactive', () => {
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            fixture.componentRef.setInput('html', content('<a href="https://example.org/docs">docs</a>'));
+            fixture.componentRef.setInput('linkTargets', ['https://example.org/docs']);
+            fixture.componentRef.setInput('interactive', false);
+            fixture.detectChanges();
+
+            clickAnchor();
+
+            expect(open).toHaveBeenCalled();
+        });
+
+        it('refuses a javascript url even when the statement contains it', () => {
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            fixture.componentRef.setInput('html', content('<a href="javascript:alert(1)">x</a>'));
+            fixture.componentRef.setInput('linkTargets', ['javascript:alert(1)']);
+            fixture.detectChanges();
+
+            clickAnchor();
+
+            expect(open).not.toHaveBeenCalled();
+        });
+
+        it('intercepts an SVG anchor, which is an SVGElement rather than an HTMLAnchorElement', () => {
+            // PlantUML emits inline SVG, and an SVG `<a>` would otherwise keep its default and navigate the whole app.
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            fixture.componentRef.setInput('html', content('<svg><a href="https://example.org/docs"><text>x</text></a></svg>'));
+            fixture.componentRef.setInput('linkTargets', ['https://example.org/docs']);
+            fixture.detectChanges();
+
+            const event = new MouseEvent('click', { bubbles: true, composed: true, cancelable: true });
+            shadow().querySelector('text')!.dispatchEvent(event);
+
+            expect(event.defaultPrevented).toBe(true);
+            expect(open).toHaveBeenCalledWith('https://example.org/docs', '_blank', 'noopener,noreferrer');
+        });
     });
 
-    it('stamps every message with the generation it was built for', () => {
-        const harness = runFrameScript(statement('<p>x</p>'));
+    describe('task precedence over a nested link', () => {
+        it('activates the task, not the link, when the reader clicks a link inside an interactive task', () => {
+            fixture.componentRef.setInput('html', content('<span class="artemis-task" data-task-name="A"><a href="https://example.org">A</a></span>'));
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.componentRef.setInput('linkTargets', ['https://example.org']);
+            fixture.detectChanges();
+            const open = vi.spyOn(window, 'open').mockReturnValue(null);
+            const activated = vi.fn();
+            comp.taskActivated.subscribe(activated);
 
-        expect(harness.posted.every((message) => message.gen === 'test-generation')).toBe(true);
+            shadow()
+                .querySelector('a')!
+                .dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true }));
+
+            expect(activated).toHaveBeenCalledWith(0);
+            expect(open).not.toHaveBeenCalled();
+        });
     });
 
-    it('marks a named task as a button and leaves the others alone', () => {
-        const harness = runFrameScript(statement(taskSpan('A') + taskSpan('B')));
+    describe('focus retention across a re-render', () => {
+        it('restores focus to the task when focus sat on a link inside it', () => {
+            const withLink = '<span class="artemis-task" data-task-name="A"><a href="https://example.org">A</a></span>';
+            fixture.componentRef.setInput('html', content(withLink));
+            fixture.componentRef.setInput('tasks', [task(0)]);
+            fixture.componentRef.setInput('interactive', true);
+            fixture.detectChanges();
 
-        harness.sendFromParent({ type: 'interactive', tasks: [{ index: 0, label: 'A: all tests passing' }] });
+            // Focus the link inside the task; the reader is "on" the task even though the anchor holds focus.
+            const anchor = shadow().querySelector('a') as HTMLElement;
+            anchor.focus();
+            // Guard: if jsdom did not move focus, the assertion below would be vacuous.
+            expect(shadow().activeElement).toBe(anchor);
 
-        const [first, second] = [...harness.document.querySelectorAll('.artemis-task')];
-        expect(first.getAttribute('role')).toBe('button');
-        expect(first.getAttribute('tabindex')).toBe('0');
-        expect(first.getAttribute('aria-label')).toBe('A: all tests passing');
-        expect(first.classList.contains(INTERACTIVE_TASK_CLASS)).toBe(true);
-        expect(second.getAttribute('role')).toBeNull();
-        expect(second.classList.contains(INTERACTIVE_TASK_CLASS)).toBe(false);
-    });
+            // A result arrives and the statement is re-rendered with byte-different markup.
+            fixture.componentRef.setInput('html', content(withLink + '<p>updated</p>'));
+            fixture.detectChanges();
 
-    it('takes the button role away again when the parent stops naming the task', () => {
-        const harness = runFrameScript(statement(taskSpan('A')));
-        harness.sendFromParent({ type: 'interactive', tasks: [{ index: 0, label: 'A' }] });
-
-        harness.sendFromParent({ type: 'interactive', tasks: [] });
-
-        const element = harness.document.querySelector('.artemis-task')!;
-        expect(element.getAttribute('role')).toBeNull();
-        expect(element.getAttribute('aria-label')).toBeNull();
-        expect(element.classList.contains(INTERACTIVE_TASK_CLASS)).toBe(false);
-    });
-
-    it('ignores a message from anyone other than its parent', () => {
-        const harness = runFrameScript(statement(taskSpan('A')));
-
-        harness.sendFromStranger({ type: 'interactive', tasks: [{ index: 0, label: 'A' }] });
-
-        expect(harness.document.querySelector('.artemis-task')?.getAttribute('role')).toBeNull();
-    });
-
-    it('reports the position of a clicked task, not its name, because names are not unique', () => {
-        const harness = runFrameScript(statement(taskSpan('Same') + taskSpan('Same')));
-
-        harness.document.querySelectorAll('.artemis-task')[1].dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
-
-        expect(harness.posted.at(-1)).toMatchObject({ type: 'task', index: 1 });
-    });
-
-    it('reports a click on something inside a task, not only on the task itself', () => {
-        const harness = runFrameScript(statement('<span class="artemis-task"><em>nested</em></span>'));
-
-        harness.document.querySelector('em')!.dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
-
-        expect(harness.posted.at(-1)).toMatchObject({ type: 'task', index: 0 });
-    });
-
-    it('reports nothing for a click outside any task', () => {
-        const harness = runFrameScript(statement('<p id="plain">text</p>'));
-        const before = harness.posted.length;
-
-        harness.document.querySelector('#plain')!.dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
-
-        expect(harness.posted).toHaveLength(before);
-    });
-
-    it('hands a clicked link to the parent instead of navigating itself out of existence', () => {
-        const harness = runFrameScript(statement('<a href="https://example.org/docs">docs</a>'));
-
-        harness.document.querySelector('a')!.dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
-
-        expect(harness.posted.at(-1)).toMatchObject({ type: 'link', href: 'https://example.org/docs' });
-    });
-
-    it('treats a link inside a task as the task, since that is what the reader is pointing at', () => {
-        const harness = runFrameScript(statement('<span class="artemis-task"><a href="https://example.org">A</a></span>'));
-
-        harness.document.querySelector('a')!.dispatchEvent(new harness.view.MouseEvent('click', { bubbles: true }));
-
-        expect(harness.posted.at(-1)).toMatchObject({ type: 'task', index: 0 });
-    });
-
-    it('reports the focused task so the parent can restore it after a re-render', () => {
-        const harness = runFrameScript(statement(taskSpan('A') + taskSpan('B')));
-
-        harness.document.querySelectorAll('.artemis-task')[1].dispatchEvent(new harness.view.FocusEvent('focusin', { bubbles: true }));
-
-        expect(harness.posted.at(-1)).toMatchObject({ type: 'focus', index: 1 });
-    });
-
-    it('focuses the task the parent asks it to', () => {
-        const harness = runFrameScript(statement(taskSpan('A') + taskSpan('B')));
-
-        harness.sendFromParent({ type: 'interactive', tasks: [{ index: 1, label: 'B' }], focusIndex: 1 });
-
-        expect(harness.document.activeElement).toBe(harness.document.querySelectorAll('.artemis-task')[1]);
+            // Focus lands back on the task, not at the top of the statement.
+            expect(shadow().activeElement).toBe(taskElements()[0]);
+        });
     });
 });
