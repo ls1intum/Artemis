@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -185,7 +186,7 @@ public class ParticipationService {
             }
             // Check if participation already exists
             if (optionalStudentParticipation.isEmpty()) {
-                participation = createNewParticipation(exercise, participant);
+                participation = createParticipationOrFetchConcurrentlyCreatedOne(exercise, participant);
             }
             else {
                 // make sure participation and exercise are connected
@@ -241,6 +242,31 @@ public class ParticipationService {
             return participation;
         }
         return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Creates the participation, or returns the one a concurrent request created a moment earlier.
+     * <p>
+     * The emptiness check above and the insert in {@link #createNewParticipation} are not atomic, so two requests for
+     * the same participant can both pass the check. For a team exercise that is the ordinary case rather than a corner
+     * one: two teammates opening the exercise at the same time is exactly how a team starts. The loser then violates
+     * the unique constraint on (team_id, exercise_id, initialization_state) - or its student_id counterpart - and
+     * received a 500, while the winner's request succeeded. Handing the loser the team's participation is what it was
+     * asking for anyway.
+     *
+     * @param exercise    the exercise the participation belongs to
+     * @param participant the student or team starting it
+     * @return the newly created participation, or the one that already exists
+     */
+    private StudentParticipation createParticipationOrFetchConcurrentlyCreatedOne(Exercise exercise, Participant participant) {
+        try {
+            return createNewParticipation(exercise, participant);
+        }
+        catch (DataIntegrityViolationException concurrentStart) {
+            // Only a lost race explains this: re-read, and if nothing is there the violation was something else and has
+            // to reach the caller rather than be reported as a participation that could not be found.
+            return findOneGradedByExerciseAndParticipant(exercise, participant).orElseThrow(() -> concurrentStart);
+        }
     }
 
     /**
