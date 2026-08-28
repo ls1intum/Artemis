@@ -967,7 +967,8 @@ public class SharedQueueProcessingService {
      *                          was initiated administratively or for maintenance.
      */
     private void pauseBuildAgent(boolean dueToFailures) {
-        // Collect running job futures outside the lock so we can wait on them without holding it.
+        // Collect the running jobs and their futures outside the lock so we can wait on them without holding it.
+        Set<String> runningBuildJobIds = Set.of();
         List<CompletableFuture<BuildResult>> runningFuturesWrapper = List.of();
 
         agentStateTransitionLock.lock();
@@ -990,7 +991,7 @@ public class SharedQueueProcessingService {
             buildAgentInformationService.updateLocalBuildAgentInformation(isPaused.get(), dueToFailures, consecutiveBuildJobFailures.get());
 
             log.info("Gracefully cancelling running build jobs");
-            Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
+            runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
             if (runningBuildJobIds.isEmpty()) {
                 log.info("No running build jobs to cancel");
             }
@@ -1004,12 +1005,27 @@ public class SharedQueueProcessingService {
         }
 
         // Outside of the lock: wait for running jobs to finish up to the configured grace period.
-        if (!runningFuturesWrapper.isEmpty()) {
+        //
+        // The decision is driven by the running job ids rather than by the futures collected for them: a job that is
+        // in the middle of being submitted is registered as running before its awaitable future exists, so an empty
+        // list of futures does not mean the node is idle. Skipping this block in that case used to lose the job -
+        // it was neither awaited nor cancelled nor put back on the queue.
+        if (!runningBuildJobIds.isEmpty()) {
+            boolean everyRunningJobIsAwaitable = runningFuturesWrapper.size() == runningBuildJobIds.size();
             CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
 
             try {
                 allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
-                log.info("All running build jobs finished during grace period");
+                if (everyRunningJobIsAwaitable) {
+                    log.info("All running build jobs finished during grace period");
+                }
+                else {
+                    // Finishing the wait does not prove the node is idle here, because at least one running job had no
+                    // future to await. Such a job has only just started, so it would not have finished within the grace
+                    // period either; cancel it now rather than leave it running on a paused agent.
+                    log.warn("Only {} of {} running build jobs could be awaited, enforcing cancellation for the rest", runningFuturesWrapper.size(), runningBuildJobIds.size());
+                    handleTimeoutAndCancelRunningJobs();
+                }
             }
             catch (TimeoutException e) {
                 log.warn("Not all running build jobs finished within {} seconds, enforcing cancellation", pauseGracePeriodSeconds, e);
