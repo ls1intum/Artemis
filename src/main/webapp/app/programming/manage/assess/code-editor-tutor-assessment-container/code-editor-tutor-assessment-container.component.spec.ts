@@ -4,7 +4,7 @@ import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DebugElement } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -32,7 +32,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
@@ -418,6 +418,44 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
     });
 
+    it.each([
+        { param: '1', expectedRound: 1, description: 'a usable round' },
+        { param: undefined, expectedRound: 0, description: 'an absent round' },
+        { param: '   ', expectedRound: 0, description: 'a whitespace only round' },
+        { param: 'abc', expectedRound: 0, description: 'a round that is not a number' },
+        { param: '1.5', expectedRound: 0, description: 'a fractional round' },
+        { param: '-1', expectedRound: 0, description: 'a negative round' },
+        { param: '1e3', expectedRound: 0, description: 'an exponential round' },
+    ])('should lock the submission for $description', ({ param, expectedRound }) => {
+        // The round is sent along when the submission is locked, so an unusable value must not travel on as NaN: the
+        // request went out as correction-round=NaN and left the tutor on an empty editor (#13396).
+        // queryParamMap is declared readonly on ActivatedRoute, so the mock is reached through a writable view.
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { queryParamMap: Observable<ParamMap> };
+        activatedRoute.queryParamMap = of(convertToParamMap(param === undefined ? { testRun: 'false' } : { testRun: 'false', 'correction-round': param }));
+
+        comp.ngOnInit();
+
+        expect(comp.correctionRound()).toBe(expectedRound);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, expectedRound);
+    });
+
+    it('should keep the round it locked with when only the correction round in the url changes', () => {
+        // This component has no resolver, so a `correction-round` that changes on its own — reachable only by
+        // hand-editing the address bar — starts no new load. The round it shows must then stay the round the submission
+        // was locked with, because the same value indexes the results of that submission.
+        const queryParamMap$ = new BehaviorSubject(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
+        const activatedRoute = TestBed.inject(ActivatedRoute) as unknown as { queryParamMap: Observable<ParamMap> };
+        activatedRoute.queryParamMap = queryParamMap$.asObservable();
+
+        comp.ngOnInit();
+        expect(comp.correctionRound()).toBe(1);
+
+        queryParamMap$.next(convertToParamMap({ testRun: 'false', 'correction-round': '0' }));
+
+        expect(comp.correctionRound()).toBe(1);
+        expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledExactlyOnceWith(123, 1);
+    });
+
     it('should not show complaint when participation contains no complaint', async () => {
         findBySubmissionIdStub.mockReturnValue(of({ body: undefined }));
         comp.ngOnInit();
@@ -597,7 +635,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             unassessedSubmission.id!.toString(),
             'assessment',
         ];
-        const queryParams = { queryParams: { 'correction-round': 0 } };
+        // Merge rather than replace, so that the navigation keeps testRun and every other parameter (#13421).
+        const queryParams = { queryParams: { 'correction-round': 0 }, queryParamsHandling: 'merge' };
         expect(getProgrammingSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
         expect(routerStub).toHaveBeenCalledWith(url, queryParams);
     });
