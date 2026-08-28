@@ -239,7 +239,7 @@
             "noAthenaFeedbackOnEmptySubmission": "You cannot request AI feedback on an empty submission.",
             "aiFeedbackPopover": {
                 "title": "AI Feedback",
-                "description": "Get AI-generated feedback for your submission. It's preliminary and can include mistakes.",
+                "description": "Get AI-generated feedback for your submission. It's preliminary and can include mistakes. Consider checking important information.",
                 "selectedAiType": "Using: {{ type }}",
                 "dontShowAgain": "Don't show this again",
                 "aiType": {

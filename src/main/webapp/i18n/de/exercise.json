@@ -239,7 +239,7 @@
             "noAthenaFeedbackOnEmptySubmission": "Du kannst kein KI-Feedback für eine leere Abgabe anfordern.",
             "aiFeedbackPopover": {
                 "title": "KI-Feedback",
-                "description": "Erhalte KI-generiertes Feedback zu deiner Abgabe. Es ist vorläufig und kann Fehler enthalten.",
+                "description": "Erhalte KI-generiertes Feedback zu deiner Abgabe. Es ist vorläufig und kann Fehler enthalten. Bitte überprüfe wichtige Informationen.",
                 "selectedAiType": "Verwendet: {{ type }}",
                 "dontShowAgain": "Nicht mehr anzeigen",
                 "aiType": {
