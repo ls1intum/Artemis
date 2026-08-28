@@ -1014,22 +1014,19 @@ public class SharedQueueProcessingService {
             boolean everyRunningJobIsAwaitable = runningFuturesWrapper.size() == runningBuildJobIds.size();
             CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
 
-            // Only one outcome proves the node is idle: the wait completed and it covered every running job. Every
-            // other outcome - a timeout, an awaited job that failed and so ended the wait early, an interrupt, or a
-            // running job that had no future to await - leaves jobs that have to be cancelled and re-queued before
-            // the build agent services close underneath them.
-            boolean nodeIsIdle = false;
+            // allOf completes once every future it was given has completed, so a job that failed still counts as
+            // finished - it only makes the wait end exceptionally. What the wait can never cover is a job that was
+            // still being submitted when the pause began and so had no future to await yet.
+            boolean allAwaitedJobsFinished = false;
             try {
                 allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
-                if (everyRunningJobIsAwaitable) {
-                    log.info("All running build jobs finished during grace period");
-                    nodeIsIdle = true;
-                }
-                else {
-                    // A job that was still being submitted when the pause began has only just started, so it would not
-                    // have finished within the grace period either.
-                    log.warn("Only {} of {} running build jobs could be awaited, enforcing cancellation for the rest", runningFuturesWrapper.size(), runningBuildJobIds.size());
-                }
+                allAwaitedJobsFinished = true;
+            }
+            catch (ExecutionException e) {
+                // A build that ended in failure is still a build that ended. Cancelling here would re-queue a job whose
+                // result is on its way to being published, so this counts as finished like any other completion.
+                allAwaitedJobsFinished = true;
+                log.warn("A build job finished exceptionally during the pause grace period", e);
             }
             catch (TimeoutException e) {
                 log.warn("Not all running build jobs finished within {} seconds, enforcing cancellation", pauseGracePeriodSeconds, e);
@@ -1038,13 +1035,16 @@ public class SharedQueueProcessingService {
                 Thread.currentThread().interrupt();
                 log.error("Interrupted while waiting for running build jobs to finish", e);
             }
-            catch (ExecutionException e) {
-                // One awaited job finished exceptionally, which ends the wait for every one of them, so the others may
-                // still be running.
-                log.error("Error while waiting for running build jobs to finish", e);
-            }
 
-            if (!nodeIsIdle) {
+            if (allAwaitedJobsFinished && everyRunningJobIsAwaitable) {
+                log.info("All running build jobs finished during grace period");
+            }
+            else {
+                if (allAwaitedJobsFinished) {
+                    // The jobs left over here have only just started, so they would not have finished within the grace
+                    // period either; cancel them rather than leave them running on a paused agent.
+                    log.warn("Only {} of {} running build jobs could be awaited, enforcing cancellation for the rest", runningFuturesWrapper.size(), runningBuildJobIds.size());
+                }
                 handleTimeoutAndCancelRunningJobs();
             }
         }
