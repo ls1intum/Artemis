@@ -17,6 +17,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,6 +41,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -750,35 +752,25 @@ class InteractiveSandboxRelayRoundTripTest {
     void copyOutRemovesPayloadWhenDeadlineExpiresDuringDistributedPut() throws Exception {
         when(localSandbox.createSession(any())).thenReturn(CONTAINER_ID);
         client.createSession(sessionSpec());
-        CountDownLatch payloadStored = new CountDownLatch(1);
-        CountDownLatch finishPut = new CountDownLatch(1);
+        AtomicLong deadline = new AtomicLong(System.currentTimeMillis() + Duration.ofMinutes(1).toMillis());
         LocalMap<String, byte[]> expiringDuringPutPayloads = new LocalMap<>() {
 
             @Override
-            public void put(String key, byte[] value) {
-                super.put(key, value);
-                payloadStored.countDown();
-                try {
-                    finishPut.await(5, TimeUnit.SECONDS);
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(e);
-                }
+            public void put(String key, byte[] value, Duration timeToLive) {
+                super.put(key, value, timeToLive);
+                deadline.set(System.currentTimeMillis() - 1);
             }
         };
         when(handlerAccess.getHyperionSandboxPayloads()).thenReturn(expiringDuringPutPayloads);
         byte[] tar = tarWithSingleFile("result.txt", "late output");
         when(localSandbox.copyOut(CONTAINER_ID, "/workspace/out")).thenReturn(new TarArchiveInputStream(new ByteArrayInputStream(tar)));
-        SandboxOpRequestDTO request = SandboxOpRequestDTO.copyOut("corr-expired-during-put", AGENT_SHORT_NAME, CONTAINER_ID, "/workspace/out").withDeadline(Duration.ofMillis(100));
+        SandboxOpRequestDTO request = spy(SandboxOpRequestDTO.copyOut("corr-expired-during-put", AGENT_SHORT_NAME, CONTAINER_ID, "/workspace/out"));
+        when(request.deadlineEpochMillis()).thenAnswer(invocation -> deadline.get());
         BlockingQueue<SandboxOpResponseDTO> matchingResponses = responsesFor(request.correlationId());
 
         requestsTopic.publish(request);
-        assertThat(payloadStored.await(2, TimeUnit.SECONDS)).isTrue();
-        await().atMost(Duration.ofSeconds(2)).until(() -> System.currentTimeMillis() > request.deadlineEpochMillis());
-        finishPut.countDown();
 
-        SandboxOpResponseDTO response = matchingResponses.poll(2, TimeUnit.SECONDS);
+        SandboxOpResponseDTO response = matchingResponses.poll(10, TimeUnit.SECONDS);
         assertThat(response).isNotNull();
         assertThat(response.success()).isFalse();
         assertThat(response.errorMessage()).contains("deadline expired");

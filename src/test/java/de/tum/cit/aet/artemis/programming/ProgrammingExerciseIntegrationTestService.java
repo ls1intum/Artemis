@@ -2194,7 +2194,8 @@ public class ProgrammingExerciseIntegrationTestService {
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_notFound() throws Exception {
-        request.put("/api/programming/programming-exercises/" + 123456789 + "/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.NOT_FOUND);
+        programmingExercise.setId(123456789L);
+        request.put("/api/programming/programming-exercises/123456789/re-evaluate", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.NOT_FOUND);
     }
 
     void testReEvaluateAndUpdateProgrammingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {

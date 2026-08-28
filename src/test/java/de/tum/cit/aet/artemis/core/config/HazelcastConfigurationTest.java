@@ -39,7 +39,8 @@ class HazelcastConfigurationTest {
      */
     private static final Set<String> HYPERION_CORRECTNESS_MAPS = Set.of("hyperion-provider-failure-cooldowns", "hyperion-exercise-generation-jobs",
             "hyperion-exercise-generation-cancellations", "hyperion-exercise-generation-transcripts", "hyperion-exercise-generation-file-changes",
-            "hyperion-exercise-generation-usage", "hyperion-generation-token-budget-reservations", "hyperion-exercise-generation-baselines", "hyperion-sandbox-payloads");
+            "hyperion-exercise-generation-usage", "hyperion-generation-token-budget-reservations", "hyperion-exercise-generation-baselines",
+            "hyperion-exercise-generation-artifacts", "hyperion-sandbox-payloads");
 
     @Test
     void shouldProtectHyperionCorrectnessMapsAgainstMemberAndNetworkFailure() {

@@ -1496,15 +1496,18 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         expect(generationService.generate).not.toHaveBeenCalled();
     });
 
-    it.each([undefined, null, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN])('supports Java generation for project type %s', (projectType) => {
-        // Mutating the exercise in place mirrors production, where the object identity is kept and the change is
-        // published through the always-notifying exercise signal.
-        comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: projectType as ProjectType | undefined }));
+    it.each([undefined, null, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE])(
+        'supports Java generation for project type %s',
+        (projectType) => {
+            // Mutating the exercise in place mirrors production, where the object identity is kept and the change is
+            // published through the always-notifying exercise signal.
+            comp.exercise.update((exercise) => Object.assign(exercise!, { projectType: projectType as ProjectType | undefined }));
 
-        expect((comp as any).canGenerateExercise()).toBe(true);
-    });
+            expect((comp as any).canGenerateExercise()).toBe(true);
+        },
+    );
 
-    it.each([ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE, ProjectType.MAVEN_BLACKBOX, ProjectType.PLAIN, ProjectType.XCODE, ProjectType.FACT, ProjectType.GCC])(
+    it.each([ProjectType.MAVEN_BLACKBOX, ProjectType.PLAIN, ProjectType.XCODE, ProjectType.FACT, ProjectType.GCC])(
         'blocks Java generation for unsupported project type %s',
         (projectType) => {
             comp.exercise.update((exercise) => Object.assign(exercise!, { projectType }));

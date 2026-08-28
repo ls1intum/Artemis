@@ -86,7 +86,7 @@ describe('CodeEditorContainerComponent bottom panel composition', () => {
 
         expect(fixture.debugElement.queryAll(By.css('tum-ui-tab'))).toHaveLength(2);
         const buildOutput = fixture.debugElement.query(By.directive(CodeEditorBuildOutputComponent));
-        expect(buildOutput.componentInstance.showHeader).toBe(false);
+        expect(buildOutput.componentInstance.showHeader()).toBe(false);
     });
 
     it('renders only the projected tab when build output is unavailable', () => {

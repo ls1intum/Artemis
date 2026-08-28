@@ -325,7 +325,7 @@ class LocalVCServletServiceTest {
         localVCServletService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation), Optional.empty());
 
         InOrder inOrder = inOrder(exerciseVersionService, programmingSubmissionService);
-        inOrder.verify(exerciseVersionService).createExerciseVersionSynchronously(testExercise, testUser, java.util.Map.of(RepositoryType.TESTS, "commit-hash"));
+        inOrder.verify(exerciseVersionService).createExerciseVersion(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
         inOrder.verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash");
     }
 

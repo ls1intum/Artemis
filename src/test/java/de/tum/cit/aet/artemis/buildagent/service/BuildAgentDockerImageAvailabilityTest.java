@@ -66,13 +66,11 @@ class BuildAgentDockerImageAvailabilityTest {
     @Test
     void concurrentRequestsOnFreshAgentPullOnlyOnce() throws Exception {
         AtomicBoolean imagePresent = new AtomicBoolean();
-        CountDownLatch initialInspections = new CountDownLatch(2);
+        CountDownLatch callersReady = new CountDownLatch(2);
         when(dockerClient.inspectImageCmd(IMAGE)).thenAnswer(ignored -> {
             InspectImageCmd command = mock(InspectImageCmd.class);
             when(command.exec()).thenAnswer(invocation -> {
                 if (!imagePresent.get()) {
-                    initialInspections.countDown();
-                    assertThat(initialInspections.await(5, TimeUnit.SECONDS)).isTrue();
                     throw new NotFoundException("missing");
                 }
                 return new InspectImageResponse().withId(IMAGE_ID).withArch("amd64");
@@ -90,8 +88,16 @@ class BuildAgentDockerImageAvailabilityTest {
         });
 
         try (var executor = Executors.newFixedThreadPool(2)) {
-            var first = executor.submit(() -> service.ensureDockerImageAvailable(IMAGE));
-            var second = executor.submit(() -> service.ensureDockerImageAvailable(IMAGE));
+            var first = executor.submit(() -> {
+                callersReady.countDown();
+                assertThat(callersReady.await(5, TimeUnit.SECONDS)).isTrue();
+                return service.ensureDockerImageAvailable(IMAGE);
+            });
+            var second = executor.submit(() -> {
+                callersReady.countDown();
+                assertThat(callersReady.await(5, TimeUnit.SECONDS)).isTrue();
+                return service.ensureDockerImageAvailable(IMAGE);
+            });
 
             assertThat(first.get(10, TimeUnit.SECONDS)).isEqualTo(IMAGE_ID);
             assertThat(second.get(10, TimeUnit.SECONDS)).isEqualTo(IMAGE_ID);

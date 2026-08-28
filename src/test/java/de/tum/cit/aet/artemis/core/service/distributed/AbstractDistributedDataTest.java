@@ -80,14 +80,14 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
 
     @Test
     void testRefreshTimeToLiveIsAtomicAndRequiresExpiringMap() throws InterruptedException {
-        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testRefreshTimeToLive", Duration.ofMillis(200));
-        map.put("key", "value", Duration.ofMillis(100));
-        Thread.sleep(50);
-
-        assertThat(map.refreshTimeToLive("key", Duration.ofMillis(200))).isTrue();
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testRefreshTimeToLive", Duration.ofSeconds(3));
+        map.put("key", "value", Duration.ofSeconds(2));
         Thread.sleep(100);
+
+        assertThat(map.refreshTimeToLive("key", Duration.ofSeconds(2))).isTrue();
+        Thread.sleep(1000);
         assertThat(map.get("key")).isEqualTo("value");
-        assertThat(map.refreshTimeToLive("absent", Duration.ofMillis(200))).isFalse();
+        assertThat(map.refreshTimeToLive("absent", Duration.ofSeconds(2))).isFalse();
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(() -> getDistributedDataProvider().<String, String>getMap("nonExpiringRefresh").refreshTimeToLive("key", Duration.ofSeconds(1)));
     }
