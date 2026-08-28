@@ -292,7 +292,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testFileWriteUsage() {
-        ArchRule usage = noClasses().should()
+        ArchRule usage = noClasses().that()
+                // The unit test of FileUtil has to plant a file at the destination itself to create the precondition it
+                // then asserts on, namely that FileUtil refuses to overwrite it. Going through the helper under test
+                // would defeat the test.
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.FileUtilUnitTest").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);
@@ -738,7 +742,21 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private static ArchCondition<JavaMethod> callAWaitMethod() {
-        var isWaiting = callMethod(Mockito.class, "timeout").or(callMethod(Mockito.class, "after")).or(callMethod(Awaitility.class, "await"));
+        var isDirectlyWaiting = callMethod(Mockito.class, "timeout").or(callMethod(Mockito.class, "after")).or(callMethod(Awaitility.class, "await"));
+        var isWaiting = new DescribedPredicate<JavaCall<?>>("is waiting") {
+
+            @Override
+            public boolean test(JavaCall<?> call) {
+                if (isDirectlyWaiting.test(call)) {
+                    return true;
+                }
+                var target = call.getTarget().resolveMember();
+                if (target.isPresent() && target.get() instanceof JavaMethod targetMethod) {
+                    return targetMethod.getMethodCallsFromSelf().stream().anyMatch(isDirectlyWaiting);
+                }
+                return false;
+            }
+        };
 
         return new ArchCondition<>("call a wait method") {
 
