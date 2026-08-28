@@ -67,11 +67,11 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequestDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponseDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContextDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalTopic;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
-import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.local.LocalTopic;
 
 class InteractiveSandboxRelayRoundTripTest {
 

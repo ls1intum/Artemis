@@ -371,6 +371,9 @@ public class AgentLoopRunner {
             lastPromptTokens = promptTokensOf(response);
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
+            if (response.getResult() != null && response.getResult().getOutput() != null) {
+                requireAssistantSafe(response.getResult().getOutput(), "provider/response");
+            }
             recordToolCalls(usageSink, toolCalls.size());
             if (cancelled.getAsBoolean()) {
                 emit(stepListener, "Cancelling generation…");
@@ -901,10 +904,22 @@ public class AgentLoopRunner {
                     responseIndex++;
                 }
             }
+            else if (message instanceof AssistantMessage assistant) {
+                requireAssistantSafe(assistant, "provider/message-" + messageIndex);
+            }
             else {
                 requireTextSafe("provider/message-" + messageIndex, message.getText());
             }
             messageIndex++;
+        }
+    }
+
+    private static void requireAssistantSafe(AssistantMessage assistant, String logicalPath) {
+        requireTextSafe(logicalPath, assistant.getText());
+        int toolCallIndex = 0;
+        for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
+            requireTextSafe(logicalPath + "-tool-call-" + toolCallIndex, toolCall.arguments());
+            toolCallIndex++;
         }
     }
 

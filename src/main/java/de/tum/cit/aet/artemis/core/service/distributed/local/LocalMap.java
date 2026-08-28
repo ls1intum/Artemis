@@ -9,8 +9,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
@@ -46,10 +44,6 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     private final ConcurrentHashMap<UUID, MapListener> mapListeners = new ConcurrentHashMap<>();
 
     private final ExecutorService notificationExecutor;
-
-    /** Shared across every local map; entries with an expiry are rare and the task is a single guarded removal. */
-    private static final ScheduledExecutorService EXPIRY_SCHEDULER = Executors
-            .newSingleThreadScheduledExecutor(BasicThreadFactory.builder().namingPattern("local-map-expiry-%d").daemon().build());
 
     public LocalMap() {
         this(Executors.newCachedThreadPool(BasicThreadFactory.builder().namingPattern("local-map-listener-%d").daemon().build()));
@@ -185,23 +179,96 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
-    public void put(K key, V value, Duration timeToLive) {
-        put(key, value);
-        // The single-JVM backend has no eviction machinery, so schedule the expiry. Value-guarded so a re-put under the same key is never evicted by the previous entry's timer.
-        EXPIRY_SCHEDULER.schedule(() -> {
-            ReentrantLock lock = getLock(key);
-            lock.lock();
-            boolean expired;
-            try {
-                expired = map.remove(key, value);
+    public V putIfAbsent(K key, V value) {
+        return putIfAbsentInternal(key, value, null);
+    }
+
+    @Override
+    public V putIfAbsent(K key, V value, Duration timeToLive) {
+        return putIfAbsentInternal(key, value, System.nanoTime() + timeToLive.toNanos());
+    }
+
+    /**
+     * @param key      the entry to write if it is absent
+     * @param value    the value to store
+     * @param deadline the nano-time the entry expires at, or null to store it without a lifetime
+     * @return the value that was already there, or null if this call stored the value
+     */
+    private V putIfAbsentInternal(K key, V value, Long deadline) {
+        purgeExpiredEntries();
+        ReentrantLock lock = getLock(key);
+        V existing;
+        lock.lock();
+        try {
+            existing = map.putIfAbsent(key, value);
+            if (existing == null) {
+                // Only the caller that actually stored the value may set or drop the lifetime.
+                writeDeadline(key, deadline);
             }
-            finally {
-                lock.unlock();
+        }
+        finally {
+            lock.unlock();
+        }
+        if (existing == null) {
+            notifyEntryAdded(key, value);
+        }
+        return existing;
+    }
+
+    @Override
+    public boolean remove(K key, V value) {
+        purgeExpiredEntries();
+        ReentrantLock lock = getLock(key);
+        boolean removed;
+        lock.lock();
+        try {
+            removed = map.remove(key, value);
+            if (removed) {
+                expiryDeadlines.remove(key);
             }
-            if (expired) {
-                notifyEntryRemoved(key, value);
+        }
+        finally {
+            lock.unlock();
+        }
+        if (removed) {
+            notifyEntryRemoved(key, value);
+        }
+        return removed;
+    }
+
+    @Override
+    public boolean replace(K key, V expectedValue, V replacementValue) {
+        purgeExpiredEntries();
+        ReentrantLock lock = getLock(key);
+        boolean replaced;
+        lock.lock();
+        try {
+            replaced = map.replace(key, expectedValue, replacementValue);
+        }
+        finally {
+            lock.unlock();
+        }
+        if (replaced) {
+            notifyEntryUpdated(key, replacementValue, expectedValue);
+        }
+        return replaced;
+    }
+
+    @Override
+    public boolean refreshTimeToLive(K key, Duration timeToLive) {
+        purgeExpiredEntries();
+        ReentrantLock lock = getLock(key);
+        lock.lock();
+        try {
+            if (!map.containsKey(key)) {
+                return false;
             }
-        }, Math.max(1L, timeToLive.toMillis()), TimeUnit.MILLISECONDS);
+            writeDeadline(key, System.nanoTime() + timeToLive.toNanos());
+            return true;
+        }
+        finally {
+            lock.unlock();
+        }
     }
 
     @Override
@@ -284,6 +351,13 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void lock(K key) {
+        getLock(key).lock();
+    }
+
+    @Override
+    public void lock(K key, Duration lease) {
+        // No process can outlive this in-memory provider. Preserve mutual exclusion; unlike remote backends there is
+        // no surviving lock to reclaim after this JVM exits.
         getLock(key).lock();
     }
 

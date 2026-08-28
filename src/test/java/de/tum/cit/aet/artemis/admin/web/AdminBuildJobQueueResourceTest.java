@@ -197,7 +197,7 @@ class AdminBuildJobQueueResourceTest {
 
     private static AdminBuildJobQueueResource resource(DistributedDataAccessService dataAccess, RemoteInteractiveSandboxClient sandboxClient, GenerationJobService jobService) {
         return new AdminBuildJobQueueResource(mock(SharedQueueManagementService.class), mock(BuildJobRepository.class), dataAccess, Optional.of(sandboxClient),
-                Optional.of(jobService), mock(AuditEventRepository.class));
+                Optional.of(jobService), mock(AuditEventRepository.class), mock(de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy.class));
     }
 
     private static AdminBuildJobQueueResource resource(DistributedDataAccessService dataAccess, Optional<RemoteInteractiveSandboxClient> sandboxClient,
@@ -207,8 +207,8 @@ class AdminBuildJobQueueResourceTest {
 
     private static AdminBuildJobQueueResource resource(DistributedDataAccessService dataAccess, Optional<RemoteInteractiveSandboxClient> sandboxClient,
             Optional<GenerationJobService> jobService, AuditEventRepository auditEventRepository) {
-        return new AdminBuildJobQueueResource(mock(SharedQueueManagementService.class), mock(BuildJobRepository.class), dataAccess, sandboxClient, jobService,
-                auditEventRepository);
+        return new AdminBuildJobQueueResource(mock(SharedQueueManagementService.class), mock(BuildJobRepository.class), dataAccess, sandboxClient, jobService, auditEventRepository,
+                mock(de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy.class));
     }
 
     private static BuildAgentInformation agent(String name, int maxSandboxSlots) {

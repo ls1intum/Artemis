@@ -57,7 +57,7 @@ class SharedQueueManagementServiceIntegrationTest extends AbstractProgrammingInt
      */
     private void storeBuildAgent(String shortName, String memberAddress) {
         distributedDataAccessService.getDistributedBuildAgentInformation().put(shortName,
-                new BuildAgentInformation(new BuildAgentDTO(shortName, memberAddress, shortName), 1, 0, List.of(), null, null, null, 0));
+                new BuildAgentInformation(new BuildAgentDTO(shortName, memberAddress, shortName), 1, 0, List.of(), null, null, null, 0, 0, 0));
     }
 
     /**

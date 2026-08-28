@@ -11,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
@@ -29,15 +28,14 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-import com.hazelcast.topic.ITopic;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationTimeouts;
@@ -79,10 +77,7 @@ public class GenerationJobService {
 
     static final Duration DEFAULT_TERMINAL_REPLAY_TTL = Duration.ofHours(4);
 
-    /** Lease on the per-exercise coordination lock. See {@link #lockJobSlot(String)} for why it exists. */
-    private static final long LOCK_LEASE_SECONDS = 30;
-
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -108,9 +103,9 @@ public class GenerationJobService {
 
     private String localNodeId;
 
-    private IMap<String, JobInfo> jobMap;
+    private DistributedMap<String, JobInfo> jobMap;
 
-    private IMap<String, Boolean> cancellationMap;
+    private DistributedMap<String, Boolean> cancellationMap;
 
     private GenerationJobReplayStore replayStore;
 
@@ -119,36 +114,35 @@ public class GenerationJobService {
     private final ConcurrentMap<String, Runnable> cancelHooks = new ConcurrentHashMap<>();
 
     @Autowired
-    public GenerationJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher,
-            LLMTokenUsageService llmTokenUsageService, HyperionGenerationBudgetService generationBudgetService, HyperionAgentProperties agentProperties,
-            HyperionEffortProfileService effortProfiles, @Qualifier("taskExecutor") Executor cancellationExecutor,
-            @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
+    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+            HyperionGenerationBudgetService generationBudgetService, HyperionAgentProperties agentProperties, HyperionEffortProfileService effortProfiles,
+            @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
             @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl, @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries) {
         // The stale-job timeout is validated against the longest deadline ANY configured effort profile can hand a run, not against the deployment default: a profile that raises
         // the deadline above the stale timeout would otherwise have its slot reclaimed by another node while it is still legitimately running.
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, agentProperties.getStaleJobTimeout(), agentProperties.getMaxJobDuration(),
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, agentProperties.getStaleJobTimeout(), agentProperties.getMaxJobDuration(),
                 cancellationExecutor, expectedDataMemberCount, terminalReplayTtl, providerMaxRetries == 0, effortProfiles.longestMaxJobDuration());
     }
 
-    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 terminalReplayTtl, true);
     }
 
-    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 terminalReplayTtl, exactProviderUsage, maxJobDuration);
     }
 
-    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration) {
         this.longestConfiguredJobDuration = longestConfiguredJobDuration;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
         this.eventPublisher = eventPublisher;
         this.llmTokenUsageService = llmTokenUsageService;
         this.generationBudgetService = generationBudgetService;
@@ -160,31 +154,31 @@ public class GenerationJobService {
         this.exactProviderUsage = exactProviderUsage;
     }
 
-    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
                 DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
-    public GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, 1,
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, 1,
                 DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
-    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService) {
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
     }
 
-    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService, Duration staleJobTimeout,
-            Duration maxJobDuration) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration, Runnable::run);
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+            Duration staleJobTimeout, Duration maxJobDuration) {
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration, Runnable::run);
     }
 
-    GenerationJobService(HazelcastInstance hazelcastInstance, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, LLMTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration) {
-        this(hazelcastInstance, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, Runnable::run);
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, Runnable::run);
     }
 
     public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId) {
@@ -250,13 +244,13 @@ public class GenerationJobService {
         Duration longestJobDuration = longestConfiguredJobDuration == null || longestConfiguredJobDuration.compareTo(maxJobDuration) < 0 ? maxJobDuration
                 : longestConfiguredJobDuration;
         HyperionGenerationTimeouts.validateStaleJobTimeout(staleJobTimeout, longestJobDuration);
-        jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
-        cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
-        replayStore = new GenerationJobReplayStore(hazelcastInstance, terminalReplayTtl);
-        ITopic<CancelRequest> cancelTopic = hazelcastInstance.getTopic(CANCEL_TOPIC_NAME);
-        cancelTopic.addMessageListener(message -> runLocalCancelHook(message.getMessageObject().jobId()));
-        localNodeId = hazelcastInstance.getCluster().getLocalMember().getUuid().toString();
-        reaper = new GenerationJobReaper(this, hazelcastInstance, jobMap, cancellationMap, replayStore, generationBudgetService, staleJobTimeout, maxJobDuration);
+        jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
+        cancellationMap = distributedDataProvider.getExpiringMap(CANCEL_MAP_NAME, maxJobDuration);
+        replayStore = new GenerationJobReplayStore(distributedDataProvider, terminalReplayTtl);
+        DistributedTopic<CancelRequest> cancelTopic = distributedDataProvider.getTopic(CANCEL_TOPIC_NAME);
+        cancelTopic.addMessageListener(message -> runLocalCancelHook(message.jobId()));
+        localNodeId = distributedDataProvider.getLocalNodeId();
+        reaper = new GenerationJobReaper(this, distributedDataProvider, jobMap, cancellationMap, replayStore, generationBudgetService, staleJobTimeout, maxJobDuration);
     }
 
     public String startJob(User user, ProgrammingExercise exercise, String userPrompt, GenerationMode mode) {
@@ -410,11 +404,11 @@ public class GenerationJobService {
 
     private long countDataMembers() {
         try {
-            return hazelcastInstance.getCluster().getMembers().stream().filter(member -> !member.isLiteMember()).count();
+            return distributedDataProvider.getDataNodeIds().orElseThrow().size();
         }
         catch (RuntimeException e) {
             throw new ServiceUnavailableAlertException(
-                    "Hyperion coordination cannot verify the Hazelcast data-member topology. Check jhipster.cache.hazelcast.expected-data-member-count.", ENTITY_NAME,
+                    "Hyperion coordination cannot verify the distributed data-node topology. Check jhipster.cache.hazelcast.expected-data-member-count.", ENTITY_NAME,
                     "hyperionDataMemberTopologyUnavailable");
         }
     }
@@ -525,7 +519,7 @@ public class GenerationJobService {
             if (replayState.done()) {
                 return isCancelled(jobId);
             }
-            cancellationMap.set(job.jobId(), Boolean.TRUE);
+            cancellationMap.put(job.jobId(), Boolean.TRUE);
             cancellationEvent = replayStore.appendCancellation(job, USER_CANCELLATION_MESSAGE);
         }
         finally {
@@ -564,7 +558,7 @@ public class GenerationJobService {
             if (replayState == null || replayState.done()) {
                 return false;
             }
-            cancellationMap.set(job.jobId(), Boolean.TRUE);
+            cancellationMap.put(job.jobId(), Boolean.TRUE);
             cancellationEvent = replayStore.appendCancellation(job, message);
             userLogin = replayState.userLogin();
         }
@@ -593,7 +587,7 @@ public class GenerationJobService {
         // a different core node than the one running the sandbox.
         runLocalCancelHook(jobId);
         try {
-            hazelcastInstance.<CancelRequest>getTopic(CANCEL_TOPIC_NAME).publish(new CancelRequest(jobId));
+            distributedDataProvider.<CancelRequest>getTopic(CANCEL_TOPIC_NAME).publish(new CancelRequest(jobId));
         }
         catch (RuntimeException e) {
             log.warn("Could not publish the cluster interrupt for cancelled generation job {}; workers will still observe the authoritative cancellation", jobId, e);
@@ -915,26 +909,16 @@ public class GenerationJobService {
     }
 
     /**
-     * Acquires the per-exercise coordination lock <em>with a lease</em>.
-     * <p>
-     * Every guarded section is a few local map reads and writes plus at most a topic publish, so it cannot legitimately take seconds. Without a lease, an owner that is alive but
-     * stalled blocks every other node's claim, cancellation, heartbeat and recovery for this exercise indefinitely — and the heartbeat runs on the shared scheduler, so a few
-     * such stalls take that scheduler with them. The mutations under the lock are value-guarded compare-and-set operations, so an expired lease loses a race rather than
-     * corrupting state.
+     * Acquires the per-exercise coordination lock without a lease. Cancellation and the transition into durable
+     * persistence must remain mutually exclusive even when a backend call stalls for longer than expected; expiring
+     * this lock would let an old cancellation resume after a newer caller entered the non-cancellable phase.
      */
     void lockJobSlot(String key) {
-        jobMap.lock(key, LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
+        jobMap.lock(key);
     }
 
-    /** Releases the lock, tolerating a lease that already expired: that is diagnostic, not a reason to replace the caller's outcome with an exception. */
     void unlockJobSlot(String key) {
-        try {
-            jobMap.unlock(key);
-        }
-        catch (IllegalMonitorStateException e) {
-            log.warn("The Hyperion coordination lock for exercise {} expired before this node released it; the section it guarded took longer than the {}s lease", key,
-                    LOCK_LEASE_SECONDS);
-        }
+        jobMap.unlock(key);
     }
 
     /** What kind of work claimed a non-cancellable slot, so an operator knows what to confirm quiescent before recovering it. */

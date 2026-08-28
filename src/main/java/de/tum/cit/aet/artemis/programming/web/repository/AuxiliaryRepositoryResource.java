@@ -33,7 +33,6 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -106,9 +105,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     OptionalLong getExerciseIdForMutation(Long auxiliaryRepositoryId) {
-        long exerciseId = auxiliaryRepositoryRepository.findExerciseIdById(auxiliaryRepositoryId)
-                .orElseThrow(() -> new EntityNotFoundException("AuxiliaryRepository", auxiliaryRepositoryId));
-        return OptionalLong.of(exerciseId);
+        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, auxiliaryRepository.getExercise(), userRepository.getUserWithAuthorities(), "auxiliary");
+        return OptionalLong.of(auxiliaryRepository.getExercise().getId());
     }
 
     @Override

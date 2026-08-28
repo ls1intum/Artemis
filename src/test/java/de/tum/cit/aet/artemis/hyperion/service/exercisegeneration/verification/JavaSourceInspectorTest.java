@@ -172,4 +172,17 @@ class JavaSourceInspectorTest {
         assertThat(JavaSourceInspector.declaresPackageMatchingPath("src/de/tum/right/Calculator.java", source, List.of("src/"))).isTrue();
         assertThat(JavaSourceInspector.declaresPackageMatchingPath("src/de/tum/wrong/Calculator.java", source, List.of("src/"))).isFalse();
     }
+
+    @Test
+    void sourceDeclaresType_ignoresCommentedOutDeclarations() {
+        String source = """
+                // class MissingClass {}
+                /* record MissingRecord(int value) {} */
+                class PresentClass {}
+                """;
+
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "MissingClass")).isFalse();
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "MissingRecord")).isFalse();
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "PresentClass")).isTrue();
+    }
 }

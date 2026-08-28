@@ -1130,8 +1130,15 @@ public class SharedQueueProcessingService {
 
             log.info("Resuming build agent with address {}", distributedDataAccessService.getLocalMemberAddress());
 
-            // Re-open the underlying services (executors, Docker client, etc.) required to run jobs.
-            buildAgentConfiguration.openBuildAgentServices();
+            // Re-open the underlying services (executors, Docker client, etc.) required to run jobs. A preceding executor shutdown can still be finishing; keep the agent paused so
+            // a later resume command can retry instead of exposing a half-open agent as available.
+            try {
+                buildAgentConfiguration.openBuildAgentServices();
+            }
+            catch (LocalCIException e) {
+                log.warn("Build agent cannot resume yet and remains paused: {}", e.getMessage());
+                return;
+            }
 
             // Mark the agent as running only after its executor is ready.
             setPaused(false);

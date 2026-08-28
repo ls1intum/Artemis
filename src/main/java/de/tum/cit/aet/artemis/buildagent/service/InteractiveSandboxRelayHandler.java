@@ -54,9 +54,9 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequestDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponseDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionContextDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxSessionSpecDTO;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
 
 /** Relays distributed interactive-sandbox operations to this build agent. */
 @Lazy(false)

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
@@ -8,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 import jakarta.annotation.PostConstruct;
@@ -16,17 +16,15 @@ import jakarta.annotation.PostConstruct;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -51,7 +49,7 @@ public class ExerciseGenerationRevertService {
     /** The same order the persist commits them, so tests come last and the re-sync build sees the reverted solution. */
     private static final RepositoryType[] REVERT_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final GitService gitService;
 
@@ -61,12 +59,11 @@ public class ExerciseGenerationRevertService {
 
     private final String defaultBranch;
 
-    private IMap<Long, ExerciseGenerationBaseline> baselineMap;
+    private DistributedMap<Long, ExerciseGenerationBaseline> baselineMap;
 
-    public ExerciseGenerationRevertService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, GitService gitService,
-            GenerationPersistenceService persistenceService, TempFileUtilService tempFileUtilService,
-            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
-        this.hazelcastInstance = hazelcastInstance;
+    public ExerciseGenerationRevertService(DistributedDataProvider distributedDataProvider, GitService gitService, GenerationPersistenceService persistenceService,
+            TempFileUtilService tempFileUtilService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+        this.distributedDataProvider = distributedDataProvider;
         this.gitService = gitService;
         this.persistenceService = persistenceService;
         this.tempFileUtilService = tempFileUtilService;
@@ -75,7 +72,7 @@ public class ExerciseGenerationRevertService {
 
     @PostConstruct
     public void init() {
-        baselineMap = hazelcastInstance.getMap(BASELINE_MAP_NAME);
+        baselineMap = distributedDataProvider.getExpiringMap(BASELINE_MAP_NAME, Duration.ofSeconds(BASELINE_TTL_SECONDS));
     }
 
     /**
@@ -98,7 +95,7 @@ public class ExerciseGenerationRevertService {
             Map<RepositoryType, String> postRunHeads, String problemStatement, String title, String expectedCurrentProblemStatement, String expectedCurrentTitle,
             String repositoryBranch) {
         try {
-            baselineMap.delete(exercise.getId());
+            baselineMap.remove(exercise.getId());
             Map<RepositoryType, String> heads = new LinkedHashMap<>();
             Map<RepositoryType, String> expectedCurrentHeads = new LinkedHashMap<>();
             for (RepositoryType repositoryType : REVERT_ORDER) {
@@ -121,8 +118,8 @@ public class ExerciseGenerationRevertService {
                     expectedCurrentHeads.put(repositoryType, expectedCurrentHead);
                 }
             }
-            baselineMap.set(exercise.getId(), new ExerciseGenerationBaseline(jobId, mode, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement,
-                    expectedCurrentTitle, repositoryBranch), BASELINE_TTL_SECONDS, TimeUnit.SECONDS);
+            baselineMap.put(exercise.getId(), new ExerciseGenerationBaseline(jobId, mode, heads, expectedCurrentHeads, problemStatement, title, expectedCurrentProblemStatement,
+                    expectedCurrentTitle, repositoryBranch));
             log.info("Recorded revertible generation baseline for exercise {} (job {}): {} repository head(s)", exercise.getId(), jobId, heads.size());
             return true;
         }
@@ -143,7 +140,7 @@ public class ExerciseGenerationRevertService {
      * @param exerciseId the exercise whose baseline should no longer be offered for automatic revert
      */
     public void invalidateBaseline(long exerciseId) {
-        baselineMap.delete(exerciseId);
+        baselineMap.remove(exerciseId);
         log.info("Invalidated the automatic-revert baseline for exercise {} before a later run began durable mutation", exerciseId);
     }
 

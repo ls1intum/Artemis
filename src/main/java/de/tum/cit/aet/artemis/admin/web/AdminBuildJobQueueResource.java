@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.GenerationSandboxSessionDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.buildagent.service.RemoteInteractiveSandboxClient;
+import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -79,13 +80,14 @@ public class AdminBuildJobQueueResource {
 
     public AdminBuildJobQueueResource(SharedQueueManagementService localCIBuildJobQueueService, BuildJobRepository buildJobRepository,
             DistributedDataAccessService distributedDataAccessService, Optional<RemoteInteractiveSandboxClient> sandboxClient, Optional<GenerationJobService> generationJobService,
-            AuditEventRepository auditEventRepository) {
+            AuditEventRepository auditEventRepository, BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
         this.buildJobRepository = buildJobRepository;
         this.distributedDataAccessService = distributedDataAccessService;
         this.sandboxClient = sandboxClient;
         this.generationJobService = generationJobService;
         this.auditEventRepository = auditEventRepository;
+        this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
     }
 
     /**

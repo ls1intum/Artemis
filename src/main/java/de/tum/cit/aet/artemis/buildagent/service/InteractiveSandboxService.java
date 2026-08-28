@@ -8,6 +8,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -488,6 +489,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
     @Override
     public void copyIn(String sessionId, String destinationPath, InputStream tarArchive) {
         try (OperationLease ignored = beginOperation(sessionId)) {
+            validateCopyInDestination(destinationPath);
             byte[] archive;
             try {
                 archive = tarArchive.readNBytes(RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + 1);
@@ -498,6 +500,7 @@ public class InteractiveSandboxService implements InteractiveSandbox {
             if (archive.length > RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES) {
                 throw new LocalCIException("Sandbox copy-in archive exceeds the " + RemoteInteractiveSandboxClient.MAX_PAYLOAD_BYTES + " byte relay limit.");
             }
+            validateCopyInArchive(archive);
             DockerClient dockerClient = buildAgentConfiguration.getDockerClient();
             String copyCommand = "head -c \"$1\" | tar -xf - -C \"$2\"";
             try (final var createCommand = dockerClient.execCreateCmd(sessionId).withAttachStdin(true).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "-c",
@@ -549,6 +552,39 @@ public class InteractiveSandboxService implements InteractiveSandbox {
                     closeQuietly(callback);
                 }
             }
+        }
+    }
+
+    static void validateCopyInDestination(String destinationPath) {
+        Path destination;
+        try {
+            destination = Path.of(destinationPath).normalize();
+        }
+        catch (RuntimeException e) {
+            throw new LocalCIException("Invalid sandbox copy-in destination", e);
+        }
+        boolean writable = destination.isAbsolute() && WRITABLE_FILESYSTEMS.keySet().stream().map(Path::of).anyMatch(root -> destination.startsWith(root.normalize()));
+        if (!writable) {
+            throw new LocalCIException("Sandbox copy-in destination is outside a writable sandbox root");
+        }
+    }
+
+    static void validateCopyInArchive(byte[] archive) {
+        try (TarArchiveInputStream tar = new TarArchiveInputStream(new ByteArrayInputStream(archive))) {
+            var entry = tar.getNextEntry();
+            while (entry != null) {
+                Path name = Path.of(entry.getName()).normalize();
+                if (name.isAbsolute() || name.startsWith("..") || entry.isSymbolicLink() || entry.isLink() || !entry.isFile() && !entry.isDirectory()) {
+                    throw new LocalCIException("Sandbox copy-in archive contains an unsafe entry");
+                }
+                entry = tar.getNextEntry();
+            }
+        }
+        catch (IOException | RuntimeException e) {
+            if (e instanceof LocalCIException localCIException) {
+                throw localCIException;
+            }
+            throw new LocalCIException("Could not validate sandbox copy-in archive", e);
         }
     }
 

@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.BuildGateTestNames;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
@@ -51,6 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.FileType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
@@ -419,7 +419,7 @@ public class GenerationPersistenceService {
         finalizationGuard.run();
         if (testsBuildSignal != null) {
             triggerTestsBuild(exercise, testsBuildSignal);
-            zeroWeightBuildGateTestCases(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
+            awaitTestCaseSynchronization(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
         }
         // The plan can be the only TESTS-stage change, so applying it must not depend on a new tests-repository commit. The guard belongs immediately before this durable
         // mutation.
@@ -881,13 +881,14 @@ public class GenerationPersistenceService {
         }
         Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
-        List<String> plannedBuildGates = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(BuildGateTestNames::isBuildGate).sorted().toList();
-        if (!plannedBuildGates.isEmpty()) {
-            throw new IllegalStateException("The verified test plan contains zero-weight build gates, which cannot carry grading decisions: " + plannedBuildGates);
+        List<String> plannedStructuralNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(byName::containsKey)
+                .filter(name -> byName.get(name).getType() == ProgrammingExerciseTestCaseType.STRUCTURAL).sorted().toList();
+        if (!plannedStructuralNames.isEmpty()) {
+            throw new IllegalStateException("The verified test plan contains server-classified structural tests, which cannot carry grading decisions: " + plannedStructuralNames);
         }
         List<String> unresolvedNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !byName.containsKey(name)).sorted().toList();
-        List<String> unplannedNames = byName.keySet().stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).filter(name -> !GeneratedTestPlan.isStructuralCheck(name))
-                .filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).sorted().toList();
+        List<String> unplannedNames = byName.values().stream().filter(testCase -> testCase.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL)
+                .map(ProgrammingExerciseTestCase::getTestName).filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).sorted().toList();
         if (!unresolvedNames.isEmpty() || !unplannedNames.isEmpty()) {
             throw new IllegalStateException(
                     "The synchronized test cases no longer match the verified test plan. Missing saved tests: " + unresolvedNames + "; unplanned saved tests: " + unplannedNames);
@@ -900,7 +901,7 @@ public class GenerationPersistenceService {
             testCase.setVisibility("AFTER_DUE_DATE".equals(entry.visibility()) ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS);
             changed.add(testCase);
         }
-        byName.values().stream().filter(testCase -> GeneratedTestPlan.isStructuralCheck(testCase.getTestName())).forEach(testCase -> {
+        byName.values().stream().filter(testCase -> testCase.getType() == ProgrammingExerciseTestCaseType.STRUCTURAL).forEach(testCase -> {
             testCase.setWeight(0.0);
             testCase.setVisibility(Visibility.ALWAYS);
             if (!changed.contains(testCase)) {
@@ -918,18 +919,9 @@ public class GenerationPersistenceService {
         }
     }
 
-    private void zeroWeightBuildGateTestCases(long exerciseId, TestsBuildSignal signal, boolean failOnError) {
+    private void awaitTestCaseSynchronization(long exerciseId, TestsBuildSignal signal, boolean failOnError) {
         try {
-            Set<ProgrammingExerciseTestCase> testCases = awaitBuildProcessedTestCaseSet(exerciseId, signal, failOnError);
-            List<ProgrammingExerciseTestCase> buildGates = testCases.stream()
-                    .filter(testCase -> BuildGateTestNames.isBuildGate(testCase.getTestName()) && testCase.getWeight() != null && testCase.getWeight() != 0.0).toList();
-            if (buildGates.isEmpty()) {
-                return;
-            }
-            buildGates.forEach(testCase -> testCase.setWeight(0.0));
-            testCaseRepository.saveAll(buildGates);
-            log.info("Zero-weighted {} build-gate test case(s) for generated exercise {} so the template grades at 0% (parity with the differential oracle): {}", buildGates.size(),
-                    exerciseId, buildGates.stream().map(ProgrammingExerciseTestCase::getTestName).toList());
+            awaitBuildProcessedTestCaseSet(exerciseId, signal, failOnError);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -941,7 +933,7 @@ public class GenerationPersistenceService {
             if (failOnError) {
                 throw e;
             }
-            log.warn("Could not adjust build-gate test-case grading for generated exercise {} (a C/C++ template may grade >0% until reconfigured): {}", exerciseId, e.getMessage());
+            log.warn("Could not await test-case synchronization for generated exercise {}: {}", exerciseId, e.getMessage());
         }
     }
 
@@ -957,7 +949,7 @@ public class GenerationPersistenceService {
         if (failOnTimeout) {
             throw new IllegalStateException("Timed out waiting for the tests-build result of generated exercise " + exerciseId);
         }
-        log.warn("Timed out waiting for the tests-build result of reverted exercise {}; a build-gate case may keep its weight until reconfigured", exerciseId);
+        log.warn("Timed out waiting for the tests-build result of reverted exercise {}", exerciseId);
         return testCaseRepository.findByExerciseId(exerciseId);
     }
 

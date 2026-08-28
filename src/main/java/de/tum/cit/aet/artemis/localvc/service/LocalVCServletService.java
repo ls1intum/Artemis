@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -142,6 +143,16 @@ public class LocalVCServletService {
 
     private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
+    private final Optional<DistributedDataAccessService> distributedDataAccessService;
+
+    private final Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService;
+
+    private final Optional<BuildJobCloneTokenService> buildJobCloneTokenService;
+
+    private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
+
     @Value("${artemis.version-control.url}")
     private URI localVCBaseUri;
 
@@ -187,7 +198,14 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard,
+            UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
+            Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
+            BuildAgentNetworkPolicy buildAgentNetworkPolicy) {
+        this.distributedDataAccessService = distributedDataAccessService;
+        this.buildAgentAddressRegistryService = buildAgentAddressRegistryService;
+        this.buildJobCloneTokenService = buildJobCloneTokenService;
+        this.buildAgentNetworkPolicy = buildAgentNetworkPolicy;
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -205,6 +223,7 @@ public class LocalVCServletService {
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
         this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
     }
 
     /**
@@ -1322,8 +1341,10 @@ public class LocalVCServletService {
 
         try {
             if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-                Map<RepositoryType, String> exactCommitId = commitHash != null && repositoryType != RepositoryType.AUXILIARY ? Map.of(repositoryType, commitHash) : Map.of();
-                exerciseVersionService.createExerciseVersionSynchronously(exercise, user, exactCommitId);
+                Long triggeringAuxiliaryRepositoryId = repositoryType == RepositoryType.AUXILIARY
+                        ? auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exercise).orElse(null)
+                        : null;
+                exerciseVersionService.createExerciseVersion(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
             }
 
             if (repositoryType.equals(RepositoryType.TESTS)) {

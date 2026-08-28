@@ -391,14 +391,14 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void productionProfileRejectsGradleUntilADedicatedOfflineImageIsConfigured() {
-        for (ProjectType projectType : List.of(ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE)) {
+    void productionProfileSupportsPlainAndWrapperBasedMavenAndGradle() {
+        for (ProjectType projectType : List.of(ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE)) {
             ProgrammingExercise exercise = new ProgrammingExercise();
             exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
             exercise.setProjectType(projectType);
 
-            assertThat(LanguageGenerationProfile.isSupported(exercise)).as("%s must not fall back to the Maven-only production image", projectType).isFalse();
-            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).isEmpty();
+            assertThat(LanguageGenerationProfile.isSupported(exercise)).as("%s should use the Java generation image", projectType).isTrue();
+            assertThat(LanguageGenerationProfile.guidanceFor(exercise)).contains("Maven or Gradle", "tests/build.gradle");
         }
     }
 
@@ -594,11 +594,11 @@ class DifferentialVerificationServiceTest {
 
     @Test
     void shouldAcceptWhenSolutionPassesAndTemplateFailsSameTests() {
-        VerificationResult result = verify(result(5, 0, 0, 0), result(5, 3, 0, 1));
+        VerificationResult result = verify(result(2, 0, 0, 0), result(2, 2, 0, 1));
         assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(result.solutionPassed()).isTrue();
         assertThat(result.templateFailed()).isTrue();
-        assertThat(result.testCount()).isEqualTo(5);
+        assertThat(result.testCount()).isEqualTo(2);
     }
 
     @Test
@@ -785,7 +785,7 @@ class DifferentialVerificationServiceTest {
         // Java always ships a build harness, so an empty seed snapshot is a failed capture rather than a harness-free exercise.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
+        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
         assertThat(result.mechanicallyVerified()).as("an empty Java harness snapshot means the capture failed; fail closed").isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("harness") && r.contains("snapshot"));
@@ -796,7 +796,7 @@ class DifferentialVerificationServiceTest {
         // Python may legitimately ship no text harness snapshot, so an empty one carries no evidence of tampering.
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(5, 0, 0, 0), result(5, 3, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
+        VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
                 new VerificationRequest(Map.of(), Map.of(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
         assertThat(result.mechanicallyVerified()).as("a non-Java empty harness snapshot stays fail-open").isTrue();
     }
@@ -804,7 +804,7 @@ class DifferentialVerificationServiceTest {
     @Test
     void shouldAcceptWhenTemplateFailsButBuildExitCodeIsZero() {
         // Report-converter languages (Go's go-junit-report, Dart's tojunit) exit 0 even on test failure; the oracle must trust the JUnit failure counts, not the exit code.
-        VerificationResult result = verify(result(14, 0, 0, 0), result(14, 14, 0, 0));
+        VerificationResult result = verify(result(2, 0, 0, 0), result(2, 2, 0, 0));
         assertThat(result.mechanicallyVerified()).isTrue();
         assertThat(result.templateFailed()).isTrue();
     }
@@ -988,21 +988,19 @@ class DifferentialVerificationServiceTest {
     }
 
     @Test
-    void shouldAcceptBuildGateHeavyExerciseWhereTemplateFailsEveryBehaviourTestButFewerThanHalfOfAllTests() {
-        // Defect regression (C/C++ FACT harness): build gates legitimately pass on BOTH builds, so an exercise where only 2 of 6 total tests fail on the template is sound.
+    void shouldRejectAgentNamedBuildGatesThatPassOnTheTemplate() {
         List<String> all = List.of("TestConfigure", "CompileSort", "ConfigureDebug", "BuildTests", "sorts_ascending", "sorts_with_duplicates");
         List<String> failedOnTemplate = List.of("sorts_ascending", "sorts_with_duplicates");
         String ps = "# Sort\n[task][Ascending](sorts_ascending)\n[task][Duplicates](sorts_with_duplicates)\n";
         VerificationResult result = verify(resultWithFails(0, all, List.of()), resultWithFails(1, all, failedOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).as("build-gate tests are exempt, so a build-gate-heavy exercise is not rejected just because most of its total tests pass")
-                .isTrue();
-        assertThat(result.reasons()).noneMatch(r -> r.contains("must fail"));
-        assertThat(result.templateFailed()).isTrue();
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(r -> r.contains("must fail") && r.contains("CompileSort"));
+        assertThat(result.templateFailed()).isFalse();
         assertThat(result.testCount()).isEqualTo(6);
     }
 
     @Test
-    void shouldRejectExerciseWithOnlyBuildGateTests() {
+    void shouldRejectExerciseWhenEveryAgentNamedBuildGatePasses() {
         List<String> all = List.of("TestConfigure", "CompileSort", "BuildTests");
         String ps = "# Sort\n[task][Build](TestConfigure,CompileSort,BuildTests)\n";
 
@@ -1010,17 +1008,17 @@ class DifferentialVerificationServiceTest {
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.templateFailed()).isFalse();
-        assertThat(result.reasons()).anyMatch(reason -> reason.contains("at least one behavioural test"));
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("must fail") && reason.contains("TestConfigure"));
     }
 
     @Test
-    void shouldAcceptWhenFrameworkPrefixedBuildGatePassesOnTemplate() {
-        // Production composes "<suite>.<testcase>" from multiple top-level suites, so the exemption keys on the final dot-segment.
+    void shouldRejectWhenFrameworkPrefixedAgentTestPassesOnTemplate() {
         List<String> all = List.of("GBS-Tester-1.36.TestConfigure", "GBS-Tester-1.36.CompileSort", "sort-test.empty_initial", "sort-test.push_top");
         List<String> failedOnTemplate = List.of("sort-test.empty_initial", "sort-test.push_top");
         String ps = "# Stack\n[task][Empty](sort-test.empty_initial)\n[task][Push/top](sort-test.push_top)\n";
         VerificationResult result = verify(multiSuiteSolution(all), multiSuiteTemplate(all, failedOnTemplate), ps);
-        assertThat(result.mechanicallyVerified()).as("a framework-prefixed build gate (GBS-Tester-1.36.TestConfigure/CompileSort) is exempted by its final segment").isTrue();
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).anyMatch(reason -> reason.contains("must fail") && reason.contains("GBS-Tester-1.36.TestConfigure"));
     }
 
     @Test

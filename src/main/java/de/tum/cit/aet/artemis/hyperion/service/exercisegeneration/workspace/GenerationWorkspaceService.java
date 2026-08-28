@@ -418,10 +418,10 @@ public class GenerationWorkspaceService {
      * @return the rendered layout snapshot, or an empty string if it could not be produced
      */
     public String probeWorkspaceLayout(InteractiveSandbox sandbox, String sessionId) {
-        // Generation only ever runs for Java/Maven exercises (LanguageGenerationProfile), so only pom.xml is probed.
         String script = "cd " + WORKSPACE + " 2>/dev/null || exit 0\n" + "echo '--- ls -R " + String.join(" ", REPOSITORY_DIRECTORIES) + " ---'\n" + "ls -R "
                 + String.join(" ", REPOSITORY_DIRECTORIES) + " 2>/dev/null\n" + "for f in $(find " + String.join(" ", REPOSITORY_DIRECTORIES)
-                + " -maxdepth 2 -type f -name pom.xml 2>/dev/null | sort); do\n" + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n"
+                + " -maxdepth 2 -type f \\( -name pom.xml -o -name build.gradle -o -name build.gradle.kts -o -name settings.gradle -o -name settings.gradle.kts -o -name gradle.properties \\) 2>/dev/null | sort); do\n"
+                + "  echo; echo \"--- head -40 $f ---\"; head -40 \"$f\" 2>/dev/null\n" + "done\n"
                 // Surface the reference dir so the agent discovers it (it is not a repository dir, so the listing above misses it).
                 + "if [ -d " + REFERENCE_DIR + " ]; then echo; echo '--- ls -R " + REFERENCE_DIR
                 + " (non-persisted worked example: study its language and test-framework conventions; do not edit or copy it) ---'; ls -R " + REFERENCE_DIR

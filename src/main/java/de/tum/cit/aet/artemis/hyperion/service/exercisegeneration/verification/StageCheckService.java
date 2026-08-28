@@ -724,8 +724,7 @@ public class StageCheckService {
         // Checked only once the differential is green, so a missing plan never drowns out failing tests in the feedback.
         String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
         if (planJson.isBlank()) {
-            List<String> behavioralTestNames = report.exactTestNames().stream().filter(name -> !seededStructuralTestNames.contains(name) && !BuildGateTestNames.isBuildGate(name))
-                    .toList();
+            List<String> behavioralTestNames = report.exactTestNames().stream().filter(name -> !seededStructuralTestNames.contains(name)).toList();
             return new StageCheckResult(false, "The differential passed, but /workspace/test-plan.json is missing. Write it now, implementing the specification's Testing "
                     + "Strategy: {\"tests\":[{\"name\":\"<exact test name>\",\"seamWeightTier\":1..3,\"visibility\":\"ALWAYS\"|\"AFTER_DUE_DATE\"}]}. Use exactly these behavioral test "
                     + "names verify reported: " + behavioralTestNames + ". Do not include server-seeded structural checks; Artemis keeps those visible and zero-weight: "

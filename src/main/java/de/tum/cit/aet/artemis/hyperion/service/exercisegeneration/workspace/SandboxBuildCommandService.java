@@ -52,6 +52,8 @@ public class SandboxBuildCommandService {
     private static final Pattern MAVEN_STATIC_ANALYSIS_PHASE = Pattern
             .compile("(?s)^\\s*(?:cd\\s+[^\\n]+\\n)?\\s*mvn\\s+[^\\n;&|]*(?:spotbugs:spotbugs|checkstyle:checkstyle|pmd:pmd|pmd:cpd)[^\\n;&|]*\\s*$");
 
+    private static final Pattern GRADLE_TEST_TASK = Pattern.compile("(?<![\\w-])(test|structuralTests|behaviorTests)(?![\\w-])");
+
     public static final String VERIFY_SCRIPT_NAME = "verify.sh";
 
     /** Lives outside {@code /workspace} so the agent can neither read nor rewrite the script and reports the verdict rests on. */
@@ -205,6 +207,16 @@ public class SandboxBuildCommandService {
                 ASSIGNMENT_DEST="@@ASSIGNMENT_DEST@@"
                 mkdir -p "$ASSIGNMENT_DEST"
                 cp -a "$WORKSPACE/$ASSIGNMENT/." "$ASSIGNMENT_DEST"/ 2>/dev/null || true
+                GRADLE_WRAPPERS=$(find "$BUILD_DIR" -type f -name gradlew -print 2>/dev/null)
+                if [ -n "$GRADLE_WRAPPERS" ]; then
+                    # Repository archives do not carry an executable bit, and the sandbox root filesystem is read-only. Give the disposable wrapper an executable bit and copy
+                    # the image's offline Gradle home into private writable storage before any configured phase runs.
+                    printf '%s\n' "$GRADLE_WRAPPERS" | while IFS= read -r wrapper; do chmod +x "$wrapper" || exit 74; done
+                    export GRADLE_USER_HOME=/tmp/hyperion-gradle-home
+                    rm -rf "$GRADLE_USER_HOME"
+                    mkdir -p "$GRADLE_USER_HOME"
+                    cp -a /root/.gradle/. "$GRADLE_USER_HOME"/ || exit 74
+                fi
                 if [ "$LANE" = "behavior-isolated" ] && [ -d "@@TRUSTED_STRUCTURAL_DIR@@" ]; then
                     TRUSTED_MANIFEST="$BUILD_DIR/.hyperion-trusted-structural-files"
                     ( cd "@@TRUSTED_STRUCTURAL_DIR@@" && find . -type f -print ) > "$TRUSTED_MANIFEST" || exit 74
@@ -237,6 +249,7 @@ public class SandboxBuildCommandService {
                         -e 's#${solutionWorkingDirectory}#@@SOLUTION_DIR@@#g' \\
                         -e 's#${testWorkingDirectory}#@@TEST_DIR@@#g' "$f" > "$f.hyp" 2>/dev/null && mv "$f.hyp" "$f" 2>/dev/null || rm -f "$f.hyp" 2>/dev/null
                 done
+                find "$BUILD_DIR" -type f -name gradlew -exec chmod +x {} \\; 2>/dev/null || exit 74
                 # Anti-forgery: delete every pre-existing JUnit report before the phases run (the agent can plant one in tests/ and cp -a preserves its mtime), so only reports
                 # written this run are collected. SCA reports are deliberately not deleted here; see buildScaCollectSection.
                 find "$BUILD_DIR" -type f \\( @@REPORT_FIND@@ \\) -delete 2>/dev/null || true
@@ -301,6 +314,9 @@ public class SandboxBuildCommandService {
      * graded test cannot inspect generated source text. Final verification restores the captured workspace after each run.
      */
     private static String buildIsolatedJavaPhaseSection(BuildRecipe recipe, ProgrammingExercise exercise) {
+        if (isGradle(exercise.getProjectType())) {
+            return buildIsolatedGradlePhaseSection(recipe);
+        }
         List<String> setupPhases = new ArrayList<>();
         List<String> staticAnalysisPhases = new ArrayList<>();
         List<MavenTestPhase> testPhases = new ArrayList<>();
@@ -340,6 +356,57 @@ public class SandboxBuildCommandService {
                 """ + executeTests + """
 
                 fi""";
+    }
+
+    private static boolean isGradle(@Nullable ProjectType projectType) {
+        return projectType == ProjectType.PLAIN_GRADLE || projectType == ProjectType.GRADLE_GRADLE;
+    }
+
+    /**
+     * Precompiles every Gradle test source set before generated sources are removed, then runs the already compiled tests
+     * with their producer tasks excluded. This preserves the same source-confidentiality boundary as the Maven lane.
+     */
+    private static String buildIsolatedGradlePhaseSection(BuildRecipe recipe) {
+        List<String> setupPhases = new ArrayList<>();
+        List<String> compilePhases = new ArrayList<>();
+        List<String> executePhases = new ArrayList<>();
+        boolean reachedTests = false;
+        for (String phase : recipe.phases()) {
+            Matcher matcher = GRADLE_TEST_TASK.matcher(phase);
+            if (!phase.contains("gradlew") || !matcher.find()) {
+                if (reachedTests) {
+                    return "run_phase 'echo \"Source-isolated verification requires compile/setup phases before Gradle test phases\" >&2; exit 65'";
+                }
+                setupPhases.add(phase);
+                continue;
+            }
+            reachedTests = true;
+            String task = matcher.group(1);
+            String classesTask = task.equals("test") ? "testClasses" : task.substring(0, task.length() - "Tests".length()) + "TestClasses";
+            String compile = matcher.replaceFirst(classesTask);
+            compilePhases.add(compile);
+            String execute = matcher.replaceFirst(task).replaceFirst("(?<![\\w-])clean(?![\\w-])\\s*", "") + gradleProducerExclusions(task);
+            executePhases.add(execute.strip());
+        }
+        if (executePhases.isEmpty()) {
+            return "run_phase 'echo \"Source-isolated verification requires a standalone Gradle test phase\" >&2; exit 65'";
+        }
+        return buildPhaseSection(setupPhases) + "\n" + buildPhaseSection(compilePhases) + """
+
+                if [ "$rc" -eq 0 ]; then
+                    find "$BUILD_DIR" "$WORKSPACE" -type f -name '*.java' -delete 2>/dev/null || exit 74
+                """ + buildPhaseSection(executePhases) + """
+
+                fi""";
+    }
+
+    private static String gradleProducerExclusions(String task) {
+        String sourceSet = task.equals("test") ? "Test" : Character.toUpperCase(task.charAt(0)) + task.substring(1, task.length() - "Tests".length()) + "Test";
+        return " -x compileJava -x processResources -x compile" + sourceSet + "Java -x process" + sourceSet + "Resources -x " + decapitalize(sourceSet) + "Classes";
+    }
+
+    private static String decapitalize(String value) {
+        return Character.toLowerCase(value.charAt(0)) + value.substring(1);
     }
 
     private static @Nullable MavenTestPhase splitMavenTestPhase(String phase) {
@@ -481,6 +548,13 @@ public class SandboxBuildCommandService {
                 return List.of("cd structural\nmvn -B clean compile", "cd behavior\nmvn -B clean compile", "cd structural\nmvn -B test", "cd behavior\nmvn -B test");
             }
             return List.of("mvn -B clean compile", "mvn -B test");
+        }
+        if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA && isGradle(exercise.getProjectType())) {
+            if (sequential) {
+                return List.of("./gradlew clean compileJava compileTestJava structuralTestClasses behaviorTestClasses --no-daemon", "./gradlew structuralTests --no-daemon",
+                        "./gradlew behaviorTests --no-daemon");
+            }
+            return List.of("./gradlew clean compileJava compileTestJava --no-daemon", "./gradlew test --no-daemon");
         }
         return List.of("""
                 if [ -f pom.xml ]; then mvn clean test;

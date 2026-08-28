@@ -222,4 +222,14 @@ public class HyperionEffortProfileService {
         return profilesByName.values().stream().map(HyperionGenerationSettings::maxJobDuration).filter(Objects::nonNull).max(Comparator.naturalOrder())
                 .filter(longest -> longest.compareTo(defaultSettings.maxJobDuration()) > 0).orElseGet(defaultSettings::maxJobDuration);
     }
+
+    /**
+     * The shortest wall-clock deadline any configured profile can give a run. The ownership heartbeat must fire before this deadline for every selectable profile.
+     *
+     * @return the minimum {@code max-job-duration} across the deployment default and every configured profile
+     */
+    public Duration shortestMaxJobDuration() {
+        return profilesByName.values().stream().map(HyperionGenerationSettings::maxJobDuration).filter(Objects::nonNull).min(Comparator.naturalOrder())
+                .filter(shortest -> shortest.compareTo(defaultSettings.maxJobDuration()) < 0).orElseGet(defaultSettings::maxJobDuration);
+    }
 }

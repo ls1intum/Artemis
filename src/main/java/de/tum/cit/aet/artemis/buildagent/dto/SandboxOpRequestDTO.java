@@ -7,7 +7,7 @@ import java.time.Instant;
 
 /**
  * A single interactive-sandbox operation a core node asks a specific remote build agent to perform on the warm container it owns. Requests are broadcast over the
- * {@code hyperion-sandbox-requests} {@link de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic} (build agents commonly run as Hazelcast clients, so a
+ * {@code hyperion-sandbox-requests} {@link de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic} (build agents commonly run as Hazelcast clients, so a
  * member-targeted RPC is not available) and self-filtered by {@link #targetAgentShortName}; the {@link #correlationId} ties the eventual {@link SandboxOpResponseDTO} back to the
  * blocked caller. The handler retains a bounded terminal-response cache so retries with the same correlation id replay the result instead of repeating the side effect.
  *

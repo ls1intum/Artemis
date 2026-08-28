@@ -3,15 +3,13 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 
 /**
@@ -27,11 +25,11 @@ final class GenerationJobReaper {
 
     private final GenerationJobService jobService;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    private final IMap<String, GenerationJobService.JobInfo> jobMap;
+    private final DistributedMap<String, GenerationJobService.JobInfo> jobMap;
 
-    private final IMap<String, Boolean> cancellationMap;
+    private final DistributedMap<String, Boolean> cancellationMap;
 
     private final GenerationJobReplayStore replayStore;
 
@@ -43,11 +41,11 @@ final class GenerationJobReaper {
 
     private final Duration maxJobDuration;
 
-    GenerationJobReaper(GenerationJobService jobService, HazelcastInstance hazelcastInstance, IMap<String, GenerationJobService.JobInfo> jobMap,
-            IMap<String, Boolean> cancellationMap, GenerationJobReplayStore replayStore, @Nullable HyperionGenerationBudgetService generationBudgetService,
+    GenerationJobReaper(GenerationJobService jobService, DistributedDataProvider distributedDataProvider, DistributedMap<String, GenerationJobService.JobInfo> jobMap,
+            DistributedMap<String, Boolean> cancellationMap, GenerationJobReplayStore replayStore, @Nullable HyperionGenerationBudgetService generationBudgetService,
             @Nullable Duration staleJobTimeout, Duration maxJobDuration) {
         this.jobService = jobService;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
         this.jobMap = jobMap;
         this.cancellationMap = cancellationMap;
         this.replayStore = replayStore;
@@ -86,7 +84,7 @@ final class GenerationJobReaper {
             return true;
         }
         try {
-            return hazelcastInstance.getCluster().getMembers().stream().anyMatch(member -> member.getUuid().toString().equals(job.ownerNodeId()));
+            return distributedDataProvider.getDataNodeIds().map(nodeIds -> nodeIds.contains(job.ownerNodeId())).orElse(true);
         }
         catch (RuntimeException e) {
             log.warn("Could not determine whether the owner of stale generation job {} is still a cluster member; retaining its slot", job.jobId(), e);
@@ -126,7 +124,7 @@ final class GenerationJobReaper {
 
     private void signalStaleLiveOwner(GenerationJobService.JobInfo current, Instant now) {
         boolean alreadyCancelled = Boolean.TRUE.equals(cancellationMap.get(current.jobId()));
-        cancellationMap.set(current.jobId(), Boolean.TRUE);
+        cancellationMap.put(current.jobId(), Boolean.TRUE);
         replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
         if (!alreadyCancelled) {
             jobService.interruptCluster(current.jobId());
@@ -135,7 +133,7 @@ final class GenerationJobReaper {
 
     /** @return whether this call was the one that removed the slot */
     boolean stopActiveJob(String key, GenerationJobService.JobInfo current, Instant now) {
-        cancellationMap.set(current.jobId(), Boolean.TRUE, Math.max(1, maxJobDuration.toSeconds()), TimeUnit.SECONDS);
+        cancellationMap.put(current.jobId(), Boolean.TRUE, maxJobDuration.isZero() || maxJobDuration.isNegative() ? Duration.ofSeconds(1) : maxJobDuration);
         replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
         replayStore.sealUsageIncomplete(current.jobId());
         boolean released = jobMap.remove(key, current);

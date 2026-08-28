@@ -89,14 +89,14 @@ class BuildJobCloneTokenAuthenticationTest {
         buildAgentInformationMap = mock(DistributedMap.class);
         when(distributedDataAccessService.getDistributedBuildAgentInformation()).thenReturn(buildAgentInformationMap);
         when(buildAgentInformationMap.get(AGENT_NAME))
-                .thenReturn(new BuildAgentInformation(new BuildAgentDTO(AGENT_NAME, "address", "display"), 1, 0, List.of(), null, null, null, 0));
+                .thenReturn(new BuildAgentInformation(new BuildAgentDTO(AGENT_NAME, "address", "display"), 1, 0, List.of(), null, null, null, 0, 0, 0));
 
         // Permissive by default: a void mock does nothing, so every other test in this class runs as if under the limit.
         rateLimitService = mock(RateLimitService.class);
         // The default for a caller with budget left; the tests that care set it to false explicitly
         when(rateLimitService.hasRemainingBudget(any(), any())).thenReturn(true);
         localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, rateLimitService, null,
-                null, Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()),
+                null, null, Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()),
                 policyAllowingEverything());
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 
@@ -312,7 +312,7 @@ class BuildJobCloneTokenAuthenticationTest {
      */
     @Test
     void shouldDeclineWhenTheNodeHasNoLocalCi() {
-        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null, null,
+        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null, null, null,
                 Optional.empty(), Optional.empty(), Optional.empty(), policyAllowingEverything());
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 

@@ -282,10 +282,13 @@ final class JavaSourceInspector {
      * Matches a top-level, nested, or secondary declaration, and covers the non-Java declaration keywords too so the same check serves the language-agnostic ownership gates.
      */
     static boolean sourceDeclaresType(String content, String type) {
+        if (content == null || type == null) {
+            return false;
+        }
         String declarationStart = "(?:^|[;{}])\\s*";
         String modifiers = "(?:(?:public|protected|private|static|abstract|final|sealed|non-sealed)\\s+)*";
         return Pattern.compile(declarationStart + modifiers + "(?:class|interface|enum|record|trait|struct|protocol)\\s+" + Pattern.quote(type) + "\\b", Pattern.MULTILINE)
-                .matcher(content).find();
+                .matcher(stripJavaComments(content)).find();
     }
 
     /**

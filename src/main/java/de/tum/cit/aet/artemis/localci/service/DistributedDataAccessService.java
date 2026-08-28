@@ -26,10 +26,10 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpRequestDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxOpResponseDTO;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 
 /**
  * This service is used to access the distributed data structures.
@@ -485,7 +485,7 @@ public class DistributedDataAccessService {
      * bytes here rather than on the broadcast request/response topics means only the node owning the correlation id fetches them, instead of every subscriber deserializing them
      * on its event thread. The recipient reads an entry without consuming it, so a retry can still recover it; the sender removes it after the terminal response or timeout.
      * <p>
-     * Obtained as an <em>expiring</em> map, and every write must use {@link de.tum.cit.aet.artemis.localci.service.distributed.api.map.DistributedMap#put(Object, Object,
+     * Obtained as an <em>expiring</em> map, and every write must use {@link de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap#put(Object, Object,
      * java.time.Duration)}. Removal by the writer is not sufficient: the agent stages a copy-out payload only after the requesting core node may already have timed out and run
      * its removal, and a core node can crash between staging and removal, either of which leaves a large blob with nothing to reclaim it.
      *
@@ -493,7 +493,7 @@ public class DistributedDataAccessService {
      */
     public DistributedMap<String, byte[]> getHyperionSandboxPayloads() {
         if (this.hyperionSandboxPayloads == null) {
-            this.hyperionSandboxPayloads = this.distributedDataProvider.getExpiringMap("hyperion-sandbox-payloads");
+            this.hyperionSandboxPayloads = this.distributedDataProvider.getExpiringMap("hyperion-sandbox-payloads", Duration.ofMinutes(15));
         }
         return this.hyperionSandboxPayloads;
     }

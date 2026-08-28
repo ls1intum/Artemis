@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -18,11 +17,10 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
@@ -53,7 +51,7 @@ final class GenerationJobReplayStore {
 
     static final int MAX_RETAINED_FILE_CHANGES = 300;
 
-    /** Defensive cap so a large {@code SPEC.md} cannot grow the retained Hazelcast transcript without bound. */
+    /** Defensive cap so a large {@code SPEC.md} cannot grow the retained distributed transcript without bound. */
     static final int MAX_SPEC_DOCUMENT_LENGTH = 20_000;
 
     private static final String SPEC_DOCUMENT_TRUNCATION_MARKER = "\n\n[... SPEC.md truncated to " + MAX_SPEC_DOCUMENT_LENGTH + " characters for the status API ...]";
@@ -62,76 +60,77 @@ final class GenerationJobReplayStore {
 
     /**
      * Recovers the running dropped-event count from the retained marker so repeated overflows update one marker instead of accumulating one per drop. The count lives in the
-     * marker's message rather than in {@code JobTranscript}, so a purely presentational counter does not change the shape of an already distributed Hazelcast value.
+     * marker's message rather than in {@code JobTranscript}, so a purely presentational counter does not change the shape of an already distributed value.
      */
     private static final Pattern EVENT_TRUNCATION_MESSAGE_PATTERN = Pattern.compile("^(\\d+)" + Pattern.quote(EVENT_TRUNCATION_MESSAGE_SUFFIX) + "$");
 
     private final long terminalReplayTtlSeconds;
 
-    private IMap<String, GenerationJobService.JobInfo> jobMap;
+    private DistributedMap<String, GenerationJobService.JobInfo> jobMap;
 
-    private IMap<String, Boolean> cancellationMap;
+    private DistributedMap<String, Boolean> cancellationMap;
 
-    private IMap<String, GenerationJobService.JobTranscript> transcriptMap;
+    private DistributedMap<String, GenerationJobService.JobTranscript> transcriptMap;
 
-    private IMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap;
+    private DistributedMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap;
 
-    private IMap<String, JobUsage> usageMap;
+    private DistributedMap<String, JobUsage> usageMap;
 
-    private IMap<String, GenerationJobService.JobArtifacts> artifactMap;
+    private DistributedMap<String, GenerationJobService.JobArtifacts> artifactMap;
 
     private final Set<String> usageWriteFailures = ConcurrentHashMap.newKeySet();
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    GenerationJobReplayStore(HazelcastInstance hazelcastInstance, Duration terminalReplayTtl) {
+    GenerationJobReplayStore(DistributedDataProvider distributedDataProvider, Duration terminalReplayTtl) {
         if (terminalReplayTtl == null || terminalReplayTtl.isZero() || terminalReplayTtl.isNegative()) {
             throw new IllegalArgumentException("artemis.hyperion.generation.terminal-replay-ttl must be positive");
         }
-        // The maps are resolved on first use, never here: HazelcastInstance.getMap during bean construction forces the cluster to be ready before the context finishes starting,
+        // The maps are resolved on first use, never here: DistributedDataProvider map access during bean construction forces the cluster to be ready before the context finishes
+        // starting,
         // which inverts the intended startup ordering.
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
         this.terminalReplayTtlSeconds = terminalReplayTtl.toSeconds();
     }
 
-    private IMap<String, GenerationJobService.JobInfo> jobMap() {
+    private DistributedMap<String, GenerationJobService.JobInfo> jobMap() {
         if (jobMap == null) {
-            jobMap = hazelcastInstance.getMap(JOB_MAP_NAME);
+            jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
         }
         return jobMap;
     }
 
-    private IMap<String, Boolean> cancellationMap() {
+    private DistributedMap<String, Boolean> cancellationMap() {
         if (cancellationMap == null) {
-            cancellationMap = hazelcastInstance.getMap(CANCEL_MAP_NAME);
+            cancellationMap = distributedDataProvider.getExpiringMap(CANCEL_MAP_NAME, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
         return cancellationMap;
     }
 
-    private IMap<String, GenerationJobService.JobTranscript> transcriptMap() {
+    private DistributedMap<String, GenerationJobService.JobTranscript> transcriptMap() {
         if (transcriptMap == null) {
-            transcriptMap = hazelcastInstance.getMap(TRANSCRIPT_MAP_NAME);
+            transcriptMap = distributedDataProvider.getExpiringMap(TRANSCRIPT_MAP_NAME, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
         return transcriptMap;
     }
 
-    private IMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap() {
+    private DistributedMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap() {
         if (fileChangeMap == null) {
-            fileChangeMap = hazelcastInstance.getMap(FILE_CHANGE_MAP_NAME);
+            fileChangeMap = distributedDataProvider.getExpiringMap(FILE_CHANGE_MAP_NAME, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
         return fileChangeMap;
     }
 
-    private IMap<String, GenerationJobService.JobArtifacts> artifactMap() {
+    private DistributedMap<String, GenerationJobService.JobArtifacts> artifactMap() {
         if (artifactMap == null) {
-            artifactMap = hazelcastInstance.getMap(ARTIFACT_MAP_NAME);
+            artifactMap = distributedDataProvider.getExpiringMap(ARTIFACT_MAP_NAME, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
         return artifactMap;
     }
 
-    private IMap<String, JobUsage> usageMap() {
+    private DistributedMap<String, JobUsage> usageMap() {
         if (usageMap == null) {
-            usageMap = hazelcastInstance.getMap(USAGE_MAP_NAME);
+            usageMap = distributedDataProvider.getExpiringMap(USAGE_MAP_NAME, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
         return usageMap;
     }
@@ -147,8 +146,8 @@ final class GenerationJobReplayStore {
             GenerationJobService.JobFileChangeIndex currentFileChanges = new GenerationJobService.JobFileChangeIndex(jobId, userLogin, new ArrayList<>());
             StartedReplay replay = new StartedReplay(currentTranscript, currentFileChanges, previousTranscript, previousFileChanges);
             try {
-                transcriptMap().set(key, currentTranscript);
-                fileChangeMap().set(key, currentFileChanges);
+                transcriptMap().put(key, currentTranscript);
+                fileChangeMap().put(key, currentFileChanges);
                 // The exercise retains one run, so a previous run's unsaved candidate must not outlive the start of a new one: leaving the old draft readable while a fresh run
                 // produces another would mislead an instructor about which draft they are looking at.
                 artifactMap().remove(key);
@@ -239,7 +238,7 @@ final class GenerationJobReplayStore {
     }
 
     private void recordIntoUsage(String jobId, UnaryOperator<JobUsage> record) {
-        IMap<String, JobUsage> map = null;
+        DistributedMap<String, JobUsage> map = null;
         boolean locked = false;
         try {
             map = usageMap();
@@ -251,7 +250,7 @@ final class GenerationJobReplayStore {
                         + "account of the run. The durable per-call token usage records are unaffected.", jobId);
                 current = JobUsage.unaccounted();
             }
-            map.set(jobId, record.apply(current), terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            map.put(jobId, record.apply(current), Duration.ofSeconds(terminalReplayTtlSeconds));
         }
         catch (RuntimeException exception) {
             usageWriteFailures.add(jobId);
@@ -264,7 +263,7 @@ final class GenerationJobReplayStore {
 
     /** Applies a completeness transition without inventing missing evidence. */
     private boolean transitionUsage(String jobId, UnaryOperator<JobUsage> transition) {
-        IMap<String, JobUsage> map = null;
+        DistributedMap<String, JobUsage> map = null;
         boolean locked = false;
         try {
             map = usageMap();
@@ -275,7 +274,7 @@ final class GenerationJobReplayStore {
                 log.debug("Skipped a usage completeness transition for exercise generation job {}: no accumulator is retained, so it already reads as incomplete", jobId);
                 return false;
             }
-            map.set(jobId, transition.apply(current), terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            map.put(jobId, transition.apply(current), Duration.ofSeconds(terminalReplayTtlSeconds));
             return true;
         }
         catch (RuntimeException exception) {
@@ -287,7 +286,7 @@ final class GenerationJobReplayStore {
         }
     }
 
-    private static void unlockUsage(@Nullable IMap<String, JobUsage> map, String jobId, boolean locked) {
+    private static void unlockUsage(@Nullable DistributedMap<String, JobUsage> map, String jobId, boolean locked) {
         if (!locked || map == null) {
             return;
         }
@@ -301,7 +300,7 @@ final class GenerationJobReplayStore {
 
     /** Applies the retention bound on every write, including runs whose worker never reaches normal cleanup. */
     private void writeUsage(String jobId, JobUsage usage) {
-        usageMap().set(jobId, usage, terminalReplayTtlSeconds, TimeUnit.SECONDS);
+        usageMap().put(jobId, usage, Duration.ofSeconds(terminalReplayTtlSeconds));
     }
 
     private void restoreReplayIfStillCurrent(String key, StartedReplay replay) {
@@ -317,7 +316,7 @@ final class GenerationJobReplayStore {
             transcriptMap().remove(key, current);
         }
         else {
-            transcriptMap().set(key, previous, terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            transcriptMap().put(key, previous, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
     }
 
@@ -329,7 +328,7 @@ final class GenerationJobReplayStore {
             fileChangeMap().remove(key, current);
         }
         else {
-            fileChangeMap().set(key, previous, terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            fileChangeMap().put(key, previous, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
     }
 
@@ -355,7 +354,7 @@ final class GenerationJobReplayStore {
             if (terminal) {
                 sealUsage(jobId);
             }
-            transcriptMap().set(key, transcript.withEvents(events, terminal || transcript.done(), transcript.specDocument()));
+            transcriptMap().put(key, transcript.withEvents(events, terminal || transcript.done(), transcript.specDocument()));
             return true;
         }
         finally {
@@ -408,7 +407,7 @@ final class GenerationJobReplayStore {
 
     /**
      * Records the gate-approved SPEC.md snapshot on the running job's transcript — the earliest meaningful intermediate result — capped so a large document cannot grow the
-     * retained Hazelcast transcript without bound, and dropped when {@code jobId} does not match the retained transcript.
+     * retained distributed transcript without bound, and dropped when {@code jobId} does not match the retained transcript.
      */
     boolean recordSpecDocument(long exerciseId, String jobId, String specDocument) {
         String key = key(exerciseId);
@@ -421,7 +420,7 @@ final class GenerationJobReplayStore {
             if (transcript == null || !transcript.jobId().equals(jobId) || transcript.done()) {
                 return false;
             }
-            transcriptMap().set(key, transcript.withEvents(transcript.events(), transcript.done(), truncateSpecDocument(specDocument)));
+            transcriptMap().put(key, transcript.withEvents(transcript.events(), transcript.done(), truncateSpecDocument(specDocument)));
             return true;
         }
         finally {
@@ -455,7 +454,7 @@ final class GenerationJobReplayStore {
                     changes.removeFirst();
                 }
             }
-            fileChangeMap().set(key, new GenerationJobService.JobFileChangeIndex(index.jobId(), index.userLogin(), changes));
+            fileChangeMap().put(key, new GenerationJobService.JobFileChangeIndex(index.jobId(), index.userLogin(), changes));
             return true;
         }
         finally {
@@ -559,7 +558,7 @@ final class GenerationJobReplayStore {
         // Deliberately does not seal the accounting: cancellation is recorded by another thread while the worker is still winding down, so further provider usage can still be
         // recorded against this job. The worker seals when it can prove otherwise, and until then the state stays PENDING rather than claiming a total it does not have.
         List<ExerciseGenerationEventDTO> events = appendBounded(transcript.events(), cancellationEvent);
-        transcriptMap().set(key, transcript.withEvents(events, true, transcript.specDocument()));
+        transcriptMap().put(key, transcript.withEvents(events, true, transcript.specDocument()));
         return cancellationEvent;
     }
 
@@ -606,7 +605,7 @@ final class GenerationJobReplayStore {
             if (!currentRun) {
                 return false;
             }
-            artifactMap().set(key, new GenerationJobService.JobArtifacts(jobId, userLogin, artifacts), terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            artifactMap().put(key, new GenerationJobService.JobArtifacts(jobId, userLogin, artifacts), Duration.ofSeconds(terminalReplayTtlSeconds));
             return true;
         }
         finally {
@@ -633,11 +632,11 @@ final class GenerationJobReplayStore {
         GenerationJobService.JobTranscript transcript = transcriptMap().get(key);
         if (transcript != null && transcript.jobId().equals(jobId)) {
             GenerationJobService.JobTranscript retainedTranscript = transcript.done() ? transcript : transcript.withEvents(transcript.events(), true, transcript.specDocument());
-            transcriptMap().set(key, retainedTranscript, terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            transcriptMap().put(key, retainedTranscript, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
         retainFileChangesForTerminalReplay(key, jobId);
         if (usageMap().containsKey(jobId)) {
-            usageMap().setTtl(jobId, terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            usageMap().refreshTimeToLive(jobId, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
     }
 
@@ -650,7 +649,7 @@ final class GenerationJobReplayStore {
                     ? ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, message).withTerminationReason(terminationReason)
                     : ExerciseGenerationEventDTO.done(message, ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, null, true).withTerminationReason(terminationReason);
             List<ExerciseGenerationEventDTO> events = appendBounded(transcript.events(), terminalEvent);
-            transcriptMap().set(key, transcript.withEvents(events, true, transcript.specDocument()));
+            transcriptMap().put(key, transcript.withEvents(events, true, transcript.specDocument()));
             return terminalEvent;
         }
         return null;
@@ -684,7 +683,7 @@ final class GenerationJobReplayStore {
     private void retainFileChangesForTerminalReplay(String key, String jobId) {
         GenerationJobService.JobFileChangeIndex fileChangeIndex = fileChangeMap().get(key);
         if (fileChangeIndex != null && fileChangeIndex.jobId().equals(jobId)) {
-            fileChangeMap().setTtl(key, terminalReplayTtlSeconds, TimeUnit.SECONDS);
+            fileChangeMap().refreshTimeToLive(key, Duration.ofSeconds(terminalReplayTtlSeconds));
         }
     }
 

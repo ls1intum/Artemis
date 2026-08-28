@@ -55,7 +55,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.splitbrainprotection.SplitBrainProtectionOn;
-import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -1308,6 +1307,7 @@ public class HazelcastConfiguration {
         config.getMapConfigs().put("hyperion-exercise-generation-cancellations", createHyperionCorrectnessMapConfig());
         config.getMapConfigs().put("hyperion-exercise-generation-transcripts", createHyperionCorrectnessMapConfig());
         config.getMapConfigs().put("hyperion-exercise-generation-file-changes", createHyperionCorrectnessMapConfig());
+        config.getMapConfigs().put("hyperion-exercise-generation-artifacts", createHyperionCorrectnessMapConfig());
         config.getMapConfigs().put("hyperion-generation-token-budget-reservations", createHyperionCorrectnessMapConfig());
         config.getMapConfigs().put("hyperion-exercise-generation-baselines", createHyperionCorrectnessMapConfig());
         // Must never fall through to the default LRU map config: evicting a LIVE usage accumulator makes the next recorded provider call fail, which marks the job's token

@@ -32,6 +32,7 @@ import { FinishedJobsTableComponent } from './tables/finished-jobs-table/finishe
 import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 import { HyperionGenerationJobsTableComponent } from 'app/localci/hyperion-generation-jobs-table/hyperion-generation-jobs-table.component';
 import { DatePipe } from '@angular/common';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component that provides an overview of the build queue system.
@@ -422,7 +423,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
         return forkJoin(
             agents.map((agentName) =>
                 this.buildAgentsService.getGenerationSandboxes(agentName).pipe(
-                    map((jobs) => ({ agentName, jobs: jobs.map((job) => ({ ...job, agentName })), unavailable: false })),
+                    map((jobs) => ({ agentName, jobs: jobs.map((job) => cloneWith(job, { agentName })), unavailable: false })),
                     catchError(() => of({ agentName, jobs: [] as GenerationSandboxJob[], unavailable: true })),
                 ),
             ),
@@ -440,7 +441,7 @@ export class BuildOverviewComponent implements OnInit, OnDestroy {
                     }
                 }
                 return {
-                    jobs: [...this.generationJobsByAgent.entries()].flatMap(([agentName, jobs]) => jobs.map((job) => ({ ...job, stale: unavailableAgents.has(agentName) }))),
+                    jobs: [...this.generationJobsByAgent.entries()].flatMap(([agentName, jobs]) => jobs.map((job) => cloneWith(job, { stale: unavailableAgents.has(agentName) }))),
                     unavailableAgents: unavailableAgents.size,
                 };
             }),

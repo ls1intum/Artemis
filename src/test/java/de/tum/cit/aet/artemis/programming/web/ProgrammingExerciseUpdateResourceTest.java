@@ -80,8 +80,9 @@ class ProgrammingExerciseUpdateResourceTest {
     @BeforeEach
     void setUp() {
         hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        generationJobService = new GenerationJobService(hazelcastInstance, event -> {
-        }, mock(LLMTokenUsageService.class), mock(HyperionGenerationBudgetService.class), Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
+        generationJobService = new GenerationJobService(new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance),
+                event -> {
+                }, mock(LLMTokenUsageService.class), mock(HyperionGenerationBudgetService.class), Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
         generationJobService.init();
     }
 
@@ -191,8 +192,7 @@ class ProgrammingExerciseUpdateResourceTest {
         CourseService courseService = mock(CourseService.class);
         when(courseService.retrieveCourseOverExerciseGroupOrCourseId(org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> invocation.getArgument(0, ProgrammingExercise.class).getCourseViaExerciseGroupOrCourseMember());
-        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(generationJobService)),
-                hazelcastInstance);
+        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(generationJobService)));
         return new ProgrammingExerciseUpdateResource(repository, userRepository, mock(AuthorizationCheckService.class), courseService, exerciseService,
                 mock(ProgrammingExerciseValidationService.class), updateService, mock(ProgrammingExerciseRepositoryService.class), mock(AuxiliaryRepositoryService.class),
                 Optional.<AthenaApi>empty(), mock(ModuleFeatureService.class), Optional.<SlideApi>empty(), Optional.<AutomaticAfterDueDateService>empty(), versionService,

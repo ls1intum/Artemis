@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -12,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.AfterAll;
@@ -24,9 +21,12 @@ import org.junit.jupiter.api.TestInstance;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 import com.openai.core.http.Headers;
 import com.openai.errors.UnauthorizedException;
+
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class HyperionProviderFailureCooldownServiceTest {
@@ -51,9 +51,10 @@ class HyperionProviderFailureCooldownServiceTest {
     @BeforeEach
     void setUp() {
         hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        firstService = new HyperionProviderFailureCooldownService(hazelcastInstance);
+        DistributedDataProvider distributedDataProvider = new HazelcastDistributedDataProviderService(hazelcastInstance);
+        firstService = new HyperionProviderFailureCooldownService(distributedDataProvider);
         firstService.init();
-        secondService = new HyperionProviderFailureCooldownService(hazelcastInstance);
+        secondService = new HyperionProviderFailureCooldownService(distributedDataProvider);
         secondService.init();
     }
 
@@ -92,17 +93,17 @@ class HyperionProviderFailureCooldownServiceTest {
     }
 
     @Test
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings("unchecked")
     void startCooldownPreservesSubsecondTtlPrecision() {
-        HazelcastInstance mockedHazelcast = mock(HazelcastInstance.class);
-        IMap mockedMap = mock(IMap.class);
-        when(mockedHazelcast.getMap(anyString())).thenReturn(mockedMap);
-        HyperionProviderFailureCooldownService service = new HyperionProviderFailureCooldownService(mockedHazelcast);
+        DistributedDataProvider provider = mock(DistributedDataProvider.class);
+        DistributedMap<String, Object> mockedMap = mock(DistributedMap.class);
+        when(provider.<String, Object>getExpiringMap(eq(MAP_NAME), any(Duration.class))).thenReturn(mockedMap);
+        HyperionProviderFailureCooldownService service = new HyperionProviderFailureCooldownService(provider);
         service.init();
 
         service.startCooldown("model", Instant.now().plusMillis(1500));
 
-        verify(mockedMap).set(eq("model"), any(), anyLong(), eq(TimeUnit.MILLISECONDS));
+        verify(mockedMap).put(eq("model"), any(), any(Duration.class));
     }
 
     @Test

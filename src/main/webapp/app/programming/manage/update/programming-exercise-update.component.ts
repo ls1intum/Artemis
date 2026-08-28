@@ -67,6 +67,7 @@ import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/servic
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import dayjs from 'dayjs/esm';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';

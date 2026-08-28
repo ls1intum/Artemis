@@ -67,7 +67,7 @@ class GenerationJobReplayStoreTest {
     @BeforeEach
     void setUp() {
         hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        replayStore = new GenerationJobReplayStore(hazelcastInstance, TERMINAL_REPLAY_TTL);
+        replayStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), TERMINAL_REPLAY_TTL);
     }
 
     @AfterAll
@@ -80,8 +80,8 @@ class GenerationJobReplayStoreTest {
         long exerciseId = 82L;
         String key = String.valueOf(exerciseId);
         IMap<String, GenerationJobService.JobTranscript> failingTranscriptMap = spy(transcriptMap());
-        doThrow(new IllegalStateException("transcript initialization failed")).when(failingTranscriptMap).set(eq(key), any(GenerationJobService.JobTranscript.class));
-        ReflectionTestUtils.setField(replayStore, "transcriptMap", failingTranscriptMap);
+        doThrow(new IllegalStateException("transcript initialization failed")).when(failingTranscriptMap).put(eq(key), any(GenerationJobService.JobTranscript.class));
+        ReflectionTestUtils.setField(replayStore, "transcriptMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingTranscriptMap));
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> replayStore.initializeStart(exerciseId, "failed", "owner", GenerationMode.GENERATE, null))
                 .withMessageContaining("transcript initialization failed");
@@ -99,8 +99,8 @@ class GenerationJobReplayStoreTest {
         transcriptMap().set(key, previousTranscript);
         fileChangeMap().set(key, previousIndex);
         IMap<String, GenerationJobService.JobFileChangeIndex> failingFileChangeMap = spy(fileChangeMap());
-        doThrow(new IllegalStateException("file-change initialization failed")).when(failingFileChangeMap).set(eq(key), any(GenerationJobService.JobFileChangeIndex.class));
-        ReflectionTestUtils.setField(replayStore, "fileChangeMap", failingFileChangeMap);
+        doThrow(new IllegalStateException("file-change initialization failed")).when(failingFileChangeMap).put(eq(key), any(GenerationJobService.JobFileChangeIndex.class));
+        ReflectionTestUtils.setField(replayStore, "fileChangeMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingFileChangeMap));
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> replayStore.initializeStart(exerciseId, "failed", "owner", GenerationMode.GENERATE, null))
                 .withMessageContaining("file-change initialization failed");
@@ -155,7 +155,7 @@ class GenerationJobReplayStoreTest {
             }
             return null;
         }).when(observedJobMap).lock(key);
-        ReflectionTestUtils.setField(replayStore, "jobMap", observedJobMap);
+        ReflectionTestUtils.setField(replayStore, "jobMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(observedJobMap));
         ExecutorService executor = Executors.newFixedThreadPool(2);
         AtomicBoolean transcriptLockHeld = new AtomicBoolean(true);
 
@@ -185,7 +185,7 @@ class GenerationJobReplayStoreTest {
     void retainAfterJobCleared_expiresTranscriptFileChangesAndUsageTogetherOnTheConfiguredTtl() {
         // The TTL is set at three independent call sites, so a short injected value proves all three read the same configured value. It must still outlast the writes below,
         // which already carry it, and the pre-condition reads that follow them.
-        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(hazelcastInstance, Duration.ofSeconds(5));
+        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(5));
         long exerciseId = 610L;
         String key = String.valueOf(exerciseId);
         String jobId = "short-lived";
@@ -208,7 +208,8 @@ class GenerationJobReplayStoreTest {
 
     @Test
     void newReplayStore_rejectsANonPositiveTerminalReplayTtl() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new GenerationJobReplayStore(hazelcastInstance, Duration.ZERO))
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ZERO))
                 .withMessageContaining("terminal-replay-ttl");
     }
 
@@ -305,11 +306,11 @@ class GenerationJobReplayStoreTest {
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
         IMap<String, Object> actualUsageMap = usageMap();
         IMap<String, Object> failingUsageMap = spy(actualUsageMap);
-        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).set(eq(jobId), any(), anyLong(), eq(TimeUnit.SECONDS));
-        ReflectionTestUtils.setField(replayStore, "usageMap", failingUsageMap);
+        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), anyLong(), eq(TimeUnit.MILLISECONDS));
+        ReflectionTestUtils.setField(replayStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingUsageMap));
 
         assertThatCode(() -> replayStore.recordAgentTurn(jobId)).doesNotThrowAnyException();
-        ReflectionTestUtils.setField(replayStore, "usageMap", actualUsageMap);
+        ReflectionTestUtils.setField(replayStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(actualUsageMap));
         replayStore.sealUsage(jobId);
 
         assertThat(replayStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
@@ -381,7 +382,7 @@ class GenerationJobReplayStoreTest {
 
     @Test
     void recordUsage_appliesTheRetentionBound() {
-        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(hazelcastInstance, Duration.ofSeconds(1));
+        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(1));
 
         shortLivedStore.recordUsage("orphan", llmRequest());
         assertThat(usageMap().get("orphan")).isNotNull();

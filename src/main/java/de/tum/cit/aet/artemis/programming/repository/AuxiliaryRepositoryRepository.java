@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.programming.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -38,13 +37,6 @@ public interface AuxiliaryRepositoryRepository extends ArtemisJpaRepository<Auxi
             WHERE a.id = :auxiliaryRepositoryId
             """)
     String findBranchByRepoId(@Param("auxiliaryRepositoryId") long auxiliaryRepositoryId);
-
-    @Query("""
-            SELECT a.exercise.id
-            FROM AuxiliaryRepository a
-            WHERE a.id = :auxiliaryRepositoryId
-            """)
-    Optional<Long> findExerciseIdById(@Param("auxiliaryRepositoryId") long auxiliaryRepositoryId);
 
     @Query("""
             SELECT a

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.web.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -28,6 +29,7 @@ import com.hazelcast.core.HazelcastInstance;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -79,11 +81,11 @@ class RepositoryResourceMutationGuardTest {
 
     @Test
     void saveFilesAndCommitChanges_blocksGenerationDuringUncommittedWrites_andDoesNotClaimANestedLease() throws Exception {
-        GenerationJobService jobService = new GenerationJobService(hazelcastInstance, event -> {
-        }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
+        GenerationJobService jobService = new GenerationJobService(
+                new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), event -> {
+                }, mock(LLMTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
         jobService.init();
-        ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(jobService)),
-                hazelcastInstance);
+        ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(jobService)));
         UserRepository userRepository = mock(UserRepository.class);
         User user = user("instructor");
         when(userRepository.getUser()).thenReturn(user);
@@ -128,17 +130,35 @@ class RepositoryResourceMutationGuardTest {
     @Test
     void auxiliaryRepositoryMutationGuard_resolvesTheOwningExercise() {
         AuxiliaryRepositoryRepository auxiliaryRepositoryRepository = mock(AuxiliaryRepositoryRepository.class);
-        when(auxiliaryRepositoryRepository.findExerciseIdById(17L)).thenReturn(Optional.of(EXERCISE_ID));
-        AuxiliaryRepositoryResource resource = new AuxiliaryRepositoryResource(mock(UserRepository.class), mock(AuthorizationCheckService.class), mock(GitService.class),
-                mock(RepositoryService.class), mock(ProgrammingExerciseRepository.class), mock(RepositoryAccessService.class), Optional.empty(), auxiliaryRepositoryRepository,
-                new ProgrammingExerciseMutationGuardService(Optional.empty(), mock(HazelcastInstance.class)));
+        AuxiliaryRepository auxiliaryRepository = mock(AuxiliaryRepository.class);
+        when(auxiliaryRepository.getExercise()).thenReturn(exercise());
+        when(auxiliaryRepositoryRepository.findByIdElseThrow(17L)).thenReturn(auxiliaryRepository);
+        AuxiliaryRepositoryResource resource = auxiliaryResource(auxiliaryRepositoryRepository, mock(UserRepository.class), mock(RepositoryAccessService.class),
+                mock(GitService.class), new ProgrammingExerciseMutationGuardService(Optional.empty()));
 
         assertThat(resource.getExerciseIdForMutation(17L)).hasValue(EXERCISE_ID);
     }
 
     @Test
+    void auxiliaryRepositoryMutationGuard_checksAccessBeforeReturningTheOwningExercise() {
+        AuxiliaryRepositoryRepository auxiliaryRepositoryRepository = mock(AuxiliaryRepositoryRepository.class);
+        AuxiliaryRepository auxiliaryRepository = mock(AuxiliaryRepository.class);
+        ProgrammingExercise exercise = exercise();
+        when(auxiliaryRepository.getExercise()).thenReturn(exercise);
+        when(auxiliaryRepositoryRepository.findByIdElseThrow(17L)).thenReturn(auxiliaryRepository);
+        UserRepository userRepository = mock(UserRepository.class);
+        RepositoryAccessService repositoryAccessService = mock(RepositoryAccessService.class);
+        doThrow(new AccessForbiddenException()).when(repositoryAccessService).checkAccessTestOrAuxRepositoryElseThrow(true, exercise, null, "auxiliary");
+        AuxiliaryRepositoryResource resource = auxiliaryResource(auxiliaryRepositoryRepository, userRepository, repositoryAccessService, mock(GitService.class),
+                mock(ProgrammingExerciseMutationGuardService.class));
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getExerciseIdForMutation(17L));
+    }
+
+    @Test
     void auxiliaryRepositoryMutationGuard_rejectsMissingOwnershipInsteadOfUsingANoOpLease() {
         AuxiliaryRepositoryRepository auxiliaryRepositoryRepository = mock(AuxiliaryRepositoryRepository.class);
+        when(auxiliaryRepositoryRepository.findByIdElseThrow(17L)).thenThrow(new EntityNotFoundException("AuxiliaryRepository", 17L));
         AuxiliaryRepositoryResource resource = auxiliaryResource(auxiliaryRepositoryRepository, mock(UserRepository.class), mock(RepositoryAccessService.class),
                 mock(GitService.class), mock(ProgrammingExerciseMutationGuardService.class));
 
@@ -159,7 +179,6 @@ class RepositoryResourceMutationGuardTest {
         when(current.getVcsRepositoryUri()).thenReturn(currentUri);
         AuxiliaryRepositoryRepository auxiliaryRepositoryRepository = mock(AuxiliaryRepositoryRepository.class);
         when(auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId)).thenReturn(stale, current);
-        when(auxiliaryRepositoryRepository.findExerciseIdById(auxiliaryRepositoryId)).thenReturn(Optional.of(EXERCISE_ID));
         UserRepository userRepository = mock(UserRepository.class);
         when(userRepository.getUserWithAuthorities("instructor")).thenReturn(user("instructor"));
         RepositoryAccessService repositoryAccessService = mock(RepositoryAccessService.class);
@@ -189,7 +208,7 @@ class RepositoryResourceMutationGuardTest {
                 mock(ParticipationAuthorizationCheckService.class), mock(GitService.class), mock(RepositoryService.class), mock(ProgrammingExerciseParticipationService.class),
                 programmingExerciseRepository, participationRepository, mock(BuildLogEntryService.class), mock(ProgrammingSubmissionRepository.class),
                 mock(SubmissionPolicyRepository.class), mock(RepositoryAccessService.class), Optional.empty(), mock(RepositoryParticipationService.class),
-                new ProgrammingExerciseMutationGuardService(Optional.empty(), mock(HazelcastInstance.class)));
+                new ProgrammingExerciseMutationGuardService(Optional.empty()));
     }
 
     private static User user(String login) {

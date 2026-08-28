@@ -85,19 +85,66 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void put(K key, V value, Duration timeToLive) {
-        // Plain RMap has no per-entry expiry, so an expiring map must have been obtained through the provider's expiring factory method, which backs it with an RMapCache.
-        // Failing loudly here is deliberate: silently ignoring the expiry is exactly the defect this method exists to prevent.
-        if (!(map instanceof RMapCache<K, V> expiringMap)) {
+        if (mapCache == null) {
             throw new UnsupportedOperationException(
-                    "Redisson map '" + map.getName() + "' does not support per-entry expiry; obtain it via DistributedDataProvider.getExpiringMap to write entries with a TTL");
+                    "Map '" + map.getName() + "' does not support entry expiry. Obtain it via DistributedDataProvider.getExpiringMap(name, ttl) instead of getMap(name).");
         }
-        V oldValue = expiringMap.put(key, value, Math.max(1L, timeToLive.toSeconds()), TimeUnit.SECONDS);
+        V oldValue = mapCache.put(key, value, timeToLive.toMillis(), TimeUnit.MILLISECONDS);
         if (oldValue != null) {
             publishSafely(MapItemEvent.updated(key, value, oldValue));
         }
         else {
             publishSafely(MapItemEvent.added(key, value));
         }
+    }
+
+    @Override
+    public V putIfAbsent(K key, V value) {
+        V existing = map.putIfAbsent(key, value);
+        if (existing == null) {
+            publishSafely(MapItemEvent.added(key, value));
+        }
+        return existing;
+    }
+
+    @Override
+    public V putIfAbsent(K key, V value, Duration timeToLive) {
+        if (mapCache == null) {
+            throw new UnsupportedOperationException(
+                    "Map '" + map.getName() + "' does not support entry expiry. Obtain it via DistributedDataProvider.getExpiringMap(name, ttl) instead of getMap(name).");
+        }
+        V existing = mapCache.putIfAbsent(key, value, timeToLive.toMillis(), TimeUnit.MILLISECONDS);
+        if (existing == null) {
+            publishSafely(MapItemEvent.added(key, value));
+        }
+        return existing;
+    }
+
+    @Override
+    public boolean remove(K key, V value) {
+        boolean removed = map.remove(key, value);
+        if (removed) {
+            publishSafely(MapItemEvent.removed(key, value));
+        }
+        return removed;
+    }
+
+    @Override
+    public boolean replace(K key, V expectedValue, V replacementValue) {
+        boolean replaced = map.replace(key, expectedValue, replacementValue);
+        if (replaced) {
+            publishSafely(MapItemEvent.updated(key, replacementValue, expectedValue));
+        }
+        return replaced;
+    }
+
+    @Override
+    public boolean refreshTimeToLive(K key, Duration timeToLive) {
+        if (mapCache == null) {
+            throw new UnsupportedOperationException(
+                    "Map '" + map.getName() + "' does not support entry expiry. Obtain it via DistributedDataProvider.getExpiringMap(name, ttl) instead of getMap(name).");
+        }
+        return mapCache.expireEntry(key, timeToLive, Duration.ZERO);
     }
 
     @Override
@@ -143,6 +190,11 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     public void lock(K key) {
         map.getLock(key).lock();
 
+    }
+
+    @Override
+    public void lock(K key, Duration lease) {
+        map.getLock(key).lock(lease.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override

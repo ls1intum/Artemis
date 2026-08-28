@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.mock.env.MockEnvironment;
 
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionEffortProfileService;
 
@@ -28,7 +29,8 @@ class HyperionGenerationConfigurationValidatorTest {
 
     private static HyperionGenerationConfigurationValidator validator(HyperionAgentProperties properties, Duration ownerHeartbeatInterval, int maxSemanticRepairs) {
         // An empty model collection is what a node without a configured ChatModel binds.
-        return new HyperionGenerationConfigurationValidator(properties, new HyperionEffortProfileService(properties, List.of()), ownerHeartbeatInterval, maxSemanticRepairs);
+        return new HyperionGenerationConfigurationValidator(properties, new HyperionEffortProfileService(properties, List.of()), ownerHeartbeatInterval, maxSemanticRepairs,
+                new MockEnvironment());
     }
 
     private static HyperionAgentProperties withProfileDeadline(Duration profileMaxJobDuration) {
@@ -67,6 +69,15 @@ class HyperionGenerationConfigurationValidatorTest {
                 .withMessageContaining("owner-heartbeat-interval");
     }
 
+    @Test
+    void anOwnerHeartbeatThatCannotFireWithinTheShortestProfile_failsStartup() {
+        HyperionAgentProperties properties = withProfileDeadline(Duration.ofSeconds(10));
+
+        assertThatIllegalArgumentException().isThrownBy(() -> validator(properties, OWNER_HEARTBEAT_INTERVAL, VALID_SEMANTIC_REPAIRS))
+                .withMessageContaining("owner-heartbeat-interval");
+        assertThatCode(() -> validator(withProfileDeadline(Duration.ofSeconds(20)), OWNER_HEARTBEAT_INTERVAL, VALID_SEMANTIC_REPAIRS)).doesNotThrowAnyException();
+    }
+
     @ParameterizedTest
     @ValueSource(ints = { 0, -1, HyperionGenerationConfigurationValidator.MAX_SEMANTIC_REPAIRS + 1 })
     void aRepairBudgetOutsideTheReviewedRange_failsStartup(int maxSemanticRepairs) {
@@ -91,4 +102,16 @@ class HyperionGenerationConfigurationValidatorTest {
         assertThat(lazy).isNotNull();
         assertThat(lazy.value()).isFalse();
     }
+
+    @Test
+    void redisProviderFailsStartup() {
+        MockEnvironment environment = new MockEnvironment().withProperty("artemis.distributed-data.provider", "Redis");
+        HyperionAgentProperties properties = new HyperionAgentProperties();
+
+        org.assertj.core.api.Assertions
+                .assertThatIllegalStateException().isThrownBy(() -> new HyperionGenerationConfigurationValidator(properties,
+                        new HyperionEffortProfileService(properties, List.of()), OWNER_HEARTBEAT_INTERVAL, VALID_SEMANTIC_REPAIRS, environment))
+                .withMessageContaining("Redis").withMessageContaining("topology");
+    }
+
 }

@@ -13,7 +13,8 @@ public final class LanguageGenerationProfile {
 
     private static final Set<ProgrammingLanguage> SUPPORTED_LANGUAGES = Set.of(ProgrammingLanguage.JAVA);
 
-    private static final Set<ProjectType> SUPPORTED_JAVA_PROJECT_TYPES = Set.of(ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN);
+    private static final Set<ProjectType> SUPPORTED_JAVA_PROJECT_TYPES = Set.of(ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN, ProjectType.GRADLE_GRADLE,
+            ProjectType.PLAIN_GRADLE);
 
     private LanguageGenerationProfile() {
     }
@@ -61,7 +62,7 @@ public final class LanguageGenerationProfile {
         return """
 
 
-                Maven Java layout:
+                Java exercise layout (Maven or Gradle):
                 - solution/src/<package path>/*
                 - template/src/<package path>/* (given/stubbed files; student-creates absent)
                 - tests/test/<package path>/* (the test sources directory is `test`, NOT `src/test/java`)

@@ -5,8 +5,10 @@ import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionEffortProfileService;
 
 /**
@@ -30,10 +32,14 @@ public class HyperionGenerationConfigurationValidator {
 
     public HyperionGenerationConfigurationValidator(HyperionAgentProperties agentProperties, HyperionEffortProfileService effortProfiles,
             @Value("${artemis.hyperion.agent.owner-heartbeat-interval:PT15S}") Duration ownerHeartbeatInterval,
-            @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs) {
+            @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs, Environment environment) {
+        if (DistributedDataProviderResolver.isProvider(environment, "Redis")) {
+            throw new IllegalStateException(
+                    "Hyperion whole-exercise generation requires Hazelcast or Local distributed data; Redis cannot yet prove authoritative data-node topology");
+        }
         Duration maxJobDuration = agentProperties.getMaxJobDuration();
         HyperionGenerationTimeouts.validateMaxJobDuration(maxJobDuration);
-        HyperionGenerationTimeouts.validateOwnerHeartbeatInterval(ownerHeartbeatInterval, maxJobDuration);
+        HyperionGenerationTimeouts.validateOwnerHeartbeatInterval(ownerHeartbeatInterval, effortProfiles.shortestMaxJobDuration());
         HyperionGenerationTimeouts.validateStaleJobTimeout(agentProperties.getStaleJobTimeout(), effortProfiles.longestMaxJobDuration());
         validateMaxSemanticRepairs(maxSemanticRepairs);
     }
@@ -49,4 +55,5 @@ public class HyperionGenerationConfigurationValidator {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-semantic-repairs must be between 1 and " + MAX_SEMANTIC_REPAIRS + " but was " + maxSemanticRepairs);
         }
     }
+
 }

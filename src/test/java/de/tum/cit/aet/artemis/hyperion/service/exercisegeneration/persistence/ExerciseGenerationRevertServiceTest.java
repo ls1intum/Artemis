@@ -30,6 +30,7 @@ import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -90,7 +91,8 @@ class ExerciseGenerationRevertServiceTest {
         tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-adaptation-revert-test"));
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap())).thenReturn(true);
-        revertService = new ExerciseGenerationRevertService(hazelcastInstance, gitService, persistenceService, tempFileUtilService, DEFAULT_BRANCH);
+        revertService = new ExerciseGenerationRevertService(new HazelcastDistributedDataProviderService(hazelcastInstance), gitService, persistenceService, tempFileUtilService,
+                DEFAULT_BRANCH);
         revertService.init();
 
         templateUri = mock(LocalVCRepositoryUri.class);

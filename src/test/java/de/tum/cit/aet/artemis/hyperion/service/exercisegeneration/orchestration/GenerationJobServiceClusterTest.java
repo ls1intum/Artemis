@@ -101,7 +101,7 @@ class GenerationJobServiceClusterTest {
     }
 
     private static GenerationJobService nodeOn(HazelcastInstance member) {
-        GenerationJobService service = new GenerationJobService(member, event -> {
+        GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
         }, mock(LLMTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, EXPECTED_DATA_MEMBERS);
         service.init();
         return service;
@@ -213,7 +213,7 @@ class GenerationJobServiceClusterTest {
     }
 
     private static GenerationJobService clusterNodeExpecting(HazelcastInstance member, int expectedDataMembers) {
-        GenerationJobService service = new GenerationJobService(member, event -> {
+        GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
         }, mock(LLMTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, expectedDataMembers);
         service.init();
         return service;

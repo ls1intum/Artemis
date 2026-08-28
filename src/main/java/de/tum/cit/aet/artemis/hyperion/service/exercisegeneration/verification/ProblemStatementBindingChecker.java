@@ -342,7 +342,7 @@ final class ProblemStatementBindingChecker {
         List<String> unbound = new ArrayList<>();
         for (String rawName : actualTestNames) {
             String normalized = normalizeTestName(rawName);
-            if (BuildGateTestNames.isBuildGate(normalized) || bound.contains(normalized) || hiddenTestNames.contains(normalized)) {
+            if (bound.contains(normalized) || hiddenTestNames.contains(normalized)) {
                 continue;
             }
             if (!unbound.contains(normalized)) {
@@ -358,7 +358,7 @@ final class ProblemStatementBindingChecker {
         Set<String> bindable = new LinkedHashSet<>();
         for (String rawName : actualTestNames) {
             String normalized = normalizeTestName(rawName);
-            if (!normalized.isEmpty() && !BuildGateTestNames.isBuildGate(normalized) && !hidden.contains(normalized)) {
+            if (!normalized.isEmpty() && !hidden.contains(normalized)) {
                 bindable.add(normalized);
             }
         }

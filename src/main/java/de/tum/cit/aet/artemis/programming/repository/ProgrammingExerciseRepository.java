@@ -72,8 +72,91 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     int updateProblemStatementAndTitleIfUnchanged(@Param("exerciseId") long exerciseId, @Param("targetProblemStatement") String targetProblemStatement,
             @Param("targetTitle") String targetTitle, @Param("expectedProblemStatement") String expectedProblemStatement, @Param("expectedTitle") String expectedTitle);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
-    Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
+    @Query("""
+            SELECT CASE WHEN COUNT(pe) > 0 THEN TRUE ELSE FALSE END
+            FROM ProgrammingExercise pe
+                LEFT JOIN pe.exerciseGroup exerciseGroup
+                LEFT JOIN exerciseGroup.exam exam
+            WHERE pe.id = :exerciseId
+                AND (
+                    (pe.course IS NOT NULL AND COALESCE(pe.startDate, pe.releaseDate) > CURRENT_TIMESTAMP)
+                    OR (exerciseGroup IS NOT NULL AND exam.startDate > CURRENT_TIMESTAMP)
+                )
+                AND NOT EXISTS (
+                    SELECT participation.id
+                    FROM ProgrammingExerciseStudentParticipation participation
+                    WHERE participation.exercise.id = pe.id
+                )
+            """)
+    boolean isUnreleasedAndWithoutStudentParticipations(@Param("exerciseId") long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "buildConfig" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationAndBuildConfigById(long exerciseId);
+
+    /**
+     * Loads a programming exercise with everything the build trigger reads off it.
+     * <p>
+     * The trigger otherwise resolves the build config and the auxiliary repositories with a query each, per push, for
+     * what are per-exercise values. Both of their loaders return the association when it is already initialized, so one
+     * load here removes both queries without introducing anything that has to be invalidated.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the exercise with its build config and auxiliary repositories
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "buildConfig", "auxiliaryRepositories" })
+    Optional<ProgrammingExercise> findWithBuildConfigAndAuxiliaryRepositoriesById(long exerciseId);
+
+    /**
+     * Returns the values of the exercise's submission policy, without the exercise the policy points back at.
+     * <p>
+     * Deliberately a projection. The policy's back reference to its exercise is an eager inverse one-to-one, so loading
+     * the policy as an entity, or loading the exercise again to read it off there, fetches the whole exercise and the
+     * course it eagerly brings along. Grading reads a limit, a flag and possibly a penalty. See
+     * {@link SubmissionPolicyValuesDTO}.
+     *
+     * @param exerciseId the exercise whose submission policy should be read
+     * @return the values of the policy, or empty if the exercise has none
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO(
+                policy.id,
+                CASE
+                    WHEN TYPE(policy) = LockRepositoryPolicy THEN 'LOCK_REPOSITORY'
+                    WHEN TYPE(policy) = SubmissionPenaltyPolicy THEN 'SUBMISSION_PENALTY'
+                    ELSE 'UNKNOWN'
+                END,
+                policy.submissionLimit,
+                policy.active,
+                TREAT (policy AS SubmissionPenaltyPolicy).exceedingPenalty)
+            FROM ProgrammingExercise exercise
+                JOIN exercise.submissionPolicy policy
+            WHERE exercise.id = :exerciseId
+            """)
+    Optional<SubmissionPolicyValuesDTO> findSubmissionPolicyValuesByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Sets the flag that marks the exercise as having changed test cases, but only when it does not already hold that
+     * value.
+     * <p>
+     * Deliberately a modifying query. The flag is a single boolean, and reading the exercise in order to change it
+     * meant fetching the whole exercise together with the course it eagerly brings along, then merging all of it back,
+     * which is two wide statements for one column. Guarding on the current value inside the statement also means the
+     * previous value does not have to be read: the affected row count answers whether anything changed. A null in the
+     * column counts as false, which is how {@link ProgrammingExercise#getTestCasesChanged()} reads it.
+     *
+     * @param exerciseId       the exercise whose flag should be set
+     * @param testCasesChanged the value to set the flag to
+     * @return 1 if the flag was changed, 0 if it already held that value or no such exercise exists
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ProgrammingExercise exercise
+            SET exercise.testCasesChanged = :testCasesChanged
+            WHERE exercise.id = :exerciseId
+                AND COALESCE(exercise.testCasesChanged, FALSE) <> :testCasesChanged
+            """)
+    int updateTestCasesChanged(@Param("exerciseId") long exerciseId, @Param("testCasesChanged") boolean testCasesChanged);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
@@ -429,7 +512,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndSubmissionsById(@Param("exerciseId") long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "auxiliaryRepositories", "buildConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
     Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
 
     @Query("""
@@ -704,24 +787,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.id = :exerciseId
             """)
     long countStudentParticipationsByExerciseId(@Param("exerciseId") long exerciseId);
-
-    @Query("""
-            SELECT CASE WHEN COUNT(pe) > 0 THEN TRUE ELSE FALSE END
-            FROM ProgrammingExercise pe
-                LEFT JOIN pe.exerciseGroup exerciseGroup
-                LEFT JOIN exerciseGroup.exam exam
-            WHERE pe.id = :exerciseId
-                AND (
-                    (pe.course IS NOT NULL AND COALESCE(pe.startDate, pe.releaseDate) > CURRENT_TIMESTAMP)
-                    OR (exerciseGroup IS NOT NULL AND exam.startDate > CURRENT_TIMESTAMP)
-                )
-                AND NOT EXISTS (
-                    SELECT participation.id
-                    FROM ProgrammingExerciseStudentParticipation participation
-                    WHERE participation.exercise.id = pe.id
-                )
-            """)
-    boolean isUnreleasedAndWithoutStudentParticipations(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p.id

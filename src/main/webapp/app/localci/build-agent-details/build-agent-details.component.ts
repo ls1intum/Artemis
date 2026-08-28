@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
-import { BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/entities/build-agent-information.model';
+import { BuildAgentAddressInfo, BuildAgentInformation, BuildAgentStatus } from 'app/localci/shared/entities/build-agent-information.model';
 import { EMPTY, Observable, Subject, Subscription, catchError, debounceTime, exhaustMap, merge, switchMap, tap, timer } from 'rxjs';
 import { faCircleCheck, faFilter, faPause, faPauseCircle, faPlay, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -30,6 +30,7 @@ import { FinishedJobsTableComponent } from 'app/localci/build-queue/tables/finis
 import { extractHost, looksLikeAddress } from 'app/localci/shared/build-agent-address.utils';
 import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
 import { HyperionGenerationJobsTableComponent } from 'app/localci/hyperion-generation-jobs-table/hyperion-generation-jobs-table.component';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 /**
  * Component that displays detailed information about a specific build agent.
@@ -388,11 +389,11 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         this.generationSandboxesLoadFailed.set(false);
         return this.buildAgentsService.getGenerationSandboxes(agentName).pipe(
             tap((sessions) => {
-                this.generationSandboxes.set(sessions.map((session) => ({ ...session, agentName })));
+                this.generationSandboxes.set(sessions.map((session) => cloneWith(session, { agentName })));
                 this.generationSandboxesLoading.set(false);
             }),
             catchError(() => {
-                this.generationSandboxes.update((sessions) => sessions.map((session) => ({ ...session, stale: true })));
+                this.generationSandboxes.update((sessions) => sessions.map((session) => cloneWith(session, { stale: true })));
                 this.generationSandboxesLoading.set(false);
                 this.generationSandboxesLoadFailed.set(true);
                 return EMPTY;
@@ -403,6 +404,14 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     /**
      * Loads agent details from the API.
      */
+    private loadRegisteredAddresses() {
+        this.registeredAddressesSubscription?.unsubscribe();
+        this.registeredAddressesSubscription = this.buildAgentsService.getBuildAgentAddresses().subscribe({
+            next: (addressInfos) => this.registeredAddressInfo.set(addressInfos.find((addressInfo) => addressInfo.agentName === this.agentName())),
+            error: () => this.registeredAddressInfo.set(undefined),
+        });
+    }
+
     private loadAgentDetails() {
         this.agentDetailsSubscription?.unsubscribe();
         this.agentDetailsSubscription = this.buildAgentsService.getBuildAgentDetails(this.agentName()).subscribe({

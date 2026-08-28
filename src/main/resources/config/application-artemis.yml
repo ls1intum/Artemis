@@ -178,11 +178,9 @@ artemis:
       stale-job-scan-ms: 60000 # Deadline/stale-slot cleanup interval.
       provider-hard-failure-cooldown: PT5M # Shared admission for agent-turn, contract, and critic calls after hard quota/auth/config failures; transient rate limits do not open it.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    # Token costs (EUR per million tokens). Baselines (gpt-5-mini, gpt-5.4, gpt-5.4-mini) are seeded in
-    # LLMModelCostConfiguration. Add entries here only to override or register a model. Keep this commented:
-    # an active entry here uses a literal key (e.g. gpt-5-mini) that would collide with the same model
-    # configured via environment variables (where it arrives stripped, e.g. gpt5mini). Dotted keys must be
-    # bracket-quoted, e.g. "[gpt-5.4]".
+    # Optional token costs (EUR per million tokens). No model prices are built in: register every model for which
+    # Artemis should estimate cost. Missing prices deliberately produce an incomplete estimate rather than a
+    # fabricated zero-cost result. Dotted keys must be bracket-quoted, e.g. "[gpt-5.4]".
     # model-costs:
     #   "[gpt-5.4]":
     #     input-cost-per-million-eur: 2.30

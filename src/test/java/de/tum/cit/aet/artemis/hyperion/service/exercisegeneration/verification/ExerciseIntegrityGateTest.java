@@ -1101,8 +1101,8 @@ class ExerciseIntegrityGateTest {
                 .as("server-authored structural feedback is not part of the agent-authored grading plan").isEmpty();
 
         String buildGatePlan = "{\"tests\":[{\"name\":\"GBS-Tester-1.36.CompileSort\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
-        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, buildGatePlan, List.of("GBS-Tester-1.36.CompileSort"))).singleElement().asString().contains("build-gate",
-                "zero-weight", "cannot satisfy");
+        assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, buildGatePlan, List.of("GBS-Tester-1.36.CompileSort")))
+                .as("an agent-controlled name cannot claim trusted build-gate provenance").isEmpty();
 
         assertThat(ExerciseIntegrityGate.approvedTestPlanReasons(spec, unexpectedHidden, List.of("transforms"), false)).singleElement().asString().contains("has no due date",
                 "hidden indefinitely");

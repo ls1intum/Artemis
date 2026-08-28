@@ -71,8 +71,13 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
-    public void put(K key, V value, Duration timeToLive) {
-        map.put(key, value, Math.max(1L, timeToLive.toSeconds()), TimeUnit.SECONDS);
+    public boolean replace(K key, V expectedValue, V replacementValue) {
+        return map.replace(key, expectedValue, replacementValue);
+    }
+
+    @Override
+    public boolean refreshTimeToLive(K key, Duration timeToLive) {
+        return map.setTtl(key, timeToLive.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -113,6 +118,11 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     @Override
     public void lock(K key) {
         map.lock(key);
+    }
+
+    @Override
+    public void lock(K key, Duration lease) {
+        map.lock(key, lease.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     @Override

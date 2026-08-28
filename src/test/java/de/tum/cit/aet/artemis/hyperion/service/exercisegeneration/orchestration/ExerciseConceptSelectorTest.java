@@ -232,7 +232,7 @@ class ExerciseConceptSelectorTest {
                 .newHazelcastInstance(new Config().setClusterName("hyperion-concept-turn-accounting-" + System.nanoTime()).setProperty("hazelcast.phone.home.enabled", "false"));
         try {
             hazelcastInstance.getConfig().getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-            GenerationJobReplayStore replayStore = new GenerationJobReplayStore(hazelcastInstance, Duration.ofHours(4));
+            GenerationJobReplayStore replayStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofHours(4));
             long exerciseId = 900L;
             String jobId = "concept-rejected";
             hazelcastInstance.getMap("hyperion-exercise-generation-jobs").set(String.valueOf(exerciseId),

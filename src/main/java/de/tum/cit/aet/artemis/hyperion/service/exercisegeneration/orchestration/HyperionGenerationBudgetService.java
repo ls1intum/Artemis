@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
 
@@ -13,18 +12,17 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 
@@ -49,7 +47,7 @@ public class HyperionGenerationBudgetService {
     private final LLMTokenUsageTraceRepository tokenUsageTraceRepository;
 
     @Nullable
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final Duration budgetWindow;
 
@@ -63,10 +61,12 @@ public class HyperionGenerationBudgetService {
 
     private final Duration reservationTtl;
 
-    private IMap<String, TokenBudgetReservation> reservationMap;
+    private DistributedMap<String, TokenBudgetReservation> reservationMap;
+
+    private DistributedLock reservationAdmissionLock;
 
     @Autowired
-    public HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+    public HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, DistributedDataProvider distributedDataProvider,
             @Value("${artemis.hyperion.agent.token-budget-window:PT24H}") Duration budgetWindow,
             @Value("${artemis.hyperion.agent.admission-max-tokens-per-user:12000000}") long maxTokensPerUser,
             @Value("${artemis.hyperion.agent.admission-max-tokens-per-course:120000000}") long maxTokensPerCourse,
@@ -74,15 +74,15 @@ public class HyperionGenerationBudgetService {
             HyperionAgentProperties agentProperties) {
         // Validated against the LARGEST configured profile, not the deployment default: a profile that raises the per-job ceiling above a rolling budget could otherwise be
         // admitted against a budget too small to hold one of its jobs, which under-reserves exactly the runs that cost the most.
-        this(tokenUsageTraceRepository, hazelcastInstance, budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, effortProfiles.largestMaxTokensPerJob(),
+        this(tokenUsageTraceRepository, distributedDataProvider, budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, effortProfiles.largestMaxTokensPerJob(),
                 agentProperties.getMaxJobDuration());
     }
 
-    HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, HazelcastInstance hazelcastInstance, Duration budgetWindow, long maxTokensPerUser,
-            long maxTokensPerCourse, long maxTokensGlobal, long maxTokensPerJob, Duration maxJobDuration) {
+    HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, DistributedDataProvider distributedDataProvider, Duration budgetWindow,
+            long maxTokensPerUser, long maxTokensPerCourse, long maxTokensGlobal, long maxTokensPerJob, Duration maxJobDuration) {
         validateConfiguration(budgetWindow, maxTokensPerUser, maxTokensPerCourse, maxTokensGlobal, maxTokensPerJob);
         this.tokenUsageTraceRepository = tokenUsageTraceRepository;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
         this.budgetWindow = budgetWindow;
         this.maxTokensPerUser = maxTokensPerUser;
         this.maxTokensPerCourse = maxTokensPerCourse;
@@ -116,7 +116,7 @@ public class HyperionGenerationBudgetService {
     public HyperionGenerationBudgetService(LLMTokenUsageTraceRepository tokenUsageTraceRepository, Duration budgetWindow, long maxTokensPerUser, long maxTokensPerCourse,
             long maxTokensGlobal) {
         this.tokenUsageTraceRepository = tokenUsageTraceRepository;
-        this.hazelcastInstance = null;
+        this.distributedDataProvider = null;
         this.budgetWindow = budgetWindow;
         this.maxTokensPerUser = maxTokensPerUser;
         this.maxTokensPerCourse = maxTokensPerCourse;
@@ -127,8 +127,9 @@ public class HyperionGenerationBudgetService {
 
     @PostConstruct
     public void init() {
-        if (hazelcastInstance != null) {
-            reservationMap = hazelcastInstance.getMap(RESERVATION_MAP_NAME);
+        if (distributedDataProvider != null) {
+            reservationMap = distributedDataProvider.getExpiringMap(RESERVATION_MAP_NAME, reservationTtl);
+            reservationAdmissionLock = distributedDataProvider.getLock(RESERVATION_MAP_NAME + ":" + RESERVATION_LOCK_KEY);
         }
     }
 
@@ -157,19 +158,14 @@ public class HyperionGenerationBudgetService {
         }
         boolean locked = false;
         try {
-            locked = reservationMap.tryLock(RESERVATION_LOCK_KEY, RESERVATION_LOCK_WAIT_SECONDS, TimeUnit.SECONDS);
+            locked = reservationAdmissionLock.tryLock(Duration.ofSeconds(RESERVATION_LOCK_WAIT_SECONDS));
             if (!locked) {
                 throw admissionBusy();
             }
             assertWithinBudgets(userId, courseId, tokens);
             String id = UUID.randomUUID().toString();
-            long ttlSeconds = Math.max(1L, reservationTtl.toSeconds());
-            reservationMap.set(id, new TokenBudgetReservation(userId, courseId, tokens), ttlSeconds, TimeUnit.SECONDS);
+            reservationMap.put(id, new TokenBudgetReservation(userId, courseId, tokens), reservationTtl);
             return new BudgetReservation(id);
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw admissionBusy();
         }
         catch (RuntimeException e) {
             if (e instanceof TooManyRequestsAlertException) {
@@ -181,7 +177,7 @@ public class HyperionGenerationBudgetService {
         finally {
             if (locked) {
                 try {
-                    reservationMap.unlock(RESERVATION_LOCK_KEY);
+                    reservationAdmissionLock.unlock();
                 }
                 catch (RuntimeException e) {
                     log.warn("Could not unlock Hyperion generation budget reservation admission lock: {}", e.getMessage());
@@ -228,8 +224,7 @@ public class HyperionGenerationBudgetService {
             // Clamp to zero, never remove: the owning worker's heartbeat reads the reservation's presence as proof it still owns the job (GenerationJobService#heartbeat), so
             // removing a fully spent one would tell that job it lost ownership within a heartbeat interval, mid-save. releaseReservation removes it when the job ends.
             long remaining = Math.max(0, reservation.tokens() - tokens);
-            reservationMap.set(reservationId, new TokenBudgetReservation(reservation.userId(), reservation.courseId(), remaining), Math.max(1L, reservationTtl.toSeconds()),
-                    TimeUnit.SECONDS);
+            reservationMap.put(reservationId, new TokenBudgetReservation(reservation.userId(), reservation.courseId(), remaining), reservationTtl);
         }
         catch (RuntimeException exception) {
             log.warn("Could not reduce Hyperion generation budget reservation {} after durable usage was recorded; admission remains conservative: {}", reservationId,
@@ -258,7 +253,7 @@ public class HyperionGenerationBudgetService {
             return true;
         }
         try {
-            boolean retained = reservationMap.setTtl(reservationId, Math.max(1L, budgetWindow.toSeconds()), TimeUnit.SECONDS);
+            boolean retained = refreshReservationTtl(reservationId, budgetWindow);
             if (!retained) {
                 log.error("Could not retain uncertain Hyperion token reservation {} because it no longer exists", reservationId);
             }
@@ -281,7 +276,7 @@ public class HyperionGenerationBudgetService {
             return true;
         }
         try {
-            boolean refreshed = reservationMap.setTtl(reservationId, Math.max(1L, reservationTtl.toSeconds()), TimeUnit.SECONDS);
+            boolean refreshed = refreshReservationTtl(reservationId, reservationTtl);
             if (!refreshed) {
                 log.error("Could not refresh Hyperion generation budget reservation {} because it no longer exists", reservationId);
             }
@@ -290,6 +285,21 @@ public class HyperionGenerationBudgetService {
         catch (RuntimeException e) {
             log.warn("Could not refresh Hyperion generation budget reservation {}; its existing TTL remains in effect: {}", reservationId, e.getMessage());
             return false;
+        }
+    }
+
+    private boolean refreshReservationTtl(String reservationId, Duration timeToLive) {
+        reservationMap.lock(reservationId);
+        try {
+            TokenBudgetReservation reservation = reservationMap.get(reservationId);
+            if (reservation == null) {
+                return false;
+            }
+            reservationMap.put(reservationId, reservation, timeToLive);
+            return true;
+        }
+        finally {
+            reservationMap.unlock(reservationId);
         }
     }
 

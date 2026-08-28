@@ -687,6 +687,32 @@ class AgentLoopRunnerTest {
     }
 
     @Test
+    void agentLoop_rejectsSupportedSecretMaterialInCarriedToolCallArguments() {
+        ChatModel chatModel = mock(ChatModel.class);
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        AssistantMessage priorAssistant = AssistantMessage.builder().content("")
+                .toolCalls(List.of(new AssistantMessage.ToolCall("call-1", "function", "write_file", "{\"content\":\"" + GITHUB_SENTINEL + "\"}"))).build();
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .isThrownBy(() -> runner.runTextSession("system", List.of(priorAssistant), "continue", 1, () -> false, null, null)).withMessageContaining("GITHUB_TOKEN")
+                .withMessageNotContaining(GITHUB_SENTINEL);
+        verify(chatModel, never()).call(any(Prompt.class));
+    }
+
+    @Test
+    void agentLoop_rejectsSupportedSecretMaterialInNewToolCallArgumentsBeforeExecution() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("write_file", "{\"content\":\"" + GITHUB_SENTINEL + "\"}"));
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+
+        assertThatExceptionOfType(de.tum.cit.aet.artemis.hyperion.service.HyperionSecretMaterialPolicy.SecretMaterialException.class)
+                .isThrownBy(() -> runner.run("system", "continue", new SandboxAgentTools(sandbox, "fake-session"), 1, () -> false, null, null))
+                .withMessageContaining("GITHUB_TOKEN").withMessageNotContaining(GITHUB_SENTINEL);
+        assertThat(sandbox.files()).isEmpty();
+    }
+
+    @Test
     void agentLoop_recordingModelNeverReceivesSupportedSentinelFromToolObservation() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("read_file", "{\"path\":\"solution/src/fixture.txt\"}"), textResponse("DONE"));

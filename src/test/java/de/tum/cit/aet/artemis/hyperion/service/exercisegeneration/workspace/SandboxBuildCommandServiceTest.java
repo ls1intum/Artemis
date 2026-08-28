@@ -174,15 +174,17 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
-    void verifyScript_fallbackUsesTheGenericBuildDetector_forConfigurationsOutsideJavaMaven() {
-        // LanguageGenerationProfile admits only Java/Maven, so a Java/Gradle exercise reaching the fallback gets generic best-effort detection, not Gradle-specific commands.
+    void verifyScript_fallbackUsesGradleCommandsForGradleExercises() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
 
         String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(exercise);
 
-        assertThat(script).contains("if [ -f pom.xml ]; then mvn clean test;").contains("elif [ -f ./gradlew ]; then chmod +x ./gradlew && ./gradlew clean test --no-daemon;");
+        assertThat(script)
+                .contains("run_phase './gradlew clean compileJava compileTestJava --no-daemon'", "run_phase './gradlew testClasses --no-daemon'",
+                        "run_phase './gradlew test --no-daemon -x compileJava -x processResources -x compileTestJava -x processTestResources -x testClasses'")
+                .doesNotContain("if [ -f pom.xml ]; then mvn clean test;");
     }
 
     @Test
@@ -345,6 +347,40 @@ class SandboxBuildCommandServiceTest {
 
         assertThat(script).contains("mvn -B -Pcourse clean compile", "mvn -B -Pcourse test-compile -DskipTests -Dstudent.profile=true",
                 "mvn -B -Pcourse surefire:test -Dstudent.profile=true");
+    }
+
+    @Test
+    void authoritativeGradleBuild_compilesTestsBeforeRemovingSources_andRunsCompiledTestsWithoutProducerTasks() {
+        for (ProjectType projectType : List.of(ProjectType.PLAIN_GRADLE, ProjectType.GRADLE_GRADLE)) {
+            ProgrammingExercise java = new ProgrammingExercise();
+            java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            java.setProjectType(projectType);
+            BuildPhaseDTO compile = new BuildPhaseDTO("compile", "./gradlew clean compileJava --no-daemon", null, false, List.of());
+            BuildPhaseDTO test = new BuildPhaseDTO("test", "./gradlew test --no-daemon", null, false, List.of());
+
+            String script = factoryWithPhases(List.of(compile, test)).verifyScriptContent(java);
+
+            assertThat(script).contains("./gradlew clean compileJava --no-daemon", "./gradlew testClasses --no-daemon", "./gradlew test --no-daemon -x compileJava",
+                    "-x processResources", "-x compileTestJava", "-x processTestResources", "-x testClasses", "export GRADLE_USER_HOME=/tmp/hyperion-gradle-home",
+                    "cp -a /root/.gradle/. \"$GRADLE_USER_HOME\"/", "find \"$BUILD_DIR\" -type f -name gradlew -exec chmod +x");
+            assertThat(script.indexOf("./gradlew testClasses --no-daemon")).isLessThan(script.indexOf("-name '*.java' -delete"));
+            assertThat(script.indexOf("-name '*.java' -delete")).isLessThan(script.indexOf("./gradlew test --no-daemon -x compileJava"));
+        }
+    }
+
+    @Test
+    void authoritativeSequentialGradleBuild_handlesStructuralAndBehaviorTestSourceSets() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        java.setProjectType(ProjectType.GRADLE_GRADLE);
+        BuildPhaseDTO structural = new BuildPhaseDTO("structural", "./gradlew clean structuralTests --no-daemon", null, false, List.of());
+        BuildPhaseDTO behavior = new BuildPhaseDTO("behavior", "./gradlew behaviorTests --no-daemon", null, false, List.of());
+
+        String script = factoryWithPhases(List.of(structural, behavior)).verifyScriptContent(java);
+
+        assertThat(script).contains("./gradlew clean structuralTestClasses --no-daemon", "./gradlew behaviorTestClasses --no-daemon",
+                "./gradlew structuralTests --no-daemon -x compileJava", "-x compileStructuralTestJava", "-x structuralTestClasses",
+                "./gradlew behaviorTests --no-daemon -x compileJava", "-x compileBehaviorTestJava", "-x behaviorTestClasses");
     }
 
     @Test

@@ -40,6 +40,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faChevronUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,

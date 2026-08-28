@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * The reply a remote build agent publishes after performing a {@link SandboxOpRequestDTO}. Broadcast over the {@code hyperion-sandbox-responses}
- * {@link de.tum.cit.aet.artemis.localci.service.distributed.api.topic.DistributedTopic} and matched back to the blocked caller by {@link #correlationId}; on failure
+ * {@link de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic} and matched back to the blocked caller by {@link #correlationId}; on failure
  * {@link #success} is {@code false} and {@link #errorMessage} carries a short description the caller rethrows as a session-fatal exception.
  *
  * @param correlationId the id of the {@link SandboxOpRequestDTO} this response answers

@@ -45,6 +45,51 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
 
     protected abstract DistributedDataProvider getDistributedDataProvider();
 
+    protected boolean exposesAuthoritativeDataNodeTopology() {
+        return true;
+    }
+
+    @Test
+    void testStableNodeIdentityAndTopology() {
+        DistributedDataProvider provider = getDistributedDataProvider();
+        assertThat(provider.getLocalNodeId()).isNotBlank().isEqualTo(provider.getLocalNodeId());
+        if (exposesAuthoritativeDataNodeTopology()) {
+            assertThat(provider.getDataNodeIds()).isPresent();
+            assertThat(provider.getDataNodeIds().orElseThrow()).contains(provider.getLocalNodeId());
+            assertThat(provider.getDataNodeAttributes("hyperion.exercise-generation-capable")).isPresent();
+            assertThat(provider.getDataNodeAttributes("hyperion.exercise-generation-capable").orElseThrow().keySet()).isEqualTo(provider.getDataNodeIds().orElseThrow());
+        }
+        else {
+            assertThat(provider.getDataNodeIds()).isEmpty();
+            assertThat(provider.getDataNodeAttributes("hyperion.exercise-generation-capable")).isEmpty();
+        }
+    }
+
+    @Test
+    void testValueGuardedReplace() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getMap("testValueGuardedReplace");
+        map.put("key", "owner-one");
+
+        assertThat(map.replace("key", "wrong-owner", "owner-two")).isFalse();
+        assertThat(map.get("key")).isEqualTo("owner-one");
+        assertThat(map.replace("key", "owner-one", "owner-two")).isTrue();
+        assertThat(map.get("key")).isEqualTo("owner-two");
+    }
+
+    @Test
+    void testRefreshTimeToLiveIsAtomicAndRequiresExpiringMap() throws InterruptedException {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("testRefreshTimeToLive", Duration.ofMillis(200));
+        map.put("key", "value", Duration.ofMillis(100));
+        Thread.sleep(50);
+
+        assertThat(map.refreshTimeToLive("key", Duration.ofMillis(200))).isTrue();
+        Thread.sleep(100);
+        assertThat(map.get("key")).isEqualTo("value");
+        assertThat(map.refreshTimeToLive("absent", Duration.ofMillis(200))).isFalse();
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(() -> getDistributedDataProvider().<String, String>getMap("nonExpiringRefresh").refreshTimeToLive("key", Duration.ofSeconds(1)));
+    }
+
     @Test
     void testQueueListener() {
         DistributedQueue<String> queue = getDistributedDataProvider().getQueue("testQueue");

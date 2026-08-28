@@ -66,8 +66,9 @@ class ProgrammingExercisePartialUpdateResourceTest {
     @BeforeEach
     void setUp() {
         hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        generationJobService = new GenerationJobService(hazelcastInstance, event -> {
-        }, mock(LLMTokenUsageService.class), mock(HyperionGenerationBudgetService.class), Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
+        generationJobService = new GenerationJobService(new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance),
+                event -> {
+                }, mock(LLMTokenUsageService.class), mock(HyperionGenerationBudgetService.class), Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
         generationJobService.init();
     }
 
@@ -194,7 +195,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
     }
 
     private ProgrammingExerciseMutationGuardService realGuard() {
-        return new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(generationJobService)), hazelcastInstance);
+        return new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(generationJobService)));
     }
 
     private void assertGenerationCannotClaim(long exerciseId) {

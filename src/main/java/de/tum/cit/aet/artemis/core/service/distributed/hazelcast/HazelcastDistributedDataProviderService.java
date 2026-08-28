@@ -174,12 +174,6 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
     }
 
     @Override
-    public <K, V> DistributedMap<K, V> getExpiringMap(String name) {
-        // An IMap supports a per-entry TTL directly, so this is the same proxy; the distinct factory method exists for the backends where it is not.
-        return getMap(name);
-    }
-
-    @Override
     public <T> DistributedTopic<T> getTopic(String name) {
         return new HazelcastDistributedTopic<>(hazelcastInstance.getTopic(name));
     }
@@ -279,6 +273,41 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
         // For cluster members, format consistently with client addresses
         var memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress();
         return "[" + memberAddress.getHost() + "]:" + memberAddress.getPort();
+    }
+
+    @Override
+    public String getLocalNodeId() {
+        if (!isInstanceRunning()) {
+            throw new HazelcastInstanceNotActiveException();
+        }
+        return hazelcastInstance.getLocalEndpoint().getUuid().toString();
+    }
+
+    @Override
+    public Optional<Set<String>> getDataNodeIds() {
+        if (!isInstanceRunning()) {
+            return Optional.empty();
+        }
+        return Optional.of(getClusterMembers().stream().filter(member -> !member.isLiteMember()).map(Member::getUuid).map(UUID::toString).collect(Collectors.toUnmodifiableSet()));
+    }
+
+    @Override
+    public Optional<Map<String, String>> getDataNodeAttributes(String attributeName) {
+        if (!isInstanceRunning()) {
+            return Optional.empty();
+        }
+        Map<String, String> attributes = new HashMap<>();
+        for (Member member : getClusterMembers()) {
+            if (member.isLiteMember()) {
+                continue;
+            }
+            String value = member.getAttribute(attributeName);
+            if (value == null) {
+                return Optional.empty();
+            }
+            attributes.put(member.getUuid().toString(), value);
+        }
+        return Optional.of(Map.copyOf(attributes));
     }
 
     /**

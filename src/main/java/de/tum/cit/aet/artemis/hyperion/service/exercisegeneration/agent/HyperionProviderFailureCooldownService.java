@@ -4,22 +4,19 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.PostConstruct;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 
-/** Hazelcast-backed hard-failure cooldown so one core node's quota/auth failure protects all Hyperion generation workers. */
+/** Distributed hard-failure cooldown so one core node's quota/auth failure protects all Hyperion generation workers. */
 @Lazy
 @Service
 @Conditional(HyperionExerciseGenerationEnabled.class)
@@ -27,17 +24,17 @@ public class HyperionProviderFailureCooldownService implements ProviderFailureCo
 
     private static final String COOLDOWN_MAP_NAME = "hyperion-provider-failure-cooldowns";
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
-    private IMap<String, CooldownState> cooldownMap;
+    private DistributedMap<String, CooldownState> cooldownMap;
 
-    public HyperionProviderFailureCooldownService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public HyperionProviderFailureCooldownService(DistributedDataProvider distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     @PostConstruct
     public void init() {
-        cooldownMap = hazelcastInstance.getMap(COOLDOWN_MAP_NAME);
+        cooldownMap = distributedDataProvider.getExpiringMap(COOLDOWN_MAP_NAME, Duration.ofDays(1));
     }
 
     @Nullable
@@ -61,7 +58,7 @@ public class HyperionProviderFailureCooldownService implements ProviderFailureCo
             CooldownState state = cooldownMap.get(key);
             Instant effectiveUntil = state != null && state.cooldownUntil().isAfter(until) ? state.cooldownUntil() : until;
             long ttlMillis = Math.max(1L, Duration.between(Instant.now(), effectiveUntil).toMillis());
-            cooldownMap.set(key, new CooldownState(effectiveUntil), ttlMillis, TimeUnit.MILLISECONDS);
+            cooldownMap.put(key, new CooldownState(effectiveUntil), Duration.ofMillis(ttlMillis));
         }
         finally {
             cooldownMap.unlock(key);

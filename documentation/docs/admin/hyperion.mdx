@@ -27,7 +27,10 @@ Whole-exercise generation and adaptation additionally require:
 
 - The `localci` and `localvc` profiles on the same node. Generation drives a resource-bounded, network-isolated sandbox on a LocalCI build agent, persists through LocalVC with a LocalCI trigger, and verifies with the production LocalCI test and static-code-analysis parsers. There is no equivalent path for external CI systems, so on a Jenkins deployment the endpoints are never registered and the client hides the entry points.
 - At least one LocalCI build agent with generation capacity allocated, as described under [Allocate generation capacity](#allocate-generation-capacity).
-- A **Java** exercise whose project type is Maven (`MAVEN_MAVEN` or `PLAIN_MAVEN`) or unset. Gradle and every other language are rejected with `400 unsupportedGenerationLanguage`.
+- A **Java** exercise whose project type is Maven (`MAVEN_MAVEN` or `PLAIN_MAVEN`), Gradle (`GRADLE_GRADLE` or `PLAIN_GRADLE`), or unset. Every other language is rejected with `400 unsupportedGenerationLanguage`.
+- The LocalCI image selected for that project type must contain its complete offline build toolchain and dependency cache. In particular, configure
+  `artemis.continuous-integration.build.images.java.gradle` for Gradle exercises; the sandbox has no network and cannot download a Gradle distribution or missing dependencies.
+  Hyperion copies an image-provided Gradle home into bounded writable storage before verification because the container root filesystem remains read-only.
 
 Consistency checks and problem-statement rewriting have neither requirement and work with any supported CI system.
 
@@ -355,7 +358,7 @@ If whole-exercise generation is enabled, continue:
 
 4. Confirm that `hyperion-exercise-generation` also appears in `activeModuleFeatures`. If it does not, the dedicated property is off or one of the `core`, `localci`, `localvc` profiles is missing.
 5. Check that `/management/health` reports the `hyperionGenerationCapacity` component as `UP` — see [Health and capacity](#health-and-capacity).
-6. Open a Java Maven programming exercise that has no student participations and no auxiliary repositories, and confirm that **Generate exercise** is offered. The date on which students could first participate — start date, else release date, else the exam's start date — must be set and in the future; an exercise with no such date counts as already released and is rejected.
+6. Open a Java Maven or Gradle programming exercise that has no student participations and no auxiliary repositories, and confirm that **Generate exercise** is offered. The date on which students could first participate — start date, else release date, else the exam's start date — must be set and in the future; an exercise with no such date counts as already released and is rejected.
 7. Start one generation run end to end. If it is rejected, look the error key up under [Why a generation request was rejected](#why-a-generation-request-was-rejected).
 
 ## Operating exercise generation
@@ -390,7 +393,7 @@ Every failure below is returned by `POST /api/hyperion/programming-exercises/{ex
 
 | Status | Error key                              | Cause and action                                                                                                                                             |
 | ------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 400    | `unsupportedGenerationLanguage`        | Not a Java exercise with a Maven or unset project type, **or** the exercise has auxiliary repositories. Both are unsupported; the message distinguishes them. |
+| 400    | `unsupportedGenerationLanguage`        | Not a Java exercise with a Maven, Gradle, or unset project type, **or** the exercise has auxiliary repositories. Both are unsupported; the message distinguishes them. |
 | 400    | `exerciseAlreadyReleased`              | The date students could first participate on is absent or in the past. Set a future start or release date.                                                    |
 | 400    | `exerciseHasParticipations`            | A student has already participated. Generation only ever writes to drafts.                                                                                   |
 | 400    | `missingBuildConfig`                   | The exercise has no build configuration. Recreate or repair the exercise.                                                                                    |
@@ -475,6 +478,9 @@ What it is **not**:
 
 ## Operational considerations
 
+- **Offline Java toolchains:** The configured Java sandbox image must contain the complete offline dependency cache for every admitted project type. Gradle verification copies
+  the image's `/root/.gradle` into a writable, sandbox-private home because the container root filesystem is read-only. Ensure that this cache includes the wrapper distribution,
+  plugins, and all dependencies used by the exercise scaffold; the network-isolated readiness probe fails before model authoring when anything is missing.
 - **Capacity:** Docker resource values are hard ceilings, not reservations: an idle container does not hold 2 GiB, while a busy one may consume up to its limits. Generation and
   normal LocalCI use separate admission pools, so a mixed host must be sized for their combined configured ceilings, and a generation-only benchmark does not predict behaviour
   beside sustained LocalCI traffic. Size core workers, aggregate sandbox slots, normal build slots, provider concurrency, and token budgets together.

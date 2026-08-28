@@ -347,17 +347,12 @@ public final class ExerciseIntegrityGate {
         }
         Set<String> knownNames = verifiedTestNames == null ? Set.of() : Set.copyOf(verifiedTestNames);
         Set<String> structuralNames = seededStructuralTestNames == null ? Set.of() : Set.copyOf(seededStructuralTestNames);
-        List<String> behavioralNames = knownNames.stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).filter(name -> !structuralNames.contains(name)).sorted().toList();
+        List<String> behavioralNames = knownNames.stream().filter(name -> !structuralNames.contains(name)).sorted().toList();
         List<String> unknownNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(name -> !knownNames.contains(name)).toList();
         if (!unknownNames.isEmpty()) {
             return List.of("the final test-plan.json names tests the verifier did not run: " + unknownNames + ". Eligible agent-authored behavioral test names are "
                     + behavioralNames + ". Replace only the unknown names; do not add server-seeded structural checks " + structuralNames
                     + " (Artemis keeps those visible and zero-weight).");
-        }
-        List<String> plannedBuildGates = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(BuildGateTestNames::isBuildGate).sorted().toList();
-        if (!plannedBuildGates.isEmpty()) {
-            return List.of("the final test-plan.json includes build-gate test(s) " + plannedBuildGates
-                    + ". Build gates are zero-weight infrastructure checks and cannot satisfy an approved learning seam, visible evidence, or hidden coverage.");
         }
         List<String> plannedStructuralTests = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(structuralNames::contains).sorted().toList();
         if (!plannedStructuralTests.isEmpty()) {
@@ -365,7 +360,7 @@ public final class ExerciseIntegrityGate {
                     + ". Remove them from the agent-authored plan; Artemis keeps structural checks ALWAYS visible and zero-weight, and they cannot stand in for a behavioral "
                     + "witness.");
         }
-        List<String> unplannedNames = knownNames.stream().filter(name -> !BuildGateTestNames.isBuildGate(name)).filter(name -> !structuralNames.contains(name))
+        List<String> unplannedNames = knownNames.stream().filter(name -> !structuralNames.contains(name))
                 .filter(name -> plan.tests().stream().noneMatch(entry -> entry.name().equals(name))).sorted().toList();
         if (!unplannedNames.isEmpty()) {
             return List.of("the final test-plan.json omits verified gradable test(s) " + unplannedNames

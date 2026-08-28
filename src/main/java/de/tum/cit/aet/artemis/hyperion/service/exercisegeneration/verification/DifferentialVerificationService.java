@@ -149,11 +149,9 @@ public class DifferentialVerificationService {
         }
     }
 
-    /**
-     * Build manifests are legitimately repository-specific, so the dead-file probe must not flag them. Only Maven is listed because generation runs for Java/Maven exercises alone
-     * (see {@link de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile}).
-     */
-    private static final Set<String> BUILD_MANIFEST_NAMES = Set.of("pom.xml");
+    /** Build manifests and wrapper launchers are repository-specific and must not be reported as dead source files. */
+    private static final Set<String> BUILD_MANIFEST_NAMES = Set.of("pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts", "gradle.properties",
+            "gradlew", "gradlew.bat");
 
     /** Empty on any non-success, so the advisory disappears rather than misreporting. */
     private static Set<String> listSourceFiles(InteractiveSandbox sandbox, String sessionId, String repoDirectory) {
@@ -677,7 +675,7 @@ public class DifferentialVerificationService {
         List<String> behavioural = new ArrayList<>();
         for (String rawName : solution.testNames()) {
             String normalized = ProblemStatementBindingChecker.normalizeTestName(rawName);
-            if (BuildGateTestNames.isBuildGate(normalized) || structural.contains(normalized)) {
+            if (structural.contains(normalized)) {
                 continue;
             }
             behavioural.add(rawName);

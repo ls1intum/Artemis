@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
@@ -705,7 +706,7 @@ class GenerationPersistenceServiceTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void persist_zeroWeightsBuildGateTestCases_setsTheRealWeightToZeroAndPersistsOnlyThoseCases() throws Exception {
+    void persist_doesNotTrustAnAgentControlledBuildGateName() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
@@ -715,15 +716,13 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
 
-        assertThat(buildGate.getWeight()).as("build gate zero-weighted").isEqualTo(0.0);
+        assertThat(buildGate.getWeight()).as("agent-controlled name remains an ordinary graded test").isEqualTo(1.0);
         assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
-        ArgumentCaptor<Iterable<ProgrammingExerciseTestCase>> saved = ArgumentCaptor.forClass(Iterable.class);
-        verify(testCaseRepository).saveAll(saved.capture());
-        assertThat(saved.getValue()).containsExactly(buildGate);
+        verify(testCaseRepository, never()).saveAll(any());
     }
 
     @Test
-    void persist_waitsForTheCompleteSyncBeforeZeroWeighting_soNoGateFromTheFullSetIsMissed() throws Exception {
+    void persist_waitsForTheCompleteSyncWithoutReclassifyingTestsByName() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
@@ -737,8 +736,8 @@ class GenerationPersistenceServiceTest {
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
 
-        assertThat(configure.getWeight()).as("configure gate (present in the partial set) zero-weighted").isEqualTo(0.0);
-        assertThat(compileSort.getWeight()).as("compile gate (only in the complete set) zero-weighted").isEqualTo(0.0);
+        assertThat(configure.getWeight()).isEqualTo(1.0);
+        assertThat(compileSort.getWeight()).isEqualTo(1.0);
         assertThat(behaviour.getWeight()).as("behaviour test left graded").isEqualTo(1.0);
         // The wait is for a result of the TESTS commit this persist pushed: the stub only answers for that hash, so a run polling on anything else never sees the complete set.
         verify(programmingSubmissionService, atLeastOnce()).existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any());
@@ -766,6 +765,7 @@ class GenerationPersistenceServiceTest {
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
         ProgrammingExerciseTestCase structural = new ProgrammingExerciseTestCase().testName("testClass[Strategy]").weight(1.0).visibility(Visibility.AFTER_DUE_DATE);
+        structural.setType(ProgrammingExerciseTestCaseType.STRUCTURAL);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour, structural));
         String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
@@ -839,7 +839,7 @@ class GenerationPersistenceServiceTest {
 
         promptService.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
 
-        assertThat(buildGate.getWeight()).as("build gate zero-weighted even though the count never moved off the pre-build value").isEqualTo(0.0);
+        assertThat(buildGate.getWeight()).as("the name alone does not change grading").isEqualTo(1.0);
         // The service is built with a ten-second sync timeout, so spinning it out would take far more than these four polls.
         verify(programmingSubmissionService, atMost(4)).existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any());
     }

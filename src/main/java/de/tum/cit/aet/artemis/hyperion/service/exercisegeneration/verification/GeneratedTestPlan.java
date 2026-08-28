@@ -132,26 +132,16 @@ public record GeneratedTestPlan(List<Entry> tests) {
 
     /**
      * Artemis weights individual test cases while the specification assigns importance to a learning seam, so each tier is split evenly across its mapped cases and adding
-     * behavioural partitions cannot silently make a seam worth more. Server-seeded structural checks stay zero-weight wherever the seam also has behavioural evidence: Ares
-     * reports class, constructor and method structure separately, so otherwise presence checks alone would consume most of the grade. A structural-only seam keeps its tier.
+     * behavioural partitions cannot silently make a seam worth more. The plan contains only agent-authored behavioural tests; server-seeded structural tests are identified from
+     * their trusted provenance outside this agent-authored file and are therefore never classified by their forgeable names here.
      */
     public Map<String, Double> effectiveWeightsByName() {
-        Map<String, Long> behavioralCountBySeam = tests.stream().filter(entry -> !entry.seam().isBlank() && !isStructuralCheck(entry.name()))
-                .collect(Collectors.groupingBy(Entry::seam, Collectors.counting()));
         Map<String, Long> totalCountBySeam = tests.stream().filter(entry -> !entry.seam().isBlank()).collect(Collectors.groupingBy(Entry::seam, Collectors.counting()));
         return tests.stream().collect(Collectors.toUnmodifiableMap(Entry::name, entry -> {
             if (entry.seam().isBlank()) {
                 return entry.seamWeightTier();
             }
-            long behavioralCount = behavioralCountBySeam.getOrDefault(entry.seam(), 0L);
-            if (behavioralCount > 0) {
-                return isStructuralCheck(entry.name()) ? 0.0 : entry.seamWeightTier() / behavioralCount;
-            }
             return entry.seamWeightTier() / totalCountBySeam.get(entry.seam());
         }));
-    }
-
-    public static boolean isStructuralCheck(String testName) {
-        return testName.startsWith("testClass[") || testName.startsWith("testMethods[") || testName.startsWith("testAttributes[") || testName.startsWith("testConstructors[");
     }
 }

@@ -27,6 +27,8 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 
 class HyperionGenerationBudgetServiceTest {
@@ -36,7 +38,7 @@ class HyperionGenerationBudgetServiceTest {
     @Test
     void configurationRejectsABudgetBelowThePerJobMaximum() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new HyperionGenerationBudgetService(repository, mock(HazelcastInstance.class), Duration.ofHours(24), 99, 0, 0, 100, Duration.ofMinutes(35)))
+                .isThrownBy(() -> new HyperionGenerationBudgetService(repository, mock(DistributedDataProvider.class), Duration.ofHours(24), 99, 0, 0, 100, Duration.ofMinutes(35)))
                 .withMessageContaining("admission-max-tokens-per-user").withMessageContaining("max-tokens-per-job");
     }
 
@@ -79,8 +81,8 @@ class HyperionGenerationBudgetServiceTest {
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
         try {
             when(repository.sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), any(ZonedDateTime.class))).thenReturn(0L);
-            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 150, 0, 0, 100,
-                    Duration.ofMinutes(35));
+            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 150, 0, 0, 100, Duration.ofMinutes(35));
             service.init();
 
             HyperionGenerationBudgetService.BudgetReservation reservation = service.reserveGenerationBudget(1L, 2L, 100);
@@ -106,8 +108,8 @@ class HyperionGenerationBudgetServiceTest {
         try {
             when(repository.sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), any(ZonedDateTime.class))).thenReturn(0L,
                     100L);
-            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 350, 0, 0, 300,
-                    Duration.ofMinutes(35));
+            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 350, 0, 0, 300, Duration.ofMinutes(35));
             service.init();
             HyperionGenerationBudgetService.BudgetReservation running = service.reserveGenerationBudget(1L, 2L, 300);
 
@@ -131,8 +133,8 @@ class HyperionGenerationBudgetServiceTest {
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
         try {
             when(repository.sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), any(ZonedDateTime.class))).thenReturn(0L);
-            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 300, 0, 0, 300,
-                    Duration.ofMinutes(35));
+            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 300, 0, 0, 300, Duration.ofMinutes(35));
             service.init();
             HyperionGenerationBudgetService.BudgetReservation exhausted = service.reserveGenerationBudget(1L, 2L, 300);
 
@@ -162,10 +164,10 @@ class HyperionGenerationBudgetServiceTest {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
             when(repository.sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), any(ZonedDateTime.class))).thenReturn(0L);
-            HyperionGenerationBudgetService firstService = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 100, 0, 0, 100,
-                    Duration.ofMinutes(35));
-            HyperionGenerationBudgetService secondService = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 100, 0, 0, 100,
-                    Duration.ofMinutes(35));
+            HyperionGenerationBudgetService firstService = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 100, 0, 0, 100, Duration.ofMinutes(35));
+            HyperionGenerationBudgetService secondService = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 100, 0, 0, 100, Duration.ofMinutes(35));
             firstService.init();
             secondService.init();
             CyclicBarrier startTogether = new CyclicBarrier(2);
@@ -198,8 +200,8 @@ class HyperionGenerationBudgetServiceTest {
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
         try {
-            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 100, 0, 0, 100,
-                    Duration.ofMinutes(30));
+            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 100, 0, 0, 100, Duration.ofMinutes(30));
             service.init();
 
             HyperionGenerationBudgetService.BudgetReservation reservation = service.reserveGenerationBudget(1L, 2L, 100);
@@ -220,8 +222,8 @@ class HyperionGenerationBudgetServiceTest {
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
         try {
-            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 100, 0, 0, 100,
-                    Duration.ofMinutes(30));
+            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 100, 0, 0, 100, Duration.ofMinutes(30));
             service.init();
 
             assertThat(service.refreshReservation("missing")).isFalse();
@@ -242,8 +244,8 @@ class HyperionGenerationBudgetServiceTest {
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
         try {
             when(repository.sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), any(ZonedDateTime.class))).thenReturn(0L);
-            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 300, 0, 0, 100,
-                    Duration.ofMinutes(35));
+            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 300, 0, 0, 100, Duration.ofMinutes(35));
             service.init();
 
             // Worst-case sizing admits three jobs against the 300-token user budget; sizing to a 20-token job admits fifteen, and the budget still bounds the sixteenth.
@@ -267,8 +269,8 @@ class HyperionGenerationBudgetServiceTest {
         HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(config);
         try {
             when(repository.sumTokensSinceForUser(eq(LLMServiceType.HYPERION), eq(GenerationJobService.GENERATION_PIPELINE_ID), eq(1L), any(ZonedDateTime.class))).thenReturn(0L);
-            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, hazelcastInstance, Duration.ofHours(24), 150, 0, 0, 100,
-                    Duration.ofMinutes(35));
+            HyperionGenerationBudgetService service = new HyperionGenerationBudgetService(repository, new HazelcastDistributedDataProviderService(hazelcastInstance),
+                    Duration.ofHours(24), 150, 0, 0, 100, Duration.ofMinutes(35));
             service.init();
 
             assertThat(service.reserveGenerationBudget(1L, 2L, Long.MAX_VALUE).id()).isNotBlank();

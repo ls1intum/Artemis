@@ -154,6 +154,15 @@ final class HyperionUtils {
         return DELIMITER_PATTERN.matcher(sanitized).replaceAll("");
     }
 
+    /** Sanitizes exercise-authored content while preserving legitimate template expressions. */
+    static String sanitizeExerciseContent(String input) {
+        if (input == null) {
+            return "";
+        }
+        String sanitized = CONTROL_CHAR_PATTERN.matcher(input).replaceAll("");
+        return DELIMITER_PATTERN.matcher(sanitized).replaceAll("").trim();
+    }
+
     static String getSanitizedCourseTitle(Course course) {
         String sanitized = sanitizeInput(course.getTitle());
         return sanitized.isBlank() ? DEFAULT_COURSE_TITLE : sanitized;

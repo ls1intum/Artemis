@@ -89,6 +89,26 @@ public interface DistributedMap<K, V> {
     boolean remove(K key, V value);
 
     /**
+     * Atomically replaces an entry only if it still has the expected value.
+     *
+     * @param key              the key
+     * @param expectedValue    the value the entry must currently hold
+     * @param replacementValue the new value
+     * @return true if the value was replaced
+     */
+    boolean replace(K key, V expectedValue, V replacementValue);
+
+    /**
+     * Atomically renews the expiry of an existing entry without changing its value.
+     *
+     * @param key        the key
+     * @param timeToLive the new time to live
+     * @return true if the entry existed and its expiry was renewed
+     * @throws UnsupportedOperationException if this map was not created as an expiring map
+     */
+    boolean refreshTimeToLive(K key, Duration timeToLive);
+
+    /**
      * Removes the mapping for the specified key from this map if present.
      *
      * @param key the key whose mapping is to be removed
@@ -198,6 +218,14 @@ public interface DistributedMap<K, V> {
      * @param key the key to lock
      */
     void lock(K key);
+
+    /**
+     * Locks the key and releases the backend lock automatically after the lease elapses.
+     *
+     * @param key   key to lock
+     * @param lease maximum lock lifetime
+     */
+    void lock(K key, Duration lease);
 
     /**
      * Unlocks the specified key in the map

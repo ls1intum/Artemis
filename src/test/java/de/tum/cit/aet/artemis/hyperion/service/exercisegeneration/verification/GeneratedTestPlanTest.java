@@ -49,7 +49,7 @@ class GeneratedTestPlanTest {
     }
 
     @Test
-    void effectiveWeightsPreserveAggregateSeamImportanceAndKeepStructuralFeedbackFromDominatingBehavior() {
+    void effectiveWeightsDoNotTrustStructuralLookingNamesFromTheAgent() {
         GeneratedTestPlan plan = GeneratedTestPlan.parse("""
                 {"tests":[
                   {"name":"behaviour","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
@@ -59,7 +59,7 @@ class GeneratedTestPlanTest {
                 ]}
                 """);
 
-        assertThat(plan.effectiveWeightsByName()).containsEntry("behaviour", 3.0).containsEntry("testClass[Strategy]", 0.0).containsEntry("testMethods[Strategy]", 0.0)
+        assertThat(plan.effectiveWeightsByName()).containsEntry("behaviour", 1.0).containsEntry("testClass[Strategy]", 1.0).containsEntry("testMethods[Strategy]", 1.0)
                 .containsEntry("edge", 1.0);
     }
 

@@ -64,7 +64,7 @@ class SshBuildAgentOriginTest {
         distributedDataAccessService = mock(DistributedDataAccessService.class);
         buildAgentAddressRegistryService = mock(BuildAgentAddressRegistryService.class);
         var agent = new BuildAgentInformation(new BuildAgentDTO(AGENT_NAME, "[10.0.0.5]:5701", AGENT_NAME), 1, 0, List.of(), BuildAgentStatus.IDLE,
-                PublicKeyEntry.toString(agentPublicKey), null, 0);
+                PublicKeyEntry.toString(agentPublicKey), null, 0, 0, 0);
         when(distributedDataAccessService.getBuildAgentInformation()).thenReturn(List.of(agent));
         // The agent is observed where it says it is, unless a test says otherwise
         when(buildAgentAddressRegistryService.isRegisteredAddressOfAgent(AGENT_NAME, AGENT_ADDRESS)).thenReturn(true);
