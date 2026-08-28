@@ -159,6 +159,11 @@ public class ProgrammingAssessmentService extends AssessmentService {
     private Result submitManualAssessment(Result newManualResult, ProgrammingSubmission submission, StudentParticipation participation, ProgrammingExercise exercise) {
         newManualResult = resultRepository.submitManualAssessment(newManualResult);
 
+        // The assessment as the tutor wrote it, taken before the broadcast below adds the synthesized views of the
+        // typed automatic feedback to the same collection. What Athena is sent must not depend on whether the
+        // assessment due date has passed.
+        final List<Feedback> assessmentFeedback = List.copyOf(newManualResult.getFeedbacks());
+
         if (participation.getStudent().isPresent()) {
             singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, participation.getStudent().get(), newManualResult);
         }
@@ -170,7 +175,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
             resultWebsocketService.broadcastNewResult(participation, newManualResult);
         }
 
-        sendFeedbackToAthena(exercise, submission, newManualResult.getFeedbacks());
+        sendFeedbackToAthena(exercise, submission, assessmentFeedback);
         handleResolvedFeedbackRequest(participation);
 
         return newManualResult;

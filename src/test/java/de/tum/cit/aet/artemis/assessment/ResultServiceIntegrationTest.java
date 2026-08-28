@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -221,6 +222,21 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         // uninitialized proxy on the detached result, so attaching the synthesized views must not try to add to it.
         Result resultWithoutFeedback = resultRepository.findByIdElseThrow(result.getId());
         assertThatCode(() -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultWithoutFeedback, programmingExercise, false)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRefuseToScoreAResultWhoseTypedFeedbackWasNotLoaded() {
+        Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        participationUtilService.addTestCaseFeedbackToResult(result, testCase, true, null);
+
+        // The automatic points come from the typed collections, so scoring a result that was loaded without them
+        // would quietly drop every automatic test instead of failing.
+        Result resultWithoutTypedFeedback = resultRepository.findByIdElseThrow(result.getId());
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> resultWithoutTypedFeedback.calculateTotalPointsForProgrammingExercises(Map.of()))
+                .withMessageContaining("has to be loaded before its score is calculated");
     }
 
     @Test

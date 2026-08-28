@@ -882,6 +882,13 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @return calculated totalScore
      */
     public Double calculateTotalPointsForProgrammingExercises(Map<Long, Double> pointsByTestCaseId) {
+        if (!Hibernate.isInitialized(testCaseFeedbacks) || !Hibernate.isInitialized(scaFeedbacks)) {
+            // The automatic points come from these collections, so scoring without them would not fail - it would
+            // quietly return a score that is missing every automatic test. Say so instead of relying on whether a
+            // session happens to be open (none of the callers runs in one).
+            throw new IllegalStateException(
+                    "The typed automatic feedback of result " + getId() + " has to be loaded before its score is calculated, see ProgrammingFeedbackSynthesizerService");
+        }
         double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
         ProgrammingExercise programmingExercise = (ProgrammingExercise) submission.getParticipation().getExercise();
@@ -889,6 +896,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : feedbacks) {
+            if (feedback.isSynthesizedView()) {
+                // A view of one of the typed rows summed below. Counting it here as well would award the automatic
+                // points twice for every result that was passed through the synthesizer before being scored.
+                continue;
+            }
             if (feedback.getGradingInstruction() != null) {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
