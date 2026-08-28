@@ -10,6 +10,10 @@
     <div class="assessment-upload">
         <p class="text-muted-color" jhiTranslate="artemisApp.assessmentUpload.description"></p>
 
+        <tum-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2" data-testid="overwrite-warning">
+            <span jhiTranslate="artemisApp.assessmentUpload.overwriteWarning"></span>
+        </tum-ui-message>
+
         <input #fileInput type="file" accept=".zip,application/zip" class="file-input" (change)="onFileInputChange($event)" data-testid="file-input" />
         <div
             class="upload-drop-zone"
@@ -40,6 +44,11 @@
                 <span>{{ selectedFile()!.name }}</span>
             </div>
         }
+
+        <div class="mt-3 flex items-center gap-2">
+            <tum-ui-checkbox inputId="assessment-upload-overwrite-confirmation" [(checked)]="overwriteConfirmed" [disabled]="isUploading()" data-testid="overwrite-confirmation" />
+            <label class="cursor-pointer mb-0" for="assessment-upload-overwrite-confirmation" jhiTranslate="artemisApp.assessmentUpload.overwriteConfirmation"></label>
+        </div>
 
         @if (errors().length > 0) {
             <div class="mt-4" data-testid="upload-errors">
@@ -90,7 +99,7 @@
                     data-testid="upload-button"
                     severity="primary"
                     size="small"
-                    [disabled]="!selectedFile() || isUploading()"
+                    [disabled]="!selectedFile() || !overwriteConfirmed() || isUploading()"
                     [loading]="isUploading()"
                     (clicked)="upload()"
                 >

@@ -2,13 +2,13 @@ import { ChangeDetectionStrategy, Component, inject, input, model, output, signa
 import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCloudUploadAlt, faDownload, faFileZipper } from '@fortawesome/free-solid-svg-icons';
+import { faCloudUploadAlt, faDownload, faFileZipper, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
-import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiDialogComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
 import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService } from 'app/assessment/manage/services/assessment-upload.service';
 
 /**
@@ -17,13 +17,17 @@ import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService 
  * <p>
  * Rendered with the tum-ui kit: a declarative {@link TumUiDialogComponent} whose visibility the parent controls via {@code [(visible)]}.
  * <p>
- * Invariant: {@link isUploading} is true only while an upload request is in flight. Validation errors keep the dialog open, while a successful upload closes it.
+ * Uploading overwrites the manual assessment a participant may already have, so the dialog states this up front and only enables the upload button once the instructor has
+ * confirmed it explicitly.
+ * <p>
+ * Invariant: {@link isUploading} is true only while an upload request is in flight, and an upload is only ever started with {@link overwriteConfirmed} set. Validation errors keep
+ * the dialog open, while a successful upload closes it.
  */
 @Component({
     selector: 'jhi-assessment-upload-dialog',
     templateUrl: './assessment-upload-dialog.component.html',
     styleUrls: ['./assessment-upload-dialog.component.scss'],
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiDialogComponent, TumUiButtonComponent],
+    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiDialogComponent, TumUiButtonComponent, TumUiCheckboxComponent, TumUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssessmentUploadDialogComponent {
@@ -42,10 +46,13 @@ export class AssessmentUploadDialogComponent {
     protected readonly isUploading = signal(false);
     protected readonly isDownloadingTemplate = signal(false);
     protected readonly errors = signal<AssessmentUploadError[]>([]);
+    /** Explicit confirmation that existing manual assessments of the uploaded participants may be overwritten. Gates the upload button. */
+    protected readonly overwriteConfirmed = signal(false);
 
     protected readonly faCloudUploadAlt = faCloudUploadAlt;
     protected readonly faDownload = faDownload;
     protected readonly faFileZipper = faFileZipper;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
 
     /** Marks the drop zone as active while a file is dragged over it. */
     onDragOver(event: DragEvent): void {
@@ -108,12 +115,12 @@ export class AssessmentUploadDialogComponent {
 
     /**
      * Uploads the currently selected file and reflects the outcome in the component state.
-     * Precondition: a file is selected (otherwise this is a no-op).
+     * Precondition: a file is selected and the overwrite of existing manual assessments has been confirmed (otherwise this is a no-op).
      * Postcondition: while in flight `isUploading()` is true; on completion it is false. A successful upload shows a success alert and closes the dialog; validation errors keep it open.
      */
     upload(): void {
         const file = this.selectedFile();
-        if (!file || this.isUploading()) {
+        if (!file || !this.overwriteConfirmed() || this.isUploading()) {
             return;
         }
         this.isUploading.set(true);
@@ -168,6 +175,7 @@ export class AssessmentUploadDialogComponent {
     resetState(): void {
         this.selectedFile.set(undefined);
         this.errors.set([]);
+        this.overwriteConfirmed.set(false);
         this.isUploading.set(false);
         this.isDownloadingTemplate.set(false);
     }

@@ -16,6 +16,12 @@ function fileInputEvent(file: File): Event {
     return { target: { files: [file], value: 'x' } } as unknown as Event;
 }
 
+/** Brings the dialog into the state an upload requires: a selected file plus the explicit overwrite confirmation. */
+function selectFileAndConfirmOverwrite(component: AssessmentUploadDialogComponent, file: File): void {
+    component.onFileInputChange(fileInputEvent(file));
+    component['overwriteConfirmed'].set(true);
+}
+
 function dropEvent(file: File): DragEvent {
     return { preventDefault: () => {}, stopPropagation: () => {}, dataTransfer: { files: [file] } } as unknown as DragEvent;
 }
@@ -105,7 +111,7 @@ describe('AssessmentUploadDialogComponent', () => {
         const uploadedSpy = vi.fn();
         component.uploaded.subscribe(uploadedSpy);
 
-        component.onFileInputChange(fileInputEvent(zipFile));
+        selectFileAndConfirmOverwrite(component, zipFile);
         component.upload();
 
         expect(uploadSpy).toHaveBeenCalledWith(7, zipFile);
@@ -121,7 +127,7 @@ describe('AssessmentUploadDialogComponent', () => {
         const uploadedSpy = vi.fn();
         component.uploaded.subscribe(uploadedSpy);
 
-        component.onFileInputChange(fileInputEvent(zipFile));
+        selectFileAndConfirmOverwrite(component, zipFile);
         component.upload();
 
         expect(component['errors']()).toEqual(result.errors);
@@ -133,7 +139,7 @@ describe('AssessmentUploadDialogComponent', () => {
     it('should leave the dialog ready for another attempt after an HTTP error', () => {
         const upload = new Subject<HttpResponse<AssessmentUploadResult>>();
         uploadSpy.mockReturnValue(upload);
-        component.onFileInputChange(fileInputEvent(zipFile));
+        selectFileAndConfirmOverwrite(component, zipFile);
 
         component.upload();
         expect(component['isUploading']()).toBe(true);
@@ -149,7 +155,7 @@ describe('AssessmentUploadDialogComponent', () => {
     it('should prevent closing and starting another request while uploading', () => {
         const upload = new Subject<HttpResponse<AssessmentUploadResult>>();
         uploadSpy.mockReturnValue(upload);
-        component.onFileInputChange(fileInputEvent(zipFile));
+        selectFileAndConfirmOverwrite(component, zipFile);
 
         component.upload();
         component.close();
@@ -157,6 +163,21 @@ describe('AssessmentUploadDialogComponent', () => {
 
         expect(component.visible()).toBe(true);
         expect(uploadSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not upload before the instructor confirms that existing assessments are overwritten', () => {
+        uploadSpy.mockReturnValue(of(new HttpResponse({ body: { numberOfCreatedAssessments: 1 } as AssessmentUploadResult })));
+        component.onFileInputChange(fileInputEvent(zipFile));
+
+        component.upload();
+
+        expect(uploadSpy).not.toHaveBeenCalled();
+        expect(component.visible()).toBe(true);
+
+        component['overwriteConfirmed'].set(true);
+        component.upload();
+
+        expect(uploadSpy).toHaveBeenCalledWith(7, zipFile);
     });
 
     it('should download the template for the bound exercise and trigger the file download', () => {
@@ -192,14 +213,16 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(downloadSpy).toHaveBeenCalledOnce();
     });
 
-    it('should clear the selected file and previous errors when reset', () => {
-        component.onFileInputChange(fileInputEvent(zipFile));
+    it('should clear the selected file, previous errors and the overwrite confirmation when reset', () => {
+        selectFileAndConfirmOverwrite(component, zipFile);
         component['errors'].set([{ identifier: '1-a', type: 'MISSING_TEXT_FILE' }]);
 
         component.resetState();
 
         expect(component['selectedFile']()).toBeUndefined();
         expect(component['errors']()).toEqual([]);
+        // The confirmation must not carry over to the next open, so every upload is confirmed again.
+        expect(component['overwriteConfirmed']()).toBe(false);
         expect(component['isUploading']()).toBe(false);
     });
 
