@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_BUILD_PLAN_CONFIGURATION_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_DOCKER_FLAGS_LENGTH;
 import static de.tum.cit.aet.artemis.programming.util.ZipTestUtil.extractExerciseJsonFromZip;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -406,6 +408,50 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_withTooLongBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        // A structurally valid phases configuration whose script pushes the serialized configuration past the maximum allowed length.
+        // This ensures the request passes the build phase name parsing and is rejected specifically by the size validation.
+        var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
+
+        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST,
+                "buildPlanConfigurationTooLong");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testUpdateProgrammingExercise_withTooLongDockerFlags_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+
+        // Structurally valid docker flags (parse successfully, each env variable below the per-variable limit) whose raw JSON
+        // exceeds the maximum allowed length, so the request is rejected specifically by the size validation.
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration(validBuildPlanConfiguration());
+        programmingExercise.getBuildConfig().setDockerFlags(oversizedButValidDockerFlags());
+
+        request.putAndExpectError("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise), HttpStatus.BAD_REQUEST, "dockerFlagsTooLong");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void testCreateProgrammingExercise_withTooLongBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
+        addInstructorToCourse();
+
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+
+        var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
+        newExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
+
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void testCreateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         // ProgrammingExercise create still receives the raw entity, so the submitted plagiarism config reaches validation
         // directly. This path is intentionally left unchanged; the test guards that invalid values are still rejected.
@@ -786,6 +832,37 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
     }
 
+    private String validBuildPlanConfiguration() throws JsonProcessingException {
+        var phase = new BuildPhaseDTO("Test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of("build/test-results/test/*.xml"));
+        return new BuildPlanPhasesDTO(List.of(phase), "ubuntu:latest").toBuildPlanConfiguration();
+    }
+
+    /**
+     * Builds a structurally valid docker flags JSON whose raw length exceeds MAX_DOCKER_FLAGS_LENGTH.
+     * Each environment variable stays below the per-variable length limit, so it passes the docker flags parsing and is
+     * rejected solely by the build config size validation.
+     *
+     * @return an oversized but otherwise valid docker flags JSON string
+     */
+    private String oversizedButValidDockerFlags() {
+        StringBuilder env = new StringBuilder();
+        for (int i = 0; i < 10; i++) {
+            if (i > 0) {
+                env.append(",");
+            }
+            env.append("\"key").append(i).append("\":\"").append("v".repeat(900)).append("\"");
+        }
+        String dockerFlags = "{\"cpuCount\": 4, \"memory\": 3072, \"memorySwap\": 2048, \"env\": {" + env + "}}";
+        assertThat(dockerFlags.length()).isGreaterThan(MAX_DOCKER_FLAGS_LENGTH);
+        return dockerFlags;
+    }
+
+    private void addInstructorToCourse() {
+        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
+    }
+
     /**
      * A variant group owns the shared timeline of its members, but the general update endpoint applies the request's dates
      * straight onto the managed entity — so without a server-side guard a stale client or a direct request could
@@ -868,15 +945,5 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(exerciseFromDb.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).as("the exercise-owned build-and-test date is left alone")
                 .isCloseTo(EXERCISE_BUILD_AND_TEST_DATE.toInstant(), within(1, SECONDS));
         assertThat(exerciseFromDb.getTitle()).as("the rest of the update still applies").isEqualTo(RENAMED_VARIANT_TITLE);
-    }
-
-    /**
-     * Gives instructor1 the instructor role in {@link #course}. Membership is expressed through the user's course role
-     * rather than the course's instructor group name, which no longer drives membership checks.
-     */
-    private void addInstructorToCourse() {
-        userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
     }
 }
