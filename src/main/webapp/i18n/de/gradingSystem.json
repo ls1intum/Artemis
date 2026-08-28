@@ -3,7 +3,7 @@
         "gradingSystem": {
             "title": "Notenschlüssel",
             "titleCourse": "Notenschlüssel für Kurs",
-            "titleExam": "Notenschlüssel für Klausur",
+            "titleExam": "Notenschlüssel",
             "titleBonus": "Notenschlüssel für Bonus",
             "defaultButton": "Standard Notenschlüssel Generieren",
             "gradeType": {
