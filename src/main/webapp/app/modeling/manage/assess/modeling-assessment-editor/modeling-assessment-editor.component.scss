@@ -16,6 +16,8 @@
     overflow: hidden;
 
     &__layout.assessment-container {
+        display: flex;
+        flex-flow: column nowrap;
         height: 100%;
         min-height: 0;
         padding-bottom: 0;

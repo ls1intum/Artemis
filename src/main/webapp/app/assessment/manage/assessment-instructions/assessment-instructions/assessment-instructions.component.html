@@ -1,7 +1,7 @@
 @let gradingCriteriaValue = this.gradingCriteria();
 @let gradingInstructionsValue = this.gradingInstructions();
 @if (showAssessmentInstructions() && (gradingInstructionsValue || (gradingCriteriaValue && gradingCriteriaValue.length > 0))) {
-    <div [class]="embeddedInEditorChrome() ? 'assessment-instructions__grading' : 'border p-2'">
+    <div [class]="embeddedInEditorChrome() ? '' : 'border p-2'">
         @if (gradingInstructionsValue) {
             <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
                 <p class="markdown-preview" [innerHTML]="gradingInstructionsValue"></p>

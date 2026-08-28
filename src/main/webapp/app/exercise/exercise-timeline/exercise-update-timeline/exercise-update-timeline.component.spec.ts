@@ -95,11 +95,14 @@ describe('ExerciseUpdateTimelineComponent', () => {
         expect(hint()).not.toBeNull();
     });
 
-    it('should drop a leftover publication date when the exercise has no example solution', async () => {
-        await createComponent({ hasExampleSolution: false, exampleSolutionPublicationDate: dayjs() });
+    it('should hide but keep a publication date the exercise cannot currently configure', async () => {
+        // `BaseExercise.isValidExampleSolutionPublicationDate` only constrains ordering, so a date without an example
+        // solution is valid server side. Opening the form must not discard it; only switching the opt-in off may.
+        const stored = dayjs();
+        await createComponent({ hasExampleSolution: false, exampleSolutionPublicationDate: stored });
 
         expect(component.isExampleSolutionPublicationDateVisible()).toBe(false);
-        expect(component.exampleSolutionPublicationDate()).toBeUndefined();
+        expect(component.exampleSolutionPublicationDate()).toBe(stored);
         expect(labelKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDate');
     });
 

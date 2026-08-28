@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
+import { Component, computed, input, linkedSignal, model, output, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -59,16 +59,6 @@ export class ExerciseUpdateTimelineComponent {
     });
 
     readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
-
-    constructor() {
-        // The one thing that cannot be derived: the date belongs to the parent form, and a date the exercise can no
-        // longer configure must not survive into a submit. Visibility itself is a linkedSignal, not an effect.
-        effect(() => {
-            if (!this.canConfigureExampleSolutionPublication()) {
-                this.exampleSolutionPublicationDate.set(undefined);
-            }
-        });
-    }
 
     protected onPublicationOptInChange(visible: boolean): void {
         this.isExampleSolutionPublicationDateVisible.set(visible);

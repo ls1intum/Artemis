@@ -19,6 +19,7 @@ import { ResizableConstraints, ResizableDirective, ResizableEdges, ResizableSize
         >
             <div class="draggable-left" aria-label="Resize panel"></div>
             <div class="draggable-right" aria-label="Resize panel"></div>
+            <button type="button" class="button-handle" aria-label="Reset split ratio"></button>
             @if (showLateHandle()) {
                 <div class="late-handle" aria-label="Resize panel"></div>
             }
@@ -142,6 +143,21 @@ describe('ResizableDirective', () => {
 
         handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true }));
         expect(panel.style.width).toBe('400px');
+    });
+
+    it('leaves a handle that is already an interactive control announced as that control', async () => {
+        // The lecture video player resizes from a <button> that also resets the split on enter/space. Overriding its
+        // role would rename it to an unnamed separator and shadow the keys it already owns.
+        fixture.componentInstance.edges.set({ left: '.button-handle' });
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const handle = panel.querySelector('.button-handle') as HTMLElement;
+        expect(handle.getAttribute('role')).toBeNull();
+        expect(handle.getAttribute('aria-valuenow')).toBeNull();
+        expect(handle.getAttribute('aria-controls')).toBeNull();
+        // It is still a drag handle, just not a re-labelled one.
+        expect(handle.style.cursor).toBe('col-resize');
     });
 
     it('re-applies handle styles when the edge map changes, before any pointerdown', async () => {

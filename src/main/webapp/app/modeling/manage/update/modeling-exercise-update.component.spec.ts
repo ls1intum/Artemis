@@ -449,9 +449,10 @@ describe('ModelingExerciseUpdateComponent', () => {
         expect(fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline #datepicker-4')).not.toBeNull();
     });
 
-    it('disables the publication opt-in and drops a leftover date while the exercise has no example solution', async () => {
+    it('disables the publication opt-in but keeps the stored date while the exercise has no example solution', async () => {
         const modelingExercise = createModelingExercise(createCourse());
-        modelingExercise.exampleSolutionPublicationDate = dayjs().add(7, 'day');
+        const storedDate = dayjs().add(7, 'day');
+        modelingExercise.exampleSolutionPublicationDate = storedDate;
         routeData$.next({ modelingExercise });
         routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
 
@@ -464,7 +465,7 @@ describe('ModelingExerciseUpdateComponent', () => {
         const toggle = fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-toggle"]') as HTMLInputElement;
         expect(toggle.disabled).toBe(true);
         expect(fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline [data-testid="example-solution-publication-hint"]')).not.toBeNull();
-        expect(comp.modelingExercise.exampleSolutionPublicationDate).toBeUndefined();
+        expect(comp.modelingExercise.exampleSolutionPublicationDate).toBe(storedDate);
     });
 
     it('binds an existing Markdown example-solution explanation into the persistent surface', async () => {

@@ -1,40 +1,13 @@
-.sgi-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-}
-
-/* Criteria share the instructions column with the problem statement and the example solution, so they
-   follow that column's rhythm: one spacing step between blocks, no rules, and the section's text size. */
-.sgi-criterion + .sgi-criterion {
-    margin-top: 0.75rem;
-}
-
-.sgi-instruction + .sgi-instruction {
-    margin-top: 0.25rem;
-}
-
 .layout-table {
-    width: 100%;
-    margin: 0;
-    border-collapse: collapse;
-    font-size: inherit;
-
-    td {
-        padding: 0.375rem 0.5rem;
-        border: 0;
-        vertical-align: top;
-    }
+    margin: 1px;
 
     .td-score,
     .td-usage-count {
         width: 4%;
-        white-space: nowrap;
     }
 
     .td-usage-count {
         position: relative;
-        text-align: end;
+        white-space: nowrap;
     }
 }

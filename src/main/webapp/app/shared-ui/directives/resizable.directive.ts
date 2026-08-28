@@ -30,6 +30,20 @@ export interface ResizableSizeEvent {
 type ActiveEdge = keyof ResizableEdges;
 const HANDLE_ATTRIBUTES = ['role', 'tabindex', 'aria-disabled', 'aria-orientation', 'aria-controls', 'aria-valuenow', 'aria-valuemin', 'aria-valuemax'] as const;
 
+/**
+ * Whether this handle should be described to assistive technology as a separator.
+ *
+ * An element that is already interactive — a `<button>` that also resets the split, say — carries its own role and
+ * keyboard contract, and overriding those would rename the control and silence its own keys. Such a handle still
+ * drags; it is simply not re-labelled. A handle with no accessible name is skipped for the opposite reason: a
+ * separator announced with no name is worse than an undecorated div.
+ */
+function isSeparatorHandle(handle: HTMLElement): boolean {
+    const hasAccessibleName = handle.hasAttribute('aria-label') || handle.hasAttribute('aria-labelledby');
+    const isNativelyInteractive = handle.matches('button, a[href], input, select, textarea, [role]:not([role="separator"])');
+    return hasAccessibleName && !isNativelyInteractive;
+}
+
 interface HandleState {
     cursor: string;
     touchAction: string;
@@ -208,8 +222,7 @@ export class ResizableDirective {
             const enabled = this.resizableEnabled();
             this.setStyleIfChanged(handle, 'touch-action', enabled ? 'none' : 'auto');
             this.setStyleIfChanged(handle, 'cursor', enabled ? cursor : 'default');
-            const hasAccessibleName = handle.hasAttribute('aria-label') || handle.hasAttribute('aria-labelledby');
-            if (!hasAccessibleName) {
+            if (!isSeparatorHandle(handle)) {
                 this.restoreHandleAttributes(handle);
                 return;
             }
@@ -420,7 +433,10 @@ export class ResizableDirective {
         if (this.resizableApplyInlineSize()) {
             this.renderer.setStyle(this.host.nativeElement, horizontal ? 'width' : 'height', `${horizontal ? width : height}px`);
         }
-        this.updateHandleAria(event.target as HTMLElement, edge, size);
+        const doubleClickHandle = event.target as HTMLElement;
+        if (isSeparatorHandle(doubleClickHandle)) {
+            this.updateHandleAria(doubleClickHandle, edge, size);
+        }
         this.resizeMove.emit(size);
         this.resizeEnd.emit(size);
     }
@@ -462,7 +478,7 @@ export class ResizableDirective {
             }
         }
         const handle = this.handleSearchRoot()?.querySelector<HTMLElement>(this.resizableEdges()[this.activeEdge]!);
-        if (handle) {
+        if (handle && isSeparatorHandle(handle)) {
             this.updateHandleAria(handle, this.activeEdge, { width, height });
         }
         this.resizeMove.emit({ width, height });

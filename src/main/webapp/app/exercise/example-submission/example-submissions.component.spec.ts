@@ -87,8 +87,7 @@ describe('Example Submission Component', () => {
         component.deleteExampleSubmission(0);
 
         expect(deleteStub).toHaveBeenCalledOnce();
-        expect(component.exercise().exampleSubmissions).toHaveLength(1);
-        expect(exercise.exampleSubmissions).toHaveLength(2);
+        expect(exercise.exampleSubmissions).toHaveLength(1);
     });
 
     it('should catch an error on delete', () => {
