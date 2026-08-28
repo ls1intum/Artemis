@@ -3,8 +3,10 @@ package de.tum.cit.aet.artemis.core.service.distributed;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -648,6 +650,18 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         map.put("shortLived", "value");
 
         Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> assertThat(map.get("shortLived")).isNull());
+    }
+
+    @Test
+    void testExpiringMapDoesNotPublishRemovalNotification() {
+        DistributedMap<String, String> map = getDistributedDataProvider().getExpiringMap("silentExpiryTest", Duration.ofSeconds(1));
+        MapEntryListener<String, String> listener = Mockito.mock(MapEntryListener.class);
+        map.addEntryListener(listener);
+
+        map.put("shortLived", "value");
+
+        Awaitility.await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> assertThat(map.get("shortLived")).isNull());
+        verify(listener, after(500).never()).entryRemoved(any());
     }
 
     @Test

@@ -237,6 +237,8 @@ public interface DistributedMap<K, V> {
     /**
      * Adds a listener that will be notified of changes to the map.
      * The listener methods get the affected entries passed as parameter.
+     * Automatic expiry is not a map change notification: backends expose different expiry event models, and Redis
+     * requires optional keyspace notifications. Callers that need expiry behavior must observe map state instead.
      *
      * @param listener the listener to add
      * @return a unique identifier for the listener, which can be used to remove it later
@@ -246,6 +248,7 @@ public interface DistributedMap<K, V> {
     /**
      * Adds a listener that will be notified of changes to the map.
      * It is simplified version of listener that does not get the specific entries passed as parameter.
+     * Automatic expiry does not trigger this listener; callers that need expiry behavior must observe map state.
      *
      * @param listener the listener to add
      * @return a unique identifier for the listener, which can be used to remove it later

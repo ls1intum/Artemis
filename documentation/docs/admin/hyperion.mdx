@@ -170,9 +170,9 @@ startup. A model with no matching complete price is recorded with a zero estimat
 
 ### Observability (optional)
 
-Artemis can export only spans marked `ai.span=true` to any OTLP/HTTP-compatible backend. Content capture is **off by default and is not implied by enabling Langfuse**: prompts,
-completions, reasoning, and tool content are attached to spans only when `artemis.telemetry.gen-ai.capture-content` is `true`. Protect the collector and apply an appropriate
-retention policy before turning it on.
+Artemis can export only spans marked `ai.span=true` to any OTLP/HTTP-compatible backend. Content capture is **off by default**. Enabling Langfuse opts in unless
+`artemis.telemetry.gen-ai.capture-content` is explicitly set to `false`; other OTLP collectors require setting it to `true`. Prompts, completions, reasoning, and tool content are
+then attached to spans. Protect the collector and apply an appropriate retention policy before turning it on.
 
 For Langfuse, create or obtain project API keys as described in the [Langfuse OpenTelemetry guide](https://langfuse.com/integrations/native/opentelemetry). Its trace endpoint is
 `https://<host>/api/public/otel/v1/traces`. Generate the required Basic authentication value without storing the keys in the repository:

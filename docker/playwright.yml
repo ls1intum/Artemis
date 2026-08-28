@@ -34,14 +34,16 @@ services:
         # Playwright fail during collection and report zero tests rather than a failing test.
         command: >
             sh -c '
-            cd /app/artemis/src/test/playwright &&
+            cd /app/artemis &&
             chmod 777 /root &&
+            corepack enable &&
+            pnpm install --frozen-lockfile &&
+            cd /app/artemis/src/test/playwright &&
             chmod +x ./run-tests.sh &&
             if env | grep -qx HYPERION_LLM_MODE=mock; then
               chmod +x ./support/hyperion-llm-mock/start.sh &&
               HYPERION_LLM_MOCK_PORT=1234 ./support/hyperion-llm-mock/start.sh
             fi &&
-            corepack enable &&
             pnpm install --frozen-lockfile &&
             pnpm run playwright:setup &&
             rm -f ./test-reports/results.xml ./test-reports/results-*.xml &&
