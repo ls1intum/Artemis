@@ -33,7 +33,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
-import { ActivatedRoute, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
