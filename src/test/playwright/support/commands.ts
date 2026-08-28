@@ -499,25 +499,30 @@ export class Commands {
             participation?.submissions ? participation.submissions.reduce((sum, submission) => sum + (submission.results?.length ?? 0), 0) : 0;
 
         const startTime = Date.now();
-        let lastCount = -1;
+        let lastCount: number | undefined;
         let lastChange = Date.now();
 
         while (Date.now() - startTime < timeout) {
-            let count = lastCount;
+            let count: number | undefined;
             try {
                 count = countResults(await exerciseAPIRequests.getProgrammingExerciseParticipation(exerciseId));
             } catch {
-                // A transient read failure is not evidence of a new result; keep the current quiet window.
-            }
-            if (count !== lastCount) {
-                lastCount = count;
+                // A read that failed says nothing about whether results are still arriving, so it must not count
+                // towards the quiet window. Restart the window instead: only an unchanged count that was actually
+                // read is evidence that the builds have stopped.
                 lastChange = Date.now();
-            } else if (Date.now() - lastChange >= quietMs) {
-                return count;
+            }
+            if (count !== undefined) {
+                if (count !== lastCount) {
+                    lastCount = count;
+                    lastChange = Date.now();
+                } else if (Date.now() - lastChange >= quietMs) {
+                    return count;
+                }
             }
             await new Promise((resolve) => setTimeout(resolve, interval));
         }
-        throw new Error(`Exercise ${exerciseId} kept producing build results for ${timeout}ms and never settled (last count: ${lastCount})`);
+        throw new Error(`Exercise ${exerciseId} kept producing build results for ${timeout}ms and never settled (last count: ${lastCount ?? 'never read'})`);
     };
 
     static waitForExerciseBuildToFinish = async (
