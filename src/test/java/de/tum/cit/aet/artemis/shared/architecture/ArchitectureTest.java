@@ -292,7 +292,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testFileWriteUsage() {
-        ArchRule usage = noClasses().should()
+        ArchRule usage = noClasses().that()
+                // The unit test of FileUtil has to plant a file at the destination itself to create the precondition it
+                // then asserts on, namely that FileUtil refuses to overwrite it. Going through the helper under test
+                // would defeat the test.
+                .doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.FileUtilUnitTest").should()
                 .callMethodWhere(target(owner(assignableTo(Files.class))).and(target(nameMatching("copy")).or(target(nameMatching("move"))).or(target(nameMatching("write.*")))))
                 .because("Files.copy does not create directories if they do not exist. Use Apache FileUtils instead.");
         usage.check(allClasses);
