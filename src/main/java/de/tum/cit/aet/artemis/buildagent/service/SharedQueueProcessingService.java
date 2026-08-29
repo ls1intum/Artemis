@@ -4,9 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
@@ -969,6 +970,7 @@ public class SharedQueueProcessingService {
     private void pauseBuildAgent(boolean dueToFailures) {
         // Collect the running jobs and their futures outside the lock so we can wait on them without holding it.
         Set<String> runningBuildJobIds = Set.of();
+        Set<String> awaitableBuildJobIds = Set.of();
         List<CompletableFuture<BuildResult>> runningFuturesWrapper = List.of();
 
         agentStateTransitionLock.lock();
@@ -996,7 +998,17 @@ public class SharedQueueProcessingService {
                 log.info("No running build jobs to cancel");
             }
             else {
-                runningFuturesWrapper = runningBuildJobIds.stream().map(buildJobManagementService::getRunningBuildJobFutureWrapper).filter(Objects::nonNull).toList();
+                // Keep the ids alongside the futures: a job that is still being submitted is registered as running
+                // before its public future exists, and only those jobs may be cancelled once the wait has finished.
+                Map<String, CompletableFuture<BuildResult>> awaitableJobs = new LinkedHashMap<>();
+                for (String runningBuildJobId : runningBuildJobIds) {
+                    CompletableFuture<BuildResult> wrapper = buildJobManagementService.getRunningBuildJobFutureWrapper(runningBuildJobId);
+                    if (wrapper != null) {
+                        awaitableJobs.put(runningBuildJobId, wrapper);
+                    }
+                }
+                awaitableBuildJobIds = Set.copyOf(awaitableJobs.keySet());
+                runningFuturesWrapper = List.copyOf(awaitableJobs.values());
             }
             // We intentionally do NOT wait for the futures while holding the lock.
         }
@@ -1011,7 +1023,7 @@ public class SharedQueueProcessingService {
         // list of futures does not mean the node is idle. Skipping this block in that case used to lose the job -
         // it was neither awaited nor cancelled nor put back on the queue.
         if (!runningBuildJobIds.isEmpty()) {
-            boolean everyRunningJobIsAwaitable = runningFuturesWrapper.size() == runningBuildJobIds.size();
+            boolean everyRunningJobIsAwaitable = awaitableBuildJobIds.size() == runningBuildJobIds.size();
             CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
 
             // allOf completes once every future it was given has completed, so a job that failed still counts as
@@ -1039,12 +1051,17 @@ public class SharedQueueProcessingService {
             if (allAwaitedJobsFinished && everyRunningJobIsAwaitable) {
                 log.info("All running build jobs finished during grace period");
             }
+            else if (allAwaitedJobsFinished) {
+                // Every awaited job has finished, so only the ones that had no future to await can still be running.
+                // Cancelling the awaited ones as well would risk re-queueing a job whose result is on its way to being
+                // published: allOf completes with the futures it was given, while the stage that takes a finished job
+                // out of the running maps runs separately and need not have run yet.
+                Set<String> neverAwaited = new HashSet<>(runningBuildJobIds);
+                neverAwaited.removeAll(awaitableBuildJobIds);
+                log.warn("{} of {} running build jobs had no future to await, enforcing cancellation for those", neverAwaited.size(), runningBuildJobIds.size());
+                cancelAndRequeueRunningBuildJobs(neverAwaited);
+            }
             else {
-                if (allAwaitedJobsFinished) {
-                    // The jobs left over here have only just started, so they would not have finished within the grace
-                    // period either; cancel them rather than leave them running on a paused agent.
-                    log.warn("Only {} of {} running build jobs could be awaited, enforcing cancellation for the rest", runningFuturesWrapper.size(), runningBuildJobIds.size());
-                }
                 handleTimeoutAndCancelRunningJobs();
             }
         }
@@ -1054,19 +1071,34 @@ public class SharedQueueProcessingService {
     }
 
     private void handleTimeoutAndCancelRunningJobs() {
+        log.info("Grace period exceeded. Cancelling running build jobs.");
+        cancelAndRequeueRunningBuildJobs(buildJobManagementService.getRunningBuildJobIds());
+    }
+
+    /**
+     * Cancels the given build jobs and puts them back on the distributed queue so another agent can pick them up.
+     * <p>
+     * The ids are intersected with the jobs that are still running, so a job that finished while the caller was making
+     * up its mind is left alone rather than re-queued behind its own result. Does nothing if the agent was resumed in
+     * the meantime.
+     *
+     * @param buildJobIds the ids of the build jobs to cancel and re-queue
+     */
+    private void cancelAndRequeueRunningBuildJobs(Set<String> buildJobIds) {
         if (!isPaused.get()) {
             log.info("Build agent was resumed before the build jobs could be cancelled");
             return;
         }
-        log.info("Grace period exceeded. Cancelling running build jobs.");
-
-        Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
-        List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = distributedDataAccessService.getDistributedProcessingJobs().getAll(runningBuildJobIdsAfterGracePeriod).values()
-                .stream().toList();
-        runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
-        distributedDataAccessService.getDistributedBuildJobQueue().addAll(runningBuildJobsAfterGracePeriod);
-        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
-        log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
+        Set<String> jobsToCancel = new HashSet<>(buildJobManagementService.getRunningBuildJobIds());
+        jobsToCancel.retainAll(buildJobIds);
+        if (jobsToCancel.isEmpty()) {
+            return;
+        }
+        List<BuildJobQueueItem> jobsToRequeue = distributedDataAccessService.getDistributedProcessingJobs().getAll(jobsToCancel).values().stream().toList();
+        jobsToCancel.forEach(buildJobManagementService::cancelBuildJob);
+        distributedDataAccessService.getDistributedBuildJobQueue().addAll(jobsToRequeue);
+        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", jobsToCancel);
+        log.debug("Cancelled running build jobs: {}", jobsToRequeue);
     }
 
     /**
