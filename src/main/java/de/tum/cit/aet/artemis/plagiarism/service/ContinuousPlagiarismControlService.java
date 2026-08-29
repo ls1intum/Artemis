@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.plagiarism.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -15,8 +17,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.jplag.exceptions.ExitException;
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -61,9 +66,11 @@ public class ContinuousPlagiarismControlService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    private final UserRepository userRepository;
+
     public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionService plagiarismDetectionService,
             PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository,
-            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository) {
+            PlagiarismPostService plagiarismPostService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
@@ -71,6 +78,7 @@ public class ContinuousPlagiarismControlService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.plagiarismPostService = plagiarismPostService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -81,13 +89,22 @@ public class ContinuousPlagiarismControlService {
         var exercises = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
         log.info("Starting scheduled continuous plagiarism control for {} exercises: {}", exercises.size(), exercises.stream().map(Exercise::getId).toList());
         exercises.stream().filter(isBeforeDueDateOrAfterWithPostDueDateChecksEnabled).forEach(exercise -> {
+            // A check whose findings nobody can act on and whose plagiarism case nobody can be named as the sender of
+            // is not worth running, so a course without an instructor is skipped before the expensive part starts.
+            var author = findPostAuthor(exercise);
+            if (author.isEmpty()) {
+                log.warn("Skipping continuous plagiarism control, the course has no instructor to act on the findings: exerciseId={}, type={}.", exercise.getId(),
+                        exercise.getExerciseType());
+                return;
+            }
+
             log.info("Started continuous plagiarism control for exercise: exerciseId={}, type={}.", exercise.getId(), exercise.getExerciseType());
             final long startTime = System.nanoTime();
 
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, exerciseRepository);
 
             var result = executeChecksForExerciseSilencingExceptions(exercise);
-            updatePlagiarismCases(result, exercise);
+            updatePlagiarismCases(result, exercise, author.get());
 
             log.info("Finished continuous plagiarism control for exercise: exerciseId={}, elapsed={}.", exercise.getId(), TimeLogUtil.formatDurationFrom(startTime));
         });
@@ -131,27 +148,27 @@ public class ContinuousPlagiarismControlService {
         };
     }
 
-    private void updatePlagiarismCases(PlagiarismResult result, Exercise exercise) {
+    private void updatePlagiarismCases(PlagiarismResult result, Exercise exercise, User author) {
         if (result != null) {
-            addCurrentComparisonsToPlagiarismCases(result);
+            addCurrentComparisonsToPlagiarismCases(result, author);
         }
         removeStalePlagiarismCases(exercise.getId());
     }
 
-    private <E extends PlagiarismSubmissionElement> void addCurrentComparisonsToPlagiarismCases(PlagiarismResult result) {
+    private <E extends PlagiarismSubmissionElement> void addCurrentComparisonsToPlagiarismCases(PlagiarismResult result, User author) {
         result.getComparisons().forEach(comparison -> {
             comparison.setPlagiarismResult(result);
             plagiarismComparisonRepository.updatePlagiarismComparisonStatus(comparison.getId(), PlagiarismStatus.CONFIRMED);
-            createOrUpdatePlagiarismCases(comparison);
+            createOrUpdatePlagiarismCases(comparison, author);
         });
     }
 
-    private void createOrUpdatePlagiarismCases(PlagiarismComparison comparison) {
+    private void createOrUpdatePlagiarismCases(PlagiarismComparison comparison, User author) {
         var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
                 plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
 
         plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null && plagiarismCase.getStudent() != null)
-                .map(ContinuousPlagiarismControlService::buildCpcPost).forEach(post -> {
+                .map(plagiarismCase -> buildCpcPost(plagiarismCase, author)).forEach(post -> {
                     try {
                         plagiarismPostService.createContinuousPlagiarismControlPlagiarismCasePost(post);
                     }
@@ -162,11 +179,29 @@ public class ContinuousPlagiarismControlService {
                 });
     }
 
-    private static Post buildCpcPost(PlagiarismCase plagiarismCase) {
+    /**
+     * Determines who the plagiarism case post is written by.
+     * <p>
+     * The control runs on a schedule, so there is no requesting user the post could belong to, and it used to be stored
+     * without an author at all. A plagiarism case is the course's business and the student who reads the post should be
+     * able to see who stands behind it and reply to somebody, so it is written in the name of a course instructor. The
+     * instructor with the lowest id is taken so that repeated runs keep attributing the posts the same way.
+     *
+     * @param exercise the exercise the plagiarism check is about to run on
+     * @return the instructor to write the post in the name of, empty if the course has none and the check is skipped
+     */
+    private Optional<User> findPostAuthor(Exercise exercise) {
+        return userRepository.getInstructors(exercise.getCourseViaExerciseGroupOrCourseMember()).stream().min(Comparator.comparing(User::getId));
+    }
+
+    private static Post buildCpcPost(PlagiarismCase plagiarismCase, User author) {
         var post = new Post();
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setPlagiarismCase(plagiarismCase);
+        post.setAuthor(author);
+        // The author was picked from the instructors of the course, so the role follows from how it was chosen
+        post.setAuthorRole(UserRole.INSTRUCTOR);
         post.setContent(ContinuousPlagiarismControlPostContentProvider.getPostContent(plagiarismCase));
         post.setCreationDate(ZonedDateTime.now());
         return post;

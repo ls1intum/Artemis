@@ -30,6 +30,7 @@ public class ConversationParticipant extends DomainObject {
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "firstName", "lastName" })
+    @JoinColumn(nullable = false)
     @NonNull
     private User user;
 

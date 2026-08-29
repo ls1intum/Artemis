@@ -223,6 +223,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         nonOrphanTeamScore.setExercise(oldExercise);
         Team team = new Team();
         team.setShortName("team");
+        team.setExercise(oldExercise);
         nonOrphanTeamScore.setTeam(team);
         teamRepository.save(team);
         nonOrphanTeamScore = teamScoreRepository.save(nonOrphanTeamScore);
