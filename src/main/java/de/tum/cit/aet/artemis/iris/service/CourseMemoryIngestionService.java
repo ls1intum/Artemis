@@ -284,8 +284,11 @@ public class CourseMemoryIngestionService {
         if (resolving.isPresent()) {
             return resolving;
         }
-        return answers.stream().filter(answer -> isBotAuthored(answer) && answer.isVerified()).max(Comparator.comparing(Posting::getCreationDate))
-                .filter(answer -> answerPostRepository.hasHumanVerifier(answer.getId()));
+        // The human-verifier check belongs in the filter, not after max: an Iris answer published automatically is
+        // also isVerified(), so testing only the newest one would discard an older dashboard-verified answer that
+        // still owns the thread's entry — and the caller would then delete that entry.
+        return answers.stream().filter(answer -> isBotAuthored(answer) && answer.isVerified() && answerPostRepository.hasHumanVerifier(answer.getId()))
+                .max(Comparator.comparing(Posting::getCreationDate));
     }
 
     /**

@@ -262,6 +262,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
         if (!courseId || this.courseMemoryStatusCourseId === courseId) {
             return;
         }
+        // Angular reuses this component when only the course changes, so the previous course's subscription has to be
+        // released here. Leaving it would keep raising that course's toasts over the new one, and ngOnDestroy only
+        // ever releases the course tracked last.
+        if (this.courseMemoryStatusCourseId !== undefined) {
+            this.irisCourseMemoryStatusService.unsubscribeFromCourse(this.courseMemoryStatusCourseId);
+        }
         this.courseMemoryStatusCourseId = courseId;
         this.irisCourseMemoryStatusService
             .subscribeToCourse(courseId)

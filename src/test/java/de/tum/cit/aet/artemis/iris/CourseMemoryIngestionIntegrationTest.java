@@ -778,6 +778,26 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void resolutionChanged_anAutoPublishedIrisAnswerDoesNotHideAnOlderVerifiedOne() {
+        Post post = createQuestion("What does CD stand for?");
+        AnswerPost verifiedIrisAnswer = saveDashboardVerifiedIrisAnswer(post, "Continuous Delivery.", false);
+        // Auto-published: isVerified() like the one above, but with no human verifier behind it — and newer.
+        // Testing only the newest bot answer for a verifier would make the anchor come out empty and the
+        // caller retract an entry the tutor-approved answer above still owns.
+        saveAnswer(post, botUser, "It can also mean Continuous Deployment.", true, false);
+        AnswerPost humanAnswer = saveAnswer(post, student, "See the glossary.", false, false);
+
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, humanAnswer.getId()), student, course);
+
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.messageId()).isEqualTo(String.valueOf(verifiedIrisAnswer.getId()));
+    }
+
+    @Test
     void resolutionChanged_dashboardVerifiedIrisAnswer_isReingestedUnderVerificationProvenance() {
         Post post = createQuestion("What is a merge conflict?");
         AnswerPost answer = saveDashboardVerifiedIrisAnswer(post, "It happens when two branches change the same lines.", true);
