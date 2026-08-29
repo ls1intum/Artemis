@@ -421,10 +421,10 @@ jobs:
       # Sole purpose: pushing coverage.json to the orphan `badges` branch. Nothing here runs
       # PR-author code — the job only reads artifacts the trusted `test` job produced.
       contents: write
-    # Serializes back-to-back develop pushes so two runs cannot race to push the same branch.
-    concurrency:
-      group: coverage-badge
-      cancel-in-progress: false
+    # No job-level `concurrency:` here, deliberately. The umbrella's own `ci-${{ github.ref }}` group
+    # (cancel-in-progress false for push) already serializes develop runs end to end, so two of these
+    # can never be in flight at once. Unlike `deploy-docs`, nothing outside this file writes `badges`,
+    # so a second group would only add a way for the job to be cancelled while pending.
     steps:
       - name: Check out the badge tooling
         uses: actions/checkout@v6
@@ -467,6 +467,15 @@ jobs:
           name: Client Coverage Summaries
           path: client-coverage
 
+      # Pinned rather than relying on the runner image's Node, matching the `coverage-report` job
+      # above: without it a runner-image change degrades to exit 127, which this job would swallow as
+      # a warning and the badge would silently stop updating.
+      - name: Setup Node.js
+        if: steps.badges-checkout.outcome == 'success'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
       - name: Compute and publish the coverage badge
         if: steps.badges-checkout.outcome == 'success'
         env:
@@ -486,9 +495,17 @@ jobs:
           status=$?
           set -e
 
-          # Exit 3 covers both an unchanged value and a tripped guard; the script printed which.
+          # 3 is the healthy no-op (nothing moved). 4 means a guard rejected the value, which
+          # warrants a warning: the collapse guard latches on the last published total, so a
+          # legitimate halving of the codebase would otherwise freeze the badge invisibly.
           if [ "$status" -eq 3 ]; then
-            echo "::notice::Coverage badge not republished; the published value stands (reason logged above)."
+            echo "::notice::Coverage badge unchanged; the published value stands."
+            exit 0
+          fi
+          if [ "$status" -eq 4 ]; then
+            echo "::warning::Coverage badge guard rejected the computed value (reason logged above);" \
+                 "the published value stands. If this repeats on every push, re-seed the branch as" \
+                 "described in supporting_scripts/code-coverage/coverage-badge/README.md."
             exit 0
           fi
           if [ "$status" -ne 0 ]; then
@@ -496,18 +513,30 @@ jobs:
             exit 0
           fi
 
-          cd badges-branch
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add coverage.json
-          # Defensive: the script only exits 0 when the value changed, so an empty diff would mean
-          # the two disagree. Nothing to push either way.
-          if git diff --cached --quiet; then
-            echo "::notice::Coverage badge file is byte-identical; nothing to push."
-            exit 0
+          # Every command is checked explicitly rather than leaning on `set -e`: `set -e` is
+          # suspended inside an `if` condition (and inside subshells within one), and this job must
+          # never turn develop red — a badge that could not be pushed is a warning, not a failure.
+          publish_badge() {
+            cd badges-branch || return 1
+            git config user.name 'github-actions[bot]' || return 1
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com' || return 1
+            git add coverage.json || return 1
+            # Defensive: the script only exits 0 when the value changed, so an empty diff would mean
+            # the two disagree. Nothing to push either way.
+            if git diff --cached --quiet; then
+              echo "::notice::Coverage badge file is byte-identical; nothing to push."
+              return 0
+            fi
+            local message
+            message=$(jq -r .message coverage.json) || return 1
+            git commit -m "Update the coverage badge to ${message}" || return 1
+            git push origin HEAD:badges || return 1
+          }
+
+          if ! publish_badge; then
+            echo "::warning::Could not publish the coverage badge; the published value stands."
           fi
-          git commit -m "Update the coverage badge to $(jq -r .message coverage.json)"
-          git push origin HEAD:badges || echo "::warning::Could not push the coverage badge; the next develop push will retry."
+          exit 0
 
   translation:
     name: Check Translation Keys

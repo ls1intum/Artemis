@@ -1,3 +1,8 @@
+import { spawnSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { describe, expect, it } from 'vitest';
 import { colorFor, computeBadge, parseJacocoLines, parseVitestLines } from './compute-coverage-badge.mjs';
 
@@ -55,6 +60,33 @@ describe('parseJacocoLines', () => {
     it('returns undefined for truncated or absent input', () => {
         expect(parseJacocoLines(undefined)).toBeUndefined();
         expect(parseJacocoLines('<?xml version="1.0"?><report name="Artemis"><package name="p">')).toBeUndefined();
+    });
+
+    it('rejects a report truncated mid-package instead of reading a sourcefile-level counter', () => {
+        // The dangerous case: the upload was cut short partway through a later package. Anchoring on
+        // the last `</package>` then lands on an EARLIER package's close, and the next LINE counter
+        // belongs to a <sourcefile> — small, plausible numbers that would publish a wrong badge.
+        const truncated =
+            `<report name="Artemis">` +
+            `<package name="a"><counter type="LINE" missed="10" covered="90"/></package>` +
+            `<package name="b"><sourcefile name="B.java"><counter type="LINE" missed="7" covered="13"/></sourcefile>`;
+        expect(parseJacocoLines(truncated)).toBeUndefined();
+    });
+
+    it('rejects a <group>-structured aggregate rather than reporting one group as the total', () => {
+        // Ant/Maven aggregates nest packages inside <group>. Gradle does not emit this shape, but if
+        // it ever did, the naive anchor would read the last group's counter as the report total.
+        const grouped =
+            `<report name="Artemis">` +
+            `<group name="one"><package name="a"></package><counter type="LINE" missed="1000" covered="9000"/></group>` +
+            `<group name="two"><package name="b"></package><counter type="LINE" missed="5" covered="5"/></group>` +
+            `<counter type="LINE" missed="1005" covered="9005"/></report>`;
+        expect(parseJacocoLines(grouped)).toBeUndefined();
+    });
+
+    it('accepts the real report shape, where only counters separate the last package from </report>', () => {
+        const withWhitespace = '<report><package name="p"></package>\n  <counter type="LINE" missed="1" covered="9"/>\n</report>\n';
+        expect(parseJacocoLines(withWhitespace)).toEqual({ covered: 9, total: 10 });
     });
 });
 
@@ -138,7 +170,8 @@ describe('computeBadge', () => {
     it('keeps the previous badge when a report measured zero lines', () => {
         const result = computeBadge({ jacocoXml: jacocoReport({ covered: 0, missed: 0 }), vitestSummary: vitestSummary() });
         expect(result.status).toBe('skip');
-        expect(result.reason).toContain('zero lines');
+        // 'measured', not just 'zero lines' — the covered-zero case below carries a similar message.
+        expect(result.reason).toContain('measured zero lines');
     });
 
     it('keeps the previous badge when a report covered zero lines', () => {
@@ -176,6 +209,20 @@ describe('computeBadge', () => {
         expect(result.reason).toContain('unchanged');
     });
 
+    it('separates the healthy no-op from a tripped guard, which CI reports differently', () => {
+        // An unchanged value is routine; a tripped guard is not, because the collapse guard latches
+        // on the last published total and would otherwise freeze the badge with no signal.
+        expect(computeBadge({ ...validInputs, previous: publishedBadge() }).kind).toBe('unchanged');
+        expect(computeBadge({ vitestSummary: vitestSummary() }).kind).toBe('guard');
+        expect(
+            computeBadge({
+                jacocoXml: jacocoReport({ covered: 100, missed: 20 }),
+                vitestSummary: vitestSummary(),
+                previous: publishedBadge(),
+            }).kind,
+        ).toBe('guard');
+    });
+
     it('republishes once the first decimal moves', () => {
         const result = computeBadge({ ...validInputs, previous: publishedBadge({ message: '88.2%' }) });
         expect(result.status).toBe('publish');
@@ -185,5 +232,67 @@ describe('computeBadge', () => {
     it('ignores a previous value that carries no combined total', () => {
         const result = computeBadge({ ...validInputs, previous: { message: '1.0%' } });
         expect(result.status).toBe('publish');
+    });
+});
+
+describe('the CLI', () => {
+    const script = fileURLToPath(new URL('./compute-coverage-badge.mjs', import.meta.url));
+
+    /** Runs the script in a throwaway directory. Arguments starting with `@` resolve into that directory. */
+    function run(args, files = {}) {
+        const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'coverage-badge-'));
+        for (const [name, contents] of Object.entries(files)) {
+            fs.writeFileSync(path.join(dir, name), contents);
+        }
+        const resolved = args.map((arg) => (arg.startsWith('@') ? path.join(dir, arg.slice(1)) : arg));
+        const result = spawnSync(process.execPath, [script, ...resolved], { encoding: 'utf-8' });
+        return { dir, code: result.status, stdout: result.stdout };
+    }
+
+    const reports = { 'report.xml': jacocoReport(), 'summary.json': JSON.stringify(vitestSummary()) };
+
+    it('exits 0 and writes the badge when nothing has been published yet', () => {
+        const { dir, code, stdout } = run(['--jacoco', '@report.xml', '--vitest', '@summary.json', '--out', '@coverage.json'], reports);
+
+        expect(code).toBe(0);
+        expect(stdout).toContain('88.3%');
+        expect(JSON.parse(fs.readFileSync(path.join(dir, 'coverage.json'), 'utf-8'))).toMatchObject({ message: '88.3%', color: 'green' });
+    });
+
+    it('reads --previous before writing when both name the same file, as CI invokes it', () => {
+        // CI aliases --previous and --out. Were the write to happen first, the "previous" read would
+        // see the value just written and the unchanged-check would be meaningless.
+        const previous = JSON.stringify({ ...publishedBadge({ message: '10.0%' }), color: 'red' });
+        const { dir, code, stdout } = run(['--jacoco', '@report.xml', '--vitest', '@summary.json', '--previous', '@coverage.json', '--out', '@coverage.json'], {
+            ...reports,
+            'coverage.json': previous,
+        });
+
+        expect(code).toBe(0);
+        expect(stdout).toContain('88.3%');
+        expect(JSON.parse(fs.readFileSync(path.join(dir, 'coverage.json'), 'utf-8')).message).toBe('88.3%');
+    });
+
+    it('exits 3 and leaves the file untouched when the value is unchanged', () => {
+        const previous = JSON.stringify(publishedBadge({ message: '88.3%' }));
+        const { dir, code, stdout } = run(['--jacoco', '@report.xml', '--vitest', '@summary.json', '--previous', '@coverage.json', '--out', '@coverage.json'], {
+            ...reports,
+            'coverage.json': previous,
+        });
+
+        expect(code).toBe(3);
+        expect(stdout).toContain('unchanged');
+        expect(fs.readFileSync(path.join(dir, 'coverage.json'), 'utf-8')).toBe(previous);
+    });
+
+    it('exits 4 when a guard rejects the value, which CI surfaces as a warning', () => {
+        const { code, stdout } = run(['--jacoco', '@missing.xml', '--vitest', '@summary.json', '--out', '@coverage.json'], reports);
+
+        expect(code).toBe(4);
+        expect(stdout).toContain('missing');
+    });
+
+    it('exits 1 on a bad invocation', () => {
+        expect(run(['--jacoco', '@report.xml'], reports).code).toBe(1);
     });
 });

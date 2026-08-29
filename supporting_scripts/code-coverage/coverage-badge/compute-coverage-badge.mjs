@@ -23,7 +23,11 @@
  *                                   --out <coverage.json> \
  *                                   [--previous <coverage.json>] [--sha <commit-sha>]
  *
- * Exit codes: 0 = wrote a new badge, 3 = deliberately kept the previous badge, 1 = bad invocation.
+ * Exit codes: 0 = wrote a new badge, 3 = the value is unchanged (the healthy no-op), 4 = a guard
+ * rejected the computed value, 1 = bad invocation. 3 and 4 are split because the collapse guard
+ * LATCHES: it compares against the last *published* total, which only advances when something is
+ * published, so a legitimate halving of the codebase would refuse forever. CI therefore surfaces 4
+ * as a warning, which is the only thing that makes such a freeze visible. See the README.
  */
 
 import fs from 'fs';
@@ -35,6 +39,11 @@ import { pathToFileURL } from 'url';
  * published total. That is the "a module's report went missing" guard: a partial report shrinks the
  * denominator drastically, while a genuine coverage regression leaves it essentially unchanged. The
  * band is deliberately wide so the badge can never freeze on a real regression.
+ *
+ * Note the guard latches: it compares against the last *published* total, which only moves when a
+ * value is published. A legitimate halving of the codebase (a large module deleted, or the Vitest
+ * `include` narrowed) therefore trips it on every subsequent push until someone re-seeds the branch.
+ * That is why it exits 4 rather than 3 — CI turns 4 into a warning so the freeze is noticed.
  */
 export const MIN_TOTAL_RATIO = 0.5;
 
@@ -76,9 +85,20 @@ export function parseJacocoLines(xml) {
     if (lastPackageEnd === -1) {
         return undefined;
     }
+    const tail = xml.slice(lastPackageEnd + '</package>'.length);
+    // Everything after the final `</package>` must be report-level counters and nothing else.
+    // Asserting that shape is what makes a mis-anchored parse fail loudly instead of quietly:
+    // in a truncated report `lastIndexOf` lands on an EARLIER package's close, and the next LINE
+    // counter then belongs to a `<sourcefile>` — a small but entirely plausible pair of numbers
+    // that would sail past the guards below and publish a wrong badge. The same assertion rejects
+    // a `<group>`-structured aggregate, where the tail would carry a `</group>` and the counter
+    // read would be one group's total rather than the report's.
+    if (!/^\s*(?:<counter\b[^>]*\/>\s*)*<\/report>\s*$/.test(tail)) {
+        return undefined;
+    }
     // Attributes are matched individually rather than as a fixed `missed`/`covered` pair, so a
     // JaCoCo version that reorders them does not silently stop matching.
-    const lineCounter = xml.slice(lastPackageEnd).match(/<counter\b[^>]*\btype="LINE"[^>]*\/>/);
+    const lineCounter = tail.match(/<counter\b[^>]*\btype="LINE"[^>]*\/>/);
     if (!lineCounter) {
         return undefined;
     }
@@ -117,24 +137,24 @@ export function parseVitestLines(summary) {
  * @param {object} [options.previous] the currently published coverage.json, absent on the very first run
  * @param {string} [options.sha] the commit the value was computed from
  * @param {string} [options.now] ISO timestamp to stamp the value with
- * @returns {{status: 'publish', badge: object} | {status: 'skip', reason: string}}
+ * @returns {{status: 'publish', badge: object} | {status: 'skip', kind: 'unchanged' | 'guard', reason: string}}
  */
 export function computeBadge({ jacocoXml, vitestSummary, previous, sha, now } = {}) {
     const server = parseJacocoLines(jacocoXml);
     if (!server) {
-        return { status: 'skip', reason: 'the server JaCoCo report is missing or has no report-level LINE counter' };
+        return { status: 'skip', kind: 'guard', reason: 'the server JaCoCo report is missing, truncated, or has no report-level LINE counter' };
     }
     const client = parseVitestLines(vitestSummary);
     if (!client) {
-        return { status: 'skip', reason: 'the client Vitest summary is missing or has no total.lines counts' };
+        return { status: 'skip', kind: 'guard', reason: 'the client Vitest summary is missing or has no total.lines counts' };
     }
     // A report that parsed but measured nothing means the run produced no usable data, not that the
     // codebase is untested.
     if (server.total === 0 || client.total === 0) {
-        return { status: 'skip', reason: 'a coverage report measured zero lines' };
+        return { status: 'skip', kind: 'guard', reason: 'a coverage report measured zero lines' };
     }
     if (server.covered === 0 || client.covered === 0) {
-        return { status: 'skip', reason: 'a coverage report covered zero lines' };
+        return { status: 'skip', kind: 'guard', reason: 'a coverage report covered zero lines' };
     }
 
     const combined = { covered: server.covered + client.covered, total: server.total + client.total };
@@ -142,6 +162,7 @@ export function computeBadge({ jacocoXml, vitestSummary, previous, sha, now } = 
     if (Number.isFinite(previousTotal) && combined.total < previousTotal * MIN_TOTAL_RATIO) {
         return {
             status: 'skip',
+            kind: 'guard',
             reason: `the combined line total collapsed from ${previousTotal} to ${combined.total}, which indicates a partial report rather than a coverage change`,
         };
     }
@@ -150,7 +171,7 @@ export function computeBadge({ jacocoXml, vitestSummary, previous, sha, now } = 
     const message = `${pct.toFixed(1)}%`;
     // Nothing visible changed, so committing would only add noise to the badges branch.
     if (previous?.message === message) {
-        return { status: 'skip', reason: `the value is unchanged at ${message}` };
+        return { status: 'skip', kind: 'unchanged', reason: `the value is unchanged at ${message}` };
     }
 
     return {
@@ -238,7 +259,7 @@ function main() {
 
     if (result.status === 'skip') {
         console.log(`Keeping the previously published coverage badge: ${result.reason}.`);
-        process.exit(3);
+        process.exit(result.kind === 'unchanged' ? 3 : 4);
     }
 
     fs.mkdirSync(path.dirname(path.resolve(args.out)), { recursive: true });

@@ -52,13 +52,22 @@ gh run download <run-id> -n "Server JaCoCo XML" -n "Client Coverage Summaries" -
 
 ## Exit codes
 
-| Code | Meaning |
-| ---- | ------- |
-| `0`  | A new value was computed and written to `--out`. |
-| `3`  | Deliberately kept the previous value (a guard tripped, or the value is unchanged). The reason is printed. |
-| `1`  | Bad invocation. |
+| Code | Meaning                                                                            |
+| ---- | ---------------------------------------------------------------------------------- |
+| `0`  | A new value was computed and written to `--out`.                                   |
+| `3`  | The value is unchanged — the routine no-op. CI logs a notice.                      |
+| `4`  | A guard rejected the computed value; the reason is printed. CI logs a **warning**. |
+| `1`  | Bad invocation.                                                                    |
 
-Exit `3` is a normal outcome, not a failure — it is how the badge stays stable across a flaky run.
+Neither `3` nor `4` is a failure: both leave the published value standing, which is how the badge
+stays stable across a flaky run. They are split because a repeating `4` is worth investigating while
+a repeating `3` is just a quiet week.
+
+The collapse guard **latches**: it compares against the last _published_ total, and that total only
+advances when a value is published. A legitimate halving of the combined line count — a large module
+deleted, or Vitest's `include` narrowed — therefore trips it on every subsequent develop push instead
+of settling, and the badge freezes until someone re-seeds. The `::warning::` on exit `4` is what
+makes that visible; the re-seed below is the fix.
 
 ## Re-seeding the `badges` branch
 

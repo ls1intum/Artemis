@@ -178,8 +178,9 @@ The one exception is the `deploy-docs` **job** in `ci.yml`, which carries a job-
 `concurrency: { group: pages, cancel-in-progress: false }`. Job-level concurrency is safe (it is
 not the reusable-workflow lock that #3205 warns about), and the repo-global `pages` group is what
 serializes every GitHub Pages deploy — across umbrella runs and against the manual redeploy in
-`deploy-documentation.yml`. `coverage-badge` uses a job-level group for the same reason: to
-serialize its pushes to the `badges` branch across back-to-back develop pushes.
+`deploy-documentation.yml`. `coverage-badge` deliberately has **no** job-level group: the umbrella's
+own `ci-${{ github.ref }}` group already serializes develop runs end to end, and nothing outside
+`ci.yml` writes the `badges` branch.
 
 ## The coverage badge
 
@@ -197,14 +198,25 @@ than publishing a worse one:
 
 1. The job runs only when `test` **succeeded**. A run with a flaky failure has artificially low
    coverage — tests that never ran cover nothing — so it is never published.
-2. `compute-coverage-badge.mjs` refuses a report that is missing, unparseable, or measured/covered
-   zero lines.
+2. `compute-coverage-badge.mjs` refuses a report that is missing, truncated, or measured/covered
+   zero lines. Truncation matters more than it sounds: the parser anchors on the last `</package>`,
+   so a report cut short mid-package would otherwise read a *sourcefile*-level counter and publish a
+   small but entirely plausible wrong number. It therefore asserts that nothing but report-level
+   counters separates that anchor from `</report>`.
 3. It refuses a value whose combined line **total** collapsed below half the published total. That
-   catches a vanished module report without freezing on a genuine regression, which leaves the
-   denominator intact.
+   catches a vanished module report without freezing on a genuine coverage regression, which leaves
+   the denominator intact.
 
 Every rejection is a no-op: the job exits 0 without committing, and Shields keeps serving the last
 good file. Nothing about the badge can turn `develop` red.
+
+**Guard 3 latches, by construction.** It compares against the last *published* total, which only
+advances when something is published. So a legitimate halving of the combined line total — a large
+module deleted, or Vitest's `include` narrowed — trips it on every subsequent develop push rather
+than settling. That is why the script exits **4** for a tripped guard and **3** for the routine
+"value unchanged" case: the job turns 4 into a `::warning::`, which is the only signal that would
+make such a freeze noticeable. The escape hatch is a manual re-seed, documented in
+[the script's README](../../supporting_scripts/code-coverage/coverage-badge/README.md).
 
 Commits land on `badges` only, never on `develop`, and only when the rendered value actually
 changes. Between changes the file's `exact`/`sha`/`updatedAt` fields go stale by design — they feed
