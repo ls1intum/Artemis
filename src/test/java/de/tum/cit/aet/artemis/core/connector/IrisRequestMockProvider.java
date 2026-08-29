@@ -232,6 +232,21 @@ public class IrisRequestMockProvider {
         mockWebhookPost("/course-memory/delete", PyrisWebhookCourseMemoryDeletionExecutionDTO.class, responseConsumer);
     }
 
+    /**
+     * Course Memory ingestion webhook that reaches Pyris and is rejected. The body still reaches the consumer, so a
+     * test can read the job token out of it and assert what Artemis did with the job the dispatch never started.
+     *
+     * @param responseConsumer receives the request body before the error response is produced
+     * @param httpStatus       the status Pyris answers with
+     */
+    public void mockCourseMemoryIngestionWebhookRunError(Consumer<PyrisWebhookCourseMemoryIngestionExecutionDTO> responseConsumer, int httpStatus) {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/course-memory/ingest")).andExpect(method(HttpMethod.POST)).andRespond(request -> {
+            var mockRequest = (MockClientHttpRequest) request;
+            responseConsumer.accept(mapper.readValue(mockRequest.getBodyAsString(), PyrisWebhookCourseMemoryIngestionExecutionDTO.class));
+            return MockRestResponseCreators.withRawStatus(httpStatus).createResponse(request);
+        });
+    }
+
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/lectures/delete", PyrisWebhookLectureIngestionExecutionDTO.class, responseConsumer);
     }

@@ -309,7 +309,7 @@ public class CourseMemoryIngestionService {
         log.info("Deleting course memory for thread {} in course {}", postId, course.getId());
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), postId));
         boolean dispatched = pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forThread(settings, course.getId(), postId));
-        notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.DELETE, course, postId);
+        notifyIfDispatchFailed(dispatched, jobToken, actorLogin, CourseMemoryOperation.DELETE, course, postId);
     }
 
     /**
@@ -338,7 +338,7 @@ public class CourseMemoryIngestionService {
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), conversationId));
         boolean dispatched = pyrisConnectorService
                 .executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forConversation(settings, course.getId(), conversationId));
-        notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.DELETE, course, conversationId);
+        notifyIfDispatchFailed(dispatched, jobToken, actorLogin, CourseMemoryOperation.DELETE, course, conversationId);
     }
 
     /**
@@ -371,7 +371,7 @@ public class CourseMemoryIngestionService {
         log.info("Deleting all course memory entries of course {}", courseId);
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), courseId));
         boolean dispatched = pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forCourse(settings, course.getId()));
-        notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.DELETE, course, courseId);
+        notifyIfDispatchFailed(dispatched, jobToken, actorLogin, CourseMemoryOperation.DELETE, course, courseId);
     }
 
     /**
@@ -417,7 +417,7 @@ public class CourseMemoryIngestionService {
         log.info("Ingesting course memory for thread {} (source={}, anchor={}) in course {}", postId, source, messageId, course.getId());
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.INGEST, course.getId(), postId));
         boolean dispatched = pyrisConnectorService.executeCourseMemoryIngestionWebhook(executionDTO);
-        notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.INGEST, course, postId);
+        notifyIfDispatchFailed(dispatched, jobToken, actorLogin, CourseMemoryOperation.INGEST, course, postId);
     }
 
     /**
@@ -425,9 +425,15 @@ public class CourseMemoryIngestionService {
      * point, and a request that never reached Pyris produces no status callback — without this the
      * client would show the run as still in progress for good.
      */
-    private void notifyIfDispatchFailed(boolean dispatched, @Nullable String actorLogin, CourseMemoryOperation operation, Course course, String postId) {
+    private void notifyIfDispatchFailed(boolean dispatched, String jobToken, @Nullable String actorLogin, CourseMemoryOperation operation, Course course, String postId) {
         if (dispatched) {
             return;
+        }
+        // Pyris never received the request, so no callback will ever close this job out. Drop it now rather than
+        // leaving a token nothing can redeem to sit out the ingestion TTL.
+        var job = pyrisJobService.getJob(jobToken);
+        if (job != null) {
+            pyrisJobService.removeJob(job);
         }
         notifyActor(actorLogin, IrisCourseMemoryStatusDTO.failed(operation, course.getId(), postId, "Could not reach Pyris"));
     }

@@ -990,6 +990,24 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void dispatchFailure_pushesFailedAndReleasesTheJob() {
+        Post post = createQuestion("What if Pyris cannot be reached?");
+        AnswerPost answer = saveAnswer(post, tutor, "An answer nobody will store.", true, true);
+        AtomicReference<String> jobToken = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunError(dto -> jobToken.set(dto.settings().authenticationToken()), HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+
+        // TRIGGERED was already pushed, and Pyris never took the request, so nothing else will ever close this run
+        // out: Artemis has to report the failure itself.
+        verifyMessageWasSentOverWebsocket(tutor.getLogin(), courseMemoryTopic(),
+                payload -> payload instanceof IrisCourseMemoryStatusDTO dto && dto.stage() == CourseMemoryStage.FAILED);
+        // And drop the job rather than leaving a token nothing can redeem to sit out the ingestion TTL.
+        assertThat(jobToken.get()).isNotNull();
+        assertThat(pyrisJobService.getJob(jobToken.get())).isNull();
+    }
+
+    @Test
     void statusUpdate_failedPushesFailedWithMessage() {
         Post post = createQuestion("Does failure notify me?");
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), String.valueOf(channel.getId()), String.valueOf(post.getId()), "answer-1",
