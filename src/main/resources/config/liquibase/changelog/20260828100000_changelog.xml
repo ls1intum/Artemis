@@ -12,8 +12,13 @@
 
         Every constraint changeset is guarded by a precondition that no such row is left. Adding a not-null constraint
         to a column that still holds a null fails, and a failing changeset stops the application from starting, which is
-        far worse than the column staying nullable. With the guard the changeset is marked as run and the server comes
-        up; the column then needs a look and a changelog of its own.
+        far worse than the column staying nullable.
+
+        The guard is onFail="CONTINUE" rather than MARK_RAN on purpose. CONTINUE skips the changeset without writing it
+        to databasechangelog, so the server starts, a warning is logged, and the constraint is tried again on the next
+        start. Once the rows that have no parent are dealt with, the column is constrained by itself. MARK_RAN would
+        record the changeset as done and the column would stay nullable on that installation for good, with only a new
+        changelog able to put it right.
 
         Rows are only deleted where the row carries nothing that cannot be recomputed and where its own dependants can
         be cleared along with it. Everything that holds course content or student work is guarded but never deleted: a
@@ -31,7 +36,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-02-competency-relation-head-competency-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM competency_relation WHERE head_competency_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="competency_relation" columnName="head_competency_id" columnDataType="bigint"/>
@@ -44,7 +49,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-04-competency-relation-tail-competency-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM competency_relation WHERE tail_competency_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="competency_relation" columnName="tail_competency_id" columnDataType="bigint"/>
@@ -57,7 +62,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-08-iris-message-content-message-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM iris_message_content WHERE message_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="iris_message_content" columnName="message_id" columnDataType="bigint"/>
@@ -70,7 +75,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-10-lecture-transcription-lecture-unit-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM lecture_transcription WHERE lecture_unit_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="lecture_transcription" columnName="lecture_unit_id" columnDataType="bigint"/>
@@ -83,7 +88,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-12-lecture-unit-processing-state-lecture-unit-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM lecture_unit_processing_state WHERE lecture_unit_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="lecture_unit_processing_state" columnName="lecture_unit_id" columnDataType="bigint"/>
@@ -96,7 +101,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-14-participant-score-exercise-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM participant_score WHERE exercise_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="participant_score" columnName="exercise_id" columnDataType="bigint"/>
@@ -109,7 +114,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-16-exam-session-student-exam-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM exam_session WHERE student_exam_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="exam_session" columnName="student_exam_id" columnDataType="bigint"/>
@@ -122,7 +127,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-18-conversation-participant-user-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation_participant WHERE user_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="conversation_participant" columnName="user_id" columnDataType="bigint"/>
@@ -135,7 +140,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-20-reaction-user-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM reaction WHERE user_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="reaction" columnName="user_id" columnDataType="bigint"/>
@@ -148,7 +153,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-22-plagiarism-comparison-matches-plagiarism-comparison-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM plagiarism_comparison_matches WHERE plagiarism_comparison_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="plagiarism_comparison_matches" columnName="plagiarism_comparison_id" columnDataType="bigint"/>
@@ -161,7 +166,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-24-plagiarism-result-similarity-distribution-plagiarism-result-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM plagiarism_result_similarity_distribution WHERE plagiarism_result_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="plagiarism_result_similarity_distribution" columnName="plagiarism_result_id" columnDataType="bigint"/>
@@ -175,7 +180,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-26-example-submission-submission-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM example_submission WHERE submission_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="example_submission" columnName="submission_id" columnDataType="bigint"/>
@@ -188,7 +193,7 @@
     </changeSet>
 
     <changeSet id="20260828100000-28-submitted-answer-submission-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM submitted_answer WHERE submission_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="submitted_answer" columnName="submission_id" columnDataType="bigint"/>
@@ -201,42 +206,42 @@
     </changeSet>
 
     <changeSet id="20260828100000-30-submitted-answer-quiz-question-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM submitted_answer WHERE quiz_question_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="submitted_answer" columnName="quiz_question_id" columnDataType="bigint"/>
     </changeSet>
 
     <changeSet id="20260828100000-31-competency-course-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM competency WHERE course_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="competency" columnName="course_id" columnDataType="bigint"/>
     </changeSet>
 
     <changeSet id="20260828100000-32-conversation-course-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation WHERE course_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="conversation" columnName="course_id" columnDataType="bigint"/>
     </changeSet>
 
     <changeSet id="20260828100000-33-student-exam-exam-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM student_exam WHERE exam_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="student_exam" columnName="exam_id" columnDataType="bigint"/>
     </changeSet>
 
     <changeSet id="20260828100000-34-exercise-group-exam-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM exercise_group WHERE exam_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="exercise_group" columnName="exam_id" columnDataType="bigint"/>
     </changeSet>
 
     <changeSet id="20260828100000-35-team-exercise-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM team WHERE exercise_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="team" columnName="exercise_id" columnDataType="bigint"/>
@@ -262,21 +267,21 @@
         </sql>
     </changeSet>
     <changeSet id="20260828100000-38-post-author-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM post WHERE author_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="post" columnName="author_id" columnDataType="bigint"/>
     </changeSet>
 
     <changeSet id="20260828100000-37-answer-post-author-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM answer_post WHERE author_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="answer_post" columnName="author_id" columnDataType="bigint"/>
     </changeSet>
 
     <changeSet id="20260828100000-40-plagiarism-result-exercise-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM plagiarism_result WHERE exercise_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="plagiarism_result" columnName="exercise_id" columnDataType="bigint"/>
