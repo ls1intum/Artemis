@@ -110,15 +110,11 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         botUser = irisBotUserService.getIrisBotUser();
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        // The opt-out and AI-selection tests below persist this flag and users are shared across methods
-        // in the class, so reset it here to keep the tests order-independent.
-        student.setSelectedLLMUsage(null);
-        tutor.setSelectedLLMUsage(null);
-        student = userTestRepository.save(student);
-        tutor = userTestRepository.save(tutor);
-        User secondStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        secondStudent.setSelectedLLMUsage(null);
-        userTestRepository.save(secondStudent);
+        // The opt-out and AI-selection tests below persist this decision and users are shared across
+        // methods in the class, so reset it here to keep the tests order-independent.
+        userUtilService.clearAiSelectionDecision(student);
+        userUtilService.clearAiSelectionDecision(tutor);
+        userUtilService.clearAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         enableIrisFor(course);
     }
 
@@ -351,7 +347,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     void ingestion_isSkippedWhenTheQuestionAuthorOptedOutOfAi() {
-        student.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
         Post post = createQuestion("Please keep my question away from AI.");
         AnswerPost answer = saveAnswer(post, tutor, "Understood.", true, true);
@@ -369,7 +365,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     void ingestion_isSkippedWhenTheAnswerAuthorOptedOutOfAi() {
-        tutor.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(tutor, AiSelectionDecision.NO_AI);
         userTestRepository.save(tutor);
         Post post = createQuestion("Who wrote this answer?");
         AnswerPost answer = saveAnswer(post, tutor, "A tutor who opted out.", true, true);
@@ -388,7 +384,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void ingestion_redactsAParticipantWhoOptedOutMidThread() {
         User bystander = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        bystander.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(bystander, AiSelectionDecision.NO_AI);
         bystander = userTestRepository.save(bystander);
 
         Post post = createQuestion("Why does the build fail?");
@@ -627,7 +623,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void ingestion_downgradesToLocalWhenAnyParticipantChoseLocal() {
         User secondStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        secondStudent.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(secondStudent, AiSelectionDecision.LOCAL_AI);
         secondStudent = userTestRepository.save(secondStudent);
 
         Post post = createQuestion("Does the extractor run on-premise?");
@@ -664,7 +660,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void ingestion_clearsResolvingFlagOfARedactedAnswer() {
         User bystander = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        bystander.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(bystander, AiSelectionDecision.NO_AI);
         bystander = userTestRepository.save(bystander);
 
         Post post = createQuestion("Which Java version do we use?");
@@ -686,7 +682,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     void retraction_stillWorksForAnOptedOutQuestionAuthor() {
-        student.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
         Post post = createQuestion("Opted out after an entry already existed.");
         AnswerPost answer = saveAnswer(post, tutor, "No longer resolving.", true, false);
@@ -937,7 +933,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     void skippedIngestion_pushesNothing() {
         // The whole reason TRIGGERED is server-pushed: a client-side toast would announce an ingestion
         // in each of these cases, none of which dispatch anything.
-        tutor.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(tutor, AiSelectionDecision.NO_AI);
         User optedOutTutor = userTestRepository.save(tutor);
         Post optedOutPost = createQuestion("Answered by someone who opted out?");
         AnswerPost optedOutAnswer = saveAnswer(optedOutPost, optedOutTutor, "Not ingested.", true, true);

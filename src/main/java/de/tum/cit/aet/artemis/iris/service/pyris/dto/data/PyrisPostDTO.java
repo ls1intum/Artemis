@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.data;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
@@ -41,18 +44,20 @@ public record PyrisPostDTO(Long id, String content, List<PyrisAnswerPostDTO> ans
 
     /**
      * Builds the thread Pyris receives: the root post plus its answers, oldest first, each tagged with
-     * its author's course role.
+     * its author's course role, and with opted-out authors' content redacted.
      *
      * @param post          the thread root, with its answers loaded
      * @param rolesByUserId course roles of the human authors, as resolved by a single query; authors
      *                          missing from the map are treated as students
+     * @param decisions     the LLM usage decisions of the answer authors, loaded in one query by
+     *                          {@code UserAiPreferenceService.findDecisions}. Reading each author's decision here
+     *                          instead would issue a query per answer post, which is why it is passed in.
      * @return the thread as Pyris expects it
      */
-    public static PyrisPostDTO of(Post post, Map<Long, UserRole> rolesByUserId) {
+    public static PyrisPostDTO of(Post post, Map<Long, UserRole> rolesByUserId, Map<Long, AiSelectionDecision> decisions) {
         var answers = post.getAnswers().stream().sorted(CHRONOLOGICAL).map(answer -> {
             String role = authorRoleOf(answer.getAuthor(), rolesByUserId);
-            return AiSelectionDecision.NO_AI.equals(answer.getAuthor() != null ? answer.getAuthor().getSelectedLLMUsage() : null) ? PyrisAnswerPostDTO.redacted(answer, role)
-                    : new PyrisAnswerPostDTO(answer, role);
+            return AiSelectionDecision.NO_AI.equals(decisionOf(decisions, answer)) ? PyrisAnswerPostDTO.redacted(answer, role) : new PyrisAnswerPostDTO(answer, role);
         }).toList();
         return new PyrisPostDTO(post.getId(), post.getContent(), answers, post.getAuthor().getId(), authorRoleOf(post.getAuthor(), rolesByUserId));
     }
@@ -75,5 +80,23 @@ public record PyrisPostDTO(Long id, String content, List<PyrisAnswerPostDTO> ans
             case TUTOR -> "TUTOR";
             case USER -> "STUDENT";
         };
+    }
+
+    /**
+     * The ids of the authors of a post's answers, which is exactly the set of decisions this DTO needs. Callers load them
+     * in one query through {@code UserAiPreferenceService.findDecisions} instead of one per answer.
+     *
+     * @param post the post whose answers are forwarded
+     * @return the distinct author ids, skipping answers without a persisted author
+     */
+    public static Set<Long> answerAuthorIds(Post post) {
+        return post.getAnswers().stream().map(answer -> answer.getAuthor() == null ? null : answer.getAuthor().getId()).filter(Objects::nonNull).collect(Collectors.toSet());
+    }
+
+    private static AiSelectionDecision decisionOf(Map<Long, AiSelectionDecision> decisions, AnswerPost answer) {
+        if (answer.getAuthor() == null || answer.getAuthor().getId() == null) {
+            return null;
+        }
+        return decisions.get(answer.getAuthor().getId());
     }
 }

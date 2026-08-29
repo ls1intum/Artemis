@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
@@ -69,6 +70,8 @@ public class PyrisPipelineService {
 
     private final IrisChatWebsocketService irisChatWebsocketService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final CourseLoadService courseLoadService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -85,8 +88,9 @@ public class PyrisPipelineService {
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            CourseLoadService courseLoadService, FeatureToggleService featureToggleService) {
+            CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService) {
         this.pyrisConnectorService = pyrisConnectorService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -157,7 +161,7 @@ public class PyrisPipelineService {
         var pyrisUser = toPyrisUserDTO(user);
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
-        executePipeline("chat", user.getSelectedLLMUsage(), variant, supportLevel, eventVariant,
+        executePipeline("chat", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, eventVariant,
             pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error));
@@ -198,14 +202,14 @@ public class PyrisPipelineService {
         // @formatter:off
         executePipeline(
             "tutor-suggestion",
-            user.getSelectedLLMUsage(),
+            userAiPreferenceService.findDecision(user.getId()),
             variant,
             supportLevel,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                PyrisPostDTO.of(post, resolveThreadAuthorRoles(post, course.getId())),
+                buildThread(post, course.getId()),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 toPyrisUserDTO(user),
                 executionDto.settings(),
@@ -220,7 +224,7 @@ public class PyrisPipelineService {
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {
-        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && user.isMemirisEnabled());
+        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && userAiPreferenceService.isMemirisEnabled(user.getId()));
     }
 
     /**
@@ -241,7 +245,7 @@ public class PyrisPipelineService {
      */
     public void executeAutonomousTutorPipeline(String variant, String supportLevel, AiSelectionDecision aiSelection, Post post, Course course, PyrisUserDTO student,
             PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO, PipelineStatusUpdater statusUpdateConsumer) {
-        var postDTO = PyrisPostDTO.of(post, resolveThreadAuthorRoles(post, course.getId()));
+        var postDTO = buildThread(post, course.getId());
         // @formatter:off
         executePipeline(
             "autonomous-tutor",
@@ -262,6 +266,21 @@ public class PyrisPipelineService {
             statusUpdateConsumer
         );
         // @formatter:on
+    }
+
+    /**
+     * Builds the thread Pyris receives, for every pipeline that sends one.
+     * <p>
+     * Both of the per-author lookups it needs — course roles and AI opt-out decisions — are one query
+     * each rather than one per message, and both live here rather than at the call sites so the
+     * autonomous tutor and tutor suggestion pipelines cannot drift apart in what they send.
+     *
+     * @param post     the thread root, with its answers loaded
+     * @param courseId the course the thread belongs to
+     * @return the thread as Pyris expects it
+     */
+    private PyrisPostDTO buildThread(Post post, long courseId) {
+        return PyrisPostDTO.of(post, resolveThreadAuthorRoles(post, courseId), userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post)));
     }
 
     /**

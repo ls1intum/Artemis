@@ -71,7 +71,7 @@ class PyrisPostDTOThreadTest {
         var irisReply = answer(58L, "The DevOps cycle typically consists of several key phases...", 4L, 1);
         var studentFollowUp = answer(59L, "What is the difference between continuous integration and delivery", 6L, 2);
 
-        var dto = PyrisPostDTO.of(threadOf(irisReply, studentFollowUp), Map.of());
+        var dto = PyrisPostDTO.of(threadOf(irisReply, studentFollowUp), Map.of(), Map.of());
 
         assertThat(dto.answers()).extracting(answer -> answer.id()).containsExactly(58L, 59L);
     }
@@ -83,7 +83,7 @@ class PyrisPostDTOThreadTest {
         var irisReply = answer(56L, "DevOps encompasses a range of responsibilities that bridge software development and IT operations...", 4L, 1);
         var studentFollowUp = answer(57L, "And how does the devops cyvle look like", 6L, 2);
 
-        var dto = PyrisPostDTO.of(threadOf(irisReply, studentFollowUp), Map.of());
+        var dto = PyrisPostDTO.of(threadOf(irisReply, studentFollowUp), Map.of(), Map.of());
 
         assertThat(dto.answers()).last().extracting(answer -> answer.id()).isEqualTo(57L);
     }
@@ -96,7 +96,7 @@ class PyrisPostDTOThreadTest {
         var irisReply = answer(58L, "The DevOps cycle typically consists of...", user(4L, true), 1);
         var studentFollowUp = answer(59L, "What is the difference between CI and CD", user(6L), 2);
 
-        var dto = PyrisPostDTO.of(threadOf(irisReply, studentFollowUp), Map.of());
+        var dto = PyrisPostDTO.of(threadOf(irisReply, studentFollowUp), Map.of(), Map.of());
 
         assertThat(dto.answers()).extracting(answer -> answer.authorRole()).containsExactly("IRIS", "STUDENT");
     }
@@ -106,7 +106,7 @@ class PyrisPostDTOThreadTest {
         var tutorAnswer = answer(60L, "Have a look at the slides.", user(7L), 1);
         var instructorAnswer = answer(61L, "To add to that...", user(8L), 2);
 
-        var dto = PyrisPostDTO.of(threadOf(tutorAnswer, instructorAnswer), Map.of(7L, UserRole.TUTOR, 8L, UserRole.INSTRUCTOR));
+        var dto = PyrisPostDTO.of(threadOf(tutorAnswer, instructorAnswer), Map.of(7L, UserRole.TUTOR, 8L, UserRole.INSTRUCTOR), Map.of());
 
         assertThat(dto.answers()).extracting(answer -> answer.authorRole()).containsExactly("TUTOR", "INSTRUCTOR");
         assertThat(dto.authorRole()).isEqualTo("STUDENT");
@@ -117,7 +117,7 @@ class PyrisPostDTOThreadTest {
         var first = answer(70L, "first", 6L, 5);
         var second = answer(71L, "second", 6L, 5);
 
-        var dto = PyrisPostDTO.of(threadOf(second, first), Map.of());
+        var dto = PyrisPostDTO.of(threadOf(second, first), Map.of(), Map.of());
 
         assertThat(dto.answers()).extracting(answer -> answer.id()).containsExactly(70L, 71L);
     }

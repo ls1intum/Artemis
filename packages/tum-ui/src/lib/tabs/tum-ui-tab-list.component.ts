@@ -34,13 +34,19 @@ export class TumUiTabListComponent implements OnDestroy {
         this.keyManagerChange = this.keyManager.change.subscribe((index) => {
             const tab = this.tabs()[index];
             if (tab) {
-                this.tabsService.select(tab.value());
+                this.tabsService.select(this.tabsService.valueFor(tab));
             }
         });
         effect(() => {
             const tabs = this.tabs();
+            if (!this.allValuesPublished(tabs)) {
+                // A tab created by @if or @for is reported by the content query before its `value` binding has been
+                // applied. Acting now would select the wrong tab, or overwrite the value the host bound with undefined;
+                // this effect re-runs as soon as the missing tab publishes its value.
+                return;
+            }
             const activeValue = this.tabsService.active();
-            const activeIndex = tabs.findIndex((tab) => tab.value() === activeValue && !tab.disabled);
+            const activeIndex = tabs.findIndex((tab) => this.tabsService.valueFor(tab) === activeValue && !tab.disabled);
             if (activeIndex >= 0) {
                 this.keyManager.updateActiveItem(activeIndex);
                 return;
@@ -48,12 +54,12 @@ export class TumUiTabListComponent implements OnDestroy {
             const firstEnabledIndex = tabs.findIndex((tab) => !tab.disabled);
             if (firstEnabledIndex >= 0) {
                 this.keyManager.updateActiveItem(firstEnabledIndex);
-                this.tabsService.select(tabs[firstEnabledIndex].value());
+                this.tabsService.select(this.tabsService.valueFor(tabs[firstEnabledIndex]));
             }
         });
         afterRenderEffect(() => {
             const tabs = this.tabs();
-            const active = tabs.find((tab) => tab.value() === this.tabsService.active());
+            const active = tabs.find((tab) => this.tabsService.valueFor(tab) === this.tabsService.active());
             this.updateIndicator(active);
             this.observeLayout(tabs);
         });
@@ -75,6 +81,14 @@ export class TumUiTabListComponent implements OnDestroy {
         this.keyManager.destroy();
     }
 
+    /**
+     * Whether every tab currently in the query has published its value, i.e. whether Angular has applied the `value`
+     * binding of each of them. Only then does the list know which tab is which.
+     */
+    private allValuesPublished(tabs: readonly TumUiTabComponent[]): boolean {
+        return tabs.every((tab) => this.tabsService.valueFor(tab) !== undefined);
+    }
+
     private updateIndicator(active: TumUiTabComponent | undefined): void {
         const width = active?.elementRef.nativeElement.offsetWidth ?? 0;
         this.indicatorPosition.set({
@@ -91,7 +105,7 @@ export class TumUiTabListComponent implements OnDestroy {
         }
         this.resizeObserver?.disconnect();
         this.resizeObserver = new ResizeObserver(() => {
-            const active = this.tabs().find((tab) => tab.value() === this.tabsService.active());
+            const active = this.tabs().find((tab) => this.tabsService.valueFor(tab) === this.tabsService.active());
             this.updateIndicator(active);
         });
         this.resizeObserver.observe(this.elementRef.nativeElement);

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
@@ -103,6 +104,8 @@ public class CourseMemoryIngestionService {
 
     private final UserRepository userRepository;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final IrisWebsocketService irisWebsocketService;
 
     @Value("${server.url}")
@@ -110,7 +113,7 @@ public class CourseMemoryIngestionService {
 
     public CourseMemoryIngestionService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
             AuthorizationCheckService authCheckService, ConversationMessageRepository conversationMessageRepository, AnswerPostRepository answerPostRepository,
-            UserRepository userRepository, IrisWebsocketService irisWebsocketService) {
+            UserRepository userRepository, IrisWebsocketService irisWebsocketService, UserAiPreferenceService userAiPreferenceService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
@@ -119,6 +122,7 @@ public class CourseMemoryIngestionService {
         this.answerPostRepository = answerPostRepository;
         this.userRepository = userRepository;
         this.irisWebsocketService = irisWebsocketService;
+        this.userAiPreferenceService = userAiPreferenceService;
     }
 
     /**
@@ -464,8 +468,10 @@ public class CourseMemoryIngestionService {
      * @return {@link AiSelectionDecision#LOCAL_AI} if any forwarded author chose it, otherwise {@link AiSelectionDecision#CLOUD_AI}
      */
     private AiSelectionDecision resolveThreadAiSelection(Post fullPost) {
-        boolean anyLocal = Stream.concat(Stream.of(fullPost.getAuthor()), visibleAnswers(fullPost).stream().map(AnswerPost::getAuthor)).filter(Objects::nonNull)
-                .filter(author -> !author.isBot()).map(User::getSelectedLLMUsage).anyMatch(AiSelectionDecision.LOCAL_AI::equals);
+        Set<Long> userIds = Stream.concat(Stream.of(fullPost.getAuthor()), visibleAnswers(fullPost).stream().map(AnswerPost::getAuthor)).filter(Objects::nonNull)
+                .filter(author -> !author.isBot()).map(User::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        // One query for the whole thread rather than one per author.
+        boolean anyLocal = userAiPreferenceService.findDecisions(userIds).values().stream().anyMatch(AiSelectionDecision.LOCAL_AI::equals);
         return anyLocal ? AiSelectionDecision.LOCAL_AI : AiSelectionDecision.CLOUD_AI;
     }
 
@@ -586,7 +592,7 @@ public class CourseMemoryIngestionService {
      * {@code AutonomousTutorForwardingService} applies before forwarding a post to Pyris.
      */
     private boolean hasOptedOutOfAi(@Nullable User user) {
-        return user != null && AiSelectionDecision.NO_AI.equals(user.getSelectedLLMUsage());
+        return user != null && user.getId() != null && AiSelectionDecision.NO_AI.equals(userAiPreferenceService.findDecision(user.getId()));
     }
 
     private boolean isAtLeastTutor(@Nullable User user, Course course) {

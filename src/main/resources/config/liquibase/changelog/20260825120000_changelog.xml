@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Per-course Atlas auto-orchestration configuration, stored on the existing course_configuration
+         table instead of a separate Atlas-owned table: the settings must be readable and writable even
+         when the Atlas module is disabled, which the (unconditional) course configuration guarantees.
+         - auto_orchestrator_enabled: hard per-course kill switch (default false), gating the debounce /
+           scheduler pipeline in addition to the global Feature.AtlasAgent toggle.
+         - debounce_window_seconds_override / max_daily_orchestration_override: nullable per-course
+           overrides; when NULL the global AtlasOrchestratorProperties defaults apply. -->
+    <changeSet id="20260825120000-1" author="lanfermann">
+        <addColumn tableName="course_configuration">
+            <column name="auto_orchestrator_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="debounce_window_seconds_override" type="integer"/>
+            <column name="max_daily_orchestration_override" type="integer"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>
