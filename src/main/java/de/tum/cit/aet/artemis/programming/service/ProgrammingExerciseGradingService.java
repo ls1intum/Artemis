@@ -817,7 +817,7 @@ public class ProgrammingExerciseGradingService {
      * @param testCases of the programming exercise.
      */
     private void filterTestCaseFeedbackWithoutActiveTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
-        result.getTestCaseFeedbacks().removeIf(feedback -> testCases.stream().noneMatch(test -> test.equals(feedback.getTestCase())));
+        result.removeTestCaseFeedbackIf(feedback -> testCases.stream().noneMatch(test -> test.equals(feedback.getTestCase())));
     }
 
     /**

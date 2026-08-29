@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -42,6 +44,9 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ProgrammingExerciseTestRepository exerciseRepository;
+
+    @Autowired
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     private Result resultStudent1;
 
@@ -153,6 +158,29 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
         final String longFeedbackText = request.get(getUrl(syntheticId), HttpStatus.OK, String.class);
         assertThat(longFeedbackText).isEqualTo(LONG_FEEDBACK);
+    }
+
+    /**
+     * The synthetic ids are enumerable, so the guard has to hide exactly what the serialization filters hide.
+     * For automatic results those keep 'after due date' feedback hidden until the LAST individual due date has
+     * passed — a student whose own due date is over must not be able to read it through this endpoint while a
+     * classmate with an extension can still submit.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testCaseMessageOfAfterDueDateTestHiddenWhileAnotherStudentStillHasTimeToSubmit() throws Exception {
+        exercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        exerciseRepository.save(exercise);
+        // a classmate got an extension, so the exercise's latest individual due date is still in the future
+        var participationWithExtension = participationUtilService.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        participationWithExtension.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+        studentParticipationRepository.save(participationWithExtension);
+
+        resultStudent1.setAssessmentType(AssessmentType.AUTOMATIC);
+        resultRepository.save(resultStudent1);
+        long syntheticId = addTestCaseMessageToResult(resultStudent1, Visibility.AFTER_DUE_DATE);
+
+        request.get(getUrl(syntheticId), HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test

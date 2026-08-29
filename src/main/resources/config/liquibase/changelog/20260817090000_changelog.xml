@@ -49,7 +49,16 @@
     <property name="hashType" value="VARBINARY(32)"/>
     <property name="messageTextType" value="CLOB"/>
 
+    <!-- One DDL statement per changeset with an existence precondition, for the reason spelled out above
+         changeset 08a: on MySQL every DDL auto-commits, so a changeset that fails after its first statement
+         leaves a committed object behind while staying unrecorded, and the automatic re-run dies on the
+         duplicate. Splitting the primary keys off the CREATE TABLEs makes a partial failure self-healing. -->
     <changeSet id="20260817090000-01-create-feedback-message" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="feedback_message"/>
+            </not>
+        </preConditions>
         <createTable tableName="feedback_message">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
@@ -70,6 +79,11 @@
     </changeSet>
 
     <changeSet id="20260817090000-02-create-test-case-feedback" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="test_case_feedback"/>
+            </not>
+        </preConditions>
         <createTable tableName="test_case_feedback">
             <column name="result_id" type="BIGINT">
                 <constraints nullable="false"/>
@@ -85,10 +99,23 @@
             <!-- NULL for pass markers without a message; no FK/index by design, see file header -->
             <column name="message_id" type="BIGINT"/>
         </createTable>
+    </changeSet>
+
+    <changeSet id="20260817090000-02b-pk-test-case-feedback" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <primaryKeyExists tableName="test_case_feedback" primaryKeyName="pk_test_case_feedback"/>
+            </not>
+        </preConditions>
         <addPrimaryKey tableName="test_case_feedback" columnNames="result_id, seq" constraintName="pk_test_case_feedback"/>
     </changeSet>
 
     <changeSet id="20260817090000-03-create-sca-feedback" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="sca_feedback"/>
+            </not>
+        </preConditions>
         <createTable tableName="sca_feedback">
             <column name="result_id" type="BIGINT">
                 <constraints nullable="false"/>
@@ -115,6 +142,14 @@
             <column name="penalty" type="DOUBLE"/>
             <column name="message_id" type="BIGINT"/>
         </createTable>
+    </changeSet>
+
+    <changeSet id="20260817090000-03b-pk-sca-feedback" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <primaryKeyExists tableName="sca_feedback" primaryKeyName="pk_sca_feedback"/>
+            </not>
+        </preConditions>
         <addPrimaryKey tableName="sca_feedback" columnNames="result_id, seq" constraintName="pk_sca_feedback"/>
     </changeSet>
 
@@ -231,7 +266,13 @@
     <!-- Backfill: sca_feedback                                                -->
     <!-- ===================================================================== -->
     <!-- category = the part of feedback.text after 'SCAFeedbackIdentifier:' (22 characters). Rows with
-         unparseable JSON keep NULL positions/rule and reference the whole detail_text as message. -->
+         unparseable JSON keep NULL positions/rule and reference the whole detail_text as message.
+         penalty = -feedback.credits, NOT the JSON '$.penalty' field: the blob carries the raw category
+         penalty, while the deduction the row actually applied is the per-issue share after the category
+         and exercise caps, which the old schema stored in feedback.credits. sca_feedback.penalty holds
+         that capped value (ScaFeedback#getCredits returns -penalty and the grading service writes the
+         capped share), so taking it from the blob would make every issue in a capped category deduct
+         more than it did before the migration. -->
 
     <changeSet id="20260817090000-07-backfill-sca-feedback-mysql" author="krusche" dbms="mysql">
         <sql>
@@ -248,10 +289,10 @@
                    JSON_EXTRACT(j.doc, '$.startColumn'),
                    JSON_EXTRACT(j.doc, '$.endColumn'),
                    LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.priority')), 25),
-                   JSON_EXTRACT(j.doc, '$.penalty'),
+                   -j.credits,
                    fm.id
             FROM (
-                SELECT f.id, f.result_id, f.reference, f.text, f.detail_text,
+                SELECT f.id, f.result_id, f.reference, f.text, f.detail_text, f.credits,
                        CASE WHEN JSON_VALID(f.detail_text) THEN f.detail_text END AS doc
                 FROM feedback f
                 WHERE f.result_id IS NOT NULL AND f.text LIKE 'SCAFeedbackIdentifier%'
@@ -285,7 +326,7 @@
                    CAST(tmp_sca_json_field(f.detail_text, 'startColumn') AS INT),
                    CAST(tmp_sca_json_field(f.detail_text, 'endColumn') AS INT),
                    LEFT(tmp_sca_json_field(f.detail_text, 'priority'), 25),
-                   CAST(tmp_sca_json_field(f.detail_text, 'penalty') AS DOUBLE PRECISION),
+                   -f.credits,
                    fm.id
             FROM feedback f
             LEFT JOIN feedback_message fm ON fm.hash = sha256(convert_to(tmp_sca_json_message(f.detail_text), 'UTF8'))

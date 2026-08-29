@@ -2,12 +2,13 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -167,10 +168,10 @@ public class ProgrammingFeedbackSynthesizerService {
 
         List<Long> idsToLoad = programmingResults.stream().filter(result -> !hasAuthoritativeTestCaseFeedback(result) || !hasAuthoritativeScaFeedback(result)).map(Result::getId)
                 .distinct().toList();
-        Map<Long, List<TestCaseFeedback>> loadedTestCaseFeedback = idsToLoad.isEmpty() ? Map.of()
-                : testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(idsToLoad).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
-        Map<Long, List<ScaFeedback>> loadedScaFeedback = idsToLoad.isEmpty() ? Map.of()
-                : scaFeedbackRepository.findWithMessageByResultIds(idsToLoad).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        Map<Long, List<TestCaseFeedback>> loadedTestCaseFeedback = loadByResultIdsInChunks(idsToLoad, testCaseFeedbackRepository::findWithTestCaseAndMessageByResultIds,
+                feedback -> feedback.getId().getResultId());
+        Map<Long, List<ScaFeedback>> loadedScaFeedback = loadByResultIdsInChunks(idsToLoad, scaFeedbackRepository::findWithMessageByResultIds,
+                feedback -> feedback.getId().getResultId());
 
         Map<String, Map<Long, Double>> pointsCache = new HashMap<>();
         for (Result result : programmingResults) {
@@ -203,13 +204,30 @@ public class ProgrammingFeedbackSynthesizerService {
         if (resultIds.isEmpty()) {
             return;
         }
-        var testCaseFeedbackByResult = testCaseFeedbackRepository.findWithTestCaseByResultIds(resultIds).stream()
-                .collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
-        var scaFeedbackByResult = scaFeedbackRepository.findByResultIds(resultIds).stream().collect(Collectors.groupingBy(feedback -> feedback.getId().getResultId()));
+        var testCaseFeedbackByResult = loadByResultIdsInChunks(resultIds, testCaseFeedbackRepository::findWithTestCaseByResultIds, feedback -> feedback.getId().getResultId());
+        var scaFeedbackByResult = loadByResultIdsInChunks(resultIds, scaFeedbackRepository::findByResultIds, feedback -> feedback.getId().getResultId());
         for (Result result : results) {
             result.setTestCaseFeedbacks(testCaseFeedbackByResult.getOrDefault(result.getId(), List.of()));
             result.setScaFeedbacks(scaFeedbackByResult.getOrDefault(result.getId(), List.of()));
         }
+    }
+
+    /**
+     * Maximum number of result ids passed into a single {@code IN} predicate. A whole-course data export
+     * hydrates every participation of the course at once, which can exceed PostgreSQL's limit of 65535 bind
+     * parameters per statement; loading in chunks keeps every statement well below it.
+     */
+    private static final int RESULT_ID_CHUNK_SIZE = 1000;
+
+    private <T> Map<Long, List<T>> loadByResultIdsInChunks(List<Long> resultIds, Function<List<Long>, List<T>> loader, Function<T, Long> resultIdOf) {
+        Map<Long, List<T>> byResultId = new HashMap<>();
+        for (int start = 0; start < resultIds.size(); start += RESULT_ID_CHUNK_SIZE) {
+            List<Long> chunk = resultIds.subList(start, Math.min(start + RESULT_ID_CHUNK_SIZE, resultIds.size()));
+            for (T row : loader.apply(chunk)) {
+                byResultId.computeIfAbsent(resultIdOf.apply(row), key -> new ArrayList<>()).add(row);
+            }
+        }
+        return byResultId;
     }
 
     private static ProgrammingExercise exerciseOf(Result result) {

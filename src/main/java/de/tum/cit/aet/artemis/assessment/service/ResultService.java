@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -121,6 +122,8 @@ public class ResultService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     private final BuildJobRepository buildJobRepository;
 
     private final BuildLogEntryService buildLogEntryService;
@@ -147,7 +150,7 @@ public class ResultService {
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
             Optional<ParticipantScoreScheduleService> participantScoreScheduleService, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.assessmentNoteRepository = assessmentNoteRepository;
@@ -171,6 +174,7 @@ public class ResultService {
         this.participantScoreScheduleService = participantScoreScheduleService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -450,15 +454,7 @@ public class ResultService {
     }
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
-        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-        Exam exam = exercise.getExerciseGroup().getExam();
-        boolean shouldResultsBePublished = exam.resultsPublished();
-        if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation) {
-            var studentExamOptional = api.findByExamIdAndParticipationId(exam.getId(), participation.getId());
-            if (studentExamOptional.isPresent()) {
-                shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
-            }
-        }
+        boolean shouldResultsBePublished = areExamResultsPublished(participation, exercise);
         for (Result result : results) {
             if (Hibernate.isInitialized(result.getFeedbacks())) {
                 result.filterSensitiveFeedbacks(!shouldResultsBePublished);
@@ -466,8 +462,41 @@ public class ResultService {
         }
     }
 
+    private boolean areExamResultsPublished(Participation participation, Exercise exercise) {
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+        Exam exam = exercise.getExerciseGroup().getExam();
+        if (exam.resultsPublished()) {
+            return true;
+        }
+        if (exam.isTestExam() && participation instanceof StudentParticipation) {
+            return api.findByExamIdAndParticipationId(exam.getId(), participation.getId()).map(StudentExam::areResultsPublishedYet).orElse(false);
+        }
+        return false;
+    }
+
+    /**
+     * Decides whether feedback marked {@code AFTER_DUE_DATE} still has to be hidden from the owner of the given participation. This is the same predicate the
+     * serialization filters apply ({@link #filterInformation}) — callers that serve a single feedback item outside those filters (see {@code LongFeedbackTextResource}) must
+     * use it so that an enumerable feedback id cannot expose what a full result would still hide.
+     *
+     * @param participation  the participation the feedback belongs to; its exercise decides between the exam and the course rules
+     * @param assessmentType the assessment type of the result the feedback belongs to
+     * @return true if 'after due date' feedback has to be withheld
+     */
+    public boolean shouldHideAfterDueDateFeedback(Participation participation, AssessmentType assessmentType) {
+        Exercise exercise = participation.getExercise();
+        if (exercise.isExamExercise()) {
+            return !areExamResultsPublished(participation, exercise);
+        }
+        // course exercises: hidden until this participation's own due date has passed, and for automatic results until the last student's individual due date has passed, so
+        // that no one gains an unfair advantage
+        return exerciseDateService.isBeforeDueDate(participation) || (AssessmentType.AUTOMATIC.equals(assessmentType) && exerciseDateService.isBeforeLatestDueDate(exercise));
+    }
+
     /**
      * Get the successful results for an exercise, ordered ascending by build completion date.
+     * <p>
+     * The returned results carry their feedback, including the synthesized views of the automatic feedback of programming results.
      *
      * @param participations  the participations with references to the exercises for which the results should be returned
      * @param withSubmissions true, if each result should also contain the submissions.
@@ -516,6 +545,10 @@ public class ResultService {
         if (withSubmissions) {
             results.removeIf(result -> result.getSubmission() == null || !result.getSubmission().isSubmitted());
         }
+
+        // The automatic feedback of programming results lives in the compact typed tables, so it is not part of the feedbacks loaded above. Attach it as legacy views: the
+        // callers sum up the feedbacks of every returned result, which would otherwise report the manual points only.
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(results);
 
         return results;
     }

@@ -18,11 +18,11 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
@@ -42,15 +42,15 @@ public class LongFeedbackTextResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ExerciseDateService exerciseDateService;
+    private final ResultService resultService;
 
     public LongFeedbackTextResource(LongFeedbackTextRepository longFeedbackTextRepository, ParticipationAuthorizationCheckService participationAuthorizationCheckService,
-            TestCaseFeedbackRepository testCaseFeedbackRepository, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService) {
+            TestCaseFeedbackRepository testCaseFeedbackRepository, AuthorizationCheckService authorizationCheckService, ResultService resultService) {
         this.longFeedbackTextRepository = longFeedbackTextRepository;
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.exerciseDateService = exerciseDateService;
+        this.resultService = resultService;
     }
 
     /**
@@ -98,12 +98,17 @@ public class LongFeedbackTextResource {
      * feedback they cannot act as capability tokens: without this check a student could fetch the messages
      * of hidden (visibility NEVER) or not-yet-visible (AFTER_DUE_DATE before the due date) test cases of
      * their own submission, which every other read path filters out (see Result#filterSensitiveFeedbacks).
+     * The 'not yet visible' half has to use the very predicate those read paths use
+     * ({@code ResultService#shouldHideAfterDueDateFeedback}) rather than a due-date check of its own:
+     * an exam hides such feedback until the results are published, and a course exercise hides automatic
+     * feedback until the last individual due date has passed, both of which outlast this participation's
+     * own due date.
      */
     private void checkTestCaseVisibilityElseThrow(TestCaseFeedback feedback, Participation participation, long syntheticFeedbackId) {
         if (authorizationCheckService.isAtLeastTeachingAssistantForExercise(participation.getExercise())) {
             return;
         }
-        boolean hiddenBeforeDueDate = feedback.isAfterDueDate() && exerciseDateService.isBeforeDueDate(participation);
+        boolean hiddenBeforeDueDate = feedback.isAfterDueDate() && resultService.shouldHideAfterDueDateFeedback(participation, feedback.getResult().getAssessmentType());
         if (feedback.isInvisible() || hiddenBeforeDueDate) {
             // 404 (not 403) so that the existence of hidden test feedback is not revealed either
             throw new EntityNotFoundException("TestCaseFeedback message", syntheticFeedbackId);

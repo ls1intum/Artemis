@@ -413,7 +413,7 @@ public class ProgrammingExerciseFeedbackCreationService {
 
             if (category.isEmpty() || category.get().getState() == CategoryState.INACTIVE) {
                 // Remove feedback of unmapped or inactive categories permanently
-                result.getScaFeedbacks().remove(scaFeedback);
+                result.removeScaFeedback(scaFeedback);
                 iterator.remove();
                 continue;
             }

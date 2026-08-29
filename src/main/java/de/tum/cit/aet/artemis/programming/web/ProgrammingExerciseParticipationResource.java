@@ -74,6 +74,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -124,13 +125,15 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -147,6 +150,7 @@ public class ProgrammingExerciseParticipationResource {
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.examApi = examApi;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -164,6 +168,9 @@ public class ProgrammingExerciseParticipationResource {
         filterParticipationSubmissionResults(participation);
         // hide details that should not be shown to the students
         Set<Result> results = participation.getSubmissions().isEmpty() ? Set.of() : participation.getSubmissions().iterator().next().getResults();
+        // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views before filtering, so that the
+        // students see them and the test case counts are derived from them
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(results);
         resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         return ResponseEntity.ok(participation);
     }
@@ -263,6 +270,9 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
+        // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy views before filtering, so that the
+        // students see them and the test case counts are derived from them
+        result.ifPresent(programmingFeedbackSynthesizerService::attachSynthesizedFeedback);
         result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
 
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
