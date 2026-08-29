@@ -16,9 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -31,7 +29,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
@@ -409,18 +406,6 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Highest sequence numbers ever handed out for a {@link TestCaseFeedback} / {@link ScaFeedback} of this result during this in-memory lifecycle, including rows that have
-     * since been removed. Sequence numbers are part of the primary key, so a number must never be reused while the removed row is still pending deletion: Hibernate flushes
-     * inserts before deletes and would raise a {@code NonUniqueObjectException} or violate the primary key. Transient by design — a freshly loaded result starts at 0 and
-     * derives the next number from its rows.
-     */
-    @Transient
-    private int highestTestCaseFeedbackSeq;
-
-    @Transient
-    private int highestScaFeedbackSeq;
-
-    /**
      * Returns the live, mutable set of test-case feedback rows attached to this result. Only meaningful for
      * programming-exercise results; empty otherwise.
      *
@@ -434,39 +419,28 @@ public class Result extends DomainObject implements Comparable<Result> {
     /**
      * Replaces the test-case feedback collection, wiring the owning side of each row. Orphaned rows are
      * deleted via {@code orphanRemoval}. Replaces the field reference for the same lazy-initialization
-     * reason as {@link #setFeedbacks(Collection)}. Rows without a sequence number yet (freshly constructed,
-     * {@code seq <= 0}) get the next free one assigned, so a mixed collection cannot produce a primary-key
-     * collision on {@code (result_id, seq)}.
+     * reason as {@link #setFeedbacks(Collection)}.
      *
      * @param testCaseFeedbacks the new collection (may be {@code null} or empty to clear)
      */
     public void setTestCaseFeedbacks(Collection<TestCaseFeedback> testCaseFeedbacks) {
         Set<TestCaseFeedback> newSet = new HashSet<>();
         if (testCaseFeedbacks != null) {
-            int maxSeq = 0;
             for (TestCaseFeedback feedback : testCaseFeedbacks) {
                 if (feedback == null) {
                     continue;
                 }
                 feedback.setResult(this);
-                maxSeq = Math.max(maxSeq, feedback.getSeq());
                 newSet.add(feedback);
             }
-            for (TestCaseFeedback feedback : newSet) {
-                if (feedback.getSeq() <= 0) {
-                    feedback.setSeq(++maxSeq);
-                }
-            }
-            highestTestCaseFeedbackSeq = Math.max(highestTestCaseFeedbackSeq, maxSeq);
         }
         this.testCaseFeedbacks = newSet;
     }
 
     /**
-     * Adds the given test-case feedback to this result, assigning the next free sequence number and wiring
-     * the owning side. Requires the target collection to be initialized (deriving the next sequence number
-     * iterates it) — use {@link #setTestCaseFeedbacks(Collection)} on detached results with uninitialized
-     * collections.
+     * Adds the given test-case feedback to this result, wiring the owning side. Requires the target
+     * collection to be initialized — use {@link #setTestCaseFeedbacks(Collection)} on detached results with
+     * uninitialized collections.
      *
      * @param feedback the test-case feedback to attach
      */
@@ -475,26 +449,7 @@ public class Result extends DomainObject implements Comparable<Result> {
             return;
         }
         feedback.setResult(this);
-        highestTestCaseFeedbackSeq = nextFeedbackItemSeq(testCaseFeedbacks.stream().mapToInt(TestCaseFeedback::getSeq), highestTestCaseFeedbackSeq);
-        feedback.setSeq(highestTestCaseFeedbackSeq);
         this.testCaseFeedbacks.add(feedback);
-    }
-
-    /**
-     * Removes every test-case feedback row matching the given predicate, remembering their sequence numbers so that {@link #addTestCaseFeedback(TestCaseFeedback)} cannot hand
-     * one of them out again in the same flush — see {@link #highestTestCaseFeedbackSeq}. Removed rows are deleted via {@code orphanRemoval}.
-     *
-     * @param filter selects the rows to remove
-     * @return true if at least one row was removed
-     */
-    public boolean removeTestCaseFeedbackIf(Predicate<TestCaseFeedback> filter) {
-        return testCaseFeedbacks.removeIf(feedback -> {
-            if (!filter.test(feedback)) {
-                return false;
-            }
-            highestTestCaseFeedbackSeq = Math.max(highestTestCaseFeedbackSeq, feedback.getSeq());
-            return true;
-        });
     }
 
     /**
@@ -509,37 +464,28 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Replaces the SCA feedback collection, wiring the owning side of each row and assigning missing
-     * sequence numbers. See {@link #setTestCaseFeedbacks(Collection)}.
+     * Replaces the SCA feedback collection, wiring the owning side of each row. See
+     * {@link #setTestCaseFeedbacks(Collection)}.
      *
      * @param scaFeedbacks the new collection (may be {@code null} or empty to clear)
      */
     public void setScaFeedbacks(Collection<ScaFeedback> scaFeedbacks) {
         Set<ScaFeedback> newSet = new HashSet<>();
         if (scaFeedbacks != null) {
-            int maxSeq = 0;
             for (ScaFeedback feedback : scaFeedbacks) {
                 if (feedback == null) {
                     continue;
                 }
                 feedback.setResult(this);
-                maxSeq = Math.max(maxSeq, feedback.getSeq());
                 newSet.add(feedback);
             }
-            for (ScaFeedback feedback : newSet) {
-                if (feedback.getSeq() <= 0) {
-                    feedback.setSeq(++maxSeq);
-                }
-            }
-            highestScaFeedbackSeq = Math.max(highestScaFeedbackSeq, maxSeq);
         }
         this.scaFeedbacks = newSet;
     }
 
     /**
-     * Adds the given SCA feedback to this result, assigning the next free sequence number and wiring the
-     * owning side. Requires the target collection to be initialized (deriving the next sequence number
-     * iterates it) — use {@link #setScaFeedbacks(Collection)} on detached results with uninitialized
+     * Adds the given SCA feedback to this result, wiring the owning side. Requires the target collection to
+     * be initialized — use {@link #setScaFeedbacks(Collection)} on detached results with uninitialized
      * collections.
      *
      * @param feedback the SCA feedback to attach
@@ -549,28 +495,7 @@ public class Result extends DomainObject implements Comparable<Result> {
             return;
         }
         feedback.setResult(this);
-        highestScaFeedbackSeq = nextFeedbackItemSeq(scaFeedbacks.stream().mapToInt(ScaFeedback::getSeq), highestScaFeedbackSeq);
-        feedback.setSeq(highestScaFeedbackSeq);
         this.scaFeedbacks.add(feedback);
-    }
-
-    /**
-     * Removes the given static-code-analysis feedback row, remembering its sequence number so that {@link #addScaFeedback(ScaFeedback)} cannot hand it out again in the same
-     * flush — see {@link #highestTestCaseFeedbackSeq}.
-     *
-     * @param feedback the row to remove
-     * @return true if the row was part of this result
-     */
-    public boolean removeScaFeedback(ScaFeedback feedback) {
-        if (feedback == null || !scaFeedbacks.remove(feedback)) {
-            return false;
-        }
-        highestScaFeedbackSeq = Math.max(highestScaFeedbackSeq, feedback.getSeq());
-        return true;
-    }
-
-    private static int nextFeedbackItemSeq(IntStream existingSeqs, int highestEverAssigned) {
-        return Math.max(existingSeqs.max().orElse(0), highestEverAssigned) + 1;
     }
 
     /**

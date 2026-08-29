@@ -245,17 +245,17 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Submission submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
-        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
-        participationUtilService.addScaFeedbackToResult(result, StaticCodeAnalysisTool.SPOTBUGS, "Bad Practice", "BAD_PRACTICE", "sca issue message");
+        var testCaseRow = participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, "Some feedback");
+        var scaRow = participationUtilService.addScaFeedbackToResult(result, StaticCodeAnalysisTool.SPOTBUGS, "Bad Practice", "BAD_PRACTICE", "sca issue message");
 
         List<Feedback> feedbacks = request.getList(
                 "/api/assessment/participations/" + result.getSubmission().getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.OK, Feedback.class);
 
-        // both rows carry seq = 1 - without the SCA seq offset the two synthesized views would collide on
-        // the same synthetic id and one of them would be dropped from the (Set-backed) feedback collection
+        // the two tables have independent id sequences, so both rows can carry the same id - without the stride the
+        // synthesized views would collide and one would be dropped from the (Set-backed) feedback collection
         assertThat(feedbacks).hasSize(2);
-        assertThat(feedbacks.stream().map(Feedback::getId)).containsExactlyInAnyOrder(ProgrammingFeedbackSynthesizerService.syntheticId(result.getId(), 1),
-                ProgrammingFeedbackSynthesizerService.syntheticScaId(result.getId(), 1));
+        assertThat(feedbacks.stream().map(Feedback::getId)).containsExactlyInAnyOrder(ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(testCaseRow.getId()),
+                ProgrammingFeedbackSynthesizerService.syntheticScaId(scaRow.getId()));
 
         // the synthesized issue JSON exposes the tool-reported category (legacy contract), not the Artemis
         // grading category (which is carried by the feedback text)
@@ -953,10 +953,10 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
 
-        result = participationUtilService.addTestCaseFeedbackToResult(result, testCase, false,
+        var testCaseRow = participationUtilService.addTestCaseFeedbackToResult(result, testCase, false,
                 "The AttributeTest test can only run if the structural oracle (test.json) is present. If you do not provide it, delete AttributeTest.java!");
-        // the feedback analysis works with synthetic ids that encode (resultId, seq) of the typed row
-        long feedbackId = ProgrammingFeedbackSynthesizerService.syntheticId(result.getId(), 1);
+        // the feedback analysis works with synthetic ids that address the typed row
+        long feedbackId = ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(testCaseRow.getId());
 
         String url = "/api/assessment/exercises/" + programmingExercise.getId() + "/feedback-details-participation?feedbackId1=" + feedbackId;
 

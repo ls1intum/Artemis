@@ -164,23 +164,17 @@ public final class Constants {
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     /**
-     * Factor encoding {@code (resultId, seq)} into one synthetic negative feedback id:
-     * {@code -(resultId * FACTOR + seq)}. Shared between the Java encoder/decoder
-     * (ProgrammingFeedbackSynthesizerService) and the JPQL feedback-analysis query that builds the same
-     * ids in the database, so the two sides cannot drift. The factor also keeps the ids JavaScript-safe on
-     * the client ({@code Number.MAX_SAFE_INTEGER / FACTOR} bounds the largest encodable result id).
+     * Stride encoding a typed automatic feedback row into one synthetic negative feedback id:
+     * {@code -(rowId * STRIDE)} for a test-case row and {@code -(rowId * STRIDE + 1)} for an SCA row.
+     * <p>
+     * The two tables have independent id sequences, so the low bit is what tells a test-case view from an
+     * SCA view; without it the same client-visible id could mean either. Shared between the Java
+     * encoder/decoder (ProgrammingFeedbackSynthesizerService) and the JPQL feedback-analysis query that
+     * builds the same ids in the database, so the two sides cannot drift. Ids stay JavaScript-safe on the
+     * client as long as {@code rowId * STRIDE} is below {@code Number.MAX_SAFE_INTEGER}, which allows
+     * ~4.5e15 rows per table.
      */
-    public static final long SYNTHETIC_FEEDBACK_ID_FACTOR = 100_000L;
-
-    /**
-     * Offset added to the {@code seq} part of synthetic SCA feedback ids. Test-case and SCA rows of the
-     * same result allocate their sequence numbers independently (two tables, two counters), so without the
-     * offset a test view and an SCA view could carry the same synthetic id. The sequence columns are
-     * deliberately SMALLINT (max 32767 items per row type and result — production peaks at ~4200 SCA rows,
-     * larger reports are not supported) to keep the composite primary key of the two largest tables small,
-     * so offset + seq always stays below {@link #SYNTHETIC_FEEDBACK_ID_FACTOR}.
-     */
-    public static final long SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET = 50_000L;
+    public static final long SYNTHETIC_FEEDBACK_ID_STRIDE = 2L;
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 

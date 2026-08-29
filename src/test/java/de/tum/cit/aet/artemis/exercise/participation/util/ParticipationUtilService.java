@@ -568,9 +568,9 @@ public class ParticipationUtilService {
      * @param testCase    The test case the feedback belongs to
      * @param positive    Whether the test passed (null = not executed)
      * @param messageText The (deduplicated) message text, may be null for pass markers
-     * @return The updated Result
+     * @return The saved test-case feedback row
      */
-    public Result addTestCaseFeedbackToResult(Result result, ProgrammingExerciseTestCase testCase, Boolean positive, String messageText) {
+    public TestCaseFeedback addTestCaseFeedbackToResult(Result result, ProgrammingExerciseTestCase testCase, Boolean positive, String messageText) {
         TestCaseFeedback feedback = new TestCaseFeedback();
         feedback.setTestCase(testCase);
         feedback.setPositive(positive);
@@ -578,12 +578,8 @@ public class ParticipationUtilService {
             feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
         }
         feedback.setResult(result);
-        // insert the row directly (instead of re-saving the possibly stale parent) to avoid composite-key
-        // collisions when this helper is called multiple times for the same result
-        int nextSeq = testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())).stream().mapToInt(TestCaseFeedback::getSeq).max().orElse(0) + 1;
-        feedback.setSeq(nextSeq);
-        testCaseFeedbackRepository.save(feedback);
-        return result;
+        // insert the row directly instead of re-saving the possibly stale parent
+        return testCaseFeedbackRepository.save(feedback);
     }
 
     /**
@@ -594,9 +590,9 @@ public class ParticipationUtilService {
      * @param category     The Artemis grading category name
      * @param toolCategory The category as reported by the tool (exposed in the synthesized issue JSON)
      * @param messageText  The (deduplicated) message text, may be null
-     * @return The updated Result
+     * @return The saved SCA feedback row
      */
-    public Result addScaFeedbackToResult(Result result, StaticCodeAnalysisTool tool, String category, String toolCategory, String messageText) {
+    public ScaFeedback addScaFeedbackToResult(Result result, StaticCodeAnalysisTool tool, String category, String toolCategory, String messageText) {
         ScaFeedback feedback = new ScaFeedback();
         feedback.setTool(tool);
         feedback.setCategory(category);
@@ -605,10 +601,7 @@ public class ParticipationUtilService {
             feedback.setMessage(feedbackMessageService.getOrCreate(messageText));
         }
         feedback.setResult(result);
-        int nextSeq = scaFeedbackRepository.findByResultIds(List.of(result.getId())).stream().mapToInt(ScaFeedback::getSeq).max().orElse(0) + 1;
-        feedback.setSeq(nextSeq);
-        scaFeedbackRepository.save(feedback);
-        return result;
+        return scaFeedbackRepository.save(feedback);
     }
 
     /**

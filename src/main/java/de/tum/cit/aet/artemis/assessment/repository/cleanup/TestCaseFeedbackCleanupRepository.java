@@ -12,7 +12,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.assessment.domain.FeedbackItemId;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -24,7 +23,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface TestCaseFeedbackCleanupRepository extends ArtemisJpaRepository<TestCaseFeedback, FeedbackItemId> {
+public interface TestCaseFeedbackCleanupRepository extends ArtemisJpaRepository<TestCaseFeedback, Long> {
 
     /**
      * Deletes {@link TestCaseFeedback} entries where the associated result has no submission or its submission has no participation.

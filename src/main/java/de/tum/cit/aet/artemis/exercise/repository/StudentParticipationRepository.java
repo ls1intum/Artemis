@@ -1602,8 +1602,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
-                LISTAGG(CAST(-(f.id.resultId * de.tum.cit.aet.artemis.core.config.Constants.SYNTHETIC_FEEDBACK_ID_FACTOR + f.id.seq) AS string), ',') WITHIN GROUP (ORDER BY f.id.resultId),
-                COUNT(f.id.resultId),
+                LISTAGG(CAST(-(f.id * de.tum.cit.aet.artemis.core.config.Constants.SYNTHETIC_FEEDBACK_ID_STRIDE) AS string), ',') WITHIN GROUP (ORDER BY f.id),
+                COUNT(f.id),
                 0,
                 COALESCE(MIN(CASE
                     WHEN LENGTH(m.text) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH
@@ -1651,7 +1651,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                             ELSE 'Student Error'
                         END IN (:filterErrorCategories))
             GROUP BY m.id, tc.testName
-            HAVING COUNT(f.id.resultId) BETWEEN :minOccurrence AND :maxOccurrence
+            HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
             """)
     Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
             @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames, @Param("minOccurrence") long minOccurrence,
@@ -1693,7 +1693,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     // TODO: move this query to a more appropriate repository, either feedbackRepository or exerciseRepository
     @Query("""
             SELECT MAX(feedbackCounts.feedbackCount) FROM (
-                SELECT COUNT(f.id.resultId) AS feedbackCount
+                SELECT COUNT(f.id) AS feedbackCount
                 FROM ProgrammingExerciseStudentParticipation p
                 INNER JOIN p.submissions s
                 INNER JOIN s.results r ON r.id = (

@@ -71,7 +71,7 @@ public class PageUtil {
             "build_completion_date", "buildCompletionDate"
         )),
         FEEDBACK_ANALYSIS(Map.of(
-            "count", "COUNT(f.id.resultId)",
+            "count", "COUNT(f.id)",
             "detailTexts", "MIN(m.text)",
             // MIN(...) is equivalent under the query's GROUP BY tc.testName and routes the sort through
             // JpaSort.unsafe, so Spring Data cannot prefix the join alias with the root alias

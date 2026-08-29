@@ -8,11 +8,12 @@
 
       feedback_message    deduplicated, content-addressed message text (SHA-256 hash unique).
                           On production, 12.8M stored detail texts collapse to ~1.6M distinct values.
-      test_case_feedback  one row per executed test per result. Composite PK (result_id, seq) because
-                          (result_id, test_case_id) is NOT unique in production data (a build can report
-                          the same test twice). Credits and visibility are NOT stored - both are derived
-                          from the test case at read time, which matches re-evaluation semantics (a
-                          re-evaluation always overwrote them from the current test case configuration).
+      test_case_feedback  one row per executed test per result, with an ordinary surrogate id. Note that
+                          (result_id, test_case_id) is deliberately NOT unique: a build can report the
+                          same test twice, which Artemis surfaces as a duplicate-test-case warning.
+                          Credits and visibility are NOT stored - both are derived from the test case at
+                          read time, which matches re-evaluation semantics (a re-evaluation always
+                          overwrote them from the current test case configuration).
       sca_feedback        one row per static-code-analysis issue per result, with structured columns
                           instead of the previous JSON blob in feedback.detail_text. The tool is stored
                           as the enum NAME (copied verbatim from feedback.reference).
@@ -85,10 +86,10 @@
             </not>
         </preConditions>
         <createTable tableName="test_case_feedback">
-            <column name="result_id" type="BIGINT">
-                <constraints nullable="false"/>
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="seq" type="SMALLINT">
+            <column name="result_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
             <column name="test_case_id" type="BIGINT">
@@ -101,13 +102,16 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="20260817090000-02b-pk-test-case-feedback" author="krusche">
+    <changeSet id="20260817090000-02b-index-test-case-feedback-result" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
-                <primaryKeyExists tableName="test_case_feedback" primaryKeyName="pk_test_case_feedback"/>
+                <indexExists tableName="test_case_feedback" indexName="ix_test_case_feedback_result"/>
             </not>
         </preConditions>
-        <addPrimaryKey tableName="test_case_feedback" columnNames="result_id, seq" constraintName="pk_test_case_feedback"/>
+        <!-- every read of automatic feedback goes through the result; also supports the FK below -->
+        <createIndex tableName="test_case_feedback" indexName="ix_test_case_feedback_result">
+            <column name="result_id"/>
+        </createIndex>
     </changeSet>
 
     <changeSet id="20260817090000-03-create-sca-feedback" author="krusche">
@@ -117,10 +121,10 @@
             </not>
         </preConditions>
         <createTable tableName="sca_feedback">
-            <column name="result_id" type="BIGINT">
-                <constraints nullable="false"/>
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="seq" type="SMALLINT">
+            <column name="result_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
             <!-- StaticCodeAnalysisTool enum name, copied verbatim from the previous feedback.reference -->
@@ -144,13 +148,15 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="20260817090000-03b-pk-sca-feedback" author="krusche">
+    <changeSet id="20260817090000-03b-index-sca-feedback-result" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
-                <primaryKeyExists tableName="sca_feedback" primaryKeyName="pk_sca_feedback"/>
+                <indexExists tableName="sca_feedback" indexName="ix_sca_feedback_result"/>
             </not>
         </preConditions>
-        <addPrimaryKey tableName="sca_feedback" columnNames="result_id, seq" constraintName="pk_sca_feedback"/>
+        <createIndex tableName="sca_feedback" indexName="ix_sca_feedback_result">
+            <column name="result_id"/>
+        </createIndex>
     </changeSet>
 
     <!-- ===================================================================== -->
@@ -234,9 +240,8 @@
 
     <changeSet id="20260817090000-06-backfill-test-case-feedback-mysql" author="krusche" dbms="mysql">
         <sql>
-            INSERT INTO test_case_feedback (result_id, seq, test_case_id, positive, message_id)
+            INSERT INTO test_case_feedback (result_id, test_case_id, positive, message_id)
             SELECT f.result_id,
-                   ROW_NUMBER() OVER (PARTITION BY f.result_id ORDER BY f.id),
                    f.test_case_id,
                    f.positive,
                    fm.id
@@ -249,9 +254,8 @@
 
     <changeSet id="20260817090000-06-backfill-test-case-feedback-postgres" author="krusche" dbms="postgresql">
         <sql>
-            INSERT INTO test_case_feedback (result_id, seq, test_case_id, positive, message_id)
+            INSERT INTO test_case_feedback (result_id, test_case_id, positive, message_id)
             SELECT f.result_id,
-                   ROW_NUMBER() OVER (PARTITION BY f.result_id ORDER BY f.id),
                    f.test_case_id,
                    f.positive,
                    fm.id
@@ -276,9 +280,8 @@
 
     <changeSet id="20260817090000-07-backfill-sca-feedback-mysql" author="krusche" dbms="mysql">
         <sql>
-            INSERT INTO sca_feedback (result_id, seq, tool, category, tool_category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
+            INSERT INTO sca_feedback (result_id, tool, category, tool_category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
             SELECT j.result_id,
-                   ROW_NUMBER() OVER (PARTITION BY j.result_id ORDER BY j.id),
                    j.reference,
                    LEFT(NULLIF(SUBSTRING(j.text, 23), ''), 255),
                    LEFT(JSON_UNQUOTE(JSON_EXTRACT(j.doc, '$.category')), 50),
@@ -313,9 +316,8 @@
             $$ LANGUAGE plpgsql IMMUTABLE;
         </sql>
         <sql>
-            INSERT INTO sca_feedback (result_id, seq, tool, category, tool_category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
+            INSERT INTO sca_feedback (result_id, tool, category, tool_category, rule, file_path, start_line, end_line, start_column, end_column, priority, penalty, message_id)
             SELECT f.result_id,
-                   ROW_NUMBER() OVER (PARTITION BY f.result_id ORDER BY f.id),
                    f.reference,
                    LEFT(NULLIF(SUBSTRING(f.text FROM 23), ''), 255),
                    LEFT(tmp_sca_json_field(f.detail_text, 'category'), 50),

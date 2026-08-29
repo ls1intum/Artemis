@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.assessment.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ConstraintMode;
-import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,11 +9,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 
 /**
@@ -26,17 +25,14 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
  * (on production data, 2.5M SCA JSON blobs contain only ~105k distinct messages), and the category
  * penalty can be updated without rewriting a JSON blob.
  * <p>
- * The primary key is {@code (result_id, seq)} — see {@link FeedbackItemId}. SCA feedback is always
- * negative; credits are {@code -penalty} (already capped per category when the row is created).
+ * SCA feedback is always negative; credits are {@code -penalty} (already capped per category when the row
+ * is created). Rows of one result are found through the index on {@code result_id}, which also supports the
+ * foreign key to {@code result}.
  */
 @Entity
 @Table(name = "sca_feedback")
-public class ScaFeedback {
+public class ScaFeedback extends DomainObject {
 
-    @EmbeddedId
-    private FeedbackItemId id = new FeedbackItemId();
-
-    @MapsId("resultId")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "result_id")
     @JsonIgnore
@@ -105,22 +101,6 @@ public class ScaFeedback {
      */
     @Column(name = "tool_category", length = MAX_TOOL_CATEGORY_LENGTH)
     private String toolCategory;
-
-    public FeedbackItemId getId() {
-        return id;
-    }
-
-    public void setId(FeedbackItemId id) {
-        this.id = id;
-    }
-
-    public int getSeq() {
-        return id.getSeq();
-    }
-
-    public void setSeq(int seq) {
-        id.setSeq(seq);
-    }
 
     public Result getResult() {
         return result;
@@ -243,20 +223,6 @@ public class ScaFeedback {
         return penalty == null ? 0.0 : -penalty;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof ScaFeedback otherFeedback)) {
-            return false;
-        }
-        if (id == null || id.getResultId() == null || otherFeedback.id == null || otherFeedback.id.getResultId() == null) {
-            return false;
-        }
-        return id.equals(otherFeedback.id);
-    }
-
     /**
      * Constant hash code — see {@link TestCaseFeedback#hashCode()}.
      */
@@ -267,6 +233,6 @@ public class ScaFeedback {
 
     @Override
     public String toString() {
-        return "ScaFeedback{id=" + id + ", tool=" + tool + ", rule='" + rule + "', filePath='" + filePath + "'}";
+        return "ScaFeedback{id=" + getId() + ", tool=" + tool + ", rule='" + rule + "', filePath='" + filePath + "'}";
     }
 }

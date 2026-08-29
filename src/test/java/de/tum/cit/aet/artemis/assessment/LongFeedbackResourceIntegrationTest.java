@@ -196,8 +196,8 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
         var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "hiddenTest" + visibility);
         testCase.setVisibility(visibility);
         testCase = testCaseRepository.save(testCase);
-        participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, LONG_FEEDBACK);
-        return ProgrammingFeedbackSynthesizerService.syntheticId(result.getId(), 1);
+        var row = participationUtilService.addTestCaseFeedbackToResult(result, testCase, false, LONG_FEEDBACK);
+        return ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(row.getId());
     }
 
     private String getUrl(final long feedbackId) {

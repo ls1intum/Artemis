@@ -12,7 +12,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.assessment.domain.FeedbackItemId;
 import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -24,7 +23,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface ScaFeedbackCleanupRepository extends ArtemisJpaRepository<ScaFeedback, FeedbackItemId> {
+public interface ScaFeedbackCleanupRepository extends ArtemisJpaRepository<ScaFeedback, Long> {
 
     /**
      * Deletes {@link ScaFeedback} entries where the associated result has no submission or its submission has no participation.

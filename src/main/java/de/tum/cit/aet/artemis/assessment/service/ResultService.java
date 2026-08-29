@@ -870,9 +870,14 @@ public class ResultService {
      * @return A {@link List} of {@link FeedbackAffectedStudentDTO} objects, each representing a student affected by the feedback.
      */
     public List<FeedbackAffectedStudentDTO> getAffectedStudentsWithFeedbackIds(long exerciseId, List<Long> feedbackIds) {
-        // The ids of automatic test-case feedback are synthetic (negative) and encode (resultId, seq);
-        // affected students are identified by the result, so decoding the result id suffices.
-        List<Long> resultIds = feedbackIds.stream().filter(id -> id != null && id < 0).map(ProgrammingFeedbackSynthesizerService::resultIdFromSyntheticId).distinct().toList();
+        // The ids of automatic test-case feedback are synthetic (negative) and address the typed row, so the result - which is what identifies the affected student - has to be
+        // looked up. The feedback analysis groups test-case feedback only, so SCA ids are not expected here and are ignored.
+        List<Long> rowIds = feedbackIds.stream().filter(Objects::nonNull).filter(ProgrammingFeedbackSynthesizerService::isSyntheticId)
+                .filter(id -> !ProgrammingFeedbackSynthesizerService.isSyntheticScaId(id)).map(ProgrammingFeedbackSynthesizerService::rowIdFromSyntheticId).distinct().toList();
+        if (rowIds.isEmpty()) {
+            return List.of();
+        }
+        List<Long> resultIds = testCaseFeedbackRepository.findResultIdsByIds(rowIds);
         if (resultIds.isEmpty()) {
             return List.of();
         }

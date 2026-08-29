@@ -2,17 +2,16 @@ package de.tum.cit.aet.artemis.assessment.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ConstraintMode;
-import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
@@ -30,19 +29,15 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
  * re-evaluation always overwrote both from the current test-case configuration anyway; grading-config
  * changes are recorded in the audit log, and {@code result.score} remains the stored, authoritative grade.
  * <p>
- * The primary key is {@code (result_id, seq)} — see {@link FeedbackItemId}. The {@code test_case_id}
- * foreign key is {@code ON DELETE CASCADE} at the database level (same safety net as the former
- * {@code feedback.test_case_id}, changelog {@code 20260713120000}): it closes the race between async
- * build-result processing and a concurrent programming-exercise deletion.
+ * The {@code test_case_id} foreign key is {@code ON DELETE CASCADE} at the database level (same safety net
+ * as the former {@code feedback.test_case_id}, changelog {@code 20260713120000}): it closes the race
+ * between async build-result processing and a concurrent programming-exercise deletion. Rows of one result
+ * are found through the index on {@code result_id}, which also supports the foreign key to {@code result}.
  */
 @Entity
 @Table(name = "test_case_feedback")
-public class TestCaseFeedback {
+public class TestCaseFeedback extends DomainObject {
 
-    @EmbeddedId
-    private FeedbackItemId id = new FeedbackItemId();
-
-    @MapsId("resultId")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "result_id")
     @JsonIgnore
@@ -65,22 +60,6 @@ public class TestCaseFeedback {
 
     @Column(name = "positive")
     private Boolean positive;
-
-    public FeedbackItemId getId() {
-        return id;
-    }
-
-    public void setId(FeedbackItemId id) {
-        this.id = id;
-    }
-
-    public int getSeq() {
-        return id.getSeq();
-    }
-
-    public void setSeq(int seq) {
-        id.setSeq(seq);
-    }
 
     public Result getResult() {
         return result;
@@ -155,25 +134,11 @@ public class TestCaseFeedback {
         return getVisibility() == Visibility.AFTER_DUE_DATE;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof TestCaseFeedback otherFeedback)) {
-            return false;
-        }
-        if (id == null || id.getResultId() == null || otherFeedback.id == null || otherFeedback.id.getResultId() == null) {
-            return false;
-        }
-        return id.equals(otherFeedback.id);
-    }
-
     /**
-     * Constant hash code for the same reason as {@link Feedback#hashCode()}: the composite id is only
-     * completed during flush ({@code @MapsId} fills the result id), and {@code Result.testCaseFeedbacks}
-     * is a {@link java.util.HashSet} — an id-based hash would break set membership across the
-     * unsaved → persisted transition.
+     * Constant hash code for the same reason as {@link Feedback#hashCode()}: the id is only assigned during
+     * flush, and {@code Result.testCaseFeedbacks} is a {@link java.util.HashSet} — the id-based hash of
+     * {@link DomainObject} would break set membership across the unsaved → persisted transition. The
+     * id-based {@code equals} inherited from {@link DomainObject} still tells the rows apart.
      */
     @Override
     public int hashCode() {
@@ -182,6 +147,6 @@ public class TestCaseFeedback {
 
     @Override
     public String toString() {
-        return "TestCaseFeedback{id=" + id + ", positive=" + positive + '}';
+        return "TestCaseFeedback{id=" + getId() + ", positive=" + positive + '}';
     }
 }

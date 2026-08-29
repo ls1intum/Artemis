@@ -386,6 +386,8 @@ public class ProgrammingExerciseGradingService {
                 // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
                 // submission itself did not change.
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
+                // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
+                // submission itself did not change.
                 resultRepository.save(updatedLatestSemiAutomaticResult);
 
                 return updatedLatestSemiAutomaticResult;
@@ -421,8 +423,7 @@ public class ProgrammingExerciseGradingService {
 
         // remove old automatic feedback (legacy rows, e.g. duplicate-test warnings and submission-policy feedback)
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
-        // remove old typed automatic feedback and flush the deletion: the copies below reuse the (result_id, seq)
-        // key space, and Hibernate would otherwise execute their inserts before the deletes
+        // remove the old typed automatic feedback and flush, so that the copies added below are written into a clean state and get their ids assigned
         latestSemiAutomaticResult.setTestCaseFeedbacks(List.of());
         latestSemiAutomaticResult.setScaFeedbacks(List.of());
         latestSemiAutomaticResult = resultRepository.saveAndFlush(latestSemiAutomaticResult);
@@ -431,6 +432,11 @@ public class ProgrammingExerciseGradingService {
         Result semiAutomaticResult = latestSemiAutomaticResult;
         newAutomaticResult.getTestCaseFeedbacks().stream().map(feedbackService::copyTestCaseFeedback).forEach(semiAutomaticResult::addTestCaseFeedback);
         newAutomaticResult.getScaFeedbacks().stream().map(feedbackService::copyScaFeedback).forEach(semiAutomaticResult::addScaFeedback);
+        // Insert the copies right away: a synthesized legacy view is addressed by the id of its row, so everything that serializes this result afterwards needs the ids. They
+        // are persisted (not merged) because they are new, which means the ids land on these very instances - and their test cases stay the initialized ones copied above,
+        // which a merge copy would have replaced with uninitialized proxies.
+        semiAutomaticResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(semiAutomaticResult.getTestCaseFeedbacks()));
+        semiAutomaticResult.setScaFeedbacks(scaFeedbackRepository.saveAll(semiAutomaticResult.getScaFeedbacks()));
         List<Feedback> copiedFeedbacks = newAutomaticResult.getFeedbacks().stream().map(feedbackService::copyFeedback).toList();
         latestSemiAutomaticResult = resultService.addFeedbackToResult(semiAutomaticResult, copiedFeedbacks, false);
 
@@ -827,7 +833,7 @@ public class ProgrammingExerciseGradingService {
      * @param testCases of the programming exercise.
      */
     private void filterTestCaseFeedbackWithoutActiveTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
-        result.removeTestCaseFeedbackIf(feedback -> testCases.stream().noneMatch(test -> test.equals(feedback.getTestCase())));
+        result.getTestCaseFeedbacks().removeIf(feedback -> testCases.stream().noneMatch(test -> test.equals(feedback.getTestCase())));
     }
 
     /**

@@ -440,7 +440,7 @@ public class Feedback extends DomainObject {
      * must never be persisted, and never counted next to the typed rows they were derived from.
      *
      * @return true if this feedback is a synthesized view of a typed automatic feedback row
-     * @see de.tum.cit.aet.artemis.core.config.Constants#SYNTHETIC_FEEDBACK_ID_FACTOR
+     * @see de.tum.cit.aet.artemis.core.config.Constants#SYNTHETIC_FEEDBACK_ID_STRIDE
      */
     @JsonIgnore
     public boolean isSynthesizedView() {

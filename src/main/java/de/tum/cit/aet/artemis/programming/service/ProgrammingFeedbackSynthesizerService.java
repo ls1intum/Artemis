@@ -39,8 +39,8 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
  * exact JSON shape the client already understands — including derived credits and visibility, the SCA
  * identifier/JSON encoding, and the long-feedback preview contract.
  * <p>
- * <b>Synthetic ids:</b> the views carry a NEGATIVE id encoding {@code (resultId, seq)} — see
- * {@link #syntheticId(long, int)}. The client uses feedback ids only as list keys and for fetching long
+ * <b>Synthetic ids:</b> the views carry a NEGATIVE id encoding the typed row they come from — see
+ * {@link #syntheticTestCaseId(long)}. The client uses feedback ids only as list keys and for fetching long
  * feedback; the long-feedback endpoint decodes negative ids back to the typed row. Incoming feedback with
  * a negative or missing id must never be persisted (the assessment save paths strip such echoes).
  * <p>
@@ -56,12 +56,10 @@ public class ProgrammingFeedbackSynthesizerService {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingFeedbackSynthesizerService.class);
 
     /**
-     * Factor encoding {@code (resultId, seq)} into one synthetic id; supports up to 100&nbsp;000 feedback
-     * items per result (the sequence is a SMALLINT, so the real bound is far lower). SCA views additionally
-     * offset the seq part by {@link Constants#SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET} so that a test view and an
-     * SCA view with the same sequence number never share an id.
+     * Stride separating the two typed feedback tables inside one synthetic id space, see
+     * {@link Constants#SYNTHETIC_FEEDBACK_ID_STRIDE}.
      */
-    public static final long SYNTHETIC_ID_FACTOR = Constants.SYNTHETIC_FEEDBACK_ID_FACTOR;
+    public static final long SYNTHETIC_ID_STRIDE = Constants.SYNTHETIC_FEEDBACK_ID_STRIDE;
 
     private static final ObjectMapper objectMapper = JsonObjectMapper.get();
 
@@ -78,41 +76,52 @@ public class ProgrammingFeedbackSynthesizerService {
         this.testCasePointsService = testCasePointsService;
     }
 
-    public static long syntheticId(long resultId, int seq) {
-        return -(resultId * SYNTHETIC_ID_FACTOR + seq);
+    /**
+     * Synthetic id of the legacy view of a test-case feedback row: the row id, negated so the client can tell
+     * a synthesized view from a stored {@code feedback} row, and multiplied by
+     * {@link Constants#SYNTHETIC_FEEDBACK_ID_STRIDE} so it cannot collide with an SCA view (the two tables
+     * have independent id sequences).
+     *
+     * @param rowId the id of the {@code test_case_feedback} row
+     * @return the synthetic (negative, even) id of the view
+     */
+    public static long syntheticTestCaseId(long rowId) {
+        return -(rowId * SYNTHETIC_ID_STRIDE);
     }
 
     /**
-     * Synthetic id of an SCA view: like {@link #syntheticId(long, int)}, but with the seq part offset by
-     * {@link Constants#SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET} so it cannot collide with a test view of the same
-     * result (the two row types allocate their sequence numbers independently).
+     * Synthetic id of the legacy view of an SCA feedback row, see {@link #syntheticTestCaseId(long)}.
      *
-     * @param resultId the id of the result the SCA row belongs to
-     * @param seq      the sequence number of the SCA row
-     * @return the synthetic (negative) id of the SCA view
+     * @param rowId the id of the {@code sca_feedback} row
+     * @return the synthetic (negative, odd) id of the view
      */
-    public static long syntheticScaId(long resultId, int seq) {
-        return -(resultId * SYNTHETIC_ID_FACTOR + Constants.SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET + seq);
+    public static long syntheticScaId(long rowId) {
+        return -(rowId * SYNTHETIC_ID_STRIDE + 1);
     }
 
     public static boolean isSyntheticId(long feedbackId) {
         return feedbackId < 0;
     }
 
-    public static long resultIdFromSyntheticId(long syntheticId) {
-        return (-syntheticId) / SYNTHETIC_ID_FACTOR;
+    /**
+     * Whether the given synthetic id addresses an SCA row rather than a test-case row.
+     *
+     * @param syntheticId the synthetic (negative) feedback id
+     * @return true if the id was produced by {@link #syntheticScaId(long)}
+     */
+    public static boolean isSyntheticScaId(long syntheticId) {
+        return (-syntheticId) % SYNTHETIC_ID_STRIDE != 0;
     }
 
     /**
-     * Decodes the seq part of a synthetic id. For SCA ids the returned value still carries the
-     * {@link Constants#SYNTHETIC_SCA_FEEDBACK_SEQ_OFFSET}, so a lookup in the test-case feedback table
-     * (the only consumer - SCA views never have long feedback) finds no row and correctly yields a 404.
+     * Decodes the row id a synthetic id addresses. Use {@link #isSyntheticScaId(long)} to learn which of the
+     * two tables the id belongs to.
      *
      * @param syntheticId the synthetic (negative) feedback id
-     * @return the encoded seq part
+     * @return the id of the addressed {@code test_case_feedback} respectively {@code sca_feedback} row
      */
-    public static int seqFromSyntheticId(long syntheticId) {
-        return (int) ((-syntheticId) % SYNTHETIC_ID_FACTOR);
+    public static long rowIdFromSyntheticId(long syntheticId) {
+        return (-syntheticId) / SYNTHETIC_ID_STRIDE;
     }
 
     /**
@@ -169,9 +178,9 @@ public class ProgrammingFeedbackSynthesizerService {
         List<Long> idsToLoad = programmingResults.stream().filter(result -> !hasAuthoritativeTestCaseFeedback(result) || !hasAuthoritativeScaFeedback(result)).map(Result::getId)
                 .distinct().toList();
         Map<Long, List<TestCaseFeedback>> loadedTestCaseFeedback = loadByResultIdsInChunks(idsToLoad, testCaseFeedbackRepository::findWithTestCaseAndMessageByResultIds,
-                feedback -> feedback.getId().getResultId());
+                feedback -> feedback.getResult().getId());
         Map<Long, List<ScaFeedback>> loadedScaFeedback = loadByResultIdsInChunks(idsToLoad, scaFeedbackRepository::findWithMessageByResultIds,
-                feedback -> feedback.getId().getResultId());
+                feedback -> feedback.getResult().getId());
 
         Map<String, Map<Long, Double>> pointsCache = new HashMap<>();
         for (Result result : programmingResults) {
@@ -204,8 +213,8 @@ public class ProgrammingFeedbackSynthesizerService {
         if (resultIds.isEmpty()) {
             return;
         }
-        var testCaseFeedbackByResult = loadByResultIdsInChunks(resultIds, testCaseFeedbackRepository::findWithTestCaseByResultIds, feedback -> feedback.getId().getResultId());
-        var scaFeedbackByResult = loadByResultIdsInChunks(resultIds, scaFeedbackRepository::findByResultIds, feedback -> feedback.getId().getResultId());
+        var testCaseFeedbackByResult = loadByResultIdsInChunks(resultIds, testCaseFeedbackRepository::findWithTestCaseByResultIds, feedback -> feedback.getResult().getId());
+        var scaFeedbackByResult = loadByResultIdsInChunks(resultIds, scaFeedbackRepository::findByResultIds, feedback -> feedback.getResult().getId());
         for (Result result : results) {
             result.setTestCaseFeedbacks(testCaseFeedbackByResult.getOrDefault(result.getId(), List.of()));
             result.setScaFeedbacks(scaFeedbackByResult.getOrDefault(result.getId(), List.of()));
@@ -253,6 +262,11 @@ public class ProgrammingFeedbackSynthesizerService {
     }
 
     private void synthesizeAndAttach(Result result, List<TestCaseFeedback> testCaseFeedbacks, List<ScaFeedback> scaFeedbacks, Map<Long, Double> pointsByTestCaseId) {
+        // A view is addressed by the id of the row it is derived from, so the row has to be persisted first. Reaching this with an unsaved row means a caller serialized a
+        // result before saving it - fail with something diagnosable rather than a NullPointerException inside the stream below.
+        if (testCaseFeedbacks.stream().anyMatch(feedback -> feedback.getId() == null) || scaFeedbacks.stream().anyMatch(feedback -> feedback.getId() == null)) {
+            throw new IllegalStateException("The typed automatic feedback of result " + result.getId() + " has to be saved before its legacy views can be synthesized");
+        }
         if (testCaseFeedbacks.isEmpty() && scaFeedbacks.isEmpty()) {
             return;
         }
@@ -271,7 +285,7 @@ public class ProgrammingFeedbackSynthesizerService {
 
     private Feedback synthesizeTestCaseFeedback(TestCaseFeedback source, long resultId, Map<Long, Double> pointsByTestCaseId) {
         Feedback view = new Feedback();
-        view.setId(syntheticId(resultId, source.getSeq()));
+        view.setId(syntheticTestCaseId(source.getId()));
         view.setType(FeedbackType.AUTOMATIC);
         view.setTestCase(source.getTestCase());
         view.setPositive(source.isPositive());
@@ -286,7 +300,7 @@ public class ProgrammingFeedbackSynthesizerService {
 
     private Feedback synthesizeScaFeedback(ScaFeedback source, long resultId) {
         Feedback view = new Feedback();
-        view.setId(syntheticScaId(resultId, source.getSeq()));
+        view.setId(syntheticScaId(source.getId()));
         view.setType(FeedbackType.AUTOMATIC);
         view.setPositive(false);
         view.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + (source.getCategory() == null ? "" : source.getCategory()));
@@ -302,7 +316,7 @@ public class ProgrammingFeedbackSynthesizerService {
             view.setDetailTextTruncated(objectMapper.writeValueAsString(issue));
         }
         catch (JsonProcessingException e) {
-            log.warn("Could not serialize SCA issue of result {} seq {} for the client", resultId, source.getSeq(), e);
+            log.warn("Could not serialize SCA issue {} of result {} for the client", source.getId(), resultId, e);
             view.setDetailTextTruncated(source.getMessageText());
         }
         return view;

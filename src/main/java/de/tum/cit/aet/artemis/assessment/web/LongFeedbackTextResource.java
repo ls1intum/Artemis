@@ -79,9 +79,12 @@ public class LongFeedbackTextResource {
     }
 
     private ResponseEntity<String> getLongFeedbackForTestCaseFeedback(long syntheticFeedbackId) {
-        long resultId = ProgrammingFeedbackSynthesizerService.resultIdFromSyntheticId(syntheticFeedbackId);
-        int seq = ProgrammingFeedbackSynthesizerService.seqFromSyntheticId(syntheticFeedbackId);
-        TestCaseFeedback feedback = testCaseFeedbackRepository.findWithMessageAndParticipationByResultIdAndSeq(resultId, seq)
+        if (ProgrammingFeedbackSynthesizerService.isSyntheticScaId(syntheticFeedbackId)) {
+            // SCA views carry their whole message inline, so there is no long feedback to serve for them
+            throw new EntityNotFoundException("TestCaseFeedback", syntheticFeedbackId);
+        }
+        long rowId = ProgrammingFeedbackSynthesizerService.rowIdFromSyntheticId(syntheticFeedbackId);
+        TestCaseFeedback feedback = testCaseFeedbackRepository.findWithMessageAndParticipationById(rowId)
                 .orElseThrow(() -> new EntityNotFoundException("TestCaseFeedback", syntheticFeedbackId));
         Participation participation = feedback.getResult().getSubmission().getParticipation();
         participationAuthorizationCheckService.checkCanAccessParticipationElseThrow(participation);

@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
@@ -88,69 +87,20 @@ class ResultTest extends AbstractSpringIntegrationIndependentBatchTest {
         var testCase = new ProgrammingExerciseTestCase();
         testCase.setId(42L);
         var passedTest = new TestCaseFeedback();
+        passedTest.setId(7L);
         passedTest.setTestCase(testCase);
         passedTest.setPositive(true);
         scoredResult.addTestCaseFeedback(passedTest);
 
         // the synthesized view of that very row, as every serialization path attaches it, carrying the derived credits
         var view = new Feedback();
-        view.setId(ProgrammingFeedbackSynthesizerService.syntheticId(1L, 1));
+        view.setId(ProgrammingFeedbackSynthesizerService.syntheticTestCaseId(passedTest.getId()));
         view.setType(FeedbackType.AUTOMATIC);
         view.setCredits(4.0);
         scoredResult.setFeedbacks(List.of(view));
 
         // 4 points, not 8: the view and the row it was derived from are the same feedback
         assertThat(scoredResult.calculateTotalPointsForProgrammingExercises(Map.of(42L, 4.0))).isEqualTo(4.0);
-    }
-
-    /**
-     * The sequence number is part of the primary key of {@code test_case_feedback}. Re-evaluating a result
-     * removes the rows of test cases that are no longer active and adds rows for active test cases that the
-     * build did not execute — in the same flush. Handing a removed row's number to a new row makes Hibernate
-     * (which flushes inserts before deletes) fail the whole re-evaluation with a duplicate-key error.
-     */
-    @Test
-    void doesNotReuseTheSequenceNumberOfARemovedTestCaseFeedback() {
-        var reEvaluated = new Result();
-        reEvaluated.setTestCaseFeedbacks(List.of(testCaseFeedbackWithSeq(1), testCaseFeedbackWithSeq(2), testCaseFeedbackWithSeq(3)));
-
-        // the test case of the last row was deactivated, so re-evaluation drops it
-        assertThat(reEvaluated.removeTestCaseFeedbackIf(feedback -> feedback.getSeq() == 3)).isTrue();
-
-        // ... and another test case is active but was not executed, so a row is created for it
-        var notExecuted = new TestCaseFeedback();
-        reEvaluated.addTestCaseFeedback(notExecuted);
-
-        assertThat(notExecuted.getSeq()).isEqualTo(4);
-        assertThat(reEvaluated.getTestCaseFeedbacks()).extracting(TestCaseFeedback::getSeq).containsExactlyInAnyOrder(1, 2, 4);
-    }
-
-    @Test
-    void doesNotReuseTheSequenceNumberOfARemovedScaFeedback() {
-        var reEvaluated = new Result();
-        var removed = scaFeedbackWithSeq(2);
-        reEvaluated.setScaFeedbacks(List.of(scaFeedbackWithSeq(1), removed));
-
-        // the category of the second issue was set to invisible, so it is dropped
-        assertThat(reEvaluated.removeScaFeedback(removed)).isTrue();
-
-        var added = new ScaFeedback();
-        reEvaluated.addScaFeedback(added);
-
-        assertThat(added.getSeq()).isEqualTo(3);
-        assertThat(reEvaluated.getScaFeedbacks()).extracting(ScaFeedback::getSeq).containsExactlyInAnyOrder(1, 3);
-    }
-
-    private static TestCaseFeedback testCaseFeedbackWithSeq(int seq) {
-        var feedback = new TestCaseFeedback();
-        feedback.setSeq(seq);
-        return feedback;
-    }
-
-    private static ScaFeedback scaFeedbackWithSeq(int seq) {
-        var feedback = new ScaFeedback();
-        feedback.setSeq(seq);
-        return feedback;
     }
 
     @Test
