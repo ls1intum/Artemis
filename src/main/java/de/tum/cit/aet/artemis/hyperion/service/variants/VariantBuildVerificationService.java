@@ -22,14 +22,19 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 
 /**
  * Build-verification helper for exercise-variant generation: polls the build result for a commit and
@@ -77,13 +82,46 @@ public class VariantBuildVerificationService {
 
     private final ResultRepository resultRepository;
 
+    private final GitService gitService;
+
+    private final ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public VariantBuildVerificationService(TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ResultRepository resultRepository) {
+            ResultRepository resultRepository, GitService gitService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.resultRepository = resultRepository;
+        this.gitService = gitService;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+    }
+
+    /**
+     * Triggers the build of one repository of the exercise and returns the handle to wait for it with.
+     * <p>
+     * The trigger time is taken before the build is requested, so a result that completes immediately still
+     * passes the freshness bound {@link #waitForBuildResults} applies.
+     *
+     * @param exercise       the exercise whose repository is built
+     * @param repositoryUri  the repository whose last commit is built
+     * @param repositoryType which repository the build belongs to (TESTS builds use the solution participation)
+     * @return the pending build to hand to {@link #waitForBuildResults}
+     * @throws ContinuousIntegrationException when the build could not be triggered
+     */
+    public PendingBuild triggerBuild(ProgrammingExercise exercise, LocalVCRepositoryUri repositoryUri, RepositoryType repositoryType) {
+        String commitHash = gitService.getLastCommitHash(repositoryUri);
+        Instant triggeredAt = Instant.now();
+        ProgrammingExerciseParticipation participation = switch (repositoryType) {
+            case TEMPLATE -> programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
+            default -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
+        };
+        continuousIntegrationTriggerService.triggerBuild(participation, commitHash, repositoryType);
+        return new PendingBuild(commitHash, triggeredAt);
     }
 
     /**

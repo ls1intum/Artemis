@@ -18,6 +18,8 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultState;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
+import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -26,6 +28,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 
 /**
  * Unit tests for the joint {@code waitForBuildResults} (performance lever B1): the solution and template builds
@@ -61,7 +64,8 @@ class VariantBuildVerificationServiceJointWaitTest {
         when(solutionRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(solutionParticipation));
         when(templateRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
 
-        service = new VariantBuildVerificationService(templateRepository, solutionRepository, submissionRepository, resultRepository);
+        service = new VariantBuildVerificationService(templateRepository, solutionRepository, submissionRepository, resultRepository, mock(GitService.class),
+                mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class));
     }
 
     private Map<RepositoryType, PendingBuild> pending() {
@@ -119,7 +123,8 @@ class VariantBuildVerificationServiceJointWaitTest {
         when(templateRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
         stubResult(TEMPLATE_PARTICIPATION_ID, freshResult(0.0, 5));
 
-        service = new VariantBuildVerificationService(templateRepository, emptySolutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository);
+        service = new VariantBuildVerificationService(templateRepository, emptySolutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository,
+                mock(GitService.class), mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class));
 
         Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, pending());
 

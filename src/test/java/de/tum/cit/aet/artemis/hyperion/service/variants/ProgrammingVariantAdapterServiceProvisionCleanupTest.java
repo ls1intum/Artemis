@@ -22,16 +22,12 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
-import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
-import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
@@ -73,9 +69,9 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
 
         adapters = new ProgrammingVariantAdapterService(mock(HyperionProgrammingExerciseContextRendererService.class), programmingExerciseImportService,
                 programmingExerciseValidationService, programmingExerciseRepository, programmingExerciseTaskRepository, programmingExerciseTaskService,
-                mock(ProgrammingExerciseTestCaseRepository.class), mock(UserRepository.class), mock(GitService.class), mock(RepositoryService.class),
-                mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), mock(VariantBuildVerificationService.class),
-                mock(HyperionConsistencyCheckService.class), mock(VariantPlacementService.class), mock(ExerciseVariantJobService.class), exerciseDeletionService, "main");
+                mock(ProgrammingExerciseTestCaseRepository.class), mock(UserRepository.class), mock(ProgrammingVariantToolsFactory.class),
+                mock(VariantBuildVerificationService.class), mock(HyperionConsistencyCheckService.class), mock(VariantPlacementService.class),
+                mock(ExerciseVariantJobService.class), exerciseDeletionService);
 
         ProgrammingExercise original = mock(ProgrammingExercise.class);
         when(original.getId()).thenReturn(1L);

@@ -21,7 +21,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -41,11 +40,8 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
-import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
@@ -53,10 +49,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
-import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
  * Capability adapters for programming-exercise variants. Thin wrappers around existing, battle-tested
@@ -106,13 +100,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
 
     private final UserRepository userRepository;
 
-    private final GitService gitService;
-
-    private final RepositoryService repositoryService;
-
-    private final ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
-
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final ProgrammingVariantToolsFactory toolsFactory;
 
     private final VariantBuildVerificationService buildVerificationService;
 
@@ -124,16 +112,13 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    private final String defaultBranch;
-
     public ProgrammingVariantAdapterService(HyperionProgrammingExerciseContextRendererService contextRendererService,
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            UserRepository userRepository, GitService gitService, RepositoryService repositoryService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, VariantBuildVerificationService buildVerificationService,
+            UserRepository userRepository, ProgrammingVariantToolsFactory toolsFactory, VariantBuildVerificationService buildVerificationService,
             HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService,
-            ExerciseDeletionService exerciseDeletionService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+            ExerciseDeletionService exerciseDeletionService) {
         this.contextRendererService = contextRendererService;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -142,16 +127,12 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
-        this.gitService = gitService;
-        this.repositoryService = repositoryService;
-        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.toolsFactory = toolsFactory;
         this.buildVerificationService = buildVerificationService;
         this.consistencyCheckService = consistencyCheckService;
         this.variantPlacementService = variantPlacementService;
         this.jobService = jobService;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.defaultBranch = defaultBranch;
     }
 
     @Override
@@ -246,8 +227,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         ProgrammingExercise sourceExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(job.getSourceExerciseId());
         User user = userRepository.getUserWithCourseRolesAndAuthorities(job.getInitiatorLogin());
-        return new ProgrammingVariantTools(exercise, user, job.getJobId(), jobService, gitService, repositoryService, programmingExerciseRepository, programmingExerciseTaskService,
-                defaultBranch, sourceExercise, programmingExerciseTestCaseRepository, this::runSolutionBuildForTestDiscovery);
+        return toolsFactory.create(exercise, sourceExercise, user, job.getJobId(), this::runSolutionBuildForTestDiscovery);
     }
 
     /**
@@ -266,12 +246,10 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         if (repositoryUri == null) {
             return;
         }
-        String commitHash = gitService.getLastCommitHash(repositoryUri);
-        Instant triggeredAt = Instant.now();
         try {
-            continuousIntegrationTriggerService.triggerBuild(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise), commitHash, RepositoryType.SOLUTION);
-            buildVerificationService.waitForBuildResults(exercise, Map.of(RepositoryType.SOLUTION, new PendingBuild(commitHash, triggeredAt)));
-            jobService.recordBuildStat(jobId, "TEST_DISCOVERY:SOLUTION", Duration.between(triggeredAt, Instant.now()).toMillis());
+            PendingBuild pending = buildVerificationService.triggerBuild(exercise, repositoryUri, RepositoryType.SOLUTION);
+            buildVerificationService.waitForBuildResults(exercise, Map.of(RepositoryType.SOLUTION, pending));
+            jobService.recordBuildStat(jobId, "TEST_DISCOVERY:SOLUTION", Duration.between(pending.triggeredAt(), Instant.now()).toMillis());
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -536,15 +514,8 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
                 findings.add(new VerificationReport.VerificationFinding(buildGate.gate(), "No " + repositoryType + " repository URI found for the variant exercise."));
                 continue;
             }
-            String commitHash = gitService.getLastCommitHash(repositoryUri);
-            ProgrammingExerciseParticipation participation = switch (repositoryType) {
-                case TEMPLATE -> programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
-                default -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
-            };
-            Instant triggeredAt = Instant.now();
             try {
-                continuousIntegrationTriggerService.triggerBuild(participation, commitHash, repositoryType);
-                pending.put(repositoryType, new PendingBuild(commitHash, triggeredAt));
+                pending.put(repositoryType, buildVerificationService.triggerBuild(exercise, repositoryUri, repositoryType));
             }
             catch (ContinuousIntegrationException e) {
                 findings.add(new VerificationReport.VerificationFinding(buildGate.gate(), "Could not trigger the " + repositoryType + " build: " + e.getMessage()));
