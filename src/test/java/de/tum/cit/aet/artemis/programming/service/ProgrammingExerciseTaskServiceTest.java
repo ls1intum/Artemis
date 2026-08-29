@@ -77,6 +77,14 @@ class ProgrammingExerciseTaskServiceTest {
     }
 
     @Test
+    void shouldIgnoreATaskMarkerWithAWhitespaceOnlyReferenceList() {
+        withTestCases("testBubbleSort");
+        when(exercise.getProblemStatement()).thenReturn("[task][Sort](   )");
+
+        assertThat(taskService.findUnresolvedTaskTestReferences(exercise)).isEmpty();
+    }
+
+    @Test
     void shouldReturnEmptyForABlankProblemStatement() {
         when(exercise.getProblemStatement()).thenReturn("");
 

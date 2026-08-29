@@ -247,6 +247,11 @@ public class ProgrammingExerciseTaskService {
         while (matcher.find()) {
             var capturedTestCaseNames = matcher.group("tests");
             for (String testName : extractTestCaseNames(capturedTestCaseNames)) {
+                // A whitespace-only reference list, e.g. "[task][Foo]( )", yields one empty name — reporting it
+                // would send the agent after a blank test name.
+                if (testName.isBlank()) {
+                    continue;
+                }
                 if (findTestCaseFromProblemStatement(testName, testCases).isEmpty()) {
                     unresolved.add(testName);
                 }
