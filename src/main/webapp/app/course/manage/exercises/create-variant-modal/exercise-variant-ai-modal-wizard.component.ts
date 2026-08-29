@@ -230,12 +230,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly canProceedToPlacement = computed(() => {
         // Every selected card must contribute a value; a selected card left empty is dropped from the request
         // and the wizard would otherwise report no problem.
-        return (
-            this.changeDifficulty() ||
-            this.changeNarrative() ||
-            (this.changeDomain() && this.domainText().trim().length > 0) ||
-            (this.changeCustom() && this.additionalInstructions().trim().length > 0)
-        );
+        return this.anyCardSelected() && (!this.changeDomain() || this.domainText().trim().length > 0) && (!this.changeCustom() || this.additionalInstructions().trim().length > 0);
     });
 
     readonly canGenerate = computed(() => this.placementChoice() !== 'new-group' || this.newGroupTitle().trim().length > 0);
@@ -670,6 +665,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     }
 
     private applyJobDetail(detail: VariantJobDetail): void {
+        // A reset clears the job id while a request is still in flight; its response belongs to the previous
+        // wizard session and must not overwrite the fresh state.
+        if (detail.job?.jobId !== this.jobId()) {
+            return;
+        }
         this.stepOutputs.set(detail.stepOutputs ?? {});
         this.instructorSummary.set(detail.job?.instructorSummary);
         this.variantTitle.set(detail.job?.variantExerciseTitle ?? this.variantTitle());

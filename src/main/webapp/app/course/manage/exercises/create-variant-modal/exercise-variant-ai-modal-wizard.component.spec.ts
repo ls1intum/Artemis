@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { NEVER, of } from 'rxjs';
+import { NEVER, Subject, of } from 'rxjs';
 import { MockPipe } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
@@ -499,6 +499,82 @@ describe('ExerciseVariantAiModalWizardComponent (fresh reopen for parallel gener
         expect(component.jobId()).toBeUndefined();
         expect(component.changeDomain()).toBe(false);
         expect(component.domainText()).toBe('');
+    });
+});
+
+/**
+ * A job-detail request outlives the wizard session that issued it: STEP_OUTPUT events fire the request, and the
+ * instructor can reset the wizard (close and reopen for a parallel generation) before the response lands. A late
+ * response must not repopulate the fresh wizard with the previous job's step outputs.
+ */
+describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () => {
+    let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
+    let component: ExerciseVariantAiModalWizardComponent;
+    let jobEvents: Subject<any>;
+    let jobDetail: Subject<any>;
+
+    beforeEach(async () => {
+        jobEvents = new Subject<any>();
+        jobDetail = new Subject<any>();
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                { provide: Router, useValue: routerMock },
+                {
+                    provide: ExerciseVariantGenerationService,
+                    useValue: {
+                        startGeneration: vi.fn().mockReturnValue(of('job-1')),
+                        jobEvents: vi.fn().mockReturnValue(jobEvents),
+                        getJobDetail: vi.fn().mockReturnValue(jobDetail),
+                        cancelJob: vi.fn().mockReturnValue(of(undefined)),
+                    },
+                },
+                { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
+                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: undefined })) } },
+                {
+                    provide: TranslateService,
+                    useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
+                },
+            ],
+        })
+            .overrideComponent(ExerciseVariantAiModalWizardComponent, {
+                remove: { imports: [ArtemisTranslatePipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('sourceExercise', { id: 1, title: 'Sorting', type: ExerciseType.PROGRAMMING } as Exercise);
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
+
+    it('discards a job detail that arrives after the wizard was reset for a new generation', () => {
+        component.changeDomain.set(true);
+        component.domainText.set('space');
+        component.startGeneration();
+        // The step output fires the detail request; the response is still pending.
+        jobEvents.next({ type: 'STEP_OUTPUT', phase: 'PROVISIONING', detail: 'Provisioned' });
+        expect(component.jobId()).toBe('job-1');
+
+        // Reopening for a parallel generation resets the wizard while the request is still in flight.
+        component.onClose(false);
+        fixture.componentRef.setInput('visible', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        expect(component.jobId()).toBeUndefined();
+
+        jobDetail.next({ job: { jobId: 'job-1' }, stepOutputs: { PROVISIONING: [{ summary: 'Provisioned', detail: 'full log' }] }, request: undefined });
+
+        expect(component.stepOutputs()).toEqual({});
     });
 });
 
