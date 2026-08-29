@@ -219,6 +219,34 @@
         <addNotNullConstraint tableName="competency" columnName="course_id" columnDataType="bigint"/>
     </changeSet>
 
+    <changeSet id="20260828100000-31b-backfill-conversation-course" author="krusche">
+        <comment>
+            A channel that belongs to an exercise, a lecture or an exam belongs to their course, so the course can be
+            worked out for the channels that were stored without one. Each statement covers one of the three, and the
+            exercise one has to look past the exercise itself: an exam exercise carries no course of its own and reaches
+            it through its exercise group.
+        </comment>
+        <sql>
+            UPDATE conversation SET course_id = (
+                SELECT COALESCE(e.course_id, ex.course_id)
+                FROM exercise e
+                    LEFT JOIN exercise_group eg ON eg.id = e.exercise_group_id
+                    LEFT JOIN exam ex ON ex.id = eg.exam_id
+                WHERE e.id = conversation.exercise_id
+            )
+            WHERE course_id IS NULL AND exercise_id IS NOT NULL;
+
+            UPDATE conversation SET course_id = (
+                SELECT l.course_id FROM lecture l WHERE l.id = conversation.lecture_id
+            )
+            WHERE course_id IS NULL AND lecture_id IS NOT NULL;
+
+            UPDATE conversation SET course_id = (
+                SELECT ex.course_id FROM exam ex WHERE ex.id = conversation.exam_id
+            )
+            WHERE course_id IS NULL AND exam_id IS NOT NULL;
+        </sql>
+    </changeSet>
     <changeSet id="20260828100000-32-conversation-course-not-null" author="krusche">
         <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation WHERE course_id IS NULL</sqlCheck>
