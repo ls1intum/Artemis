@@ -4,6 +4,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.after;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -127,8 +128,8 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         // A @TestPropertySource would fork a second Spring context, which shuts down the named-singleton Hazelcast
         // instance and breaks every later Hazelcast-using test in the slice; ReflectionTestUtils is the established
         // Artemis pattern for toggling a @Value flag without a context fork.
-        previousLegacyBuildTriggersEnabled = ReflectionTestUtils.getField(irisChatSessionService, "legacyBuildTriggersEnabled");
-        ReflectionTestUtils.setField(irisChatSessionService, "legacyBuildTriggersEnabled", false);
+        previousLegacyBuildTriggersEnabled = ReflectionTestUtils.getField(irisChatSessionService, "globalLegacyBuildTriggersEnabled");
+        ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", false);
     }
 
     @AfterEach
@@ -136,7 +137,7 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         // Restore what was actually configured, not a hardcoded true: the property default may change, and a
         // profile could set it differently, in which case writing true would silently alter the shared context
         // for every later test in the slice.
-        ReflectionTestUtils.setField(irisChatSessionService, "legacyBuildTriggersEnabled", previousLegacyBuildTriggersEnabled);
+        ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", previousLegacyBuildTriggersEnabled);
     }
 
     private Result createFailingSubmission(ProgrammingExerciseStudentParticipation studentParticipation) {
@@ -180,5 +181,47 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         // never() assertion does not race ahead of a pipeline call that would otherwise be in flight (mirrors how
         // PyrisEventSystemIntegrationTest asserts the negative case).
         verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+    }
+
+    /**
+     * The per-course half of the switch. The instance-wide flag is a deployment kill switch; this one is what an
+     * admin sets on the course running the struggle detection, so build-triggered proactivity has a single owner
+     * there while every other course on the same installation keeps Artemis' own events.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void disabledPerCourse_buildFailedEventDoesNotTriggerLegacyChatPipeline() {
+        // Global flag back ON for this test: the point is that the COURSE setting alone stops the trigger.
+        ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", true);
+        setLegacyBuildTriggersFor(course, false);
+        irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
+            // no-op: with the course opted out, this callback must never run.
+        });
+
+        Result result = createFailingSubmission(studentParticipation);
+        var event = new NewResultEvent(result);
+        pyrisEventService.trigger(event);
+
+        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> verify(irisChatSessionService, times(1)).handleNewResultEvent(eq(event)));
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+    }
+
+    /**
+     * The counterpart, so the two tests above cannot both pass by the pipeline simply never firing in this fixture.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void bothSwitchesOn_buildFailedEventStillTriggersTheLegacyChatPipeline() {
+        ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", true);
+        setLegacyBuildTriggersFor(course, true);
+        irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
+        });
+
+        Result result = createFailingSubmission(studentParticipation);
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        verify(pyrisPipelineService, timeout(5000).times(1)).executeChatPipeline(any(), any(), any(), any(), any());
     }
 }

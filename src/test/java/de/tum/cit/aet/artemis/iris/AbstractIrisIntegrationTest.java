@@ -82,6 +82,19 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
+     * Decides the admin-only legacy build-trigger switch for a course, i.e. whether Artemis' own
+     * {@code build_failed} / {@code progress_stalled} events may fire for it.
+     *
+     * @param course  the course to update
+     * @param enabled the explicit decision (the field's third state, "undecided", is what an untouched course has)
+     */
+    protected void setLegacyBuildTriggersFor(Course course, boolean enabled) {
+        var current = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(),
+                current.rateLimit(), current.proactiveStruggleEnabled(), enabled), true);
+    }
+
+    /**
      * Sets course level custom instructions and variant for the provided course.
      *
      * @param course             the target course

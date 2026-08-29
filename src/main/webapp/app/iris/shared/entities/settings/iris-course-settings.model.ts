@@ -64,6 +64,16 @@ export interface IrisCourseSettingsDTO {
      * off server-side). Optional so an older/omitted payload without the key is still accepted.
      */
     proactiveStruggleEnabled?: boolean;
+    /**
+     * Admin-only: may Artemis' OWN build-triggered proactive Iris events (build_failed / progress_stalled) fire for
+     * this course? Three states, and the third one matters. `undefined` means no admin ever decided: a settings row
+     * written before this field existed has no key, and a save from a client that does not edit the field omits it.
+     * The server merges an omitted value from what is stored, so neither case silently flips a course, and an absent
+     * value reads as ON, which is what every course did before the field existed.
+     *
+     * Normalize it with `?? true`, never `!!` — unlike `proactiveStruggleEnabled`, absent does NOT mean off here.
+     */
+    legacyBuildTriggersEnabled?: boolean | null;
 }
 
 /**
@@ -93,5 +103,7 @@ export function createDefaultCourseSettings(): IrisCourseSettingsDTO {
         variant: 'default',
         supportLevel: 'moderate',
         proactiveStruggleEnabled: false,
+        // Deliberately absent, not `true`: this resets the general-tab fields, and spelling the admin
+        // field out here would make every such reset send a decision the admin never made.
     };
 }

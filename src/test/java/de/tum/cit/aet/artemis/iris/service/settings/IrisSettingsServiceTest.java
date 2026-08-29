@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -100,6 +101,68 @@ class IrisSettingsServiceTest extends AbstractIrisIntegrationTest {
         assertThat(dto.settings().customInstructions()).isEqualTo("keep trimmed");
         assertThat(dto.settings().rateLimit().requests()).isEqualTo(100);
         assertThat(dto.settings().rateLimit().timeframeHours()).isEqualTo(24);
+    }
+
+    /**
+     * The reason the legacy-trigger field is nullable at all. Two of the three Angular components that PUT these
+     * settings never touch the switch and send whatever they read back, and a full PUT overwrites everything. Without
+     * the merge, saving the enabled toggle from the onboarding page would quietly re-arm Artemis' own proactive
+     * events on a course whose admin had turned them off.
+     */
+    @Test
+    void updateCourseSettings_aPayloadWithoutTheLegacyFlagKeepsTheStoredDecision() {
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), true);
+
+        var unaware = IrisCourseSettings.of(true, "changed by a client that does not know the flag", null, null, null, false, null);
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), unaware, true);
+
+        assertThat(dto.settings().legacyBuildTriggersEnabled()).isFalse();
+        assertThat(dto.settings().customInstructions()).isEqualTo("changed by a client that does not know the flag");
+    }
+
+    @Test
+    void updateCourseSettings_anExplicitLegacyDecisionIsPersisted() {
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), true);
+        assertThat(dto.settings().legacyBuildTriggersEffective()).isFalse();
+
+        var reEnabled = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, true), true);
+        assertThat(reEnabled.settings().legacyBuildTriggersEffective()).isTrue();
+    }
+
+    @Test
+    void updateCourseSettings_anUntouchedCourseReadsAsOn() {
+        var dto = irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null), true);
+
+        assertThat(dto.settings().legacyBuildTriggersEnabled()).isNull();
+        assertThat(dto.settings().legacyBuildTriggersEffective()).isTrue();
+    }
+
+    @Test
+    void updateCourseSettings_anInstructorMaySaveAnUntouchedCourseButNotFlipTheFlag() {
+        // Stored null against a request carrying explicit true is the SAME decision. Comparing the raw values would
+        // reject it and lock instructors out of saving anything on a course no admin has configured.
+        var allowed = IrisCourseSettings.of(true, "instructor edit", null, null, null, false, true);
+        var saved = irisSettingsService.updateCourseSettings(course.getId(), allowed, false);
+        // ...and the undecided state SURVIVES it. Letting the instructor's explicit true through would consume an
+        // admin-only state: nothing changes at runtime, but "no admin ever decided" is gone for good.
+        assertThat(saved.settings().legacyBuildTriggersEnabled()).isNull();
+        assertThat(saved.settings().customInstructions()).isEqualTo("instructor edit");
+
+        var forbidden = IrisCourseSettings.of(true, null, null, null, null, false, false);
+        assertThatThrownBy(() -> irisSettingsService.updateCourseSettings(course.getId(), forbidden, false)).isInstanceOf(AccessForbiddenAlertException.class)
+                .hasMessageContaining("build-triggered");
+    }
+
+    @Test
+    void updateCourseSettings_anInstructorCannotConsumeAnAdminsExplicitDecisionEither() {
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(true, null, null, null, null, false, false), true);
+
+        // Same effective value, so the restriction does not fire; the raw value must still be the admin's.
+        var instructorSave = IrisCourseSettings.of(true, "instructor edit", null, null, null, false, false);
+        var saved = irisSettingsService.updateCourseSettings(course.getId(), instructorSave, false);
+
+        assertThat(saved.settings().legacyBuildTriggersEnabled()).isFalse();
+        assertThat(saved.settings().customInstructions()).isEqualTo("instructor edit");
     }
 
     @Test

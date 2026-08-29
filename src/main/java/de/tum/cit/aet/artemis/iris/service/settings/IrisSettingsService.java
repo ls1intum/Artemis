@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.settings;
 
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -90,11 +91,22 @@ public class IrisSettingsService {
     public IrisCourseSettingsWithRateLimitDTO updateCourseSettings(long courseId, IrisCourseSettings payload, boolean isAdmin) {
         var current = getSettingsForCourse(courseId);
         var request = Objects.requireNonNullElse(payload, current);
+        // A full PUT cannot tell "the admin cleared this" from "the client does not know this field": both arrive as
+        // null. Merging the persisted value is what keeps an explicit opt-out alive across a save from any of the
+        // three clients that write these settings, only one of which edits the flag.
+        if (request.legacyBuildTriggersEnabled() == null) {
+            request = withLegacyBuildTriggers(request, current.legacyBuildTriggersEnabled());
+        }
         var sanitizedRequest = sanitizePayload(request);
         var sanitizedCurrent = sanitizePayload(current);
 
         if (!isAdmin) {
             enforceInstructorRestrictions(sanitizedRequest, sanitizedCurrent);
+            // The restriction above compares EFFECTIVE values, so a request carrying an explicit true against a
+            // stored null passes it: both mean "on". Persisting it anyway would let a non-admin turn "no admin ever
+            // decided" into a decision, which is an admin-only write even though nothing changes at runtime. Restore
+            // the raw stored value so an instructor save can never consume the undecided state.
+            sanitizedRequest = withLegacyBuildTriggers(sanitizedRequest, sanitizedCurrent.legacyBuildTriggersEnabled());
         }
 
         var entity = irisCourseSettingsRepository.findByCourseId(courseId).orElseGet(() -> {
@@ -107,6 +119,19 @@ public class IrisSettingsService {
         var defaults = getApplicationRateLimitDefaults();
         var effective = resolveEffectiveRateLimit(sanitizedRequest, defaults);
         return new IrisCourseSettingsWithRateLimitDTO(courseId, sanitizedRequest, effective, defaults);
+    }
+
+    /**
+     * Copy of {@code settings} carrying a different legacy-trigger decision. The value is passed through raw,
+     * {@code null} included: the whole point of the field's third state is that it can be preserved.
+     *
+     * @param settings the settings to copy
+     * @param value    the decision to carry (null = undecided)
+     * @return a copy differing only in that field
+     */
+    private static IrisCourseSettings withLegacyBuildTriggers(IrisCourseSettings settings, @Nullable Boolean value) {
+        return IrisCourseSettings.of(settings.enabled(), settings.customInstructions(), settings.variant(), settings.supportLevel(), settings.rateLimit(),
+                settings.proactiveStruggleEnabled(), value);
     }
 
     /**
@@ -129,6 +154,12 @@ public class IrisSettingsService {
 
         if (request.proactiveStruggleEnabled() != current.proactiveStruggleEnabled()) {
             throw new AccessForbiddenAlertException("Only administrators can change proactive struggle detection", "IrisSettings", "irisProactiveStruggleRestricted");
+        }
+
+        // Compared on the EFFECTIVE value: a request carrying an explicit true against a stored null is the same
+        // decision, and rejecting it would block an instructor from saving anything on an untouched course.
+        if (request.legacyBuildTriggersEffective() != current.legacyBuildTriggersEffective()) {
+            throw new AccessForbiddenAlertException("Only administrators can change Artemis' build-triggered Iris events", "IrisSettings", "irisLegacyBuildTriggersRestricted");
         }
     }
 
@@ -214,8 +245,10 @@ public class IrisSettingsService {
             return IrisCourseSettings.defaultSettings();
         }
         var sanitizedRateLimit = sanitizeRateLimit(payload.rateLimit());
+        // The raw nullable value, not the effective one: collapsing null to true here would destroy the
+        // "undecided" state before updateCourseSettings gets to merge it.
         return IrisCourseSettings.of(payload.enabled(), payload.customInstructions(), payload.variant(), payload.supportLevel(), sanitizedRateLimit,
-                payload.proactiveStruggleEnabled());
+                payload.proactiveStruggleEnabled(), payload.legacyBuildTriggersEnabled());
     }
 
     private IrisRateLimitConfiguration sanitizeRateLimit(IrisRateLimitConfiguration rateLimit) {

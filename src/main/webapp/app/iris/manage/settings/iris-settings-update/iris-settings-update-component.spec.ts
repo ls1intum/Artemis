@@ -450,6 +450,62 @@ describe('IrisSettingsUpdateComponent', () => {
         });
     });
 
+    describe('updateLegacyBuildTriggersEnabled', () => {
+        it('writes an explicit decision, which is what ends the undecided state', () => {
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: undefined }));
+
+            component.updateLegacyBuildTriggersEnabled(false);
+
+            expect(component.settings()?.legacyBuildTriggersEnabled).toBe(false);
+        });
+
+        it('restores the admin-only flag for non-admins on save', async () => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            component.isAdmin.set(false);
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+
+            component.settings.set(cloneWith(component.settings()!, { legacyBuildTriggersEnabled: false }));
+            component.saveSettings();
+            await fixture.whenStable();
+
+            expect(updateSpy.mock.calls[0][1].legacyBuildTriggersEnabled).toBe(mockSettings.legacyBuildTriggersEnabled);
+        });
+
+        it('an explicit false survives the enabled-toggle auto-save', async () => {
+            // The path that made the field nullable in the first place: flipping "Iris enabled" auto-saves the whole
+            // payload. If that save dropped or inverted the admin's opt-out, Artemis' own proactive events would come
+            // back on a study course without anyone touching the switch.
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            component.settings.set(cloneWith(component.settings()!, { legacyBuildTriggersEnabled: false, enabled: true }));
+
+            component.setEnabled(false);
+            await fixture.whenStable();
+
+            expect(updateSpy.mock.calls[0][1].legacyBuildTriggersEnabled).toBe(false);
+        });
+
+        it('treats an undecided course as on, so a stored opt-out is never invented', () => {
+            // `?? true`, never `!!`: absent means "no admin decided", and every course behaved as on before the
+            // field existed. Collapsing it to false here would show the toggle off for the whole installation.
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: undefined, proactiveStruggleEnabled: true }));
+            expect(component.bothProactiveMechanismsActive()).toBe(true);
+
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: false, proactiveStruggleEnabled: true }));
+            expect(component.bothProactiveMechanismsActive()).toBe(false);
+
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: true, proactiveStruggleEnabled: false }));
+            expect(component.bothProactiveMechanismsActive()).toBe(false);
+        });
+    });
+
     describe('getCustomInstructionsLength', () => {
         it('should return length of custom instructions', () => {
             component.settings.set({ ...mockSettings, customInstructions: 'Test' });

@@ -375,6 +375,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
                 settingsToSave.variant = originalSettingsValue.variant;
                 settingsToSave.rateLimit = originalSettingsValue.rateLimit;
                 settingsToSave.proactiveStruggleEnabled = originalSettingsValue.proactiveStruggleEnabled;
+                settingsToSave.legacyBuildTriggersEnabled = originalSettingsValue.legacyBuildTriggersEnabled;
             }
         } else {
             // Admin: reconstruct rateLimit from form fields unless a caller only saves
@@ -461,6 +462,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
             settingsToSave.variant = originalSettingsValue.variant;
             settingsToSave.rateLimit = originalSettingsValue.rateLimit;
             settingsToSave.proactiveStruggleEnabled = originalSettingsValue.proactiveStruggleEnabled;
+            settingsToSave.legacyBuildTriggersEnabled = originalSettingsValue.legacyBuildTriggersEnabled;
         } else if (this.isFormValid()) {
             // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
             settingsToSave.rateLimit = this.buildRateLimitForSave();
@@ -586,6 +588,27 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (currentSettings) {
             this.settings.set(cloneWith(currentSettings, { proactiveStruggleEnabled: value }));
         }
+    }
+
+    /**
+     * Writes an EXPLICIT boolean, which is the point: the field's third state ("no admin ever decided") exists so a
+     * save can leave the stored value alone, and touching the toggle is exactly the moment that stops being true.
+     */
+    updateLegacyBuildTriggersEnabled(value: boolean): void {
+        const currentSettings = this.settings();
+        if (currentSettings) {
+            this.settings.set(cloneWith(currentSettings, { legacyBuildTriggersEnabled: value }));
+        }
+    }
+
+    /**
+     * Both proactive mechanisms armed: Artemis' own build/progress events and this course's struggle detection fire
+     * on the same build, from different pipelines, neither aware of the other. Not blocked, because the combination
+     * has to stay observable, but the admin should not discover it by reading a chat transcript.
+     */
+    bothProactiveMechanismsActive(): boolean {
+        const currentSettings = this.settings();
+        return !!currentSettings?.proactiveStruggleEnabled && (currentSettings?.legacyBuildTriggersEnabled ?? true);
     }
 
     /**

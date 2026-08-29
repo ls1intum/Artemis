@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
@@ -113,8 +114,13 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
+    /**
+     * Instance-wide kill switch for Artemis' own build-triggered proactive events. Deliberately kept alongside the
+     * per-course setting: this one is checked before any result, course or DB access, so it can stop the whole
+     * mechanism without a settings lookup. Both must be on for a trigger to fire.
+     */
     @org.springframework.beans.factory.annotation.Value("${artemis.iris.proactive.legacy-build-triggers:true}")
-    private boolean legacyBuildTriggersEnabled;
+    private boolean globalLegacyBuildTriggersEnabled;
 
     public IrisChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
@@ -249,7 +255,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @EventListener
     public void handleNewResultEvent(NewResultEvent resultEvent) {
-        if (!legacyBuildTriggersEnabled) {
+        if (!globalLegacyBuildTriggersEnabled) {
             return;
         }
         var result = resultEvent.getEventObject();
@@ -264,20 +270,21 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         }
 
         var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
+        // Loaded once and handed down: both branches used to fetch the same settings again for their own
+        // `enabled()` check. The per-course legacy switch belongs to the same lookup, so it is decided here.
+        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
+        if (!settings.enabled() || !settings.legacyBuildTriggersEffective()) {
+            return;
+        }
         if (programmingSubmission.isBuildFailed()) {
-            onBuildFailure(studentParticipation, programmingSubmission);
+            onBuildFailure(studentParticipation, programmingSubmission, settings);
         }
         else {
-            onNewResult(studentParticipation, programmingSubmission);
+            onNewResult(studentParticipation, programmingSubmission, settings);
         }
     }
 
-    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission) {
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
-        if (!settings.enabled()) {
-            return;
-        }
-
+    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission, IrisCourseSettings settings) {
         var user = studentParticipation.getStudent().orElseThrow();
         var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
         if (session.getMode() == COURSE_CHAT) {
@@ -292,12 +299,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 });
     }
 
-    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
-        if (!settings.enabled()) {
-            return;
-        }
-
+    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission, IrisCourseSettings settings) {
         // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 

@@ -201,14 +201,14 @@ class IrisStruggleInterventionServiceTriggerTest {
     }
 
     private static IrisCourseSettings enabledSettings() {
-        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, null, true);   // Iris + proactive ON
+        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, null, true, null);   // Iris + proactive ON
     }
 
     private static IrisCourseSettings disabledSettings() {
-        return new IrisCourseSettings(false, null, IrisPipelineVariant.DEFAULT, null, null, false);  // Iris OFF
+        return new IrisCourseSettings(false, null, IrisPipelineVariant.DEFAULT, null, null, false, null);  // Iris OFF
     }
 
     private static IrisCourseSettings proactiveOffSettings() {
-        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, null, false);   // Iris ON, proactive OFF
+        return new IrisCourseSettings(true, null, IrisPipelineVariant.DEFAULT, null, null, false, null);   // Iris ON, proactive OFF
     }
 }
