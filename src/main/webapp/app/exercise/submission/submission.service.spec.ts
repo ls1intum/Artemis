@@ -83,18 +83,20 @@ describe('Submission Service', () => {
         const exerciseId = 1;
 
         const returnedFromService = [submission];
-        const expected = [
-            {
-                ...submission,
-                latestResult: getLatestSubmissionResult(submission),
-            },
-        ];
+        let converted: Submission | undefined;
         service
             .getTestRunSubmissionsForExercise(exerciseId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(expected));
+            .subscribe((resp) => (converted = resp.body![0]));
         const req = httpMock.expectOne({ url: `api/exercise/exercises/${exerciseId}/test-run-submissions`, method: 'GET' });
         req.flush(returnedFromService);
+
+        // convertSubmissionFromServer returns a detached copy, so the response no longer shares its results with the
+        // fixture. Assert the converted values and that latestResult points at the copy's own last result.
+        expect(converted!.id).toBe(submission.id);
+        expect(converted!.results).toHaveLength(1);
+        expect(converted!.results![0].id).toBe(getLatestSubmissionResult(submission)!.id);
+        expect(converted!.latestResult).toBe(getLatestSubmissionResult(converted!));
     });
 
     it('should handle feedback correction round tag', () => {
@@ -112,20 +114,24 @@ describe('Submission Service', () => {
             type: FeedbackType.MANUAL,
         };
 
-        const firstResult: Result = {
+        const firstRoundResult: Result = {
             id: 3556,
             score: 24,
             rated: true,
             hasComplaint: false,
+            correctionRound: 0,
             feedbacks: [firstFeedback],
         };
 
-        submission.results?.unshift(firstResult);
+        const secondRoundResult = submission.results![0];
+        secondRoundResult.correctionRound = 1;
+        // Prepended on purpose: the round a result belongs to is what decides the comparison, not its position.
+        submission.results!.unshift(firstRoundResult);
 
         expect(secondFeedback.copiedFeedbackId).toBeUndefined();
 
-        const latestResultFeedbacks = getLatestSubmissionResult(submission)!.feedbacks!;
-        latestResultFeedbacks?.push(secondFeedback);
+        const secondRoundFeedbacks = secondRoundResult.feedbacks!;
+        secondRoundFeedbacks.push(secondFeedback);
 
         // Copy checking should not be done for correction round 0.
         service.handleFeedbackCorrectionRoundTag(0, submission);
@@ -133,12 +139,12 @@ describe('Submission Service', () => {
 
         // Only the second feedback has identical values to the first one, the other feedback should remain untouched.
         service.handleFeedbackCorrectionRoundTag(1, submission);
-        expect(latestResultFeedbacks[0].copiedFeedbackId).toBeUndefined();
+        expect(secondRoundFeedbacks[0].copiedFeedbackId).toBeUndefined();
         expect(secondFeedback.copiedFeedbackId).toBe(firstFeedback.id);
 
         secondFeedback.text = 'Feedback changed';
         // Feedback.text is changed so the Feedback is not a direct copy anymore.
-        service.handleFeedbackCorrectionRoundTag(2, submission);
+        service.handleFeedbackCorrectionRoundTag(1, submission);
         expect(secondFeedback.copiedFeedbackId).toBeUndefined();
     });
 

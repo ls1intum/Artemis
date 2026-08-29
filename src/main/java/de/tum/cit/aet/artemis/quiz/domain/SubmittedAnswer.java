@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 /**
  * A SubmittedAnswer.
  */
-// No @Cache here on purpose: parent of MC/DnD/SA submitted answers, inserted on every live save/submit. See #12574 / #12584.
 @Entity
 @Table(name = "submitted_answer")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

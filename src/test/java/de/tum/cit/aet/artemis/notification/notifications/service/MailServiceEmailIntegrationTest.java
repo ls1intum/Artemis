@@ -99,9 +99,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void activationEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        recipient.setActivationKey("abc123-activation-key");
 
-        testMailService.sendActivationEmail(MailRecipientDTO.from(recipient));
+        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "abc123-activation-key", null));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("testuser");
@@ -112,9 +111,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void activationEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
-        recipient.setActivationKey("de-activation-key-456");
 
-        testMailService.sendActivationEmail(MailRecipientDTO.from(recipient));
+        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "de-activation-key-456", null));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-activation-key-456");
@@ -125,9 +123,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void passwordResetEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        recipient.setResetKey("reset-key-789");
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.from(recipient));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "reset-key-789"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("reset-key-789");
@@ -137,22 +134,69 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void passwordResetEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
-        recipient.setResetKey("de-reset-key-012");
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.from(recipient));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "de-reset-key-012"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-reset-key-012");
         assertThat(body).contains("account/reset/finish");
     }
 
+    @Test
+    void passwordResetEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withRecoveryKey(recipient, null, "styled-reset-key-345"));
+
+        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
+    }
+
+    @Test
+    void activationEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withRecoveryKey(recipient, "styled-activation-key-123", null));
+
+        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
+    }
+
+    @Test
+    void saml2SetPasswordEmail_shouldUseTheSharedArtemisLayout() throws Exception {
+
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "styled-saml-key-567"));
+
+        assertUsesSharedArtemisLayout(getDeliveredEmailBody());
+    }
+
+    /**
+     * Asserts that a mail carries the shared Artemis chrome.
+     * <p>
+     * The three account mails that contain a link are the ones a user is most likely to distrust, because each can
+     * arrive unprompted: anyone can type someone else's address into the reset form. Looking like every other Artemis
+     * mail is what makes them credible rather than suspicious, and all three used to render as unstyled documents in
+     * the mail client's default serif font.
+     * <p>
+     * The absence of the footer is asserted too. That footer links to the notification settings, and none of these
+     * three can be switched off there, so the link would point at a setting that does not exist for them.
+     *
+     * @param body the rendered mail body
+     */
+    private static void assertUsesSharedArtemisLayout(String body) {
+        assertThat(body).as("the Artemis header with the logo").contains("<header>").contains("id=\"logo\"");
+        assertThat(body).as("the shared stylesheet, which sets the sans-serif font").contains("<style>").contains("font-family");
+        assertThat(body).as("the message body wrapper the shared css styles").contains("id=\"message-body\"");
+        assertThat(body).as("the favicon, at the path it is actually served from").contains("/logo/favicon.svg");
+        assertThat(body).as("no notification-settings footer on a mail that cannot be switched off").doesNotContain("<footer>");
+        // The logo has to come from this installation. It is a documented customization point, and pointing at the TUM
+        // deployment would both ignore a custom logo and make every recipient's mail client fetch an image from there.
+        assertThat(body).as("the logo, served by this installation so a custom one is used").contains("src=\"http://localhost:9000/public/images/logo.png\"");
+        assertThat(body).as("no request to the TUM deployment").doesNotContain("artemis.tum.de");
+    }
+
     // -- SAML2 set password email --
 
     @Test
     void saml2SetPasswordEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        recipient.setResetKey("saml-reset-key-345");
 
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(recipient));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "saml-reset-key-345"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("saml-reset-key-345");
@@ -161,9 +205,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void saml2SetPasswordEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
-        recipient.setResetKey("de-saml-key-678");
 
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(recipient));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(recipient, null, "de-saml-key-678"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-saml-key-678");
@@ -218,6 +261,43 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         String body = getDeliveredEmailBody();
         assertThat(body).contains("user-settings/passkeys");
         assertThat(body).contains("Jane Doe");
+    }
+
+    // -- E-mail changed notification email --
+
+    @Test
+    void emailChangedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("new-address@tum.de");
+        assertThat(body).contains("Jane Doe");
+        assertThat(body).contains("was changed");
+    }
+
+    @Test
+    void emailChangedEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("new-address@tum.de");
+        assertThat(body).contains("geändert");
+    }
+
+    @Test
+    void emailChangedEmail_shouldEscapeTheAddressRatherThanRenderItAsMarkup() throws Exception {
+        // The address reaches the template from user input, so it has to be escaped. The template uses th:text for
+        // exactly this reason; th:utext would turn a crafted address into live markup in the recipient's client.
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("newEmail", "<script>alert(1)</script>@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).doesNotContain("<script>alert(1)</script>");
+        assertThat(body).contains("&lt;script&gt;");
     }
 
     // -- VCS access token expired notification email --

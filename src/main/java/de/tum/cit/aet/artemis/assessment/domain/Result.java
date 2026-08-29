@@ -90,9 +90,9 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @ManyToOne
     @JsonIgnoreProperties({ "results" })
+    @JoinColumn(nullable = false)
     private Submission submission;
 
-    // No @Cache: actively mutated during manual assessment; NONSTRICT caused stale feedback lists across nodes, same class of bug as #12574.
     // Stored as a Set: feedback ordering is not semantically meaningful — every consumer that cares about
     // presentation order sorts explicitly (by credits, by FeedbackType, by reference, ...). Using a Set
     // avoids the @OrderColumn null-index race (Hibernate "Illegal null value for list index" under
@@ -113,6 +113,17 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
     private AssessmentType assessmentType;
+
+    /**
+     * Which correction round this result belongs to: 0 for the first correction, 1 for the second, and so on. Null for
+     * automatic and Athena results, which are not correction rounds.
+     * <p>
+     * This used to be the position of the result inside its submission's result list, which is why that list carried an
+     * order column. Keeping the round here means a result can be written without loading and re-saving the whole
+     * submission just so Hibernate can renumber the list.
+     */
+    @Column(name = "correction_round")
+    private Integer correctionRound;
 
     @Column(name = "has_complaint")
     private Boolean hasComplaint;
@@ -454,6 +465,15 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     public AssessmentType getAssessmentType() {
         return assessmentType;
+    }
+
+    @Nullable
+    public Integer getCorrectionRound() {
+        return correctionRound;
+    }
+
+    public void setCorrectionRound(@Nullable Integer correctionRound) {
+        this.correctionRound = correctionRound;
     }
 
     public Result assessmentType(AssessmentType assessmentType) {

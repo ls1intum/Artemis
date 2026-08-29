@@ -38,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -99,6 +100,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
+
+    @Autowired
+    private ResultTestRepository resultTestRepository;
 
     @Autowired
     private ParticipationTestRepository participationRepository;
@@ -394,6 +398,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // all submission are saved to the database
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
         assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
+        // exactly one result per submission: the submission is saved with the result already attached, so the cascade
+        // and the explicit save of the result must not each write a row of their own
+        assertThat(resultTestRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
 
         // update the statistics
         QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
@@ -939,8 +946,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
      * <p>
      * Previously, refresh-path queries relied on Hibernate's EAGER fetch for {@code MultipleChoiceSubmittedAnswer.selectedOptions},
      * which was not reliably initialized when the polymorphic {@code submittedAnswers} collection was loaded alongside a join-table
-     * {@code ManyToMany} with a second-level cache — leading to different options appearing deselected across refreshes and (once
-     * re-evaluation read the same partial state) the stored score flipping between 0 and its true value.
+     * {@code ManyToMany} that was then cached in the Hibernate second-level cache, leading to different options appearing deselected
+     * across refreshes and (once re-evaluation read the same partial state) the stored score flipping between 0 and its true value.
+     * That cache has since been disabled cluster-wide, but the explicit fetch this test guards is what makes the result deterministic.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -974,7 +982,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         Submission submissionWithResult = participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null,
                 quizExercise.getScoreForSubmission(quizSubmission), true);
-        Result result = submissionWithResult.getResults().getFirst();
+        Result result = submissionWithResult.getFirstResult();
 
         QuizSubmission loadedByResult = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
         assertLoadedSubmissionHasAllSelectedOptions(loadedByResult, mcQuestion.getId(), expectedSelectedOptionIds);

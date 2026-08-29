@@ -148,6 +148,10 @@
             "parameters": "Parameters",
             "dockerImage": "Docker Image",
             "script": "Build script",
+            "buildConfig": {
+                "buildPlanConfigurationTooLong": "The build plan configuration is too long. The maximum allowed size is 1 MB.",
+                "dockerFlagsTooLong": "The docker flags are too long. The maximum allowed size is 8 KB."
+            },
             "buildPhasesEditor": {
                 "title": "Build Phases",
                 "help": "Before a build is executed, the scripts of all phases whose conditions are met are concatenated in order. If no result paths are configured, the script's exit code determines build success. Otherwise, success depends on whether test results are produced.",
@@ -683,7 +687,9 @@
                 "includeTestsIntoExampleSolution": "Include tests in example solution",
                 "includeTestsIntoExampleSolutionTooltip": "In addition to the example solution, the automatic tests can be published. Only available if an example solution publication date is configured.",
                 "setTestCaseVisibilityToAfterReleaseDateOfResults": "Set test case visibility to After Release Date of Results",
-                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results."
+                "setTestCaseVisibilityToAfterReleaseDateOfResultsTooltip": "During the exam students will only see if their code compiles. Details about the test results will be displayed after the Release Date of Results.",
+                "warningLeakFeedbackHeader": "Warning: Potential feedback leak",
+                "warningLeakFeedback": "By unchecking this option, test case results and feedback may become visible to students during the exam. Are you sure you want to proceed?"
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",

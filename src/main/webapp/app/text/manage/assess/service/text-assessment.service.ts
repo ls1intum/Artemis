@@ -19,6 +19,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { TextAssessmentEvent } from 'app/text/shared/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Result>;
 type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
@@ -71,10 +72,10 @@ export class TextAssessmentService {
      * @param assessmentEvent an event of type {TextAssessmentEvent}
      */
     public addTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
-        const body = Object.assign({}, assessmentEvent);
+        const body = deepClone(assessmentEvent);
         return this.http
             .post<TextAssessmentEvent>(this.RESOURCE_URL + '/event-insights/text-assessment/events', body, { observe: 'response' })
-            .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
+            .pipe(map((res: EntityResponseEventType) => deepClone(res)));
     }
 
     /**
@@ -166,9 +167,9 @@ export class TextAssessmentService {
                     const submission = participation.submissions!.last()!;
                     let result;
                     if (resultId) {
-                        result = getSubmissionResultById(submission, resultId)!;
+                        result = getSubmissionResultById(submission, resultId);
                     } else {
-                        result = getSubmissionResultByCorrectionRound(submission, correctionRound)!;
+                        result = getSubmissionResultByCorrectionRound(submission, correctionRound);
                     }
                     TextAssessmentService.reconnectResultsParticipation(participation, submission, result);
                 }),
@@ -197,7 +198,7 @@ export class TextAssessmentService {
 
     private static prepareFeedbacksAndTextblocksForRequest(feedbacks: Feedback[], textBlocks: TextBlock[], assessmentNote?: string): TextAssessmentDTO {
         feedbacks = feedbacks.map((feedback) => {
-            feedback = Object.assign({}, feedback);
+            feedback = deepClone(feedback);
             delete feedback.result;
             return feedback;
         });
@@ -235,7 +236,7 @@ export class TextAssessmentService {
     }
 
     private static convertItemFromServer(result: Result): Result {
-        return Object.assign({}, result);
+        return deepClone(result);
     }
 
     /**
@@ -260,9 +261,13 @@ export class TextAssessmentService {
      *  @param submission
      *  @param result
      */
-    private static reconnectResultsParticipation(participation: Participation, submission: Submission, result: Result) {
+    private static reconnectResultsParticipation(participation: Participation, submission: Submission, result: Result | undefined) {
         setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
         submission.participation = participation;
+        // A correction round the tutor has not assessed yet simply has no result, so there is nothing to reconnect.
+        if (!result) {
+            return;
+        }
         result.submission = submission;
         // Make sure Feedbacks Array is initialized
         result.feedbacks = result.feedbacks || [];

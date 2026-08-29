@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
@@ -44,6 +45,8 @@ public class AutonomousTutorForwardingService {
 
     private final FeatureToggleService featureToggleService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final IrisSettingsService irisSettingsService;
 
     private final PyrisPipelineService pyrisPipelineService;
@@ -51,8 +54,9 @@ public class AutonomousTutorForwardingService {
     private final UserRepository userRepository;
 
     public AutonomousTutorForwardingService(FeatureToggleService featureToggleService, IrisSettingsService irisSettingsService, PyrisPipelineService pyrisPipelineService,
-            UserRepository userRepository) {
+            UserRepository userRepository, UserAiPreferenceService userAiPreferenceService) {
         this.featureToggleService = featureToggleService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.irisSettingsService = irisSettingsService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.userRepository = userRepository;
@@ -100,7 +104,8 @@ public class AutonomousTutorForwardingService {
             return;
         }
 
-        if (AiSelectionDecision.NO_AI.equals(author.getSelectedLLMUsage())) {
+        var authorDecision = userAiPreferenceService.findDecision(author.getId());
+        if (AiSelectionDecision.NO_AI.equals(authorDecision)) {
             log.debug("User {} opted out of AI, skipping autonomous tutor forwarding for post {}", author.getId(), post.getId());
             return;
         }
@@ -108,10 +113,11 @@ public class AutonomousTutorForwardingService {
         var settings = irisSettingsService.getSettingsForCourse(course);
         String variant = settings.variant().jsonValue();
         String supportLevel = settings.supportLevel().jsonValue();
-        AiSelectionDecision aiSelection = resolveThreadAiSelection(post);
+        var decisions = userAiPreferenceService.findDecisions(threadAuthorIds(post));
+        AiSelectionDecision aiSelection = resolveThreadAiSelection(decisions);
         log.debug("Forwarding post {} to autonomous tutor pipeline (variant={}, selection={})", post.getId(), variant, aiSelection);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, aiSelection, new PyrisPostDTO(post, resolveThreadAuthorRoles(post, course)), course,
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, aiSelection, new PyrisPostDTO(post, resolveThreadAuthorRoles(post, course), decisions), course,
                 toPyrisUserDTO(author), null, null, null, (runId, runState, error) -> {
                 });
     }
@@ -160,13 +166,14 @@ public class AutonomousTutorForwardingService {
             return;
         }
 
-        if (AiSelectionDecision.NO_AI.equals(author.getSelectedLLMUsage())) {
+        var authorDecision = userAiPreferenceService.findDecision(author.getId());
+        if (AiSelectionDecision.NO_AI.equals(authorDecision)) {
             log.debug("User {} opted out of AI, skipping autonomous tutor forwarding for answer post {}", author.getId(), answerPost.getId());
             return;
         }
 
         User parentAuthor = parentPost.getAuthor();
-        if (AiSelectionDecision.NO_AI.equals(parentAuthor.getSelectedLLMUsage())) {
+        if (AiSelectionDecision.NO_AI.equals(userAiPreferenceService.findDecision(parentAuthor.getId()))) {
             log.debug("Parent post {} author opted out of AI, skipping autonomous tutor forwarding for answer post {}", parentPost.getId(), answerPost.getId());
             return;
         }
@@ -174,11 +181,13 @@ public class AutonomousTutorForwardingService {
         var settings = irisSettingsService.getSettingsForCourse(course);
         String variant = settings.variant().jsonValue();
         String supportLevel = settings.supportLevel().jsonValue();
-        AiSelectionDecision aiSelection = resolveThreadAiSelection(parentPost);
+        var decisions = userAiPreferenceService.findDecisions(threadAuthorIds(parentPost));
+        AiSelectionDecision aiSelection = resolveThreadAiSelection(decisions);
         log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={}, selection={})", answerPost.getId(), parentPost.getId(), variant, aiSelection);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, aiSelection, new PyrisPostDTO(parentPost, resolveThreadAuthorRoles(parentPost, course)), course,
-                toPyrisUserDTO(author), null, null, null, (runId, runState, error) -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, aiSelection,
+                new PyrisPostDTO(parentPost, resolveThreadAuthorRoles(parentPost, course), decisions), course, toPyrisUserDTO(author), null, null, null,
+                (runId, runState, error) -> {
                 });
     }
 
@@ -196,13 +205,26 @@ public class AutonomousTutorForwardingService {
      * local-vs-cloud preference to honour. Bot authors are ignored because Iris's own drafts carry no
      * student's preference.
      *
-     * @param parentPost the thread root, with all answers loaded
+     * @param decisions the thread authors' decisions, keyed by user id, as returned by {@link #threadAuthorIds(Post)}
      * @return {@link AiSelectionDecision#LOCAL_AI} if any contributing author chose it, {@link AiSelectionDecision#CLOUD_AI} otherwise
      */
-    private AiSelectionDecision resolveThreadAiSelection(Post parentPost) {
-        boolean anyLocal = Stream.concat(Stream.of(parentPost.getAuthor()), parentPost.getAnswers().stream().map(AnswerPost::getAuthor)).filter(Objects::nonNull)
-                .filter(author -> !author.isBot()).map(User::getSelectedLLMUsage).anyMatch(AiSelectionDecision.LOCAL_AI::equals);
+    private AiSelectionDecision resolveThreadAiSelection(Map<Long, AiSelectionDecision> decisions) {
+        boolean anyLocal = decisions.values().stream().anyMatch(AiSelectionDecision.LOCAL_AI::equals);
         return anyLocal ? AiSelectionDecision.LOCAL_AI : AiSelectionDecision.CLOUD_AI;
+    }
+
+    /**
+     * The non-bot authors of a thread, which is exactly the set of LLM usage decisions a forwarding run needs.
+     * <p>
+     * One lookup covers both uses: the model the run resolves to, and which answers are redacted before leaving
+     * Artemis. Bot authors are skipped because Iris's own drafts carry no student's preference.
+     *
+     * @param parentPost the thread root, with all answers loaded
+     * @return the distinct author ids, skipping the bot and postings without a persisted author
+     */
+    private static Set<Long> threadAuthorIds(Post parentPost) {
+        return Stream.concat(Stream.of(parentPost.getAuthor()), parentPost.getAnswers().stream().map(AnswerPost::getAuthor)).filter(Objects::nonNull)
+                .filter(author -> !author.isBot()).map(User::getId).filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     /**
@@ -231,6 +253,6 @@ public class AutonomousTutorForwardingService {
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {
-        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && user.isMemirisEnabled());
+        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && userAiPreferenceService.isMemirisEnabled(user.getId()));
     }
 }

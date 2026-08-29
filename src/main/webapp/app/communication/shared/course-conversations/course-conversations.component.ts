@@ -65,6 +65,8 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, take, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     unreadMessages: { entityData: [] },
@@ -148,7 +150,7 @@ const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
         FeatureActivationComponent,
     ],
 })
-export class CourseConversationsComponent implements OnInit, OnDestroy {
+export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarView {
     readonly isCommunicationEnabled = computed(() => {
         const currentCourse = this.course();
         return currentCourse ? isCommunicationEnabled(currentCourse) : false;
@@ -221,7 +223,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     // Getter/setter facade over a signal: the template/child read `courseWideSearchConfig` reactively, while the
     // component (and specs) keep mutating `courseWideSearchConfig.<prop>` in place. Call commitCourseWideSearchConfig()
     // after such deep mutations so the rebuilt reference fires the signal and the [courseWideSearchConfig] input updates.
-    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!);
+    private readonly _courseWideSearchConfig = signal<CourseWideSearchConfig>(undefined!, { equal: () => false });
     get courseWideSearchConfig(): CourseWideSearchConfig {
         return this._courseWideSearchConfig();
     }
@@ -229,7 +231,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this._courseWideSearchConfig.set(value);
     }
     private commitCourseWideSearchConfig(): void {
-        this._courseWideSearchConfig.update((config) => Object.assign(new CourseWideSearchConfig(), config));
+        // No copy: the signal is declared with `equal: () => false`, so re-setting the same reference emits.
+        this._courseWideSearchConfig.set(this._courseWideSearchConfig());
     }
 
     // Icons
@@ -532,7 +535,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     initializeSidebarAccordions() {
         this.messagingEnabled = isMessagingEnabled(this.course());
         this.accordionConversationGroups.set(
-            this.messagingEnabled ? { ...DEFAULT_CHANNEL_GROUPS, groupChats: { entityData: [] }, directMessages: { entityData: [] } } : DEFAULT_CHANNEL_GROUPS,
+            this.messagingEnabled ? cloneWith(DEFAULT_CHANNEL_GROUPS, { groupChats: { entityData: [] }, directMessages: { entityData: [] } }) : DEFAULT_CHANNEL_GROUPS,
         );
     }
 
@@ -672,10 +675,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openCreateGroupChatDialog() {
-        const ref = this.dialogService.open(GroupChatCreateDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(GroupChatCreateDialogComponent, cloneWith(defaultFirstLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: UserPublicInfoDTO[] | undefined) => !!result),
@@ -695,10 +695,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openCreateOneToOneChatDialog() {
-        const ref = this.dialogService.open(OneToOneChatCreateDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(OneToOneChatCreateDialogComponent, cloneWith(defaultFirstLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: UserPublicInfoDTO | undefined) => !!result),
@@ -723,10 +720,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
      * Emits a create action for the given channel on confirmation.
      */
     openCreateChannelDialog() {
-        const ref = this.dialogService.open(ChannelsCreateDialogComponent, {
-            ...defaultSecondLayerDialogOptions,
-            data: { course: this.course() },
-        });
+        const ref = this.dialogService.open(ChannelsCreateDialogComponent, cloneWith(defaultSecondLayerDialogOptions, { data: { course: this.course() } }));
         ref?.onClose
             .pipe(
                 filter((result: ChannelDTO | undefined) => !!result),
@@ -754,14 +748,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openChannelOverviewDialog() {
         const subType = undefined;
-        const ref = this.dialogService.open(ChannelsOverviewDialogComponent, {
-            ...defaultFirstLayerDialogOptions,
-            data: {
-                course: this.course(),
-                createChannelFn: subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined,
-                channelSubType: subType,
-            },
-        });
+        const ref = this.dialogService.open(
+            ChannelsOverviewDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                data: {
+                    course: this.course(),
+                    createChannelFn: subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined,
+                    channelSubType: subType,
+                },
+            }),
+        );
         ref?.onClose
             .pipe(
                 filter((result) => !!result),
@@ -900,12 +896,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (id) {
             try {
                 await firstValueFrom(this.metisService.enable(id, withMessaging));
-                const updatedCourse = {
-                    ...this.course()!,
+                const updatedCourse = cloneWith(this.course()!, {
                     courseInformationSharingConfiguration: withMessaging
                         ? CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING
                         : CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
-                };
+                });
                 this.course.set(updatedCourse);
 
                 this.eventManager.broadcast({

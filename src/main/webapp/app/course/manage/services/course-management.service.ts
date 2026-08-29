@@ -34,6 +34,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { convertTutorialGroupArrayDatesFromServer, convertTutorialGroupsConfigurationDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { toCourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -755,7 +756,7 @@ export class CourseManagementService implements OnDestroy {
 
     static convertCourseDatesFromClient(course: Course): Course {
         // copy of the object
-        return Object.assign({}, course, {
+        return cloneWith(course, {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
             enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
@@ -843,6 +844,9 @@ export class CourseManagementService implements OnDestroy {
     private setCourseDates(course: Course) {
         course.startDate = course.startDate ? dayjs(course.startDate) : undefined;
         course.endDate = course.endDate ? dayjs(course.endDate) : undefined;
+        course.enrollmentStartDate = course.enrollmentStartDate ? dayjs(course.enrollmentStartDate) : undefined;
+        course.enrollmentEndDate = course.enrollmentEndDate ? dayjs(course.enrollmentEndDate) : undefined;
+        course.unenrollmentEndDate = course.unenrollmentEndDate ? dayjs(course.unenrollmentEndDate) : undefined;
         course.exercises = ExerciseService.convertExercisesDateFromServer(course.exercises);
         course.lectures = this.lectureService.convertLectureArrayDatesFromServer(course.lectures);
     }

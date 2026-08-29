@@ -81,6 +81,12 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
         student = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         student2 = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "student2").orElseThrow();
         instructor = userTestRepository.findOneWithAuthoritiesByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        // The opt-out and AI-selection tests below record a decision in user_ai_preference, which outlives the
+        // User row the accounts are looked up from and is shared across methods, so reset it here to keep the
+        // tests order-independent.
+        userUtilService.clearAiSelectionDecision(student);
+        userUtilService.clearAiSelectionDecision(student2);
+        userUtilService.clearAiSelectionDecision(instructor);
         enableIrisFor(course);
         featureToggleService.enableFeature(Feature.AutonomousTutor);
     }
@@ -161,7 +167,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewMessage_skipsWhenUserChoseNoAi() {
-        student.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
 
         Post post = createPostInChannel(student, "Explain recursion.");
@@ -210,7 +216,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewAnswerMessage_skipsWhenReplyAuthorChoseNoAi() {
         Post post = createPostInChannel(student, "What is inheritance?");
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
         AnswerPost answerPost = createAnswerPost(post, student2, "It is a mechanism for code reuse.");
         channel.setCourse(course);
@@ -226,7 +232,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewAnswerMessage_skipsWhenParentPostAuthorChoseNoAi() {
-        student.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
         Post post = createPostInChannel(student, "Explain encapsulation.");
         AnswerPost answerPost = createAnswerPost(post, student2, "It hides internal state.");
@@ -293,7 +299,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
         Post post = createPostInChannel(student, "How do generics work?");
 
         // student2 opts out of AI and replies first
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
         userTestRepository.save(student2);
         createAnswerPost(post, student2, "This should be redacted.");
 
@@ -379,9 +385,8 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewAnswerMessage_downgradesToLocalWhenReplyAuthorChoseLocal() {
-        student.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        student2.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
-        userTestRepository.saveAll(Set.of(student, student2));
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.LOCAL_AI);
 
         Post post = createPostInChannel(student, "How does the scheduler pick a thread?");
         AnswerPost triggeringReply = createAnswerPost(post, student2, "Does it use priorities?");
@@ -394,9 +399,8 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     void onNewAnswerMessage_downgradesToLocalWhenRootAuthorChoseLocal() {
         // The trigger comes from a cloud student, but the thread root belongs to a local-only student:
         // the root's content is part of the prompt, so the run must stay local.
-        student.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
-        student2.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        userTestRepository.saveAll(Set.of(student, student2));
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.CLOUD_AI);
 
         Post post = createPostInChannel(student, "Why does my merge sort stack overflow?");
         AnswerPost triggeringReply = createAnswerPost(post, student2, "How deep is your recursion?");
@@ -407,9 +411,8 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewAnswerMessage_staysCloudWhenNoParticipantChoseLocal() {
-        student.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        student2.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        userTestRepository.saveAll(Set.of(student, student2));
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.CLOUD_AI);
 
         Post post = createPostInChannel(student, "What is a race condition?");
         AnswerPost triggeringReply = createAnswerPost(post, student2, "Two threads writing at once?");
@@ -422,9 +425,8 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     void onNewAnswerMessage_ignoresNoAiParticipantsWhenResolvingSelection() {
         // A No-AI student's reply is redacted before it leaves Artemis, so it carries no
         // local-vs-cloud preference and must not downgrade the run.
-        student.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
-        student2.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
-        userTestRepository.saveAll(Set.of(student, student2));
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.CLOUD_AI);
+        userUtilService.setAiSelectionDecision(student2, AiSelectionDecision.NO_AI);
 
         Post post = createPostInChannel(student, "How do generics erase?");
         createAnswerPost(post, student2, "This should be redacted.");
@@ -436,7 +438,7 @@ class AutonomousTutorForwardingServiceIntegrationTest extends AbstractIrisIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void onNewMessage_usesLocalForLocalOnlyAuthor() {
-        student.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.LOCAL_AI);
         userTestRepository.save(student);
 
         Post post = createPostInChannel(student, "What is tail recursion?");
