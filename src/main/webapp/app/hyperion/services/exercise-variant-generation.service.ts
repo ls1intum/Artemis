@@ -56,7 +56,17 @@ export class ExerciseVariantGenerationService {
         return this.api.getJobsOfCurrentUser().pipe(
             tap((jobs) => {
                 this.jobs.set(jobs);
-                jobs.filter((job) => !isTerminalVariantPhase(job.phase) && job.jobId).forEach((job) => this.attachToJob(job.jobId!));
+                const stillRunning = new Set(jobs.filter((job) => !isTerminalVariantPhase(job.phase) && job.jobId).map((job) => job.jobId!));
+                // REST is authoritative: a job that finished while its terminal event was missed must lose its
+                // subscription here, otherwise the topic stays attached for the rest of the session.
+                this.jobSubscriptions.forEach((subscription, jobId) => {
+                    if (!stillRunning.has(jobId)) {
+                        subscription.unsubscribe();
+                        this.websocketService.unsubscribeFromJob(jobId);
+                        this.jobSubscriptions.delete(jobId);
+                    }
+                });
+                stillRunning.forEach((jobId) => this.attachToJob(jobId));
             }),
         );
     }

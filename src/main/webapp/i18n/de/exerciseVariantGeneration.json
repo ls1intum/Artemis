@@ -11,6 +11,7 @@
                 "cancelConfirmationHeader": "Variantengenerierung abbrechen?",
                 "cancelConfirmationAccept": "Generierung abbrechen",
                 "cancelConfirmationReject": "Weiter generieren",
+                "cancelFailed": "Der Generierungsauftrag konnte nicht abgebrochen werden. Er läuft weiter.",
                 "attempt": "Versuch {{ attempt }}/{{ max }}"
             },
             "wizard": {

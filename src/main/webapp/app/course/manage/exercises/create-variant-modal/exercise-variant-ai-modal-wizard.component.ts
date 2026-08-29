@@ -36,12 +36,13 @@ import {
     faTriangleExclamation,
     faWandMagicSparkles,
 } from '@fortawesome/free-solid-svg-icons';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, switchMap } from 'rxjs';
 
 import { TranslateService } from '@ngx-translate/core';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -50,6 +51,7 @@ import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 
 import { VariantGenerationRequest, VariantGenerationRequestNarrativeStyleEnum } from 'app/openapi/model/variant-generation-request';
 import { VariantPlacement } from 'app/openapi/model/variant-placement';
 import { StepOutput } from 'app/openapi/model/step-output';
+import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
 import { PlacementChoice, adaptationChips, difficultySeverity, difficultyTranslationKey, durationDays, narrativeStyleTranslationKey } from './exercise-variant-ai-modal.utils';
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
@@ -322,7 +324,20 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     protected readonly difficultySeverity = difficultySeverity;
     protected readonly difficultyTranslationKey = difficultyTranslationKey;
 
+    private readonly alertService = inject(AlertService);
+
     private eventsSubscription?: Subscription;
+
+    /**
+     * Every STEP_OUTPUT event needs the full job detail, and the pipeline records one per phase and per repair
+     * attempt. switchMap cancels a superseded request so a late response cannot overwrite a newer one.
+     */
+    private readonly stepOutputRefresh = new Subject<string>();
+
+    private readonly stepOutputSubscription = this.stepOutputRefresh.pipe(switchMap((jobId) => this.variantGenerationService.getJobDetail(jobId))).subscribe({
+        next: (detail) => this.applyJobDetail(detail),
+        error: () => {},
+    });
 
     constructor() {
         // On open: monitor mode initializes from the job-detail endpoint. A regular open always starts a
@@ -349,6 +364,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         this.eventsSubscription?.unsubscribe();
+        this.stepOutputSubscription.unsubscribe();
     }
 
     /**
@@ -476,7 +492,8 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
             rejectLabel: this.translateService.instant('artemisApp.exerciseVariantGeneration.tray.cancelConfirmationReject'),
             acceptSeverity: 'danger',
             icon: faTriangleExclamation,
-            accept: () => this.variantGenerationService.cancelJob(jobId).subscribe({ error: () => {} }),
+            accept: () =>
+                this.variantGenerationService.cancelJob(jobId).subscribe({ error: () => this.alertService.error('artemisApp.exerciseVariantGeneration.tray.cancelFailed') }),
         });
     }
 
@@ -642,26 +659,25 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     /**
      * Live STEP_OUTPUT events only carry summaries; the job record additionally holds the full detail logs
-     * and — for failures — the id of a clone kept from PROVISIONING. Fetched once on a terminal event.
+     * and — for failures — the id of a clone kept from PROVISIONING. Requested on every step output and on the
+     * terminal events; superseded requests are cancelled by the switchMap above.
      */
     private loadFullStepOutputs(): void {
         const jobId = this.jobId();
-        if (!jobId) {
-            return;
+        if (jobId) {
+            this.stepOutputRefresh.next(jobId);
         }
-        this.variantGenerationService.getJobDetail(jobId).subscribe({
-            next: (detail) => {
-                this.stepOutputs.set(detail.stepOutputs ?? {});
-                this.instructorSummary.set(detail.job?.instructorSummary);
-                this.variantTitle.set(detail.job?.variantExerciseTitle ?? this.variantTitle());
-                this.monitorRequest.set(detail.request ?? this.monitorRequest());
-                this.totalTokensUsed.set(detail.job?.totalTokensUsed ?? this.totalTokensUsed());
-                if (this.jobPhase() === 'FAILED') {
-                    this.showResult(detail.job?.variantExerciseId);
-                }
-            },
-            error: () => {},
-        });
+    }
+
+    private applyJobDetail(detail: VariantJobDetail): void {
+        this.stepOutputs.set(detail.stepOutputs ?? {});
+        this.instructorSummary.set(detail.job?.instructorSummary);
+        this.variantTitle.set(detail.job?.variantExerciseTitle ?? this.variantTitle());
+        this.monitorRequest.set(detail.request ?? this.monitorRequest());
+        this.totalTokensUsed.set(detail.job?.totalTokensUsed ?? this.totalTokensUsed());
+        if (this.jobPhase() === 'FAILED') {
+            this.showResult(detail.job?.variantExerciseId);
+        }
     }
 
     private showResult(variantExerciseId: number | undefined): void {

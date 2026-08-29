@@ -1,6 +1,7 @@
 import { TumUiButtonComponent, TumUiConfirmDialogComponent, TumUiConfirmationService, TumUiPopoverComponent, TumUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faCheck, faCircleCheck, faExclamation, faSpinner, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
@@ -46,6 +47,7 @@ export class VariantGenerationTrayComponent {
     private readonly accountService = inject(AccountService);
     private readonly confirmationService = inject(TumUiConfirmationService);
     private readonly translateService = inject(TranslateService);
+    private readonly alertService = inject(AlertService);
 
     /**
      * Clicking a job entry opens the tray-hosted generation modal in monitor mode, initialized from the
@@ -141,7 +143,9 @@ export class VariantGenerationTrayComponent {
             icon: faTriangleExclamation,
             accept: () => {
                 if (job.jobId) {
-                    this.variantGenerationService.cancelJob(job.jobId).subscribe({ error: () => {} });
+                    this.variantGenerationService
+                        .cancelJob(job.jobId)
+                        .subscribe({ error: () => this.alertService.error('artemisApp.exerciseVariantGeneration.tray.cancelFailed') });
                 }
             },
         });

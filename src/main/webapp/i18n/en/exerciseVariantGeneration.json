@@ -11,6 +11,7 @@
                 "cancelConfirmationHeader": "Cancel variant generation?",
                 "cancelConfirmationAccept": "Cancel generation",
                 "cancelConfirmationReject": "Keep generating",
+                "cancelFailed": "The generation job could not be cancelled. It is still running.",
                 "attempt": "attempt {{ attempt }}/{{ max }}"
             },
             "wizard": {

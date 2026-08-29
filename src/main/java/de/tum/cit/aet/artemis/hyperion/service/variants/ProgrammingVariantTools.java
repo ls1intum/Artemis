@@ -905,10 +905,25 @@ class ProgrammingVariantTools implements VariantToolset {
     }
 
     private void writeFileContent(Repository repository, String path, String content) throws IOException {
+        // createFile rejects an existing path, so an overwrite has to delete first. Keep the previous bytes:
+        // otherwise a failed write leaves the file deleted and the agent's next round sees a missing file.
+        byte[] previousContent = null;
         if (gitService.getFileByName(repository, path).isPresent()) {
+            previousContent = repositoryService.getFile(repository, path);
             repositoryService.deleteFile(repository, path);
         }
-        repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
+        try {
+            repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (RuntimeException | IOException e) {
+            if (previousContent != null) {
+                if (gitService.getFileByName(repository, path).isPresent()) {
+                    repositoryService.deleteFile(repository, path);
+                }
+                repositoryService.createFile(repository, path, new ByteArrayInputStream(previousContent));
+            }
+            throw e;
+        }
     }
 
     private void markTouched(RepositoryType repositoryType) {
