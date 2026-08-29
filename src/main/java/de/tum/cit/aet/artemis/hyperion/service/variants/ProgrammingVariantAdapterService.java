@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
@@ -269,8 +270,10 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         // many TRUE findings together in one pass as it can, rather than always waiting for the previous gate to
         // be clean before running the next. Gate 3 has no such dependency and always runs; Gate 2 is skipped (not
         // just deferred) when Gate 1 isn't clean yet, because its result would otherwise not be true (see below).
-        List<VerificationReport.VerificationFinding> consistencyFindings = new ArrayList<>();
-        try (ExecutorService virtualThreads = Executors.newVirtualThreadPerTaskExecutor()) {
+        // Synchronized: a cancelled consistency task can still be writing here after the bounded wait gave up.
+        List<VerificationReport.VerificationFinding> consistencyFindings = Collections.synchronizedList(new ArrayList<>());
+        ExecutorService virtualThreads = Executors.newVirtualThreadPerTaskExecutor();
+        try {
             // Gate 3 (LLM consistency check) only reads the problem statement and repository content — it never
             // depends on a build result — so it runs CONCURRENTLY with Gate 1's build wait instead of after it,
             // on its own virtual thread. Never submit blocking work like this to the bounded
@@ -297,15 +300,20 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
             }
             finally {
                 // Bounds the wait on Gate 3 NO MATTER how Gate 1/2 above exit — including via an exception, which
-                // would otherwise skip straight past a plain "consistencyTask.get()" call and fall through to the
-                // try-with-resources' own implicit ExecutorService.close(): that call has no timeout at all and
-                // would block this whole VERIFYING call (and the job's one thread from the bounded
-                // hyperionVariantTaskExecutor pool) on a still-running, still-unbounded consistency check
-                // indefinitely.
+                // would otherwise skip straight past a plain "consistencyTask.get()" call and leave the whole
+                // VERIFYING call (and the job's one thread from the bounded hyperionVariantTaskExecutor pool)
+                // waiting on a still-running, still-unbounded consistency check indefinitely.
                 awaitConsistencyTask(consistencyTask, exercise);
             }
         }
-        findings.addAll(consistencyFindings);
+        finally {
+            // Not try-with-resources: close() waits for termination without a timeout, which is the very block
+            // awaitConsistencyTask exists to prevent. shutdownNow() interrupts and returns.
+            virtualThreads.shutdownNow();
+        }
+        synchronized (consistencyFindings) {
+            findings.addAll(consistencyFindings);
+        }
         return new VerificationReport(findings.isEmpty(), List.copyOf(findings));
     }
 

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -132,11 +133,12 @@ class ProgrammingVariantTools implements VariantToolset {
     /** Source file paths per repository, resolved once per round, backing {@link #studentOwnedTemplateRefusal}. */
     private final Map<RepositoryType, Set<String>> sourcePaths = new EnumMap<>(RepositoryType.class);
 
-    private boolean touchedTestRepo;
+    private volatile boolean touchedTestRepo;
 
-    private String finishSummary;
+    private volatile String finishSummary;
 
-    private int toolCallsUsed;
+    /** Atomic: Spring AI may invoke tool callbacks concurrently within one model turn. */
+    private final AtomicInteger toolCallsUsed = new AtomicInteger();
 
     private final ConcurrentHashMap<String, VariantJob.CallStat> toolCallStats = new ConcurrentHashMap<>();
 
@@ -866,8 +868,7 @@ class ProgrammingVariantTools implements VariantToolset {
         if (jobService.isCancelRequested(jobId)) {
             return "The variant generation job was CANCELLED. Do not call any more tools; the round is over and all further work will be discarded.";
         }
-        toolCallsUsed++;
-        if (toolCallsUsed > TOOL_CALL_BUDGET) {
+        if (toolCallsUsed.incrementAndGet() > TOOL_CALL_BUDGET) {
             return "TOOL BUDGET EXHAUSTED for this round (" + TOOL_CALL_BUDGET + " calls). Do not call any other tool. Call finish NOW with a short summary of what you changed.";
         }
         return null;

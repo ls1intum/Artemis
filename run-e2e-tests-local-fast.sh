@@ -365,8 +365,7 @@ if [ "$SKIP_SERVER" = false ]; then
     # SDK appends /chat/completions itself).
     if [ "$RUN_HYPERION" = true ]; then
         echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting the mock LLM on port ${HYPERION_MOCK_LLM_PORT}...${NC}"
-        # Kill any stale listener on the mock's port and wait for the socket to be released — killing the
-        # process is not enough, the new Python process cannot bind while the old socket lingers.
+        # Kill any stale listener AND wait for the socket to be released — the new process cannot bind before.
         check_port_available "${HYPERION_MOCK_LLM_PORT}" "Hyperion mock LLM"
         MOCK_LLM_PORT="${HYPERION_MOCK_LLM_PORT}" python3 "$HYPERION_MOCK_LLM_SCRIPT" > "$LOCAL_DIR/hyperion-mock-llm.log" 2>&1 &
         MOCK_LLM_PID=$!

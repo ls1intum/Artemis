@@ -102,10 +102,8 @@ public class VariantBuildVerificationService {
     }
 
     /**
-     * Triggers the build of one repository of the exercise and returns the handle to wait for it with.
-     * <p>
-     * The trigger time is taken before the build is requested, so a result that completes immediately still
-     * passes the freshness bound {@link #waitForBuildResults} applies.
+     * Triggers the build of one repository and returns the handle to wait for it with. The trigger time is taken
+     * before the request, so a result that completes immediately still passes the freshness bound.
      *
      * @param exercise       the exercise whose repository is built
      * @param repositoryUri  the repository whose last commit is built

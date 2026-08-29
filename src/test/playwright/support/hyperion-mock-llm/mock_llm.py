@@ -32,7 +32,7 @@ stays a drop-in OpenAI server. Python 3 standard library only — runs as a bare
 process (see run-e2e-tests-local-fast.sh, RUN_HYPERION).
 
 Config via environment variables (all optional):
-    MOCK_LLM_HOST          bind host        (default 0.0.0.0)
+    MOCK_LLM_HOST          bind host        (default 127.0.0.1)
     MOCK_LLM_PORT          bind port        (default 8090)
     MOCK_LLM_VARIANT_TITLE planned title    (default "AI Variant - Cargo Bay Inventory")
 """
@@ -44,8 +44,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
 
-# Loopback by default: the mock is unauthenticated, and the local E2E runner reaches it over localhost.
-# Set MOCK_LLM_HOST=0.0.0.0 only for a containerised setup that needs it from outside the host.
+# Loopback by default: the mock is unauthenticated. Set MOCK_LLM_HOST=0.0.0.0 only if reached from outside.
 HOST = os.environ.get("MOCK_LLM_HOST", "127.0.0.1")
 PORT = int(os.environ.get("MOCK_LLM_PORT", "8090"))
 # Deterministic planned title the E2E asserts on. Kept free of characters that a
