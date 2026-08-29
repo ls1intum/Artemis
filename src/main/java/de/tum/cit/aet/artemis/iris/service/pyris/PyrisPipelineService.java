@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,10 +19,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.Posting;
-import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -209,7 +204,7 @@ public class PyrisPipelineService {
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                buildThread(post, course.getId()),
+                new PyrisPostDTO(post, userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post))),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 toPyrisUserDTO(user),
                 executionDto.settings(),
@@ -243,9 +238,8 @@ public class PyrisPipelineService {
      * @param lectureDTO             optional lecture if the channel is linked to one
      * @param statusUpdateConsumer   consumer to handle status updates (e.g., for logging or future websocket support)
      */
-    public void executeAutonomousTutorPipeline(String variant, String supportLevel, AiSelectionDecision aiSelection, Post post, Course course, PyrisUserDTO student,
+    public void executeAutonomousTutorPipeline(String variant, String supportLevel, AiSelectionDecision aiSelection, PyrisPostDTO post, Course course, PyrisUserDTO student,
             PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO, PipelineStatusUpdater statusUpdateConsumer) {
-        var postDTO = buildThread(post, course.getId());
         // @formatter:off
         executePipeline(
             "autonomous-tutor",
@@ -253,10 +247,10 @@ public class PyrisPipelineService {
             variant,
             supportLevel,
             Optional.empty(),
-            pyrisJobService.addAutonomousTutorJob(post.getId(), course.getId()),
+            pyrisJobService.addAutonomousTutorJob(post.id(), course.getId()),
             executionDto -> new PyrisAutonomousTutorPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                postDTO,
+                post,
                 student,
                 executionDto.settings(),
                 programmingExerciseDTO,
@@ -266,43 +260,6 @@ public class PyrisPipelineService {
             statusUpdateConsumer
         );
         // @formatter:on
-    }
-
-    /**
-     * Builds the thread Pyris receives, for every pipeline that sends one.
-     * <p>
-     * Both of the per-author lookups it needs — course roles and AI opt-out decisions — are one query
-     * each rather than one per message, and both live here rather than at the call sites so the
-     * autonomous tutor and tutor suggestion pipelines cannot drift apart in what they send.
-     *
-     * @param post     the thread root, with its answers loaded
-     * @param courseId the course the thread belongs to
-     * @return the thread as Pyris expects it
-     */
-    private PyrisPostDTO buildThread(Post post, long courseId) {
-        return PyrisPostDTO.of(post, resolveThreadAuthorRoles(post, courseId), userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post)));
-    }
-
-    /**
-     * Resolves the course role of every human author in a thread in a single query.
-     * <p>
-     * The roles come from the database rather than from the author entities: {@code Posting.authorRole}
-     * is transient and only populated on the paths that render a posting for the client, and the users'
-     * course roles are lazily loaded and may already be detached here. Bot authors are left out — their
-     * role is decided by the bot flag, not by a course group.
-     *
-     * @param post     the thread root, with its answers loaded
-     * @param courseId the course the thread belongs to
-     * @return the course roles keyed by user id; authors without a resolvable role are absent
-     */
-    private Map<Long, UserRole> resolveThreadAuthorRoles(Post post, long courseId) {
-        Set<Long> userIds = Stream.concat(Stream.of(post), post.getAnswers().stream()).map(Posting::getAuthor).filter(author -> author != null && !author.isBot()).map(User::getId)
-                .collect(Collectors.toSet());
-        if (userIds.isEmpty()) {
-            return Map.of();
-        }
-        return userRepository.findUserRolesInCourse(userIds, courseId).stream().filter(userRole -> userRole.role() != null)
-                .collect(Collectors.toMap(UserRoleDTO::userId, UserRoleDTO::role, (first, second) -> first));
     }
 
     @FunctionalInterface

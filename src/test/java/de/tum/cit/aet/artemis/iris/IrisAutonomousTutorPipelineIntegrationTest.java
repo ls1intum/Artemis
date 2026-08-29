@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
@@ -86,6 +88,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
     @Test
     void executeAutonomousTutorPipeline_sendsRequestToPyris() {
         Post post = createPostInChannel(student, "How does inheritance work?");
+        var postDTO = new PyrisPostDTO(post, Map.of());
         var studentDTO = new PyrisUserDTO(student, userAiPreferenceService.isMemirisEnabled(student.getId()));
 
         AtomicBoolean pipelineDone = new AtomicBoolean(false);
@@ -95,7 +98,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
             pipelineDone.set(true);
         });
 
-        pyrisPipelineService.executeAutonomousTutorPipeline("default", "moderate", AiSelectionDecision.LOCAL_AI, post, course, studentDTO, null, null, null,
+        pyrisPipelineService.executeAutonomousTutorPipeline("default", "moderate", AiSelectionDecision.LOCAL_AI, postDTO, course, studentDTO, null, null, null,
                 (runId, runState, error) -> {
                 });
 

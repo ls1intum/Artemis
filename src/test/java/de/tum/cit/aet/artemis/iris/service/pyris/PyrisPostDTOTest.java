@@ -20,8 +20,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
  * request path.
  * <p>
  * These tests pin the mapping from that map to redaction, including the cases the map cannot answer: an author with no
- * recorded decision, and an answer with no author at all. The second map carries the authors' course roles and is
- * empty here; {@code PyrisPostDTOThreadTest} covers it.
+ * recorded decision, and an answer with no author at all.
  */
 class PyrisPostDTOTest {
 
@@ -53,7 +52,7 @@ class PyrisPostDTOTest {
         Post post = postWithAnswers(answerBy(11L, 1L, "opted out"), answerBy(12L, 2L, "opted in"));
         Map<Long, AiSelectionDecision> decisions = Map.of(1L, AiSelectionDecision.NO_AI, 2L, AiSelectionDecision.CLOUD_AI);
 
-        var dto = PyrisPostDTO.of(post, Map.of(), decisions);
+        var dto = new PyrisPostDTO(post, decisions);
 
         assertThat(dto.answers()).filteredOn(answer -> answer.id() == 11L).singleElement().satisfies(answer -> assertThat(answer.redacted()).isTrue())
                 .satisfies(answer -> assertThat(answer.content()).isNull());
@@ -69,7 +68,7 @@ class PyrisPostDTOTest {
     void doesNotRedactAnAuthorMissingFromTheMap() {
         Post post = postWithAnswers(answerBy(11L, 1L, "no decision recorded"));
 
-        var dto = PyrisPostDTO.of(post, Map.of(), Map.of());
+        var dto = new PyrisPostDTO(post, Map.of());
 
         assertThat(dto.answers()).singleElement().satisfies(answer -> {
             assertThat(answer.redacted()).isFalse();
@@ -81,7 +80,7 @@ class PyrisPostDTOTest {
     void doesNotRedactAnAnswerWithoutAnAuthor() {
         Post post = postWithAnswers(answerBy(11L, null, "authorless"));
 
-        var dto = PyrisPostDTO.of(post, Map.of(), Map.of(1L, AiSelectionDecision.NO_AI));
+        var dto = new PyrisPostDTO(post, Map.of(1L, AiSelectionDecision.NO_AI));
 
         assertThat(dto.answers()).singleElement().satisfies(answer -> {
             assertThat(answer.redacted()).isFalse();
@@ -93,7 +92,7 @@ class PyrisPostDTOTest {
     void carriesThePostContentAndAuthorThrough() {
         Post post = postWithAnswers(answerBy(11L, 1L, "answer"));
 
-        var dto = PyrisPostDTO.of(post, Map.of(), Map.of());
+        var dto = new PyrisPostDTO(post, Map.of());
 
         assertThat(dto.id()).isEqualTo(1L);
         assertThat(dto.content()).isEqualTo("post content");
@@ -102,7 +101,7 @@ class PyrisPostDTOTest {
 
     @Test
     void handlesAPostWithoutAnswers() {
-        var dto = PyrisPostDTO.of(postWithAnswers(), Map.of(), Map.of());
+        var dto = new PyrisPostDTO(postWithAnswers(), Map.of());
 
         assertThat(dto.answers()).isEmpty();
     }

@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -99,8 +100,10 @@ public class AutonomousTutorForwardingService {
         String supportLevel = settings.supportLevel().jsonValue();
         log.debug("Forwarding post {} to autonomous tutor pipeline (variant={})", post.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, authorDecision, post, course, toPyrisUserDTO(author), null, null, null,
-                (runId, runState, error) -> {
+        // One query for every answer author, rather than one per answer while the DTO is assembled.
+        var decisions = userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post));
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, authorDecision, new PyrisPostDTO(post, decisions), course, toPyrisUserDTO(author), null, null,
+                null, (runId, runState, error) -> {
                 });
     }
 
@@ -162,8 +165,9 @@ public class AutonomousTutorForwardingService {
         String supportLevel = settings.supportLevel().jsonValue();
         log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={})", answerPost.getId(), parentPost.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, authorDecision, parentPost, course, toPyrisUserDTO(author), null, null, null,
-                (runId, runState, error) -> {
+        var decisions = userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(parentPost));
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, authorDecision, new PyrisPostDTO(parentPost, decisions), course, toPyrisUserDTO(author), null,
+                null, null, (runId, runState, error) -> {
                 });
     }
 
