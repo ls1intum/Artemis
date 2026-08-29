@@ -422,7 +422,7 @@
                             @if (i === currentPhaseIndex() && activeStepDetail(); as detail) {
                                 <span class="block text-muted-color text-sm" data-testid="variant-wizard-step-detail">{{ detail }}</span>
                             }
-                            @if (stepOutputs()[phase]; as outputs) {
+                            @if (outputsFor(phase); as outputs) {
                                 <!-- Expandable only once at least one full log detail arrived — an arrow with an
                                      empty body behind it is worse than no arrow. Collapsed, the LATEST summary is
                                      shown; expanded, EVERY recorded message renders as its own scrollable code

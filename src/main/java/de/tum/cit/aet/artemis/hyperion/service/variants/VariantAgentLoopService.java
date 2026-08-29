@@ -186,7 +186,9 @@ public class VariantAgentLoopService {
         // the agent can check off as it works — and, on a repair round, that persists visibly in its own finish
         // summary instead of prose the next round has to re-derive from findings alone. Invariants stay plain
         // bullets: they are properties to maintain throughout, not discrete steps to complete.
-        return "Variant title: " + plan.variantTitle() + "\n\nTarget problem statement:\n" + plan.problemStatement() + "\n\nIntended changes (apply exactly these; check off "
+        // The plan is LLM-parsed JSON, so a missing statement must not reach the prompt as the literal "null".
+        String problemStatement = plan.problemStatement() == null || plan.problemStatement().isBlank() ? "(unchanged from the source exercise)" : plan.problemStatement();
+        return "Variant title: " + plan.variantTitle() + "\n\nTarget problem statement:\n" + problemStatement + "\n\nIntended changes (apply exactly these; check off "
                 + "each as you complete it, and report the checklist with its final state in your finish summary):\n"
                 + plan.intendedChanges().stream().map(change -> "- [ ] " + change).collect(Collectors.joining("\n")) + "\n\nInvariants (must be preserved):\n"
                 + plan.invariants().stream().map(invariant -> "- " + invariant).collect(Collectors.joining("\n"));

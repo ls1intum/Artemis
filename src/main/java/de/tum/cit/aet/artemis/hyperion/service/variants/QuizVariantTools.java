@@ -318,8 +318,8 @@ class QuizVariantTools implements VariantToolset {
     }
 
     /**
-     * Enforces the image non-goal: DnD background and drag-item picture paths must be exactly the carried-over
-     * ones — no additions, removals, or changes.
+     * Enforces the image non-goal: the DnD background path must not change, and drag-item picture paths must be
+     * a subset of the carried-over ones — a round may drop a picture with its item, but never add or repoint one.
      */
     private static String checkImagesUnchanged(QuizQuestion existing, QuizQuestion updated) {
         if (!(existing instanceof DragAndDropQuestion existingDnd) || !(updated instanceof DragAndDropQuestion updatedDnd)) {

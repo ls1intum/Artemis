@@ -226,12 +226,14 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly anyCardSelected = computed(() => this.changeDifficulty() || this.changeDomain() || this.changeNarrative() || this.changeCustom());
 
     readonly canProceedToPlacement = computed(() => {
-        if (!this.anyCardSelected()) return false;
-        // Custom instructions are the only selection that needs non-empty configuration to mean anything.
-        if (this.changeCustom() && this.additionalInstructions().trim().length === 0 && !this.changeDifficulty() && !this.changeDomain() && !this.changeNarrative()) {
-            return false;
-        }
-        return true;
+        // Every selected card must contribute a value; a selected card left empty is dropped from the request
+        // and the wizard would otherwise report no problem.
+        return (
+            this.changeDifficulty() ||
+            this.changeNarrative() ||
+            (this.changeDomain() && this.domainText().trim().length > 0) ||
+            (this.changeCustom() && this.additionalInstructions().trim().length > 0)
+        );
     });
 
     readonly canGenerate = computed(() => this.placementChoice() !== 'new-group' || this.newGroupTitle().trim().length > 0);
@@ -521,6 +523,12 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     }
 
     /** A phase's panel is expandable once at least one message carries a full log detail. */
+    /** The phase's recorded outputs, or undefined when none arrived — an empty array must not read as present. */
+    outputsFor(phase: string): StepOutput[] | undefined {
+        const outputs = this.stepOutputs()[phase];
+        return outputs?.length ? outputs : undefined;
+    }
+
     hasAnyDetail(outputs: StepOutput[]): boolean {
         return outputs.some((output) => !!output.detail);
     }
