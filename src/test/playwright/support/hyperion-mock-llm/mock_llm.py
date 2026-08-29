@@ -44,7 +44,9 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Optional
 
-HOST = os.environ.get("MOCK_LLM_HOST", "0.0.0.0")
+# Loopback by default: the mock is unauthenticated, and the local E2E runner reaches it over localhost.
+# Set MOCK_LLM_HOST=0.0.0.0 only for a containerised setup that needs it from outside the host.
+HOST = os.environ.get("MOCK_LLM_HOST", "127.0.0.1")
 PORT = int(os.environ.get("MOCK_LLM_PORT", "8090"))
 # Deterministic planned title the E2E asserts on. Kept free of characters that a
 # short-name deriver would choke on; PROVISIONING derives the short name from it.
