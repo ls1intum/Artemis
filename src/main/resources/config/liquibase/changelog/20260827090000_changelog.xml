@@ -16,8 +16,13 @@
 
         The constraint changesets are guarded by a precondition that no such row is left. Adding a not-null constraint to
         a column that still holds a null fails, and a failing changeset stops the application from starting, which is a
-        far worse outcome than the column staying nullable. With the guard the changeset is marked as run and the server
-        comes up; the column then needs a look and a changelog of its own.
+        far worse outcome than the column staying nullable.
+
+        The guard is onFail="CONTINUE" rather than MARK_RAN on purpose. CONTINUE skips the changeset without writing it
+        to databasechangelog, so the server starts, a warning is logged, and the constraint is tried again on the next
+        start. Once the rows that have no parent are dealt with, the column is constrained by itself. MARK_RAN would
+        record the changeset as done and the column would stay nullable on that installation for good, with only a new
+        changelog able to put it right.
 
         Rows are only deleted where their own dependants can be cleared along with them. exam.course_id is therefore
         left as it is: an exam is reachable through exercise groups, student exams, grading scales and exam users, and
@@ -64,7 +69,7 @@
         </sql>
     </changeSet>
     <changeSet id="20260827090000-02-result-submission-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM result WHERE submission_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="result" columnName="submission_id" columnDataType="bigint"/>
@@ -78,7 +83,7 @@
         </sql>
     </changeSet>
     <changeSet id="20260827090000-04-complaint-result-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM complaint WHERE result_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="complaint" columnName="result_id" columnDataType="bigint"/>
@@ -90,7 +95,7 @@
         </delete>
     </changeSet>
     <changeSet id="20260827090000-06-complaint-response-complaint-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM complaint_response WHERE complaint_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="complaint_response" columnName="complaint_id" columnDataType="bigint"/>
@@ -102,7 +107,7 @@
         </delete>
     </changeSet>
     <changeSet id="20260827090000-08-build-log-entry-submission-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM build_log_entry WHERE programming_submission_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="build_log_entry" columnName="programming_submission_id" columnDataType="bigint"/>
@@ -114,7 +119,7 @@
         </delete>
     </changeSet>
     <changeSet id="20260827090000-10-assessment-note-result-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM assessment_note WHERE result_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="assessment_note" columnName="result_id" columnDataType="bigint"/>
@@ -126,14 +131,14 @@
         </delete>
     </changeSet>
     <changeSet id="20260827090000-12-grade-step-scale-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM grade_step WHERE grading_scale_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="grade_step" columnName="grading_scale_id" columnDataType="bigint"/>
     </changeSet>
 
     <changeSet id="20260827090000-13-exam-course-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM exam WHERE course_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="exam" columnName="course_id" columnDataType="bigint"/>
@@ -145,7 +150,7 @@
         </delete>
     </changeSet>
     <changeSet id="20260827090000-15-conversation-participant-conversation-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM conversation_participant WHERE conversation_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="conversation_participant" columnName="conversation_id" columnDataType="bigint"/>
@@ -159,7 +164,7 @@
         </sql>
     </changeSet>
     <changeSet id="20260827090000-17-answer-post-post-not-null" author="krusche">
-        <preConditions onFail="MARK_RAN">
+        <preConditions onFail="CONTINUE">
             <sqlCheck expectedResult="0">SELECT COUNT(*) FROM answer_post WHERE post_id IS NULL</sqlCheck>
         </preConditions>
         <addNotNullConstraint tableName="answer_post" columnName="post_id" columnDataType="bigint"/>
