@@ -250,9 +250,9 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         else:
             self._respond(200, response)
 
-    def log_message(self, fmt: str, *args) -> None:
-        """Silence the per-request access log. BaseHTTPRequestHandler passes this positionally, so the parameter
-        can be named away from the `format` builtin its own signature shadows."""
+    def log_message(self, fmt: str, *args) -> None:  # pylint: disable=arguments-renamed
+        """Silence the per-request access log. BaseHTTPRequestHandler names this parameter after the `format`
+        builtin and always passes it positionally, so renaming it here is safe and avoids the shadowing."""
         return
 
 
