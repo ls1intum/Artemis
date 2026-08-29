@@ -24,6 +24,8 @@ import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
@@ -43,6 +45,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWe
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseMemoryIngestionWebhookJob;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -71,6 +75,15 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private ConversationTestRepository conversationRepository;
+
+    @Autowired
+    private ConversationService conversationService;
+
+    @Autowired
+    private ChannelService channelService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
     private PyrisJobService pyrisJobService;
@@ -181,7 +194,9 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         var dto = captured.get();
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.IRIS_AUTO);
-        assertThat(dto.existingAnswer()).isNull();
+        // Approving a draft unchanged still endorses that exact wording, so it travels verbatim rather than
+        // being re-derived by the extraction model into a paraphrase the tutor never saw.
+        assertThat(dto.existingAnswer()).isEqualTo("Push to your repo before the deadline.");
         assertThat(dto.courseId()).isEqualTo(course.getId());
         assertThat(dto.conversationId()).isEqualTo(String.valueOf(channel.getId()));
         assertThat(dto.postId()).isEqualTo(String.valueOf(post.getId()));
@@ -538,6 +553,61 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
+    void deletingAConversationPurgesItsEntries() {
+        Channel doomed = conversationUtilService.createPublicChannel(course, "channel-deleted-directly");
+
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
+
+        // The purge hangs off ConversationService rather than off any one caller, so every route that
+        // deletes a channel — a plain channel delete, an exercise's channel going away with its exercise,
+        // a tutorial group's channel — retracts its entries without having to remember to.
+        conversationService.deleteConversation(doomed.getId());
+
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.conversationId()).isEqualTo(String.valueOf(doomed.getId()));
+        assertThat(dto.postId()).isNull();
+        assertThat(dto.wholeCourse()).isFalse();
+    }
+
+    @Test
+    void deletingAnExercisesChannelPurgesItsEntries() {
+        TextExercise exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
+                ZonedDateTime.now().plusDays(2));
+        Channel exerciseChannel = conversationUtilService.addChannelToExercise(exercise);
+
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
+
+        // The sharp case: the course keeps running, so without this Iris goes on serving answers mined
+        // from a channel that no longer exists, citing links that 404.
+        channelService.deleteChannelForExerciseId(exercise.getId());
+
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.conversationId()).isEqualTo(String.valueOf(exerciseChannel.getId()));
+    }
+
+    @Test
+    void courseDeletion_purgesEveryEntryOfTheCourse() {
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.handleCourseDeleted(course, tutor);
+
+        // Course deletion drops every conversation in one bulk statement, so there is no channel id left to
+        // purge one by one — and afterwards no Artemis object survives that could ever ask for these
+        // entries' removal.
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.courseId()).isEqualTo(course.getId());
+        assertThat(dto.wholeCourse()).isTrue();
+        assertThat(dto.postId()).isNull();
+        assertThat(dto.conversationId()).isNull();
+    }
+
+    @Test
     void threadDeletion_stillTargetsASingleThread() {
         Post post = createQuestion("Does a thread deletion stay narrow?");
         saveAnswer(post, tutor, "It should.", true, false);
@@ -729,7 +799,8 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.IRIS_AUTO);
         assertThat(dto.verifiedBy()).isEqualTo(tutor.getLogin());
-        assertThat(dto.existingAnswer()).isNull();
+        // Uncorrected, but still a tutor's sign-off on this exact text, so it travels verbatim.
+        assertThat(dto.existingAnswer()).isEqualTo("It happens when two branches change the same lines.");
     }
 
     @Test

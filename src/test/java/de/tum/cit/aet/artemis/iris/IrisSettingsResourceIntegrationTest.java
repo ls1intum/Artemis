@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSupportLevel;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.coursememorywebhook.PyrisWebhookCourseMemoryDeletionExecutionDTO;
 
 class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
 
@@ -309,8 +312,17 @@ class IrisSettingsResourceIntegrationTest extends AbstractIrisIntegrationTest {
         var settingsBefore = irisCourseSettingsRepository.findByCourseId(course1.getId());
         assertThat(settingsBefore).isPresent();
 
+        // Deleting the course also retracts its Course Memory entries: its conversations go in one bulk
+        // statement, so no channel id survives to purge one by one and nothing would be left to ask.
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> purge = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(purge::set);
+
         // Delete the course
         request.delete("/api/core/admin/courses/" + course1.getId(), HttpStatus.OK);
+
+        assertThat(purge.get()).isNotNull();
+        assertThat(purge.get().wholeCourse()).isTrue();
+        assertThat(purge.get().courseId()).isEqualTo(course1.getId());
 
         // Verify Iris settings were also deleted via cascade
         var settingsAfter = irisCourseSettingsRepository.findByCourseId(course1.getId());

@@ -231,17 +231,20 @@ public class ChannelService {
                 service.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, channel.getId());
                 service.deleteAllPostsForChannelAsync(channel.getId());
             });
-            // Course Memory entries outlive the posts they were mined from, so the channel going away has
-            // to retract them explicitly — otherwise Iris keeps serving answers whose source is gone.
-            removeChannelFromCourseMemory(channel);
+            // The Course Memory purge lives in ConversationService#deleteConversation, the single route every
+            // channel deletion passes through — deliberately not called here as well, so a future deletion
+            // path cannot skip it by not remembering to.
             conversationService.deleteConversation(channel.getId());
         }
     }
 
     /**
-     * Retracts every Course Memory entry mined from the given channel, because the channel was deleted or
-     * is no longer a public place Iris may draw from. Best-effort: a failure here must not abort the
-     * channel operation that triggered it.
+     * Retracts every Course Memory entry mined from the given channel, because the channel is no longer a
+     * public place Iris may draw from. Best-effort: a failure here must not abort the channel operation
+     * that triggered it.
+     * <p>
+     * Only for a channel that <em>survives</em> with narrowed visibility; deletion is handled once, for
+     * every route, in {@code ConversationService#deleteConversation}.
      *
      * @param channel the channel whose entries should be removed
      */

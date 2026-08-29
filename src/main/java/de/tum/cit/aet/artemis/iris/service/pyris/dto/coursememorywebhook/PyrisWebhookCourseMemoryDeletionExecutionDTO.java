@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  * Body of a Course Memory deletion webhook request (Artemis &rarr; Pyris,
  * {@code POST /api/v1/webhooks/course-memory/delete}).
  * <p>
- * Covers two scopes, exactly one of which is set — Pyris rejects the request otherwise:
+ * Covers three scopes, exactly one of which is set — Pyris rejects the request otherwise:
  * <ul>
  * <li>{@code postId} – a thread stopped being memory-worthy: its resolving answer was un-marked or
  * deleted, or the thread itself was removed. Keyed on {@code postId} to match the thread-keyed
@@ -18,6 +18,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  * <li>{@code conversationId} – a whole channel was deleted or stopped being public, so every entry
  * mined from it has to go. Channel eligibility is only checked when an entry is written, so without
  * this an entry would outlive the channel it came from.</li>
+ * <li>{@code wholeCourse} – the course itself was deleted. Its conversations go in one bulk statement,
+ * so no channel id survives to purge individually and no Artemis object would be left that could ever
+ * ask for these entries' removal.</li>
  * </ul>
  *
  * @param settings       pipeline execution settings (auth token, base url, selection, variant)
@@ -26,9 +29,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSetti
  *                           {@code null} when deleting a whole channel
  * @param conversationId stringified id of the channel whose entries should all be removed, or
  *                           {@code null} when deleting a single thread
+ * @param wholeCourse    {@code true} to remove every entry of the course, for the course being deleted.
+ *                           An explicit flag rather than "no id given", so a bug that drops an id is
+ *                           rejected instead of silently escalating into a course-wide wipe
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutionSettingsDTO settings, long courseId, @Nullable String postId, @Nullable String conversationId) {
+public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutionSettingsDTO settings, long courseId, @Nullable String postId, @Nullable String conversationId,
+        boolean wholeCourse) {
 
     /**
      * Deletion of a single thread's entry.
@@ -39,7 +46,7 @@ public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutio
      * @return a DTO targeting exactly that thread
      */
     public static PyrisWebhookCourseMemoryDeletionExecutionDTO forThread(PyrisPipelineExecutionSettingsDTO settings, long courseId, String postId) {
-        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, postId, null);
+        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, postId, null, false);
     }
 
     /**
@@ -51,6 +58,17 @@ public record PyrisWebhookCourseMemoryDeletionExecutionDTO(PyrisPipelineExecutio
      * @return a DTO targeting the whole channel
      */
     public static PyrisWebhookCourseMemoryDeletionExecutionDTO forConversation(PyrisPipelineExecutionSettingsDTO settings, long courseId, String conversationId) {
-        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, null, conversationId);
+        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, null, conversationId, false);
+    }
+
+    /**
+     * Deletion of every entry of a course, for the course being deleted.
+     *
+     * @param settings pipeline execution settings
+     * @param courseId the course whose entries should all be removed
+     * @return a DTO targeting the whole course
+     */
+    public static PyrisWebhookCourseMemoryDeletionExecutionDTO forCourse(PyrisPipelineExecutionSettingsDTO settings, long courseId) {
+        return new PyrisWebhookCourseMemoryDeletionExecutionDTO(settings, courseId, null, null, true);
     }
 }

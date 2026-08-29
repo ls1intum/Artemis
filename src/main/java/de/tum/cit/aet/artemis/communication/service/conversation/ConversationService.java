@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -51,6 +52,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
+import de.tum.cit.aet.artemis.iris.api.CourseMemoryIngestionApi;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -90,10 +92,12 @@ public class ConversationService {
 
     private final CourseRepository courseRepository;
 
+    private final Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi;
+
     public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
             ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, WebsocketMessagingService websocketMessagingService,
             OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, Optional<CourseMemoryIngestionApi> courseMemoryIngestionApi) {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
@@ -105,6 +109,7 @@ public class ConversationService {
         this.groupChatRepository = groupChatRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
+        this.courseMemoryIngestionApi = courseMemoryIngestionApi;
     }
 
     /**
@@ -347,9 +352,57 @@ public class ConversationService {
      * @param conversationId the id of the conversation to be deleted
      */
     public void deleteConversation(long conversationId) {
+        removeFromCourseMemory(conversationId);
         postRepository.deleteAllByConversationId(conversationId);
         conversationParticipantRepository.deleteAllByConversationId(conversationId);
         conversationRepository.deleteById(conversationId);
+    }
+
+    /**
+     * Retracts every Course Memory entry mined from a channel that is about to be deleted.
+     * <p>
+     * Placed here rather than at the call sites because this method is the one route through which every
+     * channel deletion passes — deleting a channel directly, deleting an exercise's channel, deleting a
+     * tutorial group's channel. Course Memory entries outlive the posts they were mined from, so a
+     * channel that goes away without this leaves Iris serving answers whose source no longer exists,
+     * citing backlinks that 404. Guarding it at the one exit rather than at each producer is what keeps
+     * the next deletion route from silently reintroducing the leak.
+     * <p>
+     * Runs before the rows are gone, because the channel and its course still have to be readable, and is
+     * best-effort: Course Memory must never abort the deletion that triggered it.
+     *
+     * @param conversationId the id of the conversation about to be deleted
+     */
+    private void removeFromCourseMemory(long conversationId) {
+        if (courseMemoryIngestionApi.isEmpty()) {
+            return;
+        }
+        try {
+            var conversation = conversationRepository.findById(conversationId).orElse(null);
+            if (conversation instanceof Channel channel && channel.getCourse() != null) {
+                courseMemoryIngestionApi.get().onChannelNoLongerEligible(channel, currentUserOrNull(), channel.getCourse());
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to remove course memory entries of conversation {}", conversationId, e);
+        }
+    }
+
+    /**
+     * The acting user, or {@code null} when there is none.
+     * <p>
+     * Channel deletion is not always a user request — a scheduled job or a system-initiated course
+     * cleanup has no authenticated principal, and {@link UserRepository#getUser()} throws there. The
+     * actor is only used to address the progress toast, so its absence must not cost the purge itself.
+     */
+    @Nullable
+    private User currentUserOrNull() {
+        try {
+            return userRepository.getUser();
+        }
+        catch (Exception e) {
+            return null;
+        }
     }
 
     /**

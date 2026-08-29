@@ -123,8 +123,9 @@ public class CourseMemoryIngestionService {
 
     /**
      * Trigger A: a tutor approved (optionally after editing) an Iris-generated answer in the
-     * verification dashboard. Fires {@code IRIS_CORRECTED} when the tutor edited the draft (the edited
-     * text is passed verbatim as {@code existingAnswer}), otherwise {@code IRIS_AUTO}.
+     * verification dashboard. Fires {@code IRIS_CORRECTED} when the tutor edited the draft, otherwise
+     * {@code IRIS_AUTO}; the approved text is passed verbatim as {@code existingAnswer} in both cases,
+     * because approving a draft unchanged endorses that exact wording just as editing it does.
      *
      * @param verifiedAnswer the now-verified Iris answer post (its content is the final, approved text)
      * @param edited         whether the tutor edited the draft content before approving
@@ -140,7 +141,11 @@ public class CourseMemoryIngestionService {
             return;
         }
         var source = edited ? PyrisCourseMemorySource.IRIS_CORRECTED : PyrisCourseMemorySource.IRIS_AUTO;
-        String existingAnswer = edited ? verifiedAnswer.getContent() : null;
+        // Passed whether or not the tutor edited the draft: approving it unchanged is still a sign-off on
+        // that exact wording, and letting the extractor re-derive the answer would store — and later
+        // re-serve as tutor-verified — a paraphrase the tutor never saw. The extraction still runs; only
+        // the question comes out of it.
+        String existingAnswer = verifiedAnswer.getContent();
         String verifiedAt = verifiedAnswer.getVerifiedAt() != null ? verifiedAnswer.getVerifiedAt().toInstant().toString() : null;
         ingest(fetchThread(post), verifiedAnswer, course, verifier, source, verifier != null ? verifier.getLogin() : null, verifiedAt, existingAnswer);
     }
@@ -206,15 +211,17 @@ public class CourseMemoryIngestionService {
      * Re-dispatches a thread whose surviving anchor is a dashboard-verified Iris answer, under the
      * provenance Trigger A would have given it.
      * <p>
-     * An edit after creation is the tutor's correction, so the current content is passed verbatim as
-     * {@code existingAnswer} exactly as {@link #ingestVerifiedAnswer} does for an edited draft; the
-     * verifier and verification timestamp are the answer's own, not the user who happened to trigger
-     * this run by touching some other message in the thread.
+     * An edit after creation is the tutor's correction, which only changes the provenance label; the
+     * content is passed verbatim as {@code existingAnswer} either way, exactly as
+     * {@link #ingestVerifiedAnswer} does. The verifier and verification timestamp are the answer's own,
+     * not the user who happened to trigger this run by touching some other message in the thread.
      */
     private void reingestVerifiedIrisAnswer(Post fullPost, AnswerPost verifiedAnswer, @Nullable User actor, Course course) {
         boolean corrected = verifiedAnswer.getUpdatedDate() != null;
         var source = corrected ? PyrisCourseMemorySource.IRIS_CORRECTED : PyrisCourseMemorySource.IRIS_AUTO;
-        String existingAnswer = corrected ? verifiedAnswer.getContent() : null;
+        // Verbatim regardless of correction, for the same reason as in ingestVerifiedAnswer: the answer
+        // carries a tutor's sign-off on its exact text either way.
+        String existingAnswer = verifiedAnswer.getContent();
         String verifiedBy = answerPostRepository.findVerifierLoginById(verifiedAnswer.getId()).orElse(null);
         String verifiedAt = verifiedAnswer.getVerifiedAt() != null ? verifiedAnswer.getVerifiedAt().toInstant().toString() : null;
 
@@ -286,7 +293,9 @@ public class CourseMemoryIngestionService {
         String postId = String.valueOf(post.getId());
         String actorLogin = actor != null ? actor.getLogin() : null;
 
-        // Deletion runs no model, so the selection is immaterial; it only has to be a valid value.
+        // Deletion runs no model — Pyris serves it from a deleter that touches only Weaviate — so the
+        // selection is immaterial and a local-only deployment retracts entries just as well as a cloud one.
+        // It only has to be a valid value.
         String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), conversationId, postId, null, actorLogin, CourseMemoryOperation.DELETE);
         var settings = executionSettings(jobToken, course, AiSelectionDecision.CLOUD_AI);
 
@@ -323,6 +332,39 @@ public class CourseMemoryIngestionService {
         boolean dispatched = pyrisConnectorService
                 .executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forConversation(settings, course.getId(), conversationId));
         notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.DELETE, course, conversationId);
+    }
+
+    /**
+     * The whole course was deleted, so every entry mined from it is removed.
+     * <p>
+     * Cannot be expressed as a series of channel purges: course deletion drops all of the course's
+     * conversations in one bulk statement, so there is no channel id left to purge one by one — and once
+     * the course is gone, no Artemis object remains that could ever ask for these entries' removal. They
+     * would sit in Weaviate permanently.
+     * <p>
+     * Gated on Iris being enabled for the course, like every other trigger: a course that never had Iris
+     * on can hold no entries, and firing a purge for each of those would put a Pyris request on the
+     * critical path of every course deletion in the installation. The residual gap — Iris switched off
+     * and only then the course deleted — is the same one the thread and channel triggers carry, and is
+     * best closed for all three at once by an operator-facing purge rather than by three exceptions.
+     *
+     * @param course the course being deleted
+     * @param actor  the user who deleted the course, notified about the removal
+     */
+    public void handleCourseDeleted(Course course, @Nullable User actor) {
+        if (!irisSettingsService.isEnabledForCourse(course)) {
+            return;
+        }
+        String courseId = String.valueOf(course.getId());
+        String actorLogin = actor != null ? actor.getLogin() : null;
+
+        String jobToken = pyrisJobService.addCourseMemoryIngestionWebhookJob(course.getId(), courseId, courseId, null, actorLogin, CourseMemoryOperation.DELETE);
+        var settings = executionSettings(jobToken, course, AiSelectionDecision.CLOUD_AI);
+
+        log.info("Deleting all course memory entries of course {}", courseId);
+        notifyActor(actorLogin, IrisCourseMemoryStatusDTO.triggered(CourseMemoryOperation.DELETE, course.getId(), courseId));
+        boolean dispatched = pyrisConnectorService.executeCourseMemoryDeletionWebhook(PyrisWebhookCourseMemoryDeletionExecutionDTO.forCourse(settings, course.getId()));
+        notifyIfDispatchFailed(dispatched, actorLogin, CourseMemoryOperation.DELETE, course, courseId);
     }
 
     /**
@@ -480,10 +522,11 @@ public class CourseMemoryIngestionService {
      * its visible answers sorted by creation date. Each message states explicitly whether it is the
      * ingestion anchor and whether it resolves the post, so Pyris never has to infer either from ids.
      * <p>
-     * Only staff-written answers carry {@code resolvesPost}. Pyris merges every flagged message into the
-     * single stored answer, so flagging a student's resolving answer would splice unreviewed text into an
-     * entry that is then served as a prior answer. Student messages still travel as untagged context, which
-     * the extractor may read but never quote as the answer.
+     * {@code resolvesPost} is carried by whichever answer holds the flag, whoever wrote it — the trust
+     * tier is decided by who <em>endorsed</em> the answer, not by who authored it, and that decision is
+     * made once in {@link #handleResolutionChange}. A student's answer therefore does travel flagged, and
+     * Pyris merges it into the stored answer, when a tutor marked it as resolving the thread; without that
+     * tutor endorsement the entry is only {@code THREAD_RESOLVED} and is never served as tutor-verified.
      */
     private List<PyrisCourseMemoryThreadMessageDTO> buildThread(Post fullPost, Course course, Long anchorAnswerId) {
         List<Posting> postings = new ArrayList<>();

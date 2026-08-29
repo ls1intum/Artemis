@@ -77,4 +77,15 @@ public class CourseMemoryIngestionApi extends AbstractIrisApi {
     public void onChannelNoLongerEligible(Channel channel, @Nullable User actor, Course course) {
         courseMemoryIngestionService.handleChannelNoLongerEligible(channel, actor, course);
     }
+
+    /**
+     * The course itself was deleted, so every Course Memory entry of that course is removed. Its
+     * conversations are dropped in one bulk statement, so no channel id survives to purge individually.
+     *
+     * @param course the course being deleted
+     * @param actor  the user who deleted the course, notified about the removal
+     */
+    public void onCourseDeleted(Course course, @Nullable User actor) {
+        courseMemoryIngestionService.handleCourseDeleted(course, actor);
+    }
 }

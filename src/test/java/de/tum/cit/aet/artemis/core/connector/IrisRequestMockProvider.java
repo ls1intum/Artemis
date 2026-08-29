@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.mock.http.client.MockClientHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
@@ -97,12 +98,22 @@ public class IrisRequestMockProvider {
 
     private AutoCloseable closeable;
 
+    private ClientHttpRequestFactory originalRequestFactory;
+
+    private ClientHttpRequestFactory originalShortTimeoutRequestFactory;
+
     public IrisRequestMockProvider(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutPyrisRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     public void enableMockingOfRequests() {
+        // Remember what the templates used before binding, so unbindMockServers() can put it back. These
+        // RestTemplates are singleton beans shared with every other test class in the same Spring context.
+        if (originalRequestFactory == null) {
+            originalRequestFactory = restTemplate.getRequestFactory();
+            originalShortTimeoutRequestFactory = shortTimeoutRestTemplate.getRequestFactory();
+        }
         // Use unordered mode so tests don't fail due to request ordering
         // (e.g., when cleanup sends DELETE before processing sends INGEST)
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
@@ -114,10 +125,31 @@ public class IrisRequestMockProvider {
         if (mockServer != null) {
             mockServer.reset();
         }
+        unbindMockServers();
 
         if (closeable != null) {
             closeable.close();
         }
+    }
+
+    /**
+     * Restores the request factories the Pyris {@link RestTemplate}s had before mocking was enabled.
+     * <p>
+     * {@link MockRestServiceServer} replaces the factory on the template and offers no way to undo it, and
+     * these templates are singleton beans shared across the whole Spring context. Resetting alone therefore
+     * leaves a strict, expectation-less mock server bound to them for every test class that runs afterwards
+     * in the same JVM — so an unrelated test that happens to trigger any Pyris call (deleting a lecture,
+     * an exercise or a course fires a Course Memory purge) fails with "No further requests expected"
+     * instead of the connection error the connector is built to swallow. Which classes break then depends
+     * purely on execution order.
+     */
+    private void unbindMockServers() {
+        if (originalRequestFactory != null) {
+            restTemplate.setRequestFactory(originalRequestFactory);
+            shortTimeoutRestTemplate.setRequestFactory(originalShortTimeoutRequestFactory);
+        }
+        mockServer = null;
+        shortTimeoutMockServer = null;
     }
 
     public void mockProgrammingExerciseChatResponse(Consumer<PyrisChatPipelineExecutionDTO> responseConsumer) {
