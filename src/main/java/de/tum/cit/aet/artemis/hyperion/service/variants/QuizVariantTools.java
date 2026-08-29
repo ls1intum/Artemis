@@ -331,15 +331,12 @@ class QuizVariantTools implements VariantToolset {
         }
         Map<Long, String> existingPathsByItemId = picturePathsByItemId(existingDnd);
         for (DragItem updatedItem : updatedDnd.getDragItems() == null ? List.<DragItem>of() : updatedDnd.getDragItems()) {
-            String updatedPath = updatedItem.getPictureFilePath();
-            if (updatedPath == null) {
-                continue;
-            }
             // Identity, not membership: a path that merely still EXISTS somewhere may have been moved to another
-            // item or attached to a newly invented one, which changes the image association just as much.
-            if (!Objects.equals(existingPathsByItemId.get(updatedItem.getId()), updatedPath)) {
-                return "drag item image paths must not be added, changed, or moved between items — only text and mappings may be edited. Existing picture paths per drag item id: "
-                        + existingPathsByItemId;
+            // item or attached to a newly invented one. A retained item that drops its path to null is the same
+            // kind of change — removal is only permitted together with the item itself.
+            if (!Objects.equals(existingPathsByItemId.get(updatedItem.getId()), updatedItem.getPictureFilePath())) {
+                return "each drag item must keep its own image path — images must not be added, changed, moved between items, or removed from an item you keep. "
+                        + "Only text and mappings may be edited. Existing picture paths per drag item id: " + existingPathsByItemId;
             }
         }
         return null;
