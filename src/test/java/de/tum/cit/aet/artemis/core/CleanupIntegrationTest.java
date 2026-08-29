@@ -189,8 +189,11 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         orphanTeamScore.setExercise(oldExercise);
         orphanTeamScore = teamScoreRepository.save(orphanTeamScore);
 
+        // A result always belongs to a submission, so an orphan result is one whose submission has no participation.
+        var submissionWithoutParticipation = submissionRepository.save(new TextSubmission());
         var orphanResult = new Result();
         orphanResult.setExerciseId(oldExercise.getId());
+        orphanResult.setSubmission(submissionWithoutParticipation);
         orphanResult = resultRepository.save(orphanResult);
 
         orphanFeedback.setResult(orphanResult);

@@ -485,6 +485,8 @@ public class SubmissionService {
         }
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Set before copying the feedback, which saves the result: the result owns the foreign key to its submission.
+        newResult.setSubmission(submission);
         copyFeedbackToNewResult(newResult, oldResult);
         return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
     }
@@ -502,6 +504,9 @@ public class SubmissionService {
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Set before the first save below: copyFeedbackToResult saves the result, and the result owns the foreign key
+        // to its submission, so leaving it for copyResultContentAndAddToSubmission would insert a result without one.
+        newResult.setSubmission(submission);
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
         List<Feedback> feedbackToCopy = new ArrayList<>(feedbacks);
         if (submission.getParticipation().getExercise() instanceof ProgrammingExercise) {

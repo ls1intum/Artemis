@@ -629,8 +629,10 @@ public class ResultService {
     }
 
     private void handleFeedbackPersistence(Feedback feedback, Result result, Map<Long, LongFeedbackText> longFeedbackTextMap) {
-        // Temporarily detach feedback from the parent result to avoid Hibernate issues
-        feedback.setResult(null);
+        // The feedback owns the foreign key to its result, so it is saved together with it. This used to detach the
+        // feedback first, which was needed while a result held its feedback in an ordered list and which wrote a row
+        // without a parent for as long as the surrounding save took.
+        feedback.setResult(result);
 
         // Connect old long feedback text to the feedback before saving, otherwise it would be deleted
         if (feedback.getId() != null && feedback.getHasLongFeedbackText()) {
@@ -647,11 +649,7 @@ public class ResultService {
             }
         }
 
-        // Persist the feedback entity without the parent association
-        feedback = feedbackRepository.saveAndFlush(feedback);
-
-        // Restore associations to the result
-        feedback.setResult(result);
+        feedbackRepository.saveAndFlush(feedback);
     }
 
     @NonNull

@@ -94,6 +94,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @ManyToOne
     @JsonIgnoreProperties({ "results" })
+    @JoinColumn(nullable = false)
     private Submission submission;
 
     // Stored as a Set: feedback ordering is not semantically meaningful — every consumer that cares about
