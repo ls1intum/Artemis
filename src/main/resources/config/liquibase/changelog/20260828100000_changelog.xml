@@ -219,20 +219,32 @@
         <addNotNullConstraint tableName="competency" columnName="course_id" columnDataType="bigint"/>
     </changeSet>
 
-    <changeSet id="20260828100000-31b-backfill-conversation-course" author="krusche">
+    <changeSet id="20260828100000-31b-delete-unused-exam-exercise-channels" author="krusche">
         <comment>
-            A channel that belongs to an exercise, a lecture or an exam belongs to their course, so the course can be
-            worked out for the channels that were stored without one. Each statement covers one of the three, and the
-            exercise one has to look past the exercise itself: an exam exercise carries no course of its own and reaches
-            it through its exercise group.
+            An exercise channel is only created for a course exercise: createExerciseChannel returns without doing
+            anything for an exam exercise. The channels that exist for exam exercises all come from before that, carry
+            no course, and were never used. Giving them a course would make them appear in the channel list of their
+            course, so they are removed instead. The guards make sure nothing that anybody ever wrote in, joined, or
+            that a tutorial group uses, is touched.
+        </comment>
+        <sql>
+            DELETE FROM conversation
+            WHERE course_id IS NULL
+              AND exercise_id IN (SELECT id FROM exercise WHERE course_id IS NULL)
+              AND NOT EXISTS (SELECT 1 FROM post p WHERE p.conversation_id = conversation.id)
+              AND NOT EXISTS (SELECT 1 FROM conversation_participant cp WHERE cp.conversation_id = conversation.id)
+              AND NOT EXISTS (SELECT 1 FROM tutorial_group tg WHERE tg.tutorial_group_channel_id = conversation.id);
+        </sql>
+    </changeSet>
+    <changeSet id="20260828100000-31c-backfill-conversation-course" author="krusche">
+        <comment>
+            A channel that belongs to a course exercise, a lecture or an exam belongs to their course, so a channel of
+            one of those kinds stored without a course is one whose course was never filled in. An exam exercise is left
+            out on purpose: it has no course of its own, and a channel on one should not exist in the first place.
         </comment>
         <sql>
             UPDATE conversation SET course_id = (
-                SELECT COALESCE(e.course_id, ex.course_id)
-                FROM exercise e
-                    LEFT JOIN exercise_group eg ON eg.id = e.exercise_group_id
-                    LEFT JOIN exam ex ON ex.id = eg.exam_id
-                WHERE e.id = conversation.exercise_id
+                SELECT e.course_id FROM exercise e WHERE e.id = conversation.exercise_id
             )
             WHERE course_id IS NULL AND exercise_id IS NOT NULL;
 
