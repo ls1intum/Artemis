@@ -202,7 +202,7 @@ public class ProblemStatementRenderingService {
      * @param locale         the locale for user-visible text (task stats, modal labels)
      * @param darkMode       if {@code true}, PlantUML renders in dark theme and the container carries a dark marker class
      * @param includeJs      if {@code true}, the interactive feedback modal JS is included
-     * @param includeCss     if {@code true}, embedded CSS and KaTeX CSS are included
+     * @param includeCss     if {@code true}, the embedded CSS is included
      * @param inlineImages   if {@code true}, images are embedded as Base64 data URIs; otherwise they stay as absolute URLs
      * @param allTestsPassed if {@code true}, the client reported a successful result that carries no per-test feedback,
      *                           so every test counts as passed. Only honored when {@code testResults} is {@code null}.
@@ -272,7 +272,7 @@ public class ProblemStatementRenderingService {
 
         if (includeCss) {
             StringBuilder css = new StringBuilder();
-            // Formulas are native MathML now, so no KaTeX stylesheet is shipped; embedded.css styles <math> directly.
+            // Formulas are native MathML; embedded.css styles them directly, so no separate formula stylesheet is shipped.
             if (EMBEDDED_CSS != null) {
                 css.append("<style>").append(EMBEDDED_CSS).append("</style>");
             }

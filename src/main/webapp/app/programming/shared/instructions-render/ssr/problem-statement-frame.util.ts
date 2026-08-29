@@ -12,13 +12,14 @@ import { SSR_TASK_STATUSES, SsrTask, SsrTaskStatus } from 'app/programming/share
  *
  * The order below is fixed and pinned by specs, because each step assumes the previous one:
  *
- *   extract fragment -> DOMPurify -> read tasks -> strip sensitive attributes -> block URL references
- *   -> rewrite same-origin images -> KaTeX -> highlight.js -> serialize
+ *   extract fragment -> DOMPurify -> read tasks -> strip sensitive attributes -> harden MathML
+ *   -> rewrite same-origin images -> highlight.js -> serialize
  *
- * KaTeX and highlight.js run here as pure string producers (`renderToString`, `highlight().value`), on an inert
- * `DOMParser` document attached to nothing: no script in it runs and no resource in it is fetched, and the markup
- * leaves only as the string injected into the shadow root. Their values are KaTeX's own output and highlight.js'
- * output over text read back from `textContent`, both of which escape what they emit.
+ * Formulas are server-generated native MathML; the client only hardens it (see `hardenMathml`), it does not produce
+ * it. highlight.js runs here as a pure string producer (`highlight().value`), on an inert `DOMParser` document
+ * attached to nothing: no script in it runs and no resource in it is fetched, and the markup leaves only as the
+ * string injected into the shadow root. Its value is highlight.js' output over text read back from `textContent`,
+ * which escapes what it emits.
  */
 
 /** The `data-*` attributes the server writes that carry information about the viewer rather than the statement. */
@@ -306,8 +307,7 @@ export function rewriteSameOriginImages(root: Element, applicationOrigin: string
             // matched by path, not by origin: the server rewrites a local markdown image to an absolute
             // `${server.url}${SERVER_FILE_API_PATH}…` (MarkdownRelativeToAbsolutePathAttributeProvider), and
             // `server.url` need not be the origin the client is served from. Keying off the path catches that
-            // leftover whether it is relative or absolute, without having to learn the server origin from an
-            // optional KaTeX <link> that is only present when the statement has a formula.
+            // leftover whether it is relative or absolute, without needing to know the server origin at all.
             return url.origin === applicationOrigin || url.pathname.startsWith(SERVER_FILE_API_PATH);
         } catch {
             // An unparseable reference cannot be shown to be safe, so it is treated as one to replace.
@@ -483,9 +483,8 @@ export function assembleShadowContent(serverDocument: string, unavailableLabel: 
     // rule in `sanitizeFragment`.
     const styleNodes = [...parsed.querySelectorAll('style, link[rel="stylesheet"]')].filter((node) => !fragment.contains(node));
 
-    // The stylesheets are classpath resources plus the configured server URL, none of it derived from the
-    // statement, and DOMPurify would strip the KaTeX <link> because no sanitizer allows a stylesheet reference
-    // by default. Only the fragment goes through sanitization.
+    // The stylesheets are the server's own classpath resources, none of it derived from the statement, so they are
+    // kept as-is; only the fragment goes through sanitization.
     const sanitized = new DOMParser().parseFromString(sanitizeFragment(fragment.outerHTML), 'text/html');
     const sanitizedFragment = sanitized.querySelector('.artemis-problem-statement');
     if (!sanitizedFragment) {

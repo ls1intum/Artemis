@@ -83,8 +83,8 @@ export class ProgrammingExerciseInstructionSsrContentComponent {
         const scrollTop = scrollParent?.scrollTop;
         this.currentHtml = html;
         // The value is `assembleShadowContent` output: the server's own document-level stylesheets plus a DOMPurify
-        // fragment run through the safe producers in problem-statement-frame.util.ts (strip, image rewrite, KaTeX,
-        // highlight), each of which emits escaped markup. That is the same trust decision a `bypassSecurityTrustHtml`
+        // fragment run through the safe producers in problem-statement-frame.util.ts (strip, MathML harden, image
+        // rewrite, highlight), each of which emits escaped markup. That is the same trust decision a `bypassSecurityTrustHtml`
         // binding would encode, written imperatively rather than through `[innerHTML]` because a template binding is
         // applied during this component's view refresh, which Angular runs before the view's effects; the focus and
         // scroll capture above would then already be looking at the replaced DOM.

@@ -38,7 +38,7 @@ public final class MathFormulaExtractor {
      * Marker that survives CommonMark and the jsoup safelist ({@code data-formula-index} is on the span safelist),
      * carrying the per-render token so an author cannot forge it. Distinct from the SVG placeholder's prefix and
      * attribute even though it shares the same per-render token, so the two indexed lists cannot be confused. The
-     * MathML itself is injected only afterwards, so unlike the old KaTeX span this marker carries no formula source.
+     * MathML itself is injected only afterwards, so the marker carries no formula source of its own.
      */
     private static final String MARKER_PREFIX = "<span class=\"artemis-formula-placeholder\" data-formula-index=\"";
 
