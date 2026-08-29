@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -1066,8 +1067,20 @@ public class SharedQueueProcessingService {
             }
         }
 
-        // After handling all running jobs, close the underlying services of the build agent.
-        buildAgentConfiguration.closeBuildAgentServices();
+        // Close the services under the transition lock, and only while this pause is still the one in effect. The wait
+        // above runs without the lock, so a resume can have completed in the meantime and reopened these services;
+        // closing them afterwards would leave an agent that reports itself as active with no executor to run anything.
+        agentStateTransitionLock.lock();
+        try {
+            if (!isPaused.get()) {
+                log.info("Build agent was resumed while it was pausing, so its services stay open");
+                return;
+            }
+            buildAgentConfiguration.closeBuildAgentServices();
+        }
+        finally {
+            agentStateTransitionLock.unlock();
+        }
     }
 
     private void handleTimeoutAndCancelRunningJobs() {
@@ -1079,8 +1092,9 @@ public class SharedQueueProcessingService {
      * Cancels the given build jobs and puts them back on the distributed queue so another agent can pick them up.
      * <p>
      * The ids are intersected with the jobs that are still running, so a job that finished while the caller was making
-     * up its mind is left alone rather than re-queued behind its own result. Does nothing if the agent was resumed in
-     * the meantime.
+     * up its mind is left alone rather than re-queued behind its own result. A job can also finish in the window
+     * between that snapshot and the cancellation itself, so only the jobs that cancellation actually stopped are put
+     * back on the queue. Does nothing if the agent was resumed in the meantime.
      *
      * @param buildJobIds the ids of the build jobs to cancel and re-queue
      */
@@ -1094,10 +1108,27 @@ public class SharedQueueProcessingService {
         if (jobsToCancel.isEmpty()) {
             return;
         }
-        List<BuildJobQueueItem> jobsToRequeue = distributedDataAccessService.getDistributedProcessingJobs().getAll(jobsToCancel).values().stream().toList();
-        jobsToCancel.forEach(buildJobManagementService::cancelBuildJob);
+        Map<String, BuildJobQueueItem> processingJobs = distributedDataAccessService.getDistributedProcessingJobs().getAll(jobsToCancel);
+        Set<String> cancelledJobIds = new HashSet<>();
+        List<BuildJobQueueItem> jobsToRequeue = new ArrayList<>();
+        for (String buildJobId : jobsToCancel) {
+            if (!buildJobManagementService.cancelBuildJob(buildJobId)) {
+                // Nothing was stopped, so the job finished on its own between the snapshot above and this call and its
+                // result is already on its way. Re-queueing it here would run the same build a second time.
+                log.debug("Build job {} finished before it could be cancelled, so it is not put back on the queue", buildJobId);
+                continue;
+            }
+            cancelledJobIds.add(buildJobId);
+            BuildJobQueueItem processingJob = processingJobs.get(buildJobId);
+            if (processingJob != null) {
+                jobsToRequeue.add(processingJob);
+            }
+        }
+        if (jobsToRequeue.isEmpty()) {
+            return;
+        }
         distributedDataAccessService.getDistributedBuildJobQueue().addAll(jobsToRequeue);
-        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", jobsToCancel);
+        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", cancelledJobIds);
         log.debug("Cancelled running build jobs: {}", jobsToRequeue);
     }
 

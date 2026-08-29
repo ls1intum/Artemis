@@ -588,20 +588,24 @@ public class BuildJobManagementService {
      * Cancel the build job for the given buildJobId.
      *
      * @param buildJobId The id of the build job that should be cancelled.
+     * @return {@code true} if the job was still running and this call stopped it, {@code false} if there was nothing
+     *         left to stop because it had already finished or was never registered. A caller that puts cancelled
+     *         jobs back on the queue has to check this: re-queueing a job that finished on its own would run the
+     *         same build a second time.
      */
-    void cancelBuildJob(String buildJobId) {
+    boolean cancelBuildJob(String buildJobId) {
         Future<BuildResult> future = runningFutures.get(buildJobId);
-        if (future != null) {
-            try {
-                cancelledBuildJobs.add(buildJobId);
-                future.cancel(true); // Attempt to interrupt the build job
-            }
-            catch (CancellationException e) {
-                log.warn("Build job already cancelled or completed for id {}", buildJobId);
-            }
-        }
-        else {
+        if (future == null) {
             log.warn("Could not cancel build job with id {} as it was not found in the running build jobs", buildJobId);
+            return false;
+        }
+        try {
+            cancelledBuildJobs.add(buildJobId);
+            return future.cancel(true); // Attempt to interrupt the build job
+        }
+        catch (CancellationException e) {
+            log.warn("Build job already cancelled or completed for id {}", buildJobId);
+            return false;
         }
     }
 
