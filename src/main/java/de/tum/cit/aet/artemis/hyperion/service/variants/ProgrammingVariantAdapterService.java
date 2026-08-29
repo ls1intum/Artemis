@@ -256,7 +256,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while waiting for the test-discovery build", e);
         }
-        catch (ContinuousIntegrationException e) {
+        catch (ContinuousIntegrationException | EntityNotFoundException e) {
             // Best effort: the agent falls back to the test cases already registered, exactly as before.
             log.warn("Could not run the test-discovery build for variant exercise {}: {}", exercise.getId(), e.getMessage());
         }
@@ -525,7 +525,9 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
             try {
                 pending.put(repositoryType, buildVerificationService.triggerBuild(exercise, repositoryUri, repositoryType));
             }
-            catch (ContinuousIntegrationException e) {
+            catch (ContinuousIntegrationException | EntityNotFoundException e) {
+                // A missing participation is a defect of this variant clone, not of the job — report it as a
+                // finding for its own gate instead of aborting the whole generation.
                 findings.add(new VerificationReport.VerificationFinding(buildGate.gate(), "Could not trigger the " + repositoryType + " build: " + e.getMessage()));
             }
         }
