@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
@@ -157,10 +158,11 @@ public class ExerciseVariantJobService {
      */
     public void requestCancel(String jobId, String login) {
         VariantJob job = getJob(jobId, login).orElseThrow(() -> new ConflictException("Unknown variant generation job", ENTITY_NAME, "unknownJob"));
-        if (!job.getPhase().isCancellable()) {
+        // Checked twice: once for the fast 409, and again inside the lock, because the job can leave the
+        // cancellable phases between the read above and the write.
+        if (!job.getPhase().isCancellable() || mutateIf(jobId, mutableJob -> mutableJob.getPhase().isCancellable(), mutableJob -> mutableJob.setCancelRequested(true)).isEmpty()) {
             throw new ConflictException("Job can no longer be cancelled — the variant already exists", ENTITY_NAME, "jobNotCancellable");
         }
-        mutate(jobId, mutableJob -> mutableJob.setCancelRequested(true));
     }
 
     /**
@@ -452,22 +454,32 @@ public class ExerciseVariantJobService {
      * clone is left in place for the instructor to inspect or delete.
      */
     private VariantJob reconcileStaleness(VariantJob job) {
-        if (job.getPhase().isTerminal()) {
+        if (!isStale(job)) {
             return job;
         }
-        Instant lastBeat = job.getLastHeartbeatAt() != null ? job.getLastHeartbeatAt() : job.getStartedAt();
-        if (lastBeat == null || lastBeat.isAfter(Instant.now().minus(STALE_THRESHOLD))) {
-            return job;
-        }
-        VariantJob staleJob = mutate(job.getJobId(), mutableJob -> {
+        // Re-checked inside the lock: this read path runs on every node, so the entry can have been removed or
+        // moved on between the check above and the write. Without the guard two nodes both publish FAILED.
+        Optional<VariantJob> staleJob = mutateIf(job.getJobId(), ExerciseVariantJobService::isStale, mutableJob -> {
             mutableJob.setFailedInPhase(mutableJob.getPhase());
             mutableJob.setFailureDetail("Generation stopped responding (the server node running it restarted or crashed) and was marked as failed.");
             mutableJob.setPhase(VariantJobPhase.FAILED);
             mutableJob.setFinishedAt(Instant.now());
         });
-        logTelemetrySummary(staleJob);
-        publish(staleJob, VariantGenerationEventDTO.failed(staleJob.getFailureDetail()));
-        return staleJob;
+        if (staleJob.isEmpty()) {
+            return job;
+        }
+        logTelemetrySummary(staleJob.get());
+        publish(staleJob.get(), VariantGenerationEventDTO.failed(staleJob.get().getFailureDetail()));
+        return staleJob.get();
+    }
+
+    /** A non-terminal job whose last heartbeat is older than {@link #STALE_THRESHOLD}. */
+    private static boolean isStale(VariantJob job) {
+        if (job.getPhase().isTerminal()) {
+            return false;
+        }
+        Instant lastBeat = job.getLastHeartbeatAt() != null ? job.getLastHeartbeatAt() : job.getStartedAt();
+        return lastBeat != null && !lastBeat.isAfter(Instant.now().minus(STALE_THRESHOLD));
     }
 
     /**
@@ -486,6 +498,32 @@ public class ExerciseVariantJobService {
             job.setLastHeartbeatAt(Instant.now());
             jobMap.put(jobId, job);
             return job;
+        }
+        finally {
+            jobMap.unlock(jobId);
+        }
+    }
+
+    /**
+     * Guarded variant of {@link #mutate}: evaluates {@code guard} on the entry INSIDE the lock and writes only
+     * when it still holds. For decisions that would otherwise be made on a read taken before the lock.
+     *
+     * @param jobId    the job to mutate
+     * @param guard    the condition re-checked under the lock
+     * @param mutation the mutation to apply when the guard holds
+     * @return the mutated job, or empty when the entry is gone or the guard no longer holds
+     */
+    private Optional<VariantJob> mutateIf(String jobId, Predicate<VariantJob> guard, Consumer<VariantJob> mutation) {
+        jobMap.lock(jobId);
+        try {
+            VariantJob job = jobMap.get(jobId);
+            if (job == null || !guard.test(job)) {
+                return Optional.empty();
+            }
+            mutation.accept(job);
+            job.setLastHeartbeatAt(Instant.now());
+            jobMap.put(jobId, job);
+            return Optional.of(job);
         }
         finally {
             jobMap.unlock(jobId);
