@@ -22,6 +22,19 @@ endif
 # -g					Generates debug information to be used by GDB debugger
 WFLAGS = -Wall -Wextra -Wpedantic -g
 
+# Flags that only the sanitizer targets (asan, ubsan, lsan) receive.
+# -fno-pie -no-pie  Link at a fixed low load address instead of a randomised one. GCC's address and
+#                   leak sanitizer runtimes reserve a fixed region at 0x600000000000 (96 TiB) for
+#                   their allocator, and a position-independent executable can be loaded inside it
+#                   on a host with vm.mmap_rnd_bits=32 (the kernel default since 6.5, so Ubuntu
+#                   24.04 among others). The sanitizer then dies before main() in an endless loop of
+#                   "AddressSanitizer:DEADLYSIGNAL" lines and never exits. A non-PIE executable is
+#                   loaded at 0x400000 and cannot collide. libsanitizer made the allocator base
+#                   dynamic in GCC 14, so these two flags are unnecessary with that or newer.
+#                   See https://github.com/google/sanitizers/issues/1614
+SANITIZER_FLAGS = -fno-pie -no-pie
+
+
 # Compile without sanitizers and disable optimisation
 # $(SOURCE): 	        Input file(s)
 # $(INCLUDEDIRS:%=-I%)  Include directories
@@ -45,7 +58,7 @@ helloWorld: FORCE
 # -fsanitize=address:	Address sanitizer
 #                       (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
 asan: FORCE
-	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -Werror -fsanitize=address
+	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) $(SANITIZER_FLAGS) -Werror -fsanitize=address
 
 # Compile with undefined behavior sanitizer enabled
 # $(SOURCE): 			Input file(s)
@@ -59,7 +72,7 @@ asan: FORCE
 # -fsanitize=undefined:	Fast undefined behavior check
 #                       (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
 ubsan: FORCE
-	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -Werror -fsanitize=undefined
+	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) $(SANITIZER_FLAGS) -Werror -fsanitize=undefined
 
 # Compile with leak sanitizer enabled
 # $(SOURCE): 		    Input file(s)
@@ -73,7 +86,7 @@ ubsan: FORCE
 # -fsanitize=leak	    Basic memory leak sanitizer
 #                       (https://gcc.gnu.org/onlinedocs/gcc-5.3.0/gcc/Debugging-Options.html#index-fsanitize_003dundefined-652)
 lsan: FORCE
-	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) -Werror -fsanitize=leak
+	$(CC) $(SOURCE) $(INCLUDEDIRS:%=-I%) -o $@.out -std=c11 -O0 $(WFLAGS) $(SANITIZER_FLAGS) -Werror -fsanitize=leak
 
 # Compile with GCC static analysis enabled
 # $(SOURCE): 			Input file(s)

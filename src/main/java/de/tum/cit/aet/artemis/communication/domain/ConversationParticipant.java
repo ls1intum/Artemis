@@ -25,6 +25,7 @@ public class ConversationParticipant extends DomainObject {
 
     @ManyToOne
     @JsonIgnore
+    @JoinColumn(nullable = false)
     private Conversation conversation;
 
     @ManyToOne
