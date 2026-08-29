@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -94,8 +93,8 @@ public class AutonomousTutorForwardingService {
         String supportLevel = settings.supportLevel().jsonValue();
         log.debug("Forwarding post {} to autonomous tutor pipeline (variant={})", post.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(post), course, toPyrisUserDTO(author), null, null,
-                null, (runId, runState, error) -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), post, course, toPyrisUserDTO(author), null, null, null,
+                (runId, runState, error) -> {
                 });
     }
 
@@ -156,8 +155,8 @@ public class AutonomousTutorForwardingService {
         String supportLevel = settings.supportLevel().jsonValue();
         log.debug("Forwarding answer post {} (thread {}) to autonomous tutor pipeline (variant={})", answerPost.getId(), parentPost.getId(), variant);
 
-        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), new PyrisPostDTO(parentPost), course, toPyrisUserDTO(author), null,
-                null, null, (runId, runState, error) -> {
+        pyrisPipelineService.executeAutonomousTutorPipeline(variant, supportLevel, author.getSelectedLLMUsage(), parentPost, course, toPyrisUserDTO(author), null, null, null,
+                (runId, runState, error) -> {
                 });
     }
 
