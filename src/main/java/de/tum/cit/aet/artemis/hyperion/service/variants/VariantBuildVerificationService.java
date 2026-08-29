@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hibernate.LazyInitializationException;
@@ -346,8 +347,8 @@ public class VariantBuildVerificationService {
         // The result is fetched without build logs, so the lazy association is detached here. Re-load the submission
         // with an eager build-log graph; otherwise a compile failure (the most common repair trigger) is invisible.
         try {
-            List<BuildLogEntry> buildLogEntries = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId())
-                    .map(ProgrammingSubmission::getBuildLogEntries).orElse(List.of());
+            Set<BuildLogEntry> buildLogEntries = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(programmingSubmission.getId())
+                    .map(ProgrammingSubmission::getBuildLogEntries).orElse(Set.of());
             if (!buildLogEntries.isEmpty()) {
                 String logs = buildLogEntries.stream().map(BuildLogEntry::getLog).collect(Collectors.joining("\n"));
                 return logs.length() > MAX_BUILD_LOG_LENGTH ? logs.substring(logs.length() - MAX_BUILD_LOG_LENGTH) : logs;
