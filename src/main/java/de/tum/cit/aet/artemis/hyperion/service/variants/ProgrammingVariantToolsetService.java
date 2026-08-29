@@ -17,12 +17,12 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 /**
  * Builds the per-round {@link ProgrammingVariantTools} toolset. The toolset is not a Spring bean (it carries
- * per-round state), so this factory holds the collaborators it needs instead of the adapter service.
+ * per-round state), so this service holds the collaborators it needs instead of the adapter service.
  */
 @Service
 @Lazy
 @Conditional(HyperionEnabled.class)
-public class ProgrammingVariantToolsFactory {
+public class ProgrammingVariantToolsetService {
 
     private final ExerciseVariantJobService jobService;
 
@@ -38,7 +38,7 @@ public class ProgrammingVariantToolsFactory {
 
     private final String defaultBranch;
 
-    public ProgrammingVariantToolsFactory(ExerciseVariantJobService jobService, GitService gitService, RepositoryService repositoryService,
+    public ProgrammingVariantToolsetService(ExerciseVariantJobService jobService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
         this.jobService = jobService;

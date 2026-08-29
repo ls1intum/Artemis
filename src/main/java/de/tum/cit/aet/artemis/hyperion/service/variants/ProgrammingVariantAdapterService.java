@@ -101,7 +101,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
 
     private final UserRepository userRepository;
 
-    private final ProgrammingVariantToolsFactory toolsFactory;
+    private final ProgrammingVariantToolsetService toolsetService;
 
     private final VariantBuildVerificationService buildVerificationService;
 
@@ -117,7 +117,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
             ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            UserRepository userRepository, ProgrammingVariantToolsFactory toolsFactory, VariantBuildVerificationService buildVerificationService,
+            UserRepository userRepository, ProgrammingVariantToolsetService toolsetService, VariantBuildVerificationService buildVerificationService,
             HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService,
             ExerciseDeletionService exerciseDeletionService) {
         this.contextRendererService = contextRendererService;
@@ -128,7 +128,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
-        this.toolsFactory = toolsFactory;
+        this.toolsetService = toolsetService;
         this.buildVerificationService = buildVerificationService;
         this.consistencyCheckService = consistencyCheckService;
         this.variantPlacementService = variantPlacementService;
@@ -228,7 +228,7 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(variant.getId());
         ProgrammingExercise sourceExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(job.getSourceExerciseId());
         User user = userRepository.getUserWithCourseRolesAndAuthorities(job.getInitiatorLogin());
-        return toolsFactory.create(exercise, sourceExercise, user, job.getJobId(), this::runSolutionBuildForTestDiscovery);
+        return toolsetService.create(exercise, sourceExercise, user, job.getJobId(), this::runSolutionBuildForTestDiscovery);
     }
 
     /**

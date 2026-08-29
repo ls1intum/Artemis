@@ -69,7 +69,7 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
 
         adapters = new ProgrammingVariantAdapterService(mock(HyperionProgrammingExerciseContextRendererService.class), programmingExerciseImportService,
                 programmingExerciseValidationService, programmingExerciseRepository, programmingExerciseTaskRepository, programmingExerciseTaskService,
-                mock(ProgrammingExerciseTestCaseRepository.class), mock(UserRepository.class), mock(ProgrammingVariantToolsFactory.class),
+                mock(ProgrammingExerciseTestCaseRepository.class), mock(UserRepository.class), mock(ProgrammingVariantToolsetService.class),
                 mock(VariantBuildVerificationService.class), mock(HyperionConsistencyCheckService.class), mock(VariantPlacementService.class),
                 mock(ExerciseVariantJobService.class), exerciseDeletionService);
 

@@ -608,6 +608,21 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         });
     }
 
+    /** NEW_GROUP promises to group the variant WITH its source, so a source that cannot join is rejected up front. */
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldRejectNewGroupPlacementWhenTheSourceCannotJoinTheGroup() throws Exception {
+        QuizExercise synchronizedQuiz = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.SYNCHRONIZED, course);
+        synchronizedQuiz.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion());
+        synchronizedQuiz.setMaxPoints(synchronizedQuiz.getOverallQuizPoints());
+        synchronizedQuiz = quizExerciseRepository.save(synchronizedQuiz);
+        VariantPlacementDTO placement = new VariantPlacementDTO(VariantPlacementDTO.PlacementType.NEW_GROUP, null,
+                new CreateExerciseVariantGroupDTO("Cargo bay variants", 10.0, null, null, null, null, null));
+
+        request.postWithResponseBody("/api/hyperion/exercises/" + synchronizedQuiz.getId() + "/generate-variant", domainChangeRequest(placement), VariantJobStartDTO.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
     @Test
     @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
     void shouldPlaceExamVariantInTheSourcesExamExerciseGroup() throws Exception {

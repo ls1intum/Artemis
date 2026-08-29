@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantJobDTO;
@@ -36,6 +37,8 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.ExerciseVariantJobServic
 import de.tum.cit.aet.artemis.hyperion.service.variants.ExerciseVariantTaskService;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJob;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantTypeRegistryService;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 
 /**
  * REST controller for AI exercise-variant generation — ONE endpoint set for all exercise types;
@@ -62,13 +65,16 @@ public class HyperionExerciseVariantResource {
 
     private final VariantTypeRegistryService typeRegistry;
 
+    private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
+
     public HyperionExerciseVariantResource(UserRepository userRepository, ExerciseRepository exerciseRepository, ExerciseVariantJobService jobService,
-            ExerciseVariantTaskService taskService, VariantTypeRegistryService typeRegistry) {
+            ExerciseVariantTaskService taskService, VariantTypeRegistryService typeRegistry, ExerciseVariantGroupRepository exerciseVariantGroupRepository) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.jobService = jobService;
         this.taskService = taskService;
         this.typeRegistry = typeRegistry;
+        this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
     }
 
     /**
@@ -185,6 +191,14 @@ public class HyperionExerciseVariantResource {
             case NEW_GROUP -> {
                 if (placement.newGroup() == null || placement.newGroup().title() == null || placement.newGroup().title().isBlank()) {
                     throw new BadRequestAlertException("A group title is required for NEW_GROUP placement", ENTITY_NAME, "missingGroupTitle");
+                }
+                // NEW_GROUP promises to group the variant WITH its source, so a source that cannot join is
+                // rejected up front. Re-checked at finalization as well: the source can change while the job runs.
+                if (exerciseVariantGroupRepository.findByExerciseId(exercise.getId()).isPresent()) {
+                    throw new BadRequestAlertException("The source exercise already belongs to a variant group", ENTITY_NAME, "sourceAlreadyGrouped");
+                }
+                if (exercise instanceof QuizExercise quizExercise && quizExercise.getQuizMode() != QuizMode.INDIVIDUAL) {
+                    throw new BadRequestAlertException("Only individual-mode quizzes can join a variant group", ENTITY_NAME, "sourceQuizNotIndividual");
                 }
             }
             case STANDALONE -> {
