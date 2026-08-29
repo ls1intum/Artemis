@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -599,6 +600,43 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
         assertThat(result.getTestCaseFeedbacks()).anyMatch(feedback -> "test3".equals(feedback.getTestCase().getTestName()));
+    }
+
+    /**
+     * Re-evaluating the exercise itself (the endpoint behind a grading-criteria change) recalculates the score of every
+     * result from the typed automatic feedback, which is lazy and therefore has to be loaded first. Scoring a result
+     * whose typed collections were not loaded is refused outright, so this would fail rather than compute silently.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldKeepScoresWhenReEvaluatingTheExerciseItself() throws Exception {
+        programmingExercise = (ProgrammingExercise) exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = programmingExerciseService
+                .findByIdWithTemplateAndSolutionParticipationAndAuxiliaryReposAndLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
+        createTestCases(false);
+        final Participation[] participations = createTestParticipations();
+
+        final Map<Long, Double> scoresBefore = scoresOfLatestResults(participations);
+        assertThat(scoresBefore.values()).anyMatch(score -> score > 0);
+
+        final String endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
+        request.putWithResponseBody(endpoint, UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+
+        // nothing about the grading configuration changed, so every score has to come out the same
+        assertThat(scoresOfLatestResults(participations)).isEqualTo(scoresBefore);
+    }
+
+    private Map<Long, Double> scoresOfLatestResults(Participation[] participations) {
+        final Map<Long, Double> scores = new HashMap<>();
+        for (Participation participation : participations) {
+            // read the results back from the database: the participations were built before the re-evaluation and are detached
+            resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(participation.getId()).stream().findFirst()
+                    .ifPresent(result -> scores.put(participation.getId(), result.getScore()));
+        }
+        return scores;
     }
 
     @Test
