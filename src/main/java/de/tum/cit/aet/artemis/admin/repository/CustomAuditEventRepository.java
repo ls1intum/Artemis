@@ -21,7 +21,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthentication;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.repository.UserActivityRepository;
 import de.tum.cit.aet.artemis.admin.domain.ApplicationAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.PersistedAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
@@ -59,18 +59,18 @@ public class CustomAuditEventRepository implements AuditEventRepository {
 
     private final AuditEventConverter auditEventConverter;
 
-    private final UserRepository userRepository;
+    private final UserActivityRepository userActivityRepository;
 
     private static final Logger log = LoggerFactory.getLogger(CustomAuditEventRepository.class);
 
     public CustomAuditEventRepository(Environment environment, PersistenceAuditEventRepository persistenceAuditEventRepository,
             SecurityAuditEventRepository securityAuditEventRepository, ApplicationAuditEventRepository applicationAuditEventRepository, AuditEventConverter auditEventConverter,
-            UserRepository userRepository) {
+            UserActivityRepository userActivityRepository) {
         this.persistenceAuditEventRepository = persistenceAuditEventRepository;
         this.securityAuditEventRepository = securityAuditEventRepository;
         this.applicationAuditEventRepository = applicationAuditEventRepository;
         this.auditEventConverter = auditEventConverter;
-        this.userRepository = userRepository;
+        this.userActivityRepository = userActivityRepository;
         this.isSaml2Active = new ArtemisConfigHelper().isSaml2Enabled(environment);
     }
 
@@ -180,7 +180,7 @@ public class CustomAuditEventRepository implements AuditEventRepository {
      */
     private void recordLastLogin(String principal, Instant timestamp) {
         try {
-            userRepository.updateLastLoginDate(principal, timestamp);
+            userActivityRepository.recordLoginCreatingRowIfMissing(principal, timestamp);
         }
         catch (Exception e) {
             log.warn("Could not record last login date for principal {}", principal, e);

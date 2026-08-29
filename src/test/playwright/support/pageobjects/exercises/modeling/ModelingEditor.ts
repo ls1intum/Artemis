@@ -174,4 +174,8 @@ export class ModelingEditor {
     async showExampleAssessment() {
         await this.page.locator('#show-modeling-example-assessment').click();
     }
+
+    async saveExampleSubmission() {
+        await this.page.locator('button:has([jhitranslate="artemisApp.modelingExercise.saveExampleSubmission"])').click();
+    }
 }

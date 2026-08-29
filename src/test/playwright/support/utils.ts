@@ -408,13 +408,17 @@ export async function waitForExamBuildAndTestAfterDueDate(exam: Exam, page: Page
     }
     await exerciseAPIRequests.triggerInstructorBuildForAll(programmingExercise.id);
     await Commands.waitForExerciseBuildToFinish(page, exerciseAPIRequests, programmingExercise.id);
-    // The build above produces the automatic result, but for exam programming exercises the server also defaults
-    // the "Run Tests after Due Date" date to (latest exam end + grace + 15 min). Until that date passes, the server
-    // rejects manual assessment with 403 "Creating manual results is disabled for this exercise!"
-    // (ProgrammingExercise.areManualResultsAllowed). Mirror what an instructor would do to assess immediately and
-    // move the date into the recent past. We do this only now, after waiting for the build, so the new date is
-    // safely past the exam end date (the server keeps a client value only when it is not before the exam end).
-    await exerciseAPIRequests.setProgrammingExerciseBuildAndTestDateToPast(programmingExercise.id);
+    // Two builds are in flight here: the after-due-date one the server scheduled for ten seconds after the exam
+    // ended, and the instructor trigger above. The wait returns after whichever lands first, so without settling
+    // the second result is still being written while the caller starts assessing - and the manual submit is then
+    // rejected with a 404 or 409 that surfaces much later as a wrong-score assertion.
+    await Commands.waitForExerciseResultsToSettle(page, exerciseAPIRequests, programmingExercise.id);
+    // The "Run Tests after Due Date" date does not have to be moved here: the exercise is created with it set to
+    // `getExamBuildAndTestAfterDueDate(exam)`, which is ten seconds after the exam ends with its grace period, and
+    // this helper only runs once the exam is over. Writing it again through the timeline endpoint used to be part of
+    // this helper and is what made every exam programming assessment fail outside UTC: that endpoint stores the date
+    // shifted by the server's UTC offset, so on a UTC+2 machine the date landed two hours in the future, the
+    // assessment dashboard reported that the tests were still pending, and no submission was ever offered to assess.
 }
 
 /**
@@ -803,6 +807,9 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
             break;
         case ExerciseType.QUIZ:
             additionalData = { quizExerciseID: 0 };
+            break;
+        case ExerciseType.FILE_UPLOAD:
+            additionalData = { fileUploadFixture: 'pdf-test-file.pdf' };
             break;
     }
 
