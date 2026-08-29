@@ -331,6 +331,9 @@ class QuizVariantTools implements VariantToolset {
         }
         Map<Long, String> existingPathsByItemId = picturePathsByItemId(existingDnd);
         for (DragItem updatedItem : updatedDnd.getDragItems() == null ? List.<DragItem>of() : updatedDnd.getDragItems()) {
+            if (updatedItem == null) {
+                return "the drag item list must not contain null entries — send every drag item you keep as a full object.";
+            }
             // Identity, not membership: a path that merely still EXISTS somewhere may have been moved to another
             // item or attached to a newly invented one. A retained item that drops its path to null is the same
             // kind of change — removal is only permitted together with the item itself.
