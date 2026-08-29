@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -7,7 +8,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -318,8 +318,9 @@ class QuizVariantTools implements VariantToolset {
     }
 
     /**
-     * Enforces the image non-goal: the DnD background path must not change, and drag-item picture paths must be
-     * a subset of the carried-over ones — a round may drop a picture with its item, but never add or repoint one.
+     * Enforces the image non-goal: the DnD background path must not change, and every drag item must keep the
+     * picture path it was carried over with. An item may be dropped along with its picture, but a picture must
+     * never be added, repointed, or moved to another item — the files belong to the source exercise.
      */
     private static String checkImagesUnchanged(QuizQuestion existing, QuizQuestion updated) {
         if (!(existing instanceof DragAndDropQuestion existingDnd) || !(updated instanceof DragAndDropQuestion updatedDnd)) {
@@ -328,19 +329,30 @@ class QuizVariantTools implements VariantToolset {
         if (!Objects.equals(existingDnd.getBackgroundFilePath(), updatedDnd.getBackgroundFilePath())) {
             return "the background image path of a drag-and-drop question must not change (keep \"" + existingDnd.getBackgroundFilePath() + "\").";
         }
-        Set<String> existingPicturePaths = picturePaths(existingDnd);
-        Set<String> updatedPicturePaths = picturePaths(updatedDnd);
-        if (!existingPicturePaths.containsAll(updatedPicturePaths)) {
-            return "drag item image paths must not be added or changed — only text and mappings may be edited. Existing picture paths: " + existingPicturePaths;
+        Map<Long, String> existingPathsByItemId = picturePathsByItemId(existingDnd);
+        for (DragItem updatedItem : updatedDnd.getDragItems() == null ? List.<DragItem>of() : updatedDnd.getDragItems()) {
+            String updatedPath = updatedItem.getPictureFilePath();
+            if (updatedPath == null) {
+                continue;
+            }
+            // Identity, not membership: a path that merely still EXISTS somewhere may have been moved to another
+            // item or attached to a newly invented one, which changes the image association just as much.
+            if (!Objects.equals(existingPathsByItemId.get(updatedItem.getId()), updatedPath)) {
+                return "drag item image paths must not be added, changed, or moved between items — only text and mappings may be edited. Existing picture paths per drag item id: "
+                        + existingPathsByItemId;
+            }
         }
         return null;
     }
 
-    private static Set<String> picturePaths(DragAndDropQuestion question) {
+    private static Map<Long, String> picturePathsByItemId(DragAndDropQuestion question) {
         if (question.getDragItems() == null) {
-            return Set.of();
+            return Map.of();
         }
-        return new HashSet<>(question.getDragItems().stream().map(DragItem::getPictureFilePath).filter(Objects::nonNull).collect(Collectors.toSet()));
+        Map<Long, String> pathsByItemId = new HashMap<>();
+        question.getDragItems().stream().filter(item -> item.getId() != null && item.getPictureFilePath() != null)
+                .forEach(item -> pathsByItemId.put(item.getId(), item.getPictureFilePath()));
+        return pathsByItemId;
     }
 
     /**
