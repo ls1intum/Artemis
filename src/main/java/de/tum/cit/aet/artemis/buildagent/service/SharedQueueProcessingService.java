@@ -959,6 +959,10 @@ public class SharedQueueProcessingService {
      * {@link #agentStateTransitionLock} while waiting for running jobs to complete.
      * This avoids potential deadlocks where completion callbacks of those futures
      * might themselves try to acquire the same lock or update build-agent state.</li>
+     * <li>Because of that, a resume can complete while the wait is in progress. Everything
+     * the method does <em>after</em> the wait is irreversible - cancelling and re-queueing
+     * jobs, and closing the services - so it retakes {@link #agentStateTransitionLock} and
+     * re-checks {@code isPaused} inside it, and does nothing when a resume got there first.</li>
      * <li>The distributed build-agent information is updated immediately after setting
      * {@code isPaused = true}, so other nodes and services can already treat the agent
      * as paused while it is still finishing or cancelling in-flight jobs.</li>
@@ -1023,14 +1027,14 @@ public class SharedQueueProcessingService {
         // in the middle of being submitted is registered as running before its awaitable future exists, so an empty
         // list of futures does not mean the node is idle. Skipping this block in that case used to lose the job -
         // it was neither awaited nor cancelled nor put back on the queue.
+        boolean everyRunningJobIsAwaitable = awaitableBuildJobIds.size() == runningBuildJobIds.size();
+        boolean allAwaitedJobsFinished = false;
         if (!runningBuildJobIds.isEmpty()) {
-            boolean everyRunningJobIsAwaitable = awaitableBuildJobIds.size() == runningBuildJobIds.size();
             CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
 
             // allOf completes once every future it was given has completed, so a job that failed still counts as
             // finished - it only makes the wait end exceptionally. What the wait can never cover is a job that was
             // still being submitted when the pause began and so had no future to await yet.
-            boolean allAwaitedJobsFinished = false;
             try {
                 allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
                 allAwaitedJobsFinished = true;
@@ -1049,32 +1053,37 @@ public class SharedQueueProcessingService {
                 log.error("Interrupted while waiting for running build jobs to finish", e);
             }
 
-            if (allAwaitedJobsFinished && everyRunningJobIsAwaitable) {
-                log.info("All running build jobs finished during grace period");
-            }
-            else if (allAwaitedJobsFinished) {
-                // Every awaited job has finished, so only the ones that had no future to await can still be running.
-                // Cancelling the awaited ones as well would risk re-queueing a job whose result is on its way to being
-                // published: allOf completes with the futures it was given, while the stage that takes a finished job
-                // out of the running maps runs separately and need not have run yet.
-                Set<String> neverAwaited = new HashSet<>(runningBuildJobIds);
-                neverAwaited.removeAll(awaitableBuildJobIds);
-                log.warn("{} of {} running build jobs had no future to await, enforcing cancellation for those", neverAwaited.size(), runningBuildJobIds.size());
-                cancelAndRequeueRunningBuildJobs(neverAwaited);
-            }
-            else {
-                handleTimeoutAndCancelRunningJobs();
-            }
         }
 
-        // Close the services under the transition lock, and only while this pause is still the one in effect. The wait
-        // above runs without the lock, so a resume can have completed in the meantime and reopened these services;
-        // closing them afterwards would leave an agent that reports itself as active with no executor to run anything.
+        // The wait above deliberately runs without the lock, so a resume can complete while it is in progress.
+        // Everything that follows is irreversible - cancelling and re-queueing jobs, and closing the services the agent
+        // runs on - so it happens under the transition lock with the paused state re-checked inside it. Either this
+        // pause is still the one in effect and it finishes its work, or a resume got there first and it does nothing:
+        // cancelling a resumed agent's jobs would throw away builds it had just been told to keep running, and closing
+        // its services would leave it reporting itself as active with no executor.
         agentStateTransitionLock.lock();
         try {
             if (!isPaused.get()) {
-                log.info("Build agent was resumed while it was pausing, so its services stay open");
+                log.info("Build agent was resumed while it was pausing, so its build jobs and services are left alone");
                 return;
+            }
+            if (!runningBuildJobIds.isEmpty()) {
+                if (allAwaitedJobsFinished && everyRunningJobIsAwaitable) {
+                    log.info("All running build jobs finished during grace period");
+                }
+                else if (allAwaitedJobsFinished) {
+                    // Every awaited job has finished, so only the ones that had no future to await can still be
+                    // running. Cancelling the awaited ones as well would risk re-queueing a job whose result is on its
+                    // way to being published: allOf completes with the futures it was given, while the stage that takes
+                    // a finished job out of the running maps runs separately and need not have run yet.
+                    Set<String> neverAwaited = new HashSet<>(runningBuildJobIds);
+                    neverAwaited.removeAll(awaitableBuildJobIds);
+                    log.warn("{} of {} running build jobs had no future to await, enforcing cancellation for those", neverAwaited.size(), runningBuildJobIds.size());
+                    cancelAndRequeueRunningBuildJobs(neverAwaited);
+                }
+                else {
+                    handleTimeoutAndCancelRunningJobs();
+                }
             }
             buildAgentConfiguration.closeBuildAgentServices();
         }
@@ -1094,15 +1103,14 @@ public class SharedQueueProcessingService {
      * The ids are intersected with the jobs that are still running, so a job that finished while the caller was making
      * up its mind is left alone rather than re-queued behind its own result. A job can also finish in the window
      * between that snapshot and the cancellation itself, so only the jobs that cancellation actually stopped are put
-     * back on the queue. Does nothing if the agent was resumed in the meantime.
+     * back on the queue.
+     * <p>
+     * Must be called while holding {@link #agentStateTransitionLock} and only after confirming that the agent is still
+     * paused, so that a resume cannot land between that check and the cancellation and lose the jobs it just took over.
      *
      * @param buildJobIds the ids of the build jobs to cancel and re-queue
      */
     private void cancelAndRequeueRunningBuildJobs(Set<String> buildJobIds) {
-        if (!isPaused.get()) {
-            log.info("Build agent was resumed before the build jobs could be cancelled");
-            return;
-        }
         Set<String> jobsToCancel = new HashSet<>(buildJobManagementService.getRunningBuildJobIds());
         jobsToCancel.retainAll(buildJobIds);
         if (jobsToCancel.isEmpty()) {

@@ -135,13 +135,32 @@ class SharedQueueProcessingServicePauseTest {
     }
 
     @Test
-    void doesNotCloseTheServicesWhenTheAgentWasResumedWhilePausing() {
-        when(buildJobManagementService.getRunningBuildJobIds()).thenReturn(Set.of());
-        // A resume completed while the pause was between releasing the transition lock and closing the services.
+    void leavesTheJobsOfAnAgentThatWasResumedWhilePausingAlone() {
+        when(buildJobManagementService.getRunningBuildJobIds()).thenReturn(Set.of(JOB_ID));
+        when(buildJobManagementService.getRunningBuildJobFutureWrapper(JOB_ID)).thenReturn(null);
+        resumeWhileThePauseIsInProgress();
+
+        pause();
+
+        // The resumed agent was told to keep running these jobs, so cancelling and re-queueing them here would throw
+        // away builds that are legitimately in flight.
+        verify(buildJobManagementService, never()).cancelBuildJob(anyString());
+        verify(buildJobQueue, never()).addAll(any());
+        verify(buildAgentConfiguration, never()).closeBuildAgentServices();
+    }
+
+    private void resumeWhileThePauseIsInProgress() {
         doAnswer(invocation -> {
             ((AtomicBoolean) ReflectionTestUtils.getField(service, "isPaused")).set(false);
             return null;
         }).when(buildAgentInformationService).updateLocalBuildAgentInformation(anyBoolean(), anyBoolean(), anyInt());
+    }
+
+    @Test
+    void doesNotCloseTheServicesWhenTheAgentWasResumedWhilePausing() {
+        when(buildJobManagementService.getRunningBuildJobIds()).thenReturn(Set.of());
+        // A resume completed while the pause was between releasing the transition lock and closing the services.
+        resumeWhileThePauseIsInProgress();
 
         pause();
 
