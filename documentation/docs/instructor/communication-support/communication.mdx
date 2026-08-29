@@ -14,6 +14,10 @@ import irisChatViewImg from "./assets/communication/iris-chat-view.png";
 import tutorSuggestionsHistoryImg from "./assets/communication/tutor-suggestions-history.png";
 import channelSettingsImg from "./assets/communication/channel-settings.png";
 import channelCreationImg from "./assets/communication/channel-creation.png";
+import autonomousTutorResponseImg from "./assets/communication/autonomous-tutor-response.png";
+import autonomousTutorReviewImg from "./assets/communication/autonomous-tutor-review.png";
+import autonomousTutorNotificationTabImg from "./assets/communication/autonomous-tutor-notification-tab.png";
+import autonomousTutorVerificationDashboardImg from "./assets/communication/autonomous-tutor-verification-dashboard.png";
 
 # Communication
 
@@ -93,8 +97,7 @@ Depending on the confidence score, one of three things happens:
 
 Exemplary thread view with an autonomously posted response:
 
-{/* TODO: add screenshot to ./assets/communication/autonomous-tutor-response.png, import it, and replace this comment with:
-<Image src={autonomousTutorResponseImg} alt={"autonomous-tutor-response"} size={ImageSize.medium} /> */}
+<Image src={autonomousTutorResponseImg} alt={"autonomous-tutor-response"} size={ImageSize.large} />
 
 If a response requires tutor review, it appears in the thread with a yellow highlight and the `Awaiting tutor review` badge next to the Iris Bot sender name. Tutors can act on it directly from the thread using three buttons:
 
@@ -104,17 +107,21 @@ If a response requires tutor review, it appears in the thread with a yellow high
 
 Reviewing an unverified response:
 
-{/* TODO: add screenshot to ./assets/communication/autonomous-tutor-verification.png, import it, and replace this comment with:
-<Image src={autonomousTutorVerificationImg} alt={"autonomous-tutor-verification"} size={ImageSize.medium} /> */}
+<Image src={autonomousTutorReviewImg} alt={"autonomous-tutor-review"} size={ImageSize.large} />
 
 Once a tutor approves or edits a response, the badge disappears and the message becomes visible to the student, indistinguishable in structure from any other reply aside from the Iris icon and bot tag.
 
-To help tutors keep track of pending reviews, a dedicated `Iris Review` tab in the tutor notification panel lists all unverified responses with a preview and timestamp. A verification dashboard also aggregates every thread with a pending response across the course, giving tutors a single place to work through them.
+To help tutors keep track of pending reviews, a dedicated `Iris Review` tab in the tutor notification panel lists all unverified responses with a preview and timestamp.
 
-Verification dashboard and notification tab:
+The `Iris Review` notification tab:
 
-{/* TODO: add screenshot to ./assets/communication/autonomous-tutor-dashboard.png, import it, and replace this comment with:
-<Image src={autonomousTutorDashboardImg} alt={"autonomous-tutor-dashboard"} size={ImageSize.large} /> */}
+<Image src={autonomousTutorNotificationTabImg} alt={"autonomous-tutor-notification-tab"} size={ImageSize.medium} />
+
+In addition, the `Iris to verify` filter in the course's message overview collects every thread with a pending response, giving tutors a single place to work through them.
+
+Threads awaiting verification in the message overview:
+
+<Image src={autonomousTutorVerificationDashboardImg} alt={"autonomous-tutor-verification-dashboard"} size={ImageSize.medium} />
 
 Every response that is approved or edited, as well as every thread that is marked as resolved, is distilled into a question-answer pair and stored in a persistent, course-scoped memory. Before generating a new response, Iris searches this memory for similar previously verified answers, so recurring questions receive consistent answers as the course progresses. Where possible, responses include a citation linking back to the source lecture slide or the earlier verified thread.
 
