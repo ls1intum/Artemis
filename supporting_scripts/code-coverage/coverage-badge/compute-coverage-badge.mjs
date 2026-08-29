@@ -119,10 +119,17 @@ export function parseJacocoLines(xml) {
  */
 export function parseVitestLines(summary) {
     const lines = summary?.total?.lines;
-    if (!lines || !Number.isFinite(lines.covered) || !Number.isFinite(lines.total)) {
+    if (!lines) {
         return undefined;
     }
-    return { covered: lines.covered, total: lines.total };
+    const { covered, total } = lines;
+    // Istanbul never emits counts like these, but this function feeds a number that gets published
+    // unattended, so a corrupt summary must not become a >100% badge. `total === 0` is deliberately
+    // NOT rejected here: computeBadge reports it more precisely as "measured zero lines".
+    if (!Number.isSafeInteger(covered) || !Number.isSafeInteger(total) || covered < 0 || total < 0 || covered > total) {
+        return undefined;
+    }
+    return { covered, total };
 }
 
 /**

@@ -101,6 +101,17 @@ describe('parseVitestLines', () => {
         expect(parseVitestLines({ total: {} })).toBeUndefined();
         expect(parseVitestLines({ total: { lines: { total: 'n/a', covered: 1 } } })).toBeUndefined();
     });
+
+    it('rejects counts that are impossible, rather than publishing a nonsense percentage', () => {
+        // A badge is published unattended, so covered > total must not become ">100%".
+        expect(parseVitestLines(vitestSummary({ covered: 1000000, total: 1 }))).toBeUndefined();
+        expect(parseVitestLines(vitestSummary({ covered: -1, total: 100 }))).toBeUndefined();
+        expect(parseVitestLines(vitestSummary({ covered: 1, total: -100 }))).toBeUndefined();
+        expect(parseVitestLines(vitestSummary({ covered: 1.5, total: 100 }))).toBeUndefined();
+        expect(parseVitestLines(vitestSummary({ covered: 1, total: Number.MAX_SAFE_INTEGER + 2 }))).toBeUndefined();
+        // The boundary case is legitimate: a fully covered client.
+        expect(parseVitestLines(vitestSummary({ covered: 100, total: 100 }))).toEqual({ covered: 100, total: 100 });
+    });
 });
 
 describe('colorFor', () => {
