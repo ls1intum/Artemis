@@ -396,6 +396,119 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v5
 
+  # Publishes the combined server + client line-coverage figure that the README badge renders,
+  # replacing the Codacy coverage badge (Codacy stopped reporting a value and the badge read 0%).
+  #
+  # Develop-push only, and gated on `test` having SUCCEEDED — that gate is the stability property.
+  # Coverage from a partially failed run is artificially low (tests that never ran cover nothing), so
+  # republishing it would make the badge dip on ambient flakiness. Skipping instead leaves the last
+  # published value in place, which is what we want a flaky run to do.
+  #
+  # The value lands on the orphan `badges` branch, never on develop, so this adds no commits to the
+  # mainline history. Two independent reasons it cannot loop: no workflow triggers on `badges` (every
+  # push trigger in this repo filters to develop/main/release/*), and GitHub does not fire workflows
+  # for pushes made with GITHUB_TOKEN.
+  #
+  # ADVISORY: never in another job's `needs:` and never gating. Every failure path warns and exits 0,
+  # because a badge that could not be recomputed must not turn develop red.
+  coverage-badge:
+    name: Publish Coverage Badge
+    needs: test
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      # Sole purpose: pushing coverage.json to the orphan `badges` branch. Nothing here runs
+      # PR-author code — the job only reads artifacts the trusted `test` job produced.
+      contents: write
+    # Serializes back-to-back develop pushes so two runs cannot race to push the same branch.
+    concurrency:
+      group: coverage-badge
+      cancel-in-progress: false
+    steps:
+      - name: Check out the badge tooling
+        uses: actions/checkout@v6
+        with:
+          sparse-checkout: supporting_scripts/code-coverage/coverage-badge
+          # This checkout only supplies the script; the push happens from the `badges` checkout below.
+          persist-credentials: false
+
+      - name: Check out the badges branch
+        id: badges-checkout
+        # `continue-on-error` keeps the job advisory: if the orphan branch is missing or unreadable,
+        # the guard step below warns and every later step no-ops.
+        continue-on-error: true
+        uses: actions/checkout@v6
+        with:
+          ref: badges
+          path: badges-branch
+          fetch-depth: 1
+
+      - name: Warn when the badges branch is unavailable
+        if: steps.badges-checkout.outcome != 'success'
+        run: |
+          echo "::warning::Could not check out the 'badges' branch, so the published coverage badge stands." \
+               "If the branch was deleted, re-seed it as described in" \
+               "supporting_scripts/code-coverage/coverage-badge/README.md."
+
+      - name: Download the server JaCoCo report
+        if: steps.badges-checkout.outcome == 'success'
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: Server JaCoCo XML
+          path: server-coverage
+
+      - name: Download the client coverage summary
+        if: steps.badges-checkout.outcome == 'success'
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: Client Coverage Summaries
+          path: client-coverage
+
+      - name: Compute and publish the coverage badge
+        if: steps.badges-checkout.outcome == 'success'
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -Eeuo pipefail
+
+          # Exit 0 publishes, 3 deliberately keeps the previous value, anything else is unexpected.
+          # `set +e` around the call so a non-zero status is inspected rather than killing the step.
+          set +e
+          node supporting_scripts/code-coverage/coverage-badge/compute-coverage-badge.mjs \
+            --jacoco server-coverage/aggregated/jacocoTestReport.xml \
+            --vitest client-coverage/coverage-summary.json \
+            --previous badges-branch/coverage.json \
+            --out badges-branch/coverage.json \
+            --sha "$COMMIT_SHA"
+          status=$?
+          set -e
+
+          # Exit 3 covers both an unchanged value and a tripped guard; the script printed which.
+          if [ "$status" -eq 3 ]; then
+            echo "::notice::Coverage badge not republished; the published value stands (reason logged above)."
+            exit 0
+          fi
+          if [ "$status" -ne 0 ]; then
+            echo "::warning::Coverage badge computation failed (exit ${status}); keeping the published value."
+            exit 0
+          fi
+
+          cd badges-branch
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add coverage.json
+          # Defensive: the script only exits 0 when the value changed, so an empty diff would mean
+          # the two disagree. Nothing to push either way.
+          if git diff --cached --quiet; then
+            echo "::notice::Coverage badge file is byte-identical; nothing to push."
+            exit 0
+          fi
+          git commit -m "Update the coverage badge to $(jq -r .message coverage.json)"
+          git push origin HEAD:badges || echo "::warning::Could not push the coverage badge; the next develop push will retry."
+
   translation:
     name: Check Translation Keys
     needs: detect-changes

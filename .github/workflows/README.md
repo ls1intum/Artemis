@@ -32,6 +32,7 @@ ci.yml                                                            (single entry 
 │
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
+├── coverage-badge               (publishes the README coverage figure to the orphan `badges` branch; needs a GREEN `test`)
 │
 ├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
@@ -177,7 +178,41 @@ The one exception is the `deploy-docs` **job** in `ci.yml`, which carries a job-
 `concurrency: { group: pages, cancel-in-progress: false }`. Job-level concurrency is safe (it is
 not the reusable-workflow lock that #3205 warns about), and the repo-global `pages` group is what
 serializes every GitHub Pages deploy — across umbrella runs and against the manual redeploy in
-`deploy-documentation.yml`.
+`deploy-documentation.yml`. `coverage-badge` uses a job-level group for the same reason: to
+serialize its pushes to the `badges` branch across back-to-back develop pushes.
+
+## The coverage badge
+
+The `coverage` badge in the root `README.md` is served by Shields from `coverage.json` on the
+orphan **`badges`** branch. `ci.yml`'s `coverage-badge` job recomputes it on every `develop` push,
+from the same `Server JaCoCo XML` and `Client Coverage Summaries` artifacts the `test` job already
+uploads — no test re-run. The figure is
+`(server.covered + client.covered) / (server.total + client.total)` over **lines**, the one metric
+JaCoCo and Vitest both emit natively, so it is weighted by codebase size rather than being a mean
+of two percentages. E2E contributes nothing: `ci-e2e.yml` is black-box Playwright with no JaCoCo
+agent and no instrumented client build, so it produces no coverage data.
+
+**The badge is deliberately sticky.** Three guards each cause the previous value to stand rather
+than publishing a worse one:
+
+1. The job runs only when `test` **succeeded**. A run with a flaky failure has artificially low
+   coverage — tests that never ran cover nothing — so it is never published.
+2. `compute-coverage-badge.mjs` refuses a report that is missing, unparseable, or measured/covered
+   zero lines.
+3. It refuses a value whose combined line **total** collapsed below half the published total. That
+   catches a vanished module report without freezing on a genuine regression, which leaves the
+   denominator intact.
+
+Every rejection is a no-op: the job exits 0 without committing, and Shields keeps serving the last
+good file. Nothing about the badge can turn `develop` red.
+
+Commits land on `badges` only, never on `develop`, and only when the rendered value actually
+changes. Between changes the file's `exact`/`sha`/`updatedAt` fields go stale by design — they feed
+only the coarse guard in (3), which does not need to be current. Nothing loops: no push trigger in
+this repo matches `badges`, and GitHub does not fire workflows for `GITHUB_TOKEN` pushes.
+
+The logic is unit-tested in `supporting_scripts/code-coverage/coverage-badge/compute-coverage-badge.spec.mjs`,
+which runs as part of `pnpm run test:rules` in the client test job.
 
 ## Adding a new CI check
 
