@@ -250,9 +250,10 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         else:
             self._respond(200, response)
 
-    def log_message(self, fmt: str, *args) -> None:  # pylint: disable=arguments-renamed
-        """Silence the per-request access log. BaseHTTPRequestHandler names this parameter after the `format`
-        builtin and always passes it positionally, so renaming it here is safe and avoids the shadowing."""
+    def log_request(self, code="-", size="-") -> None:
+        """Silence the per-request access log. Overriding this instead of `log_message` keeps the base signature
+        verbatim — `log_message` names its first parameter after the `format` builtin, and either shadowing or
+        renaming it is a static-analysis finding. Error logging stays on, which is what a failing run needs."""
         return
 
 
