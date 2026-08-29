@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "label": "coverage",
+  "message": "88.3%",
+  "color": "green",
+  "exact": 88.34,
+  "server": {
+    "covered": 74256,
+    "total": 85908
+  },
+  "client": {
+    "covered": 70728,
+    "total": 78212
+  },
+  "combined": {
+    "covered": 144984,
+    "total": 164120
+  },
+  "sha": "e62c69b098fb4cbd542582cbe054d94163bb7e8a",
+  "updatedAt": "2026-08-29T19:29:21.675Z"
+}
