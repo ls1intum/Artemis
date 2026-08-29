@@ -1029,6 +1029,40 @@ examples.forEach((activeConversation) => {
 
                 expect(spy).toHaveBeenCalledWith(key);
             });
+
+            it('should subscribe even when the parent route carries no resolved course', () => {
+                // Regression: the subscription used to run in ngOnInit off the parent route snapshot.
+                // Only the course-management routes resolve a course into route data; the student route
+                // /courses/:courseId/communication does not, so the id was undefined, the early return
+                // fired and no toast could ever reach a student-view tutor. The course is known only
+                // once MetisConversationService reports itself set up.
+                const route = TestBed.inject(ActivatedRoute);
+                (route.parent!.snapshot as { data: Record<string, unknown> }).data = {};
+                const subscribeSpy = vi.spyOn(TestBed.inject(IrisCourseMemoryStatusService), 'subscribeToCourse');
+                const alertService = TestBed.inject(AlertService);
+                const spy = vi.spyOn(alertService, 'success').mockReturnValue({} as never);
+
+                component.ngOnInit();
+
+                expect(subscribeSpy).toHaveBeenCalledWith(course.id);
+
+                courseMemoryStatus$.next(statusOf(CourseMemoryOperation.INGEST, CourseMemoryStage.COMPLETED));
+
+                expect(spy).toHaveBeenCalledWith('artemisApp.iris.courseMemoryAlert.ingestionSuccess');
+            });
+
+            it('should not raise duplicate toasts when the service reports setup more than once', () => {
+                // isServiceSetup$ is a replaying subject in production; a second emission must not add a
+                // second alert subscriber to the same status stream.
+                const alertService = TestBed.inject(AlertService);
+                const spy = vi.spyOn(alertService, 'success').mockReturnValue({} as never);
+                component.ngOnInit();
+                component['subscribeToCourseMemoryStatus']();
+
+                courseMemoryStatus$.next(statusOf(CourseMemoryOperation.INGEST, CourseMemoryStage.COMPLETED));
+
+                expect(spy).toHaveBeenCalledOnce();
+            });
         });
     });
 });

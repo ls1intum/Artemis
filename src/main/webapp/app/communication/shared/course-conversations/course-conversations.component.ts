@@ -259,7 +259,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
      */
     private subscribeToCourseMemoryStatus(): void {
         const courseId = this.course()?.id;
-        if (!courseId) {
+        if (!courseId || this.courseMemoryStatusCourseId === courseId) {
             return;
         }
         this.courseMemoryStatusCourseId = courseId;
@@ -362,12 +362,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
             this.courseSidebarService.openSidebar();
         }
 
-        this.subscribeToCourseMemoryStatus();
-
         this.isLoading.set(true);
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
                 this.course.set(this.metisConversationService.course);
+                // Only here, not in ngOnInit: the student route has no course resolver, so the parent
+                // snapshot carries no course and the id would still be undefined at that point. This is
+                // the first place both views have one.
+                this.subscribeToCourseMemoryStatus();
                 this.initializeCourseWideSearchConfig();
                 this.initializeSidebarAccordions();
                 this.setupMetis();
