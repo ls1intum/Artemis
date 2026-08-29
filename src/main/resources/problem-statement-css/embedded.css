@@ -743,11 +743,13 @@ math {
     font-size: inherit;
 }
 
+/* Do NOT set `display: block` here: that replaces the intrinsic `block math` display type and disables MathML
+ * layout, stacking the children as plain blocks. The browser's UA stylesheet already gives `math[display="block"]`
+ * its block-math display; this only adds the vertical gutter and lets a wide formula scroll rather than overflow. */
 math[display='block'] {
-    display: block;
-    overflow-x: auto;
     margin: 0.5em 0;
-    text-align: center;
+    max-width: 100%;
+    overflow-x: auto;
 }
 
 /* Shown when a formula could not be converted to MathML: its LaTeX source between delimiters. */
