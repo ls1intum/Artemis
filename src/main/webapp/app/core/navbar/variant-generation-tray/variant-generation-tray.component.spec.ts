@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { VariantGenerationTrayComponent } from 'app/core/navbar/variant-generation-tray/variant-generation-tray.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
@@ -131,7 +132,7 @@ describe('VariantGenerationTrayComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-spinner"]')).toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-success"]')).not.toBeNull();
 
-        jobs.set([completedJob, Object.assign({}, completedJob, { jobId: 'job-3', phase: 'FAILED' as const })]);
+        jobs.set([completedJob, cloneWith(completedJob, { jobId: 'job-3', phase: 'FAILED' as const })]);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-success"]')).toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-attention"]')).not.toBeNull();
@@ -168,8 +169,8 @@ describe('VariantGenerationTrayComponent', () => {
     it('flags failed jobs and drafts with warnings as needing attention', () => {
         expect(component.needsAttention(runningJob)).toBe(false);
         expect(component.needsAttention(completedJob)).toBe(false);
-        expect(component.needsAttention(Object.assign({}, completedJob, { phase: 'FAILED' as const }))).toBe(true);
-        expect(component.needsAttention(Object.assign({}, completedJob, { phase: 'DRAFT_WITH_WARNINGS' as const }))).toBe(true);
+        expect(component.needsAttention(cloneWith(completedJob, { phase: 'FAILED' as const }))).toBe(true);
+        expect(component.needsAttention(cloneWith(completedJob, { phase: 'DRAFT_WITH_WARNINGS' as const }))).toBe(true);
     });
 
     it('maps phases onto the step-dot timeline and off it for terminal phases', () => {

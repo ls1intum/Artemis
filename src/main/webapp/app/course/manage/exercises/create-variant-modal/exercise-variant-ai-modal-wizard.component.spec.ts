@@ -119,6 +119,11 @@ describe('ExerciseVariantAiModalWizardComponent (exam path)', () => {
         expect(request.targetDifficulty).toBe(DifficultyLevel.EASY);
         expect(request.domainText).toBe('banking');
     });
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
 });
 
 /**
