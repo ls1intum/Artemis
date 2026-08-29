@@ -22,18 +22,21 @@ endif
 # -g					Generates debug information to be used by GDB debugger
 WFLAGS = -Wall -Wextra -Wpedantic -g
 
-# Flags that only the sanitizer targets (asan, ubsan, lsan) receive.
-# -fno-pie -no-pie  Link at a fixed low load address instead of a randomised one. GCC's address and
-#                   leak sanitizer runtimes reserve a fixed region at 0x600000000000 (96 TiB) for
-#                   their allocator, and a position-independent executable can be loaded inside it
-#                   on a host with vm.mmap_rnd_bits=32 (the kernel default since 6.5, so Ubuntu
-#                   24.04 among others). The sanitizer then dies before main() in an endless loop of
-#                   "AddressSanitizer:DEADLYSIGNAL" lines and never exits. A non-PIE executable is
-#                   loaded at 0x400000 and cannot collide. libsanitizer made the allocator base
-#                   dynamic in GCC 14, so these two flags are unnecessary with that or newer.
-#                   See https://github.com/google/sanitizers/issues/1614
+# Flags that only the sanitizer targets (asan, ubsan, lsan) receive, and only on Linux.
+#
+# GCC's address and leak sanitizer runtimes reserve a fixed region at 0x600000000000 for their allocator. The
+# Linux kernel loads a position-independent executable at a randomised address that can fall inside that
+# region - on a host with vm.mmap_rnd_bits=32, the default since kernel 6.5, about one run in four. The
+# sanitizer then dies before main() in an endless loop of "AddressSanitizer:DEADLYSIGNAL" lines and never
+# exits. Linking non-PIE puts the executable at a fixed low address where it cannot collide.
+#
+# This is a Linux kernel layout problem, so the flags are only set there. macOS does not lay memory out this
+# way and Apple clang has no use for -no-pie, which combined with -Werror below would fail the build.
+ifeq ($(shell uname -s),Linux)
 SANITIZER_FLAGS = -fno-pie -no-pie
-
+else
+SANITIZER_FLAGS =
+endif
 
 # Compile without sanitizers and disable optimisation
 # $(SOURCE): 	        Input file(s)
