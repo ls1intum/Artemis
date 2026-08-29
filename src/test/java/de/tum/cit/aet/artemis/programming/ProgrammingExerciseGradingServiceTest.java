@@ -235,6 +235,39 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
     }
 
+    /**
+     * The duplicate-test-case warnings are the only automatic feedback the grading flow still writes to the legacy
+     * feedback table, and re-evaluating an exercise runs that flow again on a result that already carries them.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotAccumulateDuplicateTestCaseFeedbackOverSeveralRuns() {
+        var testCases = getTestCases(programmingExercise);
+        testCases.get("test1").active(true).visibility(Visibility.ALWAYS);
+        testCases.get("test2").active(true).visibility(Visibility.ALWAYS);
+        testCaseRepository.saveAll(testCases.values());
+        testCases = getTestCases(programmingExercise);
+
+        // the build reported test1 twice
+        addTestCaseFeedback(result, testCases.get("test1"), true);
+        addTestCaseFeedback(result, testCases.get("test1"), true);
+        addTestCaseFeedback(result, testCases.get("test2"), false);
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+        long afterFirstRun = countDuplicateTestCaseFeedback(result);
+
+        // a re-evaluation grades the very same result again
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        assertThat(afterFirstRun).isEqualTo(1);
+        assertThat(countDuplicateTestCaseFeedback(result)).isEqualTo(afterFirstRun);
+    }
+
+    private static long countDuplicateTestCaseFeedback(Result result) {
+        return result.getFeedbacks().stream().filter(feedback -> feedback.getText() != null && feedback.getText().endsWith(" - Duplicate Test Case!")).count();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {

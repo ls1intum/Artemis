@@ -411,6 +411,19 @@ public class ResultService {
         }
     }
 
+    /**
+     * Attaches the synthesized views of the automatic feedback of programming results and then removes what the owner of the participation must not see. Read paths that
+     * serialize stored results need both steps in this order: the filters — and the test case counts they refresh — operate on the attached views, so filtering first would
+     * report a result without any automatic feedback.
+     *
+     * @param participation the results belong to
+     * @param results       the results to complete and filter, in place
+     */
+    public void attachAutomaticFeedbackAndFilterSensitiveInformation(final Participation participation, final Collection<Result> results) {
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(results);
+        filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
+    }
+
     private void filterInformation(Participation participation, Collection<Result> results) {
         // The test cases marked as after_due_date should only be shown after all
         // students can no longer submit so that no unfair advantage is possible.

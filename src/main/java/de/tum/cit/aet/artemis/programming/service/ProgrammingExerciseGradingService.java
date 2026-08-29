@@ -87,6 +87,11 @@ public class ProgrammingExerciseGradingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
+    /**
+     * Suffix of the {@code text} of the warning feedback created for a test case the build reported more than once.
+     */
+    private static final String DUPLICATE_TEST_CASE_FEEDBACK_SUFFIX = " - Duplicate Test Case!";
+
     private final Optional<ContinuousIntegrationResultService> continuousIntegrationResultService;
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -561,6 +566,11 @@ public class ProgrammingExerciseGradingService {
         final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(allTestCases, true);
         final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(allTestCases, false);
 
+        // Load the typed automatic feedback of every result up front with two queries. Without this each result would load its own (the per-result hydration below then finds
+        // the collections initialized and does nothing), which is two queries per participation on an exercise that can have thousands.
+        hydrateTypedFeedbackBulk(participations.stream().map(Participation::findLatestResult).filter(Objects::nonNull).filter(result -> result.getId() != null)
+                .filter(result -> !Hibernate.isInitialized(result.getTestCaseFeedbacks()) || !Hibernate.isInitialized(result.getScaFeedbacks())).toList());
+
         return participations.stream().map(participation -> updateLatestResult(exercise, participation, allTestCases, testCasesBeforeDueDate, testCasesAfterDueDate, true))
                 .flatMap(Optional::stream);
     }
@@ -858,10 +868,15 @@ public class ProgrammingExerciseGradingService {
                 // Set.add() returns false if the test case is already present in the set
                 .filter(testCase -> !uniqueTestCases.add(testCase)).collect(Collectors.toSet());
 
+        // These warnings are the only automatic feedback this flow still writes to the legacy table, and re-evaluation runs the flow again on a result that already carries
+        // them. Drop the previous ones first, otherwise every re-evaluation appends another copy (before the split, the removal of test feedback without an active test case
+        // took care of this, because the warnings carry no test case).
+        result.getFeedbacks().removeIf(feedback -> feedback.getText() != null && feedback.getText().endsWith(DUPLICATE_TEST_CASE_FEEDBACK_SUFFIX));
+
         if (!duplicateTestCases.isEmpty()) {
             String duplicateDetailText = "This is a duplicate test case. Please review all your test cases and verify that your test cases have unique names!";
             List<Feedback> feedbacksForDuplicateTestCases = duplicateTestCases.stream().map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC)
-                    .text(testCase.getTestName() + " - Duplicate Test Case!").detailText(duplicateDetailText).positive(false)).toList();
+                    .text(testCase.getTestName() + DUPLICATE_TEST_CASE_FEEDBACK_SUFFIX).detailText(duplicateDetailText).positive(false)).toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
 
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);

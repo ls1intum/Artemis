@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -409,20 +408,14 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Highest sequence number ever handed out for a {@link TestCaseFeedback} of this result during this
-     * in-memory lifecycle, including rows that have since been removed. Sequence numbers are part of the
-     * primary key, so a number must never be reused while the removed row is still pending deletion in the
-     * persistence context: Hibernate flushes inserts before deletes and would either raise a
-     * {@code NonUniqueObjectException} or violate {@code test_case_feedback_pkey}. Transient by design —
-     * a freshly loaded result starts at 0 and derives the next number from its rows.
+     * Highest sequence numbers ever handed out for a {@link TestCaseFeedback} / {@link ScaFeedback} of this result during this in-memory lifecycle, including rows that have
+     * since been removed. Sequence numbers are part of the primary key, so a number must never be reused while the removed row is still pending deletion: Hibernate flushes
+     * inserts before deletes and would raise a {@code NonUniqueObjectException} or violate the primary key. Transient by design — a freshly loaded result starts at 0 and
+     * derives the next number from its rows.
      */
     @Transient
     private int highestTestCaseFeedbackSeq;
 
-    /**
-     * Highest sequence number ever handed out for a {@link ScaFeedback} of this result, see
-     * {@link #highestTestCaseFeedbackSeq}.
-     */
     @Transient
     private int highestScaFeedbackSeq;
 
@@ -487,24 +480,20 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Removes every test-case feedback row matching the given predicate, remembering their sequence numbers
-     * so that {@link #addTestCaseFeedback(TestCaseFeedback)} cannot hand one of them out again in the same
-     * flush — see {@link #highestTestCaseFeedbackSeq}. Removed rows are deleted via {@code orphanRemoval}.
+     * Removes every test-case feedback row matching the given predicate, remembering their sequence numbers so that {@link #addTestCaseFeedback(TestCaseFeedback)} cannot hand
+     * one of them out again in the same flush — see {@link #highestTestCaseFeedbackSeq}. Removed rows are deleted via {@code orphanRemoval}.
      *
      * @param filter selects the rows to remove
      * @return true if at least one row was removed
      */
     public boolean removeTestCaseFeedbackIf(Predicate<TestCaseFeedback> filter) {
-        boolean removed = false;
-        for (Iterator<TestCaseFeedback> iterator = testCaseFeedbacks.iterator(); iterator.hasNext();) {
-            TestCaseFeedback feedback = iterator.next();
-            if (filter.test(feedback)) {
-                highestTestCaseFeedbackSeq = Math.max(highestTestCaseFeedbackSeq, feedback.getSeq());
-                iterator.remove();
-                removed = true;
+        return testCaseFeedbacks.removeIf(feedback -> {
+            if (!filter.test(feedback)) {
+                return false;
             }
-        }
-        return removed;
+            highestTestCaseFeedbackSeq = Math.max(highestTestCaseFeedbackSeq, feedback.getSeq());
+            return true;
+        });
     }
 
     /**
@@ -565,9 +554,8 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Removes the given static-code-analysis feedback row, remembering its sequence number so that
-     * {@link #addScaFeedback(ScaFeedback)} cannot hand it out again in the same flush — see
-     * {@link #highestTestCaseFeedbackSeq}.
+     * Removes the given static-code-analysis feedback row, remembering its sequence number so that {@link #addScaFeedback(ScaFeedback)} cannot hand it out again in the same
+     * flush — see {@link #highestTestCaseFeedbackSeq}.
      *
      * @param feedback the row to remove
      * @return true if the row was part of this result
