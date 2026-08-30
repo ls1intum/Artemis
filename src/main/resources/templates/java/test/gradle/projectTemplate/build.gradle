@@ -29,6 +29,16 @@ repositories {
 }
 
 dependencies {
+    // artemis-java-test-sandbox still resolves to Logback 1.5.18 and AssertJ 3.27.3, both of which carry
+    // published advisories (GHSA-25qh-j22f-pwp8, GHSA-qqpg-mvqg-649v, GHSA-p47f-322f-whfh,
+    // GHSA-jhq6-gfmj-v8fx and GHSA-rqfh-9r24-8c9r). Pin the patched releases here until the sandbox
+    // ships them itself; both bumps stay within the same minor version and are API-compatible.
+    constraints {
+        testImplementation 'ch.qos.logback:logback-classic:1.5.38'
+        testImplementation 'ch.qos.logback:logback-core:1.5.38'
+        testImplementation 'org.assertj:assertj-core:3.27.7'
+    }
+
     testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0'
     implementation 'org.apache.commons:commons-lang3:3.18.0'
 
