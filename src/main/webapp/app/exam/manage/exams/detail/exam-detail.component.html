@@ -19,7 +19,7 @@
             </a>
         </jhi-feature-overlay>
         @if (exam() && isExamOver() && exam()?.course) {
-            <jhi-course-exam-archive-button class="flex items-center gap-2" [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
+            <jhi-course-exam-archive-button class="flex flex-wrap items-center gap-2" [archiveMode]="'Exam'" [exam]="exam()" [course]="exam()!.course!" />
         }
         <button
             tumUiButton
