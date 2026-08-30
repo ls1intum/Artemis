@@ -58,6 +58,7 @@ public class PlagiarismResult extends AbstractAuditingEntity {
      * Exercise for which plagiarism was detected.
      */
     @ManyToOne
+    @JoinColumn(nullable = false)
     protected Exercise exercise;
 
     /**

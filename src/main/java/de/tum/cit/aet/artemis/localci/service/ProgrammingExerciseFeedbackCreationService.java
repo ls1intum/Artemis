@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -275,6 +276,41 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     /**
+     * Saves the test cases, tolerating a second result for the same exercise that inserted the same ones first.
+     * <p>
+     * The read above and this write are not atomic, and results are processed on
+     * {@code artemis.continuous-integration.concurrent-result-processing-size} threads (16 by default), so two passes
+     * over the same exercise can both decide the same test names are new. The loser then violates the unique index on
+     * (test_name, exercise_id), and because nothing caught that, the exception unwound the whole result processing -
+     * the build's result was lost with "Result could not be processed for build job", not just its test cases.
+     * <p>
+     * Re-reading and saving only what is genuinely still missing makes the losing pass a no-op instead. Test cases
+     * that already carry an id are activation changes rather than inserts; they cannot collide, so they are kept.
+     * <p>
+     * Deliberately not implemented by deleting and re-inserting: {@code feedback.test_case_id} is declared
+     * {@code ON DELETE CASCADE}, so a delete would take the feedback of every past result for this exercise with it.
+     *
+     * @param exercise        the exercise the test cases belong to
+     * @param testCasesToSave the new test cases and activation changes this pass computed
+     */
+    private void saveToleratingConcurrentInsert(ProgrammingExercise exercise, Set<ProgrammingExerciseTestCase> testCasesToSave) {
+        try {
+            testCaseRepository.saveAll(testCasesToSave);
+        }
+        catch (DataIntegrityViolationException concurrentInsert) {
+            Set<ProgrammingExerciseTestCase> persisted = testCaseRepository.findByExerciseId(exercise.getId());
+            Set<ProgrammingExerciseTestCase> stillMissing = testCasesToSave.stream()
+                    .filter(testCase -> testCase.getId() != null || persisted.stream().noneMatch(testCase::isSameTestCase)).collect(Collectors.toSet());
+            if (stillMissing.isEmpty()) {
+                log.debug("Test cases for exercise {} were written by a concurrent result; nothing left to save", exercise.getId());
+                return;
+            }
+            // Whatever is left did not collide, so a failure here is not this race and has to reach the caller.
+            testCaseRepository.saveAll(stillMissing);
+        }
+    }
+
+    /**
      * Generates test cases from the given result's feedbacks & notifies the subscribing users about the test cases if they have changed. Has the side effect of sending a message
      * through the websocket!
      *
@@ -321,7 +357,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         testCasesToSave.removeIf(candidate -> testCasesToSave.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(candidate.getTestName())).count() > 1);
 
         if (!testCasesToSave.isEmpty()) {
-            testCaseRepository.saveAll(testCasesToSave);
+            saveToleratingConcurrentInsert(exercise, testCasesToSave);
             programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
             // Replace the test case names by ids in the problem statement.
             // This handles the case if the problem statement already contains the name of a test case
