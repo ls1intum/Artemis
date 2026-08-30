@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260830233350-1" author="Artemis">
+        <preConditions onFail="HALT"
+                       onFailMessage="Cannot enforce unique user emails because case-insensitive duplicates still exist. Follow https://docs.artemis.cit.tum.de/admin/user-email-uniqueness and rerun the documented detection query.">
+            <sqlCheck expectedResult="0"><![CDATA[
+                SELECT COUNT(*)
+                FROM (
+                    SELECT LOWER(email)
+                    FROM jhi_user
+                    WHERE email IS NOT NULL
+                      AND TRIM(email) <> ''
+                    GROUP BY LOWER(email)
+                    HAVING COUNT(*) > 1
+                ) AS duplicate_emails
+            ]]></sqlCheck>
+        </preConditions>
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260830233350-2" author="Artemis">
+        <comment>Normalize existing user emails before adding the unique index</comment>
+        <sql>
+            UPDATE jhi_user
+            SET email = NULL
+            WHERE email IS NOT NULL
+              AND TRIM(email) = ''
+        </sql>
+        <update tableName="jhi_user">
+            <column name="email" valueComputed="LOWER(email)"/>
+            <where>email IS NOT NULL</where>
+        </update>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260830233350-3" author="Artemis">
+        <dropIndex indexName="jhi_user_email" tableName="jhi_user"/>
+        <createIndex indexName="jhi_user_email" tableName="jhi_user" unique="true">
+            <column name="email"/>
+        </createIndex>
+        <rollback>
+            <dropIndex indexName="jhi_user_email" tableName="jhi_user"/>
+            <createIndex indexName="jhi_user_email" tableName="jhi_user">
+                <column name="email"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

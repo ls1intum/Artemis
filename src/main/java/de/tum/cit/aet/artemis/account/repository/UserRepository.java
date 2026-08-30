@@ -87,24 +87,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     boolean existsByEmailIgnoreCaseAndIdNot(String email, Long id);
 
-    /**
-     * Finds the numeric identifiers of all accounts whose non-blank email address is used by at least one other account, ignoring case.
-     * Deleted users are included because the future database constraint will apply to every row.
-     *
-     * @return the affected user identifiers, ordered for a stable administrator report
-     */
-    @Query("""
-            SELECT user.id
-            FROM User user
-            WHERE user.email IS NOT NULL
-                AND TRIM(user.email) <> ''
-                AND (SELECT COUNT(otherUser.id)
-                     FROM User otherUser
-                     WHERE LOWER(otherUser.email) = LOWER(user.email)) > 1
-            ORDER BY user.id
-            """)
-    List<Long> findUserIdsWithDuplicatedEmail();
-
     Optional<User> findOneByLogin(String login);
 
     /**
