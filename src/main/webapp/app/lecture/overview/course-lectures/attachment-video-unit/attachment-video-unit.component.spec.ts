@@ -69,10 +69,6 @@ describe('AttachmentVideoUnitComponent', () => {
 
     let mockLectureTranscriptionService: any;
 
-    /**
-     * Sends the unit a deep link, the only thing that expands it from the outside. A fresh object each call: the
-     * reference is what tells the unit this is a new jump.
-     */
     function deepLinkTo(unitId: number, target: { timestamp?: number; page?: number } = {}): void {
         fixture.componentRef.setInput('deepLink', { unitId, timestamp: target.timestamp, page: target.page });
     }
@@ -474,7 +470,6 @@ describe('AttachmentVideoUnitComponent', () => {
             };
             vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(mockTranscriptDTO));
 
-            // Set lectureUnit first, then expand (the deep link triggers toggleCollapse)
             fixture.componentRef.setInput('lectureUnit', {
                 id: 2,
                 videoSourceType: 'TUM_LIVE',
@@ -483,7 +478,6 @@ describe('AttachmentVideoUnitComponent', () => {
             deepLinkTo(2);
             fixture.detectChanges();
 
-            // Flush the HTTP request triggered by the deep link → toggleCollapse(false)
             expectPlaylistRequest(src, playlist);
             await fixture.whenStable();
             fixture.detectChanges();
@@ -499,7 +493,6 @@ describe('AttachmentVideoUnitComponent', () => {
             deepLinkTo(3);
             fixture.detectChanges();
 
-            // the deep link triggers toggleCollapse → playlist request
             expectPlaylistRequest('https://youtu.be/dQw4w9WgXcQ', null);
             await fixture.whenStable();
             fixture.detectChanges();
@@ -1117,7 +1110,6 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(videoPlayer.seekTo).toHaveBeenCalledWith(30, false);
             expect(videoPlayer.seekTo.mock.invocationCallOrder[0]).toBeLessThan(pdfViewer.goToPage.mock.invocationCallOrder[0]);
-            // The page change is ours, so synchronization must not answer it by seeking the video away again.
             expect(component['pendingPdfTargetPage']).toBe(4);
         });
 

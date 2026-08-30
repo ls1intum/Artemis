@@ -23,7 +23,6 @@ describe('LectureUnitComponent', () => {
         visibleToStudents: true,
     };
 
-    // A fresh object each call: the reference is what tells the card this is a new jump.
     const deepLinkTo = (target: { timestamp?: number; page?: number }): LectureDeepLink => ({ unitId: lectureUnit.id!, timestamp: target.timestamp, page: target.page });
 
     beforeEach(async () => {
@@ -195,9 +194,7 @@ describe('LectureUnitComponent', () => {
             fixture.detectChanges();
 
             await vi.waitFor(() => {
-                // Video player should be scrolled (timestamp takes priority)
                 expect(videoScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
-                // PDF viewer should not be scrolled (early return after video player)
                 expect(pdfScrollSpy).not.toHaveBeenCalled();
             });
         });
@@ -272,15 +269,12 @@ describe('LectureUnitComponent', () => {
 
             fixture.detectChanges();
 
-            // Manually toggle collapse to expand
             const collapseButton = fixture.debugElement.query(By.css('#lecture-unit-toggle-button'));
             collapseButton.nativeElement.click();
 
             await vi.waitFor(() => {
-                // Deeplink targets should not be scrolled (manual expand ignores deeplinks)
                 expect(videoScrollSpy).not.toHaveBeenCalled();
                 expect(pdfScrollSpy).not.toHaveBeenCalled();
-                // Unit card itself should be scrolled with 'nearest'
                 expect(unitCardScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
             });
         });
@@ -298,7 +292,6 @@ describe('LectureUnitComponent', () => {
                 expect(videoScrollSpy).toHaveBeenCalledTimes(1);
             });
 
-            // The user collapses the unit and asks for the very same place again.
             component.toggleCollapse();
             fixture.detectChanges();
             expect(component.isCollapsed()).toBe(true);

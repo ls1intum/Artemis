@@ -8,10 +8,8 @@ import { LectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-de
 export class LectureUnitDirective<T extends LectureUnit> {
     courseId = input.required<number>();
     lectureUnit = input.required<T>();
-    /** The lecture's pending jump; every unit gets it and picks out the ones addressed to itself. */
     readonly deepLink = input<LectureDeepLink | undefined>(undefined);
 
-    /** The pending jump if it targets this unit, handed on unchanged so that it keeps its identity. */
     readonly matchedDeepLink = computed(() => {
         const deepLink = this.deepLink();
         return deepLink?.unitId === this.lectureUnit()?.id ? deepLink : undefined;

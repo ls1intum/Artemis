@@ -47,12 +47,6 @@ import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, Lectu
 import { LectureDeepLink, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-interface DeepLinkNavigationState {
-    readonly routeKey: string;
-    readonly deepLinkKey?: string;
-    readonly urlAfterRedirects?: string;
-}
-
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
     completed: boolean;
@@ -157,11 +151,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly sidebarToggle = signal<(() => void) | undefined>(undefined);
     readonly toggleSidebar = (): void => this.sidebarToggle()?.();
 
-    private readonly deepLinkState = signal<LectureDeepLink | undefined>(undefined);
-    readonly deepLink = this.deepLinkState.asReadonly();
-    /** A jump waiting for its lecture to load, with the lecture it arrived for — else another one could execute it. */
+    readonly deepLink = signal<LectureDeepLink | undefined>(undefined);
     private pendingDeepLink?: { readonly deepLink: LectureDeepLink; readonly lectureId: number };
-    private lastDeepLinkNavigationState?: DeepLinkNavigationState;
+    private lastDeepLinkNavigation?: { readonly routeKey: string; readonly deepLinkKey?: string; readonly urlAfterRedirects?: string };
     private lastHandledDeepLinkNavigationId?: number;
     private readonly lectureDetailsLoad$ = new Subject<number>();
     private irisSettingsSubscription?: Subscription;
@@ -226,9 +218,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             const lectureId = +params.lectureId;
             if (lectureId !== this.lectureId) {
-                // Angular reuses this component for a new lectureId, so a jump belonging to the lecture being left must
-                // not stay behind — except one that came in for the lecture being entered.
-                this.deepLinkState.set(undefined);
+                this.deepLink.set(undefined);
                 if (this.pendingDeepLink && this.pendingDeepLink.lectureId !== lectureId) {
                     this.pendingDeepLink = undefined;
                 }
@@ -241,16 +231,11 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        // Reacts to NavigationEnd rather than to the queryParams observable: that one only emits when the values
-        // change, so clicking the same citation twice would be swallowed. What makes an identical URL produce a fresh
-        // navigation — and therefore this event — is `onSameUrlNavigation: 'reload'` in app.config.ts. Remove that and
-        // repeated jumps stop arriving here, silently.
         const initialNavigationId = this.router.currentNavigation()?.id;
         this.acceptDeepLinkFromRoute(initialNavigationId);
-        this.lastDeepLinkNavigationState = this.currentDeepLinkNavigationState(this.router.url);
+        this.lastDeepLinkNavigation = this.currentDeepLinkNavigation(this.router.url);
         this.router.events
             .pipe(
-                // The navigation that is activating this page right now has already been handled by the call above.
                 filter((event): event is NavigationEnd => event instanceof NavigationEnd && event.id !== initialNavigationId),
                 takeUntilDestroyed(this.destroyRef),
             )
@@ -266,7 +251,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         const deepLink = parseLectureDeepLink(this.activatedRoute.snapshot.queryParams);
         if (!deepLink) {
             this.pendingDeepLink = undefined;
-            this.deepLinkState.set(undefined);
+            this.deepLink.set(undefined);
             this.lastHandledDeepLinkNavigationId = undefined;
             return;
         }
@@ -277,38 +262,27 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     }
 
     private shouldHandleNavigationEnd(event: NavigationEnd): boolean {
-        if (this.lastHandledDeepLinkNavigationId === event.id) {
+        if (event.id === this.lastHandledDeepLinkNavigationId) {
             return false;
         }
-        const previous = this.lastDeepLinkNavigationState;
-        const current = this.currentDeepLinkNavigationState(event.urlAfterRedirects);
-        this.lastDeepLinkNavigationState = current;
-
-        if (!previous || current.routeKey !== previous.routeKey || current.deepLinkKey !== previous.deepLinkKey) {
-            return true;
-        }
-
-        return current.deepLinkKey !== undefined && current.urlAfterRedirects === previous.urlAfterRedirects;
+        const previous = this.lastDeepLinkNavigation;
+        const current = this.currentDeepLinkNavigation(event.urlAfterRedirects);
+        this.lastDeepLinkNavigation = current;
+        return (
+            !previous ||
+            current.routeKey !== previous.routeKey ||
+            current.deepLinkKey !== previous.deepLinkKey ||
+            (!!current.deepLinkKey && current.urlAfterRedirects === previous.urlAfterRedirects)
+        );
     }
 
-    private currentDeepLinkNavigationState(urlAfterRedirects?: string): DeepLinkNavigationState {
-        const queryParams = this.activatedRoute.snapshot.queryParams;
-        const deepLink = parseLectureDeepLink(queryParams);
+    private currentDeepLinkNavigation(urlAfterRedirects?: string) {
+        const deepLink = parseLectureDeepLink(this.activatedRoute.snapshot.queryParams);
         return {
-            routeKey: this.currentRouteKey(),
-            deepLinkKey: deepLink ? this.deepLinkKey(deepLink) : undefined,
+            routeKey: `${this.activatedRoute.parent?.parent?.snapshot?.params?.['courseId'] ?? ''}/${this.activatedRoute.snapshot.params['lectureId'] ?? ''}`,
+            deepLinkKey: deepLink ? `${deepLink.unitId}/${deepLink.timestamp ?? ''}/${deepLink.page ?? ''}` : undefined,
             urlAfterRedirects,
         };
-    }
-
-    private deepLinkKey(deepLink: LectureDeepLink): string {
-        return `${deepLink.unitId}/${deepLink.timestamp ?? ''}/${deepLink.page ?? ''}`;
-    }
-
-    private currentRouteKey(): string {
-        const courseId = this.activatedRoute.parent?.parent?.snapshot?.params?.['courseId'] ?? '';
-        const lectureId = this.activatedRoute.snapshot.params['lectureId'] ?? '';
-        return `${courseId}/${lectureId}`;
     }
 
     loadData() {
@@ -395,10 +369,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Hands the pending jump to the units, once the lecture it arrived for is the loaded one — a link can arrive before
-     * its lecture, so until then it waits and loadData publishes it. Published at most once: twice would jump twice.
-     */
     private publishDeepLink(): void {
         const pending = this.pendingDeepLink;
         if (!pending || this.lecture()?.id !== pending.lectureId) {
@@ -406,7 +376,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
 
         this.pendingDeepLink = undefined;
-        this.deepLinkState.set(pending.deepLink);
+        this.deepLink.set(pending.deepLink);
     }
 
     createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {

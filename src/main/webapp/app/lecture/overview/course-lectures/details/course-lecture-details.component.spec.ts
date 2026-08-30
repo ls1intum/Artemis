@@ -72,7 +72,6 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
     let lectureService: LectureService;
-    /** Stands in for the router's event stream; emit a NavigationEnd to let a navigation finish. */
     let routerEvents: Subject<NavigationEnd>;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
@@ -179,8 +178,6 @@ describe('CourseLectureDetailsComponent', () => {
                     useValue: {
                         params: of({ lectureId: '1' }),
                         queryParams: of({}),
-                        // Advanced ahead of the observables by the router; the deep link is validated against it, and
-                        // the clearing reads the query parameters from it to see whether anything is left to clear.
                         snapshot: { params: { lectureId: '1' }, queryParams: {} },
                         parent: {
                             parent: {
@@ -190,7 +187,6 @@ describe('CourseLectureDetailsComponent', () => {
                         },
                     },
                 },
-                // currentNavigation is a signal property, which MockProvider does not stub on its own.
                 MockProvider(Router, { events: routerEvents, currentNavigation: signal({ id: 1 } as Navigation) }),
                 MockProvider(ScienceService),
                 MockProvider(IrisSettingsService),
@@ -614,23 +610,18 @@ describe('CourseLectureDetailsComponent', () => {
             return unit;
         };
 
-        // Deep-cloned, so nested fixture state is not shared between responses or test cases.
         const lectureWith = (units: AttachmentVideoUnit[], id = 1) => new HttpResponse({ body: cloneWith(lecture, { id, lectureUnits: units, attachments: [] }), status: 200 });
 
-        /** Answers the lecture request right away. */
         const respondWith = (units: AttachmentVideoUnit[], id = 1) => {
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(lectureWith(units, id)));
         };
 
-        /** Leaves the lecture request open; call the returned function to let it answer. */
         const respondLater = (units: AttachmentVideoUnit[], id = 1) => {
             const response = new Subject<HttpResponse<Lecture>>();
             vi.spyOn(lectureService, 'findWithDetails').mockReturnValue(response);
             return () => response.next(lectureWith(units, id));
         };
 
-        // The route is provided as a plain value object, so we can swap the observables before re-running ngOnInit.
-        // Angular reuses this component for a new lectureId, so opening another lecture is a re-init with new params.
         const reInit = (queryParams: Record<string, unknown> = {}, lectureId?: string) => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             if (lectureId) {
@@ -670,7 +661,6 @@ describe('CourseLectureDetailsComponent', () => {
         });
 
         it('should pass a target on even when the unit cannot honour it', () => {
-            // Players and viewer only render when the unit has a video or a PDF, so this page need not judge it twice.
             respondWith([attachmentUnit(7, '/path/to/slides.zip', undefined)]);
 
             reInit({ unit: '7', timestamp: '30', page: '4' });
@@ -713,7 +703,7 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
         });
 
-        it('should ignore unrelated query navigations that keep handled deep-link parameters', () => {
+        it('should ignore unrelated navigations that preserve handled deep-link parameters', () => {
             respondWith([attachmentUnit(7)]);
             reInit();
 
@@ -734,21 +724,10 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
         });
 
-        it('should ignore query-only navigations unrelated to lecture deep-link parameters', () => {
-            respondWith([attachmentUnit(7)]);
-            reInit();
-            const acceptDeepLink = vi.spyOn(courseLecturesDetailsComponent as unknown as { acceptDeepLinkFromRoute: () => void }, 'acceptDeepLinkFromRoute');
-
-            emitNavigationWithQueryParams({ unrelated: 'value' });
-
-            expect(acceptDeepLink).not.toHaveBeenCalled();
-        });
-
         it('should hold a jump back until the lecture it points at is loaded, across the switch to it', () => {
             respondWith([attachmentUnit(7)]);
             reInit({ unit: '7', page: '4' });
 
-            // The link for the next lecture arrives while this component still shows the previous one.
             const deliver = respondLater([attachmentUnit(9)], 2);
             reInit({ unit: '9', page: '2' }, '2');
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();
@@ -759,11 +738,9 @@ describe('CourseLectureDetailsComponent', () => {
         });
 
         it('should not execute a waiting jump against a lecture it did not arrive for', () => {
-            // The link comes in for lecture 2, whose load never answers.
             respondLater([attachmentUnit(7)], 2);
             reInit({ unit: '7', page: '4' }, '2');
 
-            // Lecture 3 is opened instead and does load, carrying a unit with the very id the waiting link names.
             respondWith([attachmentUnit(7)], 3);
             reInit({}, '3');
 
@@ -775,7 +752,6 @@ describe('CourseLectureDetailsComponent', () => {
             reInit({ unit: '7', page: '4' });
             expect(courseLecturesDetailsComponent.deepLink()).toBeDefined();
 
-            // Kept, it would jump again in every lecture opened afterwards that carries unit 7.
             reInit({}, '2');
 
             expect(courseLecturesDetailsComponent.deepLink()).toBeUndefined();

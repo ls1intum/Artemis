@@ -9,7 +9,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { GlobalSearchLectureResultsComponent } from './global-search-lecture-results.component';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
-import { normalizeLectureSearchResultQueryParams } from 'app/core/navbar/global-search/services/lecture-search-result-normalization.util';
 
 const mockResult: LectureSearchResult = {
     course: { id: 1, name: 'Advanced Web Development' },
@@ -56,10 +55,6 @@ describe('GlobalSearchLectureResultsComponent', () => {
         fixture.detectChanges();
     });
 
-    const setLectureResults = (results: LectureSearchResult[]) => {
-        (component as any).lectureResults.set(results.map(normalizeLectureSearchResultQueryParams));
-    };
-
     it('should create', () => {
         expect(component).toBeTruthy();
     });
@@ -90,7 +85,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
         it('should show results when lectureResults is populated', () => {
             (component as any).isLoading.set(false);
-            setLectureResults([mockResult]);
+            (component as any).lectureResults.set([mockResult]);
             fixture.detectChanges();
 
             const cards = fixture.nativeElement.querySelectorAll('.lecture-result-card');
@@ -99,7 +94,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
         it('should display lecture unit name, course path, and page number', () => {
             (component as any).isLoading.set(false);
-            setLectureResults([mockResult]);
+            (component as any).lectureResults.set([mockResult]);
             fixture.detectChanges();
 
             const card = fixture.nativeElement.querySelector('.lecture-result-card');
@@ -115,7 +110,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
         it('should show snippet when available', () => {
             (component as any).isLoading.set(false);
-            setLectureResults([mockResult]);
+            (component as any).lectureResults.set([mockResult]);
             fixture.detectChanges();
 
             const snippet = fixture.nativeElement.querySelector('.lecture-card-content');
@@ -125,7 +120,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
         it('should not show snippet section when snippet is undefined', () => {
             (component as any).isLoading.set(false);
-            setLectureResults([mockResultNoSnippet]);
+            (component as any).lectureResults.set([mockResultNoSnippet]);
             fixture.detectChanges();
 
             const snippet = fixture.nativeElement.querySelector('.lecture-card-content');
@@ -134,7 +129,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
         it('should show no-results message when results are empty and not loading', () => {
             (component as any).isLoading.set(false);
-            setLectureResults([]);
+            (component as any).lectureResults.set([]);
             fixture.detectChanges();
 
             const emptyMessage = fixture.nativeElement.querySelector('.d-block.text-secondary.text-center.py-5');
@@ -145,12 +140,12 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
     describe('itemCount', () => {
         it('should be 0 when there are no results', () => {
-            setLectureResults([]);
+            (component as any).lectureResults.set([]);
             expect(component.itemCount()).toBe(0);
         });
 
         it('should equal the number of results', () => {
-            setLectureResults([mockResult, mockResultNoSnippet]);
+            (component as any).lectureResults.set([mockResult, mockResultNoSnippet]);
             expect(component.itemCount()).toBe(2);
         });
     });
@@ -169,7 +164,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
     describe('Keyboard navigation', () => {
         it('should navigate to result link when Enter is pressed on a selected result', () => {
-            setLectureResults([mockResult]);
+            (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
 
@@ -184,7 +179,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
         });
 
         it('should not navigate when Enter is pressed with no selection', () => {
-            setLectureResults([mockResult]);
+            (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', -1);
             fixture.detectChanges();
 
@@ -197,7 +192,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
         });
 
         it('should not navigate on non-Enter key', () => {
-            setLectureResults([mockResult]);
+            (component as any).lectureResults.set([mockResult]);
             fixture.componentRef.setInput('selectedIndex', 0);
             fixture.detectChanges();
 
@@ -245,7 +240,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             pipelineFixture.detectChanges();
 
             expect(mockSearchService.search).toHaveBeenCalledWith('signals');
-            expect((pipelineComponent as any).lectureResults()).toEqual(results.map(normalizeLectureSearchResultQueryParams));
+            expect((pipelineComponent as any).lectureResults()).toEqual(results);
         });
 
         it('should normalize lecture deep-link query params before keyboard navigation', () => {
