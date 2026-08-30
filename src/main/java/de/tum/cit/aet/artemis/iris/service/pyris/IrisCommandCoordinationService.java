@@ -13,9 +13,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.topic.ITopic;
-
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandAckDTO;
 
@@ -23,7 +21,8 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCommandAckDTO;
  * Coordinates the synchronous wait for a client acknowledgement of an Iris command across the cluster.
  * <p>
  * A command is carried out by pushing a request to the user's browser over WebSocket and blocking until the browser replies. The browser's STOMP ack may arrive on a different node
- * than the one awaiting it, so acks are broadcast over a Hazelcast topic and applied to the local pending future by correlation id. Only the node that registered a correlation id
+ * than the one awaiting it, so acks are broadcast over a distributed topic and applied to the local pending future by correlation id. Only the node that registered a correlation
+ * id
  * holds a future for it; all other nodes ignore the broadcast.
  */
 @Lazy
@@ -35,18 +34,17 @@ public class IrisCommandCoordinationService {
 
     private static final String ACK_TOPIC = "iris-command-ack";
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     private final Map<String, PendingCommand> pendingCommands = new ConcurrentHashMap<>();
 
-    public IrisCommandCoordinationService(HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
+    public IrisCommandCoordinationService(DistributedDataProvider distributedDataProvider) {
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     @PostConstruct
     public void init() {
-        ITopic<AckMessage> topic = hazelcastInstance.getTopic(ACK_TOPIC);
-        topic.addMessageListener(message -> applyAck(message.getMessageObject()));
+        distributedDataProvider.<AckMessage>getTopic(ACK_TOPIC).addMessageListener(this::applyAck);
     }
 
     /**
@@ -60,7 +58,7 @@ public class IrisCommandCoordinationService {
     public CompletableFuture<IrisCommandAckDTO> register(String correlationId, String userLogin) {
         var future = new CompletableFuture<IrisCommandAckDTO>();
         pendingCommands.put(correlationId, new PendingCommand(future, userLogin));
-        future.whenComplete((ack, throwable) -> pendingCommands.remove(correlationId));
+        future.whenComplete((_, _) -> pendingCommands.remove(correlationId));
         return future;
     }
 
@@ -71,7 +69,7 @@ public class IrisCommandCoordinationService {
      * @param userLogin the login of the authenticated user that sent the ack
      */
     public void handleAck(IrisCommandAckDTO ack, String userLogin) {
-        hazelcastInstance.<AckMessage>getTopic(ACK_TOPIC).publish(new AckMessage(ack.correlationId(), ack.applied(), userLogin));
+        distributedDataProvider.<AckMessage>getTopic(ACK_TOPIC).publish(new AckMessage(ack.correlationId(), ack.applied(), userLogin));
     }
 
     private void applyAck(AckMessage message) {

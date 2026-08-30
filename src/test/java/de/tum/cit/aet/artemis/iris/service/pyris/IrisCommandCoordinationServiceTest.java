@@ -3,13 +3,13 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,15 +17,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.topic.ITopic;
-import com.hazelcast.topic.Message;
-import com.hazelcast.topic.MessageListener;
-
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandAckDTO;
 
 /**
- * Unit tests for {@link IrisCommandCoordinationService}. The Hazelcast topic is mocked and its
+ * Unit tests for {@link IrisCommandCoordinationService}. The distributed topic is mocked and its
  * fan-out is simulated by delivering every published ack straight to the registered listener, so
  * the register -> handleAck -> future-completion round-trip (and its user/correlation guards) can be
  * exercised without a real cluster.
@@ -39,41 +36,39 @@ class IrisCommandCoordinationServiceTest {
 
     private static final String UNREGISTERED_CORRELATION_ID = "00000000-0000-0000-0000-000000000002";
 
-    // Hazelcast hands back a registration id when a listener is added; nothing here uses it.
+    // Distributed topics hand back a registration id when a listener is added; nothing here uses it.
     private static final UUID LISTENER_REGISTRATION_ID = UUID.fromString("00000000-0000-0000-0000-0000000000ff");
 
     @Mock
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider distributedDataProvider;
 
     @Mock
-    private ITopic<Object> ackTopic;
+    private DistributedTopic<Object> ackTopic;
 
     // The listener the service registers in init(), captured so the test can deliver published acks to
-    // it — standing in for Hazelcast's same-node fan-out.
-    private final AtomicReference<MessageListener<Object>> listenerRef = new AtomicReference<>();
+    // it, standing in for the topic's same-node fan-out.
+    private final AtomicReference<Consumer<Object>> listenerRef = new AtomicReference<>();
 
     private IrisCommandCoordinationService coordinationService;
 
     @BeforeEach
     @SuppressWarnings({ "unchecked", "rawtypes" })
     void setUp() {
-        when(hazelcastInstance.getTopic(any())).thenReturn((ITopic) ackTopic);
+        when(distributedDataProvider.getTopic(any())).thenReturn((DistributedTopic) ackTopic);
         doAnswer(invocation -> {
             listenerRef.set(invocation.getArgument(0));
             return LISTENER_REGISTRATION_ID;
         }).when(ackTopic).addMessageListener(any());
         doAnswer(invocation -> {
             Object published = invocation.getArgument(0);
-            MessageListener<Object> listener = listenerRef.get();
+            Consumer<Object> listener = listenerRef.get();
             if (listener != null) {
-                Message<Object> message = mock(Message.class);
-                when(message.getMessageObject()).thenReturn(published);
-                listener.onMessage(message);
+                listener.accept(published);
             }
             return null;
         }).when(ackTopic).publish(any());
 
-        coordinationService = new IrisCommandCoordinationService(hazelcastInstance);
+        coordinationService = new IrisCommandCoordinationService(distributedDataProvider);
         coordinationService.init();
     }
 
