@@ -37,7 +37,7 @@ class OgMetaElementHtmlParser {
             }).toList();
         }
         catch (IOException e) {
-            log.info("IOException occurred while parsing html meta elements.");
+            log.info("Could not retrieve link preview: {}", e.getMessage());
             return List.of();
         }
     }

@@ -42,6 +42,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        Objects.requireNonNull(cacheManager.getCache("linkPreview")).clear();
     }
 
     @ParameterizedTest
@@ -59,6 +60,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
             // Perform a GET request with the URL as a query parameter
             LinkPreviewDTO linkPreviewData = request.get(requestUrl, HttpStatus.OK, LinkPreviewDTO.class);
+            documentFetcherMock.verify(() -> LinkPreviewDocumentFetcher.fetch(url));
 
             // Assert that the response is not null
             assertThat(linkPreviewData).isNotNull();

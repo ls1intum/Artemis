@@ -8,9 +8,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,17 +42,22 @@ class LinkPreviewDocumentFetcherTest {
     @Test
     void validatesAndRetrievesRedirectDestination() throws Exception {
         String targetUrl = url("/target");
+        AtomicReference<String> requestHost = new AtomicReference<>();
         httpServer.createContext("/redirect", exchange -> redirect(exchange, targetUrl));
-        httpServer.createContext("/target", exchange -> respond(exchange, "<html><head><meta property=\"og:title\" content=\"Example\"></head></html>"));
+        httpServer.createContext("/target", exchange -> {
+            requestHost.set(exchange.getRequestHeaders().getFirst("Host"));
+            respond(exchange, "<html><head><meta property=\"og:title\" content=\"Example\"></head></html>");
+        });
         List<URI> resolvedUris = new ArrayList<>();
 
         var document = LinkPreviewDocumentFetcher.fetch(url("/redirect"), uri -> {
             resolvedUris.add(uri);
-            return new LinkPreviewUrlValidator.ValidatedUrl(uri);
+            return validatedUrl(uri);
         });
 
         assertThat(resolvedUris).extracting(URI::getPath).containsExactly("/redirect", "/target");
         assertThat(document.selectFirst("meta[property=og:title]").attr("content")).isEqualTo("Example");
+        assertThat(requestHost).hasValue("example.com:" + httpServer.getAddress().getPort());
     }
 
     @Test
@@ -67,13 +74,86 @@ class LinkPreviewDocumentFetcherTest {
             if (uri.getPath().equals("/target")) {
                 throw new IOException("Rejected link preview URL");
             }
-            return new LinkPreviewUrlValidator.ValidatedUrl(uri);
+            return validatedUrl(uri);
         })).isInstanceOf(IOException.class);
         assertThat(targetRequests).hasValue(0);
     }
 
+    @Test
+    void stopsAfterMaximumNumberOfRedirects() {
+        AtomicInteger requests = new AtomicInteger();
+        httpServer.createContext("/redirect", exchange -> {
+            requests.incrementAndGet();
+            redirect(exchange, url("/redirect"));
+        });
+
+        assertThatThrownBy(() -> LinkPreviewDocumentFetcher.fetch(url("/redirect"), this::validatedUrl)).isInstanceOf(IOException.class)
+                .hasMessage("Too many redirects while retrieving link preview");
+        assertThat(requests).hasValue(6);
+    }
+
+    @Test
+    void rejectsResponseExceedingMaximumSize() {
+        httpServer.createContext("/large", exchange -> respond(exchange, 200, new byte[2 * 1024 * 1024 + 1]));
+
+        assertThatThrownBy(() -> LinkPreviewDocumentFetcher.fetch(url("/large"), this::validatedUrl)).isInstanceOf(IOException.class)
+                .hasMessage("Link preview response exceeded the maximum size");
+    }
+
+    @Test
+    void rejectsUnsuccessfulResponse() {
+        httpServer.createContext("/error", exchange -> respond(exchange, 500, "Error".getBytes(StandardCharsets.UTF_8)));
+
+        assertThatThrownBy(() -> LinkPreviewDocumentFetcher.fetch(url("/error"), this::validatedUrl)).isInstanceOf(IOException.class)
+                .hasMessage("Link preview request returned status 500");
+    }
+
+    @Test
+    void retrievesChunkedResponse() throws Exception {
+        httpServer.createContext("/chunked", exchange -> {
+            exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+            exchange.sendResponseHeaders(200, 0);
+            try (var responseBody = exchange.getResponseBody()) {
+                responseBody.write("<html><head>".getBytes(StandardCharsets.UTF_8));
+                responseBody.flush();
+                responseBody.write("<meta property=\"og:title\" content=\"Example\"></head></html>".getBytes(StandardCharsets.UTF_8));
+            }
+        });
+
+        var document = LinkPreviewDocumentFetcher.fetch(url("/chunked"), this::validatedUrl);
+
+        assertThat(document.selectFirst("meta[property=og:title]").attr("content")).isEqualTo("Example");
+    }
+
+    @Test
+    void boundsResponseBodyReadDuration() {
+        httpServer.createContext("/slow", exchange -> {
+            exchange.sendResponseHeaders(200, 0);
+            try (var responseBody = exchange.getResponseBody()) {
+                for (int i = 0; i < 100; i++) {
+                    responseBody.write('a');
+                    responseBody.flush();
+                    Thread.sleep(25);
+                }
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            catch (IOException ignored) {
+                // The client closes the response when the request duration is exceeded.
+            }
+        });
+
+        assertThatThrownBy(() -> LinkPreviewDocumentFetcher.fetch(url("/slow"), this::validatedUrl, Duration.ofMillis(500))).isInstanceOf(IOException.class)
+                .hasMessageContaining("timed out");
+    }
+
     private String url(String path) {
-        return "http://127.0.0.1:" + httpServer.getAddress().getPort() + path;
+        return "http://example.com:" + httpServer.getAddress().getPort() + path;
+    }
+
+    private LinkPreviewUrlValidator.ValidatedUrl validatedUrl(URI uri) {
+        return new LinkPreviewUrlValidator.ValidatedUrl(uri, List.of(serverAddress));
     }
 
     private static void redirect(HttpExchange exchange, String location) throws IOException {
@@ -85,7 +165,11 @@ class LinkPreviewDocumentFetcherTest {
     private static void respond(HttpExchange exchange, String response) throws IOException {
         byte[] body = response.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
-        exchange.sendResponseHeaders(200, body.length);
+        respond(exchange, 200, body);
+    }
+
+    private static void respond(HttpExchange exchange, int status, byte[] body) throws IOException {
+        exchange.sendResponseHeaders(status, body.length);
         try (var responseBody = exchange.getResponseBody()) {
             responseBody.write(body);
         }

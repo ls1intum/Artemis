@@ -26,6 +26,7 @@ class LinkPreviewUrlValidatorTest {
         var result = validator.validateAndResolve(uri);
 
         assertThat(result.uri()).isEqualTo(uri);
+        assertThat(result.addresses()).containsExactly(addresses);
     }
 
     @ParameterizedTest

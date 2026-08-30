@@ -2,11 +2,7 @@ package de.tum.cit.aet.artemis.communication.service.linkpreview;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.time.Duration;
 import java.util.regex.Matcher;
@@ -24,11 +20,11 @@ public final class LinkPreviewDocumentFetcher {
 
     private static final int MAX_RESPONSE_SIZE = 2 * 1024 * 1024;
 
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+
     private static final Pattern CHARSET_PATTERN = Pattern.compile("(?:^|;)\\s*charset\\s*=\\s*[\\\"']?([^;\\\"'\\s]+)", Pattern.CASE_INSENSITIVE);
 
     private static final LinkPreviewUrlValidator URL_VALIDATOR = new LinkPreviewUrlValidator();
-
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).followRedirects(HttpClient.Redirect.NEVER).build();
 
     private LinkPreviewDocumentFetcher() {
     }
@@ -38,55 +34,39 @@ public final class LinkPreviewDocumentFetcher {
     }
 
     static Document fetch(String url, UrlResolver urlResolver) throws IOException {
+        return fetch(url, urlResolver, REQUEST_TIMEOUT);
+    }
+
+    static Document fetch(String url, UrlResolver urlResolver, Duration requestTimeout) throws IOException {
         URI currentUri = createUri(url);
 
         for (int redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
             LinkPreviewUrlValidator.ValidatedUrl validatedUrl = urlResolver.resolve(currentUri);
-            FetchResponse response = fetch(validatedUrl);
-            if (response.redirectLocation() == null) {
-                return Jsoup.parse(new ByteArrayInputStream(response.body()), response.charsetName(), validatedUrl.uri().toString());
+            LinkPreviewHttpClient.Response response = LinkPreviewHttpClient.get(validatedUrl, requestTimeout, MAX_RESPONSE_SIZE);
+            if (!isRedirect(response.statusCode())) {
+                if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                    throw new IOException("Link preview request returned status " + response.statusCode());
+                }
+                return Jsoup.parse(new ByteArrayInputStream(response.body()), getCharsetName(response), validatedUrl.uri().toString());
             }
             if (redirectCount == MAX_REDIRECTS) {
                 throw new IOException("Too many redirects while retrieving link preview");
             }
-            currentUri = resolveRedirect(currentUri, response.redirectLocation());
+            String redirectLocation = response.firstHeader("Location");
+            if (redirectLocation == null) {
+                throw new IOException("Redirect response did not include a location");
+            }
+            currentUri = resolveRedirect(currentUri, redirectLocation);
         }
 
         throw new IOException("Could not retrieve link preview");
     }
 
-    private static FetchResponse fetch(LinkPreviewUrlValidator.ValidatedUrl validatedUrl) throws IOException {
-        var request = HttpRequest.newBuilder(validatedUrl.uri()).timeout(Duration.ofSeconds(10)).header("Accept", "text/html,application/xhtml+xml")
-                .header("User-Agent", "Artemis Link Preview").GET().build();
-        HttpResponse<InputStream> response;
-        try {
-            response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
+    private static String getCharsetName(LinkPreviewHttpClient.Response response) {
+        String contentType = response.firstHeader("Content-Type");
+        if (contentType == null) {
+            return null;
         }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("Link preview request was interrupted", e);
-        }
-
-        try (InputStream responseBody = response.body()) {
-            int statusCode = response.statusCode();
-            if (isRedirect(statusCode)) {
-                String location = response.headers().firstValue("Location").orElseThrow(() -> new IOException("Redirect response did not include a location"));
-                return new FetchResponse(location, null, null);
-            }
-            if (statusCode < 200 || statusCode >= 300) {
-                throw new IOException("Link preview request returned status " + statusCode);
-            }
-
-            byte[] body = responseBody.readNBytes(MAX_RESPONSE_SIZE + 1);
-            if (body.length > MAX_RESPONSE_SIZE) {
-                throw new IOException("Link preview response exceeded the maximum size");
-            }
-            return new FetchResponse(null, body, getCharsetName(response.headers()));
-        }
-    }
-
-    private static String getCharsetName(java.net.http.HttpHeaders headers) {
-        String contentType = headers.firstValue("Content-Type").orElse("");
         Matcher matcher = CHARSET_PATTERN.matcher(contentType);
         if (!matcher.find()) {
             return null;
@@ -125,8 +105,5 @@ public final class LinkPreviewDocumentFetcher {
     interface UrlResolver {
 
         LinkPreviewUrlValidator.ValidatedUrl resolve(URI uri) throws IOException;
-    }
-
-    private record FetchResponse(String redirectLocation, byte[] body, String charsetName) {
     }
 }

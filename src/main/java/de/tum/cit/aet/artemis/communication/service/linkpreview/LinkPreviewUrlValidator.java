@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -36,7 +37,7 @@ final class LinkPreviewUrlValidator {
         if (addresses.length == 0 || Arrays.stream(addresses).anyMatch(address -> !isPublicAddress(address))) {
             throw new UnknownHostException("The link preview host did not resolve to a public address");
         }
-        return new ValidatedUrl(uri);
+        return new ValidatedUrl(uri, List.copyOf(Arrays.asList(addresses)));
     }
 
     private boolean isValidUri(URI uri) {
@@ -123,6 +124,10 @@ final class LinkPreviewUrlValidator {
         InetAddress[] resolve(String host) throws UnknownHostException;
     }
 
-    record ValidatedUrl(URI uri) {
+    record ValidatedUrl(URI uri, List<InetAddress> addresses) {
+
+        ValidatedUrl {
+            addresses = List.copyOf(addresses);
+        }
     }
 }
