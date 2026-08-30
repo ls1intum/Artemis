@@ -663,6 +663,12 @@ public class CourseTestService {
             }
         }
 
+        // Indexing is asynchronous, so wait for it to land before deleting. An upsert that completes after the
+        // deletion has swept the collection would leave a row the deletion can no longer remove.
+        for (Long exerciseId : allExerciseIds) {
+            WeaviateTestUtil.awaitExerciseInWeaviate(weaviateService, exerciseId);
+        }
+
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next());
@@ -3362,7 +3368,8 @@ public class CourseTestService {
                 course.getMaxRequestMoreFeedbackTimeDays(), course.getMaxComplaintTextLimit(), course.getMaxComplaintResponseTextLimit(), course.getColor(),
                 course.isEnrollmentEnabled(), course.getEnrollmentConfirmationMessage(), course.isUnenrollmentEnabled(), course.getLearningPathsEnabled(),
                 course.getPresentationScore(), course.getMaxPoints(), course.getAccuracyOfScores(), course.getRestrictedAthenaModulesAccess(), course.getTimeZone(),
-                course.getCourseInformationSharingConfiguration(), course.isGradeRelevant());
+                course.getCourseInformationSharingConfiguration(), course.isGradeRelevant(), course.getAutoOrchestratorEnabled(), course.getDebounceWindowSecondsOverride(),
+                course.getMaxDailyOrchestrationOverride());
     }
 
     public MockMultipartHttpServletRequestBuilder buildUpdateCourse(long id, @NonNull Course course) throws JsonProcessingException {
