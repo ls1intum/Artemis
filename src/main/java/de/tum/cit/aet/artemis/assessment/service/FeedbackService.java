@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 
 @Profile(PROFILE_CORE)
@@ -45,6 +47,45 @@ public class FeedbackService {
         }
 
         return copyFeedback(originalFeedback, longFeedbackText);
+    }
+
+    /**
+     * Creates a copy of the given test-case feedback for attaching to another result. The copy shares the
+     * immutable, deduplicated message row — copying is cheap by design.
+     *
+     * @param originalFeedback The feedback that should be copied.
+     * @return A copy of the feedback without an owning result (the caller attaches it).
+     */
+    public TestCaseFeedback copyTestCaseFeedback(final TestCaseFeedback originalFeedback) {
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(originalFeedback.getTestCase());
+        feedback.setPositive(originalFeedback.isPositive());
+        feedback.setMessage(originalFeedback.getMessage());
+        return feedback;
+    }
+
+    /**
+     * Creates a copy of the given SCA feedback for attaching to another result. The copy shares the
+     * immutable, deduplicated message row.
+     *
+     * @param originalFeedback The feedback that should be copied.
+     * @return A copy of the feedback without an owning result (the caller attaches it).
+     */
+    public ScaFeedback copyScaFeedback(final ScaFeedback originalFeedback) {
+        ScaFeedback feedback = new ScaFeedback();
+        feedback.setTool(originalFeedback.getTool());
+        feedback.setCategory(originalFeedback.getCategory());
+        feedback.setToolCategory(originalFeedback.getToolCategory());
+        feedback.setRule(originalFeedback.getRule());
+        feedback.setFilePath(originalFeedback.getFilePath());
+        feedback.setStartLine(originalFeedback.getStartLine());
+        feedback.setEndLine(originalFeedback.getEndLine());
+        feedback.setStartColumn(originalFeedback.getStartColumn());
+        feedback.setEndColumn(originalFeedback.getEndColumn());
+        feedback.setPriority(originalFeedback.getPriority());
+        feedback.setPenalty(originalFeedback.getPenalty());
+        feedback.setMessage(originalFeedback.getMessage());
+        return feedback;
     }
 
     private Feedback copyFeedback(final Feedback originalFeedback, final Optional<LongFeedbackText> longFeedbackText) {
