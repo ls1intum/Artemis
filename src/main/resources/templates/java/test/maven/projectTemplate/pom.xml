@@ -14,6 +14,29 @@
         <analyzeTests>false</analyzeTests>
         <!--%static-code-analysis-stop%-->
 	</properties>
+    <!-- artemis-java-test-sandbox still resolves to Logback 1.5.18 and AssertJ 3.27.3, both of which carry
+         published advisories (GHSA-25qh-j22f-pwp8, GHSA-qqpg-mvqg-649v, GHSA-p47f-322f-whfh,
+         GHSA-jhq6-gfmj-v8fx and GHSA-rqfh-9r24-8c9r). Pin the patched releases here until the sandbox
+         ships them itself; both bumps stay within the same minor version and are API-compatible. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.5.38</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>1.5.38</version>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.27.7</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <!-- Comes with JUnit 5, AssertJ and Hamcrest. JUnit 4 (JUnit 5 Vintage) or jqwik need to be added explicitly -->
