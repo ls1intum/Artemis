@@ -80,6 +80,26 @@ public final class WeaviateTestUtil {
     }
 
     /**
+     * Waits until the exercise is present in Weaviate, without asserting on any of its properties.
+     * <p>
+     * Indexing runs asynchronously, so a test that indexes an exercise and then deletes its course needs this barrier:
+     * without it the upsert can land after the deletion has already swept the collection, leaving behind a row that
+     * the deletion can no longer remove and that the test then reports as a cleanup failure.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param exerciseId      the ID of the exercise that should be indexed
+     */
+    public static void awaitExerciseInWeaviate(WeaviateService weaviateService, long exerciseId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+            var properties = queryExerciseProperties(weaviateService, exerciseId);
+            assertThat(properties).as("Exercise %d should be indexed in Weaviate before its course is deleted", exerciseId).isNotNull();
+        });
+    }
+
+    /**
      * Asserts that the exercise exists in Weaviate and its core properties match the given exercise.
      * Skips if Docker is not available. Fails if Docker is available but WeaviateService is null.
      *

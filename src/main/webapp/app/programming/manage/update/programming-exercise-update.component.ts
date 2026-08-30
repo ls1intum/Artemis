@@ -2,7 +2,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
@@ -1259,6 +1259,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExercisePlagiarism(validationErrorReasons);
         this.validateGradingSection(validationErrorReasons);
         this.validateBuildPhaseNames(validationErrorReasons);
+        this.validateBuildConfigSize(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1307,6 +1308,37 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (!phasesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
+                translateValues: {},
+            });
+        }
+    }
+
+    /**
+     * Validates that the build config text fields do not exceed their maximum allowed length, mirroring the server-side
+     * limits so the user gets immediate feedback instead of an HTTP 400. The build plan configuration is checked against
+     * its live serialized value (the same accessor used when saving), the docker flags against the value stored on the
+     * build config (which is updated on every edit).
+     *
+     * @param validationErrorReasons the list of validation reasons to append to
+     */
+    private validateBuildConfigSize(validationErrorReasons: ValidationReason[]): void {
+        if (!this.programmingExercise.customizeBuildPlan || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
+            return;
+        }
+
+        const customBuildPlanComponent = this.exerciseLanguageComponent()?.programmingExerciseCustomBuildPlanComponent();
+        const buildPlanConfiguration = customBuildPlanComponent?.getBuildPlanPhasesJSON();
+        if (buildPlanConfiguration !== undefined && buildPlanConfiguration.length > BUILD_PLAN_CONFIGURATION_MAX_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        }
+
+        const dockerFlags = this.programmingExercise.buildConfig?.dockerFlags;
+        if (dockerFlags !== undefined && dockerFlags.length > DOCKER_FLAGS_MAX_LENGTH) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
                 translateValues: {},
             });
         }

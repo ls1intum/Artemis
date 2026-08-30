@@ -17,6 +17,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -119,6 +120,24 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
         var requestDTO = new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
         request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+    }
+
+    /**
+     * The decision selects which model may answer, so Pyris has to receive the one the account actually recorded. Asserting
+     * on a decision other than the fixture default is what makes this test able to fail.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_shouldForwardTheRecordedDecisionToPyris() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.LOCAL_AI);
+        AtomicReference<AiSelectionDecision> forwardedDecision = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> forwardedDecision.set(dto.settings().selection()));
+
+        var requestDTO = new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
+        request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        assertThat(forwardedDecision.get()).isEqualTo(AiSelectionDecision.LOCAL_AI);
     }
 
     @Test
