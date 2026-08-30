@@ -59,6 +59,7 @@
             "orphanTextBlockForOrphanResults": "Orphan text block for orphan results",
             "orphanRating": "Orphan rating",
             "orphanResultsWithoutParticipation": "Orphan results without participation",
+            "orphanFeedbackMessage": "Unreferenced feedback message",
             "plagiarismComparison": "Plagiarism comparisons",
             "plagiarismElements": "Plagiarism elements",
             "plagiarismSubmissions": "Plagiarism submissions",
