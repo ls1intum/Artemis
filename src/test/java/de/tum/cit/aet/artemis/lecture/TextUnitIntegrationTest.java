@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -23,11 +25,13 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.TextUnitDTO;
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
+@RecordApplicationEvents
 class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "textunitintegrationtest";
@@ -36,6 +40,9 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
 
     @Autowired
     private LectureTestRepository lectureRepository;
+
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -183,6 +190,33 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         request.delete("/api/lecture/lectures/" + lecture.getId() + "/lecture-units/" + this.textUnit.getId(), HttpStatus.OK);
         request.get("/api/lecture/lectures/" + lecture.getId() + "/text-units/" + this.textUnit.getId(), HttpStatus.FORBIDDEN, TextUnitDTO.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(textUnit), eq(Optional.empty()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void createTextUnit_withContent_publishesContentChangedEvent() throws Exception {
+        request.postWithResponseBody("/api/lecture/lectures/" + this.lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.CREATED);
+        // Creating a unit with non-blank content is a content change: the Atlas pipeline event must fire exactly once.
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void updateTextUnit_changedContent_publishesContentChangedEvent() throws Exception {
+        persistTextUnitWithLecture();
+        textUnit.setContent("Genuinely changed content");
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.OK);
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void updateTextUnit_unchangedContent_doesNotPublishContentChangedEvent() throws Exception {
+        persistTextUnitWithLecture();
+        // Keep the same content ("This is a Test") but change only the name — no content-bearing field changed.
+        textUnit.setName("Renamed but same content");
+        request.putWithResponseBody("/api/lecture/lectures/" + lecture.getId() + "/text-units", TextUnitDTO.of(textUnit), TextUnitDTO.class, HttpStatus.OK);
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).isEmpty();
     }
 
     private TextUnitDTO textUnitDtoWithId(Long id) {

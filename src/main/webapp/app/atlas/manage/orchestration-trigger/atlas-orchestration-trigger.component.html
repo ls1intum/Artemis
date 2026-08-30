@@ -8,7 +8,9 @@
         [class]="buttonClass()"
     >
         <fa-icon [icon]="faWandMagicSparkles" />
-        <span jhiTranslate="artemisApp.atlasOrchestrator.button"></span>
+        @if (showLabel()) {
+            <span jhiTranslate="artemisApp.atlasOrchestrator.button"></span>
+        }
     </button>
     <jhi-orchestration-result-dialog [(visible)]="orchestrationDialogVisible" [summaryMessage]="orchestrationDialogMessage()" [appliedActions]="orchestrationDialogActions()" />
 }

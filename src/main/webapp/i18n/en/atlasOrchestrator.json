@@ -2,7 +2,7 @@
     "artemisApp": {
         "atlasOrchestrator": {
             "button": "Suggest competencies",
-            "tooltip": "Run the Atlas competency orchestrator on this exercise",
+            "tooltip": "Run the Atlas competency orchestrator on this learning object",
             "error": "Atlas orchestrator run failed. Please try again later.",
             "partial": "Atlas orchestrator run failed midway — review the partial actions in the dialog and revert any that are incorrect.",
             "inProgress": "Another Atlas orchestrator run is already in progress for this course. Please wait for it to finish.",
@@ -29,9 +29,9 @@
                 }
             },
             "autoToast": {
-                "success": "Atlas ran automatically on {{count}} exercise(s).",
-                "partial": "Atlas ran on {{count}} exercise(s): {{success}} succeeded, {{failure}} failed.",
-                "failure": "Atlas ran automatically on {{count}} exercise(s), but all runs failed. Please try again later."
+                "success": "Atlas ran automatically on {{count}} learning object(s).",
+                "partial": "Atlas ran on {{count}} learning object(s): {{success}} succeeded, {{failure}} failed.",
+                "failure": "Atlas ran automatically on {{count}} learning object(s), but all runs failed. Please try again later."
             }
         }
     }
