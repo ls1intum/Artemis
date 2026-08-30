@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, EventEmitter, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, OnDestroy, TemplateRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { User } from 'app/account/user/user.model';
@@ -43,7 +43,6 @@ import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exa
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
 import { Tag } from 'primeng/tag';
-import { Popover } from 'primeng/popover';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { Tooltip } from 'primeng/tooltip';
 import { ProgressBar } from 'primeng/progressbar';
@@ -58,9 +57,6 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
-interface MenuCommandEvent {
-    originalEvent?: Event;
-}
 @Component({
     selector: 'jhi-exam-students',
     templateUrl: './exam-students.component.html',
@@ -82,7 +78,6 @@ interface MenuCommandEvent {
         StudentExamWorkingTimeComponent,
         TestExamWorkingTimeComponent,
         Tag,
-        Popover,
         Tooltip,
         ProgressBar,
         TableViewComponent,
@@ -116,8 +111,6 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
     readonly addStudentsModal = viewChild.required(UserRegistrationModalComponent);
-    readonly individualExamsStatusPopover = viewChild.required<Popover>('individualExamsStatusPopover');
-    readonly individualExamsStatusButton = viewChild<ElementRef<HTMLButtonElement>>('individualExamsStatusButton');
     readonly tableViewRef = viewChild(TableViewComponent);
 
     // Cell template refs (resolved after view init; used by computed columns signal)
@@ -310,8 +303,8 @@ export class ExamStudentsComponent implements OnDestroy {
                 tooltip: 'artemisApp.studentExams.generateStudentExamsTooltip',
                 icon: 'pi pi-file-plus',
                 disabled: isExamStarted || isLoading,
-                command: (event: MenuCommandEvent) => {
-                    this.handleGenerateStudentExams(event.originalEvent);
+                command: () => {
+                    this.handleGenerateStudentExams();
                 },
             },
             {
@@ -319,9 +312,8 @@ export class ExamStudentsComponent implements OnDestroy {
                 tooltip: 'artemisApp.studentExams.generateMissingStudentExamsTooltip',
                 icon: 'pi pi-file-plus',
                 disabled: isExamStarted || isLoading || !hasStudentsWithoutExam,
-                command: (event: MenuCommandEvent) => {
+                command: () => {
                     this.generateMissingStudentExams();
-                    this.openIndividualExamsStatusPopover(event.originalEvent);
                 },
             },
             {
@@ -329,9 +321,8 @@ export class ExamStudentsComponent implements OnDestroy {
                 tooltip: 'artemisApp.studentExams.startExercisesTooltip',
                 icon: 'pi pi-play',
                 disabled: isExamStarted || isLoading || exercisePreparationRunning,
-                command: (event: MenuCommandEvent) => {
+                command: () => {
                     this.startExercises();
-                    this.openIndividualExamsStatusPopover(event.originalEvent);
                 },
             },
         ];
@@ -531,23 +522,6 @@ export class ExamStudentsComponent implements OnDestroy {
         void this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
     }
 
-    private openIndividualExamsStatusPopover(event?: Event, defer = false) {
-        const showPopover = () => {
-            const popover = this.individualExamsStatusPopover();
-            const target = this.individualExamsStatusButton()?.nativeElement;
-            if (!popover || !target || popover.overlayVisible) {
-                return;
-            }
-            popover.show(event ?? new MouseEvent('click'), target);
-        };
-
-        if (defer) {
-            setTimeout(showPopover, 0);
-            return;
-        }
-        showPopover();
-    }
-
     reloadStudentsView() {
         const exam = this.exam();
         if (!exam.id) {
@@ -615,7 +589,7 @@ export class ExamStudentsComponent implements OnDestroy {
      * Generate all student exams for the exam on the server and handle the result.
      * Asks for confirmation if some exams already exist.
      */
-    handleGenerateStudentExams(event: Event | undefined) {
+    handleGenerateStudentExams() {
         if (this.studentExamCount() > 0) {
             this.confirmationService.confirm({
                 header: this.artemisTranslatePipe.transform('artemisApp.studentExams.generateStudentExams'),
@@ -623,12 +597,10 @@ export class ExamStudentsComponent implements OnDestroy {
                 rejectButtonProps: { label: this.artemisTranslatePipe.transform('global.form.cancel'), severity: 'secondary' },
                 acceptButtonProps: { label: this.artemisTranslatePipe.transform('global.form.confirm'), severity: 'danger' },
                 accept: () => {
-                    this.openIndividualExamsStatusPopover(undefined, true);
                     this.generateStudentExams();
                 },
             });
         } else {
-            this.openIndividualExamsStatusPopover(event);
             this.generateStudentExams();
         }
     }

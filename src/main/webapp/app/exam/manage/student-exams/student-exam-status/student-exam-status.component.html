@@ -1,16 +1,16 @@
 <p-tag
-    class="d-flex gap-2 align-items-center"
+    class="w-100 d-flex gap-2 align-items-center justify-content-start"
     [severity]="isTestExam() ? 'info' : hasStudentsWithoutExam() ? 'warn' : 'success'"
     [title]="!isTestExam() && hasStudentsWithoutExam() ? ('artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate) : ''"
 >
     @if (isTestExam()) {
-        <i class="pi pi-info-circle"></i>
+        <i class="pi pi-info-circle px-1"></i>
         <span jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
     } @else if (hasStudentsWithoutExam()) {
-        <i class="pi pi-exclamation-triangle"></i>
+        <i class="pi pi-exclamation-triangle px-1"></i>
         <span jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>
     } @else {
-        <i class="pi pi-check"></i>
+        <i class="pi pi-check px-1"></i>
         <span jhiTranslate="artemisApp.studentExams.studentExamStatusSuccess"></span>
     }
 </p-tag>

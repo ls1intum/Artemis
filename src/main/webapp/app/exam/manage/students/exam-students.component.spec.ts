@@ -557,18 +557,17 @@ describe('ExamStudentsComponent', () => {
             const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
             const confirmSpy = vi.spyOn(confirmationService, 'confirm');
 
-            component.handleGenerateStudentExams(undefined);
+            component.handleGenerateStudentExams();
 
             expect(confirmSpy).toHaveBeenCalled();
         });
 
         it('should call generateStudentExams directly when no student exams exist yet', () => {
             fixture.detectChanges();
-            vi.spyOn(component as any, 'openIndividualExamsStatusPopover').mockImplementation(() => {});
             const generateSpy = vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [] as any })));
             component.studentExamCount.set(0);
 
-            component.handleGenerateStudentExams(undefined);
+            component.handleGenerateStudentExams();
 
             expect(generateSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
         });
