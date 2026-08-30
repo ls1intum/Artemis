@@ -223,7 +223,14 @@ spring:
         scheduling:
             thread-name-prefix: artemis-scheduling-
             pool:
-                size: 1
+                # Same reasoning as task.execution.pool.core-size above, which was raised from 1 for the same reason
+                # in #13341. About a dozen production services share this one taskScheduler (ParticipantScoreScheduleService,
+                # ExerciseLifecycleService, QuizScheduleService, ProgrammingExerciseScheduleService, ...), and hundreds of
+                # test classes run in parallel against it. At size 1 a single long scheduled task blocked every other
+                # test's scheduled work, and Awaitility's 10s default could not survive it: one run produced seven
+                # simultaneous ConditionTimeoutExceptions across four classes waiting on scheduled work that had never
+                # been given a thread.
+                size: 8
     thymeleaf:
         mode: HTML
     sleuth:

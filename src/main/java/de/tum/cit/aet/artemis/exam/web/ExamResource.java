@@ -266,6 +266,7 @@ public class ExamResource {
         if (examDTO.id() != null) {
             throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        checkExamTitleIsPresentElseThrow(examDTO.title());
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
@@ -299,6 +300,7 @@ public class ExamResource {
         if (examUpdateDTO.id() == null) {
             throw new BadRequestAlertException("An exam update must have an ID", ENTITY_NAME, "idMissing");
         }
+        checkExamTitleIsPresentElseThrow(examUpdateDTO.title());
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examUpdateDTO.id());
 
@@ -477,6 +479,7 @@ public class ExamResource {
     public ResponseEntity<ExamImportResultDTO> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO,
             @RequestParam(required = false) String importId) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examImportDTO);
+        checkExamTitleIsPresentElseThrow(examImportDTO.title());
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
@@ -557,6 +560,18 @@ public class ExamResource {
         if (exam.getTitle() != null && exam.getTitle().length() > Constants.EXAM_TITLE_MAX_LENGTH) {
             throw new BadRequestAlertException("The exam title is too long. Maximum allowed is " + Constants.EXAM_TITLE_MAX_LENGTH + " characters.", ENTITY_NAME,
                     "examTitleTooLong");
+        }
+    }
+
+    /**
+     * Checks that the exam title is present, so an exam is never created or updated with a missing or blank title. The client marks this too, but crafted requests and import
+     * payloads bypass the UI. This validates the raw request title before it is mapped to an entity, because {@link Exam#setTitle} would throw on a null title during mapping.
+     *
+     * @param title the exam title from the request
+     */
+    private void checkExamTitleIsPresentElseThrow(String title) {
+        if (title == null || title.isBlank()) {
+            throw new BadRequestAlertException("The exam title must not be empty.", ENTITY_NAME, "examTitleEmpty");
         }
     }
 

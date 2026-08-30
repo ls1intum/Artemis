@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -16,9 +17,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -60,8 +66,19 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final PlagiarismResultRepository plagiarismResultRepository = mock();
 
+    private final UserTestRepository userRepository = mock();
+
     private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository, Optional.empty());
+            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository, userRepository, Optional.empty());
+
+    /**
+     * The control only runs for a course that has an instructor to act on the findings, so every test that expects a
+     * check to happen needs one. The test for the opposite case overrides this.
+     */
+    @BeforeEach
+    void setUp() {
+        when(userRepository.getInstructors(any())).thenReturn(Set.of(createUser(7L)));
+    }
 
     @Test
     void shouldExecuteChecks() throws IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
@@ -111,6 +128,11 @@ class ContinuousPlagiarismControlServiceTest {
         var exercise = new TextExercise();
         exercise.setId(99L);
         exercise.setTitle("Exercise 1");
+        var course = new Course();
+        course.setId(42L);
+        exercise.setCourse(course);
+        var instructor = createUser(7L);
+        when(userRepository.getInstructors(any())).thenReturn(Set.of(createUser(9L), instructor));
 
         var participationText1 = createStudentParticipation(1);
         var participationText2 = createStudentParticipation(2);
@@ -139,8 +161,32 @@ class ContinuousPlagiarismControlServiceTest {
         verify(plagiarismComparisonRepository).updatePlagiarismComparisonStatus(12L, PlagiarismStatus.CONFIRMED);
         verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), true);
         verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), true);
-        verify(plagiarismPostService, times(2)).createContinuousPlagiarismControlPlagiarismCasePost(any());
+        // the control runs on a schedule, so the post is written in the name of the course instructor with the lowest id
+        var posts = ArgumentCaptor.forClass(Post.class);
+        verify(plagiarismPostService, times(2)).createContinuousPlagiarismControlPlagiarismCasePost(posts.capture());
+        assertThat(posts.getAllValues()).hasSize(2).allSatisfy(post -> {
+            assertThat(post.getAuthor()).as("the post has an author").isEqualTo(instructor);
+            assertThat(post.getAuthorRole()).as("the author is shown as an instructor").isEqualTo(UserRole.INSTRUCTOR);
+        });
         verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, plagiarismPostService, plagiarismResultRepository);
+    }
+
+    @Test
+    void shouldSkipTheCheckWhenTheCourseHasNoInstructor() {
+        var exercise = new TextExercise();
+        exercise.setId(99L);
+        exercise.setTitle("Exercise 1");
+        var course = new Course();
+        course.setId(42L);
+        exercise.setCourse(course);
+        exercise.setStudentParticipations(Set.of(createStudentParticipation(1), createStudentParticipation(2)));
+        when(userRepository.getInstructors(any())).thenReturn(Set.of());
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
+
+        service.executeChecks();
+
+        // nobody could act on the findings, so the expensive check does not even start
+        verifyNoInteractions(plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismPostService);
     }
 
     @Test
@@ -226,6 +272,12 @@ class ContinuousPlagiarismControlServiceTest {
         // then
         assertThatNoException().isThrownBy(service::executeChecks);
         verify(plagiarismResultRepository).deletePlagiarismResultsByExerciseId(101L);
+    }
+
+    private static User createUser(long id) {
+        var user = new User();
+        user.setId(id);
+        return user;
     }
 
     private static StudentParticipation createStudentParticipation(long submissionId) {

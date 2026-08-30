@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.course.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -262,25 +261,6 @@ public class CourseManagementResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         Set<Exercise> exercises = exerciseRepository.findByCourseIdWithFutureDueDatesAndCategories(courseId);
         return ResponseEntity.ok(exercises);
-    }
-
-    /**
-     * GET /courses/exercises-for-management-overview
-     * <p>
-     * gets the courses with exercises for the user
-     *
-     * @param onlyActive if true, only active courses will be considered in the result
-     * @return ResponseEntity with status, containing a list of courses
-     */
-    @GetMapping("courses/exercises-for-management-overview")
-    @EnforceAtLeastTutor
-    public ResponseEntity<List<Course>> getExercisesForCourseOverview(@RequestParam(defaultValue = "false") boolean onlyActive) {
-        final List<Course> courses = new ArrayList<>();
-        for (final var course : courseOverviewService.getAllCoursesForManagementOverview(onlyActive)) {
-            course.setExercises(exerciseRepository.getExercisesForCourseManagementOverview(course.getId()));
-            courses.add(course);
-        }
-        return ResponseEntity.ok(courses);
     }
 
     /**
