@@ -1,0 +1,55 @@
+<tum-ui-dialog
+    [(visible)]="visible"
+    size="large"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="true"
+    [ariaLabel]="'artemisApp.courseIngestionDashboard.browser.ariaLabel' | artemisTranslate"
+    (hidden)="close()"
+>
+    <ng-template #header>
+        <div class="flex flex-wrap items-center justify-between gap-2 w-full">
+            <span class="truncate">{{ course().courseTitle || ('artemisApp.courseIngestionDashboard.matrix.courseFallback' | artemisTranslate) + ' ' + course().courseId }}</span>
+            @if (incompleteTypeCount() > 0) {
+                <!-- No dot here. A dot earns its place in a column of statuses, where it aligns and scans; beside a
+                     title it is a lone mark next to text that already carries the colour. -->
+                <span class="text-sm font-normal text-state-danger" data-testid="incomplete-types-chip">
+                    {{ incompleteTypeCount() }} {{ incompleteTypesLabelKey() | artemisTranslate }}
+                </span>
+            }
+        </div>
+    </ng-template>
+
+    <p class="text-muted-color text-sm mt-0 mb-3" jhiTranslate="artemisApp.courseIngestionDashboard.browser.subtitle"></p>
+
+    @if (loading()) {
+        <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.loading" data-testid="browser-loading"></div>
+    }
+
+    @if (error()) {
+        <tum-ui-message severity="error" class="w-full" data-testid="browser-error">{{ 'artemisApp.courseIngestionDashboard.browser.error' | artemisTranslate }}</tum-ui-message>
+    }
+
+    @if (!loading() && !error() && data()) {
+        @if (isEmpty()) {
+            <div class="text-muted-color py-4" jhiTranslate="artemisApp.courseIngestionDashboard.browser.empty" data-testid="browser-empty"></div>
+        } @else if (data(); as loaded) {
+            <div class="grid grid-cols-1 md:grid-cols-[17rem_1fr] gap-4 h-[60vh]" data-testid="browser-master-detail">
+                <div class="min-h-0 overflow-y-auto border border-solid rounded-lg p-2" data-testid="browser-navigation">
+                    <jhi-course-ingestion-browser-tree
+                        [entities]="loaded.entities"
+                        [contentPresence]="loaded.contentPresence"
+                        [typeCounts]="course().typeCounts"
+                        [contentGaps]="loaded.contentGaps"
+                        [(selection)]="selection"
+                    />
+                </div>
+
+                <!-- Detail pane for the current selection. -->
+                <div class="min-h-0 overflow-auto border border-solid rounded-lg p-4" data-testid="browser-detail">
+                    <jhi-course-ingestion-browser-detail [courseId]="course().courseId" [data]="loaded" [typeCounts]="course().typeCounts" [(selection)]="selection" />
+                </div>
+            </div>
+        }
+    }
+</tum-ui-dialog>

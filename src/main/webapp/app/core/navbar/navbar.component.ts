@@ -15,11 +15,11 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
+import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faChevronRight, faCog, faFlag, faLock, faMagnifyingGlassChart, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
@@ -101,8 +101,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     protected readonly faSignOutAlt = faSignOutAlt;
     protected readonly faChevronRight = faChevronRight;
     protected readonly faUserShield = faUserShield;
+    // TEMPORARY (revert before merge): icon for the instructor-visible ingestion-dashboard link.
+    protected readonly faMagnifyingGlassChart = faMagnifyingGlassChart;
 
     protected readonly IS_AT_LEAST_ADMIN = IS_AT_LEAST_ADMIN;
+    // TEMPORARY (revert before merge): gates the instructor-visible ingestion-dashboard link.
+    protected readonly IS_AT_LEAST_INSTRUCTOR = IS_AT_LEAST_INSTRUCTOR;
     protected readonly IS_AT_LEAST_TUTOR = IS_AT_LEAST_TUTOR;
 
     readonly inProduction = signal<boolean>(undefined!);

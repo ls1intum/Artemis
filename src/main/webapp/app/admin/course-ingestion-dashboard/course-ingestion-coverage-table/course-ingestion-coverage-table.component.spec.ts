@@ -206,4 +206,36 @@ describe('CourseIngestionCoverageTableComponent', () => {
         expect(component['statusOptions']()[0].label).toBe('de:artemisApp.courseIngestionDashboard.matrix.status.all');
         expect(component['activeOptions']()[1].label).toBe('de:artemisApp.courseIngestionDashboard.matrix.active.active');
     });
+
+    it('should emit the course when its row is activated, so the page can open the browser', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const emitted: IngestionCoverage[] = [];
+        component.courseSelected.subscribe((course) => emitted.push(course));
+
+        // The title button carries the accessible name; its click bubbles to the row handler.
+        const openButton = fixture.nativeElement.querySelector('[data-testid="coverage-row-open"]') as HTMLButtonElement;
+        expect(openButton).toBeTruthy();
+        openButton.click();
+
+        expect(emitted).toEqual([rows[0]]);
+    });
+
+    it('should apply a page size change and reload from the first page', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        component['onPageChange'](2);
+        await fixture.whenStable();
+        liveSpy.mockClear();
+
+        // The paginator emits a size change separately from a page change, so it needs its own handler to take effect.
+        component['onPageSizeChange'](50);
+        await fixture.whenStable();
+
+        expect(component.pageSize()).toBe(50);
+        expect(component.page()).toBe(0);
+        expect(liveSpy).toHaveBeenCalledWith(expect.objectContaining({ page: 0, size: 50 }));
+    });
 });
