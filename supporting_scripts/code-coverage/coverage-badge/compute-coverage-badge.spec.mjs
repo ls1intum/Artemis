@@ -34,8 +34,8 @@ function vitestSummary({ total = 78212, covered = 70728 } = {}) {
 }
 
 /** A published badge matching the fixtures above, used as the `previous` value. */
-function publishedBadge({ message = '88.3%', total = 164120 } = {}) {
-    return { schemaVersion: 1, label: 'coverage', message, combined: { covered: 144984, total } };
+function publishedBadge({ message = '88.3%', color = 'green', total = 164120 } = {}) {
+    return { schemaVersion: 1, label: 'coverage', message, color, combined: { covered: 144984, total } };
 }
 
 describe('parseJacocoLines', () => {
@@ -218,6 +218,18 @@ describe('computeBadge', () => {
         const result = computeBadge({ ...validInputs, previous: publishedBadge({ message: '88.3%' }) });
         expect(result.status).toBe('skip');
         expect(result.reason).toContain('unchanged');
+    });
+
+    it('republishes when the rounded message is unchanged but the colour threshold moved', () => {
+        const result = computeBadge({
+            jacocoXml: jacocoReport({ covered: 4498, missed: 502 }),
+            vitestSummary: vitestSummary({ covered: 4498, total: 5000 }),
+            previous: publishedBadge({ message: '90.0%', color: 'brightgreen', total: 10000 }),
+        });
+
+        // 8996 / 10000 = 89.96%, which rounds to 90.0% but belongs to the green band.
+        expect(result.status).toBe('publish');
+        expect(result.badge).toMatchObject({ message: '90.0%', color: 'green' });
     });
 
     it('separates the healthy no-op from a tripped guard, which CI reports differently', () => {

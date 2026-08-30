@@ -409,14 +409,16 @@ jobs:
   # push trigger in this repo filters to develop/main/release/*), and GitHub does not fire workflows
   # for pushes made with GITHUB_TOKEN.
   #
-  # ADVISORY: never in another job's `needs:` and never gating. Every failure path warns and exits 0,
-  # because a badge that could not be recomputed must not turn develop red.
+  # ADVISORY: never in another job's `needs:` and never gating. Scripted failure paths warn and exit
+  # 0; job-level `continue-on-error` is the final safety net for action/runner failures, because a
+  # badge that could not be recomputed must not turn develop red.
   coverage-badge:
     name: Publish Coverage Badge
     needs: test
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' && needs.test.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    continue-on-error: true
     permissions:
       # Sole purpose: pushing coverage.json to the orphan `badges` branch. Nothing here runs
       # PR-author code — the job only reads artifacts the trusted `test` job produced.

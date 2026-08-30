@@ -176,8 +176,9 @@ export function computeBadge({ jacocoXml, vitestSummary, previous, sha, now } = 
 
     const pct = (combined.covered / combined.total) * 100;
     const message = `${pct.toFixed(1)}%`;
+    const color = colorFor(pct);
     // Nothing visible changed, so committing would only add noise to the badges branch.
-    if (previous?.message === message) {
+    if (previous?.message === message && previous?.color === color) {
         return { status: 'skip', kind: 'unchanged', reason: `the value is unchanged at ${message}` };
     }
 
@@ -187,7 +188,7 @@ export function computeBadge({ jacocoXml, vitestSummary, previous, sha, now } = 
             schemaVersion: 1,
             label: 'coverage',
             message,
-            color: colorFor(pct),
+            color,
             exact: Math.round(pct * 100) / 100,
             server,
             client,
