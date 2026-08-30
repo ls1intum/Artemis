@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
         'adaptive-learning',
         'user-registration',
         'jenkins-localvc',
+        'hades-setup',
         'saml2-login-registration',
         'oidc-login-registration',
         'troubleshooting',

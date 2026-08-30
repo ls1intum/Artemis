@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
 import java.time.ZonedDateTime;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
@@ -36,6 +38,8 @@ public class ProgrammingExerciseImportService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
+
+    private final ProfileService profileService;
 
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
@@ -56,13 +60,15 @@ public class ProgrammingExerciseImportService {
     private final Optional<AutomaticAfterDueDateService> automaticAfterDueDateService;
 
     public ProgrammingExerciseImportService(Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseValidationService programmingExerciseValidationService,
-            ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, TemplateUpgradePolicyService templateUpgradePolicyService,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProfileService profileService,
+            ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
+            ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            TemplateUpgradePolicyService templateUpgradePolicyService, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService,
+            ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            Optional<AutomaticAfterDueDateService> automaticAfterDueDateService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
+        this.profileService = profileService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
@@ -203,11 +209,19 @@ public class ProgrammingExerciseImportService {
             // Create completely new build plans for the exercise
             programmingExerciseBuildPlanService.setupBuildPlansForNewExercise(newExercise);
         }
-        else {
+        else if (profileService.isJenkinsActive()) {
             // We have removed the automatic build trigger from test to base for new programming exercises.
             // We also remove this build trigger in the case of an import as the source exercise might still have this trigger.
-            // The importBuildPlans method includes this process
+            // The importBuildPlans method includes this process.
             importBuildPlans(sourceExercise, newExercise);
+        }
+        else if (profileService.isLocalCIActive() || profileService.isProfileActive(PROFILE_HADES)) {
+            // LocalCI and Hades have no per-exercise build plan to clone, but the imported template and solution still need
+            // an initial build so the new exercise has up-to-date results. This mirrors setupBuildPlansForNewExercise, which
+            // triggers these builds when the build plans are recreated, so the no-recreation path must trigger them as well.
+            ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
+            triggerService.triggerBuild(newExercise.getTemplateParticipation());
+            triggerService.triggerBuild(newExercise.getSolutionParticipation());
         }
 
         programmingExerciseCreationScheduleService.scheduleOperations(newExercise.getId());

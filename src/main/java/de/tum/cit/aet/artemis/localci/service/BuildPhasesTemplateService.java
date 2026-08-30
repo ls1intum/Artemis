@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.localci.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -18,6 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -31,6 +35,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 
 /**
  * Handles the request to {@link BuildPhasesTemplateResource} and Artemis internal
@@ -38,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
  */
 @Lazy
 @Service
-@Profile("localci")
+@Profile({ PROFILE_LOCALCI, PROFILE_HADES })
 public class BuildPhasesTemplateService {
 
     private static final Logger log = LoggerFactory.getLogger(BuildPhasesTemplateService.class);
@@ -51,13 +57,37 @@ public class BuildPhasesTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
     private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
     public BuildPhasesTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
-            BuildScriptProviderService buildScriptProviderService) {
+            BuildScriptProviderService buildScriptProviderService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProviderService = buildScriptProviderService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+    }
+
+    /**
+     * Resets the exercise's build configuration to the default build phases and Docker image for its programming language and
+     * project type, and persists it. This is the "recreate build plans" operation for stateless CI systems (LocalCI, Hades),
+     * which have no remote build plan to recreate but do keep a persisted phase/image configuration.
+     *
+     * @param exercise the exercise whose build configuration should be reset to the default
+     * @throws JsonProcessingException if the default build plan configuration cannot be serialized
+     */
+    public void resetBuildConfigToDefault(ProgrammingExercise exercise) throws JsonProcessingException {
+        if (exercise == null) {
+            return;
+        }
+        log.debug("Resetting build configuration to default for exercise {}", exercise.getTitle());
+        List<BuildPhaseDTO> phases = getDefaultBuildPlanPhasesFor(exercise);
+        String image = getDefaultDockerImageFor(exercise);
+        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
+        buildConfig.setBuildScript(null);
+        buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
     }
 
     /**

@@ -1,0 +1,249 @@
+package de.tum.cit.aet.artemis.programming.service.hades;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_HADES;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestTemplate;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
+import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.localci.service.ci.StatelessCIService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.BuildTriggerRequestDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildJobDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildResponseDTO;
+import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildStepDTO;
+
+/**
+ * Implementation of StatelessCIService for Hades. Contains methods to communicate with Hades.
+ */
+
+@Lazy
+@Service
+@Profile(PROFILE_HADES)
+public class HadesService implements StatelessCIService {
+
+    private static final Logger log = LoggerFactory.getLogger(HadesService.class);
+
+    private final RestTemplate restTemplate;
+
+    @Value("${artemis.continuous-integration.url}")
+    private String hadesServerUrl;
+
+    @Value("${artemis.continuous-integration.hades.auth-key}")
+    private String hadesAuthKey;
+
+    @Value("${artemis.continuous-integration.hades.images.clone-image}")
+    private String cloneImage;
+
+    @Value("${artemis.version-control.build-agent-git-username}")
+    private String username;
+
+    @Value("${artemis.version-control.build-agent-git-password}")
+    private String password;
+
+    private static final String repositoryDir = "/shared";
+
+    private static final String workingDir = "/shared";
+
+    private static final String hadesTestPath = "./";
+
+    private static final String assignmentPath = "./assignment";
+
+    private static final List<HadesBuildStepDTO.VolumeMountDTO> volumeMounts = List.of(new HadesBuildStepDTO.VolumeMountDTO("shared", "/shared"));
+
+    private static final String testOrder = "1";
+
+    private static final String assignmentOrder = "2";
+
+    @Value("${artemis.continuous-integration.hades.images.result-parser-image}")
+    private String resultParserImage;
+
+    @Value("${artemis.continuous-integration.hades.adapter.endpoint}")
+    private String adapterEndPoint;
+
+    @Value("${artemis.continuous-integration.hades.adapter.logs-endpoint:}")
+    private String logsCallbackUrl;
+
+    private static final String ingestDir = "/shared/build/test-results/test";
+
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
+    public HadesService(RestTemplate restTemplate, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+        this.restTemplate = restTemplate;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+    }
+
+    @Override
+    public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
+        // Hades is a stateless CI system, so we cannot track individual build statuses by participation.
+        log.debug("getBuildStatus called for participation {}, but stateless CI doesn't track individual build statuses", participation.getId());
+        return BuildStatus.INACTIVE;
+    }
+
+    @Override
+    public UUID build(BuildTriggerRequestDTO buildTriggerRequestDTO) throws ContinuousIntegrationException {
+        try {
+            log.info("Triggering build via Hades for exercise {} and participation {}", buildTriggerRequestDTO.exerciseId(), buildTriggerRequestDTO.participationId());
+
+            HadesBuildJobDTO hadesDTO = convertToHadesBuildJobDTO(buildTriggerRequestDTO);
+            return build(hadesDTO);
+        }
+        catch (Exception e) {
+            log.error("Failed to trigger build via Hades for exercise {} and participation {}", buildTriggerRequestDTO.exerciseId(), buildTriggerRequestDTO.participationId(), e);
+            throw new ContinuousIntegrationException("Failed to trigger build via Hades", e);
+        }
+    }
+
+    private UUID build(HadesBuildJobDTO hadesBuildJobDTO) {
+        HttpEntity<HadesBuildJobDTO> request = new HttpEntity<>(hadesBuildJobDTO, createAuthHeaders());
+        ResponseEntity<HadesBuildResponseDTO> response;
+        try {
+            response = restTemplate.postForEntity(hadesServerUrl + "/build", request, HadesBuildResponseDTO.class);
+        }
+        catch (HttpStatusCodeException e) {
+            throw new ContinuousIntegrationException("Build request failed with status: " + e.getStatusCode() + " - " + e.getResponseBodyAsString(), e);
+        }
+
+        HadesBuildResponseDTO responseBody = response.getBody();
+        if (responseBody == null) {
+            throw new ContinuousIntegrationException("Received empty build ID from Hades");
+        }
+
+        return UUID.fromString(response.getBody().jobId());
+    }
+
+    @Override
+    public ConnectorHealth health() {
+        var additionalInfo = new HashMap<String, Object>();
+        additionalInfo.put("url", hadesServerUrl);
+        ConnectorHealth health;
+        try {
+            HttpEntity<Void> request = new HttpEntity<>(createAuthHeaders());
+            final var response = restTemplate.exchange(hadesServerUrl + "/ping", HttpMethod.GET, request, String.class);
+            final var body = response.getBody();
+            final var hadesStatus = body != null ? new ObjectMapper().readTree(body).get("message").asText() : null;
+            health = new ConnectorHealth("pong".equals(hadesStatus), additionalInfo);
+        }
+        catch (Exception ex) {
+            health = new ConnectorHealth(false, additionalInfo, new ContinuousIntegrationException("Hades Server is down"));
+        }
+        return health;
+    }
+
+    // This method is temporary, for an adaptation to the programming-exercises/new-result endpoint
+    // TODO: remove after endpoint handling is refactored.
+    @Override
+    public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
+        return "";
+    }
+
+    private HadesBuildJobDTO convertToHadesBuildJobDTO(BuildTriggerRequestDTO buildTriggerRequestDTO) {
+        var metadata = new HashMap<String, String>();
+        var steps = new ArrayList<HadesBuildStepDTO>();
+
+        // Create Clone Step
+        var cloneMetadata = new HashMap<String, String>();
+        cloneMetadata.put("REPOSITORY_DIR", repositoryDir);
+        cloneMetadata.put("HADES_TEST_USERNAME", username);
+        cloneMetadata.put("HADES_TEST_PASSWORD", password);
+        cloneMetadata.put("HADES_TEST_URL", buildTriggerRequestDTO.testRepository().url());
+        String testCheckoutPath = buildTriggerRequestDTO.testRepository().cloneLocation();
+        cloneMetadata.put("HADES_TEST_PATH", testCheckoutPath == null || testCheckoutPath.isBlank() ? hadesTestPath : "./" + testCheckoutPath);
+        cloneMetadata.put("HADES_TEST_ORDER", testOrder);
+        cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", username);
+        cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", password);
+
+        cloneMetadata.put("HADES_ASSIGNMENT_URL", buildTriggerRequestDTO.exerciseRepository().url());
+        // Honor the configured assignment checkout path so the clone step and the build script reference the same directory.
+        String assignmentCheckoutPath = buildTriggerRequestDTO.exerciseRepository().cloneLocation();
+        cloneMetadata.put("HADES_ASSIGNMENT_PATH", assignmentCheckoutPath == null || assignmentCheckoutPath.isBlank() ? assignmentPath : "./" + assignmentCheckoutPath);
+        cloneMetadata.put("HADES_ASSIGNMENT_ORDER", assignmentOrder);
+
+        // Forward-compatible: the hades clone container ignores unknown env vars, and will pin the clone to the given commit once
+        // it supports these variables. Empty/blank hashes are omitted, which keeps the current "clone HEAD" behavior.
+        String assignmentCommitHash = buildTriggerRequestDTO.exerciseRepository().commitHash();
+        if (assignmentCommitHash != null && !assignmentCommitHash.isBlank()) {
+            cloneMetadata.put("HADES_ASSIGNMENT_COMMIT", assignmentCommitHash);
+        }
+        String testCommitHash = buildTriggerRequestDTO.testRepository().commitHash();
+        if (testCommitHash != null && !testCommitHash.isBlank()) {
+            cloneMetadata.put("HADES_TEST_COMMIT", testCommitHash);
+        }
+
+        steps.add(new HadesBuildStepDTO(1, "Clone", cloneImage, volumeMounts, workingDir, cloneMetadata, "", false));
+
+        // Create Execute Step
+        Optional<ProjectType> projectType = Optional.ofNullable(buildTriggerRequestDTO.additionalProperties().get("projectType")).map(ProjectType::tryFromString);
+        // Honor the exercise's custom Docker image (windfile) when configured; otherwise fall back to the language default.
+        var image = StringUtils.hasText(buildTriggerRequestDTO.dockerImage()) ? buildTriggerRequestDTO.dockerImage()
+                : programmingLanguageConfiguration.getImage(ProgrammingLanguage.valueOf(buildTriggerRequestDTO.programmingLanguage()), projectType);
+        var script = buildTriggerRequestDTO.buildScript();
+        var executeMetadata = new HashMap<String, String>();
+
+        // Map the exercise's Docker resource limits, network, and env onto the Execute step only. The clone and parse result steps run
+        // trusted Artemis images and must not inherit exercise-configured limits. Hades receives step metadata entries as env vars, so
+        // the env map is merged into the Execute step metadata. pids_limit stays null: Artemis has no per-exercise value for it.
+        DockerFlagsDTO dockerFlags = buildTriggerRequestDTO.dockerFlags();
+        Integer cpuLimit = dockerFlags != null && dockerFlags.cpuCount() > 0 ? dockerFlags.cpuCount() : null;
+        String memoryLimit = dockerFlags != null && dockerFlags.memory() > 0 ? dockerFlags.memory() + "M" : null;
+        String memorySwap = dockerFlags != null && dockerFlags.memorySwap() > 0 ? dockerFlags.memorySwap() + "M" : null;
+        String network = dockerFlags != null && StringUtils.hasText(dockerFlags.network()) ? dockerFlags.network() : null;
+        if (dockerFlags != null && dockerFlags.env() != null && !dockerFlags.env().isEmpty()) {
+            executeMetadata.putAll(dockerFlags.env());
+        }
+        steps.add(new HadesBuildStepDTO(2, "Execute", image, volumeMounts, workingDir, executeMetadata, script, true, cpuLimit, memoryLimit, network, memorySwap, null));
+
+        // Create Parse Result Step
+        var parseResultMetadata = new HashMap<String, String>();
+        parseResultMetadata.put("API_ENDPOINT", adapterEndPoint);
+        // HadesTriggerService already resolves this (from the exercise's actual result paths, or a language-based
+        // guess as a fallback); this class only needs a last-resort default in case that's ever missing entirely.
+        parseResultMetadata.put("INGEST_DIR", buildTriggerRequestDTO.additionalProperties().getOrDefault("resultIngestDirectory", ingestDir));
+
+        if (assignmentCommitHash != null && !assignmentCommitHash.isBlank()) {
+            parseResultMetadata.put("ASSIGNMENT_REPO_COMMIT_HASH", assignmentCommitHash);
+        }
+        if (testCommitHash != null && !testCommitHash.isBlank()) {
+            parseResultMetadata.put("TESTS_REPO_COMMIT_HASH", testCommitHash);
+        }
+        steps.add(new HadesBuildStepDTO(3, "Parse Result", resultParserImage, volumeMounts, "", parseResultMetadata, "", false));
+
+        // Create Hades Job
+        var timestamp = java.time.Instant.now().toString();
+        Integer timeoutSeconds = buildTriggerRequestDTO.timeoutSeconds();
+        Long jobTimeoutSeconds = timeoutSeconds != null && timeoutSeconds > 0 ? (long) timeoutSeconds : null;
+        return new HadesBuildJobDTO(buildTriggerRequestDTO.participationId().toString(), metadata, timestamp, 1, steps, logsCallbackUrl, jobTimeoutSeconds);
+    }
+
+    private HttpHeaders createAuthHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBasicAuth("hades", hadesAuthKey);
+        return headers;
+    }
+}

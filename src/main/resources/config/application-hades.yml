@@ -1,0 +1,25 @@
+# ===================================================================
+# Hades specific properties: this file will only be loaded during startup if the profile hades is active
+#
+# This configuration overrides the application.yml file.
+# ===================================================================
+artemis:
+  continuous-integration:
+    # Hades scheduler (https://github.com/Hades-Scheduler/hades), run separately from Artemis.
+    # See documentation/docs/admin/hades-setup.mdx for the full setup.
+    url: http://localhost:8081
+    hades:
+      images:
+        # Pinned to released images from the Hades-Scheduler org. clone-image git-container:1.1.0 includes the
+        # exact-commit checkout (HADES_ASSIGNMENT_COMMIT / HADES_TEST_COMMIT).
+        clone-image: ghcr.io/hades-scheduler/git-container:1.1.0
+        result-parser-image: ghcr.io/hades-scheduler/hades/junit-result-parser:1.0.0
+      adapter:
+        # hades-artemis-adapter (https://github.com/ls1intum/hades-artemis-adapter): receives parsed results from
+        # junit-result-parser, combines them with build logs, and forwards to Artemis' new-result endpoint.
+        endpoint: http://host.docker.internal:8083/adapter/test-results
+        # Per-job callback the Hades log manager POSTs the aggregated build logs to (replaces the removed global
+        # ARTEMIS_ADAPTER_URL in Hades; requires Hades with https://github.com/ls1intum/hades/pull/452). Point at the
+        # hades-artemis-adapter log route. Leave empty to disable log forwarding (no callback_url is sent).
+        logs-endpoint: http://host.docker.internal:8083/adapter/logs
+      auth-key: # Set this in production environment

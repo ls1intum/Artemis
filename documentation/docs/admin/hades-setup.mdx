@@ -1,0 +1,75 @@
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Hades Setup
+
+This section describes how to set up a programming exercise environment based on [Hades](https://github.com/ls1intum/hades), a containerized build
+orchestrator that Artemis can use as an alternative Continuous Integration system, activated via the `hades` Spring profile.
+
+Unlike the [Integrated Code Lifecycle](/admin/production-setup/integrated-code-lifecycle-setup) (Local CI) or [Jenkins](/admin/jenkins-localvc), the Hades
+scheduler and its result adapter (`hades-artemis-adapter`) run as separate services outside of this repository. Artemis only triggers builds on Hades and
+receives the resulting test outcome back; it does not manage the Hades scheduler or its build agents itself.
+
+<Callout variant={CalloutVariant.warning}>
+    The Hades integration is under active development. Check the linked repositories for the current state before relying on this in production.
+</Callout>
+
+---
+
+## Prerequisites
+
+- [Docker](https://docs.docker.com/install) (required by the Hades scheduler to run build containers)
+- A running Hades scheduler instance — see the [Hades repository](https://github.com/ls1intum/hades) for setup instructions
+- A running `hades-artemis-adapter` instance — see the [adapter repository](https://github.com/ls1intum/hades-artemis-adapter) for setup instructions
+
+---
+
+## Artemis Configuration
+
+The `hades` profile is configured in `src/main/resources/config/application-hades.yml`:
+
+```yaml
+artemis:
+  continuous-integration:
+    url: http://localhost:8081 # Hades scheduler URL
+    hades:
+      images:
+        clone-image: ghcr.io/hades-scheduler/git-container:1.1.0
+        result-parser-image: ghcr.io/hades-scheduler/hades/junit-result-parser:1.0.0
+      adapter:
+        endpoint: http://host.docker.internal:8083/adapter/test-results
+        logs-endpoint: http://host.docker.internal:8083/adapter/logs
+      auth-key: # Set this in production environment
+```
+
+- `url` — where the Hades scheduler is reachable. Adjust the host/port to match your Hades scheduler deployment.
+- `hades.images.*` — the container images used for the pipeline steps that clone repositories and parse test results. These are public, released images maintained by the Hades project (pinned to a version tag for reproducibility); you usually don't need to change them.
+- `hades.adapter.endpoint` — where the `hades-artemis-adapter` is reachable from inside the build containers. `host.docker.internal` lets containers managed by the Hades scheduler reach back out to the Docker host; adjust if the adapter runs elsewhere. The adapter receives parsed test results, combines them with the build logs, and forwards the combined result to Artemis' own result-ingestion endpoint.
+- `hades.adapter.logs-endpoint` — per-job callback URL that Artemis sends with each build job; the Hades scheduler's log manager POSTs the aggregated build logs there. This replaces the global `ARTEMIS_ADAPTER_URL` that Hades previously required and needs a Hades scheduler that includes [ls1intum/hades#452](https://github.com/ls1intum/hades/pull/452). Point it at the `hades-artemis-adapter` log route. Leave it empty to disable log forwarding (no `callback_url` is sent with the job).
+- `hades.auth-key` — Basic Auth password Artemis sends to the Hades scheduler (username `hades`). Must match the credential configured on the Hades scheduler side; set a strong value in production.
+
+You also still need `artemis.version-control` (LocalVC) configured, since builds are triggered against exercise repositories hosted there — see the
+`version-control` section in [Jenkins and LocalVC Setup](/admin/jenkins-localvc#artemis-configuration) for the relevant fields.
+
+The Hades clone container clones the exercise repositories from LocalVC over HTTPS using `artemis.version-control.build-agent-git-username` and `build-agent-git-password`.
+A Hades node runs the `localvc` and `hades` profiles (not `localci`), so - like a Jenkins-with-LocalVC setup - it authenticates clones with this shared credential pair rather than the per-build-job clone tokens that Integrated Code Lifecycle build agents use.
+Both must be set and `artemis.version-control.build-agent-use-ssh` must stay `false`: since [#13515](https://github.com/ls1intum/Artemis/pull/13515) the node refuses to start otherwise, and the password is what authorizes every Hades clone.
+
+In addition, you have to start Artemis with the profiles `hades` and `localvc` so that the correct adapters will be used, e.g.:
+
+```
+--spring.profiles.active=dev,core,localvc,hades,artemis,scheduling
+```
+
+Please read the [Server Setup](/developer/setup#server-setup) guide for more details.
+
+---
+
+## Known limitations
+
+The Hades integration is still under active development. The following capabilities are not yet available and are tracked upstream:
+
+- **Maven blackbox exercises are not supported.** Blackbox exercises emit their results as `customFeedbacks/*.json`, which the Hades result parser does not ingest yet (it reads only JUnit `*.xml`), so no results would be reported. `MAVEN_BLACKBOX` is therefore not offered for Hades exercises. Tracked in [hades-artemis-result-parser#6](https://github.com/Hades-Scheduler/hades-artemis-result-parser/issues/6).
+- **Docker network mode, memory-swap, and PID limits are not enforced on Kubernetes.** Artemis forwards the exercise's build timeout and Docker run settings to Hades ([hades#501](https://github.com/Hades-Scheduler/hades/issues/501)). The build timeout, CPU limit, and memory limit are enforced by both Hades executors, but network mode, memory-swap, and PID limits are applied only by Hades' Docker executor - they are accepted but not enforced when Hades schedules builds on Kubernetes.
+- **Commit pinning requires clone container `1.1.0` or newer.** Artemis sends the exact assignment and test commit hashes to the clone step; the container checks them out as of [git-container v1.1.0](https://github.com/Hades-Scheduler/git-container/releases/tag/v1.1.0) (the pinned default). With an older image the build runs against the branch HEAD instead of the scheduled commit.
+- **Result ingestion scans a broad directory.** Because result paths are depth-agnostic, the parser is pointed at the working directory root and matches any `*.xml`; a single malformed XML fails the whole result submission. Tracked in [hades-artemis-result-parser#7](https://github.com/Hades-Scheduler/hades-artemis-result-parser/issues/7).

@@ -69,17 +69,20 @@ public class ProgrammingExerciseBuildPlanService {
      *                                exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
-        // Get URLs for repos
-        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
-        var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
-        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
+        // Jenkins needs a real project/build plan; LocalCI's implementation is a no-op.
+        if (profileService.isJenkinsActive() || profileService.isLocalCIActive()) {
+            // Get URLs for repos
+            var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+            var testsRepoUri = programmingExercise.getVcsTestRepositoryUri();
+            var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
 
-        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
-        continuousIntegration.createProjectForExercise(programmingExercise);
-        // template build plan
-        continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
-        // solution build plan
-        continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
+            ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+            continuousIntegration.createProjectForExercise(programmingExercise);
+            // template build plan
+            continuousIntegration.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUri, testsRepoUri, solutionRepoUri);
+            // solution build plan
+            continuousIntegration.createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUri, testsRepoUri, solutionRepoUri);
+        }
 
         // trigger BASE and SOLUTION build plans once here
         continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
@@ -134,9 +137,12 @@ public class ProgrammingExerciseBuildPlanService {
         // do not have a valid exercise anymore
         if (updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration() != null) {
             if (!profileService.isLocalCIActive()) {
-                continuousIntegrationService.get().deleteProject(updatedProgrammingExercise.getProjectKey());
-                continuousIntegrationService.get().createProjectForExercise(updatedProgrammingExercise);
-                continuousIntegrationService.get().recreateBuildPlansForExercise(updatedProgrammingExercise);
+                if (profileService.isJenkinsActive()) {
+                    ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
+                    continuousIntegration.deleteProject(updatedProgrammingExercise.getProjectKey());
+                    continuousIntegration.createProjectForExercise(updatedProgrammingExercise);
+                    continuousIntegration.recreateBuildPlansForExercise(updatedProgrammingExercise);
+                }
                 resetAllStudentBuildPlanIdsForExercise(updatedProgrammingExercise);
             }
         }

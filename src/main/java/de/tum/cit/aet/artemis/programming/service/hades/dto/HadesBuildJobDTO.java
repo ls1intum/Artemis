@@ -1,0 +1,42 @@
+package de.tum.cit.aet.artemis.programming.service.hades.dto;
+
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.List;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+/**
+ * Record for a build job in Hades
+ * This record wraps a build request for Hades. It contains the name of a job, volumes, metadata, timestamp, priority, steps, and an optional callback URL.
+ * The steps are a list of HadesBuildStepDTOs.
+ * The metadata is a hashmap containing key-value pairs for the metadata which should be shared between all build steps.
+ * The callback URL is the per-job destination where Hades forwards the aggregated build logs.
+ * The API Specification for Hades can be found here: <a href="https://github.com/ls1intum/hades/blob/main/shared/payload/payload.go">...</a>
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record HadesBuildJobDTO(@NotBlank String name, List<VolumeDTO> volumes, HashMap<String, String> metadata, String timestamp, Integer priority,
+        @NotEmpty List<HadesBuildStepDTO> steps, @JsonProperty("callback_url") String callbackUrl, @JsonProperty("timeout_seconds") Long timeoutSeconds) implements Serializable {
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record VolumeDTO(String name, EmptyDirDTO emptyDir) {
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record EmptyDirDTO() {
+    }
+
+    public HadesBuildJobDTO(String name, HashMap<String, String> metadata, String timestamp, Integer priority, List<HadesBuildStepDTO> steps, String callbackUrl,
+            Long timeoutSeconds) {
+        if (steps == null) {
+            steps = List.of();
+        }
+
+        List<VolumeDTO> volumes = List.of(new VolumeDTO("shared", new EmptyDirDTO()));
+        this(name, volumes, metadata, timestamp, priority, steps, callbackUrl, timeoutSeconds);
+    }
+}
