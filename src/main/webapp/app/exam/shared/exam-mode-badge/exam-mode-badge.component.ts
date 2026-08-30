@@ -8,6 +8,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     selector: 'jhi-exam-mode-badge',
     templateUrl: './exam-mode-badge.component.html',
     imports: [TranslateDirective, TumUiTagComponent, FaIconComponent],
+    host: { class: 'inline-flex items-center' },
 })
 export class ExamModeBadgeComponent {
     testExam = input.required<boolean>();
