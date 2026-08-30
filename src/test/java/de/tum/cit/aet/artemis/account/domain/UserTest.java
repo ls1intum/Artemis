@@ -45,4 +45,13 @@ class UserTest {
 
         assertThat(user.getEmail()).isNull();
     }
+
+    @Test
+    void shouldNormalizeBlankEmailToNull() {
+        User user = new User();
+
+        user.setEmail("  ");
+
+        assertThat(user.getEmail()).isNull();
+    }
 }

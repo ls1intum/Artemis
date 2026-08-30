@@ -380,19 +380,9 @@ public class UserService {
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
-        // Find user that has the same email
-        optionalExistingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
-        if (optionalExistingUser.isPresent()) {
-            User existingUser = optionalExistingUser.get();
-
-            // An account with the same login is already activated.
-            if (existingUser.getActivated()) {
-                throw new EmailAlreadyUsedException();
-            }
-
-            // The email is different which means that the user wants to re-register the same
-            // account with a different email. Block this.
-            throw new AccountRegistrationBlockedException(newUser.getEmail());
+        // Do not use a single-result lookup here: installations can still contain legacy duplicate emails during the preparation phase.
+        if (userRepository.existsByEmailIgnoreCase(userDTO.getEmail())) {
+            throw new EmailAlreadyUsedException();
         }
 
         // we need to save first so that the user can be found in the database in the subsequent method

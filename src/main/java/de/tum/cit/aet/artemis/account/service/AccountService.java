@@ -96,10 +96,7 @@ public class AccountService {
         }
 
         final String userLogin = currentUser.getLogin();
-        Optional<User> existingUser = userRepository.findOneByEmailIgnoreCase(userDTO.getEmail());
-        if (existingUser.isPresent() && (!existingUser.get().getLogin().equalsIgnoreCase(userLogin))) {
-            throw new EmailAlreadyUsedException();
-        }
+        userCreationService.validateEmailIsAvailable(userDTO.getEmail(), currentUser.getId());
 
         // Captured before the update: once the address has been replaced there is no longer any way to reach the
         // previous one, and that is where the change notice has to go.

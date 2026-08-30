@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
@@ -98,6 +99,7 @@ public class UserCreationService {
      */
     public User createUser(String login, @Nullable String password, String firstName, String lastName, String email, @Nullable String registrationNumber, String imageUrl,
             String langKey, boolean isInternal) {
+        validateEmailIsAvailable(email, null);
         User newUser = new User();
 
         if (isInternal) {
@@ -163,6 +165,7 @@ public class UserCreationService {
      * @return newly created user
      */
     public User createUser(ManagedUserVM userDTO) {
+        validateEmailIsAvailable(userDTO.getEmail(), null);
         User user = new User();
         user.setLogin(userDTO.getLogin());
         user.setFirstName(userDTO.getFirstName());
@@ -234,6 +237,7 @@ public class UserCreationService {
      */
     public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
+            validateEmailIsAvailable(email, user.getId());
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setEmail(email.toLowerCase());
@@ -262,6 +266,7 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
+        validateEmailIsAvailable(updatedUserDTO.getEmail(), user.getId());
         user.setLogin(updatedUserDTO.getLogin().toLowerCase());
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
@@ -435,6 +440,26 @@ public class UserCreationService {
     public User saveUser(User user) {
         log.debug("Save user {}", user);
         return userRepository.save(user);
+    }
+
+    /**
+     * Rejects a non-blank email address that belongs to another account. Existing legacy duplicates remain editable as long as their email address is not changed through a
+     * path that invokes this validation. The database constraint introduced in the implementation phase will close the concurrent-write race that application validation
+     * cannot eliminate.
+     *
+     * @param email         the proposed email address
+     * @param currentUserId the current account when updating, or {@code null} when creating an account
+     * @throws EmailAlreadyUsedException if another account already uses the address, ignoring case
+     */
+    public void validateEmailIsAvailable(@Nullable String email, @Nullable Long currentUserId) {
+        if (!StringUtils.hasText(email)) {
+            return;
+        }
+
+        boolean emailAlreadyUsed = currentUserId == null ? userRepository.existsByEmailIgnoreCase(email) : userRepository.existsByEmailIgnoreCaseAndIdNot(email, currentUserId);
+        if (emailAlreadyUsed) {
+            throw new EmailAlreadyUsedException();
+        }
     }
 
     /**

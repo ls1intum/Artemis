@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.account.repository;
 
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -12,7 +11,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -479,17 +477,5 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isInternalUserByEmailIgnoreCase(deletedUser.getEmail())).isEmpty();
         // the lookup by email has to stay case-insensitive, just like the entity based findOneByEmailIgnoreCase it replaces
         assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
-    }
-
-    @Test
-    void testEmailIsUniqueIgnoringCase() {
-        User firstUser = UserFactory.generateActivatedUser(TEST_PREFIX + "uniqueemail1");
-        firstUser.setEmail("Unique.Email@Example.COM");
-        userRepository.saveAndFlush(firstUser);
-
-        User secondUser = UserFactory.generateActivatedUser(TEST_PREFIX + "uniqueemail2");
-        secondUser.setEmail("unique.email@example.com");
-
-        assertThatThrownBy(() -> userRepository.saveAndFlush(secondUser)).isInstanceOf(DataIntegrityViolationException.class);
     }
 }

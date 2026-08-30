@@ -28,6 +28,7 @@ const sidebars: SidebarsConfig = {
         'hyperion',
         'adaptive-learning',
         'user-registration',
+        'user-email-uniqueness',
         'jenkins-localvc',
         'saml2-login-registration',
         'oidc-login-registration',

@@ -110,6 +110,7 @@ public class OIDCService extends OidcUserService {
                 isUpdated = true;
             }
             if (email != null && !email.isBlank() && !Objects.equals(actualUser.getEmail(), email)) {
+                userCreationService.validateEmailIsAvailable(email, actualUser.getId());
                 actualUser.setEmail(email);
                 isUpdated = true;
             }

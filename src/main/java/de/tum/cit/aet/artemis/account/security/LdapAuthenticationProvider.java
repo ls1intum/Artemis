@@ -163,6 +163,7 @@ public class LdapAuthenticationProvider implements ArtemisAuthenticationProvider
             saveNeeded = true;
         }
         if (!Objects.equals(user.getEmail(), ldapUserDto.getEmail())) {
+            userCreationService.validateEmailIsAvailable(ldapUserDto.getEmail(), user.getId());
             user.setEmail(ldapUserDto.getEmail());
             saveNeeded = true;
         }
