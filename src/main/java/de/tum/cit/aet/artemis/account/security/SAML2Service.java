@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.exception.UserNotActivatedException;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.ArtemisSuccessfulLoginService;
+import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
 import de.tum.cit.aet.artemis.account.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
@@ -85,6 +86,8 @@ public class SAML2Service {
 
     private final MailService mailService;
 
+    private final UserRecoveryKeyService userRecoveryKeyService;
+
     private final Map<String, Pattern> extractionPatterns;
 
     private final ArtemisSuccessfulLoginService artemisSuccessfulLoginService;
@@ -98,8 +101,10 @@ public class SAML2Service {
      * @param userCreationService  The user creation service
      */
     public SAML2Service(final AuditEventRepository auditEventRepository, final UserRepository userRepository, final SAML2Properties properties,
-            final UserCreationService userCreationService, MailService mailService, UserService userService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService) {
+            final UserCreationService userCreationService, MailService mailService, UserService userService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
+            UserRecoveryKeyService userRecoveryKeyService) {
         this.auditEventRepository = auditEventRepository;
+        this.userRecoveryKeyService = userRecoveryKeyService;
         this.userRepository = userRepository;
         this.properties = properties;
         this.userCreationService = userCreationService;
@@ -145,7 +150,7 @@ public class SAML2Service {
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
                 if (userService.prepareUserForPasswordReset(user.get())) {
-                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.from(user.get()));
+                    mailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(user.get(), null, userRecoveryKeyService.findResetKey(user.get().getId())));
                 }
                 else {
                     log.error("User {} was created but could not be found in the database!", user.get());
