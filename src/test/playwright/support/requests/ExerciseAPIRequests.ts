@@ -30,6 +30,7 @@ import {
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
@@ -419,25 +420,35 @@ export class ExerciseAPIRequests {
         options: { mode?: ExerciseMode; teamAssignmentConfig?: TeamAssignmentConfig } = {},
     ): Promise<ModelingExercise> {
         const { mode = ExerciseMode.INDIVIDUAL, teamAssignmentConfig } = options;
-        const templateCopy = {
-            ...modelingExerciseTemplate,
+        // The create endpoint consumes the flat UpdateModelingExerciseDTO (courseId XOR exerciseGroupId), matching what
+        // the Angular client sends via toUpdateModelingExerciseDTO — not the nested entity shape.
+        const createDto: UpdateModelingExerciseDTO = {
             title,
             channelName: 'exercise-' + titleLowercase(title),
+            problemStatement: modelingExerciseTemplate.problemStatement,
+            gradingInstructions: modelingExerciseTemplate.gradingInstructions,
+            categories: modelingExerciseTemplate.categories,
+            difficulty: modelingExerciseTemplate.difficulty as UpdateModelingExerciseDTO['difficulty'],
+            maxPoints: modelingExerciseTemplate.maxPoints,
+            bonusPoints: modelingExerciseTemplate.bonusPoints,
+            includedInOverallScore: modelingExerciseTemplate.includedInOverallScore as UpdateModelingExerciseDTO['includedInOverallScore'],
+            presentationScoreEnabled: modelingExerciseTemplate.presentationScoreEnabled,
+            secondCorrectionEnabled: modelingExerciseTemplate.secondCorrectionEnabled,
+            diagramType: modelingExerciseTemplate.diagramType as UpdateModelingExerciseDTO['diagramType'],
+            exampleSolutionModel: modelingExerciseTemplate.exampleSolutionModel,
+            exampleSolutionExplanation: modelingExerciseTemplate.exampleSolutionExplanation,
             mode,
-            ...(teamAssignmentConfig ? { teamAssignmentConfig } : {}),
+            ...(teamAssignmentConfig ? { teamAssignmentConfig: { minTeamSize: teamAssignmentConfig.minTeamSize, maxTeamSize: teamAssignmentConfig.maxTeamSize } } : {}),
         };
-        const dates = {
-            releaseDate: dayjsToString(releaseDate),
-            dueDate: dayjsToString(dueDate),
-            assessmentDueDate: dayjsToString(assessmentDueDate),
-        };
-        let newModelingExercise;
         if (Object.hasOwn(body, 'course')) {
-            newModelingExercise = Object.assign({}, templateCopy, dates, body);
+            createDto.courseId = (body as { course: Course }).course.id;
+            createDto.releaseDate = dayjsToString(releaseDate);
+            createDto.dueDate = dayjsToString(dueDate);
+            createDto.assessmentDueDate = dayjsToString(assessmentDueDate);
         } else {
-            newModelingExercise = Object.assign({}, templateCopy, body);
+            createDto.exerciseGroupId = (body as { exerciseGroup: ExerciseGroup }).exerciseGroup.id;
         }
-        const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: newModelingExercise });
+        const response = await this.page.request.post(MODELING_EXERCISE_BASE, { data: createDto });
         return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
     }
 
@@ -792,42 +803,6 @@ export class ExerciseAPIRequests {
         const response = await this.page.request.post(`api/programming/programming-exercises/${exerciseId}/trigger-instructor-build-all`);
         if (!response.ok()) {
             throw new Error(`Failed to trigger instructor build for exercise ${exerciseId}: ${response.status()}`);
-        }
-    }
-
-    /**
-     * Moves a programming exercise's "Run Tests after Due Date" date into the recent past via the timeline endpoint.
-     *
-     * For exam programming exercises the server defaults this date to (latest individual exam end + grace + 15 min)
-     * — the intended default (see AutomaticAfterDueDateService.BUILD_AND_TEST_OFFSET_MINUTES). Until it passes,
-     * {@code ProgrammingExercise.areManualResultsAllowed()} is false and the server rejects manual assessment with
-     * 403 "Creating manual results is disabled for this exercise!". An instructor would normally move this date
-     * earlier to start assessing right away; this mirrors that so the E2E test does not have to wait 15 minutes.
-     *
-     * Must be called after the exam (and its grace period) has ended: the timeline update keeps a client-provided
-     * value only when it is not before the exam end date, so {@code dayjs()} here must already be past that.
-     * Requires at least editor rights (admin/instructor). The full current timeline is re-sent unchanged so only
-     * the build-and-test date is modified.
-     */
-    async setProgrammingExerciseBuildAndTestDateToPast(exerciseId: number) {
-        const getResponse = await this.page.request.get(`api/programming/programming-exercises/${exerciseId}`);
-        if (!getResponse.ok()) {
-            throw new Error(`Failed to fetch programming exercise ${exerciseId}: ${getResponse.status()}`);
-        }
-        const exercise = await getResponse.json();
-        const timelineUpdate = {
-            id: exercise.id,
-            releaseDate: exercise.releaseDate,
-            startDate: exercise.startDate,
-            dueDate: exercise.dueDate,
-            assessmentType: exercise.assessmentType,
-            assessmentDueDate: exercise.assessmentDueDate,
-            exampleSolutionPublicationDate: exercise.exampleSolutionPublicationDate,
-            buildAndTestStudentSubmissionsAfterDueDate: dayjsToString(dayjs()),
-        };
-        const response = await this.page.request.put(`api/programming/programming-exercises/timeline`, { data: timelineUpdate });
-        if (!response.ok()) {
-            throw new Error(`Failed to move build-and-test date for exercise ${exerciseId}: ${response.status()}`);
         }
     }
 

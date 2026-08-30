@@ -715,6 +715,16 @@ public class CourseUtilService {
         programmingSubmission.addResult(resultProgramming);
         resultProgramming.setSubmission(programmingSubmission);
 
+        // Save the results before the submissions. A result owns the foreign key to its submission, so saving it here
+        // is what creates the row. Saving the submission first would create it through the cascade on its results
+        // instead, and because a merge does not write the generated id back to the detached result, the save below
+        // would then insert a second copy of every result.
+        resultModeling = resultRepo.save(resultModeling);
+        resultText = resultRepo.save(resultText);
+        resultFileUpload = resultRepo.save(resultFileUpload);
+        resultQuiz = resultRepo.save(resultQuiz);
+        resultProgramming = resultRepo.save(resultProgramming);
+
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);
         textSubmission = submissionRepository.save(textSubmission);
@@ -727,13 +737,6 @@ public class CourseUtilService {
         resultFileUpload.setSubmission(fileUploadSubmission);
         resultQuiz.setSubmission(quizSubmission);
         resultProgramming.setSubmission(programmingSubmission);
-
-        // Save results
-        resultRepo.save(resultModeling);
-        resultRepo.save(resultText);
-        resultRepo.save(resultFileUpload);
-        resultRepo.save(resultQuiz);
-        resultRepo.save(resultProgramming);
 
         // Save exercises
         exerciseRepository.save(modelingExercise);
@@ -1303,38 +1306,38 @@ public class CourseUtilService {
     public Course createEnrolledCourseWithExamExercisesAndSubmissions(String userPrefix) throws IOException {
         var course = addEnrolledEmptyCourse(userPrefix);
 
+        // The exam comes first: an exercise group belongs to an exam, and it is the exam's own collection that writes
+        // both the foreign key and the order column, so the groups are stored through the exam and not on their own.
+        Exam exam = examUtilService.addExam(course);
+        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
+        exam.addExerciseGroup(new ExerciseGroup());
+        exam.addExerciseGroup(new ExerciseGroup());
+        exam = examRepository.save(exam);
+        var exerciseGroup1 = exam.getExerciseGroups().get(0);
+        var exerciseGroup2 = exam.getExerciseGroups().get(1);
+
         // Create a file upload exercise with a dummy submission file
-        var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
         var fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
         fileUploadExercise = exerciseRepository.save(fileUploadExercise);
         fileUploadExerciseUtilService.createFileUploadSubmissionWithFile(userPrefix, fileUploadExercise, "uploaded-file.png");
         exerciseGroup1.addExercise(fileUploadExercise);
-        exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
 
         // Create a text exercise with a dummy submission file
-        var exerciseGroup2 = exerciseGroupRepository.save(new ExerciseGroup());
         var textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup2);
         textExercise = exerciseRepository.save(textExercise);
         var textSubmission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, userPrefix + "student1");
         exerciseGroup2.addExercise(textExercise);
-        exerciseGroup2 = exerciseGroupRepository.save(exerciseGroup2);
 
-        // Create a modeling exercise with a dummy submission file
-        var exerciseGroup3 = exerciseGroupRepository.save(new ExerciseGroup());
+        // Create a modeling exercise with a dummy submission file. It has always belonged to the second group: the
+        // exercise carries the group, and it was generated for exerciseGroup2. There used to be a third group here that
+        // the modeling exercise never actually ended up in and that was never added to the exam, so it is gone.
         var modelingExercise = ModelingExerciseFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup2);
         modelingExercise = exerciseRepository.save(modelingExercise);
         String emptyActivityModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         var modelingSubmission = ParticipationFactory.generateModelingSubmission(emptyActivityModel, true);
         participationUtilService.addSubmission(modelingExercise, modelingSubmission, userPrefix + "student1");
-        exerciseGroup3.addExercise(modelingExercise);
-        exerciseGroupRepository.save(exerciseGroup3);
-
-        Exam exam = examUtilService.addExam(course);
-        exam.setEndDate(ZonedDateTime.now().minusMinutes(5));
-        exam.addExerciseGroup(exerciseGroup1);
-        exam.addExerciseGroup(exerciseGroup2);
-        examRepository.save(exam);
+        exerciseGroup2.addExercise(modelingExercise);
 
         return course;
     }
