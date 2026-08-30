@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -73,6 +75,8 @@ public class DataExportExerciseCreationService {
     static final String CSV_FILE_EXTENSION = ".csv";
 
     private final Path repoClonePath;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     private static final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
 
@@ -98,7 +102,8 @@ public class DataExportExerciseCreationService {
     public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
             Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<ModelingApollonApi> modelingApollonApi, ComplaintRepository complaintRepository,
-            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
+            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
@@ -109,6 +114,7 @@ public class DataExportExerciseCreationService {
         this.repoClonePath = repoClonePath;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -207,6 +213,13 @@ public class DataExportExerciseCreationService {
         boolean includeResults = (exercise.isExamExercise() && exercise.getExam().resultsPublished())
                 || (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise) && !(exercise instanceof QuizExercise))
                 || (exercise.isCourseExercise() && exercise instanceof QuizExercise quizExercise && quizExercise.isQuizEnded()) || isInstructor;
+        if (exercise instanceof ProgrammingExercise) {
+            // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy
+            // views for all exported results at once - two grouped queries instead of two per result
+            var allResults = exercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                    .flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull).toList();
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(allResults);
+        }
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
