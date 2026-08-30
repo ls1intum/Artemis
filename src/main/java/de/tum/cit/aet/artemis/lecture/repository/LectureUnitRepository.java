@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -31,6 +32,57 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findById(@Param("lectureUnitId") long lectureUnitId);
+
+    /**
+     * Returns the (courseId, lectureUnitId) pairs of the text, online, and attachment/video units in the given courses
+     * (the concrete content subtypes, excluding exercise units), resolving each unit's course through its lecture. Bulk:
+     * all requested courses are resolved in a single query.
+     *
+     * @param courseIds the ids of the courses
+     * @return the (courseId, unitId) pairs of the text, online, and attachment/video units
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(lu.lecture.course.id, lu.id)
+            FROM LectureUnit lu
+            WHERE lu.lecture.course.id IN :courseIds
+                AND TYPE(lu) IN (TextUnit, OnlineUnit, AttachmentVideoUnit)
+            """)
+    List<CourseEntityIdDTO> findIndexableUnitIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
+
+    /**
+     * Returns the (courseId, unitId) pairs of the attachment/video units in the given courses whose attachment link ends
+     * in {@code .pdf}. The comparison is a case-sensitive {@code LIKE '%.pdf'} (no {@code LOWER()}) so the query stays
+     * engine-agnostic and matches only the lowercase {@code .pdf} suffix. Bulk: all requested courses in a single query.
+     *
+     * @param courseIds the ids of the courses
+     * @return the (courseId, unitId) pairs of units whose attachment is a PDF
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(avu.lecture.course.id, avu.id)
+            FROM AttachmentVideoUnit avu
+            WHERE avu.lecture.course.id IN :courseIds
+                AND avu.attachment IS NOT NULL
+                AND avu.attachment.link LIKE '%.pdf'
+            """)
+    List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithPdfAttachmentForCourses(@Param("courseIds") Collection<Long> courseIds);
+
+    /**
+     * Returns the (courseId, unitId) pairs of the attachment/video units in the given courses that have a non-blank
+     * video source. The {@code TRIM(...) <> ''} check treats an empty or space-only source as absent; it approximates
+     * the trigger's {@code String.isBlank()} rather than matching it exactly, since JPQL {@code TRIM} strips only spaces
+     * (not tabs or newlines), a gap that is moot for URL video sources. Bulk: all requested courses in a single query.
+     *
+     * @param courseIds the ids of the courses
+     * @return the (courseId, unitId) pairs of units with a video source
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseEntityIdDTO(avu.lecture.course.id, avu.id)
+            FROM AttachmentVideoUnit avu
+            WHERE avu.lecture.course.id IN :courseIds
+                AND avu.videoSource IS NOT NULL
+                AND TRIM(avu.videoSource) <> ''
+            """)
+    List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithVideoForCourses(@Param("courseIds") Collection<Long> courseIds);
 
     @Query("""
             SELECT lu
