@@ -94,7 +94,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Email
     @Size(max = 100)
-    @Column(length = 100)
+    @Column(length = 100, unique = true)
     private String email;
 
     /**
@@ -289,7 +289,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email == null ? null : email.toLowerCase(Locale.ROOT);
     }
 
     public String getImageUrl() {

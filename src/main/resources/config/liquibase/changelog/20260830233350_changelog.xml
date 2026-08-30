@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Email addresses have been treated as unique ignoring case by the application since the legacy TUM/edX
+         multi-account exception became obsolete. Refuse to guess how an operator wants to resolve historical
+         identity collisions before making that invariant authoritative in the database. -->
+    <changeSet id="20260830233350-1-require-unique-user-emails" author="krusche">
+        <preConditions onFail="HALT"
+                       onFailMessage="Cannot enforce unique user emails because jhi_user contains case-insensitive duplicates. Resolve the rows returned by SELECT LOWER(email), COUNT(*) FROM jhi_user WHERE email IS NOT NULL GROUP BY LOWER(email) HAVING COUNT(*) > 1, then run the migration again.">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*)
+                FROM (SELECT LOWER(email) FROM jhi_user WHERE email IS NOT NULL GROUP BY LOWER(email) HAVING COUNT(*) > 1) AS duplicate_emails
+            </sqlCheck>
+        </preConditions>
+        <!-- The precondition is the entire purpose of this changeset. -->
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260830233350-2-normalize-user-emails" author="krusche">
+        <update tableName="jhi_user">
+            <column name="email" valueComputed="LOWER(email)"/>
+            <where>email IS NOT NULL</where>
+        </update>
+        <!-- Original casing cannot be reconstructed. Artemis already compares email addresses ignoring case. -->
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260830233350-3-enforce-unique-user-emails" author="krusche">
+        <dropIndex tableName="jhi_user" indexName="jhi_user_email"/>
+        <createIndex tableName="jhi_user" indexName="jhi_user_email" unique="true">
+            <column name="email"/>
+        </createIndex>
+        <rollback>
+            <dropIndex tableName="jhi_user" indexName="jhi_user_email"/>
+            <createIndex tableName="jhi_user" indexName="jhi_user_email">
+                <column name="email"/>
+            </createIndex>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
