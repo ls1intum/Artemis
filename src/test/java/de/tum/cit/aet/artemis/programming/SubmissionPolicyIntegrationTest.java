@@ -19,6 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCIJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -495,6 +497,47 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, false);
 
         assertThat(result).isNotNull();
+        assertThat(result.getSubmission()).isInstanceOf(ProgrammingSubmission.class);
+        assertThat(((ProgrammingSubmission) result.getSubmission()).isBuildFailed()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_processResultWithTests_doesNotMarkSubmissionAsBuildFailed() {
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
+
+        // one executed (successful) test case: the build must NOT count as failed even though the legacy
+        // feedback collection stays empty - test results live in the typed test-case feedback collection
+        var jobs = List.of(new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("test1", List.of()))));
+        BuildResult buildResult = new BuildResult(defaultBranch, "commit0", null, true, ZonedDateTime.now(), jobs, List.of(), List.of(), false, 0);
+
+        Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, true);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTestCaseFeedbacks()).isNotEmpty();
+        assertThat(result.getSubmission()).isInstanceOf(ProgrammingSubmission.class);
+        assertThat(((ProgrammingSubmission) result.getSubmission()).isBuildFailed()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_processResultWithOnlyUnknownTests_doesNotMarkSubmissionAsBuildFailed() {
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        participationUtilService.addSubmission(participation, new ProgrammingSubmission().commitHash("commit0").type(SubmissionType.MANUAL).submissionDate(ZonedDateTime.now()));
+
+        // The reported test is not one of the exercise's test cases, which is what a failed or missing solution build
+        // looks like from here (the solution result is what registers them). The tests still ran, so the build did not
+        // fail - there is only nothing Artemis can attribute the results to.
+        var jobs = List.of(new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("aTestTheExerciseDoesNotKnow", List.of()))));
+        BuildResult buildResult = new BuildResult(defaultBranch, "commit0", null, true, ZonedDateTime.now(), jobs, List.of(), List.of(), false, 0);
+
+        Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, true);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTestCaseFeedbacks()).isEmpty();
         assertThat(result.getSubmission()).isInstanceOf(ProgrammingSubmission.class);
         assertThat(((ProgrammingSubmission) result.getSubmission()).isBuildFailed()).isFalse();
     }

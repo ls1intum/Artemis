@@ -79,6 +79,8 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+import de.tum.cit.aet.artemis.programming.service.TestCasePointsService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -141,6 +143,10 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
+    private final TestCasePointsService testCasePointsService;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -148,7 +154,8 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService) {
+            ParticipationFilterService participationFilterService, TestCasePointsService testCasePointsService,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -173,6 +180,8 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
+        this.testCasePointsService = testCasePointsService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -715,6 +724,16 @@ public class ExerciseService {
             results.addAll(resultRepository.getResultForExampleSubmissions(exercise.getExampleSubmissions()));
         }
 
+        // programming results need their (lazy) typed automatic feedback for the score re-calculation below
+        if (exercise instanceof ProgrammingExercise) {
+            programmingFeedbackSynthesizerService.hydrateTypedFeedback(results);
+        }
+
+        // the derived points map is identical for all results of the exercise (except for the solution
+        // participation), so compute each variant at most once instead of loading the test cases per result
+        Map<Long, Double> pointsForStudentResults = null;
+        Map<Long, Double> pointsForSolutionResults = null;
+
         // re-calculate the results after updating the feedback
         for (Result result : results) {
             if (!feedbackToBeDeleted.isEmpty()) {
@@ -731,7 +750,20 @@ public class ExerciseService {
                 resultRepository.submitResult(result, exercise);
             }
             else {
-                result.calculateScoreForProgrammingExercise(programmingExercise);
+                Map<Long, Double> pointsByTestCaseId;
+                if (TestCasePointsService.isForSolutionParticipation(result)) {
+                    if (pointsForSolutionResults == null) {
+                        pointsForSolutionResults = testCasePointsService.calculateTestCasePoints(programmingExercise, true);
+                    }
+                    pointsByTestCaseId = pointsForSolutionResults;
+                }
+                else {
+                    if (pointsForStudentResults == null) {
+                        pointsForStudentResults = testCasePointsService.calculateTestCasePoints(programmingExercise, false);
+                    }
+                    pointsByTestCaseId = pointsForStudentResults;
+                }
+                result.calculateScoreForProgrammingExercise(programmingExercise, pointsByTestCaseId);
                 resultRepository.save(result);
             }
         }
