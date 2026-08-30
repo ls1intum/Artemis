@@ -123,7 +123,18 @@
         </ng-template>
     }
 
-    @if (loaded() && cards().length === 0) {
+    @if (loaded() && exerciseCount() === 0) {
+        <div class="text-center py-5 text-muted-color">
+            <fa-icon [icon]="faList" size="2x" class="mb-3" aria-hidden="true" />
+            <p class="mb-2" jhiTranslate="artemisApp.exerciseManagement.noExercisesYet"></p>
+            @if (course()?.isAtLeastEditor) {
+                <tum-ui-button size="small" [attr.data-testid]="'create-first-exercise-button'" (clicked)="openCreateModal()">
+                    <fa-icon [icon]="faPlus" />
+                    <span class="ms-1" jhiTranslate="global.generic.create"></span>
+                </tum-ui-button>
+            }
+        </div>
+    } @else if (loaded() && cards().length === 0) {
         <tum-ui-message severity="secondary">
             <span jhiTranslate="artemisApp.exerciseManagement.noExercisesMatch" [translateValues]="{ search: search() }"></span>
         </tum-ui-message>
