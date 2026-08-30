@@ -22,6 +22,9 @@
             <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.addEnvVar"></span>
         </button>
+        @if (!areDockerFlagsWithinSizeLimit()) {
+            <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong"></div>
+        }
     </div>
     <div class="d-flex align-items-center justify-content-start gap-4 mb-2">
         <div>

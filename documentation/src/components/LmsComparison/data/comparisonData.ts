@@ -35,26 +35,27 @@ export const defaultSelections: [PlatformId, PlatformId] = [PlatformId.Canvas, P
 export const highlightCards: HighlightCardData[] = [
     {
         icon: faRobot,
-        title: 'AI-Powered Learning',
-        description: 'Iris, an AI virtual tutor, guides students through exercises. AI-assisted grading reduces feedback time.',
+        title: 'AI-Supported Learning',
+        description: 'Iris, an AI tutor, guides students with hints instead of answers, and Athena suggests feedback for tutors to review. Both are optional.',
         borderColor: '#0065BD',
     },
     {
         icon: faCode,
         title: 'Built for CS Education',
-        description: 'Native programming exercises with automatic grading in 15+ languages. No plugins required.',
+        description: 'Native programming exercises with automatic grading. 20 languages ship with templates, and any language that runs in a build container can be added.',
         borderColor: '#A2AD00',
     },
     {
         icon: faLock,
-        title: 'European Data Sovereignty',
-        description: 'Fully self-hosted and open-source. No student data leaves your servers. GDPR-compliant.',
+        title: 'Institutional Data Sovereignty',
+        description:
+            'Open source and self-hosted on infrastructure you control. Self-hosted AI models keep AI processing inside it. Designed to support GDPR-compliant deployments.',
         borderColor: '#E37222',
     },
     {
         icon: faClipboardCheck,
         title: 'Online Exams at Scale',
-        description: 'Integrated exam mode with exercise variants and plagiarism detection. Proven with 2,000+ students.',
+        description: 'Integrated exam mode with exercise variants and plagiarism detection. Used for exams with more than 2,000 students.',
         borderColor: '#98C6EA',
     },
 ];
@@ -391,7 +392,7 @@ export const featureCategories: FeatureCategory[] = [
             feature('scalability', 'Scalability (concurrent users)', [S, S, S, S, P, P], {
                 tooltip: 'Ability to handle large numbers of simultaneous users',
                 notes: {
-                    [PlatformId.Artemis]: 'Proven with 2,000+ concurrent students',
+                    [PlatformId.Artemis]: 'Used for courses and online exams with more than 2,000 students; scales horizontally',
                     [PlatformId.ILIAS]: 'Requires careful tuning for large deployments',
                     [PlatformId.OpenOlat]: 'Suitable for mid-size deployments',
                 },
@@ -413,9 +414,9 @@ export const featureCategories: FeatureCategory[] = [
                 },
             }),
             feature('accessibility', 'Accessibility (WCAG)', [P, S, P, S, P, P], {
-                tooltip: 'Compliance with WCAG accessibility standards and built-in accessibility tools',
+                tooltip: 'Conformance with WCAG accessibility standards and built-in accessibility tools',
                 notes: {
-                    [PlatformId.Artemis]: 'Improving, not yet fully WCAG compliant',
+                    [PlatformId.Artemis]: 'Targets WCAG 2.2 AA; actively improving, no certification or conformance statement',
                     [PlatformId.Canvas]: 'VPAT-certified, WCAG 2.1 AA',
                     [PlatformId.Blackboard]: 'Ally tool for automated accessibility scoring, VPAT available',
                 },
@@ -429,12 +430,16 @@ export const featureCategories: FeatureCategory[] = [
         features: [
             feature('self-hosted', 'Self-Hosted Deployment', [S, N, S, N, S, S], {
                 notes: {
+                    [PlatformId.Artemis]: 'Self-hosted only; there is no vendor-operated Artemis service',
                     [PlatformId.Canvas]: 'SaaS only (Instructure-hosted)',
                     [PlatformId.Blackboard]: 'SaaS only (Anthology-hosted)',
                 },
             }),
-            feature('gdpr', 'GDPR Compliance', [S, P, S, P, S, S], {
+            feature('gdpr', 'Supports GDPR-Compliant Deployments', [S, P, S, P, S, S], {
+                tooltip:
+                    'Whether the platform can be deployed and configured so that the operating institution can meet its GDPR obligations. Compliance always depends on the concrete deployment and remains the responsibility of the operator.',
                 notes: {
+                    [PlatformId.Artemis]: 'Self-hosted; data flows depend on the configured integrations',
                     [PlatformId.Canvas]: 'US-based provider, EU data centers available',
                     [PlatformId.Blackboard]: 'US-based provider, DPA available',
                 },

@@ -439,7 +439,29 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         result.testCaseCount = dto.testCaseCount;
         result.passedTestCaseCount = dto.passedTestCaseCount;
         result.codeIssueCount = dto.codeIssueCount;
+        result.correctionRound = dto.correctionRoundResults?.find((roundResult) => roundResult.resultId === dto.resultId)?.correctionRound;
         return result;
+    }
+
+    /**
+     * Builds the results the submission row works with: the newest one, which carries the score the table shows, and
+     * one per correction round, which is what the assessment actions of each round act on. The newest result is often
+     * one of the rounds itself, so it is not added twice.
+     */
+    private toResults(dto: ParticipationScoreDTO): Result[] {
+        const latestResult = this.toResult(dto);
+        const roundResults = (dto.correctionRoundResults ?? [])
+            .filter((roundResult) => roundResult.resultId !== dto.resultId)
+            .map((roundResult) => {
+                const result = new Result();
+                result.id = roundResult.resultId;
+                result.correctionRound = roundResult.correctionRound;
+                result.assessmentType = roundResult.assessmentType;
+                result.completionDate = roundResult.completionDate;
+                result.hasComplaint = roundResult.hasComplaint;
+                return result;
+            });
+        return latestResult ? [latestResult, ...roundResults] : roundResults;
     }
 
     /**
@@ -465,8 +487,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * into a plain Submission literal, which only type-checked because spreads skip excess-property checking.
      */
     private toSubmission(dto: ParticipationScoreDTO): Submission {
-        const result = this.toResult(dto);
-        const results = result ? [result] : [];
+        const results = this.toResults(dto);
         if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
             const submission = new ProgrammingSubmission();
             submission.id = dto.submissionId;

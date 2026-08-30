@@ -9,6 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { parseJson } from 'app/foundation/util/json.util';
+import { DOCKER_FLAGS_MAX_LENGTH } from 'app/programming/shared/entities/programming-exercise-build.config';
 
 const NOT_SUPPORTED_NETWORK_DISABLED_LANGUAGES = [ProgrammingLanguage.EMPTY];
 
@@ -73,6 +74,11 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
 
     // the editor page blocks saving while a resource limit is invalid, so the server never has to reject the payload
     readonly areDockerResourcesValid = computed(() => this.isCpuCountValid() && this.isMemoryValid() && this.isMemorySwapValid());
+
+    // The serialized flags as last written by parseDockerFlagsToString.
+    private readonly serializedDockerFlags = signal<string>('{}');
+
+    readonly areDockerFlagsWithinSizeLimit = computed(() => this.serializedDockerFlags().length <= DOCKER_FLAGS_MAX_LENGTH);
 
     faPlus = faPlus;
     faTrash = faTrash;
@@ -145,6 +151,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     initDockerFlags() {
+        this.serializedDockerFlags.set(this.programmingExercise()?.buildConfig?.dockerFlags ?? '{}');
         this.dockerFlags = parseJson<DockerFlags>(this.programmingExercise()?.buildConfig?.dockerFlags ?? '');
         if (this.dockerFlags.network) {
             this.network.set(this.dockerFlags.network);
@@ -213,7 +220,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     onEnvVarsKeyChange(row: [string, string]) {
         return (newValue: string) => {
             row[0] = newValue;
-            this.parseDockerFlagsToString();
+            this.notifyEnvVarsChanged();
             return row[0];
         };
     }
@@ -221,9 +228,22 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     onEnvVarsValueChange(row: [string, string]) {
         return (newValue: string) => {
             row[1] = newValue;
-            this.parseDockerFlagsToString();
+            this.notifyEnvVarsChanged();
             return row[1];
         };
+    }
+
+    /**
+     * Publishes an in-place edit of an environment variable row and re-serializes the Docker flags.
+     * <p>
+     * The rows are edited in place because the table binds each row object into its cell templates and
+     * {@link removeEnvVar} identifies a row by reference, so the row identity has to survive an edit. A mutated row
+     * leaves the signal holding the same array, which would notify nothing and leave everything derived from
+     * {@link envVars} (such as the flags size check) stale, so a new array over the same rows is published here.
+     */
+    private notifyEnvVarsChanged(): void {
+        this.envVars.update((envVars) => [...envVars]);
+        this.parseDockerFlagsToString();
     }
 
     addEnvVar() {
@@ -236,6 +256,13 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     parseDockerFlagsToString() {
+        this.dockerFlags = this.currentDockerFlags();
+        const serialized = JSON.stringify(this.dockerFlags);
+        this.serializedDockerFlags.set(serialized);
+        this.programmingExercise()!.buildConfig!.dockerFlags = serialized;
+    }
+
+    private currentDockerFlags(): DockerFlags {
         const newEnv: { [key: string]: string } = {};
         this.envVars().forEach(([key, value]) => {
             if (key.trim()) {
@@ -243,8 +270,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
             }
         });
         const network = this.network() === '' ? undefined : this.network();
-        this.dockerFlags = { env: newEnv, network: network, cpuCount: this.cpuCount(), memory: this.memory(), memorySwap: this.memorySwap() };
-        this.programmingExercise()!.buildConfig!.dockerFlags = JSON.stringify(this.dockerFlags);
+        return { env: newEnv, network: network, cpuCount: this.cpuCount(), memory: this.memory(), memorySwap: this.memorySwap() };
     }
 
     setIsLanguageSupported() {

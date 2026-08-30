@@ -138,6 +138,10 @@
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Build Script",
+            "buildConfig": {
+                "buildPlanConfigurationTooLong": "Die Build-Plan-Konfiguration ist zu lang. Die maximal zulässige Größe beträgt 1 MB.",
+                "dockerFlagsTooLong": "Die Docker-Flags sind zu lang. Die maximal zulässige Größe beträgt 8 KB."
+            },
             "buildPhasesEditor": {
                 "title": "Build-Phasen",
                 "help": "Bevor ein Build ausgeführt wird, werden die Skripte aller Phasen, deren Bedingungen erfüllt sind, in ihrer Reihenfolge zusammengefügt. Wenn keine Ergebnispfade konfiguriert sind, bestimmt der Exit-Code des Skripts den Build-Erfolg. Andernfalls hängt der Erfolg davon ab, ob Testergebnisse erzeugt werden.",

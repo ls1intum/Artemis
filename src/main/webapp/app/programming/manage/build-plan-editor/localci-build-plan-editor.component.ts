@@ -17,6 +17,7 @@ import { BuildPlanConfigurationService } from 'app/programming/manage/services/b
 import { LegacyBuildPlanConverterService } from 'app/programming/shared/services/legacy-build-plan-converter.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/build-plan-editor/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phases-editor.component';
 
@@ -100,8 +101,23 @@ export class LocalCIBuildPlanEditorComponent implements OnInit, ComponentCanDeac
     // before the build configuration child exists, do not block saving on its resource limits
     readonly areDockerResourcesValid = computed(() => this.buildConfigurationComponent()?.areDockerResourcesValid() ?? true);
 
+    // the Docker flags are assembled by the build configuration child, so the size check lives there and is delegated here
+    readonly areDockerFlagsWithinSizeLimit = computed(() => this.buildConfigurationComponent()?.areDockerFlagsWithinSizeLimit() ?? true);
+
+    readonly isBuildPlanConfigurationWithinSizeLimit = computed(
+        () => JSON.stringify({ phases: this.phases(), dockerImage: this.dockerImage().trim() || undefined }).length <= BUILD_PLAN_CONFIGURATION_MAX_LENGTH,
+    );
+
     // An empty image is allowed: submit() sends no image and the server falls back to the exercise's language default.
-    readonly canSubmit = computed(() => this.phases().length > 0 && this.arePhaseNamesValid() && this.isTimeoutValid() && this.areDockerResourcesValid());
+    readonly canSubmit = computed(
+        () =>
+            this.phases().length > 0 &&
+            this.arePhaseNamesValid() &&
+            this.isTimeoutValid() &&
+            this.areDockerResourcesValid() &&
+            this.isBuildPlanConfigurationWithinSizeLimit() &&
+            this.areDockerFlagsWithinSizeLimit(),
+    );
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ exercise }) => {

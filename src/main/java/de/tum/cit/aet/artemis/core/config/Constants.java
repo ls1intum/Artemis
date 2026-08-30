@@ -33,14 +33,17 @@ public final class Constants {
 
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
-    /**
-     * Upper bound for the serialized Docker flags string of a build plan configuration. It mirrors the 1 MB cap the
-     * structured build plan is parsed under, so the whole build config payload is uniformly size bounded and an abusive
-     * flags string is rejected up front rather than persisted.
-     */
-    public static final int MAX_DOCKER_FLAGS_LENGTH = 1024 * 1024;
-
     public static final int MAX_PACKAGE_NAME_LENGTH = 100;
+
+    /**
+     * The maximum allowed length (in characters) of the build plan configuration stored for a programming exercise build config.
+     */
+    public static final int MAX_BUILD_PLAN_CONFIGURATION_LENGTH = 1024 * 1024;
+
+    /**
+     * The maximum allowed length (in characters) of the docker flags stored for a programming exercise build config.
+     */
+    public static final int MAX_DOCKER_FLAGS_LENGTH = 8 * 1024;
 
     /**
      * The default REST/URL-path prefix for accessing file uploads.
@@ -207,6 +210,12 @@ public final class Constants {
 
     public static final String CLEANUP_COURSE = "CLEANUP_COURSE";
 
+    /** An administrator switched an account off, so it can no longer authenticate anywhere. */
+    public static final String DEACTIVATE_USER = "DEACTIVATE_USER";
+
+    /** An account was activated, either by an administrator or by the account holder redeeming their activation key. */
+    public static final String ACTIVATE_USER = "ACTIVATE_USER";
+
     public static final String DELETE_ALL_IRIS_SESSIONS = "DELETE_ALL_IRIS_SESSIONS";
 
     public static final String DELETE_IRIS_SESSION = "DELETE_IRIS_SESSION";
@@ -304,9 +313,9 @@ public final class Constants {
 
     public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
 
-    public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
+    public static final String PLAGIARISM_CACHE_PREFIX = "plagiarism-";
 
-    public static final String HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = HAZELCAST_PLAGIARISM_PREFIX + "active-plagiarism-checks-per-course-cache";
+    public static final String ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = PLAGIARISM_CACHE_PREFIX + "active-plagiarism-checks-per-course-cache";
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
@@ -620,6 +629,21 @@ public final class Constants {
      * The name of the property used to enable or disable Weaviate integration.
      */
     public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
+
+    /**
+     * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with
+     * the key pair they generate at startup when {@code true}, or with the build-agent git username and password when
+     * {@code false}.
+     * <p>
+     * It means something different on each node role. On a build agent it picks the mechanism the agent uses. On a core
+     * node it governs only the build-agent shortcut over https: {@code true} stops that pair from granting
+     * repository-wide read, though it is still processed as ordinary Basic credentials afterwards. Core nodes
+     * accept a registered build agent's public key either way, because a key is per-agent and only reaches a core node
+     * through an agent that has joined the cluster, so unlike the shared credential pair there is nothing to close.
+     * Setting it on the agents therefore keeps builds running, and setting it on the core nodes is what removes the
+     * credential.
+     */
+    public static final String BUILD_AGENT_USE_SSH_PROPERTY_NAME = "artemis.version-control.build-agent-use-ssh";
 
     /**
      * The name of the property used to define the directories for file uploads.

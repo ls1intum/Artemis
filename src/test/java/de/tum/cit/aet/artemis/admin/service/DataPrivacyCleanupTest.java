@@ -27,6 +27,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
@@ -79,6 +80,9 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CourseDataRetentionService courseDataRetentionService;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     @Autowired
     private DataCleanupService dataCleanupService;
@@ -248,23 +252,23 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // only if the deployment did not already seed it, so that ONLY the service's bot filter can save it on delete.
         User irisBot = userUtilService.userExistsWithLogin(User.IRIS_BOT_LOGIN) ? null : notEnrolledUser(User.IRIS_BOT_LOGIN, longAgo);
         if (irisBot != null) {
-            userRepository.updateDeletionWarningSentDate(User.IRIS_BOT_LOGIN, ZonedDateTime.now().minusDays(31).toInstant());
+            userActivityService.recordDeletionWarning(User.IRIS_BOT_LOGIN, ZonedDateTime.now().minusDays(31).toInstant());
         }
 
         // Phase 1 (warn): exactly the one candidate is counted (enrolled, recent, and the already-warned bot excluded).
         assertThat(dataCleanupService.countNotEnrolledUsersWarning().users()).isEqualTo(baselineWarnCount + 1);
         dataCleanupService.warnNotEnrolledUsers();
         verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
-        assertThat(userRepository.findById(toDeleteId)).get().extracting(User::getDeletionWarningSentDate).isNotNull();
-        assertThat(userRepository.findById(enrolled.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
-        assertThat(userRepository.findById(recent.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(toDeleteId)).isNotNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(enrolled.getId())).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(recent.getId())).isNull();
 
         // Immediately after warning the account is within grace -> the delete phase deletes nobody yet.
         dataCleanupService.deleteNotEnrolledUsers();
         assertThat(userRepository.findById(toDeleteId)).get().extracting(User::isDeleted).isEqualTo(false);
 
         // Backdate the warning past the 30-day grace; now the account is due for deletion.
-        userRepository.updateDeletionWarningSentDate(originalLogin, ZonedDateTime.now().minusDays(31).toInstant());
+        userActivityService.recordDeletionWarning(originalLogin, ZonedDateTime.now().minusDays(31).toInstant());
         dataCleanupService.deleteNotEnrolledUsers();
 
         // The warned, past-grace account is soft-deleted and anonymized (login/email replaced, deactivated).
@@ -297,7 +301,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         dataCleanupService.warnNotEnrolledUsers();
 
         verify(mailSendingService, atLeastOnce()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
-        assertThat(userRepository.findById(sendFails.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(sendFails.getId())).isNull();
 
         // No warning was ever stamped, so phase 2 cannot delete the account (even though it is well past the grace period).
         dataCleanupService.deleteNotEnrolledUsers();
@@ -316,7 +320,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         dataCleanupService.warnNotEnrolledUsers();
 
         verify(mailSendingService, never()).buildAndSendSyncReporting(any(), any(), anyList(), any(), anyMap());
-        assertThat(userRepository.findById(candidate.getId())).get().extracting(User::getDeletionWarningSentDate).isNull();
+        assertThat(userActivityService.findDeletionWarningSentDate(candidate.getId())).isNull();
     }
 
     @Test
@@ -471,14 +475,14 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // delete an actively-used account. This drives the real audit path (add -> isLoginSuccess -> recordLastLogin).
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Instant longAgo = ZonedDateTime.now().minusYears(1).toInstant();
-        userRepository.updateLastLoginDate(user.getLogin(), longAgo);
+        userActivityService.recordLogin(user.getLogin(), longAgo);
 
         Instant loginTime = ZonedDateTime.now().toInstant();
         auditEventRepository.add(new AuditEvent(loginTime, user.getLogin(), AuditEventConstants.AUTHENTICATION_SUCCESS, Map.of()));
 
         // The successful login moved lastLoginDate forward from the backdated value to ~now (compared with a margin
         // because the column stores millisecond precision), proving the audit hook records the activity signal.
-        Instant recorded = userRepository.findById(user.getId()).orElseThrow().getLastLoginDate();
+        Instant recorded = userActivityService.findLastLoginDate(user.getId());
         assertThat(recorded).isAfter(longAgo).isBetween(loginTime.minusSeconds(60), loginTime.plusSeconds(60));
     }
 
@@ -529,7 +533,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     private User notEnrolledUser(String login, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);
-        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
+        userActivityService.recordLogin(user.getLogin(), lastLoginDate);
         return user;
     }
 
@@ -537,7 +541,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         User user = userUtilService.createAndSaveUser(login);
         // enrollment is a course role now, so a plain group name would no longer make the user count as enrolled
         userUtilService.enrollUserInCourse(user, courseUtilService.createCourse(), CourseRole.STUDENT);
-        userRepository.updateLastLoginDate(user.getLogin(), lastLoginDate);
+        userActivityService.recordLogin(user.getLogin(), lastLoginDate);
         return user;
     }
 }

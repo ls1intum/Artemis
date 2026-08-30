@@ -12,6 +12,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Course } from 'app/course/shared/entities/course.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { DOCKER_FLAGS_MAX_LENGTH } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { By } from '@angular/platform-browser';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;
@@ -44,6 +46,9 @@ describe('ProgrammingExercise Docker Image', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        // the exercise is shared by every test in this suite and parseDockerFlagsToString writes into it, so a test that
+        // edits the flags would otherwise leak them into the next one through ngOnInit
+        programmingExercise.buildConfig!.dockerFlags = undefined;
     });
 
     it('should update build values', () => {
@@ -201,6 +206,72 @@ describe('ProgrammingExercise Docker Image', () => {
         comp.onMemorySwapChange({ target: { value: '0' } });
 
         expect(comp.areDockerResourcesValid()).toBe(true);
+    });
+
+    it('should flag docker flags that are already too long when the exercise is opened', () => {
+        // an exercise saved before the limit existed can carry oversized flags, so the check has to hold on load as well
+        programmingExercise.buildConfig!.dockerFlags = JSON.stringify({ env: { key: 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH) } });
+
+        fixture.detectChanges();
+
+        expect(comp.areDockerFlagsWithinSizeLimit()).toBe(false);
+    });
+
+    it('should flag docker flags that grow too long through the editable field, not only through a direct signal write', () => {
+        // the row is edited in place, so the size check only sees the new value if the handler republishes the signal.
+        // Setting envVars directly would notify on its own and hide that, so this drives the handler the table calls.
+        comp.envVars.set([['key', 'value']]);
+        expect(comp.areDockerFlagsWithinSizeLimit()).toBe(true);
+
+        comp.onEnvVarsValueChange(comp.envVars()[0])('a'.repeat(DOCKER_FLAGS_MAX_LENGTH));
+
+        expect(comp.areDockerFlagsWithinSizeLimit()).toBe(false);
+    });
+
+    it('should render the docker flags size message next to the environment variables', () => {
+        // the first detectChanges runs ngOnInit, which repopulates envVars from the exercise, so seed the rows after it
+        fixture.detectChanges();
+        comp.envVars.set([['key', 'value']]);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[jhiTranslate$="dockerFlagsTooLong"]'))).toBeNull();
+
+        comp.onEnvVarsValueChange(comp.envVars()[0])('a'.repeat(DOCKER_FLAGS_MAX_LENGTH));
+        fixture.detectChanges();
+
+        const message = fixture.debugElement.query(By.css('[jhiTranslate$="dockerFlagsTooLong"]'));
+        expect(message).not.toBeNull();
+        // it has to sit in the same block as the environment variables, not at the bottom of the page
+        expect(message.nativeElement.parentElement?.querySelector('#envVarsTable')).not.toBeNull();
+    });
+
+    it('should publish a new envVars array when a row is edited, so derived state is not left stale', () => {
+        comp.envVars.set([['key', 'value']]);
+        const before = comp.envVars();
+
+        comp.onEnvVarsValueChange(before[0])('edited');
+
+        // the row is mutated in place, so without republishing the array the signal would notify nothing
+        expect(comp.envVars()).not.toBe(before);
+        expect(comp.envVars()[0][1]).toBe('edited');
+    });
+
+    it('should keep removing a row working after it was edited in place', () => {
+        comp.envVars.set([['key', 'value']]);
+        const row = comp.envVars()[0];
+        comp.onEnvVarsValueChange(row)('edited');
+
+        // removeEnvVar identifies the row by reference, so republishing the signal must not replace the row object
+        comp.removeEnvVar(comp.envVars()[0]);
+
+        expect(comp.envVars()).toEqual([]);
+    });
+
+    it('should accept docker flags that stay within the maximum length', () => {
+        programmingExercise.buildConfig!.dockerFlags = JSON.stringify({ env: { key: 'value' } });
+
+        fixture.detectChanges();
+
+        expect(comp.areDockerFlagsWithinSizeLimit()).toBe(true);
     });
 
     it('should update environment variable rows with new array references when adding and removing rows', () => {

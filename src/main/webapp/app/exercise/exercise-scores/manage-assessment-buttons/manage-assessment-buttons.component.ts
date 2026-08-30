@@ -7,6 +7,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { getSubmissionResultByCorrectionRound } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
@@ -61,6 +62,18 @@ export class ManageAssessmentButtonsComponent implements OnInit {
         this.correctionRoundIndices.set([...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
     }
 
+    /**
+     * The result of the given correction round, matched on the round the result belongs to.
+     *
+     * Indexing the results by the round only worked while a submission's results were an ordered list whose position was
+     * the round. They are a set now and the round lives on the result, so it is matched instead. The scores view is fed
+     * one entry per round for exactly this lookup.
+     */
+    resultForRound(correctionRound: number): Result | undefined {
+        const submission = this.participation().submissions?.[0];
+        return submission ? getSubmissionResultByCorrectionRound(submission, correctionRound) : undefined;
+    }
+
     getAssessmentLink(correctionRound = 0) {
         const exercise = this.exercise();
         const course = this.course();
@@ -80,18 +93,17 @@ export class ManageAssessmentButtonsComponent implements OnInit {
             exercise.exerciseGroup?.exam?.id,
             exercise.exerciseGroup?.id,
             // TODO do we need to handle this differently for programming exercises?
-            submission.results?.[correctionRound]?.id,
+            this.resultForRound(correctionRound)?.id,
         );
     }
 
     getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
         // TODO do we need to handle this differently for programming exercises?
-        const submission = this.participation().submissions![0];
-        const result = submission.results?.[correctionRound];
+        const result = this.resultForRound(correctionRound);
         if (!result) {
             return correctionRound;
         }
-        if (result.hasComplaint && !!submission.results?.[correctionRound + 1]) {
+        if (result.hasComplaint && !!this.resultForRound(correctionRound + 1)) {
             // If there is a complaint and the complaint got accepted (additional result)
             // open this next result.
             return correctionRound + 1;

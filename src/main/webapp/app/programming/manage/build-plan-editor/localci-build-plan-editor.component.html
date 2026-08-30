@@ -59,4 +59,7 @@
             [translateValues]="{ min: timeoutMinValue(), max: timeoutMaxValue() }"
         ></div>
     }
+    @if (!isBuildPlanConfigurationWithinSizeLimit()) {
+        <div class="text-state-danger mt-1" jhiTranslate="artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong"></div>
+    }
 }

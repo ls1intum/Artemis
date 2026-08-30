@@ -19,6 +19,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/build-plan-ed
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { BuildPlanConfigurationService } from 'app/programming/manage/services/build-plan-configuration.service';
+import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
@@ -47,6 +48,7 @@ class StubProgrammingExerciseBuildConfigurationComponent {
     readonly timeoutMinValue = signal<number | undefined>(undefined);
     readonly timeoutMaxValue = signal<number | undefined>(undefined);
     readonly areDockerResourcesValid = signal(true);
+    readonly areDockerFlagsWithinSizeLimit = signal(true);
 }
 
 describe('LocalCIBuildPlanEditorComponent', () => {
@@ -534,6 +536,25 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         expect(comp.canSubmit()).toBe(true);
     });
 
+    it('should block submitting while the docker flags exceed the maximum length', () => {
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+
+        fixture.detectChanges();
+        const buildConfiguration = (comp as unknown as { buildConfigurationComponent: () => StubProgrammingExerciseBuildConfigurationComponent }).buildConfigurationComponent();
+        expect(comp.canSubmit()).toBe(true);
+
+        // the server rejects oversized docker flags, so saving is blocked up front; the message itself is rendered by the
+        // build configuration component, next to the environment variables that cause it
+        buildConfiguration.areDockerFlagsWithinSizeLimit.set(false);
+        expect(comp.canSubmit()).toBe(false);
+
+        buildConfiguration.areDockerFlagsWithinSizeLimit.set(true);
+        expect(comp.canSubmit()).toBe(true);
+    });
+
     it('should allow leaving with no edits and prompt once the plan is edited', () => {
         activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration } } as unknown as ProgrammingExercise });
         vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
@@ -658,6 +679,29 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         expect(comp.canSubmit()).toBe(false);
         expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    it('should not submit when the serialized build plan configuration exceeds the maximum length', () => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        // one oversized script is enough to push the serialized plan past the server-side limit
+        comp.phases.set([{ ...phases[0], script: 'a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH) }]);
+        comp.dockerImage.set('some-image');
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration');
+
+        comp.submit();
+
+        expect(comp.isBuildPlanConfigurationWithinSizeLimit()).toBe(false);
+        expect(comp.canSubmit()).toBe(false);
+        expect(updateStub).not.toHaveBeenCalled();
+    });
+
+    it('should submit a build plan configuration that stays within the maximum length', () => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.phases.set(phases);
+        comp.dockerImage.set('some-image');
+
+        expect(comp.isBuildPlanConfigurationWithinSizeLimit()).toBe(true);
+        expect(comp.canSubmit()).toBe(true);
     });
 
     it.each([

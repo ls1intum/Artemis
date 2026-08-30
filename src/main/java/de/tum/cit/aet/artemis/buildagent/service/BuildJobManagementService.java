@@ -14,6 +14,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -222,7 +223,7 @@ public class BuildJobManagementService {
         distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
             if (!isInitialConnection) {
                 // This is a reconnection - reset the initialized flag so listeners are re-registered
-                log.info("Hazelcast client reconnected to cluster. Re-initializing BuildJobManagementService listeners.");
+                log.info("Reconnected to the distributed data provider. Re-initializing BuildJobManagementService listeners.");
                 initialized.set(false);
             }
             boolean initSucceeded = tryInitialize();
@@ -235,7 +236,8 @@ public class BuildJobManagementService {
         // If already connected, tryInitialize was called by the listener above.
         // If not connected yet, schedule periodic retries as a fallback.
         if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
-            log.info("Hazelcast client not yet connected to cluster. Scheduling periodic initialization retries every {} seconds.", CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+            log.info("Not connected to the distributed data provider yet. Scheduling periodic initialization retries every {} seconds.",
+                    CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
             scheduleConnectionRetryIfNeeded();
         }
     }
@@ -277,7 +279,7 @@ public class BuildJobManagementService {
         }
 
         if (!distributedDataAccessService.isConnectedToCluster()) {
-            log.debug("Cannot initialize BuildJobManagementService: not connected to Hazelcast cluster yet");
+            log.debug("Cannot initialize BuildJobManagementService: not connected to the distributed data provider yet");
             return false;
         }
 
@@ -352,8 +354,22 @@ public class BuildJobManagementService {
                 buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
-            future = buildAgentConfiguration.getBuildExecutor().submit(buildJob);
-            runningFutures.put(buildJobItem.id(), future);
+            // Register the job before it can start running. submit() hands the task to a worker thread before it
+            // returns, so registering afterwards left a window in which the build was already executing while
+            // runningFutures was still empty. A cancel or pause arriving in that window concluded that nothing was
+            // running: the pause then skipped its grace period and closed the build agent services underneath the
+            // job, which kept running until it hit the build timeout and was reported to the student as a failure.
+            // Executing the task only after the registration keeps "registered" strictly ahead of "running".
+            FutureTask<BuildResult> task = new FutureTask<>(buildJob);
+            runningFutures.put(buildJobItem.id(), task);
+            try {
+                buildAgentConfiguration.getBuildExecutor().execute(task);
+            }
+            catch (RuntimeException notAccepted) {
+                runningFutures.remove(buildJobItem.id());
+                throw notAccepted;
+            }
+            future = task;
         }
         finally {
             jobLifecycleLock.unlock();
@@ -572,20 +588,24 @@ public class BuildJobManagementService {
      * Cancel the build job for the given buildJobId.
      *
      * @param buildJobId The id of the build job that should be cancelled.
+     * @return {@code true} if the job was still running and this call stopped it, {@code false} if there was nothing
+     *         left to stop because it had already finished or was never registered. A caller that puts cancelled
+     *         jobs back on the queue has to check this: re-queueing a job that finished on its own would run the
+     *         same build a second time.
      */
-    void cancelBuildJob(String buildJobId) {
+    boolean cancelBuildJob(String buildJobId) {
         Future<BuildResult> future = runningFutures.get(buildJobId);
-        if (future != null) {
-            try {
-                cancelledBuildJobs.add(buildJobId);
-                future.cancel(true); // Attempt to interrupt the build job
-            }
-            catch (CancellationException e) {
-                log.warn("Build job already cancelled or completed for id {}", buildJobId);
-            }
-        }
-        else {
+        if (future == null) {
             log.warn("Could not cancel build job with id {} as it was not found in the running build jobs", buildJobId);
+            return false;
+        }
+        try {
+            cancelledBuildJobs.add(buildJobId);
+            return future.cancel(true); // Attempt to interrupt the build job
+        }
+        catch (CancellationException e) {
+            log.warn("Build job already cancelled or completed for id {}", buildJobId);
+            return false;
         }
     }
 

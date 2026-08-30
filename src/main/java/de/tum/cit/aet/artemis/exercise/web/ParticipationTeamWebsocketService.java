@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.security.Principal;
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,7 +12,6 @@ import java.util.regex.Pattern;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
@@ -30,13 +28,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
-
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -76,25 +73,25 @@ public class ParticipationTeamWebsocketService {
 
     private final Optional<ModelingSubmissionApi> modelingSubmissionApi;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider distributedDataProvider;
 
     // TODO: Follow-Up: move this into a separate service that contains all Hazelcast related data structures
 
     /** Always access using the getter to ensure that the map is initialized **/
     @Nullable
-    private Map<String, String> destinationTracker;
+    private DistributedMap<String, String> destinationTracker;
 
     /** Always access using the getter to ensure that the map is initialized **/
     @Nullable
-    private Map<String, Instant> lastTypingTracker;
+    private DistributedMap<String, Instant> lastTypingTracker;
 
     /** Always access using the getter to ensure that the map is initialized **/
     @Nullable
-    private Map<String, Instant> lastActionTracker;
+    private DistributedMap<String, Instant> lastActionTracker;
 
     public ParticipationTeamWebsocketService(WebsocketMessagingService websocketMessagingService, SimpUserRegistry simpUserRegistry, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TextSubmissionApi> textSubmissionApi,
-            Optional<ModelingSubmissionApi> modelingSubmissionApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            Optional<ModelingSubmissionApi> modelingSubmissionApi, DistributedDataProvider distributedDataProvider) {
         this.websocketMessagingService = websocketMessagingService;
         this.simpUserRegistry = simpUserRegistry;
         this.userRepository = userRepository;
@@ -102,7 +99,7 @@ public class ParticipationTeamWebsocketService {
         this.exerciseRepository = exerciseRepository;
         this.textSubmissionApi = textSubmissionApi;
         this.modelingSubmissionApi = modelingSubmissionApi;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -111,9 +108,9 @@ public class ParticipationTeamWebsocketService {
      *
      * @return the destination tracker map
      */
-    public Map<String, Instant> getLastTypingTracker() {
+    public DistributedMap<String, Instant> getLastTypingTracker() {
         if (this.lastTypingTracker == null) {
-            this.lastTypingTracker = this.hazelcastInstance.getMap("lastTypingTracker");
+            this.lastTypingTracker = this.distributedDataProvider.getMap("lastTypingTracker");
         }
         return lastTypingTracker;
     }
@@ -124,9 +121,9 @@ public class ParticipationTeamWebsocketService {
      *
      * @return the last action tracker map
      */
-    private Map<String, Instant> getLastActionTracker() {
+    private DistributedMap<String, Instant> getLastActionTracker() {
         if (this.lastActionTracker == null) {
-            this.lastActionTracker = this.hazelcastInstance.getMap("lastActionTracker");
+            this.lastActionTracker = this.distributedDataProvider.getMap("lastActionTracker");
         }
         return lastActionTracker;
     }
@@ -137,9 +134,9 @@ public class ParticipationTeamWebsocketService {
      *
      * @return the destination tracker map
      */
-    public Map<String, String> getDestinationTracker() {
+    public DistributedMap<String, String> getDestinationTracker() {
         if (this.destinationTracker == null) {
-            this.destinationTracker = this.hazelcastInstance.getMap("destinationTracker");
+            this.destinationTracker = this.distributedDataProvider.getMap("destinationTracker");
         }
         return destinationTracker;
     }
@@ -353,7 +350,7 @@ public class ParticipationTeamWebsocketService {
     public void unsubscribe(String sessionId) {
         // check if Hazelcast is still active, before invoking this
         try {
-            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
+            if (distributedDataProvider.isInstanceRunning()) {
                 Optional.ofNullable(getDestinationTracker().get(sessionId)).ifPresent(destination -> {
                     getDestinationTracker().remove(sessionId);
                     Long participationId = getParticipationIdFromDestination(destination);
@@ -361,8 +358,8 @@ public class ParticipationTeamWebsocketService {
                 });
             }
         }
-        catch (HazelcastInstanceNotActiveException e) {
-            log.error("Failed to unsubscribe as Hazelcast is no longer active");
+        catch (RuntimeException e) {
+            log.error("Failed to unsubscribe as the distributed data provider is unavailable");
         }
     }
 
@@ -418,11 +415,11 @@ public class ParticipationTeamWebsocketService {
         return getDestination(participationId, "");
     }
 
-    private void updateValue(Map<String, Instant> map, long participationId, String username) {
+    private void updateValue(DistributedMap<String, Instant> map, long participationId, String username) {
         map.put(participationId + "-" + username, Instant.now());
     }
 
-    private Instant getValue(Map<String, Instant> map, long participationId, String username) {
+    private Instant getValue(DistributedMap<String, Instant> map, long participationId, String username) {
         return map.get(participationId + "-" + username);
     }
 }

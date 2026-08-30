@@ -145,7 +145,7 @@
     @if (isEditFieldDisplayedRecord().assessmentInstructions && programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise()" />
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise()" [editable]="editable()" (criteriaGenerated)="criteriaGenerated.emit()" />
         </div>
     }
     @if (isEditFieldDisplayedRecord().presentationScore) {

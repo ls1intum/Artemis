@@ -7,7 +7,7 @@ import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.mo
 
 import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/services/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
-import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
+import { CourseResolve, ExamResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { featureToggleGuard } from 'app/foundation/feature-toggle/feature-toggle.guard';
@@ -94,32 +94,6 @@ export const examManagementRoutes: Routes = [
     {
         path: ':examId/exercise-groups',
         loadComponent: () => import('app/exam/manage/exercise-groups/exercise-groups.component').then((m) => m.ExerciseGroupsComponent),
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.examManagement.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/new',
-        loadComponent: () => import('app/exam/manage/exercise-groups/update/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
-        resolve: {
-            exam: ExamResolve,
-            exerciseGroup: ExerciseGroupResolve,
-        },
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            pageTitle: 'artemisApp.examManagement.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/edit',
-        loadComponent: () => import('app/exam/manage/exercise-groups/update/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
-        resolve: {
-            exam: ExamResolve,
-            exerciseGroup: ExerciseGroupResolve,
-        },
         data: {
             authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.examManagement.title',
