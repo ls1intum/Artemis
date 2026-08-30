@@ -26,7 +26,8 @@ jobs:
       MAX_STARTUP_DEPENDENCY_CHAIN_LENGTH: 10
       MAX_DEFERRED_CHAIN_LENGTH: 16
       MIN_INSTANTIATED_BEANS: 20
-      # develop's 151 plus the one the pluggable build job runner adds, so 152.
+      # develop's 151 plus the one the pluggable build job runner adds, the two typed feedback tables add,
+      # and this branch's local CI job-retry handling update, so 154.
       #
       # develop's own 151: three account-module services hold the columns moved out of jhi_user - the VCS access token,
       # the recovery keys and the activity timestamps. Each is reached at startup through a consumer that is already
@@ -39,8 +40,10 @@ jobs:
       # clone.
       #
       # The one this branch adds is the build job runner, which is selected at startup so the agent knows whether it
-      # executes through Docker or Kubernetes before it takes a job.
-      MAX_INSTANTIATED_BEANS: 152
+      # executes through Docker or Kubernetes before it takes a job. The two in origin/develop are the feedback
+      # synthesizer and the test case points service, which the grading service and the exercise re-evaluation reach
+      # at startup.
+      MAX_INSTANTIATED_BEANS: 154
       MIN_DEFERRED_CHAIN_LENGTH: 1
 
     steps:

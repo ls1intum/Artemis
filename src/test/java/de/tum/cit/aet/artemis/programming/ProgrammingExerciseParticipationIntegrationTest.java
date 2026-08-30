@@ -617,14 +617,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestPendingSubmissionIfNotExists_student() throws Exception {
-        // Submission has a result, therefore not considered pending.
-
-        Result result = new Result();
-        result.setExerciseId(programmingExercise.getId());
-        result = resultRepository.save(result);
+        // The submission has no result yet and its submission date is old enough, so it counts as pending.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);
@@ -633,13 +628,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestPendingSubmissionIfNotExists_ta() throws Exception {
-        // Submission has a result, therefore not considered pending.
-        Result result = new Result();
-        result.setExerciseId(programmingExercise.getId());
-        result = resultRepository.save(result);
+        // The submission has no result yet and its submission date is old enough, so it counts as pending.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);
@@ -648,13 +639,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestPendingSubmissionIfNotExists_instructor() throws Exception {
-        // Submission has a result, therefore not considered pending.
-        Result result = new Result();
-        result.setExerciseId(programmingExercise.getId());
-        result = resultRepository.save(result);
+        // The submission has no result yet and its submission date is old enough, so it counts as pending.
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
         submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
-        submission.addResult(result);
         Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.OK,
                 ProgrammingSubmission.class);
         assertThat(returnedSubmission).isEqualTo(submission);

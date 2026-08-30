@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -364,9 +365,24 @@ public class BuildJobManagementService {
                 buildLogsMap.appendBuildLogEntry(buildJobItem.id(), msg);
                 throw new CompletionException(msg, null);
             }
-            future = buildAgentConfiguration.getBuildExecutor().submit(buildJob);
-            runningFutures.put(buildJobItem.id(), future);
+            // Register the job before it can start running. submit() hands the task to a worker thread before it
+            // returns, so registering afterwards left a window in which the build was already executing while
+            // runningFutures was still empty. A cancel or pause arriving in that window concluded that nothing was
+            // running: the pause then skipped its grace period and closed the build agent services underneath the
+            // job, which kept running until it hit the build timeout and was reported to the student as a failure.
+            // Executing the task only after the registration keeps "registered" strictly ahead of "running".
+            FutureTask<BuildResult> task = new FutureTask<>(buildJob);
+            runningFutures.put(buildJobItem.id(), task);
             runningExecutionTrackers.put(buildJobItem.id(), executionTracker);
+            try {
+                buildAgentConfiguration.getBuildExecutor().execute(task);
+            }
+            catch (RuntimeException notAccepted) {
+                runningFutures.remove(buildJobItem.id());
+                runningExecutionTrackers.remove(buildJobItem.id());
+                throw notAccepted;
+            }
+            future = task;
         }
         finally {
             jobLifecycleLock.unlock();
@@ -593,8 +609,12 @@ public class BuildJobManagementService {
      * Cancel the build job for the given buildJobId.
      *
      * @param buildJobId The id of the build job that should be cancelled.
+     * @return {@code true} if the job was still running and this call stopped it, {@code false} if there was nothing
+     *         left to stop because it had already finished or was never registered. A caller that puts cancelled
+     *         jobs back on the queue has to check this: re-queueing a job that finished on its own would run the
+     *         same build a second time.
      */
-    void cancelBuildJob(String buildJobId) {
+    boolean cancelBuildJob(String buildJobId) {
         jobLifecycleLock.lock();
         try {
             Future<BuildResult> future = runningFutures.get(buildJobId);
@@ -614,13 +634,16 @@ public class BuildJobManagementService {
                     else if (markerAdded) {
                         cancelledBuildJobs.remove(buildJobId);
                     }
+                    return cancellationAccepted;
                 }
                 catch (CancellationException e) {
                     log.warn("Build job already cancelled or completed for id {}", buildJobId);
+                    return false;
                 }
             }
             else {
                 log.warn("Could not cancel build job with id {} as it was not found in the running build jobs", buildJobId);
+                return false;
             }
         }
         finally {
