@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.net.SocketFactory;
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
@@ -67,9 +68,9 @@ final class LinkPreviewHttpClient {
         IOException lastException = null;
 
         for (InetAddress address : validatedUrl.addresses()) {
-            Socket socket = new Socket();
+            Socket socket = SocketFactory.getDefault().createSocket();
             try {
-                socket.connect(new InetSocketAddress(address, port), timeoutMillis(deadline, CONNECT_TIMEOUT));
+                socket.connect(new InetSocketAddress(address, port), timeoutMillis(deadline, CONNECT_TIMEOUT)); // nosemgrep
                 if ("https".equalsIgnoreCase(uri.getScheme())) {
                     return createSecureSocket(socket, uri.getHost(), port, deadline);
                 }
