@@ -110,15 +110,11 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         botUser = irisBotUserService.getIrisBotUser();
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        // The opt-out and AI-selection tests below persist this flag and users are shared across methods
-        // in the class, so reset it here to keep the tests order-independent.
-        student.setSelectedLLMUsage(null);
-        tutor.setSelectedLLMUsage(null);
-        student = userTestRepository.save(student);
-        tutor = userTestRepository.save(tutor);
-        User secondStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        secondStudent.setSelectedLLMUsage(null);
-        userTestRepository.save(secondStudent);
+        // The opt-out and AI-selection tests below persist this decision and users are shared across
+        // methods in the class, so reset it here to keep the tests order-independent.
+        userUtilService.clearAiSelectionDecision(student);
+        userUtilService.clearAiSelectionDecision(tutor);
+        userUtilService.clearAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         enableIrisFor(course);
     }
 
@@ -351,7 +347,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     void ingestion_isSkippedWhenTheQuestionAuthorOptedOutOfAi() {
-        student.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
         Post post = createQuestion("Please keep my question away from AI.");
         AnswerPost answer = saveAnswer(post, tutor, "Understood.", true, true);
@@ -368,27 +364,32 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void ingestion_isSkippedWhenTheAnswerAuthorOptedOutOfAi() {
-        tutor.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+    void resolutionChanged_onlyResolvingAnswerIsOptedOut_retractsInsteadOfIngesting() {
+        userUtilService.setAiSelectionDecision(tutor, AiSelectionDecision.NO_AI);
         userTestRepository.save(tutor);
         Post post = createQuestion("Who wrote this answer?");
         AnswerPost answer = saveAnswer(post, tutor, "A tutor who opted out.", true, true);
         AnswerPost managed = reloadManagedAnswer(post, answer.getId());
 
-        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
-        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> ingested = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(ingested::set);
+        AtomicReference<PyrisWebhookCourseMemoryDeletionExecutionDTO> retracted = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryDeletionWebhookRunResponse(retracted::set);
 
-        // The answer itself would become the stored text, so redacting it is not an option: the whole
-        // ingestion has to stop.
+        // The answer itself would become the stored text, so redacting it is not an option and nothing may be
+        // ingested. Doing nothing is not an option either: whatever the entry holds was written by an answer
+        // that no longer resolves this thread, so it has to go.
         courseMemoryIngestionService.handleResolutionChange(reloadPost(post), managed, tutor, course);
 
-        assertThat(captured.get()).isNull();
+        assertThat(ingested.get()).isNull();
+        assertThat(retracted.get()).isNotNull();
+        assertThat(retracted.get().postId()).isEqualTo(String.valueOf(post.getId()));
     }
 
     @Test
     void ingestion_redactsAParticipantWhoOptedOutMidThread() {
         User bystander = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        bystander.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(bystander, AiSelectionDecision.NO_AI);
         bystander = userTestRepository.save(bystander);
 
         Post post = createQuestion("Why does the build fail?");
@@ -627,7 +628,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void ingestion_downgradesToLocalWhenAnyParticipantChoseLocal() {
         User secondStudent = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        secondStudent.setSelectedLLMUsage(AiSelectionDecision.LOCAL_AI);
+        userUtilService.setAiSelectionDecision(secondStudent, AiSelectionDecision.LOCAL_AI);
         secondStudent = userTestRepository.save(secondStudent);
 
         Post post = createQuestion("Does the extractor run on-premise?");
@@ -664,7 +665,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void ingestion_clearsResolvingFlagOfARedactedAnswer() {
         User bystander = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        bystander.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(bystander, AiSelectionDecision.NO_AI);
         bystander = userTestRepository.save(bystander);
 
         Post post = createQuestion("Which Java version do we use?");
@@ -686,7 +687,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     void retraction_stillWorksForAnOptedOutQuestionAuthor() {
-        student.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
+        userUtilService.setAiSelectionDecision(student, AiSelectionDecision.NO_AI);
         userTestRepository.save(student);
         Post post = createQuestion("Opted out after an entry already existed.");
         AnswerPost answer = saveAnswer(post, tutor, "No longer resolving.", true, false);
@@ -779,6 +780,49 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(dto).isNotNull();
         assertThat(dto.source()).isEqualTo(PyrisCourseMemorySource.IRIS_AUTO);
         assertThat(dto.messageId()).isEqualTo(String.valueOf(irisAnswer.getId()));
+    }
+
+    @Test
+    void resolutionChanged_anAutoPublishedIrisAnswerDoesNotHideAnOlderVerifiedOne() {
+        Post post = createQuestion("What does CD stand for?");
+        AnswerPost verifiedIrisAnswer = saveDashboardVerifiedIrisAnswer(post, "Continuous Delivery.", false);
+        // Auto-published: isVerified() like the one above, but with no human verifier behind it — and newer.
+        // Testing only the newest bot answer for a verifier would make the anchor come out empty and the
+        // caller retract an entry the tutor-approved answer above still owns.
+        saveAnswer(post, botUser, "It can also mean Continuous Deployment.", true, false);
+        AnswerPost humanAnswer = saveAnswer(post, student, "See the glossary.", false, false);
+
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, humanAnswer.getId()), student, course);
+
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.messageId()).isEqualTo(String.valueOf(verifiedIrisAnswer.getId()));
+    }
+
+    @Test
+    void resolutionChanged_anOptedOutResolverDoesNotDisplaceAnOlderUsableOne() {
+        // selectAnchor takes the newest resolving answer, so an opted-out author answering after a tutor used to
+        // win the anchor — and the run then stopped, leaving the tutor's entry standing for an answer that no
+        // longer owned it. The opted-out answer is not a candidate at all, so the tutor's still is.
+        User bystander = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        userUtilService.setAiSelectionDecision(bystander, AiSelectionDecision.NO_AI);
+        bystander = userTestRepository.save(bystander);
+
+        Post post = createQuestion("Which branch do I base my work on?");
+        AnswerPost tutorAnswer = saveAnswer(post, tutor, "Always branch off develop.", true, true);
+        saveAnswer(post, bystander, "That matches what I did.", true, true);
+
+        AtomicReference<PyrisWebhookCourseMemoryIngestionExecutionDTO> captured = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunResponse(captured::set);
+
+        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), null, tutor, course);
+
+        var dto = captured.get();
+        assertThat(dto).isNotNull();
+        assertThat(dto.messageId()).isEqualTo(String.valueOf(tutorAnswer.getId()));
     }
 
     @Test
@@ -936,13 +980,7 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
     @Test
     void skippedIngestion_pushesNothing() {
         // The whole reason TRIGGERED is server-pushed: a client-side toast would announce an ingestion
-        // in each of these cases, none of which dispatch anything.
-        tutor.setSelectedLLMUsage(AiSelectionDecision.NO_AI);
-        User optedOutTutor = userTestRepository.save(tutor);
-        Post optedOutPost = createQuestion("Answered by someone who opted out?");
-        AnswerPost optedOutAnswer = saveAnswer(optedOutPost, optedOutTutor, "Not ingested.", true, true);
-        courseMemoryIngestionService.handleResolutionChange(reloadPost(optedOutPost), reloadManagedAnswer(optedOutPost, optedOutAnswer.getId()), optedOutTutor, course);
-
+        // in a case like this one, which dispatches nothing at all.
         Channel privateChannel = conversationUtilService.createPublicChannel(course, "private-for-status");
         privateChannel.setIsPublic(false);
         privateChannel = conversationRepository.save(privateChannel);
@@ -971,6 +1009,24 @@ class CourseMemoryIngestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         pyrisStatusUpdateService.handleStatusUpdate(job, new PyrisCourseMemoryIngestionStatusUpdateDTO(null, PyrisRunState.FINISHED, null, null));
         verifyMessageWasSentOverWebsocket(tutor.getLogin(), courseMemoryTopic(), status(CourseMemoryOperation.INGEST, CourseMemoryStage.COMPLETED, post));
+    }
+
+    @Test
+    void dispatchFailure_pushesFailedAndReleasesTheJob() {
+        Post post = createQuestion("What if Pyris cannot be reached?");
+        AnswerPost answer = saveAnswer(post, tutor, "An answer nobody will store.", true, true);
+        AtomicReference<String> jobToken = new AtomicReference<>();
+        irisRequestMockProvider.mockCourseMemoryIngestionWebhookRunError(dto -> jobToken.set(dto.settings().authenticationToken()), HttpStatus.INTERNAL_SERVER_ERROR.value());
+
+        courseMemoryIngestionService.handleResolutionChange(reloadPost(post), reloadManagedAnswer(post, answer.getId()), tutor, course);
+
+        // TRIGGERED was already pushed, and Pyris never took the request, so nothing else will ever close this run
+        // out: Artemis has to report the failure itself.
+        verifyMessageWasSentOverWebsocket(tutor.getLogin(), courseMemoryTopic(),
+                payload -> payload instanceof IrisCourseMemoryStatusDTO dto && dto.stage() == CourseMemoryStage.FAILED);
+        // And drop the job rather than leaving a token nothing can redeem to sit out the ingestion TTL.
+        assertThat(jobToken.get()).isNotNull();
+        assertThat(pyrisJobService.getJob(jobToken.get())).isNull();
     }
 
     @Test

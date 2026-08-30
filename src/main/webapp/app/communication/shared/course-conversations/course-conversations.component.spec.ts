@@ -1051,6 +1051,22 @@ examples.forEach((activeConversation) => {
                 expect(spy).toHaveBeenCalledWith('artemisApp.iris.courseMemoryAlert.ingestionSuccess');
             });
 
+            it('should release the previous course subscription when the course changes', () => {
+                // Angular reuses this component across a course switch, so course A's subscription has to be dropped
+                // when B is tracked; otherwise A's toasts keep arriving and ngOnDestroy only releases B.
+                const statusService = TestBed.inject(IrisCourseMemoryStatusService);
+                const unsubscribeSpy = vi.spyOn(statusService, 'unsubscribeFromCourse');
+                const subscribeSpy = vi.spyOn(statusService, 'subscribeToCourse');
+                component.ngOnInit();
+                expect(subscribeSpy).toHaveBeenCalledWith(course.id);
+
+                component.course.set({ ...course, id: 99 } as Course);
+                component['subscribeToCourseMemoryStatus']();
+
+                expect(unsubscribeSpy).toHaveBeenCalledWith(course.id);
+                expect(subscribeSpy).toHaveBeenCalledWith(99);
+            });
+
             it('should not raise duplicate toasts when the service reports setup more than once', () => {
                 // isServiceSetup$ is a replaying subject in production; a second emission must not add a
                 // second alert subscriber to the same status stream.

@@ -217,7 +217,14 @@ spring:
         scheduling:
             thread-name-prefix: artemis-scheduling-
             pool:
-                size: 1
+                # Same reasoning as task.execution.pool.core-size above, which was raised from 1 for the same reason
+                # in #13341. About a dozen production services share this one taskScheduler (ParticipantScoreScheduleService,
+                # ExerciseLifecycleService, QuizScheduleService, ProgrammingExerciseScheduleService, ...), and hundreds of
+                # test classes run in parallel against it. At size 1 a single long scheduled task blocked every other
+                # test's scheduled work, and Awaitility's 10s default could not survive it: one run produced seven
+                # simultaneous ConditionTimeoutExceptions across four classes waiting on scheduled work that had never
+                # been given a thread.
+                size: 8
     thymeleaf:
         mode: HTML
     sleuth:
@@ -361,7 +368,7 @@ jhipster:
                 base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
-                token-validity-in-seconds-for-remember-me: 2592000
+                token-validity-in-seconds-for-remember-me: 604800 # 7 days, matching what dev and prod ship, so the tests exercise the real value
 
 # Eureka configuration
 eureka:

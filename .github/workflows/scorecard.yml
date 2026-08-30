@@ -3,8 +3,16 @@
 # vulnerability handling, and so on).
 #
 # It reports on practices Artemis already follows, which is the point: it turns them into an
-# externally computed, checkable number instead of a claim in a document. Findings land in the
-# code-scanning UI next to CodeQL, and `publish_results: true` feeds the badge in README.md.
+# externally computed, checkable number instead of a claim in a document. `publish_results: true`
+# feeds the badge in README.md and makes the score independently verifiable via
+# api.securityscorecards.dev; the full findings are attached to each run as `results.sarif`.
+#
+# The results are deliberately NOT uploaded to code scanning. Scorecard measures repository
+# posture, not exploitable defects: it reports passing scores ("28/30 changesets approved") and
+# not-applicable checks ("project is not fuzzed") as `error`-severity alerts, ~155 of them. Next
+# to CodeQL that buries the findings that describe an actual vulnerability, which is the one thing
+# the code-scanning tab has to stay useful for. Its fingerprints also embed the changing score
+# text, so dismissed findings reappear as new alerts on the next run.
 #
 # This is advisory. It never gates a pull request, and it does not run on pull requests at all:
 # the analysis needs repository-level metadata that a fork PR token cannot read.
@@ -33,8 +41,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      security-events: write  # upload the SARIF result to code scanning
-      id-token: write         # Sigstore OIDC, required to publish the result
+      id-token: write  # Sigstore OIDC, required to publish the result
       contents: read
     steps:
       - name: Checkout
@@ -51,14 +58,10 @@ jobs:
           # the README badge and lets anyone re-check the score without access to this repository.
           publish_results: true
 
+      # The full findings live here rather than in the code-scanning tab (see the header comment).
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: scorecard-results
           path: results.sarif
-          retention-days: 5
-
-      - name: Upload to code scanning
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: results.sarif
+          retention-days: 30

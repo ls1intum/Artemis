@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +17,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.Posting;
-import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
-import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -69,6 +65,8 @@ public class PyrisPipelineService {
 
     private final IrisChatWebsocketService irisChatWebsocketService;
 
+    private final UserAiPreferenceService userAiPreferenceService;
+
     private final CourseLoadService courseLoadService;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -85,8 +83,9 @@ public class PyrisPipelineService {
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            CourseLoadService courseLoadService, FeatureToggleService featureToggleService) {
+            CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService) {
         this.pyrisConnectorService = pyrisConnectorService;
+        this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.pyrisDTOService = pyrisDTOService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -157,7 +156,7 @@ public class PyrisPipelineService {
         var pyrisUser = toPyrisUserDTO(user);
         var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
         // @formatter:off
-        executePipeline("chat", user.getSelectedLLMUsage(), variant, supportLevel, eventVariant,
+        executePipeline("chat", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, eventVariant,
             pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId),
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error));
@@ -198,14 +197,14 @@ public class PyrisPipelineService {
         // @formatter:off
         executePipeline(
             "tutor-suggestion",
-            user.getSelectedLLMUsage(),
+            userAiPreferenceService.findDecision(user.getId()),
             variant,
             supportLevel,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                PyrisPostDTO.of(post, resolveThreadAuthorRoles(post, course.getId())),
+                new PyrisPostDTO(post, userAiPreferenceService.findDecisions(PyrisPostDTO.answerAuthorIds(post))),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 toPyrisUserDTO(user),
                 executionDto.settings(),
@@ -220,7 +219,7 @@ public class PyrisPipelineService {
     }
 
     private PyrisUserDTO toPyrisUserDTO(User user) {
-        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && user.isMemirisEnabled());
+        return new PyrisUserDTO(user, featureToggleService.isFeatureEnabled(Feature.Memiris) && userAiPreferenceService.isMemirisEnabled(user.getId()));
     }
 
     /**
@@ -239,9 +238,8 @@ public class PyrisPipelineService {
      * @param lectureDTO             optional lecture if the channel is linked to one
      * @param statusUpdateConsumer   consumer to handle status updates (e.g., for logging or future websocket support)
      */
-    public void executeAutonomousTutorPipeline(String variant, String supportLevel, AiSelectionDecision aiSelection, Post post, Course course, PyrisUserDTO student,
+    public void executeAutonomousTutorPipeline(String variant, String supportLevel, AiSelectionDecision aiSelection, PyrisPostDTO post, Course course, PyrisUserDTO student,
             PyrisProgrammingExerciseDTO programmingExerciseDTO, PyrisTextExerciseDTO textExerciseDTO, PyrisLectureDTO lectureDTO, PipelineStatusUpdater statusUpdateConsumer) {
-        var postDTO = PyrisPostDTO.of(post, resolveThreadAuthorRoles(post, course.getId()));
         // @formatter:off
         executePipeline(
             "autonomous-tutor",
@@ -249,10 +247,10 @@ public class PyrisPipelineService {
             variant,
             supportLevel,
             Optional.empty(),
-            pyrisJobService.addAutonomousTutorJob(post.getId(), course.getId()),
+            pyrisJobService.addAutonomousTutorJob(post.id(), course.getId()),
             executionDto -> new PyrisAutonomousTutorPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                postDTO,
+                post,
                 student,
                 executionDto.settings(),
                 programmingExerciseDTO,
@@ -262,28 +260,6 @@ public class PyrisPipelineService {
             statusUpdateConsumer
         );
         // @formatter:on
-    }
-
-    /**
-     * Resolves the course role of every human author in a thread in a single query.
-     * <p>
-     * The roles come from the database rather than from the author entities: {@code Posting.authorRole}
-     * is transient and only populated on the paths that render a posting for the client, and the users'
-     * course roles are lazily loaded and may already be detached here. Bot authors are left out — their
-     * role is decided by the bot flag, not by a course group.
-     *
-     * @param post     the thread root, with its answers loaded
-     * @param courseId the course the thread belongs to
-     * @return the course roles keyed by user id; authors without a resolvable role are absent
-     */
-    private Map<Long, UserRole> resolveThreadAuthorRoles(Post post, long courseId) {
-        Set<Long> userIds = Stream.concat(Stream.of(post), post.getAnswers().stream()).map(Posting::getAuthor).filter(author -> author != null && !author.isBot()).map(User::getId)
-                .collect(Collectors.toSet());
-        if (userIds.isEmpty()) {
-            return Map.of();
-        }
-        return userRepository.findUserRolesInCourse(userIds, courseId).stream().filter(userRole -> userRole.role() != null)
-                .collect(Collectors.toMap(UserRoleDTO::userId, UserRoleDTO::role, (first, second) -> first));
     }
 
     @FunctionalInterface

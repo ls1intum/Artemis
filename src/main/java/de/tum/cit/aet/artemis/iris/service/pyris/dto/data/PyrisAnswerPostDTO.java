@@ -12,14 +12,12 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
  * @param resolvesPost resolves the post
  * @param userID       author user id
  * @param redacted     {@code true} when the author opted out of AI and the content was suppressed
- * @param authorRole   {@code IRIS}, {@code INSTRUCTOR}, {@code TUTOR} or {@code STUDENT}; lets Iris tell its own
- *                         earlier reply apart from a student's follow-up and from staff answers
  */
 @JsonInclude
-public record PyrisAnswerPostDTO(Long id, String content, boolean resolvesPost, Long userID, boolean redacted, String authorRole) {
+public record PyrisAnswerPostDTO(Long id, String content, boolean resolvesPost, Long userID, boolean redacted) {
 
-    public PyrisAnswerPostDTO(AnswerPost answerPost, String authorRole) {
-        this(answerPost.getId(), answerPost.getContent(), answerPost.doesResolvePost(), answerPost.getAuthor() != null ? answerPost.getAuthor().getId() : null, false, authorRole);
+    public PyrisAnswerPostDTO(AnswerPost answerPost) {
+        this(answerPost.getId(), answerPost.getContent(), answerPost.doesResolvePost(), answerPost.getAuthor() != null ? answerPost.getAuthor().getId() : null, false);
     }
 
     /**
@@ -27,11 +25,9 @@ public record PyrisAnswerPostDTO(Long id, String content, boolean resolvesPost, 
      * The content is suppressed so that Iris is aware the message exists without seeing its text.
      *
      * @param answerPost the answer post to redact
-     * @param authorRole the author's course role, which is not sensitive and is still sent
      * @return a {@link PyrisAnswerPostDTO} with {@code content = null} and {@code redacted = true}
      */
-    public static PyrisAnswerPostDTO redacted(AnswerPost answerPost, String authorRole) {
-        return new PyrisAnswerPostDTO(answerPost.getId(), null, answerPost.doesResolvePost(), answerPost.getAuthor() != null ? answerPost.getAuthor().getId() : null, true,
-                authorRole);
+    public static PyrisAnswerPostDTO redacted(AnswerPost answerPost) {
+        return new PyrisAnswerPostDTO(answerPost.getId(), null, answerPost.doesResolvePost(), answerPost.getAuthor() != null ? answerPost.getAuthor().getId() : null, true);
     }
 }

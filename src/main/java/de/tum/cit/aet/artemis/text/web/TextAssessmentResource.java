@@ -253,7 +253,7 @@ public class TextAssessmentResource extends AssessmentResource {
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
             resultService.deleteResult(latestResult, true);
-            submission.setResults(List.of());
+            submission.setResults(Set.of());
             submissionRepository.save(submission);
         }
 
@@ -449,7 +449,7 @@ public class TextAssessmentResource extends AssessmentResource {
         // set result again as it was changed
         if (resultId != null) {
             result = textSubmission.getManualResultsById(resultId);
-            textSubmission.setResults(List.of(result));
+            textSubmission.setResults(Set.of(result));
         }
         else {
             textSubmission.getResultForCorrectionRound(correctionRound);

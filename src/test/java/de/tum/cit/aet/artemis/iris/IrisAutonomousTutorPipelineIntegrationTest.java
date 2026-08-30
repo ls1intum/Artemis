@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -27,6 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
@@ -38,6 +42,9 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
 
     @Autowired
     private PyrisPipelineService pyrisPipelineService;
+
+    @Autowired
+    private UserAiPreferenceService userAiPreferenceService;
 
     @Autowired
     private PyrisJobService pyrisJobService;
@@ -81,7 +88,8 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
     @Test
     void executeAutonomousTutorPipeline_sendsRequestToPyris() {
         Post post = createPostInChannel(student, "How does inheritance work?");
-        var studentDTO = new PyrisUserDTO(student, student.isMemirisEnabled());
+        var postDTO = new PyrisPostDTO(post, Map.of());
+        var studentDTO = new PyrisUserDTO(student, userAiPreferenceService.isMemirisEnabled(student.getId()));
 
         AtomicBoolean pipelineDone = new AtomicBoolean(false);
         AtomicReference<PyrisAutonomousTutorPipelineExecutionDTO> capturedDto = new AtomicReference<>();
@@ -90,11 +98,11 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
             pipelineDone.set(true);
         });
 
-        pyrisPipelineService.executeAutonomousTutorPipeline("default", "moderate", AiSelectionDecision.LOCAL_AI, post, course, studentDTO, null, null, null,
+        pyrisPipelineService.executeAutonomousTutorPipeline("default", "moderate", AiSelectionDecision.LOCAL_AI, postDTO, course, studentDTO, null, null, null,
                 (runId, runState, error) -> {
                 });
 
-        await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
+        await().atMost(Duration.ofSeconds(5)).until(pipelineDone::get);
 
         var dto = capturedDto.get();
         assertThat(dto.post().id()).isEqualTo(post.getId());
