@@ -72,7 +72,7 @@ public class PublicLtiResource {
         }
 
         URI redirectUrl = UriComponentsBuilder.fromPath(LOGIN_REDIRECT_CLIENT_PATH).queryParam("state", state).queryParam("id_token", idToken).build().encode().toUri();
-        log.info("redirect to url: {}", redirectUrl);
+        log.info("LTI redirect generated for client path {}", LOGIN_REDIRECT_CLIENT_PATH);
         return ResponseEntity.status(HttpStatus.FOUND).location(redirectUrl).build();
     }
 
@@ -88,7 +88,7 @@ public class PublicLtiResource {
             return !parsedToken.getJWTClaimsSet().getExpirationTime().before(Date.from(Instant.now()));
         }
         catch (ParseException e) {
-            log.info("LTI request: JWT token is invalid: {}", token, e);
+            log.info("LTI request contains an invalid JWT token", e);
             return false;
         }
     }
