@@ -350,7 +350,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                         feedbackSuggestionModule: 'modeling',
                     } as unknown as Exercise,
                 },
-                results: [{ id: 55, feedbacks: [] } as unknown as Result],
+                results: [{ id: 55, feedbacks: [], correctionRound: 0 } as unknown as Result],
             } as ModelingSubmission;
 
             const unreferencedSuggestion = { id: 42, credits: 1, text: 'FeedbackSuggestion:accepted:Suggestion', type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
