@@ -1853,10 +1853,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         StudentExam studentExam = new StudentExam();
         studentExam.setUser(student1);
         studentExam.setTestRun(false);
-        studentExam = studentExamRepository.save(studentExam);
-
-        // Add student exam to exam and save into database
+        // A student exam belongs to an exam, so the link is set before it is stored
         exam2.addStudentExam(studentExam);
+        studentExam = studentExamRepository.save(studentExam);
         exam2 = examRepository.save(exam2);
 
         // Get the latest exam end date DTO from server -> This returns the endDate as no specific student working time is set

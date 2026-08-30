@@ -767,6 +767,53 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.participationMode()).toBe('practice');
     });
 
+    it('points the URL at a started practice participation, so the mode survives the editor redirect', () => {
+        // Setting the mode alone is not enough. The split panel redirects to the code editor as soon as a participation
+        // is available, and that crosses a route-config boundary, so this component is destroyed and re-created. The new
+        // instance derives the mode from the URL - and if the redirect went out while the practice start was still in
+        // flight, the URL names the graded participation and the practice selection is gone. Writing the URL here is
+        // what makes the selection outlive the redirect.
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, studentParticipations: [] } as unknown as Exercise;
+        comp.studentParticipations = [];
+        const router = TestBed.inject(Router) as unknown as MockRouter;
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        comp.onNewParticipation({ id: 680, testRun: true } as StudentParticipation);
+
+        expect(comp.participationMode()).toBe('practice');
+        expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', exercise.id, 'code-editor', 680], expect.objectContaining({ replaceUrl: true }));
+    });
+
+    it('does not add a history entry when correcting the URL to the practice participation', () => {
+        // replaceUrl, because the address being corrected is one the student never chose: a back navigation must not
+        // return them to the graded editor they were never shown.
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, studentParticipations: [] } as unknown as Exercise;
+        comp.studentParticipations = [];
+        const router = TestBed.inject(Router) as unknown as MockRouter;
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        comp.onNewParticipation({ id: 680, testRun: true } as StudentParticipation);
+
+        expect(navigateSpy.mock.calls[0][1]).toMatchObject({ replaceUrl: true });
+    });
+
+    it('leaves the URL alone when it already names the started practice participation', () => {
+        // The split panel may have routed there already; a second navigation to the same place is churn the router has
+        // to resolve and would re-trigger the effects that depend on the child route.
+        comp.courseId = 1;
+        comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, studentParticipations: [] } as unknown as Exercise;
+        comp.studentParticipations = [];
+        const router = TestBed.inject(Router) as unknown as MockRouter;
+        router.setUrl('/courses/1/exercises/programming-exercises/42/code-editor/680');
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        comp.onNewParticipation({ id: 680, testRun: true } as StudentParticipation);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
     it('should merge websocket submission deltas instead of replacing the attempt history (subscribeForNewResults)', () => {
         // Covers the second call site of mergeSubmissions: the participation-change websocket delivers a participation
         // that may only carry the changed/added submission. Prior attempts must be preserved.
