@@ -44,6 +44,7 @@ describe('FeedbackSuggestionsBannerComponent', () => {
 
         const messages = fixture.debugElement.queryAll(By.directive(TumUiMessageComponent));
         expect(messages).toHaveLength(1);
+        expect(messages[0].nativeElement.textContent).toContain('artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentAvailable');
         expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.assessment.feedbackSuggestions.loading"]'))).toBeFalsy();
     });
 
