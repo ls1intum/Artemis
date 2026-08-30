@@ -456,7 +456,7 @@
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
             "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur startet",
-            "individualExamsStatus": "Status der individuellen Klausuren",
+            "individualExamsStatus": "Individuelle Klausuren",
             "allExercisesPrepared": "Alle Aufgaben sind für alle individuellen Klausuren vorbereitet",
             "notAllExercisesPrepared": "Nicht alle Aufgaben sind für alle individuellen Klausuren vorbereitet",
             "setWorkingTime": "Absolut:",
@@ -657,10 +657,10 @@
                     "attendance": "Anwesenheit"
                 },
                 "menu": {
-                    "manageStudents": "Studierende registrieren",
-                    "examLogistics": "Klausurlogistik",
+                    "manageStudents": "Studierende",
+                    "examLogistics": "Logistik",
                     "manageStudentExams": "Individuelle Klausuren verwalten",
-                    "addStudents": "Hinzufügen",
+                    "addStudents": "Registrieren",
                     "importUsers": "Importieren aus CSV",
                     "exportUsers": "Exportieren als CSV",
                     "registerCourseStudents": "Alle Studierenden des Kurses anmelden",

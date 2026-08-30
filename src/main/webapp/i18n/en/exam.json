@@ -451,7 +451,7 @@
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
             "studentExamStatusTestExam": "Student exams are automatically created once a student requests to start a test exam",
-            "individualExamsStatus": "Individual exams status",
+            "individualExamsStatus": "Individual exams",
             "allExercisesPrepared": "All exercises are prepared for all individual exams",
             "notAllExercisesPrepared": "Not all exercises are prepared for all individual exams",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
@@ -657,10 +657,10 @@
                     "attendance": "Attendance"
                 },
                 "menu": {
-                    "manageStudents": "Register students",
-                    "examLogistics": "Exam logistics",
+                    "manageStudents": "Students",
+                    "examLogistics": "Logistik",
                     "manageStudentExams": "Manage individual exams",
-                    "addStudents": "Add",
+                    "addStudents": "Register",
                     "importUsers": "Import from CSV",
                     "exportUsers": "Export to CSV",
                     "registerCourseStudents": "Register course students",
