@@ -258,7 +258,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         request.putWithResponseBodyAndParams("/api/text/participations/" + textSubmission.getParticipation().getId() + "/results/" + result.getId() + "/text-assessment", body,
                 ResultDTO.class, HttpStatus.OK, new LinkedMultiValueMap<>());
 
-        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
+        Feedback persistedFeedback = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessmentNoteById(result.getId()).orElseThrow().getFeedbacks().stream()
                 .filter(feedback -> Objects.equals(feedback.getId(), feedbackId)).findFirst().orElseThrow();
         assertThat(persistedFeedback.getDetailText()).as("shortened feedback text is persisted").isEqualTo(editedShortText);
         assertThat(persistedFeedback.getHasLongFeedbackText()).as("shortened feedback no longer advertises long text").isFalse();

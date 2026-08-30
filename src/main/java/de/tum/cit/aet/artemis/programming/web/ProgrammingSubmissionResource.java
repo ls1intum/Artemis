@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
@@ -95,13 +96,15 @@ public class ProgrammingSubmissionResource {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
             SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
-            ExerciseDateService exerciseDateService) {
+            ExerciseDateService exerciseDateService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
@@ -116,6 +119,7 @@ public class ProgrammingSubmissionResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
         this.exerciseDateService = exerciseDateService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -354,7 +358,15 @@ public class ProgrammingSubmissionResource {
         // The result of the requested correction round, which used to be read off the position of the result inside the
         // submission's result list and is now stored on the result itself.
         var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
-        programmingSubmission.setResults(resultForCorrectionRound == null ? Set.of() : Set.of(resultForCorrectionRound));
+        if (resultForCorrectionRound == null) {
+            programmingSubmission.setResults(Set.of());
+        }
+        else {
+            // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+            // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForCorrectionRound, programmingExercise, false);
+            programmingSubmission.setResults(Set.of(resultForCorrectionRound));
+        }
 
         return ResponseEntity.ok(programmingSubmission);
     }
@@ -408,6 +420,9 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.hideDetails(submission, user);
             // remove automatic results before sending to client
             submission.setResults(submission.getManualResults());
+            // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+            // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
+            submission.getResults().forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
         }
 
         return ResponseEntity.ok().body(submission);

@@ -41,6 +41,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -63,6 +64,7 @@ describe('Course Management Update Component', () => {
     let loadImageSpy: ReturnType<typeof vi.spyOn>;
     let eventManager: EventManager;
     let dialogService: DialogService;
+    let navigationUtilService: ArtemisNavigationUtilService;
 
     beforeEach(async () => {
         course = new Course();
@@ -128,11 +130,32 @@ describe('Course Management Update Component', () => {
         accountService = TestBed.inject(AccountService);
         eventManager = TestBed.inject(EventManager);
         dialogService = TestBed.inject(DialogService);
+        navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
         (Intl as any).supportedValuesOf = undefined;
+    });
+
+    describe('previousState', () => {
+        it('should fall back to the management page when editing an existing course', () => {
+            const navigateBackSpy = vi.spyOn(navigationUtilService, 'navigateBackWithOptional').mockImplementation(() => undefined);
+
+            comp.course = course;
+            comp.previousState();
+
+            expect(navigateBackSpy).toHaveBeenCalledWith(['course-management'], '123');
+        });
+
+        it('should fall back to the course overview when creating a course', () => {
+            const navigateBackSpy = vi.spyOn(navigationUtilService, 'navigateBackWithOptional').mockImplementation(() => undefined);
+            comp.course = new Course();
+
+            comp.previousState();
+
+            expect(navigateBackSpy).toHaveBeenCalledWith(['courses'], undefined);
+        });
     });
 
     describe('max points validation', () => {

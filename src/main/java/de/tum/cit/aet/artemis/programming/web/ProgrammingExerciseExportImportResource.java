@@ -212,6 +212,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.setCompetencyLinks(new java.util.HashSet<>());
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
+        programmingExerciseValidationService.validateBuildConfigSize(newExercise);
         programmingExerciseValidationService.validateDockerFlags(newExercise);
         programmingExerciseValidationService.validatePackageName(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);
