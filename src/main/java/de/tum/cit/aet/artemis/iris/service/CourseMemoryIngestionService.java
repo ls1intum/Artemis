@@ -178,8 +178,9 @@ public class CourseMemoryIngestionService {
 
         Optional<AnswerPost> anchor = selectAnchor(answers, triggeringAnswer);
         if (anchor.isEmpty()) {
-            // Nothing resolving and no verified Iris answer left: the thread no longer holds an answer
-            // anyone signed off on, so its entry must go.
+            // Nothing usable resolving and no verified Iris answer left: the thread no longer holds an answer
+            // anyone signed off on — or the only one left belongs to an author who opted out, whose words may
+            // not be stored — so its entry must go rather than keep serving what a retracted answer wrote.
             deleteThreadMemory(fullPost, marker, course);
             return;
         }
@@ -193,11 +194,6 @@ public class CourseMemoryIngestionService {
             // a resolving staff answer that has since been un-marked or deleted. Leaving it untouched would
             // keep serving retracted text, and would ignore an edit to the verified answer itself.
             reingestVerifiedIrisAnswer(fullPost, resolvingAnswer, marker, course);
-            return;
-        }
-
-        if (hasOptedOutOfAi(resolvingAnswer.getAuthor())) {
-            log.info("Skipping course memory resolution ingestion for thread {}: the author of answer {} opted out of AI", fullPost.getId(), resolvingAnswer.getId());
             return;
         }
 
@@ -274,20 +270,27 @@ public class CourseMemoryIngestionService {
      * {@link #handleResolutionChange} re-ingests from that answer instead of dropping the thread. It is
      * therefore restricted to dashboard-verified answers — an Iris answer published automatically was
      * never signed off on, so once nothing resolves the thread any more there is nothing left to keep.
+     * <p>
+     * Answers by authors who opted out of AI are not candidates at all. Their text can never become the
+     * stored answer, so selecting one and bailing out afterwards would leave whatever the entry already
+     * held standing — the content of an answer that no longer resolves the thread. Skipping them here
+     * instead lets an older usable answer keep the entry it legitimately owns, and leaves the empty case
+     * to mean what it says: nothing memory-worthy survives, so {@link #handleResolutionChange} retracts.
      */
     private Optional<AnswerPost> selectAnchor(List<AnswerPost> answers, @Nullable AnswerPost triggeringAnswer) {
+        List<AnswerPost> usable = answers.stream().filter(answer -> !hasOptedOutOfAi(answer.getAuthor())).toList();
         if (triggeringAnswer != null && Boolean.TRUE.equals(triggeringAnswer.doesResolvePost())
-                && answers.stream().anyMatch(answer -> answer.getId().equals(triggeringAnswer.getId()))) {
+                && usable.stream().anyMatch(answer -> answer.getId().equals(triggeringAnswer.getId()))) {
             return Optional.of(triggeringAnswer);
         }
-        Optional<AnswerPost> resolving = answers.stream().filter(answer -> Boolean.TRUE.equals(answer.doesResolvePost())).max(Comparator.comparing(Posting::getCreationDate));
+        Optional<AnswerPost> resolving = usable.stream().filter(answer -> Boolean.TRUE.equals(answer.doesResolvePost())).max(Comparator.comparing(Posting::getCreationDate));
         if (resolving.isPresent()) {
             return resolving;
         }
         // The human-verifier check belongs in the filter, not after max: an Iris answer published automatically is
         // also isVerified(), so testing only the newest one would discard an older dashboard-verified answer that
         // still owns the thread's entry — and the caller would then delete that entry.
-        return answers.stream().filter(answer -> isBotAuthored(answer) && answer.isVerified() && answerPostRepository.hasHumanVerifier(answer.getId()))
+        return usable.stream().filter(answer -> isBotAuthored(answer) && answer.isVerified() && answerPostRepository.hasHumanVerifier(answer.getId()))
                 .max(Comparator.comparing(Posting::getCreationDate));
     }
 
