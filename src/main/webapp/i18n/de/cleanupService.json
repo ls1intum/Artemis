@@ -59,6 +59,7 @@
             "orphanTextBlockForOrphanResults": "Verwaister Textblock für verwaiste Ergebnisse",
             "orphanRating": "Verwaiste Bewertung",
             "orphanResultsWithoutParticipation": "Verwaiste Ergebnisse ohne Teilnahme",
+            "orphanFeedbackMessage": "Nicht referenzierte Feedback-Nachricht",
             "plagiarismComparison": "Plagiatsvergleiche",
             "plagiarismElements": "Plagiatselemente",
             "plagiarismSubmissions": "Plagiatseingaben",
