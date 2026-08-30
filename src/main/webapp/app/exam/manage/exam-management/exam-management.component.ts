@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -24,7 +24,7 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
     selector: 'jhi-exam-management',
     templateUrl: './exam-management.component.html',
     styleUrls: ['./exam-management.component.scss'],
-    imports: [ExamManagementNavigationSidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, NgTemplateOutlet, FaIconComponent, ExamModeBadgeComponent],
+    imports: [ExamManagementNavigationSidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, RouterLink, NgTemplateOutlet, FaIconComponent, ExamModeBadgeComponent],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, PageTitleView {
     private route = inject(ActivatedRoute);

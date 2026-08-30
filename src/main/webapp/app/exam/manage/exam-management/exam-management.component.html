@@ -20,9 +20,11 @@
                     }
                     <!-- Current exam title -->
                     @if (currentExam()) {
-                        <h5 class="flex align-items-center gap-2 mb-0">
-                            <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" />
-                            {{ currentExam()!.title }}
+                        <h5 class="flex items-center gap-2 mb-0">
+                            <a class="exam-title-link tab-link flex items-center gap-2 rounded-md" [routerLink]="['/course-management', course().id, 'exams', currentExam()!.id]">
+                                <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" />
+                                {{ currentExam()!.title }}
+                            </a>
                         </h5>
                     }
                     <!-- Inject page specific data -->
