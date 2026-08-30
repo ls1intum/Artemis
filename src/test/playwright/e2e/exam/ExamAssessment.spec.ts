@@ -70,7 +70,11 @@ test.describe('Exam assessment', () => {
             await login(tutor);
             await startAssessing(course.id!, exam.id!, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
             await examAssessment.addNewFeedback(2, 'Good job');
-            await examAssessment.submit();
+            // Assert the status, as the second-round test below already does. A rejected submit used to be
+            // discarded here and only surfaced ten seconds later as a wrong result score, which pointed at
+            // grading rather than at the submit that never landed.
+            const assessmentResponse = await examAssessment.submit();
+            expect(assessmentResponse.status()).toBe(200);
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('70%');
         });
