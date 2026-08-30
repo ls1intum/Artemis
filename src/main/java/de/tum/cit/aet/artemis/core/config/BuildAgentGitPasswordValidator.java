@@ -21,7 +21,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 
 /**
- * Refuses to start a production node whose build-agent git password is a value Artemis ships as an example, or is blank.
+ * Refuses to start a production node whose build-agent git password is a value Artemis ships as an example.
  * <p>
  * This lives outside {@link ConfigurationValidator} because of which nodes have to run it. That validator is
  * {@code @Profile(PROFILE_CORE)}, while a build agent is a supported topology on its own: the multi-node setup runs a
@@ -99,14 +99,19 @@ public class BuildAgentGitPasswordValidator {
             return;
         }
         if (!StringUtils.hasText(buildAgentGitPassword)) {
-            // A configured but blank value is worse than a shipped default: LocalVCServletService compares the supplied
-            // Basic credentials against it directly, so the published build-agent username with an empty password would
-            // pass, again ahead of the rate limit, the authorization checks and the access log.
-            throw new InsecureDefaultCredentialException(BUILD_AGENT_GIT_PASSWORD_PROPERTY,
-                    "the build-agent git password is configured but blank, and a caller presenting the build-agent username with an empty password can then read every "
-                            + "repository without any authorization check or access-log entry",
-                    "Set a unique, non-blank password and keep it in sync with the build agents' configuration, or set " + BUILD_AGENT_USE_SSH_PROPERTY_NAME
-                            + " to true on the build agents and on every core node, which drops the credential pair in favour of an ssh key.");
+            // Blank is not a security problem, and is now the state worth aiming for. LocalVCServletService requires
+            // hasText on *both* credentials before it compares them, so a blank pair can never match: there is no
+            // shortcut for an empty password to open. What blank does mean is that the pair cannot authenticate
+            // anything, which is exactly right on a node whose build agents use per-build-job clone tokens or ssh keys,
+            // and which only matters for a client that has neither - Jenkins with LocalVC.
+            //
+            // This used to fail startup, on the reasoning that an empty configured password would be matched by an
+            // empty supplied one. The hasText guard in the servlet makes that unreachable, and failing here refused the
+            // configuration with no shared secret anywhere - the opposite of what this validator exists to encourage.
+            log.info("The build-agent git password is blank, so the shared credential pair is not accepted at all. That is expected where build agents authenticate with a "
+                    + "per-build-job clone token or an ssh key. Configure both credentials only if a client that is not an Artemis build agent, such as Jenkins with LocalVC, "
+                    + "clones from this installation.");
+            return;
         }
 
         // Non-short-circuiting on purpose, so that every candidate is compared regardless of where the match sits.

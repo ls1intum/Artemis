@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.exercise.domain;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +29,7 @@ class SubmissionResultAccessorTest {
 
     private static Submission submissionWith(Result... results) {
         Submission submission = new TextSubmission();
-        submission.setResults(new ArrayList<>(List.of(results)));
+        submission.setResults(new HashSet<>(Arrays.asList(results)));
         return submission;
     }
 
@@ -74,8 +74,8 @@ class SubmissionResultAccessorTest {
     void manualResultAccessorsToleratePlaceholdersLeftByDeletedResults() {
         Result manual = result(2L, AssessmentType.MANUAL);
         Submission submission = new TextSubmission();
-        // Deleting an entry of the @OrderColumn list leaves a null hole behind.
-        submission.setResults(new ArrayList<>(List.of()));
+        // The results are defensively null tolerant, so a null among them must not break the accessors.
+        submission.setResults(new HashSet<>());
         submission.getResults().add(null);
         submission.getResults().add(manual);
 
