@@ -1,0 +1,127 @@
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+
+# Distributed Data
+
+Artemis runs as a cluster: several core nodes behind a load balancer without sticky sessions, plus build agents that pick
+up jobs from a shared queue. Everything those nodes share — the build job queue, feature toggles, scheduling messages,
+websocket broker status, LTI state, Pyris jobs, rate-limit buckets, the `@Cacheable` caches — lives in a distributed
+store.
+
+<Callout variant={CalloutVariant.danger}>
+  <strong>Never use Hazelcast or Redis directly.</strong> All cross-node state goes through
+  <code>DistributedDataProvider</code>. An ArchUnit rule
+  (<code>DistributedDataProviderArchitectureTest</code>) fails the build if a production class outside the small,
+  explicitly named set of backend adapters depends on <code>com.hazelcast..</code>, <code>org.redisson..</code> or
+  <code>org.springframework.data.redis..</code>.
+</Callout>
+
+## Why the abstraction exists
+
+Artemis supports two backends and intends to be able to switch between them:
+
+* **Hazelcast** — embedded in every node, no extra container. This is what production runs today.
+* **Redis** — an external server, selected with `artemis.distributed-data.provider: Redis`. With it, no Hazelcast
+  instance is created at all.
+
+A third, **Local**, keeps everything inside one JVM. It exists for single-node development and has no cross-node
+semantics.
+
+That choice only stays real as long as no application code names a backend. A single `hazelcastInstance.getMap(...)` in a
+service pins the whole deployment to Hazelcast, and it does so without failing any test: the other backend simply never
+sees that state, and nothing reads it back to notice. That is exactly how the abstraction drifted the first time, when
+21 services across 8 modules had each grown their own Hazelcast usage, and where the backends disagreed nobody found out
+until a shared contract test suite was written for them.
+
+## The API
+
+`DistributedDataProvider` hands out the structures, and each has an implementation per backend plus a case in the shared
+contract suite `AbstractDistributedDataTest`, which every backend runs:
+
+| Method | Use for |
+|---|---|
+| `getMap(name)` | Shared key/value state that never expires. Rejects a per-entry time-to-live, so the expiry requirement stays visible at the call site instead of hiding in backend configuration. |
+| `getExpiringMap(name, ttl)` | Shared state that has to expire. Entries stored with `put(k, v)` live for `ttl`; `put(k, v, otherTtl)` overrides it per entry. |
+| `getQueue(name)` / `getPriorityQueue(name)` | Work queues. A priority queue dequeues by the items' natural ordering. |
+| `getSet(name)` | A shared set, for example the courses with a plagiarism check in flight. |
+| `getTopic(name)` | Fire-and-forget broadcast, for state that self-heals on the next heartbeat. |
+| `getReliableTopic(name)` | Broadcast where losing one message has a lasting effect — the scheduling messages, where a dropped message means an exercise or quiz is never scheduled. |
+| `getLock(name)` | A cluster-wide mutex. Deliberately AP, not a CP fenced lock: it prevents concurrent work under normal operation, it does not survive a split brain. |
+
+`putIfAbsent`, `remove(key, value)` and `computeIfAbsent` on a map are genuine atomics and are the right way to claim a
+job slot from exactly one node.
+
+<Callout variant={CalloutVariant.warning}>
+  A backend-level map configuration is not a substitute for asking for what you need. A Hazelcast <code>MapConfig</code>
+  time-to-live applies on Hazelcast only, and silently does nothing on Redis. Request the lifetime at the call site with
+  <code>getExpiringMap</code>.
+</Callout>
+
+## Selecting the backend
+
+`artemis.distributed-data.provider` takes `Hazelcast` (default), `Redis` or `Local`. As an environment variable that is
+`ARTEMIS_DISTRIBUTEDDATA_PROVIDER`. The superseded `artemis.continuous-integration.data-store`, which was named when the
+abstraction only carried the Local CI queue, is still honoured as a fallback for one release.
+
+An unsupported value fails at startup rather than leaving the application with no provider at all.
+
+### Redis needs no service registry
+
+Eureka exists in Artemis for one purpose: finding the addresses of Hazelcast members so a member or client can join the
+cluster. Every reader of the registry — `HazelcastConfiguration`, `HazelcastClusterManager`,
+`EurekaHazelcastDiscoveryStrategy` and the `EurekaInstanceHelper` they share — is conditional on Hazelcast. Nothing else
+in Artemis reads it: there are no `@LoadBalanced` clients, no `lb://` URIs and no Spring Cloud Config server.
+
+So on Redis, `RedisDiscoveryEnvironmentPostProcessor` sets both `eureka.client.enabled=false` and
+`spring.cloud.discovery.enabled=false` before the context is built, and Spring Cloud's own conditions then keep every
+Eureka and discovery auto-configuration out of it. Both are needed: the first stops the registration, the heartbeat and
+the registry health indicator, but on its own it leaves Spring Cloud's discovery health indicators behind reporting
+`Discovery Client not initialized`, which drags the whole health endpoint down. A Redis node ends up with no Eureka
+client, no registration, no heartbeat thread and no discovery health indicator at all — verified on a three-node
+cluster: zero Eureka threads, zero live `com.netflix.*` objects, zero references to port 8761, and a health endpoint
+with no discovery entries.
+
+**A Redis deployment therefore does not need to run a JHipster registry at all.** The local multi-node runner does not
+start one for `--middleware redis`, which is what keeps this property honest: if anything started depending on the
+registry again, that stack would stop coming up.
+
+## Caches
+
+Spring `@Cacheable` resolves against a `RoutingCacheManager` that splits caches by value shape:
+
+* **Blob caches** (`files`, `plantUmlPng`, `plantUmlSvg`) are per-node Caffeine caches bounded by *bytes*, because their
+  values range from kilobytes to tens of megabytes. Pushing those through a shared grid costs a network transfer per
+  read, and on Redis it is worse: Redis is single-threaded, so one multi-MB value stalls every other operation including
+  the CI queue. Coherence comes from `BlobCacheEvictionService`, which broadcasts evictions, plus a time-to-live so a
+  dropped broadcast self-corrects.
+* **Everything else** is served by `DistributedDataCacheManager`, which is built on `DistributedDataProvider` and
+  therefore behaves the same on every backend.
+
+The rest of the caching policy — in particular that Hibernate second-level cache is disabled cluster-wide — is on the
+[Caching](/developer/guidelines/caching) page.
+
+## Adding a capability
+
+If something you need is genuinely missing from `DistributedDataProvider`, add it there rather than reaching past it:
+
+1. Add the method to `DistributedDataProvider` with Javadoc that says what guarantee callers may rely on.
+2. Implement it for **all three** providers (`hazelcast`, `redisson`, `local`).
+3. Add a case to `AbstractDistributedDataTest`, so every backend has to agree. Behaviour that only one backend supports
+   must fail uniformly rather than work on one and silently do nothing on the other.
+
+Only then add the class to the allowlist in `DistributedDataProviderArchitectureTest` if it truly has to name a backend —
+each entry there needs a recorded reason, and two guard tests fail if an entry stops matching a class or stops using a
+backend.
+
+## Testing
+
+* `AbstractDistributedDataTest` is the contract suite; `LocalDataTest`, `HazelcastDistributedDataTest` and
+  `RedissonDistributedDataTest` run it against the three backends.
+* The multi-node E2E runners take `--middleware hazelcast|redis` and run the identical suite on either backend:
+
+```bash
+./run-e2e-tests-local-multinode-fast.sh --middleware redis
+./run-e2e-tests-local-multinode.sh --middleware redis --filter "ClusterFormation"
+```
+
+Hazelcast remains the default, because that is what production runs.

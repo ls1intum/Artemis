@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Activate the externally managed users that the student import left unactivated.
+
+        UserCreationService.createUser used to set activated = false and generate an activation key for every user it created,
+        external (LDAP/SAML) ones included. Course import, exam registration and admin user import all resolve unknown students
+        through UserService.findUserInLdap, which uses that factory and never activated the result - unlike the LDAP first-login
+        path, which activated the user immediately afterwards. Whether an external user ended up activated therefore depended on
+        nothing more than whether they logged in before an instructor imported them.
+
+        This stayed invisible because LdapAuthenticationProvider is the only authentication provider that does not check
+        `activated`. Once git authentication started enforcing account state, these users kept their web access but lost access to
+        their repositories over both HTTPS and SSH.
+
+        An activation key is only redeemable through GET /activate, which - like the mail that carries the key - is gated behind
+        artemis.user-management.registration.enabled, and self-registration always creates internal users. For an external user the
+        key is therefore unreachable state, which also makes it a reliable marker of an account created by this bug:
+
+          - createUser set activated = false AND an activation key
+          - deactivateUser sets activated = false and never sets a key
+
+        Restricting the update to rows that still carry an activation key consequently repairs the import-created accounts while
+        leaving deliberate administrative deactivations untouched. Internal users are excluded as well: an unactivated internal
+        account with a key is a genuine abandoned self-registration and must stay unactivated.
+    -->
+    <changeSet id="20260820091251-01-activate-imported-external-users" author="krusche">
+        <update tableName="jhi_user">
+            <column name="activated" valueBoolean="true"/>
+            <column name="activation_key" valueComputed="NULL"/>
+            <where>activated = false AND is_internal = false AND is_deleted = false AND activation_key IS NOT NULL</where>
+        </update>
+    </changeSet>
+</databaseChangeLog>

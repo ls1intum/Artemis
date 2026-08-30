@@ -99,9 +99,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void activationEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        recipient.setActivationKey("abc123-activation-key");
 
-        testMailService.sendActivationEmail(MailRecipientDTO.from(recipient));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("testuser");
@@ -112,9 +111,8 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     @Test
     void activationEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
-        recipient.setActivationKey("de-activation-key-456");
 
-        testMailService.sendActivationEmail(MailRecipientDTO.from(recipient));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-activation-key-456");
@@ -125,7 +123,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void passwordResetEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom("secret-for-789", recipient));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, "secret-for-789"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains(recipient.getEmail());
@@ -137,7 +135,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void passwordResetEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom("secret-for-012", recipient));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, "secret-for-012"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains(recipient.getEmail());
@@ -147,27 +145,24 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void passwordResetEmail_shouldUseTheSharedArtemisLayout() throws Exception {
-        recipient.setResetKey("styled-reset-key-345");
 
-        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetSecretFrom("", recipient));
+        testMailService.sendPasswordResetMail(MailRecipientDTO.withResetKeyFrom(recipient, ""));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
 
     @Test
     void activationEmail_shouldUseTheSharedArtemisLayout() throws Exception {
-        recipient.setActivationKey("styled-activation-key-123");
 
-        testMailService.sendActivationEmail(MailRecipientDTO.from(recipient));
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "styled-activation-key-123"));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
 
     @Test
     void saml2SetPasswordEmail_shouldUseTheSharedArtemisLayout() throws Exception {
-        recipient.setResetKey("styled-saml-key-567");
 
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetSecretFrom("abc", recipient));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetKeyFrom(recipient, "abc"));
 
         assertUsesSharedArtemisLayout(getDeliveredEmailBody());
     }
@@ -201,7 +196,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Test
     void saml2SetPasswordEmail_shouldRenderAndDeliverInEnglish() throws Exception {
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetSecretFrom("saml-secret-for-345", recipient));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetKeyFrom(recipient, "saml-secret-for-345"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains(recipient.getEmail());
@@ -213,7 +208,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     void saml2SetPasswordEmail_shouldRenderAndDeliverInGerman() throws Exception {
         recipient.setLangKey("de");
 
-        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetSecretFrom("saml-secret-for-678", recipient));
+        testMailService.sendSAML2SetPasswordMail(MailRecipientDTO.withResetKeyFrom(recipient, "saml-secret-for-678"));
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains(recipient.getEmail());
@@ -270,6 +265,43 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         String body = getDeliveredEmailBody();
         assertThat(body).contains("user-settings/passkeys");
         assertThat(body).contains("Jane Doe");
+    }
+
+    // -- E-mail changed notification email --
+
+    @Test
+    void emailChangedEmail_shouldRenderAndDeliverInEnglish() throws Exception {
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("new-address@tum.de");
+        assertThat(body).contains("Jane Doe");
+        assertThat(body).contains("was changed");
+    }
+
+    @Test
+    void emailChangedEmail_shouldRenderAndDeliverInGerman() throws Exception {
+        recipient.setLangKey("de");
+
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("newEmail", "new-address@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).contains("new-address@tum.de");
+        assertThat(body).contains("geändert");
+    }
+
+    @Test
+    void emailChangedEmail_shouldEscapeTheAddressRatherThanRenderItAsMarkup() throws Exception {
+        // The address reaches the template from user input, so it has to be escaped. The template uses th:text for
+        // exactly this reason; th:utext would turn a crafted address into live markup in the recipient's client.
+        testMailSendingService.buildAndSendSync(MailRecipientDTO.from(recipient), "email.notification.emailChanged.title", "mail/notification/emailChangedEmail",
+                new HashMap<>(Map.of("newEmail", "<script>alert(1)</script>@tum.de")));
+
+        String body = getDeliveredEmailBody();
+        assertThat(body).doesNotContain("<script>alert(1)</script>");
+        assertThat(body).contains("&lt;script&gt;");
     }
 
     // -- VCS access token expired notification email --

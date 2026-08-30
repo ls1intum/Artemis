@@ -25,6 +25,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { UMLModel } from '@tumaet/apollon';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -362,7 +363,7 @@ export class ExerciseService {
      * @param { Exercise } exercise - Exercise from client whose date is adjusted
      */
     static convertExerciseDatesFromClient<E extends Exercise>(exercise: E): E {
-        return Object.assign({}, exercise, {
+        return cloneWith(exercise, {
             releaseDate: convertDateFromClient(exercise.releaseDate),
             startDate: convertDateFromClient(exercise.startDate),
             dueDate: convertDateFromClient(exercise.dueDate),
@@ -483,8 +484,9 @@ export class ExerciseService {
      * @param exercise - Exercise that will be modified
      */
     static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
-        let copy = Object.assign(exercise, {});
-        copy = ExerciseService.convertExerciseDatesFromClient(copy);
+        // convertExerciseDatesFromClient already returns a detached copy, so no separate copy step is needed
+        // (the previous `Object.assign(exercise, {})` was a no-op that returned the argument itself).
+        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
         ExerciseService.stringifyExerciseCategories(copy);
         if (copy.course) {
             copy.course.exercises = [];
