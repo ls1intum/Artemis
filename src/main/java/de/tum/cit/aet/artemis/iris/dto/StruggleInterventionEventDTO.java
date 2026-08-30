@@ -16,6 +16,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * server-computed Pyris confidence, forwarded for the client eval log (spec §12). {@code anchorFile}/
  * {@code anchorLine}/{@code inlineHint} are set only when the gate localized the nudge to a single line (spec §4/§8).
  * {@code episodeId} is the client-allocated UUID that correlates this event back to the outstanding slot request.
+ * {@code rationale} is the gate's own one-sentence reason for the decision. It is never shown to the student; it rides
+ * alongside {@code confidence} so the client's eval log records WHY a run decided as it did, which matters most for a
+ * {@code silent} run, where the detector fired and the gate still surfaced nothing (spec §12).
  *
  * <p>
  * A11 confirm_close payload fields:
@@ -30,21 +33,22 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullable String action, @Nullable String message, @Nullable Long sessionId, @Nullable Long messageId,
         @Nullable String anchorFile, @Nullable Integer anchorLine, @Nullable String inlineHint, @Nullable Double confidence, @Nullable String episodeId, @Nullable Boolean resolved,
-        @Nullable String closingSentence, @Nullable String episodeLabel) {
+        @Nullable String closingSentence, @Nullable String episodeLabel, @Nullable String rationale) {
 
     /**
      * The noop completion frame for a {@code decide} run that surfaces nothing, so the client's in-flight decide
-     * clears. Fourteen positional fields, most of them nullable and adjacent, are easy to shift by one without the
+     * clears. Fifteen positional fields, most of them nullable and adjacent, are easy to shift by one without the
      * compiler noticing - which is exactly what happened to the empty-result frame, where a {@code null} sat in the
      * {@code confidence} slot and the client silently lost the value it logs for the eval (spec §12).
      *
      * @param exerciseId the exercise the run belongs to
      * @param confidence the gate confidence, forwarded for the client eval log; null when no decision produced one
      * @param episodeId  the client-allocated episode id, or null when the run carried none
+     * @param rationale  the gate's reason for staying silent, for the eval log; null when the run produced none
      * @return the silent completion event
      */
-    public static StruggleInterventionEventDTO silentDecide(long exerciseId, @Nullable Double confidence, @Nullable String episodeId) {
-        return new StruggleInterventionEventDTO(exerciseId, "decide", "silent", null, null, null, null, null, null, confidence, episodeId, null, null, null);
+    public static StruggleInterventionEventDTO silentDecide(long exerciseId, @Nullable Double confidence, @Nullable String episodeId, @Nullable String rationale) {
+        return new StruggleInterventionEventDTO(exerciseId, "decide", "silent", null, null, null, null, null, null, confidence, episodeId, null, null, null, rationale);
     }
 
     /**
@@ -57,6 +61,6 @@ public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullab
      * @return the unresolved completion event
      */
     public static StruggleInterventionEventDTO unresolvedClose(long exerciseId, @Nullable String episodeId) {
-        return new StruggleInterventionEventDTO(exerciseId, "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null);
+        return new StruggleInterventionEventDTO(exerciseId, "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null, null);
     }
 }
