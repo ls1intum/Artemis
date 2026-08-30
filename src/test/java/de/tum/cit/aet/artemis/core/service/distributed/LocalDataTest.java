@@ -12,6 +12,12 @@ class LocalDataTest extends AbstractDistributedDataTest {
     }
 
     @Override
+    protected boolean clientsReachCoreNodesDirectly() {
+        // Everything runs in one JVM, so there is no client connection at all to draw a conclusion from
+        return false;
+    }
+
+    @Override
     protected DistributedDataProvider getDistributedDataProvider() {
         return distributedDataProvider;
     }

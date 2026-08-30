@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -41,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
@@ -155,6 +157,9 @@ public class ParticipationService {
         InitializationState persistedState = null;
         ZonedDateTime persistedInitializationDate = null;
         boolean loadedWithSubmissions = false;
+        // Set when a concurrent request won the race to create the participation and this call only re-read it. Such a
+        // participation can already carry an initial submission, so it must not be treated as freshly created below.
+        boolean participationCreatedConcurrently = false;
 
         // In case of a test exam we don't try to find an existing participation, because students can participate multiple times
         // Instead, all previous participations are marked as finished and a new one is created
@@ -184,7 +189,9 @@ public class ParticipationService {
             }
             // Check if participation already exists
             if (optionalStudentParticipation.isEmpty()) {
-                participation = createNewParticipation(exercise, participant);
+                StartedParticipation started = createParticipationOrFetchConcurrentlyCreatedOne(exercise, participant);
+                participation = started.participation();
+                participationCreatedConcurrently = !started.createdHere();
             }
             else {
                 // make sure participation and exercise are connected
@@ -207,7 +214,9 @@ public class ParticipationService {
             // TODO: load submission with exercise for exam edge case:
             // clients creates missing participation for exercise, call on server succeeds, but response to client is lost
             // -> client tries to create participation again. In this case the submission is not loaded from db -> client errors
-            if (optionalStudentParticipation.isEmpty() || !submissionRepository.existsByParticipationId(participation.getId())) {
+            // Only a participation this call created is certain to have no submission yet. One that a concurrent
+            // request created has to be checked, or the initial submission would be written a second time.
+            if ((optionalStudentParticipation.isEmpty() && !participationCreatedConcurrently) || !submissionRepository.existsByParticipationId(participation.getId())) {
                 // initialize a modeling, text, file upload or quiz submission
                 if (createInitialSubmission) {
                     submissionRepository.initializeSubmission(participation, exercise, null);
@@ -240,6 +249,43 @@ public class ParticipationService {
             return participation;
         }
         return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
+     * Creates the participation, or returns the one a concurrent request created a moment earlier.
+     * <p>
+     * The emptiness check above and the insert in {@link #createNewParticipation} are not atomic, so two requests for
+     * the same participant can both pass the check. For a team exercise that is the ordinary case rather than a corner
+     * one: two teammates opening the exercise at the same time is exactly how a team starts. The loser then violates
+     * the unique constraint on (team_id, exercise_id, initialization_state) - or its student_id counterpart - and
+     * received a 500, while the winner's request succeeded. Handing the loser the team's participation is what it was
+     * asking for anyway.
+     *
+     * @param exercise    the exercise the participation belongs to
+     * @param participant the student or team starting it
+     * @return the newly created participation, or the one a concurrent request created, together with which of the two
+     *         it is
+     */
+    private StartedParticipation createParticipationOrFetchConcurrentlyCreatedOne(Exercise exercise, Participant participant) {
+        try {
+            return new StartedParticipation(createNewParticipation(exercise, participant), true);
+        }
+        catch (DataIntegrityViolationException concurrentStart) {
+            // Only a lost race explains this: re-read, and if nothing is there the violation was something else and has
+            // to reach the caller rather than be reported as a participation that could not be found.
+            StudentParticipation concurrentlyCreated = findOneGradedByExerciseAndParticipant(exercise, participant).orElseThrow(() -> concurrentStart);
+            return new StartedParticipation(concurrentlyCreated, false);
+        }
+    }
+
+    /**
+     * A participation to start with, and whether this call is the one that created it.
+     *
+     * @param participation the participation for the exercise and participant
+     * @param createdHere   {@code true} when this call created the participation, so it cannot have a submission yet;
+     *                          {@code false} when a concurrent request created it and this call only re-read it
+     */
+    private record StartedParticipation(StudentParticipation participation, boolean createdHere) {
     }
 
     /**
@@ -1086,9 +1132,14 @@ public class ParticipationService {
         // Load latest results with assessment notes
         Set<Long> submissionIds = participations.stream().flatMap(p -> p.getSubmissions().stream()).map(Submission::getId).filter(Objects::nonNull).collect(Collectors.toSet());
         Map<Long, Result> resultBySubmissionId = Map.of();
+        // The scores view renders assessment actions per correction round, so it needs one entry per round on top of the
+        // newest result the score columns are built from.
+        Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId = Map.of();
         if (!submissionIds.isEmpty()) {
             Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
             resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
+            correctionRoundResultsBySubmissionId = resultRepository.findCorrectionRoundResultsBySubmissionIds(submissionIds).stream()
+                    .collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
         }
 
         // Load submission counts for these IDs
@@ -1097,12 +1148,15 @@ public class ParticipationService {
         // Step 3: Map to DTOs, preserving the ID query order
         Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
-        List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToDTO(p, submissionCountMap, finalResultMap)).toList();
+        final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
+        List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
+                .map(p -> mapToDTO(p, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId) {
+    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
+            Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
         // Participant info
         String participantName;
         String participantIdentifier;
@@ -1165,9 +1219,11 @@ public class ParticipationService {
         Integer passedTestCaseCount = latestResult != null ? latestResult.getPassedTestCaseCount() : null;
         Integer codeIssueCount = latestResult != null ? latestResult.getCodeIssueCount() : null;
 
+        List<CorrectionRoundResultDTO> correctionRoundResults = submissionId != null ? correctionRoundResultsBySubmissionId.getOrDefault(submissionId, List.of()) : List.of();
+
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
                 resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri, testRun,
-                testCaseCount, passedTestCaseCount, codeIssueCount);
+                testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults);
     }
 
     /**
