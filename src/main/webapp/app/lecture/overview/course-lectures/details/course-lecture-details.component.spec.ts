@@ -642,11 +642,16 @@ describe('CourseLectureDetailsComponent', () => {
             courseLecturesDetailsComponent.ngOnInit();
         };
 
-        const emitNavigationWithQueryParams = (queryParams: Record<string, unknown>, lectureId = '1', eventId = ++navigationId) => {
+        const emitNavigationWithQueryParams = (
+            queryParams: Record<string, unknown>,
+            lectureId = '1',
+            eventId = ++navigationId,
+            urlAfterRedirects = `/courses/1/lectures/${lectureId}`,
+        ) => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.snapshot.params = { lectureId };
             activatedRoute.snapshot.queryParams = queryParams as Params;
-            routerEvents.next(new NavigationEnd(eventId, `/courses/1/lectures/${lectureId}`, `/courses/1/lectures/${lectureId}`));
+            routerEvents.next(new NavigationEnd(eventId, urlAfterRedirects, urlAfterRedirects));
         };
 
         it.each([
@@ -695,6 +700,28 @@ describe('CourseLectureDetailsComponent', () => {
             expect(first).toEqual(expect.objectContaining({ unitId: 7, page: 4 }));
             expect(second).not.toBe(first);
             expect(second).toEqual(first);
+        });
+
+        it('should ignore duplicate NavigationEnd events for a handled deep-link navigation id', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 11, '/courses/1/lectures/1?unit=7&page=4');
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 11, '/courses/1/lectures/1?unit=7&page=4');
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
+        });
+
+        it('should ignore unrelated query navigations that keep handled deep-link parameters', () => {
+            respondWith([attachmentUnit(7)]);
+            reInit();
+
+            emitNavigationWithQueryParams({ unit: '7', page: '4', postId: '5' }, '1', 12, '/courses/1/lectures/1?unit=7&page=4&postId=5');
+            const first = courseLecturesDetailsComponent.deepLink();
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 13, '/courses/1/lectures/1?unit=7&page=4');
+
+            expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
         });
 
         it('should not publish the current activation NavigationEnd a second time', () => {

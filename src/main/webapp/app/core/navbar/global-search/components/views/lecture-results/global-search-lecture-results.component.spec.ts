@@ -183,31 +183,6 @@ describe('GlobalSearchLectureResultsComponent', () => {
             expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
         });
 
-        it('should normalize lecture deep-link query params before keyboard navigation', () => {
-            const result: LectureSearchResult = {
-                course: mockResult.course,
-                lecture: mockResult.lecture,
-                lectureUnit: {
-                    id: mockResult.lectureUnit.id,
-                    name: mockResult.lectureUnit.name,
-                    link: mockResult.lectureUnit.link,
-                    pageNumber: mockResult.lectureUnit.pageNumber,
-                    sourceType: mockResult.lectureUnit.sourceType,
-                    queryParams: { unit: '1', timestamp: '-1', page: '3', unrelated: 'kept' },
-                },
-                snippet: mockResult.snippet,
-            };
-            setLectureResults([result]);
-            fixture.componentRef.setInput('selectedIndex', 0);
-            fixture.detectChanges();
-
-            const navigateSpy = vi.spyOn((component as any).router, 'navigate');
-
-            component.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
-
-            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: { unrelated: 'kept', unit: 1, page: 3 } });
-        });
-
         it('should not navigate when Enter is pressed with no selection', () => {
             setLectureResults([mockResult]);
             fixture.componentRef.setInput('selectedIndex', -1);
@@ -271,6 +246,36 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
             expect(mockSearchService.search).toHaveBeenCalledWith('signals');
             expect((pipelineComponent as any).lectureResults()).toEqual(results.map(normalizeLectureSearchResultQueryParams));
+        });
+
+        it('should normalize lecture deep-link query params before keyboard navigation', () => {
+            const result: LectureSearchResult = {
+                course: mockResult.course,
+                lecture: mockResult.lecture,
+                lectureUnit: {
+                    id: mockResult.lectureUnit.id,
+                    name: mockResult.lectureUnit.name,
+                    link: mockResult.lectureUnit.link,
+                    pageNumber: mockResult.lectureUnit.pageNumber,
+                    sourceType: mockResult.lectureUnit.sourceType,
+                    queryParams: { unit: '1', timestamp: '-1', page: '3', unrelated: 'kept' },
+                },
+                snippet: mockResult.snippet,
+            };
+            mockSearchService.search.mockReturnValue(of([result]));
+
+            pipelineFixture.componentRef.setInput('searchQuery', 'signals');
+            pipelineFixture.componentRef.setInput('selectedIndex', 0);
+            pipelineFixture.detectChanges();
+
+            vi.advanceTimersByTime(300);
+            pipelineFixture.detectChanges();
+
+            const navigateSpy = vi.spyOn((pipelineComponent as any).router, 'navigate');
+
+            pipelineComponent.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: { unrelated: 'kept', unit: 1, page: 3 } });
         });
 
         it('should not call the search service for a whitespace-only query', () => {

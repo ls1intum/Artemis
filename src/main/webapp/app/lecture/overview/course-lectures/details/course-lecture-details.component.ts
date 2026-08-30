@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChildren } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/foundation/util/download.util';
@@ -49,7 +49,8 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 interface DeepLinkNavigationState {
     readonly routeKey: string;
-    readonly hasLectureDeepLinkParams: boolean;
+    readonly deepLinkKey?: string;
+    readonly urlAfterRedirects?: string;
 }
 
 export interface LectureUnitCompletionEvent {
@@ -161,6 +162,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     /** A jump waiting for its lecture to load, with the lecture it arrived for — else another one could execute it. */
     private pendingDeepLink?: { readonly deepLink: LectureDeepLink; readonly lectureId: number };
     private lastDeepLinkNavigationState?: DeepLinkNavigationState;
+    private lastHandledDeepLinkNavigationId?: number;
     private readonly lectureDetailsLoad$ = new Subject<number>();
     private irisSettingsSubscription?: Subscription;
 
@@ -243,58 +245,70 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         // change, so clicking the same citation twice would be swallowed. What makes an identical URL produce a fresh
         // navigation — and therefore this event — is `onSameUrlNavigation: 'reload'` in app.config.ts. Remove that and
         // repeated jumps stop arriving here, silently.
-        this.acceptDeepLinkFromRoute();
-        this.lastDeepLinkNavigationState = this.currentDeepLinkNavigationState();
         const initialNavigationId = this.router.currentNavigation()?.id;
+        this.acceptDeepLinkFromRoute(initialNavigationId);
+        this.lastDeepLinkNavigationState = this.currentDeepLinkNavigationState(this.router.url);
         this.router.events
             .pipe(
                 // The navigation that is activating this page right now has already been handled by the call above.
                 filter((event): event is NavigationEnd => event instanceof NavigationEnd && event.id !== initialNavigationId),
                 takeUntilDestroyed(this.destroyRef),
             )
-            .subscribe(() => {
-                if (this.shouldHandleNavigationEnd()) {
-                    this.acceptDeepLinkFromRoute();
+            .subscribe((event) => {
+                if (this.shouldHandleNavigationEnd(event)) {
+                    this.acceptDeepLinkFromRoute(event.id);
                 }
             });
     }
 
-    private acceptDeepLinkFromRoute(): void {
+    private acceptDeepLinkFromRoute(navigationId?: number): void {
         const routeLectureId = Number(this.activatedRoute.snapshot.params['lectureId']);
         const deepLink = parseLectureDeepLink(this.activatedRoute.snapshot.queryParams);
         if (!deepLink) {
             this.pendingDeepLink = undefined;
             this.deepLinkState.set(undefined);
+            this.lastHandledDeepLinkNavigationId = undefined;
             return;
         }
 
+        this.lastHandledDeepLinkNavigationId = navigationId;
         this.pendingDeepLink = { deepLink, lectureId: routeLectureId };
         this.publishDeepLink();
     }
 
-    private shouldHandleNavigationEnd(): boolean {
+    private shouldHandleNavigationEnd(event: NavigationEnd): boolean {
+        if (this.lastHandledDeepLinkNavigationId === event.id) {
+            return false;
+        }
         const previous = this.lastDeepLinkNavigationState;
-        const current = this.currentDeepLinkNavigationState();
+        const current = this.currentDeepLinkNavigationState(event.urlAfterRedirects);
         this.lastDeepLinkNavigationState = current;
 
-        return !previous || current.routeKey !== previous.routeKey || current.hasLectureDeepLinkParams || previous.hasLectureDeepLinkParams;
+        if (!previous || current.routeKey !== previous.routeKey || current.deepLinkKey !== previous.deepLinkKey) {
+            return true;
+        }
+
+        return current.deepLinkKey !== undefined && current.urlAfterRedirects === previous.urlAfterRedirects;
     }
 
-    private currentDeepLinkNavigationState(): DeepLinkNavigationState {
+    private currentDeepLinkNavigationState(urlAfterRedirects?: string): DeepLinkNavigationState {
+        const queryParams = this.activatedRoute.snapshot.queryParams;
+        const deepLink = parseLectureDeepLink(queryParams);
         return {
             routeKey: this.currentRouteKey(),
-            hasLectureDeepLinkParams: this.hasLectureDeepLinkParams(this.activatedRoute.snapshot.queryParams),
+            deepLinkKey: deepLink ? this.deepLinkKey(deepLink) : undefined,
+            urlAfterRedirects,
         };
+    }
+
+    private deepLinkKey(deepLink: LectureDeepLink): string {
+        return `${deepLink.unitId}/${deepLink.timestamp ?? ''}/${deepLink.page ?? ''}`;
     }
 
     private currentRouteKey(): string {
         const courseId = this.activatedRoute.parent?.parent?.snapshot?.params?.['courseId'] ?? '';
         const lectureId = this.activatedRoute.snapshot.params['lectureId'] ?? '';
         return `${courseId}/${lectureId}`;
-    }
-
-    private hasLectureDeepLinkParams(params: Params): boolean {
-        return params['unit'] !== undefined || params['timestamp'] !== undefined || params['page'] !== undefined;
     }
 
     loadData() {

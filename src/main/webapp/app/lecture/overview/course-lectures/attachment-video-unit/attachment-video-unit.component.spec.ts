@@ -74,7 +74,7 @@ describe('AttachmentVideoUnitComponent', () => {
      * reference is what tells the unit this is a new jump.
      */
     function deepLinkTo(unitId: number, target: { timestamp?: number; page?: number } = {}): void {
-        fixture.componentRef.setInput('deepLink', { unitId, ...target });
+        fixture.componentRef.setInput('deepLink', { unitId, timestamp: target.timestamp, page: target.page });
     }
 
     function expectPlaylistRequest(url: string, response: string | null) {

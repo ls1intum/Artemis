@@ -24,7 +24,7 @@ describe('LectureUnitComponent', () => {
     };
 
     // A fresh object each call: the reference is what tells the card this is a new jump.
-    const deepLinkTo = (target: { timestamp?: number; page?: number }): LectureDeepLink => ({ unitId: lectureUnit.id!, ...target });
+    const deepLinkTo = (target: { timestamp?: number; page?: number }): LectureDeepLink => ({ unitId: lectureUnit.id!, timestamp: target.timestamp, page: target.page });
 
     beforeEach(async () => {
         mockProfileService = {
@@ -220,6 +220,35 @@ describe('LectureUnitComponent', () => {
             await vi.waitFor(() => {
                 expect(youtubeScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
             });
+        });
+
+        it('should ignore a deep link superseded before its render callback schedules the scroll timeout', async () => {
+            vi.useFakeTimers();
+
+            const mockVideoPlayer = document.createElement('div');
+            mockVideoPlayer.scrollIntoView = vi.fn();
+            const videoScrollSpy = mockVideoPlayer.scrollIntoView as ReturnType<typeof vi.fn>;
+
+            const mockPdfViewer = document.createElement('div');
+            mockPdfViewer.scrollIntoView = vi.fn();
+            const pdfScrollSpy = mockPdfViewer.scrollIntoView as ReturnType<typeof vi.fn>;
+
+            vi.spyOn(fixture.nativeElement, 'querySelector').mockImplementation((selector) => {
+                if (selector === 'jhi-video-player') return mockVideoPlayer;
+                if (selector === 'jhi-pdf-viewer') return mockPdfViewer;
+                return null;
+            });
+
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ timestamp: 30 }));
+            fixture.detectChanges();
+            fixture.componentRef.setInput('deepLink', deepLinkTo({ page: 5 }));
+            fixture.detectChanges();
+
+            await fixture.whenStable();
+            await vi.advanceTimersByTimeAsync(500);
+
+            expect(videoScrollSpy).not.toHaveBeenCalled();
+            expect(pdfScrollSpy).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
         });
 
         it('should ignore deeplink targets when manually expanding (toggle)', async () => {
