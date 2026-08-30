@@ -18,6 +18,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Static utilities shared by every orchestrator tool service ({@link OrchestratorReadToolsService},
@@ -200,6 +202,22 @@ public final class OrchestratorToolHelpers {
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         return course != null && Objects.equals(courseId, course.getId());
+    }
+
+    /**
+     * Analogue of {@link #exerciseBelongsToCourse(Exercise, long)} for lecture units. A lecture unit
+     * is owned by a course through its lecture ({@code lectureUnit.lecture.course}); the check refuses
+     * a unit with no lecture or a lecture with no course so a tool call cannot walk a broken chain or
+     * cross course boundaries via a forged id. Callers must load the lecture (and its course) eagerly —
+     * the tool path runs with no open session.
+     *
+     * @param lectureUnit the lecture unit to check
+     * @param courseId    the expected course id
+     * @return {@code true} if the lecture unit belongs to the course
+     */
+    static boolean lectureUnitBelongsToCourse(LectureUnit lectureUnit, long courseId) {
+        Lecture lecture = lectureUnit.getLecture();
+        return lecture != null && lecture.getCourse() != null && Objects.equals(courseId, lecture.getCourse().getId());
     }
 
     /**

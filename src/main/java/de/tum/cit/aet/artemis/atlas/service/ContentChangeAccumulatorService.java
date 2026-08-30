@@ -153,6 +153,29 @@ public class ContentChangeAccumulatorService {
     }
 
     /**
+     * Record a lecture-unit change for a course. Caller must have already filtered ExerciseUnits and
+     * other ineligible content — this method does not revalidate. Mirrors {@link #record(long, long)}
+     * for exercises; both feed the same per-course bucket so a mixed burst of edits collapses into one run.
+     *
+     * @param courseId      the course the lecture unit belongs to
+     * @param lectureUnitId id of the lecture unit that changed
+     */
+    public void recordLectureUnit(long courseId, long lectureUnitId) {
+        Instant now = Instant.now(clock);
+        LocalDate today = LocalDate.now(clock);
+        DistributedMap<Long, ContentChangeAccumulator> currentMap = map();
+        currentMap.lock(courseId);
+        try {
+            ContentChangeAccumulator current = currentMap.get(courseId);
+            ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
+            currentMap.put(courseId, next.withLectureUnit(lectureUnitId, now));
+        }
+        finally {
+            currentMap.unlock(courseId);
+        }
+    }
+
+    /**
      * List every course id with an accumulator entry whose debounce window has elapsed and which
      * actually holds buffered content. Iterating the entry set is acceptable because the map is
      * bounded by the number of courses currently debouncing (rarely more than a few dozen).
@@ -252,7 +275,7 @@ public class ContentChangeAccumulatorService {
             if (countQuota && effectiveDailyCount >= cap) {
                 return Optional.empty();
             }
-            BatchClaim claim = new BatchClaim(current.exerciseIds());
+            BatchClaim claim = new BatchClaim(current.exerciseIds(), current.lectureUnitIds());
             currentMap.put(courseId, current.claim(today, countQuota));
             return Optional.of(claim);
         }
@@ -272,7 +295,20 @@ public class ContentChangeAccumulatorService {
      * @param exerciseIds the exercise ids to re-add to the accumulator
      */
     public void requeueAfterConcurrentRun(long courseId, Set<Long> exerciseIds) {
-        requeue(courseId, exerciseIds, true);
+        requeue(courseId, exerciseIds, Set.of(), true);
+    }
+
+    /**
+     * Lecture-unit-aware variant of {@link #requeueAfterConcurrentRun(long, Set)}: re-merges both the
+     * exercise and lecture-unit ids of a claimed batch that could not run because a concurrent
+     * orchestration held the per-course run lock, refunding the single daily-run reservation.
+     *
+     * @param courseId       the course whose batch is being requeued
+     * @param exerciseIds    the exercise ids to re-add to the accumulator
+     * @param lectureUnitIds the lecture-unit ids to re-add to the accumulator
+     */
+    public void requeueAfterConcurrentRun(long courseId, Set<Long> exerciseIds, Set<Long> lectureUnitIds) {
+        requeue(courseId, exerciseIds, lectureUnitIds, true);
     }
 
     /**
@@ -291,29 +327,46 @@ public class ContentChangeAccumulatorService {
      * @param exerciseIds the exercise ids to re-add to the accumulator
      */
     public void requeueAfterFailedRun(long courseId, Set<Long> exerciseIds) {
-        requeue(courseId, exerciseIds, false);
+        requeue(courseId, exerciseIds, Set.of(), false);
+    }
+
+    /**
+     * Lecture-unit-aware variant of {@link #requeueAfterFailedRun(long, Set)}: re-merges both the
+     * exercise and lecture-unit ids of a claimed batch that failed before committing any mutation,
+     * keeping the daily-run reservation so failed retries stay bounded by the per-course cap.
+     *
+     * @param courseId       the course whose batch is being requeued
+     * @param exerciseIds    the exercise ids to re-add to the accumulator
+     * @param lectureUnitIds the lecture-unit ids to re-add to the accumulator
+     */
+    public void requeueAfterFailedRun(long courseId, Set<Long> exerciseIds, Set<Long> lectureUnitIds) {
+        requeue(courseId, exerciseIds, lectureUnitIds, false);
     }
 
     /**
      * Re-merge claimed ids atomically under the per-key lock. When {@code refundDailyRun} is set
      * (concurrent-run requeue) one daily-run reservation is released so a retry-only tick does not
      * burn automatic quota; when unset (failed-run requeue) the reservation is kept so the per-day
-     * cap bounds how many failed retries a course can attempt.
+     * cap bounds how many failed retries a course can attempt. A no-op when both id sets are empty.
      */
-    private void requeue(long courseId, Set<Long> exerciseIds, boolean refundDailyRun) {
-        if (exerciseIds.isEmpty()) {
+    private void requeue(long courseId, Set<Long> exerciseIds, Set<Long> lectureUnitIds, boolean refundDailyRun) {
+        if (exerciseIds.isEmpty() && lectureUnitIds.isEmpty()) {
             return;
         }
         Instant now = Instant.now(clock);
         LocalDate today = LocalDate.now(clock);
-        Set<Long> idsToRequeue = new HashSet<>(exerciseIds);
+        Set<Long> exerciseIdsToRequeue = new HashSet<>(exerciseIds);
+        Set<Long> lectureUnitIdsToRequeue = new HashSet<>(lectureUnitIds);
         DistributedMap<Long, ContentChangeAccumulator> currentMap = map();
         currentMap.lock(courseId);
         try {
             ContentChangeAccumulator current = currentMap.get(courseId);
             ContentChangeAccumulator next = current == null ? ContentChangeAccumulator.empty(now, today) : current;
-            for (Long exerciseId : idsToRequeue) {
+            for (Long exerciseId : exerciseIdsToRequeue) {
                 next = next.with(exerciseId, now);
+            }
+            for (Long lectureUnitId : lectureUnitIdsToRequeue) {
+                next = next.withLectureUnit(lectureUnitId, now);
             }
             currentMap.put(courseId, refundDailyRun ? next.refundDailyRun(today) : next);
         }
@@ -356,11 +409,19 @@ public class ContentChangeAccumulatorService {
         return clock;
     }
 
-    /** The completion snapshot returned by {@link #claimDueBatch(long)}. */
-    public record BatchClaim(Set<Long> exerciseIds) implements Serializable {
+    /**
+     * The drained batch returned by {@link #claimDueBatch(long)}: the exercise ids and lecture-unit ids
+     * buffered for the course. Both sets are guarded against {@code null} for rolling-upgrade safety.
+     */
+    public record BatchClaim(Set<Long> exerciseIds, Set<Long> lectureUnitIds) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
+
+        public BatchClaim {
+            exerciseIds = exerciseIds == null ? Set.of() : exerciseIds;
+            lectureUnitIds = lectureUnitIds == null ? Set.of() : lectureUnitIds;
+        }
     }
 
     /** Hook for tests: reset the map between cases without touching private state. */

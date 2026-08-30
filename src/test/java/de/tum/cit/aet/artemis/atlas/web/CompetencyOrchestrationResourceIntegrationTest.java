@@ -17,6 +17,8 @@ import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -42,6 +44,8 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
 
     private ProgrammingExercise programmingExercise;
 
+    private TextUnit textUnit;
+
     @BeforeEach
     void setup() {
         userUtilService.addUsers(OTHER_PREFIX, 0, 0, 0, 1);
@@ -49,6 +53,8 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
         // Only TEST_PREFIX instructor is enrolled; OTHER_PREFIX instructor has no UCR entry and will be denied.
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
+        Lecture lecture = lectureUtilService.createLecture(course);
+        textUnit = lectureUtilService.createTextUnit(lecture);
         featureToggleService.enableFeature(Feature.AtlasAgent);
     }
 
@@ -61,6 +67,28 @@ class CompetencyOrchestrationResourceIntegrationTest extends AbstractAtlasIntegr
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void runForExercise_student_returnsForbidden() throws Exception {
         request.performMvcRequest(post("/api/atlas/orchestrator/exercises/{exerciseId}/run", programmingExercise.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void runForLectureUnit_student_returnsForbidden() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{lectureUnitId}/run", textUnit.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void runForLectureUnit_wrongCourseInstructor_returnsForbidden() throws Exception {
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{lectureUnitId}/run", textUnit.getId()).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void runForLectureUnit_atlasAgentFeatureDisabled_returnsForbidden() throws Exception {
+        featureToggleService.disableFeature(Feature.AtlasAgent);
+        request.performMvcRequest(post("/api/atlas/orchestrator/lecture-units/{lectureUnitId}/run", textUnit.getId()).contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 

@@ -49,7 +49,12 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
          * underlying course's competencies, which is never what the instructor wants —
          * surfaced as 422.
          */
-        UNSUPPORTED_EXERCISE
+        UNSUPPORTED_EXERCISE,
+        /**
+         * The requested learning object cannot be orchestrated, for example an exercise-backed,
+         * missing, or non-course lecture unit — surfaced as 422.
+         */
+        UNSUPPORTED_LEARNING_OBJECT
     }
 
     public static CompetencyOrchestrationResultDTO success(String summary, List<AppliedActionDTO> appliedActions) {
@@ -73,9 +78,8 @@ public record CompetencyOrchestrationResultDTO(Status status, String summary, Li
     }
 
     /**
-     * The run completed without anything to do: every claimed exercise resolved to nothing
-     * applicable (deleted, exam, or owned by another course). No competencies were touched, so the
-     * caller must not report the claimed ids as successfully processed.
+     * The run completed without anything to do: every claimed learning object resolved to nothing
+     * applicable or extractable. No competencies were touched.
      */
     public static CompetencyOrchestrationResultDTO noOp(String summary) {
         return new CompetencyOrchestrationResultDTO(Status.NO_OP, summary, List.of(), null);

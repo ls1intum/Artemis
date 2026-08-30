@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.belon
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.courseIdFromContext;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.errorJson;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.exerciseBelongsToCourse;
+import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.lectureUnitBelongsToCourse;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.markWorkerRead;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.missingCourseContextError;
 import static de.tum.cit.aet.artemis.atlas.service.OrchestratorToolHelpers.toJson;
@@ -33,6 +34,9 @@ import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * Read-only orchestrator tools that let the LLM inspect a single competency or an exercise's content.
@@ -69,20 +73,24 @@ public class OrchestratorReadToolsService {
 
     private final ContentExtractionService contentExtractionService;
 
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
+
     /**
      * Creates the read tools service.
      *
      * @param objectMapper               JSON serialiser for tool responses
      * @param courseCompetencyRepository repository for competency lookups
      * @param exerciseRepository         repository for exercise lookups
-     * @param contentExtractionService   service extracting learning-relevant exercise content
+     * @param contentExtractionService   service extracting learning-relevant content
+     * @param lectureUnitRepositoryApi   optional lecture module API for lecture-unit lookups (absent when lectures are disabled)
      */
     public OrchestratorReadToolsService(ObjectMapper objectMapper, CourseCompetencyRepository courseCompetencyRepository, ExerciseRepository exerciseRepository,
-            ContentExtractionService contentExtractionService) {
+            ContentExtractionService contentExtractionService, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.objectMapper = objectMapper;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.exerciseRepository = exerciseRepository;
         this.contentExtractionService = contentExtractionService;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
     /**
@@ -161,6 +169,45 @@ public class OrchestratorReadToolsService {
             // Generic message — raw exception text could leak Hibernate/SQL detail into the LLM's summary.
             log.warn("getExerciseContent failed for exercise {}: {}", exerciseId, ex.getMessage(), ex);
             return errorJson(objectMapper, "Failed to extract content for exercise " + exerciseId + ".");
+        }
+    }
+
+    /**
+     * LLM tool: extracts learning-relevant content for a lecture unit in the current course as JSON.
+     * Exercise-backed lecture units remain owned by the exercise orchestration path.
+     *
+     * @param lectureUnitId id to extract
+     * @param toolContext   carries the current course id
+     * @return the JSON-serialized content, or a JSON error
+     */
+    @Tool(description = "Extract the learning-relevant content for a lecture unit that belongs to the current course. Returns a title, learning text, and metadata. "
+            + "Text units expose their content; online units expose their description and source metadata; attachment/video units expose their description and file/video metadata. "
+            + "A blank attachment/video description means there is no extractable learning text. Exercise-backed lecture units are not supported here; inspect their exercise instead.")
+    public String getLectureUnitContent(@ToolParam(description = "id of the lecture unit whose content should be extracted") Long lectureUnitId, ToolContext toolContext) {
+        Long courseId = courseIdFromContext(toolContext);
+        if (courseId == null) {
+            return missingCourseContextError(objectMapper);
+        }
+        if (lectureUnitId == null) {
+            return errorJson(objectMapper, "lectureUnitId is required.");
+        }
+        if (lectureUnitRepositoryApi.isEmpty()) {
+            return errorJson(objectMapper, "Lecture unit " + lectureUnitId + " is not available in the current course.");
+        }
+        LectureUnit lectureUnit = lectureUnitRepositoryApi.get().findWithLectureById(lectureUnitId).orElse(null);
+        if (lectureUnit == null || lectureUnit instanceof ExerciseUnit || !lectureUnitBelongsToCourse(lectureUnit, courseId)) {
+            return errorJson(objectMapper, "Lecture unit " + lectureUnitId + " is not a readable lecture unit in the current course.");
+        }
+        try {
+            ExtractedContentDTO extracted = contentExtractionService.extractContent(lectureUnit, false);
+            String safeTitle = CompetencyOrchestrationService.sanitizeForPrompt(extracted.title(), MAX_EXERCISE_TITLE_LENGTH);
+            String safeText = CompetencyOrchestrationService.sanitizeForPrompt(extracted.extractedLearningText(), MAX_EXERCISE_CONTENT_LENGTH);
+            markWorkerRead(toolContext);
+            return toJson(objectMapper, new ExtractedContentDTO(safeTitle, safeText, extracted.metadata()));
+        }
+        catch (RuntimeException ex) {
+            log.warn("getLectureUnitContent failed for lecture unit {}: {}", lectureUnitId, ex.getMessage(), ex);
+            return errorJson(objectMapper, "Failed to extract content for lecture unit " + lectureUnitId + ".");
         }
     }
 

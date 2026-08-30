@@ -25,15 +25,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.OrchestratorToolContextKeys.AppliedActionsBuffer;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyExerciseLinkTestRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyLectureUnitLinkTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Unit tests for {@link AssignerToolsService}; relocated from the former monolithic OrchestratorToolsServiceTest. */
@@ -56,6 +62,12 @@ class AssignerToolsServiceTest {
     private CompetencyExerciseLinkTestRepository competencyExerciseLinkRepository;
 
     @Mock
+    private CompetencyLectureUnitLinkTestRepository competencyLectureUnitLinkRepository;
+
+    @Mock
+    private LectureUnitRepositoryApi lectureUnitRepositoryApi;
+
+    @Mock
     private CompetencyProgressApi competencyProgressApi;
 
     private AssignerToolsService service;
@@ -69,7 +81,7 @@ class AssignerToolsServiceTest {
     @BeforeEach
     void setUp() {
         service = new AssignerToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository,
-                Optional.of(competencyProgressApi));
+                competencyLectureUnitLinkRepository, Optional.of(lectureUnitRepositoryApi), Optional.of(competencyProgressApi));
         appliedActions = Collections.synchronizedList(new ArrayList<>());
         appliedActionsBuffer = new AppliedActionsBuffer(appliedActions);
         Map<String, Object> ctx = new HashMap<>();
@@ -279,11 +291,191 @@ class AssignerToolsServiceTest {
 
         String assignResult = service.assignExerciseToCompetency(10L, 20L, 1.0, JUSTIFICATION, toolContext);
         String unassignResult = service.unassignExerciseFromCompetency(10L, 20L, JUSTIFICATION, toolContext);
+        String assignLectureUnitResult = service.assignLectureUnitToCompetency(10L, 30L, 1.0, JUSTIFICATION, toolContext);
+        String unassignLectureUnitResult = service.unassignLectureUnitFromCompetency(10L, 30L, JUSTIFICATION, toolContext);
 
         assertThat(assignResult).contains("Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ")");
         assertThat(unassignResult).contains("Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ")");
+        assertThat(assignLectureUnitResult).contains("Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ")");
+        assertThat(unassignLectureUnitResult).contains("Write tool call cap (" + OrchestratorToolContextKeys.MAX_WRITE_CALLS + ")");
         verify(competencyExerciseLinkRepository, never()).save(any(CompetencyExerciseLink.class));
         verify(competencyExerciseLinkRepository, never()).delete(any());
+        verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+        verify(competencyLectureUnitLinkRepository, never()).delete(any());
+    }
+
+    // ---- Lecture-unit assign / unassign ----------------------------------------------------------
+
+    private static final long LECTURE_UNIT_ID = 30L;
+
+    private static final long COMPETENCY_ID = 5L;
+
+    @Test
+    void assignLectureUnitToCompetency_newLink_createsAndTriggersProgress() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        TextUnit unit = lectureUnitInCourse(LECTURE_UNIT_ID, "Recursion basics", course);
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(LECTURE_UNIT_ID, COMPETENCY_ID)).thenReturn(Optional.empty());
+
+        String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 0.5, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"status\":\"ok\"").contains("\"weight\":0.5").contains("\"lectureUnitId\":30");
+        verify(competencyLectureUnitLinkRepository).save(any(CompetencyLectureUnitLink.class));
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(unit);
+        assertThat(appliedActions).singleElement().satisfies(a -> {
+            assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.ASSIGN);
+            assertThat(a.lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
+            assertThat(a.exerciseId()).isNull();
+            assertThat(a.weight()).isEqualTo(0.5);
+        });
+    }
+
+    @Test
+    void assignLectureUnitToCompetency_reweightExistingLink_updatesWeight() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        TextUnit unit = lectureUnitInCourse(LECTURE_UNIT_ID, "Recursion basics", course);
+        CompetencyLectureUnitLink existing = new CompetencyLectureUnitLink(competency, unit, 0.3);
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(LECTURE_UNIT_ID, COMPETENCY_ID)).thenReturn(Optional.of(existing));
+
+        String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"status\":\"ok\"").contains("\"weight\":1.0");
+        verify(competencyLectureUnitLinkRepository).save(existing);
+        assertThat(existing.getWeight()).isEqualTo(1.0);
+    }
+
+    @Test
+    void assignLectureUnitToCompetency_sameWeightAsExisting_isNoop() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        TextUnit unit = lectureUnitInCourse(LECTURE_UNIT_ID, "Recursion basics", course);
+        CompetencyLectureUnitLink existing = new CompetencyLectureUnitLink(competency, unit, 0.5);
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+        when(competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(LECTURE_UNIT_ID, COMPETENCY_ID)).thenReturn(Optional.of(existing));
+
+        String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 0.5, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("noop");
+        verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+        verify(competencyProgressApi, never()).updateProgressByLearningObjectAsync(any());
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignLectureUnitToCompetency_weightBetweenBands_returnsBandError() {
+        String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 0.7, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("weight must be one of 1.0").contains("0.5").contains("0.3");
+        verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignLectureUnitToCompetency_exerciseUnit_isRejected() {
+        // CourseCompetency.prePersistOrUpdate would silently strip an ExerciseUnit link, so the tool must reject it up front.
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        exerciseUnit.setLecture(lectureInCourse(course));
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(exerciseUnit));
+
+        String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("not a linkable lecture unit");
+        verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    @Test
+    void assignLectureUnitToCompetency_differentCourse_returnsError() {
+        Course current = courseWithId(COURSE_ID);
+        Course other = courseWithId(OTHER_COURSE_ID);
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, current);
+        TextUnit unit = lectureUnitInCourse(LECTURE_UNIT_ID, "Foreign unit", other);
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+
+        String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("not a linkable lecture unit");
+        verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+    }
+
+    @Test
+    void assignLectureUnitToCompetency_lectureApiAbsent_failsClosed() {
+        AssignerToolsService noLectureService = new AssignerToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, competencyExerciseLinkRepository,
+                competencyLectureUnitLinkRepository, Optional.empty(), Optional.of(competencyProgressApi));
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+
+        String result = noLectureService.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 1.0, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("not a linkable lecture unit");
+        verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+    }
+
+    @Test
+    void assignLectureUnitToCompetency_missingCourseContext_failsClosed() {
+        String result = service.assignLectureUnitToCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, 1.0, JUSTIFICATION, new ToolContext(Map.of()));
+
+        assertThat(result).contains("No course context");
+        verify(competencyLectureUnitLinkRepository, never()).save(any(CompetencyLectureUnitLink.class));
+    }
+
+    @Test
+    void unassignLectureUnitFromCompetency_existingLink_deletesAndLogs() {
+        Course course = courseWithId(COURSE_ID);
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, course);
+        TextUnit unit = lectureUnitInCourse(LECTURE_UNIT_ID, "Recursion basics", course);
+        CompetencyLectureUnitLink existing = new CompetencyLectureUnitLink(competency, unit, 1.0);
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+        when(competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(LECTURE_UNIT_ID, COMPETENCY_ID)).thenReturn(Optional.of(existing));
+        when(lectureUnitRepositoryApi.findWithLectureById(LECTURE_UNIT_ID)).thenReturn(Optional.of(unit));
+
+        String result = service.unassignLectureUnitFromCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("\"status\":\"ok\"");
+        verify(competencyLectureUnitLinkRepository).delete(existing);
+        verify(competencyProgressApi).updateProgressByLearningObjectAsync(unit);
+        assertThat(appliedActions).singleElement().satisfies(a -> {
+            assertThat(a.type()).isEqualTo(AppliedActionDTO.ActionType.UNASSIGN);
+            assertThat(a.lectureUnitId()).isEqualTo(LECTURE_UNIT_ID);
+        });
+    }
+
+    @Test
+    void unassignLectureUnitFromCompetency_missingLink_returnsNoop() {
+        CourseCompetency competency = newCompetency(COMPETENCY_ID, "Target", "Desc", CompetencyTaxonomy.APPLY, courseWithId(COURSE_ID));
+        when(courseCompetencyRepository.findById(COMPETENCY_ID)).thenReturn(Optional.of(competency));
+        when(competencyLectureUnitLinkRepository.findByLectureUnitIdAndCompetencyId(LECTURE_UNIT_ID, COMPETENCY_ID)).thenReturn(Optional.empty());
+
+        String result = service.unassignLectureUnitFromCompetency(COMPETENCY_ID, LECTURE_UNIT_ID, JUSTIFICATION, toolContext);
+
+        assertThat(result).contains("noop");
+        verify(competencyLectureUnitLinkRepository, never()).delete(any(CompetencyLectureUnitLink.class));
+        assertThat(appliedActions).isEmpty();
+    }
+
+    private static TextUnit lectureUnitInCourse(long id, String name, Course course) {
+        TextUnit unit = new TextUnit();
+        unit.setId(id);
+        unit.setName(name);
+        unit.setLecture(lectureInCourse(course));
+        return unit;
+    }
+
+    private static Lecture lectureInCourse(Course course) {
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        return lecture;
     }
 
     private static Course courseWithId(long id) {

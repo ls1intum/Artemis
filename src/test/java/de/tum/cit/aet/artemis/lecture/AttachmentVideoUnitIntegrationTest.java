@@ -46,6 +46,8 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -67,6 +69,7 @@ import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -78,6 +81,7 @@ import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
+@RecordApplicationEvents
 class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "attachmentunit"; // only lower case is supported
@@ -85,6 +89,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     private static final int SLIDE_COUNT = 3;
+
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     @Autowired
     private AttachmentRepository attachmentRepository;
@@ -394,6 +401,35 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withDescription_publishesContentChangedEvent() throws Exception {
+        // The unit carries a non-blank description ("Lorem Ipsum" from setUp), so a content-changed event must fire.
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_changedDescription_publishesContentChangedEvent() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        unit.setDescription("Genuinely changed description");
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null)).andExpect(status().isOk());
+        // The resource snapshots the pre-update description before the service applies the DTO, so a real edit publishes exactly once.
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_unchangedDescription_doesNotPublishEvent() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        // PUT the unit back with its description unchanged — no content-bearing field changed, so no event fires.
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null)).andExpect(status().isOk());
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).isEmpty();
     }
 
     @Test

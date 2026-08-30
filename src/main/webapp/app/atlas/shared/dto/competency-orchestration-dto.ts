@@ -9,6 +9,7 @@ export enum CompetencyOrchestrationFailureReason {
     NoChatClient = 'NO_CHAT_CLIENT',
     LlmError = 'LLM_ERROR',
     UnsupportedExercise = 'UNSUPPORTED_EXERCISE',
+    UnsupportedLearningObject = 'UNSUPPORTED_LEARNING_OBJECT',
 }
 
 export enum AppliedActionType {
@@ -24,6 +25,7 @@ export interface AppliedActionDTO {
     competencyId: number;
     competencyTitle: string;
     exerciseId?: number;
+    lectureUnitId?: number;
     weight?: number;
     detail: string;
     justification: string;

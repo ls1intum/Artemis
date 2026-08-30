@@ -213,6 +213,18 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(mockUnit as unknown as LectureUnit)).toBe('');
     });
 
+    it('should offer orchestration only for supported lecture units with extractable content', () => {
+        attachmentVideoUnit.description = 'Attachment description';
+
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(textUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(new OnlineUnit())).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(attachmentVideoUnit)).toBe(true);
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(exerciseUnit)).toBe(false);
+
+        attachmentVideoUnit.description = '   ';
+        expect(lectureUnitManagementComponent.isOrchestrationAvailable(attachmentVideoUnit)).toBe(false);
+    });
+
     it('should give the correct confirmation text translation key', () => {
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentVideoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');

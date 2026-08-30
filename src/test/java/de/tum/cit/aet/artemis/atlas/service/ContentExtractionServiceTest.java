@@ -14,9 +14,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -129,11 +134,102 @@ class ContentExtractionServiceTest {
 
     @Test
     void extractContent_unsupportedLearningObjectType_throwsIllegalArgumentException() {
-        TextUnit textUnit = new TextUnit();
-        textUnit.setName("Intro");
+        // A LearningObject that is neither an exercise nor a lecture-unit subtype hits the defensive default branch.
+        LearningObject unsupported = mock(LearningObject.class);
 
-        assertThatThrownBy(() -> contentExtractionService.extractContent(textUnit)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> contentExtractionService.extractContent(unsupported)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Unsupported learning object type");
+    }
+
+    @Test
+    void extractContent_exerciseUnit_throwsBecauseNeverOrchestrated() {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+
+        assertThatThrownBy(() -> contentExtractionService.extractContent(exerciseUnit)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ExerciseUnit is never orchestrated");
+    }
+
+    @Test
+    void extractContent_textUnit_populatesTitleAndContent() {
+        TextUnit unit = new TextUnit();
+        unit.setName("Recursion basics");
+        unit.setContent("A recursive function calls itself until a base case is reached.");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.title()).isEqualTo("Recursion basics");
+        assertThat(result.extractedLearningText()).isEqualTo("A recursive function calls itself until a base case is reached.");
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "text");
+    }
+
+    @Test
+    void extractContent_textUnit_blankContent_returnsEmptyLearningText() {
+        TextUnit unit = new TextUnit();
+        unit.setName("Empty");
+        unit.setContent("   ");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.extractedLearningText()).isEmpty();
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "text");
+    }
+
+    @Test
+    void extractContent_onlineUnit_usesDescriptionAndRecordsSource() {
+        OnlineUnit unit = new OnlineUnit();
+        unit.setName("Spring docs");
+        unit.setDescription("Read the dependency-injection chapter.");
+        unit.setSource("https://spring.io/guides");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.title()).isEqualTo("Spring docs");
+        assertThat(result.extractedLearningText()).isEqualTo("Read the dependency-injection chapter.");
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "online").containsEntry("source", "https://spring.io/guides");
+    }
+
+    @Test
+    void extractContent_onlineUnit_blankSource_omitsSourceMetadata() {
+        OnlineUnit unit = new OnlineUnit();
+        unit.setName("Notes");
+        unit.setDescription("Some notes.");
+        unit.setSource("  ");
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "online").doesNotContainKey("source");
+    }
+
+    @Test
+    void extractContent_attachmentVideoUnit_usesDescription() {
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setName("Lecture 3 slides");
+        unit.setDescription("Covers hashing and collision resolution.");
+        unit.setVideoSource(" https://videos.example/lecture-3 ");
+        Attachment attachment = new Attachment();
+        attachment.setLink(" /api/core/files/lecture-3.pdf ");
+        unit.setAttachment(attachment);
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.title()).isEqualTo("Lecture 3 slides");
+        assertThat(result.extractedLearningText()).isEqualTo("Covers hashing and collision resolution.");
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "attachment").containsEntry("videoSource", "https://videos.example/lecture-3")
+                .containsEntry("attachmentLink", "/api/core/files/lecture-3.pdf");
+    }
+
+    @Test
+    void extractContent_attachmentVideoUnit_blankDescription_returnsEmptyLearningText() {
+        // A file/video-only unit carries no description; the orchestrator treats the empty learning text as "skip".
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setName("Lecture recording");
+        unit.setDescription(null);
+
+        ExtractedContentDTO result = contentExtractionService.extractContent(unit);
+
+        assertThat(result.title()).isEqualTo("Lecture recording");
+        assertThat(result.extractedLearningText()).isEmpty();
+        assertThat(result.metadata()).containsEntry("lectureUnitType", "attachment");
     }
 
     @Test
