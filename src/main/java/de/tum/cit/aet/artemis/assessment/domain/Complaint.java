@@ -51,7 +51,7 @@ public class Complaint extends DomainObject {
     private ComplaintResponse complaintResponse;
 
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn(unique = true, nullable = false)
     private Result result;
 
     /**

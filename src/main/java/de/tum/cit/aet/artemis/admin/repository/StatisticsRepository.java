@@ -412,7 +412,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.StatisticsEntry(
-                r.completionDate, SUM(SIZE(r.feedbacks))
+                r.completionDate, SUM(SIZE(r.feedbacks) + SIZE(r.testCaseFeedbacks) + SIZE(r.scaFeedbacks))
             )
             FROM Result r
             WHERE r.completionDate >= :startDate
@@ -427,7 +427,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.StatisticsEntry(
-                r.completionDate, SUM(SIZE(r.feedbacks))
+                r.completionDate, SUM(SIZE(r.feedbacks) + SIZE(r.testCaseFeedbacks) + SIZE(r.scaFeedbacks))
             )
             FROM Result r
             WHERE r.completionDate >= :startDate
@@ -442,7 +442,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.StatisticsEntry(
-                r.completionDate, SUM(SIZE(r.feedbacks))
+                r.completionDate, SUM(SIZE(r.feedbacks) + SIZE(r.testCaseFeedbacks) + SIZE(r.scaFeedbacks))
             )
             FROM Result r
             WHERE r.completionDate >= :startDate
