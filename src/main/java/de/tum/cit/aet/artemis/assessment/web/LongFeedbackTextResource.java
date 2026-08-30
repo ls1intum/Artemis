@@ -57,7 +57,7 @@ public class LongFeedbackTextResource {
      * Gets the long feedback associated with the specified feedback.
      * <p>
      * Negative ids are synthetic ids of automatic test-case feedback (see
-     * {@link ProgrammingFeedbackSynthesizerService}): they encode {@code (resultId, seq)} of a
+     * {@link ProgrammingFeedbackSynthesizerService}): they encode the id of a
      * {@code test_case_feedback} row whose full message is served from the deduplicated message table.
      *
      * @param feedbackId The feedback for which the long feedback should be fetched.
@@ -97,7 +97,7 @@ public class LongFeedbackTextResource {
     }
 
     /**
-     * The synthetic ids encode (resultId, seq) and are enumerable, so unlike the surrogate ids of manual
+     * The synthetic ids encode typed row ids and are enumerable, so unlike the surrogate ids of manual
      * feedback they cannot act as capability tokens: without this check a student could fetch the messages
      * of hidden (visibility NEVER) or not-yet-visible (AFTER_DUE_DATE before the due date) test cases of
      * their own submission, which every other read path filters out (see Result#filterSensitiveFeedbacks).

@@ -102,18 +102,6 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="20260817090000-02b-index-test-case-feedback-result" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <indexExists tableName="test_case_feedback" indexName="ix_test_case_feedback_result"/>
-            </not>
-        </preConditions>
-        <!-- every read of automatic feedback goes through the result; also supports the FK below -->
-        <createIndex tableName="test_case_feedback" indexName="ix_test_case_feedback_result">
-            <column name="result_id"/>
-        </createIndex>
-    </changeSet>
-
     <changeSet id="20260817090000-03-create-sca-feedback" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>
@@ -146,17 +134,6 @@
             <column name="penalty" type="DOUBLE"/>
             <column name="message_id" type="BIGINT"/>
         </createTable>
-    </changeSet>
-
-    <changeSet id="20260817090000-03b-index-sca-feedback-result" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <indexExists tableName="sca_feedback" indexName="ix_sca_feedback_result"/>
-            </not>
-        </preConditions>
-        <createIndex tableName="sca_feedback" indexName="ix_sca_feedback_result">
-            <column name="result_id"/>
-        </createIndex>
     </changeSet>
 
     <!-- ===================================================================== -->
@@ -362,6 +339,29 @@
     <!-- Same safety net as the previous feedback.test_case_id FK (changelog 20260713120000): the async
          build-result processing can race a concurrent programming-exercise deletion, so the database
          removes test feedback when its test case is deleted. -->
+    <changeSet id="20260817090000-08a2-index-test-case-feedback-result" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="test_case_feedback" indexName="ix_test_case_feedback_result"/>
+            </not>
+        </preConditions>
+        <!-- every read of automatic feedback goes through the result; also the supporting index MySQL requires for the result foreign key below -->
+        <createIndex tableName="test_case_feedback" indexName="ix_test_case_feedback_result">
+            <column name="result_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260817090000-08a3-index-sca-feedback-result" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="sca_feedback" indexName="ix_sca_feedback_result"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="sca_feedback" indexName="ix_sca_feedback_result">
+            <column name="result_id"/>
+        </createIndex>
+    </changeSet>
+
     <changeSet id="20260817090000-08b-fk-test-case" author="krusche">
         <preConditions onFail="MARK_RAN">
             <not>

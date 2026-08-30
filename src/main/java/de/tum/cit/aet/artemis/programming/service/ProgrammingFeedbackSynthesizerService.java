@@ -104,13 +104,14 @@ public class ProgrammingFeedbackSynthesizerService {
     }
 
     /**
-     * Whether the given synthetic id addresses an SCA row rather than a test-case row.
+     * Whether the given feedback id addresses an SCA row rather than a test-case row. Stored (positive) ids belong to neither, so they are reported as not-SCA — callers that
+     * distinguish the two typed tables have to establish {@link #isSyntheticId(long)} first.
      *
-     * @param syntheticId the synthetic (negative) feedback id
+     * @param feedbackId the feedback id
      * @return true if the id was produced by {@link #syntheticScaId(long)}
      */
-    public static boolean isSyntheticScaId(long syntheticId) {
-        return (-syntheticId) % SYNTHETIC_ID_STRIDE != 0;
+    public static boolean isSyntheticScaId(long feedbackId) {
+        return isSyntheticId(feedbackId) && (-feedbackId) % SYNTHETIC_ID_STRIDE != 0;
     }
 
     /**
@@ -310,15 +311,63 @@ public class ProgrammingFeedbackSynthesizerService {
         // the legacy JSON exposed the tool-reported category; migrated rows whose original JSON was
         // unparseable have no tool category and fall back to the Artemis category
         String issueCategory = source.getToolCategory() != null ? source.getToolCategory() : source.getCategory();
-        StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue(source.getFilePath(), source.getStartLine(), source.getEndLine(), source.getStartColumn(),
-                source.getEndColumn(), source.getRule(), issueCategory, source.getMessageText(), source.getPriority(), source.getPenalty());
         try {
-            view.setDetailTextTruncated(objectMapper.writeValueAsString(issue));
+            view.setDetailTextTruncated(serializeScaIssueWithinFeedbackLimit(source, issueCategory));
         }
         catch (JsonProcessingException e) {
             log.warn("Could not serialize SCA issue {} of result {} for the client", source.getId(), resultId, e);
             view.setDetailTextTruncated(source.getMessageText());
         }
         return view;
+    }
+
+    /**
+     * Keeps the legacy SCA detail-text contract (a valid JSON object within the feedback column limit). Escaping can
+     * make a message much longer in JSON than its raw character count — truncating the serialized JSON would then
+     * cut it in the middle of a string and make every client-side {@code JSON.parse} fail. Find the longest message
+     * prefix whose complete serialized issue still fits instead.
+     */
+    private String serializeScaIssueWithinFeedbackLimit(ScaFeedback source, String issueCategory) throws JsonProcessingException {
+        String message = source.getMessageText();
+        StaticCodeAnalysisIssue issue = createScaIssue(source, issueCategory, message, true);
+        String serialized = objectMapper.writeValueAsString(issue);
+        if (serialized.length() <= Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH) {
+            return serialized;
+        }
+
+        // The writer caps every metadata field, so normally only the message can make the JSON overflow. Keep a
+        // defensive fallback for migrated/pathological data whose escaped metadata exceeds the limit on its own:
+        // a valid message-only issue is more useful than an invalid JSON fragment that breaks result rendering.
+        boolean includeMetadata = objectMapper.writeValueAsString(createScaIssue(source, issueCategory, null, true)).length() <= Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+        if (!includeMetadata) {
+            log.warn("The metadata of SCA issue {} exceeds the feedback detail-text limit; serializing the message and penalty only", source.getId());
+        }
+
+        if (message == null || message.isEmpty()) {
+            return objectMapper.writeValueAsString(createScaIssue(source, issueCategory, null, includeMetadata));
+        }
+
+        int lowerBound = 0;
+        int upperBound = message.codePointCount(0, message.length());
+        String bestFit = objectMapper.writeValueAsString(createScaIssue(source, issueCategory, null, includeMetadata));
+        while (lowerBound <= upperBound) {
+            int candidateCodePoints = lowerBound + (upperBound - lowerBound) / 2;
+            int candidateEndIndex = message.offsetByCodePoints(0, candidateCodePoints);
+            String candidate = objectMapper.writeValueAsString(createScaIssue(source, issueCategory, message.substring(0, candidateEndIndex), includeMetadata));
+            if (candidate.length() <= Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH) {
+                bestFit = candidate;
+                lowerBound = candidateCodePoints + 1;
+            }
+            else {
+                upperBound = candidateCodePoints - 1;
+            }
+        }
+        return bestFit;
+    }
+
+    private static StaticCodeAnalysisIssue createScaIssue(ScaFeedback source, String issueCategory, String message, boolean includeMetadata) {
+        return new StaticCodeAnalysisIssue(includeMetadata ? source.getFilePath() : null, includeMetadata ? source.getStartLine() : null,
+                includeMetadata ? source.getEndLine() : null, includeMetadata ? source.getStartColumn() : null, includeMetadata ? source.getEndColumn() : null,
+                includeMetadata ? source.getRule() : null, includeMetadata ? issueCategory : null, message, includeMetadata ? source.getPriority() : null, source.getPenalty());
     }
 }

@@ -185,7 +185,7 @@ public class ProgrammingExerciseFeedbackCreationService {
     /**
      * Transforms static code analysis reports to structured {@link ScaFeedback} rows. The (heavily
      * duplicated) issue message is stored via the content-addressed {@link FeedbackMessageService}; the
-     * tool-reported category is kept transiently for the later categorization step
+     * tool-reported category is retained separately for the later categorization step
      * ({@link #categorizeScaFeedback(Result, List, ProgrammingExercise)}), which maps it to the Artemis
      * category and sets the graded penalty.
      *
@@ -290,8 +290,9 @@ public class ProgrammingExerciseFeedbackCreationService {
      * Re-reading and saving only what is genuinely still missing makes the losing pass a no-op instead. Test cases
      * that already carry an id are activation changes rather than inserts; they cannot collide, so they are kept.
      * <p>
-     * Deliberately not implemented by deleting and re-inserting: {@code feedback.test_case_id} is declared
-     * {@code ON DELETE CASCADE}, so a delete would take the feedback of every past result for this exercise with it.
+     * Deliberately not implemented by deleting and re-inserting: {@code test_case_feedback.test_case_id} is
+     * declared {@code ON DELETE CASCADE}, so a delete would take the feedback of every past result for this
+     * exercise with it.
      *
      * @param exercise        the exercise the test cases belong to
      * @param testCasesToSave the new test cases and activation changes this pass computed

@@ -436,7 +436,7 @@ public class Feedback extends DomainObject {
     /**
      * Whether this is a read-only view synthesized from a result's typed automatic feedback rather than a row of the
      * feedback table. Such views exist only to keep the JSON shape the client expects; they carry a negative
-     * (synthetic) id encoding {@code (resultId, seq)}, which is what tells them apart from persisted feedback. They
+     * (synthetic) id encoding the typed row id and its table, which is what tells them apart from persisted feedback. They
      * must never be persisted, and never counted next to the typed rows they were derived from.
      *
      * @return true if this feedback is a synthesized view of a typed automatic feedback row

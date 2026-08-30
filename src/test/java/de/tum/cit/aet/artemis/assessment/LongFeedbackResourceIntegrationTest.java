@@ -132,7 +132,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testCaseMessageOfInvisibleTestHiddenFromStudent() throws Exception {
-        // the synthetic ids encode (resultId, seq) and are enumerable, so the endpoint must not leak
+        // the synthetic ids encode typed row ids and are enumerable, so the endpoint must not leak
         // messages of hidden test cases even for the student's own submission
         long syntheticId = addTestCaseMessageToResult(resultStudent1, Visibility.NEVER);
 

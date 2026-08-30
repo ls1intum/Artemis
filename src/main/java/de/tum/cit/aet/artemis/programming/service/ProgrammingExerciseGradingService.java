@@ -386,8 +386,6 @@ public class ProgrammingExerciseGradingService {
                 // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
                 // submission itself did not change.
                 updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-                // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
-                // submission itself did not change.
                 resultRepository.save(updatedLatestSemiAutomaticResult);
 
                 return updatedLatestSemiAutomaticResult;
@@ -423,10 +421,10 @@ public class ProgrammingExerciseGradingService {
 
         // remove old automatic feedback (legacy rows, e.g. duplicate-test warnings and submission-policy feedback)
         latestSemiAutomaticResult.getFeedbacks().removeIf(feedback -> feedback != null && feedback.getType() == FeedbackType.AUTOMATIC);
-        // remove the old typed automatic feedback and flush, so that the copies added below are written into a clean state and get their ids assigned
+        // remove the old typed automatic feedback; the copies added below are inserted separately and get fresh ids, so they cannot collide with these pending deletes
         latestSemiAutomaticResult.setTestCaseFeedbacks(List.of());
         latestSemiAutomaticResult.setScaFeedbacks(List.of());
-        latestSemiAutomaticResult = resultRepository.saveAndFlush(latestSemiAutomaticResult);
+        latestSemiAutomaticResult = resultRepository.save(latestSemiAutomaticResult);
 
         // copy all automatic feedback from the new automatic result (the copies share the deduplicated message rows)
         Result semiAutomaticResult = latestSemiAutomaticResult;
