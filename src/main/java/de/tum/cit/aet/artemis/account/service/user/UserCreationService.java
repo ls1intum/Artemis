@@ -142,7 +142,7 @@ public class UserCreationService {
         final var authorities = new HashSet<>(Set.of(authority));
         newUser.setAuthorities(authorities);
         try {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(email);
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(newUser.getEmail());
             newUser.setOrganizations(matchingOrganizations);
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
@@ -186,7 +186,7 @@ public class UserCreationService {
             user.setPassword(passwordService.hashPassword(password));
         }
         try {
-            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
+            Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(user.getEmail());
             user.setOrganizations(matchingOrganizations);
         }
         catch (InvalidDataAccessApiUsageException | PatternSyntaxException pse) {
