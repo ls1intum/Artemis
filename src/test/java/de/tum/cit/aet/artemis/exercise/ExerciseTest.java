@@ -29,6 +29,9 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
@@ -346,5 +349,24 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentBatchTest {
 
         // The same exercise, unmodified, now fails re-validation on its next write
         assertThatThrownBy(programmingExercise::validateScoreSettings).hasMessageContaining("1 decimal places");
+    }
+
+    @Test
+    void validateScoreSettings_quizExerciseWithFloatingPointAggregateMaxPoints_doesNotThrow() {
+        // QuizExercise#getMaxPoints() is a raw double sum of its questions' individual points (see
+        // QuizExercise#getOverallQuizPoints()), so two fully valid question points can still produce a sum that
+        // *looks* like it has more decimal places due to binary floating-point rounding, e.g. 0.1 + 0.2 ==
+        // 0.30000000000000004. The precision check must not reject a quiz for this - see
+        // Exercise#validateScoreSettings(), which skips the maxPoints precision check entirely for QuizExercise.
+        Course course = CourseFactory.generateCourse(44L, null, null, null);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(null, null, QuizMode.SYNCHRONIZED, course);
+        quizExercise.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion().score(0.1));
+        quizExercise.addQuestion(QuizExerciseFactory.createMultipleChoiceQuestion().score(0.2));
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
+        assertThat(quizExercise.getMaxPoints()).isNotEqualTo(0.3);
+        quizExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        quizExercise.setBonusPoints(0.0);
+
+        assertThatNoException().isThrownBy(quizExercise::validateScoreSettings);
     }
 }

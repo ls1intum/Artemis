@@ -903,7 +903,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
 
         int maxDecimalPlaces = getMaxPointsDecimalPlaces();
-        if (!hasValidDecimalPrecision(getMaxPoints(), maxDecimalPlaces)) {
+        // QuizExercise#getMaxPoints() is a floating-point sum of its question points (e.g. 0.1 + 0.2 == 0.30000000000000004),
+        // so a valid quiz can appear to violate the precision limit purely due to binary floating-point rounding.
+        if (!(this instanceof QuizExercise) && !hasValidDecimalPrecision(getMaxPoints(), maxDecimalPlaces)) {
             throw new BadRequestAlertException("The max points must not have more than " + maxDecimalPlaces + " decimal places", "Exercise", "maxScoreInvalid");
         }
 

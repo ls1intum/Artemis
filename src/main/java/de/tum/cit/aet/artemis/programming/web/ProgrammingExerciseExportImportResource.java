@@ -215,7 +215,7 @@ public class ProgrammingExerciseExportImportResource {
         // This prevents detached entity errors when the exercise contains competency links with serialized competency entities
         newExercise.setCompetencyLinks(new java.util.HashSet<>());
 
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final User user = userRepository.getUserWithAuthorities();
         // Resolved before validation (not just for auth) so that the fully-populated course is attached to newExercise:
         // validateGeneralSettings() reads the course's accuracyOfScores for programming exercises, which the bare
         // id-only course reference deserialized from the request body does not carry.
