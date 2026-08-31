@@ -183,11 +183,32 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies/bulk")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId, @Valid @RequestBody List<CourseCompetencyRequestDTO> competencies)
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId, @RequestBody List<@Valid CourseCompetencyRequestDTO> competencies)
             throws URISyntaxException {
+        return createCompetencies(courseId, competencies, false, "competency creation");
+    }
+
+    /**
+     * POST courses/:courseId/competencies/bulk/generated-from-description : creates competencies from Iris-generated course-description recommendations.
+     *
+     * @param courseId     the id of the course to which the competencies should be added
+     * @param competencies the Iris-generated competency recommendations selected by the editor
+     * @return the ResponseEntity with status 201 (Created) and body the created competencies
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("courses/{courseId}/competencies/bulk/generated-from-description")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetenciesGeneratedFromDescription(@PathVariable Long courseId,
+            @RequestBody List<@Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
+        return createCompetencies(courseId, competencies, true, "competency creation from course description");
+    }
+
+    private ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(Long courseId, List<CourseCompetencyRequestDTO> competencies, boolean generatedByAi,
+            String notificationReason) throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
         var competencyEntities = competencies.stream().map(request -> CourseCompetencyRequestDTO.toEntity(request, Competency::new)).toList();
         for (Competency competency : competencyEntities) {
+            competency.setGeneratedByAi(generatedByAi);
             competencyValidator.checkForCreation(competency);
         }
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
@@ -195,7 +216,7 @@ public class CompetencyResource {
         var createdCompetencies = competencyService.createCompetencies(competencyEntities, course);
 
         // Notify AtlasML about the new competencies
-        atlasMLNotificationService.notifyAtlasML(createdCompetencies, OperationTypeDTO.UPDATE, "competency creation for " + createdCompetencies.size() + " competencies");
+        atlasMLNotificationService.notifyAtlasML(createdCompetencies, OperationTypeDTO.UPDATE, notificationReason + " for " + createdCompetencies.size() + " competencies");
 
         return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/"))
                 .body(createdCompetencies.stream().map(CourseCompetencyResponseDTO::of).toList());

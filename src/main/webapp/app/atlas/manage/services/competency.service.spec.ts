@@ -216,6 +216,18 @@ describe('CompetencyService', () => {
         expect(response.body).toEqual(expected);
     });
 
+    it('should bulk create competencies generated from a course description', () => {
+        const returnedFromService = defaultCompetencyDtos;
+        const expected = defaultCompetencies;
+        let response: any;
+
+        competencyService.createBulkFromCourseDescription(defaultCompetencies, 1).subscribe((resp) => (response = resp));
+        const req = httpTestingController.expectOne({ method: 'POST', url: 'api/atlas/courses/1/competencies/bulk/generated-from-description' });
+        req.flush(returnedFromService);
+
+        expect(response.body).toEqual(expected);
+    });
+
     it('should import all competencies of a course', () => {
         const competencyDTO = new CompetencyWithTailRelationDTO();
         competencyDTO.competency = { ...defaultCompetencies.first(), id: 1 };
