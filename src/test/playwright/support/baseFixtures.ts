@@ -25,7 +25,6 @@ import { addE2EInitScript, installApiResponseCapture } from './utils';
  * diminishing returns past ~10 entries.
  */
 const PREWARM_ROUTES = [
-    '/course-management',
     `/course-management/${SEED_COURSES.atlas1.id}`,
     `/course-management/${SEED_COURSES.atlas1.id}/competency-management`,
     `/course-management/${SEED_COURSES.atlas1.id}/learning-path-management`,

@@ -1,6 +1,17 @@
 # pnpm 11+ install/resolution settings for the documentation/ subproject.
-# Default isolated layout: no hoist shim. The gray-matter patch is applied
-# via `patchedDependencies` below (works on the .pnpm symlink store directly).
+# Default isolated layout: no hoist shim. Source patches are applied via
+# `patchedDependencies` below (works on the .pnpm symlink store directly).
+
+# image-size 2.0.2 is the last release its authors ever published: the upstream repository
+# was archived read-only on 2026-06-03 with the fix PR unmerged, so GHSA-5p2g-fcmc-qvqq and
+# GHSA-w3rx-r6r6-pgpr have no patched version to upgrade to. The package is not optional
+# here - @docusaurus/mdx-loader calls it through remark/transformImage to size every local
+# image in the docs - so we ship the upstream fix ourselves. The patch adds the missing
+# forward-progress guards to the ICNS, HEIF and JXL parsers, whose cursors advance by a
+# length field read straight out of the file and therefore never move when a crafted image
+# sets that field to zero. Regenerate with `pnpm patch image-size@2.0.2` if it ever moves.
+patchedDependencies:
+  image-size@2.0.2: patches/image-size@2.0.2.patch
 
 preferFrozenLockfile: true
 enablePrePostScripts: true

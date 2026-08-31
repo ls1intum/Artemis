@@ -548,6 +548,7 @@ public class ProgrammingExerciseUpdateResource {
 
             // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
             update(updateDTO, programmingExercise);
+            programmingExerciseValidationService.validateBuildConfigSize(programmingExercise);
 
             exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 

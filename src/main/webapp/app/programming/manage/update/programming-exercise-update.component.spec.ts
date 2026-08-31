@@ -27,7 +27,9 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
+import { BUILD_PLAN_CONFIGURATION_MAX_LENGTH, DOCKER_FLAGS_MAX_LENGTH, ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
     MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH,
@@ -1283,6 +1285,93 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateKey: 'artemisApp.exercise.form.shortName.minlength',
                 translateValues: {},
             });
+        });
+
+        const setupCustomizeBuildPlan = (buildPlanPhasesJSON: string | undefined, dockerFlags: string | undefined) => {
+            comp.programmingExercise.customizeBuildPlan = true;
+            comp.customBuildPlansSupported = PROFILE_LOCALCI;
+            comp.programmingExercise.buildConfig = Object.assign(new ProgrammingExerciseBuildConfig(), { dockerFlags });
+            const customBuildPlanComponent = {
+                arePhaseNamesValid: () => true,
+                getBuildPlanPhasesJSON: () => buildPlanPhasesJSON,
+            };
+            internals(comp).exerciseLanguageComponent = signal({
+                programmingExerciseCustomBuildPlanComponent: () => customBuildPlanComponent,
+            } as unknown as ProgrammingExerciseLanguageComponent).asReadonly();
+        };
+
+        it('validateBuildConfigSize rejects a build plan configuration exceeding the maximum length', () => {
+            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH + 1), undefined);
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize accepts a build plan configuration exactly at the maximum length', () => {
+            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH), undefined);
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize rejects docker flags exceeding the maximum length', () => {
+            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH + 1));
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
+                translateValues: {},
+            });
+        });
+
+        it('validateBuildConfigSize accepts docker flags exactly at the maximum length', () => {
+            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH));
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong',
+                translateValues: {},
+            });
+        });
+
+        // UI: the build config size reason produced by getInvalidReasons() must disable saving in the rendered form footer.
+        it('disables saving in the form footer when the build plan configuration is too long', () => {
+            setupCustomizeBuildPlan('a'.repeat(BUILD_PLAN_CONFIGURATION_MAX_LENGTH + 1), undefined);
+            const reasons = comp.getInvalidReasons().filter((reason) => reason.translateKey === 'artemisApp.programmingExercise.buildConfig.buildPlanConfigurationTooLong');
+            expect(reasons).toHaveLength(1);
+
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', reasons);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeTruthy();
+        });
+
+        it('disables saving in the form footer when the docker flags are too long', () => {
+            setupCustomizeBuildPlan(undefined, 'a'.repeat(DOCKER_FLAGS_MAX_LENGTH + 1));
+            const reasons = comp.getInvalidReasons().filter((reason) => reason.translateKey === 'artemisApp.programmingExercise.buildConfig.dockerFlagsTooLong');
+            expect(reasons).toHaveLength(1);
+
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', reasons);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeTruthy();
+        });
+
+        it('enables saving in the form footer when there are no invalid reasons', () => {
+            const footer = TestBed.createComponent(FormFooterComponent);
+            footer.componentRef.setInput('isCreation', true);
+            footer.componentRef.setInput('invalidReasons', []);
+            footer.detectChanges();
+
+            const saveButton = footer.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(false);
+            expect(footer.nativeElement.querySelector('.badge.bg-danger')).toBeFalsy();
         });
 
         it('validateExercisePoints', () => {

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -118,7 +119,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest {
         ProgrammingExerciseTestRepository exerciseRepository = mock();
         GitService gitService = mock();
         ProgrammingExerciseFeedbackCreationService service = spy(new ProgrammingExerciseFeedbackCreationService(testCaseRepository, websocketMessagingService, taskService,
-                exerciseRepository, mock(StaticCodeAnalysisCategoryRepository.class), gitService));
+                exerciseRepository, mock(StaticCodeAnalysisCategoryRepository.class), gitService, mock(FeedbackMessageService.class)));
         ProgrammingExercise exercise = mock();
         LocalVCRepositoryUri testsUri = mock();
         when(exercise.getId()).thenReturn(42L);
