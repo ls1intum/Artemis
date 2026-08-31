@@ -31,7 +31,7 @@ import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.compone
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
-import { normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
+import { getModelElementType, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { TranslateService } from '@ngx-translate/core';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -619,7 +619,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                     feedback.gradingInstruction = undefined;
                 }
             } else {
-                feedback = Feedback.forModeling(assessment.score, assessment.feedback, assessment.modelElementId, assessment.elementType, assessment.dropInfo as DropInfo);
+                feedback = Feedback.forModeling(
+                    assessment.score,
+                    assessment.feedback,
+                    assessment.modelElementId,
+                    this.referenceTypeFor(assessment),
+                    assessment.dropInfo as DropInfo,
+                );
                 this.elementFeedback.set(assessment.modelElementId, feedback);
             }
         }
@@ -635,6 +641,20 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
 
         return assessments.map((a) => this.elementFeedback.get(a.modelElementId)!).filter(Boolean);
+    }
+
+    /**
+     * The UML type of the assessed element, which is what a feedback reference is built from.
+     *
+     * Apollon's `elementType` answers what kind of thing was assessed — `node`, `edge`, `attribute` — not which UML
+     * type it is. Storing that would spell the same element `node:<id>` here while Athena, the example assessments and
+     * every reference already in the database spell it `Class:<id>`. References are compared as whole strings, so the
+     * two never match: the tutor-training comparison then reports correct feedback as unnecessary, and the element it
+     * names cannot be found on the canvas. The model is asked instead, and Apollon's kind is only the fallback for an
+     * element the model no longer holds.
+     */
+    private referenceTypeFor(assessment: Assessment): string {
+        return getModelElementType(this.umlModel(), assessment.modelElementId) ?? assessment.elementType;
     }
 
     private handleFeedback(): void {

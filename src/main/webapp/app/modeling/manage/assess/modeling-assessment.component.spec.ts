@@ -399,6 +399,27 @@ describe('ModelingAssessmentComponent', () => {
             expect(created.text).toBe('Looks right');
         });
 
+        it('references an element by its UML type, not by the kind Apollon reports', () => {
+            // Apollon 5.3 answers `node` / `edge` / `attribute` for elementType. Taking that would spell this element
+            // `node:<id>` while Athena, the example assessments and every stored reference spell it `Package:<id>`;
+            // references are compared as whole strings, so the tutor-training comparison would call correct feedback
+            // unnecessary and could not point at the element it named.
+            fixture.componentRef.setInput('umlModel', makeMockModel());
+
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ elementType: 'node' })]);
+
+            expect(created.referenceType).toBe('Package');
+            expect(created.reference).toBe(`Package:${PACKAGE_ID}`);
+        });
+
+        it('falls back to what Apollon reports when the model no longer holds the element', () => {
+            fixture.componentRef.setInput('umlModel', makeMockModel());
+
+            const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ modelElementId: 'no-longer-in-the-model', elementType: 'node' })]);
+
+            expect(created.reference).toBe('node:no-longer-in-the-model');
+        });
+
         it('drops the grading instruction when the tutor overrides its score', () => {
             const graded = Feedback.forModeling(1, 'Looks right', PACKAGE_ID, 'Package');
             graded.gradingInstruction = { id: 7 } as any;

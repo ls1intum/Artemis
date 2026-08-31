@@ -89,6 +89,25 @@ export function isModelEmpty(model: UMLModel | ApollonModelData | undefined): bo
     return getModelNodes(model).length === 0;
 }
 
+/**
+ * The UML type of one element — `Class`, `ClassAttribute`, a relationship type — whether it is a node, an edge, or a
+ * member nested in a node, and whether the model is still in its stored v3 shape or the imported v4 one.
+ *
+ * A feedback reference is `<type>:<id>`, and references are compared as whole strings, so this has to answer the same
+ * type for an element no matter who asks: Apollon's own `elementType` says only `node` or `attribute`, which would
+ * spell the same element differently from Athena and from every reference already stored.
+ */
+export function getModelElementType(model: UMLModel | ApollonModelData | undefined, elementId: string): string | undefined {
+    if (!model) {
+        return undefined;
+    }
+
+    const candidates = [...getModelNodes(model), ...getModelEdges(model), ...getNestedNodeElements(model)];
+    const match = candidates.find((element) => element.id === elementId);
+    const type = match?.type;
+    return typeof type === 'string' ? type : undefined;
+}
+
 export function getModelElementIds(model: UMLModel | ApollonModelData | undefined): Set<string> {
     const nodeIds = getModelNodes(model).map((node) => node.id);
     const nestedNodeElementIds = getNestedNodeElements(model).map((element) => element.id);

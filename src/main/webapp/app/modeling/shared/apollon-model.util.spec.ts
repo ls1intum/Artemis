@@ -4,6 +4,7 @@ import {
     countModelElements,
     getModelEdges,
     getModelElementIds,
+    getModelElementType,
     getModelNodes,
     hasModelElements,
     isModelEmpty,
@@ -286,6 +287,46 @@ describe('apollon-model.util', () => {
             expect(hasModelElements(modelWithNodes)).toBe(!isModelEmpty(modelWithNodes));
             expect(hasModelElements(emptyModel)).toBe(!isModelEmpty(emptyModel));
             expect(hasModelElements(undefined)).toBe(!isModelEmpty(undefined));
+        });
+    });
+
+    describe('getModelElementType', () => {
+        it('should answer the UML type of a node, an edge and a nested member in v4 format', () => {
+            const model = {
+                version: '4.0.0',
+                nodes: [
+                    {
+                        id: 'node1',
+                        type: 'Class',
+                        width: 100,
+                        height: 50,
+                        position: { x: 0, y: 0 },
+                        data: { attributes: [{ id: 'attr1', type: 'ClassAttribute', name: '+ a: T' }] },
+                        measured: { width: 100, height: 50 },
+                    },
+                ],
+                edges: [{ id: 'edge1', source: 'node1', target: 'node1', type: 'ClassAggregation', sourceHandle: 'out', targetHandle: 'in', data: { points: [] } }],
+            } as any as ApollonModelData;
+
+            expect(getModelElementType(model, 'node1')).toBe('Class');
+            expect(getModelElementType(model, 'edge1')).toBe('ClassAggregation');
+            expect(getModelElementType(model, 'attr1')).toBe('ClassAttribute');
+        });
+
+        it('should answer the same type for a model still in v3 format', () => {
+            const model = {
+                version: '3.0.0',
+                elements: { elem1: { id: 'elem1', type: 'AbstractClass', name: 'Abstract' } },
+                relationships: { rel1: { id: 'rel1', type: 'ClassAssociation', name: '' } },
+            } as any as ApollonModelData;
+
+            expect(getModelElementType(model, 'elem1')).toBe('AbstractClass');
+            expect(getModelElementType(model, 'rel1')).toBe('ClassAssociation');
+        });
+
+        it('should answer undefined for an unknown element and for no model', () => {
+            expect(getModelElementType(undefined, 'node1')).toBeUndefined();
+            expect(getModelElementType({ version: '4.0.0', nodes: [], edges: [] } as any as ApollonModelData, 'gone')).toBeUndefined();
         });
     });
 
