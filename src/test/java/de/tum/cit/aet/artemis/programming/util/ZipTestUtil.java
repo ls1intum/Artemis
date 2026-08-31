@@ -47,6 +47,25 @@ public final class ZipTestUtil {
         };
     }
 
+    /**
+     * Reads the first entry whose name ends with the given suffix as a UTF-8 string.
+     *
+     * @param zipContent  the zip file content
+     * @param entrySuffix the suffix identifying the entry, e.g. {@code .git/config}
+     * @return the entry content, or null if no entry matches
+     */
+    public static String readEntryAsString(byte[] zipContent, String entrySuffix) throws IOException {
+        try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                if (entry.getName().endsWith(entrySuffix)) {
+                    return new String(zipInputStream.readAllBytes(), StandardCharsets.UTF_8);
+                }
+            }
+        }
+        return null;
+    }
+
     public static void verifyZipContainsGitDirectory(byte[] zipContent) throws Exception {
         GitVerificationResult result = processZipEntries(zipContent);
 

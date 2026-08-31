@@ -5,7 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,7 +24,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.cache.BlobCacheEvictionService;
-import de.tum.cit.aet.artemis.core.util.FileUtil;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -42,7 +41,19 @@ public class FileService implements DisposableBean {
     @Nullable
     private final BlobCacheEvictionService blobCacheEvictionService;
 
-    private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
+    /**
+     * Only needed by {@link #createTemporaryDirectory(Path, String, long)}, so it is absent on the directly constructed
+     * instances below, which never create temporary directories.
+     */
+    @Nullable
+    private final TempFileUtilService tempFileUtilService;
+
+    /**
+     * The pending deletions, kept only so {@link #destroy()} can cancel them. Deliberately not keyed by path: two
+     * cleanups may legitimately target the same path, and a map would drop one of the futures and leave it running past
+     * shutdown.
+     */
+    private final Set<ScheduledFuture<?>> futures = ConcurrentHashMap.newKeySet();
 
     /**
      * For the JPA entities that construct this service directly to reach its path helpers. Such an instance cannot
@@ -51,18 +62,20 @@ public class FileService implements DisposableBean {
      */
     public FileService() {
         this.blobCacheEvictionService = null;
+        this.tempFileUtilService = null;
     }
 
     @Autowired
-    public FileService(BlobCacheEvictionService blobCacheEvictionService) {
+    public FileService(BlobCacheEvictionService blobCacheEvictionService, TempFileUtilService tempFileUtilService) {
         this.blobCacheEvictionService = blobCacheEvictionService;
+        this.tempFileUtilService = tempFileUtilService;
     }
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
     @Override
     public void destroy() {
-        futures.values().forEach(future -> future.cancel(true));
+        futures.forEach(future -> future.cancel(true));
         futures.clear();
     }
 
@@ -109,28 +122,15 @@ public class FileService implements DisposableBean {
      * @param delayInMinutes The delay in minutes after which the path should be deleted
      */
     public void schedulePathForDeletion(@Nullable Path path, long delayInMinutes) {
-        if (path == null) {
-            return;
-        }
-        ScheduledFuture<?> future = executor.schedule(() -> {
-            try {
-                if (Files.exists(path)) {
-                    log.info("Delete file {}", path);
-                    Files.delete(path);
-                }
-                else {
-                    log.error("Deleting the file {} did not work because it does not exist", path);
-                }
-
-                futures.remove(path);
+        scheduleDeletion(path, delayInMinutes, () -> {
+            if (Files.exists(path)) {
+                log.info("Delete file {}", path);
+                Files.delete(path);
             }
-            catch (IOException e) {
-                log.error("Deleting the file {} did not work", path);
-                log.error("Exception during deletion of file", e);
+            else {
+                log.debug("Not deleting the file {} because it no longer exists", path);
             }
-        }, delayInMinutes, TimeUnit.MINUTES);
-
-        futures.put(path, future);
+        });
     }
 
     /**
@@ -140,53 +140,75 @@ public class FileService implements DisposableBean {
      * @param delayInMinutes The delay in minutes after which the path should be deleted
      */
     public void scheduleDirectoryPathForRecursiveDeletion(@Nullable Path path, long delayInMinutes) {
+        scheduleDeletion(path, delayInMinutes, () -> {
+            if (Files.exists(path) && Files.isDirectory(path)) {
+                log.debug("Delete directory {}", path);
+                FileUtils.deleteDirectory(path.toFile());
+            }
+        });
+    }
+
+    /**
+     * Runs the given best-effort deletion after the delay and keeps its future around until {@link #destroy()} or the
+     * next scheduling call prunes it.
+     *
+     * <p>
+     * A deletion that fails because the target has meanwhile disappeared is not reported as an error: these cleanups run
+     * minutes after the work that requested them, so another cleanup, an operator or a container restart may legitimately
+     * have removed the tree first. Anything else is still logged as an error.
+     */
+    private void scheduleDeletion(@Nullable Path path, long delayInMinutes, IoRunnable deletion) {
         if (path == null) {
             return;
         }
-        ScheduledFuture<?> future = executor.schedule(() -> {
+        futures.removeIf(ScheduledFuture::isDone);
+        futures.add(executor.schedule(() -> {
             try {
-                if (Files.exists(path) && Files.isDirectory(path)) {
-                    log.debug("Delete directory {}", path);
-                    FileUtils.deleteDirectory(path.toFile());
-                }
-                futures.remove(path);
+                deletion.run();
             }
             catch (IOException e) {
-                log.error("Deleting the directory {} did not work", path);
-                log.error("Exception during deletion of directory", e);
+                if (Files.exists(path)) {
+                    log.error("Deleting {} did not work", path, e);
+                }
+                else {
+                    log.debug("Deleting {} did not complete because it was removed concurrently", path, e);
+                }
             }
-        }, delayInMinutes, TimeUnit.MINUTES);
+        }, delayInMinutes, TimeUnit.MINUTES));
+    }
 
-        futures.put(path, future);
+    @FunctionalInterface
+    private interface IoRunnable {
+
+        void run() throws IOException;
     }
 
     /**
-     * create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system and schedules it for deletion.
-     * See {@link FileUtil#getUniqueSubfolderPath(Path)} for more information.
+     * Creates a temporary directory below the given parent and schedules it for recursive deletion.
      *
-     * @param path                 the original path, e.g. /opt/artemis/repos-download
-     * @param deleteDelayInMinutes the delay in minutes after which the path should be deleted
-     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
-     */
-    public Path getTemporaryUniqueSubfolderPath(Path path, long deleteDelayInMinutes) {
-        var temporaryPath = FileUtil.getUniqueSubfolderPath(path);
-        scheduleDirectoryPathForRecursiveDeletion(temporaryPath, deleteDelayInMinutes);
-        return temporaryPath;
-    }
-
-    /**
-     * Create a unique path by appending a folder named with the current milliseconds (e.g. 1609579674868) of the system but does not create the folder.
-     * This is used when cloning the programming exercises into a new temporary directory because if we already create the directory, the git clone does not work anymore.
-     * The directory will be scheduled for deletion.
+     * <p>
+     * The directory name is generated atomically by the file system, so concurrent callers can never be handed the same
+     * path. Naming it after the wall clock, as this method's predecessors did, gave every export running on the same
+     * millisecond one shared directory and one cleanup task each, which then raced each other (issue #13575).
      *
-     * @param path                 the original path, e.g. /opt/artemis/repos-download
-     * @param deleteDelayInMinutes the delay in minutes after which the path should be deleted
-     * @return the unique path, e.g. /opt/artemis/repos-download/1609579674868
+     * <p>
+     * Callers that clone repositories should create one directory per operation and place each repository in a
+     * deterministic subdirectory of it, rather than requesting a directory per repository: that keeps the cleanup to a
+     * single task and removes the whole tree even when the export fails halfway through.
+     *
+     * @param parent               the directory to create the temporary directory in, e.g. /opt/artemis/repos-download
+     * @param prefix               a prefix for the directory name, so leftovers can be traced back to their origin
+     * @param deleteDelayInMinutes the delay in minutes after which the directory should be deleted
+     * @return the newly created directory
+     * @throws IOException if the directory could not be created
      */
-    public Path getTemporaryUniquePathWithoutPathCreation(Path path, long deleteDelayInMinutes) {
-        var temporaryPath = path.resolve(String.valueOf(System.currentTimeMillis()));
-        scheduleDirectoryPathForRecursiveDeletion(temporaryPath, deleteDelayInMinutes);
-        return temporaryPath;
+    public Path createTemporaryDirectory(Path parent, String prefix, long deleteDelayInMinutes) throws IOException {
+        if (tempFileUtilService == null) {
+            throw new IllegalStateException("Cannot create a temporary directory: this FileService was constructed directly instead of being injected");
+        }
+        Path temporaryDirectory = tempFileUtilService.createTempDirectory(parent, prefix);
+        scheduleDirectoryPathForRecursiveDeletion(temporaryDirectory, deleteDelayInMinutes);
+        return temporaryDirectory;
     }
 
 }

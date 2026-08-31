@@ -3,16 +3,19 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.service.FileUtilUnitTest.FILE_WITH_UNIX_LINE_ENDINGS;
 import static de.tum.cit.aet.artemis.core.service.FileUtilUnitTest.exportTestRootPath;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNoException;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,14 +69,41 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(result).isNull();
     }
 
-    // TODO: either rework those tests or delete them
+    /**
+     * Reproduces the collision reported in <a href="https://github.com/ls1intum/Artemis/issues/13575">#13575</a>: student
+     * repositories are exported on a pool of ten threads, so a directory name derived from the current wall clock is handed
+     * out more than once, and every colliding caller schedules its own recursive deletion of the shared directory.
+     */
     @Test
-    void testGetUniqueTemporaryPath_shouldNotThrowException() {
-        assertThatNoException().isThrownBy(() -> {
-            var uniquePath = fileService.getTemporaryUniqueSubfolderPath(Path.of("some-random-path-which-does-not-exist"), 1);
-            assertThat(uniquePath.toString()).isNotEmpty();
-            verify(fileService).scheduleDirectoryPathForRecursiveDeletion(any(Path.class), eq(1L));
-        });
+    void testCreateTemporaryDirectory_shouldReturnDistinctDirectoriesWhenCalledConcurrently() throws IOException {
+        Path parent = createTempTargetDirectory("testCreateTemporaryDirectoryConcurrently");
+        final int callCount = 32;
+
+        Set<Path> createdDirectories;
+        try (var threadPool = Executors.newFixedThreadPool(8)) {
+            var futures = IntStream.range(0, callCount).mapToObj(ignored -> CompletableFuture.supplyAsync(() -> {
+                try {
+                    return fileService.createTemporaryDirectory(parent, "export-", 1);
+                }
+                catch (IOException e) {
+                    throw new CompletionException(e);
+                }
+            }, threadPool)).toList();
+            createdDirectories = futures.stream().map(CompletableFuture::join).collect(Collectors.toSet());
+        }
+
+        assertThat(createdDirectories).hasSize(callCount).allSatisfy(directory -> assertThat(directory).isDirectory());
+    }
+
+    @Test
+    void testCreateTemporaryDirectory_shouldCreateTheDirectoryAndScheduleItForDeletion() throws IOException {
+        Path parent = createTempTargetDirectory("testCreateTemporaryDirectory");
+
+        Path temporaryDirectory = fileService.createTemporaryDirectory(parent, "export-", 1);
+
+        assertThat(temporaryDirectory).isDirectory().hasParent(parent);
+        assertThat(temporaryDirectory.getFileName().toString()).startsWith("export-");
+        verify(fileService).scheduleDirectoryPathForRecursiveDeletion(temporaryDirectory, 1L);
     }
 
     @Test

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.mockStatic;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -1591,13 +1592,36 @@ public class ProgrammingExerciseTestService {
     private String exportStudentRequestedRepository(HttpStatus expectedStatus, boolean includeTests) throws Exception {
         generateProgrammingExerciseForExport();
 
-        setupMockRepo(exerciseRepo, RepositoryType.SOLUTION, "some-file.java");
+        // The endpoint exports the solution repository, or the tests repository when tests are included, so those are the
+        // ones that need a commit, and they need it in the bare repository the exercise actually points at. Seeding the
+        // template repository of a different project key instead left the exported repository without any commit, which
+        // used to produce a zero-byte archive that this test accepted as a successful export.
+        String projectKey = exercise.getProjectKey();
+        seedBareRepositoryWithCommit(projectKey, projectKey.toLowerCase() + "-solution", "some-file.java");
         if (includeTests) {
-            setupMockRepo(testRepo, RepositoryType.TESTS, "some-test-file.java");
+            seedBareRepositoryWithCommit(projectKey, projectKey.toLowerCase() + "-tests", "some-test-file.java");
         }
 
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-student-requested-repository?includeTests=" + includeTests;
         return request.get(url, expectedStatus, String.class);
+    }
+
+    /**
+     * Creates a bare LocalVC repository at the given slug holding a single committed file, so that an export of it has
+     * something to archive.
+     */
+    private void seedBareRepositoryWithCommit(String projectKey, String repositorySlug, String filename) throws Exception {
+        RepositoryExportTestUtil.seedBareRepository(localVCLocalCITestService, projectKey, repositorySlug, git -> {
+            try {
+                Path file = git.getRepository().getWorkTree().toPath().resolve(filename);
+                FileUtils.writeStringToFile(file.toFile(), "// " + filename, StandardCharsets.UTF_8);
+                git.add().addFilepattern(filename).call();
+                GitService.commit(git).setMessage("Added " + filename).call();
+            }
+            catch (IOException | GitAPIException e) {
+                throw new UncheckedIOException(new IOException("Could not seed " + repositorySlug, e));
+            }
+        });
     }
 
     /**

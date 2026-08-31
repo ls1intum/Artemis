@@ -393,16 +393,29 @@ public class ProgrammingExerciseIntegrationTestService {
         List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(true);
 
         // Make sure that the practice submission is not included
-        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
-                .noneMatch(entry -> entry.toString().matches(".*practice-[^/]*" + userPrefix + "student2.*\\.git$"));
+        assertThat(entries).anyMatch(entry -> isExportedRepositoryOf(entry, userPrefix + "student1"))
+                .noneMatch(entry -> isExportedPracticeRepositoryOf(entry, userPrefix + "student2"));
     }
 
     void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
         List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(false);
 
         // Make sure that the practice submission is included
-        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
-                .anyMatch(entry -> entry.toString().matches(".*practice-[^/]*" + userPrefix + "student2.*\\.git$"));
+        assertThat(entries).anyMatch(entry -> isExportedRepositoryOf(entry, userPrefix + "student1"))
+                .anyMatch(entry -> isExportedPracticeRepositoryOf(entry, userPrefix + "student2"));
+    }
+
+    /**
+     * With none of the rewriting export options set, a student repository is streamed from its bare repository into a
+     * single zip named after the participant, so that zip is what marks the participation's presence in the archive.
+     */
+    private static boolean isExportedRepositoryOf(Path entry, String participantIdentifier) {
+        return entry.getFileName().toString().equals(participantIdentifier + ".zip") || entry.getFileName().toString().endsWith("-" + participantIdentifier + ".zip");
+    }
+
+    private static boolean isExportedPracticeRepositoryOf(Path entry, String participantIdentifier) {
+        String fileName = entry.getFileName().toString();
+        return fileName.startsWith("practice-") && fileName.endsWith("-" + participantIdentifier + ".zip");
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
@@ -521,9 +534,10 @@ public class ProgrammingExerciseIntegrationTestService {
 
         List<Path> entries = unzipExportedFile();
 
-        // Make sure both repositories are present (by login suffix)
-        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student1", ".git").toString()))
-                .anyMatch(entry -> entry.toString().endsWith(Path.of(userPrefix + "student2", ".git").toString()));
+        // Make sure both repositories are present (by login suffix). None of the rewriting options is set, so each one is
+        // streamed from its bare repository into a working-tree-only zip and carries no .git directory.
+        assertThat(entries).anyMatch(entry -> isExportedRepositoryOf(entry, userPrefix + "student1")).anyMatch(entry -> isExportedRepositoryOf(entry, userPrefix + "student2"))
+                .noneMatch(entry -> entry.getFileName().toString().equals(".git"));
     }
 
     void testExportSubmissionAnonymizationCombining() throws Exception {
