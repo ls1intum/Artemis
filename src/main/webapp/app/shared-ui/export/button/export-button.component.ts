@@ -10,7 +10,7 @@ import { TumUiButtonDirective, TumUiButtonSize } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-csv-export-button',
-    template: ` <button tumUiButton severity="secondary" variant="outlined" [size]="getTumUiSize()" [disabled]="disabled()" (click)="openExportModal($event)">
+    template: ` <button type="button" tumUiButton severity="secondary" variant="outlined" [size]="getTumUiSize()" [disabled]="disabled()" (click)="openExportModal($event)">
         @if (icon()) {
             <fa-icon [icon]="icon()!" />
         }

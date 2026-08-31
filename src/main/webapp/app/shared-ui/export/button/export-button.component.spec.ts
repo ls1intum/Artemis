@@ -40,6 +40,7 @@ describe('ExportButtonComponent', () => {
         comp.openExportModal(new MouseEvent('click'));
         const csvExportButton = fixture.debugElement.query(By.css('button[tumUiButton]'));
         expect(csvExportButton).not.toBeNull();
+        expect(csvExportButton.nativeElement.getAttribute('type')).toBe('button');
         expect(dialogOpenStub).toHaveBeenCalledOnce();
     });
 });
