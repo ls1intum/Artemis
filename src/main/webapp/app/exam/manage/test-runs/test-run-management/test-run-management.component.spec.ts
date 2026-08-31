@@ -1,6 +1,6 @@
+import { EmbeddedViewRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -22,6 +22,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -69,8 +70,23 @@ describe('Test Run Management Component', () => {
             });
     });
 
+    const projectedViews: EmbeddedViewRef<unknown>[] = [];
+
+    function renderTitleBarActions(): HTMLElement {
+        const service = TestBed.inject(CourseTitleBarService);
+        const template = service.actionsTemplate();
+        expect(template, 'the test-run-management page does not project a title bar actions template').toBeDefined();
+        const view = template!.createEmbeddedView({});
+        projectedViews.push(view);
+        view.detectChanges();
+        const host = document.createElement('div');
+        view.rootNodes.forEach((node) => host.appendChild(node));
+        return host;
+    }
+
     afterEach(() => {
         vi.restoreAllMocks();
+        projectedViews.splice(0).forEach((view) => view.destroy());
     });
 
     describe('onInit', () => {
@@ -117,10 +133,11 @@ describe('Test Run Management Component', () => {
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
             expect(createTestRunButton).toBeTruthy();
-            expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
-            createTestRunButton.nativeElement.click();
+            expect(createTestRunButton!.disabled).toBeFalsy();
+            createTestRunButton!.click();
 
             const testRunConfiguration: CreateTestRunDTO = { examId: exam.id!, exerciseIds: [exercise.id!], workingTime: 3600 };
             onCloseSubject.next(testRunConfiguration);
@@ -146,10 +163,11 @@ describe('Test Run Management Component', () => {
             fixture.detectChanges();
 
             expect(component.examContainsExercises()).toBeTruthy();
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
             expect(createTestRunButton).toBeTruthy();
-            expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
-            createTestRunButton.nativeElement.click();
+            expect(createTestRunButton!.disabled).toBeFalsy();
+            createTestRunButton!.click();
 
             const testRunConfiguration: CreateTestRunDTO = { examId: exam.id!, exerciseIds: [exercise.id!], workingTime: 3600 };
             onCloseSubject.next(testRunConfiguration);
@@ -169,8 +187,9 @@ describe('Test Run Management Component', () => {
             const createTestRunSpy = vi.spyOn(examManagementService, 'createTestRun');
             fixture.detectChanges();
 
-            const createTestRunButton = fixture.debugElement.query(By.css('#createTestRunButton'));
-            createTestRunButton.nativeElement.click();
+            const actionsHost = renderTitleBarActions();
+            const createTestRunButton = actionsHost.querySelector<HTMLButtonElement>('#createTestRunButton');
+            createTestRunButton!.click();
             onCloseSubject.next(undefined);
 
             await Promise.resolve();
