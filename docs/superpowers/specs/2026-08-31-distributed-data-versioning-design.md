@@ -95,7 +95,7 @@ structures currently in use:
 | `buildJobQueue` | carry over | queued student builds, not reconstructible |
 | `processingJobs` | carry over | in-flight builds; orphan re-queue reads this map |
 | `buildResultQueue` | carry over | finished results not yet persisted; losing one loses student feedback |
-| `features` | carry over (verify) | admin-set toggles; confirm whether these are already DB-backed |
+| `features` | carry over | admin-set toggles; `FeatureToggleService` seeds defaults into this map and has no DB backing, so discarding it silently re-enables anything an admin turned off |
 | `pyris-job-map` | carry over | in-flight Iris jobs |
 | `ltiJwkMap`, `ltiStateAuthorizationRequestStore` | discard | short-lived in-flight launches; a retry costs one redirect |
 | `buildAgentInformation`, `buildAgentAddresses`, `buildAgentReportedAddresses` | discard | agents re-register on startup |
@@ -115,8 +115,25 @@ structures marked carry over verbatim; a step only needs custom code when a carr
 case it reads the old namespace with the old type and writes the new.
 
 Steps run on one core node, under a distributed lock, exactly once, before the rest of startup proceeds. Completion
-updates `artemis:distributed-data-schema`. The old namespace is given a TTL rather than deleted immediately, so a
-rollback within the grace period still finds its data.
+updates `artemis:distributed-data-schema`.
+
+Carry-over **drains** rather than copies: each entry is moved from the old structure to the new one and removed from
+the old, so peak memory stays flat even for a large `buildJobQueue`. The old namespace is deleted as soon as the step
+completes, rather than being kept alive on a grace TTL.
+
+Draining has to be crash-safe, because a node that dies mid-migration leaves entries split across two namespaces and
+readers only ever look at the new one. Two properties make that safe:
+
+- Each entry moves with an atomic pop-from-old, push-to-new, so an entry is never in both namespaces and never in
+  neither.
+- A step is idempotent and resumable. It runs before startup completes and under the lock, so a restart re-enters it
+  and drains whatever is left. The version key is written only after the last entry has moved, so an interrupted
+  migration is indistinguishable from one that never started.
+
+The consequence of deleting immediately is that rolling back to the previous release gives that release an empty
+namespace: its data is gone, not merely hidden. This is a deliberate choice and it matches the forward-only rule
+`RedissonCodecConfiguration` already documents. It is worth stating in the release notes for the first release that
+ships a version bump.
 
 ### 5. Fingerprint gate in CI
 
@@ -135,7 +152,7 @@ belongs with the existing ArchUnit rules.
 | Stored version equals code version | normal start |
 | Stored version lower, migration path declared | run steps under lock, log what was carried over and what was dropped, start |
 | Stored version lower, no path declared | refuse to start with an actionable message naming the versions, following `DatabaseMigration` |
-| Stored version higher (rollback) | refuse to start, pointing at the newer namespace and the roll-forward rule |
+| Stored version higher (rollback) | refuse to start, pointing at the roll-forward rule; note the old namespace no longer exists |
 | No stored version (fresh store) | write the current version, start |
 
 A build agent that reaches Redis before the core node has migrated must not write into the new namespace prematurely.
@@ -148,6 +165,7 @@ paragraph.
 - A migration test that seeds an old namespace, runs the step, and asserts the carried-over structures moved and the
   discarded ones did not.
 - A rollback test asserting a higher stored version refuses to start.
+- A crash-recovery test that interrupts a drain and re-runs it, asserting no entry is lost or duplicated.
 - The fingerprint test itself, with a deliberate DTO change proving it fails.
 
 ## Rollout
@@ -163,8 +181,19 @@ Move queue, set and topic elements off raw Kryo, or make `BuildJobQueueItem` ver
 worth preserving has the weakest evolution guarantees, and the namespacing above protects it across versions without
 making the encoding itself any safer within one.
 
+## Noted while classifying
+
+`FeatureToggleService` keeps admin feature toggles only in the distributed map, with no database backing. On Hazelcast
+that means a full cluster restart already resets every toggle to its default, which looks like a pre-existing latent
+bug independent of this design. On Redis the toggles survive today only because the store survives, so `features` has
+to be carried over.
+
+## Decisions
+
+- Carry-over drains entries rather than copying them, so peak memory stays flat.
+- The old namespace is deleted as soon as the migration completes, with no grace TTL. Rollback therefore does not
+  recover the previous release's distributed data, consistent with the existing forward-only rule.
+
 ## Open questions
 
-1. Is `features` already DB-backed, making it discardable?
-2. Is the doubled memory during carry-over of a large `buildJobQueue` acceptable on the production instance?
-3. Should the grace TTL on the old namespace be configurable, and what default?
+None outstanding.
