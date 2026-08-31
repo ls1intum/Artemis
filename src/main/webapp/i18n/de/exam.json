@@ -660,7 +660,7 @@
                 "menu": {
                     "manageStudents": "Studierende",
                     "examLogistics": "Logistik",
-                    "manageStudentExams": "Individuelle Klausuren verwalten",
+                    "manageStudentExams": "Individuelle Klausuren",
                     "addStudents": "Registrieren",
                     "importUsers": "Importieren aus CSV",
                     "exportUsers": "Exportieren als CSV",

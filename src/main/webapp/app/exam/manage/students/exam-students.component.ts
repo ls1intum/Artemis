@@ -110,6 +110,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     readonly studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
     readonly addStudentsModal = viewChild.required(UserRegistrationModalComponent);
+    readonly manageStudentExamsButton = viewChild<ExamStudentsMenuButtonComponent>('manageStudentExamsButton');
     readonly tableViewRef = viewChild(TableViewComponent);
 
     // Cell template refs (resolved after view init; used by computed columns signal)
@@ -312,6 +313,7 @@ export class ExamStudentsComponent implements OnDestroy {
                 icon: 'pi pi-file-plus',
                 disabled: isExamStarted || isLoading || !hasStudentsWithoutExam,
                 command: () => {
+                    this.openStudentExamsMenu();
                     this.generateMissingStudentExams();
                 },
             },
@@ -321,6 +323,7 @@ export class ExamStudentsComponent implements OnDestroy {
                 icon: 'pi pi-play',
                 disabled: isExamStarted || isLoading || exercisePreparationRunning,
                 command: () => {
+                    this.openStudentExamsMenu();
                     this.startExercises();
                 },
             },
@@ -584,6 +587,10 @@ export class ExamStudentsComponent implements OnDestroy {
         }
     }
 
+    private openStudentExamsMenu() {
+        setTimeout(() => this.manageStudentExamsButton()?.openMenu(), 0);
+    }
+
     /**
      * Generate all student exams for the exam on the server and handle the result.
      * Asks for confirmation if some exams already exist.
@@ -596,10 +603,12 @@ export class ExamStudentsComponent implements OnDestroy {
                 rejectButtonProps: { label: this.artemisTranslatePipe.transform('global.form.cancel'), severity: 'secondary' },
                 acceptButtonProps: { label: this.artemisTranslatePipe.transform('global.form.confirm'), severity: 'danger' },
                 accept: () => {
+                    this.openStudentExamsMenu();
                     this.generateStudentExams();
                 },
             });
         } else {
+            this.openStudentExamsMenu();
             this.generateStudentExams();
         }
     }

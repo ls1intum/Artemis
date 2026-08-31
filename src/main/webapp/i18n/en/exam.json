@@ -660,7 +660,7 @@
                 "menu": {
                     "manageStudents": "Students",
                     "examLogistics": "Logistics",
-                    "manageStudentExams": "Manage individual exams",
+                    "manageStudentExams": "Individual exams",
                     "addStudents": "Register",
                     "importUsers": "Import from CSV",
                     "exportUsers": "Export to CSV",
