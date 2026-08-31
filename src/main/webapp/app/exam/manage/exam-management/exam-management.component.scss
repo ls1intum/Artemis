@@ -4,6 +4,10 @@ $breakpoint-md: 48rem; // Tailwind 'md' breakpoint (768px)
 
 .exam-management-layout {
     display: grid;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    min-height: 0;
     grid-template-areas:
         'header header'
         'sidebar content';
@@ -41,6 +45,21 @@ $breakpoint-md: 48rem; // Tailwind 'md' breakpoint (768px)
 
     height: auto;
     flex-wrap: wrap;
+}
+
+.exam-management-title-wrapper {
+    flex: 0 1 auto;
+}
+
+.exam-title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 5rem;
+}
+
+.title-bar-actions {
+    flex: 0 0 auto;
 }
 
 .title-bar-actions-wrapper ::ng-deep {
