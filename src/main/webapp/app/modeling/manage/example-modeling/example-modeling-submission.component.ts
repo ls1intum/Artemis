@@ -20,11 +20,10 @@ import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { parseJson } from 'app/foundation/util/json.util';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faCheck, faClipboardCheck, faExclamationTriangle, faSave, faShapes, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faClipboardCheck, faSave, faShapes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
@@ -44,6 +43,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
+import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } from 'app/modeling/manage/assess/modeling-assessment-legend/modeling-assessment-legend.component';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -67,6 +67,7 @@ import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/
         CdkTextareaAutosize,
         ModelingAssessmentTopLeftDirective,
         ModelingAssessmentTopRightDirective,
+        ModelingAssessmentLegendComponent,
     ],
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
@@ -104,23 +105,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
     ExampleSubmissionMode = ExampleSubmissionMode;
 
-    readonly legend = [
-        {
-            text: 'artemisApp.exampleSubmission.legend.positiveScore',
-            icon: faCheck as IconProp,
-            tone: 'positive',
-        },
-        {
-            text: 'artemisApp.exampleSubmission.legend.negativeScore',
-            icon: faTimes as IconProp,
-            tone: 'negative',
-        },
-        {
-            text: 'artemisApp.exampleSubmission.legend.feedbackWithoutScore',
-            icon: faExclamationTriangle as IconProp,
-            tone: 'zero',
-        },
-    ];
+    /** The one highlight this view paints: the elements a tutor in training assessed differently from the sample. */
+    readonly legendHighlights = computed<ModelingAssessmentLegendHighlight[]>(() =>
+        this.toComplete() || this.highlightedElements().size > 0 ? [{ color: this.highlightColor, text: 'artemisApp.modelingAssessment.legend.incorrectAssessment' }] : [],
+    );
 
     protected readonly trainingModeOptions = computed(() => {
         this.languageChange();

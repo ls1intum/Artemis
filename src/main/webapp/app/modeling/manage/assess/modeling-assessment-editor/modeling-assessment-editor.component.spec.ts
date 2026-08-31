@@ -13,7 +13,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -795,11 +795,11 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.feedbackSuggestionsNotice()).toBeUndefined();
         });
 
-        it('should mount the banner as canvas chrome rather than a band above the workspace', async () => {
+        it('should mount the banner as canvas chrome rather than a band above the workspace, but only while loading', async () => {
             const submission = getSubmissionWithData();
             submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
             component.submission.set(submission);
-            setNoticeInputs({ automatic: true, assessor: true, enabled: true });
+            setNoticeInputs({ loading: true, enabled: true });
             fixture.detectChanges();
             await fixture.whenStable();
 
@@ -810,6 +810,20 @@ describe('ModelingAssessmentEditorComponent', () => {
             // is content of the canvas component, and its top-left directive is what mounts it into the chrome.
             expect(fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).query(By.directive(FeedbackSuggestionsBannerComponent))).not.toBeNull();
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(true);
+        });
+
+        it('should let the legend, not a second island, say that suggestions are available', async () => {
+            const submission = getSubmissionWithData();
+            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
+            component.submission.set(submission);
+            setNoticeInputs({ automatic: true, assessor: true, enabled: true });
+            component.result.set({ id: 7 } as Result);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
+            expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
+            expect(component.legendHighlights()).toEqual([{ color: FeedbackHighlightColor.CYAN, text: 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions' }]);
         });
 
         it('should hand a referenced suggestion to the canvas, so Apollon can draw and highlight it', async () => {

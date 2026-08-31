@@ -170,26 +170,11 @@
                                 </button>
                             </div>
 
-                            <div
-                                modelingAssessmentTopRight
-                                class="assessment-legend apollon-glass"
-                                [attr.aria-label]="'artemisApp.exampleSubmission.legend.title' | artemisTranslate"
-                            >
-                                @for (legendElement of legend; track legendElement.tone) {
-                                    <span class="assessment-legend__item">
-                                        <span class="assessment-legend__marker" [attr.data-tone]="legendElement.tone" aria-hidden="true">
-                                            <fa-icon [icon]="legendElement.icon" />
-                                        </span>
-                                        <span>{{ legendElement.text | artemisTranslate }}</span>
-                                    </span>
-                                }
-                                @if (toComplete() || highlightedElements().size > 0) {
-                                    <span class="assessment-legend__item">
-                                        <span class="assessment-legend__highlight" aria-hidden="true"></span>
-                                        <span jhiTranslate="artemisApp.exampleSubmission.legend.incorrectAssessment"></span>
-                                    </span>
-                                }
-                            </div>
+                            <jhi-modeling-assessment-legend
+                                [modelingAssessmentTopRight]="true"
+                                [attr.aria-label]="'artemisApp.modelingAssessment.legend.title' | artemisTranslate"
+                                [highlights]="legendHighlights()"
+                            />
                         </jhi-modeling-assessment>
                     </div>
 

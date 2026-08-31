@@ -45,6 +45,8 @@ import {
     feedbackSuggestionsNotice as resolveFeedbackSuggestionsNotice,
 } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
+import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
+import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } from 'app/modeling/manage/assess/modeling-assessment-legend/modeling-assessment-legend.component';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
@@ -67,6 +69,8 @@ import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular'
         RouterLink,
         FeedbackSuggestionsBannerComponent,
         ModelingAssessmentTopLeftDirective,
+        ModelingAssessmentTopRightDirective,
+        ModelingAssessmentLegendComponent,
         AssessmentNotPossibleYetComponent,
         TumUiButtonDirective,
         TumUiMessageComponent,
@@ -106,6 +110,24 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     feedbackSuggestions: Feedback[] = [];
     readonly highlightedElements = signal<Map<string, string>>(undefined!);
     readonly highlightMissingFeedback = signal(false);
+
+    /**
+     * The highlight colours currently painted on the canvas, named for the legend beside it. Only colours that are
+     * actually in use are listed, so the legend never explains something the tutor cannot see.
+     */
+    readonly legendHighlights = computed<ModelingAssessmentLegendHighlight[]>(() => {
+        const highlights: ModelingAssessmentLegendHighlight[] = [];
+        if (this.hasAutomaticFeedback() && !this.result()?.completionDate) {
+            highlights.push({
+                color: FeedbackHighlightColor.CYAN,
+                text: this.isFeedbackSuggestionsEnabled ? 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions' : 'artemisApp.modelingAssessment.legend.automaticAssessment',
+            });
+        }
+        if (this.highlightMissingFeedback()) {
+            highlights.push({ color: FeedbackHighlightColor.RED, text: 'artemisApp.modelingAssessment.legend.missingAssessment' });
+        }
+        return highlights;
+    });
 
     readonly assessmentsAreValid = signal(false);
     readonly nextSubmissionBusy = signal<boolean>(false);

@@ -6,13 +6,6 @@
                 "editor": "Beispielabgabe-Editor",
                 "assessmentTraining": "Das ist ein Beurteilungstraining"
             },
-            "legend": {
-                "title": "Legende",
-                "positiveScore": "Positive Punktzahl",
-                "negativeScore": "Negative Punktzahl",
-                "incorrectAssessment": "Falsche Beurteilung",
-                "feedbackWithoutScore": "Feedback ohne Punktzahl"
-            },
             "feedback": {
                 "CORRECT": "Richtiges Feedback 👍",
                 "INCORRECT_SCORE": "Falsche Punktzahl",

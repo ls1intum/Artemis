@@ -47,9 +47,11 @@
                         [elementCounts]="submission()?.similarElements"
                     >
                         <!-- Athena's status belongs to the diagram, so it rides in the canvas' top-left corner.
-                             Projected unconditionally and gated by occupancy, never `@if` — see `ModelingAssessmentRegion`. -->
+                             Projected unconditionally and gated by occupancy, never `@if` — see `ModelingAssessmentRegion`.
+                             Only the transient loading state remains here; what a suggestion looks like on the canvas is
+                             the legend's job, on the opposite corner. -->
                         <jhi-feedback-suggestions-banner
-                            [modelingAssessmentTopLeft]="!!feedbackSuggestionsNotice()"
+                            [modelingAssessmentTopLeft]="feedbackSuggestionsNotice() === 'loading'"
                             appearance="chrome"
                             [isLoading]="loadingFeedbackSuggestions()"
                             [hasAutomaticFeedback]="hasAutomaticFeedback()"
@@ -57,6 +59,10 @@
                             [resultCompletionDate]="result()?.completionDate"
                             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
                         />
+
+                        <!-- What the markers and the highlight colours on an element mean, beside the diagram they
+                             describe rather than in a pane the tutor has to scroll to. -->
+                        <jhi-modeling-assessment-legend [modelingAssessmentTopRight]="true" [highlights]="legendHighlights()" />
                     </jhi-modeling-assessment>
 
                     <!-- A complaint is about this assessment, so it belongs beside the diagram rather than at the end of
@@ -105,24 +111,6 @@
                     }
 
                     <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="onAssessmentNoteChange($event)" />
-
-                    @if ((hasAutomaticFeedback() || highlightMissingFeedback()) && !result()?.completionDate) {
-                        <section class="modeling-assessment-highlights">
-                            <h3 jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.title"></h3>
-                            @if (hasAutomaticFeedback()) {
-                                <div class="modeling-assessment-highlights__item">
-                                    <span class="modeling-assessment-highlights__swatch color-cyan" aria-hidden="true"></span>
-                                    <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.automaticAssessment"></span>
-                                </div>
-                            }
-                            @if (highlightMissingFeedback()) {
-                                <div class="modeling-assessment-highlights__item">
-                                    <span class="modeling-assessment-highlights__swatch color-red" aria-hidden="true"></span>
-                                    <span jhiTranslate="artemisApp.modelingAssessmentEditor.highlightingColors.missingAssessment"></span>
-                                </div>
-                            }
-                        </section>
-                    }
                 </div>
             </jhi-assessment-workspace>
         } @else {

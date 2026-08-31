@@ -6,13 +6,6 @@
                 "editor": "Example Submission Editor",
                 "assessmentTraining": "This is an Assessment Training"
             },
-            "legend": {
-                "title": "Legend",
-                "positiveScore": "Positive score",
-                "negativeScore": "Negative score",
-                "incorrectAssessment": "Incorrect assessment",
-                "feedbackWithoutScore": "Feedback without score"
-            },
             "feedback": {
                 "CORRECT": "Correct assessment 👍",
                 "INCORRECT_SCORE": "Incorrect score",
