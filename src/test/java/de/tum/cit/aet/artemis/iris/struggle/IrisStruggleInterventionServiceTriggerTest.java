@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.iris.struggle;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -17,6 +19,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -37,6 +40,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -197,6 +201,46 @@ class IrisStruggleInterventionServiceTriggerTest {
         service.sendToPyris(prepared, signal, Map.of());
 
         verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void sendToPyris_userOptedOut_emitsTerminalCompletionBeforeReleasingSlot() {
+        // The endpoint already answered 202, so the client is waiting on a terminal frame. When the async re-check
+        // finds consent revoked, sendToPyris must emit the intent-shaped completion (so the in-flight decide clears)
+        // BEFORE releasing the slot, mirroring the dispatch-failure path - not release silently and leave the client
+        // hanging until timeout.
+        when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
+        when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(false);
+        when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "decide", "ep-9", null, null, null));
+        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "decide", null, null, null, null);
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
+
+        service.sendToPyris(prepared, signal, Map.of());
+
+        InOrder inOrder = inOrder(irisChatWebsocketService, pyrisJobService);
+        inOrder.verify(irisChatWebsocketService).sendStruggleEvent(eq(user), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action()) && "ep-9".equals(e.episodeId())
+                && e.message() == null && e.sessionId() == null && e.messageId() == null));
+        inOrder.verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
+        verifyNoInteractions(pyrisPipelineService);
+    }
+
+    @Test
+    void sendToPyris_userOptedOut_confirmCloseEmitsUnresolvedCloseBeforeReleasingSlot() {
+        // Same bail path, confirm_close intent: the terminal frame must be the close-shaped completion with
+        // resolved=false (a failed close must not read as "the episode is resolved"), again before the release.
+        when(userRepository.findByIdElseThrow(USER_ID)).thenReturn(user);
+        when(userAiPreferenceService.hasOptedIntoLlmUsage(USER_ID)).thenReturn(false);
+        when(pyrisJobService.getJob("tok")).thenReturn(new StruggleInterventionJob("tok", COURSE, EX, USER_ID, "confirm_close", "ep-9", "progress", null, null));
+        var prepared = new IrisStruggleInterventionService.PreparedTrigger(COURSE, EX, USER_ID, "default", "moderate", "tok", "confirm_close", null, "progress", null, null);
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(1, "FM", List.of("FM"), 0.7, "armed", false, false), List.of(), 1);
+
+        service.sendToPyris(prepared, signal, Map.of());
+
+        InOrder inOrder = inOrder(irisChatWebsocketService, pyrisJobService);
+        inOrder.verify(irisChatWebsocketService).sendStruggleEvent(eq(user),
+                argThat(e -> "confirm_close".equals(e.kind()) && Boolean.FALSE.equals(e.resolved()) && "ep-9".equals(e.episodeId())));
+        inOrder.verify(pyrisJobService).releaseStruggleInFlightJob("tok", USER_ID, EX);
         verifyNoInteractions(pyrisPipelineService);
     }
 

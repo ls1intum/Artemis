@@ -235,6 +235,13 @@ public class IrisStruggleInterventionService {
         // Bail BEFORE any egress to Pyris and release the reserved slot (no callback will then arrive).
         if (!userAiPreferenceService.hasOptedIntoLlmUsage(user.getId())) {
             log.info("Struggle intervention skipped: user {} is no longer opted into LLM usage", p.userId());
+            // The endpoint already answered 202, so the client is waiting on a terminal frame that no callback will
+            // ever deliver for this bailed run. Emit the intent-shaped completion BEFORE releasing (the same order as
+            // the dispatch-failure path above), so the slot is still ours while the frame goes out and the client's
+            // in-flight request clears instead of hanging until its own timeout.
+            if (pyrisJobService.getJob(p.jobToken()) instanceof StruggleInterventionJob struggleJob) {
+                emitTerminalCompletion(struggleJob);
+            }
             pyrisJobService.releaseStruggleInFlightJob(p.jobToken(), p.userId(), p.exerciseId());
             return;
         }
