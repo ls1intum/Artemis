@@ -77,10 +77,23 @@ describe('collapsible title bar labels', () => {
     it('only marks elements that sit inside a title bar', () => {
         // The markers a template uses to render into one of the bars: the shell bar's slots, or a self-rendered bar.
         const insideABar = /titleBarActions|titleBarTitle|titleBarToolbar|page-top-bar|controlsViewContainer/;
-        const offenders = walk(webapp, '.html')
+        const allHtml = walk(webapp, '.html');
+
+        const sitsInsideBar = (file, content) => {
+            if (insideABar.test(content)) return true;
+            try {
+                const selector = readFileSync(file.replace(/\.html$/, '.ts'), 'utf8').match(/selector:\s*['"]([^'"]+)['"]/)?.[1];
+                const usages = selector ? allHtml.filter((f) => f !== file && readFileSync(f, 'utf8').includes(selector)) : [];
+                return usages.length > 0 && usages.every((f) => insideABar.test(readFileSync(f, 'utf8')));
+            } catch {
+                return false;
+            }
+        };
+
+        const offenders = allHtml
             .filter((file) => {
                 const content = readFileSync(file, 'utf8');
-                return (content.includes(LABEL_CLASS) || content.includes(OPTIONAL_CLASS)) && !insideABar.test(content);
+                return (content.includes(LABEL_CLASS) || content.includes(OPTIONAL_CLASS)) && !sitsInsideBar(file, content);
             })
             .map(relative);
         expect(offenders, `these classes only work inside a title bar; elsewhere the query never matches`).toEqual([]);

@@ -14,7 +14,6 @@ import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumUiButtonDirective } from '@tumaet/ui-angular';
 
@@ -46,9 +45,6 @@ export class ExamAssessmentButtonsComponent implements OnInit {
     readonly isExamOver = signal(false);
     readonly longestWorkingTime = signal<number | undefined>(undefined);
     readonly isAdmin = signal(false);
-
-    // icons
-    faClipboard = faClipboard;
 
     /**
      * Initialize the courseId and examId
