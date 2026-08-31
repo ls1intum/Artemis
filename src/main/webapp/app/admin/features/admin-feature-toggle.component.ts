@@ -17,6 +17,7 @@ import {
     MODULE_FEATURE_APOLLON,
     MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_DEIMOS,
     MODULE_FEATURE_EXAM,
     MODULE_FEATURE_FILEUPLOAD,
     MODULE_FEATURE_HYPERION,
@@ -120,6 +121,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_IRIS,
         MODULE_FEATURE_ATLAS,
         MODULE_FEATURE_HYPERION,
+        MODULE_FEATURE_DEIMOS,
         MODULE_FEATURE_EXAM,
         MODULE_FEATURE_PLAGIARISM,
         MODULE_FEATURE_TEXT,
@@ -150,6 +152,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [FeatureToggle.AtlasAgent]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [FeatureToggle.Memiris]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
         [FeatureToggle.RateLimit]: 'https://docs.artemis.tum.de/admin/production-setup/security/#rate-limiting',
+        [FeatureToggle.Deimos]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
     };
 
     /** Documentation links for profile-based features */
@@ -164,6 +167,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_IRIS]: 'https://docs.artemis.tum.de/admin/extensions-setup#iris--pyris-setup-guide',
         [MODULE_FEATURE_ATLAS]: 'https://docs.artemis.tum.de/instructor/adaptive-learning',
         [MODULE_FEATURE_HYPERION]: 'https://docs.artemis.tum.de/admin/hyperion',
+        [MODULE_FEATURE_DEIMOS]: 'https://docs.artemis.tum.de/admin/artemis-intelligence',
         [MODULE_FEATURE_EXAM]: 'https://docs.artemis.tum.de/instructor/exams/intro',
         [MODULE_FEATURE_PLAGIARISM]: 'https://docs.artemis.tum.de/instructor/plagiarism-check',
         [MODULE_FEATURE_TEXT]: 'https://docs.artemis.tum.de/instructor/exercises/text-exercise',
