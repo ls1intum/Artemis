@@ -69,7 +69,7 @@ describe('ExerciseSplitPanelComponent', () => {
             .overrideComponent(ExerciseSplitPanelComponent, {
                 set: {
                     template: `
-                        <jhi-resizable-panels [flushLeftPanel]="exercise().type === ExerciseType.MODELING">
+                        <jhi-resizable-panels [flushLeftPanel]="exercise().type === ExerciseType.MODELING && showEditorPanel()">
                             @if (showEditorPanel()) {
                                 <ng-template jhiPanel [label]="editorLabelKey()">Editor</ng-template>
                             }
@@ -124,6 +124,17 @@ describe('ExerciseSplitPanelComponent', () => {
 
         const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
         expect(panels.flushLeftPanel()).toBe(true);
+    });
+
+    it('should not make the left panel full bleed while the modeling exercise has no editor panel, so the problem statement keeps its padding', () => {
+        // Before the participation starts there is no editor panel, and the problem statement becomes the left panel.
+        fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
+        fixture.componentRef.setInput('studentParticipation', undefined);
+        fixture.detectChanges();
+
+        const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance as ResizablePanelsComponent;
+        expect(component.showEditorPanel()).toBe(false);
+        expect(panels.flushLeftPanel()).toBe(false);
     });
 
     it('navigates only when the target route identity changes, not when the participation object is replaced (prevents the navigate-thrash loop on incoming results, #12976)', () => {
