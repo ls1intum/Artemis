@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +16,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOExceptionList;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,11 +180,11 @@ public class FileService implements DisposableBean {
                     deletion.run();
                 }
                 catch (IOException e) {
-                    if (Files.exists(path)) {
-                        log.error("Deleting {} did not work", path, e);
+                    if (isCausedByMissingFile(e) || !Files.exists(path)) {
+                        log.debug("Deleting {} did not complete because it was removed concurrently", path, e);
                     }
                     else {
-                        log.debug("Deleting {} did not complete because it was removed concurrently", path, e);
+                        log.error("Deleting {} did not work", path, e);
                     }
                 }
             }, delayInMinutes, TimeUnit.MINUTES));
@@ -191,6 +194,33 @@ public class FileService implements DisposableBean {
             // the next start cleans up, and failing the caller's request over it would be worse.
             log.debug("Not scheduling the deletion of {} because the scheduler is shutting down", path);
         }
+    }
+
+    /**
+     * Whether the failure is only that something the deletion wanted to remove had already been removed.
+     *
+     * <p>
+     * Checking whether the root still exists is not enough on its own: a concurrent cleanup that is halfway through the
+     * tree leaves the root in place, and the walk then fails on a file that vanished underneath it. That is exactly the
+     * shape of the failure in issue #13575, and it is reported as
+     * {@code IOExceptionList -> IOIndexedException -> FileNotFoundException -> NoSuchFileException}, so the whole cause
+     * chain has to be inspected.
+     */
+    // Package-private so the test can pin the exact exception shape from the issue report without provoking the race.
+    static boolean isCausedByMissingFile(IOException exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof NoSuchFileException || cause instanceof FileNotFoundException) {
+                return true;
+            }
+            if (cause instanceof IOExceptionList exceptionList
+                    && exceptionList.getCauseList().stream().anyMatch(listed -> listed instanceof IOException ioException && isCausedByMissingFile(ioException))) {
+                return true;
+            }
+            if (cause.getCause() == cause) {
+                break;
+            }
+        }
+        return false;
     }
 
     @FunctionalInterface

@@ -128,6 +128,31 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     /**
+     * The manual repository export and the data export ask for the history even when no rewriting option is set, because
+     * an instructor may untick every checkbox in the export dialog. Deriving the content from the options alone would
+     * hand them a snapshot with no commits at all, which is the opposite of what unticking "combine student commits"
+     * asks for, so those callers keep the checkout and the directory layout they have always produced.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportStudentRepositories_shouldKeepTheHistoryWhenTheCallerAsksForItWithoutAnyRewritingOption() throws Exception {
+        List<ProgrammingExerciseStudentParticipation> participations = seedStudentParticipations(TEST_PREFIX + "student1");
+        Path outputDir = tempFileUtilService.createTempDirectory("manual-export-plain");
+        List<String> exportErrors = new ArrayList<>();
+
+        // Exactly the options of an instructor who unticked every checkbox in the export dialog.
+        var noRewritingOptions = new RepositoryExportOptionsDTO(false, false, false, null, false, false, false, false, false);
+        List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, exportErrors,
+                noRewritingOptions, RepositoryExportContent.WITH_HISTORY);
+
+        assertThat(exportErrors).isEmpty();
+        assertThat(exportedRepositories).hasSize(1);
+        Path exportedRepository = exportedRepositories.getFirst();
+        assertThat(exportedRepository).as("the manual export keeps producing a directory, not a zip").isDirectory();
+        assertThat(exportedRepository.resolve(".git")).as("the student's commit history must survive the export").isDirectory();
+    }
+
+    /**
      * A repository that cannot be read, because its setup failed and it never made it onto disk, has to be reported as an
      * export error and leave nothing behind: the callers zip whole directories, so a truncated archive inside one of them
      * would be read as an empty repository and hide the failure.

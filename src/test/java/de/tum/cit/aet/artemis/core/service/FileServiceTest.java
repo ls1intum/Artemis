@@ -7,10 +7,13 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.verify;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -20,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.io.IOExceptionList;
+import org.apache.commons.io.IOIndexedException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -116,6 +121,28 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Both cleanups target the same path, and the second one finds it already gone. That is expected, not an error,
         // so the directory is simply removed and nothing is left behind.
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(directory).doesNotExist());
+    }
+
+    /**
+     * The failure in <a href="https://github.com/ls1intum/Artemis/issues/13575">#13575</a> is a directory walk tripping
+     * over a file another cleanup had already removed. The root directory is still present at that point, so recognising
+     * it means inspecting the cause chain Commons IO reports, not just checking whether the target still exists.
+     */
+    @Test
+    void testScheduleDirectoryPathForRecursiveDeletion_shouldNotReportAConcurrentlyRemovedEntryAsAnError() throws Exception {
+        Path parent = createTempTargetDirectory("testConcurrentlyRemovedEntry");
+        Path directory = Files.createDirectory(parent.resolve("tree"));
+        Files.createDirectory(directory.resolve("nested"));
+        Files.writeString(directory.resolve("nested").resolve("file.txt"), "content");
+
+        // Reproduces the reported shape: IOExceptionList -> IOIndexedException -> FileNotFoundException -> NoSuchFileException.
+        var missingFile = new NoSuchFileException(directory.resolve("nested").resolve("file.txt").toString());
+        var cannotDelete = new FileNotFoundException("Cannot delete file: " + directory.resolve("nested"));
+        cannotDelete.initCause(missingFile);
+        var reported = new IOExceptionList(List.of(new IOIndexedException(0, cannotDelete)));
+
+        assertThat(FileService.isCausedByMissingFile(reported)).as("a vanished entry inside the tree must be recognised as benign").isTrue();
+        assertThat(FileService.isCausedByMissingFile(new IOException("disk is full"))).as("an unrelated failure must still be reported").isFalse();
     }
 
     @Test
