@@ -489,6 +489,7 @@
         "examManagement": {
             "reviewDatesInvalidWarning": "Das Ende der Klausureinsicht ist falsch definiert oder fehlt",
             "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden. Zusätzlich muss das Ende der Klausureinsicht immer nach dem Beginn datiert sein.",
+            "titleMissingOrNotValid": "'Titel' fehlt/ungültig",
             "sections": {
                 "configuration": "Klausurkonfiguration",
                 "conduction": "Klausurdurchführung",
@@ -529,7 +530,6 @@
                 "title": "Erreichbare Punktzahl",
                 "warning": "Durch die Aktualisierung dieses Feldes wird der Notenschlüssel für die Prüfung aktualisiert (falls er existiert), sodass die Punktzahl für die Notenstufen weiterhin den Prozentsätzen entspricht, angepasst an die neue maximale Punktzahl. Dies wirkt sich auch auf die Noten aller Studierenden in der Prüfung aus!"
             },
-            "numberOfExerciseGroups": "Anzahl Aufgabengruppen:",
             "numberOfExercisesInExam": "Anzahl an Aufgaben in der Klausur",
             "numberOfExercisesInExamTooltip": "Die Anzahl der Aufgaben muss mit der Anzahl der Aufgabengruppen übereinstimmen",
             "numberOfCorrectionRoundsInExam": "Anzahl der Korrekturrunden der Klausur",
@@ -697,12 +697,17 @@
                 "selectExerciseGroupExplanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit den Aufgabengruppen importiert werden sollen",
                 "noExerciseGroup": "Die ausgewählte Klausur {{examTitle}} hat keine Aufgabengruppen",
                 "update": "Aufgabengruppe bearbeiten",
+                "addExercise": "Aufgabe hinzufügen",
+                "editNotPossibleExamStarted": "Eine Bearbeitung ist nicht möglich, da die Klausur bereits begonnen hat.",
+                "editGroup": "Gruppe bearbeiten",
+                "deleteGroup": "Gruppe löschen",
                 "type": "Typ",
                 "title": "Titel",
                 "points": "Punktzahl",
                 "mandatory": "Verpflichtend",
                 "optional": "Optional",
                 "noExercises": "Es wurden noch keine Aufgaben hinzugefügt.",
+                "noExerciseGroups": "Es wurden noch keine Aufgabengruppen erstellt.",
                 "titleInfo": "Der Name der Aufgabengruppe wird den Studierenden als Aufgabenname angezeigt.",
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",

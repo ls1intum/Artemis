@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -58,18 +59,23 @@ public class RepositoryAccessService {
      */
     public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user, ProgrammingExercise programmingExercise,
             RepositoryActionType repositoryActionType) throws AccessForbiddenException {
-        boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        boolean atLeastStudent = authorizationCheckService.isAtLeastStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        // Each of these resolves in memory when the user was loaded with its course roles, and costs a query otherwise, so
+        // none of them is evaluated before its answer is actually needed. A student, the overwhelmingly common caller on
+        // this path, reaches only isAtLeastStudentInCourse.
+        if (authorizationCheckService.isAtLeastEditorInCourse(course, user)) {
+            return;
+        }
+        boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(course, user);
         // The user is allowed to access the repository in any way if they are at least an editor or if they are a teaching assistant and only want to read the repository.
-        if (isAtLeastEditor || (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ)) {
+        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ) {
             return;
         }
 
         // The user has to be at least a student in the course to access the repository.
         // We also check if the user is the owner of the participation and if it's a student participation.
-        if (atLeastStudent && programmingParticipation instanceof ProgrammingExerciseStudentParticipation programmingStudentParticipation) {
+        if (programmingParticipation instanceof ProgrammingExerciseStudentParticipation programmingStudentParticipation
+                && authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
             boolean ownerOfParticipation = authorizationCheckService.isOwnerOfParticipation(programmingStudentParticipation, user);
             if (ownerOfParticipation) {
                 if (hasAccessToOwnStudentParticipation(programmingExercise, repositoryActionType, programmingStudentParticipation, isTeachingAssistant)) {

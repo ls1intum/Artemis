@@ -155,12 +155,13 @@
             "archive": {
                 "title": "Archive",
                 "sort": "Sort",
-                "tip": "The archive enables you to view all your past courses, organized by semester. Click on a semester to expand and see the courses you were enrolled in during that period.",
+                "tip": "The archive shows all your past courses, grouped by semester where available. Courses without a semester appear under Semester-independent.",
                 "noCoursesPreviousSemester": "No courses found from previous semesters",
                 "winterSemester": "Winter semester 20{{ param }}",
-                "summerSemester": "Summer semester 20{{ param }}"
+                "summerSemester": "Summer semester 20{{ param }}",
+                "semesterIndependent": "Semester-independent",
+                "manage": "Manage"
             },
-            "showActive": "Show only active courses",
             "totalScore": "Total Score:",
             "title": "Title",
             "color": "Color",
@@ -205,7 +206,6 @@
             "semester": "Semester",
             "language": "Language",
             "ltiConfiguration": "LTI Configuration",
-            "recentlyAccessed": "Recently accessed",
             "maxPoints": {
                 "title": "Max. Points for Course",
                 "info": "This value is used for example calculations (e.g. in the grading key) and does not influence the students' grades. The grades are calculated based on the points achievable in the course.",
@@ -236,6 +236,20 @@
             "learningPaths": {
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
+            },
+            "autoOrchestration": {
+                "label": "Atlas Auto-Orchestration Enabled",
+                "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
+                "overridePlaceholder": "Use default",
+                "overridePlaceholderWithValue": "Use default ({{ value }})",
+                "debounceWindowSecondsOverride": {
+                    "label": "Debounce Window Override (seconds)",
+                    "hint": "How long to wait after the last content change before running. Leave empty to use the global default."
+                },
+                "maxDailyOrchestrationOverride": {
+                    "label": "Daily Run Limit Override",
+                    "hint": "Maximum number of automatic runs per day for this course. Leave empty to use the global default."
+                }
             },
             "restrictedAthenaModulesAccess": {
                 "label": "Access to Restricted Athena Modules Enabled",
@@ -363,11 +377,6 @@
                 "profilePicture": "Profile Picture"
             },
             "averageScore": "Average Score",
-            "releasedSoon": "Released Soon",
-            "currentWorking": "Currently In Progress",
-            "inAssessment": "Currently In Assessment",
-            "pastExercises": "Past Exercises ({{ amount }} of {{ total }})",
-            "noExercises": "No active exercises to display",
             "assessmentProgress": "Assessments",
             "releaseDate": "Release",
             "dueDate": "Due",
