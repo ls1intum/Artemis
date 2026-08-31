@@ -13,7 +13,11 @@ export class ExamDetailsPage {
     async openExerciseGroups() {
         const match = this.page.url().match(/\/exams\/(\d+)/);
         if (match) {
-            await this.page.locator(`#exam-${match[1]}-exercise-groups`).click();
+            const subpage = this.page.locator(`#exam-${match[1]}-exercise-groups`);
+            if (!(await subpage.isVisible())) {
+                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+            }
+            await subpage.click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-exercise-groups"]').first().click();
         }

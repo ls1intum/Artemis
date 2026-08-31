@@ -100,7 +100,11 @@ export class ExamManagementPage {
     async openTestRun() {
         const match = this.page.url().match(/\/exams\/(\d+)/);
         if (match) {
-            await this.page.locator(`#exam-${match[1]}-test-runs`).click();
+            const subpage = this.page.locator(`#exam-${match[1]}-test-runs`);
+            if (!(await subpage.isVisible())) {
+                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+            }
+            await subpage.click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-test-runs"]').first().click();
         }
@@ -112,7 +116,11 @@ export class ExamManagementPage {
     async openGradingKey() {
         const match = this.page.url().match(/\/exams\/(\d+)/);
         if (match) {
-            await this.page.locator(`#exam-${match[1]}-grading`).click();
+            const subpage = this.page.locator(`#exam-${match[1]}-grading`);
+            if (!(await subpage.isVisible())) {
+                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+            }
+            await subpage.click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-grading"]').first().click();
         }
@@ -124,7 +132,11 @@ export class ExamManagementPage {
     async openScoresPage() {
         const match = this.page.url().match(/\/exams\/(\d+)/);
         if (match) {
-            await this.page.locator(`#exam-${match[1]}-scores`).click();
+            const subpage = this.page.locator(`#exam-${match[1]}-scores`);
+            if (!(await subpage.isVisible())) {
+                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+            }
+            await subpage.click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-scores"]').first().click();
         }
@@ -220,7 +232,11 @@ export class ExamManagementPage {
     async clickEdit() {
         const match = this.page.url().match(/\/exams\/(\d+)/);
         if (match) {
-            await this.page.locator(`#exam-${match[1]}-edit`).click();
+            const subpage = this.page.locator(`#exam-${match[1]}-edit`);
+            if (!(await subpage.isVisible())) {
+                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+            }
+            await subpage.click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-edit"]').first().click();
         }

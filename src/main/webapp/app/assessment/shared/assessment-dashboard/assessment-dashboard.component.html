@@ -24,7 +24,7 @@
             </jhi-feature-overlay>
 
             @if (deimosModuleEnabled()) {
-                <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" class="tab-item btn btn-sm btn-info ms-1" (click)="openDeimosBatchDialog()">
+                <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" tumUiButton severity="info" size="small" (click)="openDeimosBatchDialog()">
                     <fa-icon [icon]="faShieldAlt" />
                     <span jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
                 </button>
