@@ -99,8 +99,8 @@ describe('Component Tests', () => {
 
         it('should define its initial state', () => {
             expect(comp.initialized()).toBe(true);
-            expect(comp.email()).toBe('XYZPDQ');
-            expect(comp.resetKey()).toBe('XYZSecret');
+            expect(comp.resetKeyId()).toBe('XYZPDQ');
+            expect(comp.resetKeySecret()).toBe('XYZSecret');
         });
 
         it('sets focus after the view has been initialized', () => {

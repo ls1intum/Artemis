@@ -46,14 +46,25 @@ public class UserRecoveryKeyService {
     }
 
     /**
+     * The reset key id the account currently has outstanding, or null when it has none.
+     *
+     * @param userId the account
+     * @return the reset key id, or null
+     */
+    @Nullable
+    public String findResetKeyId(long userId) {
+        return userRecoveryKeyRepository.findByUserId(userId).map(UserRecoveryKey::getResetKeyId).orElse(null);
+    }
+
+    /**
      * The hashed reset key the account currently has outstanding, or null when it has none.
      *
      * @param userId the account
-     * @return the reset key, or null
+     * @return the hashed reset key secret, or null
      */
     @Nullable
     public String findResetKeyHash(long userId) {
-        return userRecoveryKeyRepository.findByUserId(userId).map(UserRecoveryKey::getResetKey).orElse(null);
+        return userRecoveryKeyRepository.findByUserId(userId).map(UserRecoveryKey::getResetKeyHash).orElse(null);
     }
 
     /**
@@ -69,13 +80,15 @@ public class UserRecoveryKeyService {
     /**
      * Stores a password-reset key and the moment it was issued, replacing any previous one.
      *
-     * @param userId    the account
-     * @param resetKey  the key to store
-     * @param resetDate when the key was issued, which is what bounds its validity
+     * @param userId     the account
+     * @param resetKeyId the id of the key to store
+     * @param resetKeyId the hash of the keys secret to store
+     * @param resetDate  when the key was issued, which is what bounds its validity
      */
-    public void storeResetKey(long userId, String resetKey, Instant resetDate) {
+    public void storeResetKey(long userId, String resetKeyId, String resetKeyHash, Instant resetDate) {
         saveHandlingConcurrentInsert(userId, row -> {
-            row.setResetKey(resetKey);
+            row.setResetKeyId(resetKeyId);
+            row.setResetKeyHash(resetKeyHash);
             row.setResetDate(resetDate);
         });
     }
@@ -96,13 +109,13 @@ public class UserRecoveryKeyService {
     }
 
     /**
-     * Finds the data for the account with given if.
+     * Finds the data for the given reset key id.
      *
-     * @param userId the id of the user
+     * @param resetKeyId the id of the reset key
      * @return the pending row, or empty if no account has that key outstanding
      */
-    public Optional<UserRecoveryKey> findById(long userId) {
-        return userRecoveryKeyRepository.findByUserId(userId);
+    public Optional<UserRecoveryKey> findByResetKeyId(String resetKeyId) {
+        return userRecoveryKeyRepository.findByResetKeyId(resetKeyId);
     }
 
     /**
@@ -121,7 +134,8 @@ public class UserRecoveryKeyService {
      */
     public void clearResetKey(long userId) {
         clear(userId, row -> {
-            row.setResetKey(null);
+            row.setResetKeyId(null);
+            row.setResetKeyHash(null);
             row.setResetDate(null);
         });
     }

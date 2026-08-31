@@ -365,10 +365,11 @@ public class PublicAccountResource {
         if (accountService.isPasswordLengthInvalid(keyAndPassword.newPassword())) {
             throw new PasswordViolatesRequirementsException();
         }
-        if (StringUtils.isEmpty(keyAndPassword.resetKey()) || keyAndPassword.resetKey().length() < 10) {
+        if (StringUtils.isEmpty(keyAndPassword.keyId()) || StringUtils.isEmpty(keyAndPassword.keySecret()) || keyAndPassword.keyId().length() < 10
+                || keyAndPassword.keySecret().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
-        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(), keyAndPassword.email(), keyAndPassword.resetKey(),
+        Optional<User> user = userService.completePasswordReset(keyAndPassword.newPassword(), keyAndPassword.keyId(), keyAndPassword.keySecret(),
                 keyAndPassword.revokeCredentialsOrAll());
 
         if (user.isEmpty()) {

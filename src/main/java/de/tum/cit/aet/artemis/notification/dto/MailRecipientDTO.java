@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.notification.dto;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKey;
 
 /**
  * DTO carrying the user fields needed to send a mail and to render mail templates.
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
  * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable @JsonIgnore String resetKey) {
+public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKey resetKey) {
 
     public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName) {
         this(email, langKey, login, firstName, lastName, null, null);
@@ -60,7 +60,7 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
      * @param resetKey the reset key to render, or null
      * @return the recipient carrying the given key
      */
-    public static MailRecipientDTO withResetKeyFrom(User user, String resetKey) {
+    public static MailRecipientDTO withResetKeyFrom(User user, PasswordResetKey resetKey) {
         return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, resetKey);
     }
 
@@ -79,6 +79,6 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
     @Override
     public @NonNull String toString() {
         return "MailRecipientDTO[" + "email='" + email + '\'' + ", langKey='" + langKey + '\'' + ", login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='"
-                + lastName + '\'' + ", activationKey=***, resetKey=***]";
+                + lastName + '\'' + ", activationKey=***, resetKey=" + resetKey + ']';
     }
 }

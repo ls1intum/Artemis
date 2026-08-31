@@ -116,13 +116,13 @@ public class MailService {
 
     public void sendPasswordResetMail(MailRecipientDTO recipient) {
         log.debug("Sending password reset email to '{}'", recipient.email());
-        assert recipient.email() != null && recipient.resetKey() != null;
+        assert recipient.resetKey() != null;
         sendEmailFromTemplate(recipient, "mail/passwordResetEmail", "email.reset.title");
     }
 
     public void sendSAML2SetPasswordMail(MailRecipientDTO recipient) {
         log.debug("Sending SAML2 set password email to '{}'", recipient.email());
-        assert recipient.email() != null && recipient.resetKey() != null;
+        assert recipient.resetKey() != null;
         sendEmailFromTemplate(recipient, "mail/samlSetPasswordEmail", "email.saml.title");
     }
 

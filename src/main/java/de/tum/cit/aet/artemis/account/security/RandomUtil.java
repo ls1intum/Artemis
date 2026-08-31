@@ -35,7 +35,11 @@ public final class RandomUtil {
         return generateRandomAlphanumericString();
     }
 
-    public static String generateResetKey() {
+    public static String generateResetKeyId() {
+        return generateRandomAlphanumericString();
+    }
+
+    public static String generateResetKeySecret() {
         return generateRandomAlphanumericString();
     }
 }

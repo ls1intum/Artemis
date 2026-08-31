@@ -225,11 +225,12 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1")
     void deactivatingAnAccountDropsItsOutstandingRecoveryKeys() {
         userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-1");
-        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-1", RESET_ISSUED_AT);
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-1", "hash", RESET_ISSUED_AT);
 
         userCreationService.deactivateUser(user);
 
         assertThat(userRecoveryKeyService.findActivationKey(user.getId())).isNull();
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isNull();
         assertThat(userRecoveryKeyService.findResetKeyHash(user.getId())).isNull();
         // And the key can no longer be redeemed, which is the point of clearing it.
         assertThat(userRecoveryKeyService.findUserIdByActivationKey("activation-key-1")).isEmpty();
@@ -243,12 +244,13 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1")
     void anAdministrativePasswordChangeKeepsTheInvitationKeys() {
         userRecoveryKeyService.storeActivationKey(user.getId(), "activation-key-2");
-        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-2", RESET_ISSUED_AT);
+        userRecoveryKeyService.storeResetKey(user.getId(), "reset-key-2", "hash-2", RESET_ISSUED_AT);
 
         accountCredentialRevocationService.revokeAllCredentials(user, "password changed by an administrator");
 
         assertThat(userRecoveryKeyService.findActivationKey(user.getId())).isEqualTo("activation-key-2");
-        assertThat(userRecoveryKeyService.findResetKeyHash(user.getId())).isEqualTo("reset-key-2");
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isEqualTo("reset-key-2");
+        assertThat(userRecoveryKeyService.findResetKeyHash(user.getId())).isEqualTo("hash-2");
     }
 
     /**
@@ -413,7 +415,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         giveUserCredentials();
         prepareResetKey();
 
-        userService.completePasswordReset("new-Password-123", user.getEmail(), getUnhashedResetKey(), new CredentialRevocationChoiceDTO(true, true, true)).orElseThrow();
+        userService.completePasswordReset("new-Password-123", getResetKeyId(), getResetKeySecret(), new CredentialRevocationChoiceDTO(true, true, true)).orElseThrow();
 
         assertAllCredentialsRevoked();
     }
@@ -425,7 +427,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         giveUserCredentials();
         prepareResetKey();
 
-        userService.completePasswordReset("new-Password-123", user.getEmail(), getUnhashedResetKey(), CredentialRevocationChoiceDTO.none()).orElseThrow();
+        userService.completePasswordReset("new-Password-123", getResetKeyId(), getResetKeySecret(), CredentialRevocationChoiceDTO.none()).orElseThrow();
 
         assertAllCredentialsKept();
     }
@@ -436,21 +438,25 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         giveUserCredentials();
         prepareResetKey();
 
-        userService.completePasswordReset("new-Password-123", user.getEmail(), getUnhashedResetKey(), new CredentialRevocationChoiceDTO(false, true, false)).orElseThrow();
+        userService.completePasswordReset("new-Password-123", getResetKeyId(), getResetKeySecret(), new CredentialRevocationChoiceDTO(false, true, false)).orElseThrow();
 
         assertPasskeyKept();
         assertVcsAccessTokensKept();
         assertThat(userSshPublicKeyRepository.findAllByUserId(user.getId())).isEmpty();
     }
 
-    private String getUnhashedResetKey() {
+    private String getResetKeyId() {
         return "reset-key-" + user.getId();
+    }
+
+    private String getResetKeySecret() {
+        return "reset-key-" + user.getId() + "-secret";
     }
 
     private void prepareResetKey() {
         // Deliberately clock-relative, unlike the fixed dates elsewhere in this class: completePasswordReset only accepts a
         // key issued within the last 24 hours, so a fixed date would expire and the reset would be refused.
-        userRecoveryKeyService.storeResetKey(user.getId(), passwordService.hashPassword(getUnhashedResetKey()), Instant.now());
+        userRecoveryKeyService.storeResetKey(user.getId(), getResetKeyId(), passwordService.hashPassword(getResetKeySecret()), Instant.now());
         userRepository.save(user);
     }
 

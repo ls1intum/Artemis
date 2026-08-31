@@ -198,7 +198,7 @@ public class UserCreationService {
         }
         saveUser(user);
         // An administrator-created account gets a reset key so its owner can set their own password.
-        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKey(), Instant.now());
+        userRecoveryKeyService.storeResetKey(user.getId(), RandomUtil.generateResetKeyId(), RandomUtil.generateResetKeySecret(), Instant.now());
 
         log.debug("Created Information for User: {}", user);
         return user;

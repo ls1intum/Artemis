@@ -5,9 +5,12 @@
 
     <!-- Remove user_recovery_key.reset_key and replace it with two columns for id and hash -->
     <changeSet id="20260830210000-1" author="angatha and Lion Holtkötter">
+        <renameColumn tableName="user_recovery_key" oldColumnName="reset_key" newColumnName="reset_key_id"/>
         <update tableName="user_recovery_key">
-            <column name="reset_key" value="null"/>
+            <column name="reset_key_id" value="null"/>
         </update>
-        <modifyDataType tableName="user_recovery_key" columnName="reset_key" newDataType="varchar(255)" />
+        <addColumn tableName="user_recovery_key">
+            <column name="reset_key_hash" type="varchar(255)"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>

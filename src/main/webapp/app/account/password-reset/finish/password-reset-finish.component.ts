@@ -51,10 +51,10 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     readonly error = signal(false);
     /** Indicates the password was successfully reset */
     readonly success = signal(false);
-    /** The email of the account for which the password is reset. It is extracted from the URL query parameters */
-    readonly email = signal('');
+    /** The reset key id extracted from the URL query parameters */
+    readonly resetKeyId = signal('');
     /** The reset key secret extracted from the URL query parameters */
-    readonly resetKey = signal('');
+    readonly resetKeySecret = signal('');
 
     // Default to revoking, so the safe outcome needs no thought and keeping a credential is the deliberate act.
     // A reset only proves the person controls the mailbox, which is a weaker claim to the account than knowing the
@@ -84,8 +84,8 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
      */
     ngOnInit() {
         this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            this.email.set(params['email'] ?? '');
-            this.resetKey.set(params['key'] ?? '');
+            this.resetKeyId.set(params['keyId'] ?? '');
+            this.resetKeySecret.set(params['keySecret'] ?? '');
             this.initialized.set(true);
         });
     }
@@ -126,7 +126,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        this.passwordResetFinishService.completePasswordReset(this.email(), this.resetKey(), newPassword.value, revocationChoice).subscribe({
+        this.passwordResetFinishService.completePasswordReset(this.resetKeyId(), this.resetKeySecret(), newPassword.value, revocationChoice).subscribe({
             next: () => this.success.set(true),
             error: () => this.error.set(true),
         });

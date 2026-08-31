@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -533,12 +532,12 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
-        String emailBefore = userBefore.get().getEmail();
+        String resetKeyIdBefore = userRecoveryKeyService.findResetKeyId(userBefore.get().getId());
         String resetKeyHashBefore = userRecoveryKeyService.findResetKeyHash(userBefore.get().getId());
 
         doNothing().when(mailService).sendPasswordResetMail(any());
         request.postStringWithoutLocation("/api/core/public/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
-        verifyPasswordReset(createdUser, emailBefore, resetKeyHashBefore);
+        verifyPasswordReset(createdUser, resetKeyIdBefore, resetKeyHashBefore);
     }
 
     @Test
@@ -547,30 +546,31 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
         Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
-        String emailBefore = userBefore.get().getEmail();
+        String resetKeyIdBefore = userRecoveryKeyService.findResetKeyId(userBefore.get().getId());
         String resetKeyHashBefore = userRecoveryKeyService.findResetKeyHash(userBefore.get().getId());
 
         doNothing().when(mailService).sendPasswordResetMail(any());
         request.postStringWithoutLocation("/api/core/public/account/reset-password/init", createdUser.getLogin(), HttpStatus.OK, null);
-        verifyPasswordReset(createdUser, emailBefore, resetKeyHashBefore);
+        verifyPasswordReset(createdUser, resetKeyIdBefore, resetKeyHashBefore);
     }
 
-    private void verifyPasswordReset(User createdUser, String emailBefore, String resetKeyHashBefore) throws Exception {
+    private void verifyPasswordReset(User createdUser, String resetKeyIdBefore, String resetKeyHashBefore) throws Exception {
         // check user data
         Optional<User> userPasswordResetInit = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();
-        String email = userPasswordResetInit.get().getEmail();
+        String resetKeyId = userRecoveryKeyService.findResetKeyId(userPasswordResetInit.get().getId());
         String resetKeyHash = userRecoveryKeyService.findResetKeyHash(userPasswordResetInit.get().getId());
 
         // verify key has been changed by the request
-        assertThat(email).isEqualTo(emailBefore);
+        assertThat(resetKeyId).isEqualTo(resetKeyIdBefore);
         assertThat(resetKeyHash).isNotEqualTo(resetKeyHashBefore);
 
         // finish password reset
         ArgumentCaptor<MailRecipientDTO> recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
         verify(mailService).sendPasswordResetMail(recipientCaptor.capture());
         String newPassword = getValidPassword();
-        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM(recipientCaptor.getValue().email(), recipientCaptor.getValue().resetKey(), newPassword, null);
+        assertThat(recipientCaptor.getValue().resetKey()).isNotNull();
+        KeyAndPasswordVM finishResetData = new KeyAndPasswordVM(recipientCaptor.getValue().resetKey().id(), recipientCaptor.getValue().resetKey().secret(), newPassword, null);
 
         // finish password reset
         request.postWithoutLocation("/api/core/public/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
@@ -657,7 +657,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         ArgumentCaptor<MailRecipientDTO> recipientCaptor = ArgumentCaptor.forClass(MailRecipientDTO.class);
         verify(mailService).sendPasswordResetMail(recipientCaptor.capture());
         String newPassword = getValidPassword();
-        final var badSecret = new StringBuilder(Objects.requireNonNull(recipientCaptor.getValue().resetKey()));
+        assertThat(recipientCaptor.getValue().resetKey()).isNotNull();
+        final var badSecret = new StringBuilder(recipientCaptor.getValue().resetKey().secret());
         badSecret.setCharAt(0, badSecret.charAt(0) == 'a' ? 'b' : 'a');
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM(recipientCaptor.getValue().email(), badSecret.toString(), newPassword, null);
 

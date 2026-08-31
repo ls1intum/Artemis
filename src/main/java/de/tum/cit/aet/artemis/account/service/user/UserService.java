@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +57,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKey;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -296,35 +296,31 @@ public class UserService {
      * Reset user password for given reset key
      *
      * @param newPassword      new password string
-     * @param email            email of the user whose password should be set.
-     * @param resetKey         reset key secret (not the hashed version)
+     * @param keyId            reset key id
+     * @param keySecret        reset key secret (not the hashed version)
      * @param revocationChoice which of the user's other credentials to revoke alongside the reset
      * @return user for whom the password was performed
      */
-    public Optional<User> completePasswordReset(String newPassword, String email, String resetKey, CredentialRevocationChoiceDTO revocationChoice) {
-        log.debug("Reset user password for {} with reset key", email);
-        return userRepository.findOneByEmailIgnoreCase(email).filter(user -> isResetRequestValid(user, resetKey)).map(user -> {
-            userRecoveryKeyService.clearResetKey(user.getId());
-            user.setPassword(passwordService.hashPassword(newPassword));
-            saveUser(user);
-            // Stops sessions established before the reset from being extended any further.
-            userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
-            // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
-            // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
-            // exactly as they do when changing a password from inside the account - with the difference that a reset
-            // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
-            // only proves control of the mailbox.
-            accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
-            accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
-            return user;
-        });
-    }
-
-    private boolean isResetRequestValid(@NonNull User user, @Nullable String resetKey) {
-        return userRecoveryKeyService.findById(user.getId())
-                .filter(userKey -> userKey.getResetDate() != null && userKey.getResetDate().isAfter(Instant.now().minus(MAX_RESET_KEY_LIFETIME)) && userKey.getResetKey() != null
-                        && passwordService.checkPasswordMatch(resetKey, userKey.getResetKey()))
-                .isPresent();
+    public Optional<User> completePasswordReset(String newPassword, String keyId, String keySecret, CredentialRevocationChoiceDTO revocationChoice) {
+        log.debug("Reset user password for reset key with id {}", keyId);
+        return userRecoveryKeyService.findByResetKeyId(keyId)
+                .filter(userKey -> userKey.getResetDate() != null && userKey.getResetDate().isAfter(Instant.now().minus(MAX_RESET_KEY_LIFETIME))
+                        && userKey.getResetKeyHash() != null && passwordService.checkPasswordMatch(keySecret, userKey.getResetKeyHash()))
+                .flatMap(userKey -> userRepository.findById(userKey.getUserId())).map(user -> {
+                    userRecoveryKeyService.clearResetKey(user.getId());
+                    user.setPassword(passwordService.hashPassword(newPassword));
+                    saveUser(user);
+                    // Stops sessions established before the reset from being extended any further.
+                    userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
+                    // A reset is the recovery flow, but forgetting a password is not the same as losing it to someone else, and
+                    // re-enrolling every authenticator and key is a real cost to impose on the common case. So the user decides,
+                    // exactly as they do when changing a password from inside the account - with the difference that a reset
+                    // defaults to revoking everything (see KeyAndPasswordVM#revokeCredentialsOrAll), because completing one
+                    // only proves control of the mailbox.
+                    accountCredentialRevocationService.revokeSelectedCredentials(user, revocationChoice, "password reset completed");
+                    accountSecurityNotificationService.passwordChanged(user, revocationChoice, AccountSecurityNotificationService.PasswordChangeActor.RESET);
+                    return user;
+                });
     }
 
     /**
@@ -342,14 +338,15 @@ public class UserService {
      * Set password reset data for a user if eligible
      *
      * @param user user requesting reset
-     * @return The newly created secret for resetting the password; {@code Optional.empty()} iff. not eligible.
+     * @return The newly created reset key for resetting the password; {@code Optional.empty()} iff. not eligible.
      */
-    public Optional<String> prepareUserForPasswordReset(User user) {
+    public Optional<PasswordResetKey> prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
-            String resetKey = RandomUtil.generateResetKey();
-            String resetKeyHash = passwordService.hashPassword(resetKey);
-            userRecoveryKeyService.storeResetKey(user.getId(), resetKeyHash, Instant.now());
-            return Optional.of(resetKey);
+            String resetKeyId = RandomUtil.generateResetKeyId();
+            String resetKeySecret = RandomUtil.generateResetKeySecret();
+            String resetKeyHash = passwordService.hashPassword(resetKeySecret);
+            userRecoveryKeyService.storeResetKey(user.getId(), resetKeyId, resetKeyHash, Instant.now());
+            return Optional.of(new PasswordResetKey(resetKeyId, resetKeySecret));
         }
         return Optional.empty();
     }
