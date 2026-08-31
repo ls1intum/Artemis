@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Drop the two position columns that no longer have a reader.
+
+        A submission's results used to be an ordered list whose position carried the correction round, and a submission's
+        build log entries used to be an ordered list as well. Both positions were maintained by Hibernate through an
+        @OrderColumn, which forced every write in those areas to go through a save of the whole submission, and saving a
+        submission selects it together with its participation, its exercise and the exercise's course because all three
+        associations are eager.
+
+        The correction round now lives on result.correction_round and the build log entries are ordered by the timestamp
+        they already carry, so neither column is mapped or read any more. They were deliberately left in place at the
+        time so that rolling the application back would still work; this drops them one release later.
+
+        Deferred on purpose: do not merge this before the release that contains the change which stopped using them.
+    -->
+
+    <changeSet id="20260825-03-drop-results-order" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="result" columnName="results_order"/>
+        </preConditions>
+        <dropColumn tableName="result" columnName="results_order"/>
+    </changeSet>
+
+    <changeSet id="20260825-04-drop-build-log-entries-order" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="build_log_entry" columnName="build_log_entries_order"/>
+        </preConditions>
+        <dropColumn tableName="build_log_entry" columnName="build_log_entries_order"/>
+    </changeSet>
+
+</databaseChangeLog>
