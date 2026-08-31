@@ -3,6 +3,8 @@ artemis:
         enabled: true
         atlasml:
             enabled: false
+    deimos:
+        enabled: false
     hyperion:
         enabled: false
     iris:
