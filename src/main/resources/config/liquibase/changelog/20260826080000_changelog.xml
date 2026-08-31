@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        Drop the twelve jhi_user columns whose values now live in their own tables.
+
+        The predecessor created each table, backfilled it and moved every reader and writer across, then stopped mapping
+        these columns entirely. They were left in the database so that a node still on the version before it keeps working
+        through a rolling deployment. This is the contract half of that expand/contract, and it must not be deployed until
+        the predecessor has been.
+
+        No index on jhi_user names any of these columns, so each is a plain drop.
+
+              column                        ->  now lives in
+              vcs_access_token              ->  user_vcs_access_token.token
+              vcs_access_token_expiry_date  ->  user_vcs_access_token.expiry_date
+              activation_key                ->  user_recovery_key.activation_key
+              reset_key                     ->  user_recovery_key.reset_key
+              reset_date                    ->  user_recovery_key.reset_date
+              last_login_date               ->  user_activity.last_login_date
+              deletion_warning_sent_date    ->  user_activity.deletion_warning_sent_date
+              credentials_changed_date      ->  user_activity.credentials_changed_date
+              ai_selection_decision         ->  user_ai_preference.selection_decision
+              ai_selection_decision_date    ->  user_ai_preference.selection_decision_date
+              memiris_enabled               ->  user_ai_preference.memiris_enabled
+              lti_created                   ->  user_lti.created_by_launch
+
+        Rollback re-creates the columns but not their values: the data lives in the new tables, and a rollback that
+        silently produced empty columns which code no longer reads would be worse than none. Recovering the values means
+        rolling the predecessor's changesets back too, which restores them from those tables.
+    -->
+    <changeSet id="20260826080000-1-drop-vacated-user-columns" author="krusche">
+        <dropColumn tableName="jhi_user">
+            <column name="vcs_access_token"/>
+            <column name="vcs_access_token_expiry_date"/>
+            <column name="activation_key"/>
+            <column name="reset_key"/>
+            <column name="reset_date"/>
+            <column name="last_login_date"/>
+            <column name="deletion_warning_sent_date"/>
+            <column name="credentials_changed_date"/>
+            <column name="ai_selection_decision"/>
+            <column name="ai_selection_decision_date"/>
+            <column name="memiris_enabled"/>
+            <column name="lti_created"/>
+        </dropColumn>
+        <rollback>
+            <addColumn tableName="jhi_user">
+                <column name="vcs_access_token" type="VARCHAR(50)"/>
+                <column name="vcs_access_token_expiry_date" type="DATETIME(3)"/>
+                <column name="activation_key" type="VARCHAR(20)"/>
+                <column name="reset_key" type="VARCHAR(20)"/>
+                <column name="reset_date" type="DATETIME(3)"/>
+                <column name="last_login_date" type="DATETIME(3)"/>
+                <column name="deletion_warning_sent_date" type="DATETIME(3)"/>
+                <column name="credentials_changed_date" type="DATETIME(3)"/>
+                <column name="ai_selection_decision" type="VARCHAR(20)"/>
+                <column name="ai_selection_decision_date" type="DATETIME(3)"/>
+                <column name="memiris_enabled" type="BOOLEAN" defaultValueBoolean="true">
+                    <constraints nullable="false"/>
+                </column>
+                <column name="lti_created" type="BOOLEAN" defaultValueBoolean="false">
+                    <constraints nullable="false"/>
+                </column>
+            </addColumn>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

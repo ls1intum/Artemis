@@ -70,6 +70,7 @@ describe('ExamUpdateComponent', () => {
         beforeEach(() => {
             examWithoutExercises = new Exam();
             examWithoutExercises.id = 1;
+            examWithoutExercises.title = 'Test Exam';
             course = new Course();
             course.id = 1;
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -145,6 +146,23 @@ describe('ExamUpdateComponent', () => {
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(1);
             expect(component.exam.testExam).toBe(false);
             expect(component.exam.workingTime).toBe(0);
+        });
+
+        it('should show the title validation message for a missing or whitespace-only title and hide it once a title is set', () => {
+            fixture.detectChanges();
+            const titleValidationSelector = By.css('[data-testid="title-validation-message"]');
+
+            const examWithBlankTitle = deepClone(component.exam);
+            examWithBlankTitle.title = '   ';
+            component.exam = examWithBlankTitle;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(titleValidationSelector)).not.toBeNull();
+
+            const examWithTitle = deepClone(component.exam);
+            examWithTitle.title = 'A valid exam title';
+            component.exam = examWithTitle;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
         });
 
         it('should validate the dates correctly', () => {
@@ -258,6 +276,7 @@ describe('ExamUpdateComponent', () => {
         it('should validate the example solution publication date correctly', () => {
             const newExamWithoutExercises = new Exam();
             newExamWithoutExercises.id = 2;
+            newExamWithoutExercises.title = 'Test Exam';
             component.exam = newExamWithoutExercises;
             component.timelineStatus.set({ valid: true, empty: false });
 
@@ -279,6 +298,7 @@ describe('ExamUpdateComponent', () => {
         it('should validate the exam summary publication date correctly', () => {
             const newExam = new Exam();
             newExam.id = 3;
+            newExam.title = 'Test Exam';
             component.exam = newExam;
             component.timelineStatus.set({ valid: true, empty: false });
 
@@ -721,6 +741,25 @@ describe('ExamUpdateComponent', () => {
 
             expect(component.isValidConfiguration).toBe(true);
             button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
+            expect(button.disabled()).toBe(true);
+        });
+
+        it('should disable the save button when the title is only whitespace', async () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            examWithoutExercises.title = '   ';
+
+            fixture.changeDetectorRef.detectChanges();
+            // Force the reactive form itself to report valid, so only the whitespace-only title can disable the save button
+            const ngForm = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            vi.spyOn(ngForm.form, 'invalid', 'get').mockReturnValue(false);
+            fixture.changeDetectorRef.markForCheck();
+            await fixture.whenStable();
+
+            expect(component.isValidConfiguration).toBe(false);
+            const button = fixture.debugElement.query(By.directive(ButtonComponent)).componentInstance;
             expect(button.disabled()).toBe(true);
         });
 
