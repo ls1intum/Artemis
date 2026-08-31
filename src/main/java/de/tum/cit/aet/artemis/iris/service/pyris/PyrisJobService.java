@@ -257,6 +257,16 @@ public class PyrisJobService {
      * This prevents {@code cancel(A)} from accidentally removing a since-started run B that carries a different
      * token. Run B is only removed by its own scoped cancel or by the normal completion path.
      *
+     * <p>
+     * The removal runs under {@link #runWithJobLock}, keyed on the pending token, and re-reads the job under that
+     * lock. The terminal callback ({@code PyrisStatusUpdateService#handleStatusUpdate}) runs its whole
+     * remove-job-then-{@code handleDecision}-then-release-marker sequence under the same job lock. Without this
+     * serialization, cancel's read-check-remove is not atomic against it: cancel could read job A as still present,
+     * pass the token check, and then release the marker after the callback has removed the job but while
+     * {@code handleDecision} is still materializing + persisting + pushing - reopening the re-trigger race the
+     * marker exists to close. Under the lock, cancel either runs fully before the callback claims the job, or sees
+     * the job already gone and does nothing.
+     *
      * @param userId       the struggling student (scopes the in-flight key)
      * @param exerciseId   the exercise the student is struggling on (scopes the in-flight key)
      * @param requestToken the token that must match the pending job's stamped token; null is treated as no-match
@@ -266,20 +276,29 @@ public class PyrisJobService {
             return;
         }
         var key = struggleInFlightKey(userId, exerciseId);
+        // Read the marker outside the lock only to learn WHICH job id to lock on. Everything the removal depends on
+        // is re-read under the lock. A stale read here cannot cancel the wrong run: we lock and re-check that token's
+        // own job, and the marker remove is token-conditional, so a marker already retaken by a newer run B is never
+        // touched. The worst a stale read does is lock a token whose job is gone (noop) or clean up its own leftover
+        // job-map entry.
         String pendingToken = getStruggleInFlightMap().get(key);
         if (pendingToken == null) {
             return;  // no pending job, idempotent noop
         }
-        var job = getPyrisJobMap().get(pendingToken);
-        if (!(job instanceof StruggleInterventionJob sij)) {
-            return;  // job expired or wrong type, noop
-        }
-        if (!requestToken.equals(sij.requestToken())) {
-            return;  // token mismatch: cancel(A) must never remove a since-started B
-        }
-        // Scoped match: remove the job entry and the in-flight marker
-        getPyrisJobMap().remove(pendingToken);
-        getStruggleInFlightMap().remove(key, pendingToken);
+        runWithJobLock(pendingToken, () -> {
+            var job = getPyrisJobMap().get(pendingToken);
+            if (!(job instanceof StruggleInterventionJob sij)) {
+                return null;  // callback already claimed/removed the job (or it expired): nothing to cancel
+            }
+            if (!requestToken.equals(sij.requestToken())) {
+                return null;  // token mismatch: cancel(A) must never remove a since-started B
+            }
+            // Scoped match, still pending under our token: remove the job entry and the in-flight marker
+            // (token-conditional, so a marker already retaken by a newer run is left intact).
+            getPyrisJobMap().remove(pendingToken);
+            getStruggleInFlightMap().remove(key, pendingToken);
+            return null;
+        });
     }
 
     /**

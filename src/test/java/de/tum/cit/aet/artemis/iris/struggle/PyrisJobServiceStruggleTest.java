@@ -6,6 +6,9 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,6 +174,61 @@ class PyrisJobServiceStruggleTest extends AbstractIrisIntegrationTest {
         assertThat(pyrisJobService.getJob(token)).as("a non-matching token must leave the job intact").isNotNull();
         assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-2", null, "tok-B", null))
                 .as("a non-matching scoped cancel must leave the in-flight reservation intact").isEmpty();
+    }
+
+    @Test
+    void scopedCancelSerializesUnderTheJobLockAgainstTheTerminalCallback() throws Exception {
+        long courseId = 9008L;
+        long userId = 9108L;
+        long exerciseId = 9208L;
+
+        String token = pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-1", null, "tok-A", null).orElseThrow();
+
+        // Stand in for the terminal callback, which runs its whole remove-job / handleDecision / release-marker
+        // sequence under runWithJobLock(jobId). Hold that exact lock so the scoped cancel below must wait for it.
+        var lockHeld = new CountDownLatch(1);
+        var releaseLock = new CountDownLatch(1);
+        var cancelReturned = new AtomicBoolean(false);
+
+        var callbackHolder = new Thread(() -> pyrisJobService.runWithJobLock(token, () -> {
+            lockHeld.countDown();
+            try {
+                releaseLock.await(5, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return null;
+        }));
+        callbackHolder.start();
+        assertThat(lockHeld.await(5, TimeUnit.SECONDS)).as("the callback stand-in must acquire the job lock").isTrue();
+
+        // Signalled at the call site so the assertion below cannot pass merely because the canceller thread had not
+        // been scheduled yet: we wait for the thread to be inside (or about to enter) removeStruggleJobIfTokenMatches
+        // before judging whether it blocked.
+        var cancelAtCallSite = new CountDownLatch(1);
+        var canceller = new Thread(() -> {
+            cancelAtCallSite.countDown();
+            pyrisJobService.removeStruggleJobIfTokenMatches(userId, exerciseId, "tok-A");
+            cancelReturned.set(true);
+        });
+        canceller.start();
+        assertThat(cancelAtCallSite.await(5, TimeUnit.SECONDS)).as("the canceller thread must reach the scoped-cancel call").isTrue();
+
+        // The canceller has entered the method while the callback still holds the job lock. It must not have
+        // completed: it now serializes under that same lock instead of releasing the marker out from under an
+        // in-flight decision. Without the fix the cancel takes no lock and its pure in-memory map ops return at once.
+        await().pollDelay(Duration.ofMillis(500)).atMost(Duration.ofSeconds(1)).until(() -> true);
+        assertThat(cancelReturned).as("the scoped cancel must block until the terminal callback releases the job lock").isFalse();
+
+        releaseLock.countDown();
+        callbackHolder.join(5000);
+        canceller.join(5000);
+        assertThat(cancelReturned).as("once the job lock is free the scoped cancel completes").isTrue();
+
+        assertThat(pyrisJobService.getJob(token)).as("after it runs, the matching scoped cancel has removed the job entry").isNull();
+        assertThat(pyrisJobService.addStruggleInterventionJobIfNonePending(courseId, userId, exerciseId, "decide", "ep-2", null, "tok-B", null))
+                .as("and freed the pair for a new reservation").isPresent();
     }
 
     @Test
