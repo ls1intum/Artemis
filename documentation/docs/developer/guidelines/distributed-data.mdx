@@ -113,6 +113,36 @@ Only then add the class to the allowlist in `DistributedDataProviderArchitecture
 each entry there needs a recorded reason, and two guard tests fail if an entry stops matching a class or stops using a
 backend.
 
+## Changing a stored type
+
+Hazelcast throws its data away when the cluster restarts. Redis and Valkey do not, which is the point: a queued build
+survives a deploy. The cost is that a new release reads bytes an older one wrote, and queue entries, set elements,
+topic messages and map keys are encoded positionally by Kryo, which carries no schema and no version of its own. A
+release that walks into the wrong layout gets a `KryoBufferUnderflowException` or, worse, a plausible-looking value
+built from the wrong bytes. That is what issue #12137 was.
+
+Every key is therefore prefixed with `DistributedDataSchema.VERSION`, for example `artemis:v1:buildJobQueue`, so a
+release only ever reads what a compatible build wrote. Two things follow for anybody changing a stored type.
+
+**Bump the version when the change is not readable by the previous build.** Adding, removing, reordering or retyping a
+record component all qualify. `DistributedDataSurfaceTest` fails when the shape of a stored type changes, writes what
+it found to `build/distributed-data-surface.actual.txt`, and asks you to decide: bump `VERSION` and update the
+recorded surface, or, if the change never reaches the encoding, update the recorded surface alone. The test is the
+reminder, in the way a Liquibase checksum is for the database.
+
+**Decide whether the structure survives the bump.** `DistributedDataSchema.CARRIED_OVER_STRUCTURES` lists what is moved
+into the new namespace. A structure that is not listed starts empty, which is how data gets discarded: leaving it out
+is the flush, and it is reviewed like any other change rather than typed into `redis-cli` during a deploy. The bar for
+listing something is that it cannot be reconstructed. Queued and running builds and unwritten results are listed,
+because nothing else knows they exist. Feature toggles are listed because a toggle an admin flipped at runtime lives
+nowhere else. Build agent registrations, websocket presence and caches are not, because they rebuild themselves within
+seconds.
+
+Migration runs on one node under a distributed lock before anything reads the store, and it moves entries rather than
+copying them, so peak memory stays flat. The old namespace is deleted once it completes: **rolling back to the previous
+release leaves it with an empty namespace**, which matches the forward-only rule
+`RedissonCodecConfiguration` already documents. Say so in the release notes of any release that bumps the version.
+
 ## Testing
 
 * `AbstractDistributedDataTest` is the contract suite; `LocalDataTest`, `HazelcastDistributedDataTest` and

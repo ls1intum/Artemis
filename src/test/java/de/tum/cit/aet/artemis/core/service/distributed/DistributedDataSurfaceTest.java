@@ -1,0 +1,189 @@
+package de.tum.cit.aet.artemis.core.service.distributed;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.RecordComponent;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Test;
+
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+
+/**
+ * Fails when the shape of a type stored in the distributed store changes, so that the change is a decision rather than
+ * a discovery.
+ *
+ * <p>
+ * Queue entries, set elements, topic messages and map keys are encoded positionally by Kryo, which carries no schema
+ * and no version. A release that reads what another release wrote therefore walks into the wrong bytes rather than
+ * getting a clean error, which is what issue #12137 looked like in production. Namespacing by
+ * {@link DistributedDataSchema#VERSION} prevents that, but only if somebody remembers to bump the version. This test
+ * is the reminder, and plays the part a Liquibase checksum plays for the database.
+ *
+ * <p>
+ * <b>When this test fails</b>, decide whether the change is one an older build could still read:
+ * <ul>
+ * <li>It cannot (a component added, removed, reordered or retyped): bump {@link DistributedDataSchema#VERSION}, decide
+ * in {@link DistributedDataSchema#CARRIED_OVER_STRUCTURES} whether the affected structure survives the bump, and then
+ * update the recorded surface.</li>
+ * <li>It can (a comment, a method, an annotation that does not reach the encoding): update the recorded surface
+ * alone.</li>
+ * </ul>
+ * Either way the test writes what it found next to the recorded file, so updating it is a review of the diff followed
+ * by a copy.
+ */
+class DistributedDataSurfaceTest {
+
+    /**
+     * Where the accepted surface is recorded. Kept as a file rather than a hash so that a failure shows what changed.
+     */
+    private static final Path RECORDED_SURFACE = Path.of("src", "test", "resources", "config", "distributed-data-surface.txt");
+
+    /**
+     * Where a differing surface is written, so the fix is reviewing a diff rather than transcribing by hand.
+     */
+    private static final Path ACTUAL_SURFACE = Path.of("build", "distributed-data-surface.actual.txt");
+
+    /**
+     * The types stored in the distributed structures. Everything they reach is walked, so this only has to name the
+     * roots: a build job and its result as they travel through the queues and the processing map, the agent record
+     * whose change caused #12137, and the key type of the feature toggles.
+     */
+    private static final List<Class<?>> ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class);
+
+    /**
+     * Types whose shape Artemis does not control and cannot change, so walking into them adds noise rather than
+     * coverage.
+     */
+    private static boolean isOurs(Class<?> type) {
+        return type.getName().startsWith("de.tum.cit.aet.artemis.");
+    }
+
+    @Test
+    void testDistributedDataSurfaceIsUnchanged() throws Exception {
+        String surface = renderSurface();
+        String recorded = Files.exists(RECORDED_SURFACE) ? Files.readString(RECORDED_SURFACE, StandardCharsets.UTF_8) : "";
+
+        if (!surface.equals(recorded)) {
+            // Written before asserting so that the fix is a reviewed copy rather than a hand edit.
+            FileUtils.writeStringToFile(ACTUAL_SURFACE.toFile(), surface, StandardCharsets.UTF_8);
+        }
+
+        assertThat(surface).as("""
+                The shape of a type stored in the distributed store changed.
+
+                Decide whether an older build could still read it. If it could not, because a component was added, \
+                removed, reordered or retyped, bump DistributedDataSchema.VERSION and check whether the affected \
+                structure is listed in CARRIED_OVER_STRUCTURES. If it could, only the record below needs updating.
+
+                What was found has been written to %s. Review the diff against %s, then replace it.
+                """.formatted(ACTUAL_SURFACE, RECORDED_SURFACE)).isEqualTo(recorded);
+
+        Files.deleteIfExists(ACTUAL_SURFACE);
+    }
+
+    /**
+     * @return the shape of every stored type, one per line, in a stable order
+     */
+    private static String renderSurface() {
+        Set<Class<?>> visited = new LinkedHashSet<>();
+        ROOTS.forEach(root -> collect(root, visited));
+
+        var byName = new TreeMap<String, String>();
+        for (Class<?> type : visited) {
+            byName.put(type.getName(), describe(type));
+        }
+        StringBuilder rendered = new StringBuilder();
+        rendered.append("# Shape of the types stored in the distributed store. See DistributedDataSurfaceTest.\n");
+        rendered.append("schema-version=").append(DistributedDataSchema.VERSION).append('\n');
+        byName.values().forEach(line -> rendered.append(line).append('\n'));
+        return rendered.toString();
+    }
+
+    private static void collect(Class<?> type, Set<Class<?>> visited) {
+        if (type == null || type.isPrimitive() || !isOurs(type) || !visited.add(type)) {
+            return;
+        }
+        for (Type referenced : referencedTypes(type)) {
+            for (Class<?> candidate : rawTypesOf(referenced)) {
+                collect(candidate, visited);
+            }
+        }
+    }
+
+    private static List<Type> referencedTypes(Class<?> type) {
+        if (type.isRecord()) {
+            return Arrays.stream(type.getRecordComponents()).map(RecordComponent::getGenericType).toList();
+        }
+        return Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers())).map(Field::getGenericType).toList();
+    }
+
+    private static List<Class<?>> rawTypesOf(Type type) {
+        List<Class<?>> raw = new ArrayList<>();
+        switch (type) {
+            case Class<?> clazz -> raw.add(clazz.isArray() ? clazz.getComponentType() : clazz);
+            case ParameterizedType parameterized -> {
+                raw.addAll(rawTypesOf(parameterized.getRawType()));
+                for (Type argument : parameterized.getActualTypeArguments()) {
+                    raw.addAll(rawTypesOf(argument));
+                }
+            }
+            default -> {
+                // Wildcards and type variables carry no shape of their own.
+            }
+        }
+        return raw;
+    }
+
+    /**
+     * @param type a stored type
+     * @return its encoded shape: what it is, the serialVersionUID an older build would compare against, and the
+     *         components or fields in declaration order, since Kryo encodes them positionally
+     */
+    private static String describe(Class<?> type) {
+        String kind = type.isRecord() ? "record" : type.isEnum() ? "enum" : type.isInterface() ? "interface" : "class";
+        String members;
+        if (type.isEnum()) {
+            // Constant order is part of the encoding: Kryo writes an enum by ordinal.
+            members = Arrays.stream(type.getEnumConstants()).map(Object::toString).collect(Collectors.joining(","));
+        }
+        else if (type.isRecord()) {
+            members = Arrays.stream(type.getRecordComponents()).map(component -> component.getGenericType().getTypeName() + " " + component.getName())
+                    .collect(Collectors.joining(", "));
+        }
+        else {
+            members = Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers()))
+                    .map(field -> field.getGenericType().getTypeName() + " " + field.getName()).collect(Collectors.joining(", "));
+        }
+        return "%s %s serialVersionUID=%s serializable=%s [%s]".formatted(kind, type.getName(), serialVersionUidOf(type), Serializable.class.isAssignableFrom(type), members);
+    }
+
+    private static String serialVersionUidOf(Class<?> type) {
+        try {
+            Field field = type.getDeclaredField("serialVersionUID");
+            field.setAccessible(true);
+            return String.valueOf(field.get(null));
+        }
+        catch (ReflectiveOperationException e) {
+            return "none";
+        }
+    }
+}
