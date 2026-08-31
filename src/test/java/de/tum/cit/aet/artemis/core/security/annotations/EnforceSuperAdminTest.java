@@ -51,7 +51,7 @@ class EnforceSuperAdminTest {
         String expression = preAuthorize.value();
         assertThat(expression).isNotNull();
         assertThat(expression).contains("hasRole('SUPER_ADMIN')");
-        assertThat(expression).contains("@currentUserAuthorizationService.isCurrentUserSuperAdmin(authentication)");
+        assertThat(expression).contains("@userRepository.isActiveSuperAdmin(authentication.name)");
         assertThat(expression).contains("@passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()");
         assertThat(expression).contains(" and ");
     }

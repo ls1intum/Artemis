@@ -23,7 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('SUPER_ADMIN') and @currentUserAuthorizationService.isCurrentUserSuperAdmin(authentication) and "
+@PreAuthorize("hasRole('SUPER_ADMIN') and @userRepository.isActiveSuperAdmin(authentication.name) and "
         + "@passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()")
 public @interface EnforceSuperAdmin {
 
