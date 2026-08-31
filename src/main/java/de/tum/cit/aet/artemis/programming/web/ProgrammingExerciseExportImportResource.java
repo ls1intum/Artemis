@@ -225,6 +225,7 @@ public class ProgrammingExerciseExportImportResource {
         newExercise.validateGeneralSettings();
         newExercise.validateProgrammingSettings();
         newExercise.validateSettingsForFeedbackRequest();
+        programmingExerciseValidationService.validateBuildConfigSize(newExercise);
         programmingExerciseValidationService.validateDockerFlags(newExercise);
         programmingExerciseValidationService.validatePackageName(newExercise);
         validateStaticCodeAnalysisSettings(newExercise);

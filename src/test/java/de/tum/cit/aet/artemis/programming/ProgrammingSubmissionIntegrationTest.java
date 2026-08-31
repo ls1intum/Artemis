@@ -34,7 +34,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -587,6 +586,35 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testLockAndGetProgrammingSubmissionKeepsAutomaticFeedback() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise = programmingExerciseRepository.save(exercise);
+        exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
+        submission.setParticipation(programmingExerciseStudentParticipation);
+        submission = submissionRepository.save(submission);
+
+        // automatic result with typed test-case feedback (including a deduplicated message)
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "lockTest");
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "lock failure message");
+
+        String url = "/api/programming/programming-submissions/" + submission.getId() + "/lock";
+        var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+
+        Result draft = storedSubmission.getLatestResult();
+        assertThat(draft).isNotNull();
+        assertThat(draft.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        // the automatic feedback was copied into the draft as typed rows and must be exposed as synthesized views
+        assertThat(draft.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getId()).isNegative();
+            assertThat(feedback.getDetailText()).isEqualTo("lock failure message");
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
 
         ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
@@ -774,10 +802,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         final var submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, ParticipationFactory.generateProgrammingSubmission(true),
                 TEST_PREFIX + "student1");
         var automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
-        var automaticFeedback = new Feedback().credits(1.0).type(FeedbackType.AUTOMATIC).text("lockedTestCase").detailText("failed");
-        automaticFeedback.setTestCase(testCase);
-        automaticResult.setFeedbacks(List.of(automaticFeedback));
-        resultRepository.save(automaticResult);
+        // The automatic feedback lives in the typed table; locking copies it and the endpoint synthesizes the view.
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "failed");
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
         String url = "/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true";

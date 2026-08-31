@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * REST controller for managing ProgrammingAssessment.
@@ -66,15 +67,18 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final SubmissionService submissionService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             StudentParticipationRepository studentParticipationRepository, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            SubmissionService submissionService) {
+            SubmissionService submissionService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.submissionService = submissionService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -91,7 +95,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             @PathVariable long submissionId) {
         log.debug("REST request to update the assessment of manual result for submission {} after complaint.", submissionId);
         User user = userRepository.getUserWithAuthorities();
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(submissionId);
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
         // NOTE: no assessment availability check here. A complaint can only exist once the results have been published,
@@ -107,6 +111,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         // assessment from result.assessor, and it replaces its in-memory result with this one. Without the explicit
         // reload the assessor would arrive as null and the override controls would wrongly stay enabled.
         Result resultForResponse = resultRepository.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
+        // The reload dropped the synthesized views of the typed automatic feedback the service attached - re-attach
+        // them so the editor keeps showing the automatic feedback next to the updated assessment.
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForResponse, programmingExercise, false);
 
         return ResponseEntity.ok(ProgrammingAssessmentResultDTO.of(resultForResponse));
     }

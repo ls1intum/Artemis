@@ -27,7 +27,25 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
     Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber);
 
-    List<Slide> findAllByAttachmentVideoUnitId(Long attachmentUnitId);
+    /**
+     * The slides of an attachment video unit, in slide order.
+     * <p>
+     * Ordered explicitly. As a derived query this returned rows in whatever order the database produced them, while
+     * callers do treat the result as ordered: the splitter iterates it to renumber and re-hide slides, and
+     * SlideSplitterServiceTest asserts the slide number by list position. That assumption held until it did not - the
+     * test failed in CI with "expected: 1 but was: 3" on the first element, which is an unordered read rather than a
+     * wrong split. Ordering here fixes every caller at once and cannot break one that never cared.
+     *
+     * @param attachmentUnitId the attachment video unit whose slides are returned
+     * @return the slides, ascending by slide number
+     */
+    @Query("""
+            SELECT slide
+            FROM Slide slide
+            WHERE slide.attachmentVideoUnit.id = :attachmentUnitId
+            ORDER BY slide.slideNumber ASC
+            """)
+    List<Slide> findAllByAttachmentVideoUnitId(@Param("attachmentUnitId") Long attachmentUnitId);
 
     /**
      * Find all slides with non-null hidden field but only returns the id and hidden fields

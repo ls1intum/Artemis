@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
@@ -97,13 +98,15 @@ public class ProgrammingSubmissionResource {
 
     private final ExerciseDateService exerciseDateService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
             SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
-            ExerciseDateService exerciseDateService) {
+            ExerciseDateService exerciseDateService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
@@ -118,6 +121,7 @@ public class ProgrammingSubmissionResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
         this.exerciseDateService = exerciseDateService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -358,7 +362,16 @@ public class ProgrammingSubmissionResource {
         // round stored on the result itself. The automatic results are filtered in the mapper instead of by mutating
         // the managed submission, whose result collection is mapped with orphanRemoval.
         var resultForCorrectionRound = programmingSubmission.getResultForCorrectionRound(correctionRound);
-        List<Result> resultsForResponse = resultForCorrectionRound == null ? List.of() : List.of(resultForCorrectionRound);
+        List<Result> resultsForResponse;
+        if (resultForCorrectionRound == null) {
+            resultsForResponse = List.of();
+        }
+        else {
+            // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+            // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(resultForCorrectionRound, programmingExercise, false);
+            resultsForResponse = List.of(resultForCorrectionRound);
+        }
 
         return ResponseEntity.ok(ProgrammingSubmissionForAssessmentDTO.of(programmingSubmission, ProgrammingExerciseResponseDTO.of(programmingExercise), resultsForResponse));
     }
@@ -416,6 +429,9 @@ public class ProgrammingSubmissionResource {
         // Only the manual results belong in the response. Filtering happens in the mapper, never by mutating the
         // managed submission, whose result collection is mapped with orphanRemoval.
         Set<Result> manualResults = submission.getManualResults();
+        // the copied automatic test-case and SCA feedback lives in the JSON-ignored typed collections -
+        // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
+        manualResults.forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
 
         return ResponseEntity.ok().body(ProgrammingSubmissionForAssessmentDTO.of(submission, ProgrammingExerciseResponseDTO.of(programmingExercise), manualResults));
     }

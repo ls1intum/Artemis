@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -109,6 +110,41 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void updateAssessmentAfterComplaint_responseKeepsTypedAutomaticFeedback() throws Exception {
+        ProgrammingSubmission submissionWithComplaint = ParticipationFactory.generateProgrammingSubmission(true);
+        submissionWithComplaint = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submissionWithComplaint,
+                TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
+        Result complainedAboutResult = submissionWithComplaint.getLatestResult();
+
+        // stored automatic test-case feedback (typed table) on the result that is complained about
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "complaintResponseTest");
+        participationUtilService.addTestCaseFeedbackToResult(complainedAboutResult, testCase, false, "typed complaint failure message");
+
+        Complaint complaint = complaintRepo.save(new Complaint().result(complainedAboutResult).complaintText("This is not fair"));
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("accepted");
+
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
+
+        Result updatedResult = request.putWithResponseBody("/api/programming/programming-submissions/" + submissionWithComplaint.getId() + "/assessment-after-complaint",
+                assessmentUpdate, Result.class, HttpStatus.OK);
+
+        // the typed rows are copied onto the new result ...
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(updatedResult.getId()))).hasSize(1);
+        // ... and the complaint response must expose them as synthesized views next to the manual feedback -
+        // the typed collections are not serialized, so the client would otherwise lose all automatic feedback
+        assertThat(updatedResult.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getId()).isNegative();
+            assertThat(feedback.getDetailText()).isEqualTo("typed complaint failure message");
+        });
+        assertThat(updatedResult.getFeedbacks()).anySatisfy(feedback -> assertThat(feedback.getDetailText()).isEqualTo("nice submission 1"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
@@ -138,7 +174,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(updatedResult.getAssessor().getId()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "tutor2").getId());
 
         // Check that result and submission are properly connected
-        var submissionFromDb = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(programmingSubmission.getId());
+        var submissionFromDb = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(programmingSubmission.getId());
         var resultFromDb = resultRepository.findWithSubmissionAndFeedbackAndTeamStudentsById(programmingAssessment.getId()).orElseThrow();
         assertThat(submissionFromDb.getLatestResult()).isEqualTo(updatedResult);
         assertThat(resultFromDb.getSubmission().getId()).isEqualTo(programmingSubmission.getId());
@@ -255,8 +291,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         ProgrammingSubmission newSubmission = new ProgrammingSubmission().commitHash("asdf");
         manualResult.setSubmission(newSubmission);
         request.put("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.OK);
-        var submission = programmingSubmissionRepository
-                .findByIdWithResultsFeedbacksAssessorTestCases(programmingExerciseStudentParticipation.getSubmissions().iterator().next().getId());
+        var submission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(programmingExerciseStudentParticipation.getSubmissions().iterator().next().getId());
         String commitHash = submission.getCommitHash();
 
         assertThat(commitHash).isEqualToIgnoringCase("123");
@@ -370,7 +405,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Double expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         manualResult.setFeedbacks(feedbacks);
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         var score = (points / programmingExercise.getMaxPoints()) * 100.0;
         manualResult.score(score);
         manualResult.rated(true);
@@ -387,7 +422,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
         manualResult.setFeedbacks(feedbacks);
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
         manualResult.rated(true);
@@ -399,7 +434,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         manualResult.addFeedback(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
-        points = manualResult.calculateTotalPointsForProgrammingExercises();
+        points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.score(points);
 
         response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
@@ -419,7 +454,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL).detailText("nice submission 1").text("manual feedback"));
 
         manualResult.setFeedbacks(feedbacks);
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
 
@@ -427,10 +462,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 manualResult, Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(4);
-        assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
-            assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
-            assertThat(feedback.getTestCase().getId()).isEqualTo(testCase.getId());
-        });
+        // The echoed automatic test-case feedback is not persisted as a manual feedback row anymore:
+        // automatic test feedback lives in the typed test_case_feedback table, and incoming echoes
+        // (without a stored id) are stripped before saving.
+        assertThat(response.getFeedbacks()).hasSize(3);
+        assertThat(response.getFeedbacks()).noneMatch(feedback -> feedback.getTestCase() != null && testCase.getId().equals(feedback.getTestCase().getId()));
     }
 
     @Test
@@ -496,7 +532,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // Remove feedbacks, change text and score. Keep the "theory" feedback (+2 credits) deterministically so the asserted score below is stable.
         Feedback keptFeedback = manualResult.getFeedbacks().stream().filter(f -> "theory".equals(f.getReference())).findFirst().orElseThrow();
         manualResult.setFeedbacks(List.of(keptFeedback));
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.setScore(points);
         manualResult = resultRepository.save(manualResult);
 
@@ -506,7 +542,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
 
         // Submission in response is lazy loaded therefore, we fetch submission and check if relation is correct
-        ProgrammingSubmission submissionFetch = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessorTestCases(programmingSubmission.getId());
+        ProgrammingSubmission submissionFetch = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(programmingSubmission.getId());
         assertThat(response.getId()).isEqualTo(submissionFetch.getLatestResult().getId());
         assertThat(submissionFetch.getId()).isEqualTo(programmingSubmission.getId());
     }
@@ -545,7 +581,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Overwrite the previous assessment with additional feedback.
         manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.setScore(points);
         Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
                 Result.class, HttpStatus.OK);
@@ -562,6 +598,39 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(savedAutomaticLongFeedback.getDetailText()).isEqualTo(manualLongFeedback.getDetailText());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateManualProgrammingExerciseResult_responseKeepsTypedAutomaticFeedback() throws Exception {
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
+        manualResult = setUpManualResultForUpdate(feedbacks);
+
+        // stored automatic test-case feedback (typed table) on the manual result being updated
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "typedResponseTest");
+        participationUtilService.addTestCaseFeedbackToResult(manualResult, testCase, false, "typed failure message");
+
+        // the manual result hangs on its own participation (created by the update helper) - target that one
+        long participationId = manualResult.getSubmission().getParticipation().getId();
+
+        // the draft-save response must expose the automatic feedback as synthesized views - the typed
+        // collections are not serialized, so the client would otherwise lose all automatic feedback
+        Result saveResponse = request.putWithResponseBody("/api/programming/participations/" + participationId + "/manual-results", manualResult, Result.class, HttpStatus.OK);
+        // the save must also preserve the stored typed rows themselves
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(saveResponse.getId()))).hasSize(1);
+        assertThat(saveResponse.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getId()).isNegative();
+            assertThat(feedback.getDetailText()).isEqualTo("typed failure message");
+        });
+
+        // same guarantee for the submit response
+        Result submitResponse = request.putWithResponseBody("/api/programming/participations/" + participationId + "/manual-results?submit=true", manualResult, Result.class,
+                HttpStatus.OK);
+        assertThat(submitResponse.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getId()).isNegative();
+            assertThat(feedback.getDetailText()).isEqualTo("typed failure message");
+        });
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
@@ -572,6 +641,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0);
         result.setRated(true);
         result.setExerciseId(programmingExercise.getId());
+        result.setSubmission(programmingSubmission);
         result = resultRepository.save(result);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -593,6 +663,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualLongFeedback.setDetailText(longText);
         var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0).rated(true);
         result.setExerciseId(programmingExercise.getId());
+        result.setSubmission(programmingSubmission);
         result = resultRepository.save(result);
 
         var newLongText = "def".repeat(5000);
@@ -629,7 +700,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Overwrite the previous assessment with additional feedback.
         manualResult.addFeedback(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.setScore(points);
         Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult,
                 Result.class, HttpStatus.OK);
@@ -664,7 +735,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         // Remove feedbacks, change text and score.
         manualResult.setFeedbacks(feedbacks);
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
+        double points = manualResult.calculateTotalPointsForProgrammingExercises(Map.of());
         manualResult.setScore(points);
         return resultRepository.save(manualResult);
     }
@@ -705,7 +776,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         manualResult = request.putWithResponseBody("/api/programming/participations/" + manualResult.getSubmission().getParticipation().getId() + "/manual-results", manualResult,
                 Result.class, HttpStatus.OK);
-        manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(manualResult.getId());
+        manualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(manualResult.getId());
         assessmentNote = manualResult.getAssessmentNote();
         assertThat(assessmentNote.getCreatedDate()).isNotNull();
         assertThat(assessmentNote.getLastModifiedDate()).isNotNull();
@@ -735,10 +806,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var latestCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
         var submission = programmingExerciseUtilService.createProgrammingSubmission(participation, true, latestCommitHash);
         var automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
-        var automaticFeedback = new Feedback().credits(1.0).type(FeedbackType.AUTOMATIC).text("echoedTestCase").detailText("failed");
-        automaticFeedback.setTestCase(testCase);
-        automaticResult.setFeedbacks(List.of(automaticFeedback));
-        resultRepository.save(automaticResult);
+        // The automatic feedback lives in the typed table; locking copies it and the endpoints synthesize the views.
+        participationUtilService.addTestCaseFeedbackToResult(automaticResult, testCase, false, "failed");
 
         // 1. the editor loads the assessment
         var lockedSubmission = request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmission.class);
@@ -759,13 +828,15 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         request.put("/api/programming/participations/" + participation.getId() + "/manual-results?submit=true", lockedResult, HttpStatus.OK);
 
-        // 3. fresh-session assert: exact row count and the surviving test-case foreign key
-        var storedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(lockedResult.getId());
-        assertThat(storedResult.getFeedbacks()).hasSize(2);
-        var storedAutomaticFeedback = storedResult.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).toList();
-        assertThat(storedAutomaticFeedback).hasSize(1);
-        assertThat(storedAutomaticFeedback.getFirst().getTestCase()).as("the automatic feedback kept its test case after the echo").isNotNull();
-        assertThat(storedAutomaticFeedback.getFirst().getTestCase().getId()).isEqualTo(testCase.getId());
+        // 3. fresh-session assert: the echoed synthesized views were not persisted as feedback rows, and the typed
+        // automatic feedback row survived the save with its test-case foreign key
+        var storedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(lockedResult.getId());
+        assertThat(storedResult.getFeedbacks()).hasSize(1);
+        assertThat(storedResult.getFeedbacks().iterator().next().getType()).isEqualTo(FeedbackType.MANUAL_UNREFERENCED);
+        var storedTypedFeedback = testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(lockedResult.getId()));
+        assertThat(storedTypedFeedback).hasSize(1);
+        assertThat(storedTypedFeedback.getFirst().getTestCase()).as("the automatic feedback kept its test case after the echo").isNotNull();
+        assertThat(storedTypedFeedback.getFirst().getTestCase().getId()).isEqualTo(testCase.getId());
     }
 
     /**
@@ -781,6 +852,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualLongFeedback.setDetailText(longText);
         var result = new Result().feedbacks(List.of(manualLongFeedback)).score(0.0).rated(true);
         result.setExerciseId(programmingExercise.getId());
+        // result.submission_id is a non-null column
+        result.setSubmission(programmingSubmission);
         result = resultRepository.save(result);
 
         Long originalFeedbackId = result.getFeedbacks().iterator().next().getId();
@@ -825,7 +898,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(savedResult.feedbacks().getFirst().hasLongFeedbackText()).isTrue();
 
         // fresh-session assert: the flag on the stored row and exactly one long feedback text holding the full text
-        var storedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(savedResult.id());
+        var storedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndAssessmentNoteElseThrow(savedResult.id());
         assertThat(storedResult.getFeedbacks()).hasSize(1);
         var storedFeedback = storedResult.getFeedbacks().iterator().next();
         assertThat(storedFeedback.getHasLongFeedbackText()).isTrue();
@@ -898,7 +971,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         var latestCommitHash = gitService.getLastCommitHash(studentParticipation.getVcsRepositoryUri());
         // Ensure the existing submission matches the repository HEAD returned during locking
         final var thirdSubmission = programmingExerciseUtilService.createProgrammingSubmission(studentParticipation, false, latestCommitHash);
-        participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
+        var thirdSubmissionWithResult = participationUtilService.addResultToSubmission(thirdSubmission, AssessmentType.AUTOMATIC, null);
+        // typed automatic feedback, so that the manual results of both rounds carry copies of it
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(exercise, "correctionRoundTest");
+        participationUtilService.addTestCaseFeedbackToResult(thirdSubmissionWithResult.getLatestResult(), testCase, false, "correction round failure message");
 
         var submissionsOfParticipation = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
         assertThat(submissionsOfParticipation).hasSize(3);
@@ -960,7 +1036,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // change the user here, so that for the next query the result will show up again.
         // set to true, if a tutor is only able to assess a submission if they have not assessed it any prior correction rounds
         // The response is the assessment only, so the reassignment must be done on the stored result: saving the
-        // response-shaped object would blank its submission reference.
+        // response-shaped object would blank its submission reference and try to persist the synthesized read-only
+        // feedback views as rows (see ProgrammingFeedbackSynthesizerService).
         var storedFirstManualResult = resultRepository.findByIdElseThrow(firstSubmittedManualResult.getId());
         storedFirstManualResult.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepository.save(storedFirstManualResult);
@@ -989,6 +1066,16 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         // it should contain the latest automatic result, and the lock for the manual result
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+
+        // The assessment dashboard asks for the same submission WITHOUT locking it, to find out whether it offers a
+        // second correction round at all. That variant loads the first round's result without its feedback, so
+        // nothing may try to attach the synthesized views of the typed automatic feedback to it - doing so answered
+        // 500 and the dashboard never offered the round.
+        LinkedMultiValueMap<String, String> paramsSecondCorrectionWithoutLock = new LinkedMultiValueMap<>();
+        paramsSecondCorrectionWithoutLock.add("correction-round", "1");
+        final var unlockedSubmissionForSecondRound = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK,
+                ProgrammingSubmission.class, paramsSecondCorrectionWithoutLock);
+        assertThat(unlockedSubmissionForSecondRound).isEqualTo(submissionWithoutFirstAssessment);
 
         // SECOND ROUND OF CORRECTION
         LinkedMultiValueMap<String, String> paramsSecondCorrection = new LinkedMultiValueMap<>();
@@ -1088,10 +1175,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         initialResult.setHasComplaint(true);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         initialResult.setExerciseId(programmingExercise.getId());
+        initialResult.setSubmission(programmingSubmission);
         initialResult = resultRepository.save(initialResult);
 
         programmingSubmission.addResult(initialResult);
-        initialResult.setSubmission(programmingSubmission);
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // complaining

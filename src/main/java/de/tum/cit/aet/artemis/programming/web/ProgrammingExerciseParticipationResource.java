@@ -172,7 +172,8 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingSubmission submission = participation.getSubmissions().isEmpty() ? null : (ProgrammingSubmission) participation.getSubmissions().iterator().next();
         // hide details that should not be shown to the students; masking happens by mapping fewer DTOs, never by mutating the loaded (possibly managed) submission
         Collection<Result> results = submission == null || hideResults ? List.of() : submission.getResults();
-        resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
+        // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
+        resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, results);
 
         List<ProgrammingSubmissionWithResultsDTO> submissionDTOs = submission == null ? List.of()
                 : List.of(ProgrammingSubmissionWithResultsDTO.of(submission, mapResults(results)));
@@ -285,7 +286,8 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
-        result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
+        // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
+        result.ifPresent(value -> resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, List.of(value)));
 
         return result.map(value -> ResponseEntity.ok(ProgrammingParticipationLatestResultDTO.of(value))).orElseGet(() -> ResponseEntity.ok(null));
     }
