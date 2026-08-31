@@ -60,7 +60,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 public abstract class ParticipantScore extends DomainObject {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exercise_id")
+    @JoinColumn(name = "exercise_id", nullable = false)
     private Exercise exercise;
 
     /**
