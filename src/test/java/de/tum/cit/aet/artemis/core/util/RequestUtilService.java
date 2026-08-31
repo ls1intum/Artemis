@@ -30,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -68,6 +69,10 @@ public class RequestUtilService {
 
     private final RequestPostProcessor requestPostProcessor;
 
+    // Thread-local because this bean is shared by every test in the context and JUnit runs them in parallel, and
+    // because SecurityContextHolder is itself thread-scoped, so the authentication to restore is per test thread.
+    private static final ThreadLocal<Authentication> AUTHENTICATION_BEFORE_REQUEST = new ThreadLocal<>();
+
     public RequestUtilService(MockMvc mvc, ObjectMapper mapper, @Autowired(required = false) FixMissingServletPathProcessor fixMissingServletPathProcessor)
             throws ServletException {
         this.mvc = mvc;
@@ -83,6 +88,11 @@ public class RequestUtilService {
      * @return the result actions
      */
     public ResultActions performMvcRequest(AbstractMockHttpServletRequestBuilder<?> requestBuilder) throws Exception {
+        // Captured per request rather than read back from the holder afterwards: server code that runs during the
+        // request may call SecurityUtils.setAuthorizationObject(), which replaces the authentication on the context
+        // object itself. That object is the one the test's @WithMockUser put there, so by the time the request
+        // returns, both it and TestSecurityContextHolder hold the system principal instead of the test's user.
+        AUTHENTICATION_BEFORE_REQUEST.set(SecurityContextHolder.getContext().getAuthentication());
         return mvc.perform(addRequestPostProcessorIfAvailable(requestBuilder));
     }
 
@@ -884,6 +894,14 @@ public class RequestUtilService {
      */
     public void restoreSecurityContext() {
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+        // Put back the principal the test authenticated as. Without this a second request in the same test runs as the
+        // nameless ROLE_ADMIN system principal left behind by SecurityUtils.setAuthorizationObject(), which passes the
+        // URL-level authority check but fails any rule that resolves the login, such as @EnforceAdmin.
+        Authentication authenticationBeforeRequest = AUTHENTICATION_BEFORE_REQUEST.get();
+        if (authenticationBeforeRequest != null) {
+            SecurityContextHolder.getContext().setAuthentication(authenticationBeforeRequest);
+            TestSecurityContextHolder.setAuthentication(authenticationBeforeRequest);
+        }
     }
 
     /**
