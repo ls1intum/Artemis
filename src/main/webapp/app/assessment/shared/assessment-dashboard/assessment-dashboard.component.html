@@ -22,6 +22,13 @@
                     <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
                 </a>
             </jhi-feature-overlay>
+
+            @if (deimosModuleEnabled()) {
+                <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" class="tab-item btn btn-sm btn-info ms-1" (click)="openDeimosBatchDialog()">
+                    <fa-icon [icon]="faShieldAlt" />
+                    <span jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
+                </button>
+            }
         }
     } @else {
         @if (!isTestRun() && course()?.isAtLeastInstructor) {
@@ -267,3 +274,10 @@
         </div>
     </div>
 }
+<jhi-deimos-date-range-modal
+    #deimosDateRangeModal
+    [titleTranslationKey]="'artemisApp.deimos.modal.title.course'"
+    [maxWindowDays]="31"
+    [isSubmitting]="deimosSubmitting()"
+    (confirmSelection)="triggerCourseDeimosBatch($event)"
+/>
