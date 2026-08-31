@@ -10,11 +10,13 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -144,5 +146,60 @@ class SecurityUtilsUnitTest {
         String tooLongPassword = "a".repeat(PASSWORD_MAX_LENGTH + 1);
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> SecurityUtils.checkUsernameAndPasswordValidity("validUser", tooLongPassword))
                 .withMessage("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
+    }
+
+    @Test
+    void testSetAuthorizationObjectKeepsAnAuthenticatedPrincipal() {
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("instructor1", "password", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+        SecurityContextHolder.setContext(securityContext);
+
+        SecurityUtils.setAuthorizationObject();
+
+        // The stand-in carries no login, so replacing a real principal would silently strip the identity that
+        // auditing and any authorization rule resolving authentication.name rely on for the rest of the request.
+        assertThat(SecurityUtils.getCurrentUserLogin()).contains("instructor1");
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("instructor1");
+    }
+
+    @Test
+    void testSetAuthorizationObjectReplacesAnAnonymousPrincipal() {
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(new AnonymousAuthenticationToken("key", "anonymousUser", List.of(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()))));
+        SecurityContextHolder.setContext(securityContext);
+
+        SecurityUtils.setAuthorizationObject();
+
+        // An anonymous request is exactly the case the stand-in exists for.
+        assertThat(SecurityUtils.isAuthenticated()).isTrue();
+        assertThat(SecurityContextHolder.getContext().getAuthentication().getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly("ROLE_ADMIN");
+    }
+
+    @Test
+    void testSetAuthorizationObjectSetsAStandInWhenNothingIsAuthenticated() {
+        SecurityContextHolder.clearContext();
+
+        SecurityUtils.setAuthorizationObject();
+
+        assertThat(SecurityUtils.isAuthenticated()).isTrue();
+    }
+
+    @Test
+    void testSetAuthorizationObjectIsIdempotent() {
+        SecurityContextHolder.clearContext();
+        SecurityUtils.setAuthorizationObject();
+        var firstStandIn = SecurityContextHolder.getContext().getAuthentication();
+
+        SecurityUtils.setAuthorizationObject();
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(firstStandIn);
+    }
+
+    @Test
+    void testMakeAuthorizationObjectReportsTheImpersonatedLogin() {
+        // getName() used to be null regardless of the argument, which made the object useless to anything reading
+        // authentication.name, including Spring Security expressions.
+        assertThat(SecurityUtils.makeAuthorizationObject("student1").getName()).isEqualTo("student1");
+        assertThat(SecurityUtils.makeAuthorizationObject("student1").getPrincipal()).isEqualTo("student1");
     }
 }

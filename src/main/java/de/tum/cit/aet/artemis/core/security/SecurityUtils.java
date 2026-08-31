@@ -126,6 +126,13 @@ public final class SecurityUtils {
      * behavior.
      */
     public static void setAuthorizationObject() {
+        // Only stands in for a missing authentication, never replaces one. The stand-in carries no login, and the
+        // context object is shared, so overwriting a real principal loses the identity that auditing
+        // (SpringSecurityAuditorAware), UserRepository#getUser and every authorization rule resolving
+        // authentication.name depend on for the rest of the request.
+        if (isAuthenticated()) {
+            return;
+        }
         SecurityContext context = SecurityContextHolder.getContext();
         context.setAuthentication(makeAuthorizationObject(null));
     }
@@ -171,7 +178,7 @@ public final class SecurityUtils {
 
             @Override
             public String getName() {
-                return null;
+                return login;
             }
         };
     }

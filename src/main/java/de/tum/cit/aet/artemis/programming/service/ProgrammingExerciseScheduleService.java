@@ -242,9 +242,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     private void scheduleCourseExercise(ProgrammingExercise exercise) {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
-        }
+        SecurityUtils.setAuthorizationObject();
 
         final ZonedDateTime now = TimeUtil.now();
 

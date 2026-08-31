@@ -117,9 +117,7 @@ public class DataExportScheduleService {
     }
 
     private void checkSecurityUtils() {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
-        }
+        SecurityUtils.setAuthorizationObject();
     }
 
     /**

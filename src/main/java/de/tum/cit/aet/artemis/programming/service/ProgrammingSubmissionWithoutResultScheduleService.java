@@ -77,9 +77,7 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
     }
 
     private void checkSecurityUtils() {
-        if (!SecurityUtils.isAuthenticated()) {
-            SecurityUtils.setAuthorizationObject();
-        }
+        SecurityUtils.setAuthorizationObject();
     }
 
 }
