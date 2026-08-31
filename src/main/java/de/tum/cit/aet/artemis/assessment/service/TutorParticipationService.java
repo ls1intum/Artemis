@@ -160,8 +160,11 @@ public class TutorParticipationService {
                 return feedback.getType() == MANUAL_UNREFERENCED;
             }
 
-            // For other feedback, both feedback have to reference the same element
-            return Objects.equals(tutorFeedback.getReference(), feedback.getReference());
+            // For other feedback, both feedback have to reference the same element. Compared by element id rather than
+            // by the whole reference: the type in front of the id is the editor's name for that kind of element, and
+            // that vocabulary changed with Apollon. Comparing the whole string made a sample assessed before the change
+            // match nothing a tutor writes after it, so every correct feedback was reported as unnecessary.
+            return Objects.equals(tutorFeedback.getReferenceElementId(), feedback.getReferenceElementId());
         }).toList();
 
         // If there are no potential matches, then the feedback is unnecessary

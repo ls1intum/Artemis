@@ -274,6 +274,25 @@ public class Feedback extends DomainObject {
         return reference != null && !reference.isEmpty();
     }
 
+    /**
+     * The id of the element this feedback refers to, taken out of a {@code <type>:<id>} reference.
+     * <p>
+     * Only the id identifies the element. The type in front of it is whatever the editor called that kind of element
+     * when the feedback was written, and that vocabulary has changed with Apollon versions, so two feedbacks on the
+     * very same element can carry different references. Compare elements by this, not by the whole reference.
+     *
+     * @return the element id, or the whole reference when it carries no type, or null when there is no reference
+     */
+    @JsonIgnore
+    @Nullable
+    public String getReferenceElementId() {
+        if (!hasReference()) {
+            return null;
+        }
+        int separator = reference.indexOf(':');
+        return separator < 0 ? reference : reference.substring(separator + 1);
+    }
+
     public void setReference(String reference) {
         this.reference = reference;
     }
