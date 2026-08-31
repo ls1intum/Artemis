@@ -4,6 +4,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { By } from '@angular/platform-browser';
+import { faGraduationCap, faVial } from '@fortawesome/free-solid-svg-icons';
 
 describe('ExamModeBadgeComponent', () => {
     let fixture: ComponentFixture<ExamModeBadgeComponent>;
@@ -30,6 +31,7 @@ describe('ExamModeBadgeComponent', () => {
         expect(tag.nativeElement.textContent).toContain('artemisApp.examManagement.testExam.testExam');
         const icon = fixture.debugElement.query(By.css('fa-icon'));
         expect(icon).not.toBeNull();
+        expect(icon.componentInstance.icon()).toBe(faVial);
     });
 
     it('should display real exam badge when testExam is false', () => {
@@ -41,5 +43,6 @@ describe('ExamModeBadgeComponent', () => {
         expect(tag.nativeElement.textContent).toContain('artemisApp.examManagement.testExam.realExam');
         const icon = fixture.debugElement.query(By.css('fa-icon'));
         expect(icon).not.toBeNull();
+        expect(icon.componentInstance.icon()).toBe(faGraduationCap);
     });
 });
