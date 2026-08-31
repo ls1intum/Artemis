@@ -25,8 +25,8 @@ import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/butto
 import { ExamChecklistComponent } from '../exam-checklist-component/exam-checklist.component';
 import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TumUiButtonDirective } from '@tumaet/ui-angular';
