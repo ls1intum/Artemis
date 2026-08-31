@@ -1080,6 +1080,36 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getSubmissionsWithResultsForParticipation_withUnfinishedAssessment_stillAnswers() throws Exception {
+        // A tutor who has started an assessment but not submitted it leaves a result without a completion date. Sorting
+        // the results by that date used to fail the whole request, so a student who asked Athena for feedback while an
+        // assessment was open could not load their feedback at all.
+        classExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        classExercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.updateExercise(classExercise);
+
+        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        submission = modelingExerciseUtilService.addModelingSubmission(classExercise, submission, TEST_PREFIX + "student1");
+        StudentParticipation participation = (StudentParticipation) submission.getParticipation();
+
+        createResult(AssessmentType.AUTOMATIC_ATHENA, submission, participation, null);
+        Result unfinished = createResult(AssessmentType.MANUAL, submission, participation, null);
+        unfinished.setCompletionDate(null);
+        resultRepository.save(unfinished);
+
+        List<ModelingSubmissionResponseDTO> submissions = request.getList("/api/modeling/participations/" + participation.getId() + "/submissions-with-results", HttpStatus.OK,
+                ModelingSubmissionResponseDTO.class);
+
+        assertThat(submissions).hasSize(1);
+        var results = submissions.getFirst().results();
+        assertThat(results).hasSize(2);
+        // The finished assessment comes first; the one still being written has no date and sorts last.
+        assertThat(results.getFirst().completionDate()).isNotNull();
+        assertThat(results.getLast().completionDate()).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getSubmissionsWithResultsForParticipation_afterSubmissionDueDate_returnsOnlyAthenaResults() throws Exception {
         // Given

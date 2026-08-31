@@ -508,7 +508,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                 else {
                     return true; // Tutors and above can see all results
                 }
-            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
+                // Newest assessment first. An assessment a tutor has started but not submitted has no completion date,
+                // and this list can hold one: for anyone who may see every result, it holds all of them. The comparator
+                // therefore has to tolerate a null date, which otherwise failed the whole request - a student who asked
+                // Athena for feedback while a tutor had an open assessment could not load their feedback at all.
+                // Undated results sort last, which is where the client's own ordering puts them too.
+            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate, Comparator.nullsFirst(Comparator.naturalOrder())).reversed())
+                    .toList();
 
             // Set filtered results back into the submission if any results remain after filtering
             if (!filteredResults.isEmpty()) {
