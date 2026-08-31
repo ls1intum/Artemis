@@ -217,6 +217,15 @@ public class SandboxBuildCommandService {
                     mkdir -p "$GRADLE_USER_HOME"
                     cp -a /root/.gradle/. "$GRADLE_USER_HOME"/ || exit 74
                 fi
+                if find "$BUILD_DIR" -type f -name pom.xml -print -quit | grep -q .; then
+                    # Maven writes resolver metadata even when every artifact is already present. The image cache lives on the read-only root filesystem, so builds use an
+                    # isolated writable copy just like Gradle builds above. Resetting it for every lane also prevents one candidate from influencing the other through the cache.
+                    MAVEN_REPOSITORY=/tmp/hyperion-m2-repository
+                    rm -rf "$MAVEN_REPOSITORY"
+                    mkdir -p "$MAVEN_REPOSITORY"
+                    cp -a /root/.m2/repository/. "$MAVEN_REPOSITORY"/ || exit 74
+                    export MAVEN_OPTS="${MAVEN_OPTS:+$MAVEN_OPTS }-Dmaven.repo.local=$MAVEN_REPOSITORY"
+                fi
                 if [ "$LANE" = "behavior-isolated" ] && [ -d "@@TRUSTED_STRUCTURAL_DIR@@" ]; then
                     TRUSTED_MANIFEST="$BUILD_DIR/.hyperion-trusted-structural-files"
                     ( cd "@@TRUSTED_STRUCTURAL_DIR@@" && find . -type f -print ) > "$TRUSTED_MANIFEST" || exit 74

@@ -369,6 +369,17 @@ class SandboxBuildCommandServiceTest {
     }
 
     @Test
+    void mavenBuild_usesWritableIsolatedLocalRepository() {
+        ProgrammingExercise java = new ProgrammingExercise();
+        java.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        java.setProjectType(ProjectType.PLAIN_MAVEN);
+
+        String script = new SandboxBuildCommandService(Optional.empty(), Optional.empty()).verifyScriptContent(java);
+
+        assertThat(script).contains("MAVEN_REPOSITORY=/tmp/hyperion-m2-repository", "cp -a /root/.m2/repository/. \"$MAVEN_REPOSITORY\"/", "-Dmaven.repo.local=$MAVEN_REPOSITORY");
+    }
+
+    @Test
     void authoritativeSequentialGradleBuild_handlesStructuralAndBehaviorTestSourceSets() {
         ProgrammingExercise java = new ProgrammingExercise();
         java.setProgrammingLanguage(ProgrammingLanguage.JAVA);

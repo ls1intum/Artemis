@@ -216,6 +216,7 @@ public class ProgrammingExerciseUpdateResource {
             ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
 
             // Validate the updated exercise
+            programmingExerciseValidationService.validateBuildConfigSize(updatedProgrammingExercise);
             updatedProgrammingExercise.validateGeneralSettings();
             updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
             programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
