@@ -236,6 +236,14 @@ public class UserService {
         else {
             log.info("Create internal admin user {}", internalAdminUsername);
             final var managedUserVM = createManagedUserVm(internalAdminUsername, internalAdminPassword);
+            // The configured address is one fixed value - and defaults to a placeholder - so it can already belong to another account: a previous internal admin that was
+            // renamed, or imported data. Since emails have to be unique, creating the account would be refused, and refusing the emergency account over an address it does
+            // not need is the wrong trade-off. It is created without one instead, and the operator is told which setting to point at a free address.
+            if (StringUtils.hasText(managedUserVM.getEmail()) && userRepository.existsByEmailIgnoreCase(managedUserVM.getEmail())) {
+                log.warn("The email address {} configured for the internal admin already belongs to another account, so {} is created without an email address. "
+                        + "Point artemis.user-management.internal-admin.email at an unused address to give it one.", managedUserVM.getEmail(), internalAdminUsername);
+                managedUserVM.setEmail(null);
+            }
             userCreationService.createUser(managedUserVM);
         }
     }
