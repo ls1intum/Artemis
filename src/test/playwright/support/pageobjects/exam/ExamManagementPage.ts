@@ -46,23 +46,37 @@ export class ExamManagementPage {
     /**
      * Opens the exercise groups page.
      */
-    async openExerciseGroups(examId: number) {
-        const subpage = this.page.locator(`#exam-${examId}-exercise-groups`);
-        if (!(await subpage.isVisible())) {
-            await this.page.locator(`#exam-${examId} [tumUiPanelHeader]`).click();
+    async openExerciseGroups(examId?: number) {
+        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
+        if (id) {
+            const panel = this.page.locator(`#exam-${id}`);
+            await panel.waitFor({ state: 'visible', timeout: 30_000 });
+            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+            if (await toggler.isVisible()) {
+                await toggler.click();
+            }
+            await panel.locator(`#exam-${id}-exercise-groups`).click();
+        } else {
+            await this.page.locator('[data-testid="sidebar-subpage-exercise-groups"]').first().click();
         }
-        await subpage.click();
     }
 
     /**
      * Opens the student registration page.
      */
-    async openStudentRegistration(examId: number) {
-        const subpage = this.page.locator(`#exam-${examId}-students`);
-        if (!(await subpage.isVisible())) {
-            await this.page.locator(`#exam-${examId} [tumUiPanelHeader]`).click();
+    async openStudentRegistration(examId?: number) {
+        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
+        if (id) {
+            const panel = this.page.locator(`#exam-${id}`);
+            await panel.waitFor({ state: 'visible', timeout: 30_000 });
+            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+            if (await toggler.isVisible()) {
+                await toggler.click();
+            }
+            await panel.locator(`#exam-${id}-students`).click();
+        } else {
+            await this.page.locator('[data-testid="sidebar-subpage-students"]').first().click();
         }
-        await subpage.click();
     }
 
     /**
@@ -97,14 +111,16 @@ export class ExamManagementPage {
     /**
      * Opens the test run page.
      */
-    async openTestRun() {
-        const match = this.page.url().match(/\/exams\/(\d+)/);
-        if (match) {
-            const subpage = this.page.locator(`#exam-${match[1]}-test-runs`);
-            if (!(await subpage.isVisible())) {
-                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+    async openTestRun(examId?: number) {
+        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
+        if (id) {
+            const panel = this.page.locator(`#exam-${id}`);
+            await panel.waitFor({ state: 'visible', timeout: 30_000 });
+            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+            if (await toggler.isVisible()) {
+                await toggler.click();
             }
-            await subpage.click();
+            await panel.locator(`#exam-${id}-test-runs`).click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-test-runs"]').first().click();
         }
@@ -113,14 +129,16 @@ export class ExamManagementPage {
     /**
      * Opens the exam grading system page.
      */
-    async openGradingKey() {
-        const match = this.page.url().match(/\/exams\/(\d+)/);
-        if (match) {
-            const subpage = this.page.locator(`#exam-${match[1]}-grading`);
-            if (!(await subpage.isVisible())) {
-                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+    async openGradingKey(examId?: number) {
+        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
+        if (id) {
+            const panel = this.page.locator(`#exam-${id}`);
+            await panel.waitFor({ state: 'visible', timeout: 30_000 });
+            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+            if (await toggler.isVisible()) {
+                await toggler.click();
             }
-            await subpage.click();
+            await panel.locator(`#exam-${id}-grading`).click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-grading"]').first().click();
         }
@@ -129,14 +147,16 @@ export class ExamManagementPage {
     /**
      * Opens the exam scores page.
      */
-    async openScoresPage() {
-        const match = this.page.url().match(/\/exams\/(\d+)/);
-        if (match) {
-            const subpage = this.page.locator(`#exam-${match[1]}-scores`);
-            if (!(await subpage.isVisible())) {
-                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+    async openScoresPage(examId?: number) {
+        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
+        if (id) {
+            const panel = this.page.locator(`#exam-${id}`);
+            await panel.waitFor({ state: 'visible', timeout: 30_000 });
+            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+            if (await toggler.isVisible()) {
+                await toggler.click();
             }
-            await subpage.click();
+            await panel.locator(`#exam-${id}-scores`).click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-scores"]').first().click();
         }
@@ -229,14 +249,16 @@ export class ExamManagementPage {
         await this.page.locator('#confirm').click();
     }
 
-    async clickEdit() {
-        const match = this.page.url().match(/\/exams\/(\d+)/);
-        if (match) {
-            const subpage = this.page.locator(`#exam-${match[1]}-edit`);
-            if (!(await subpage.isVisible())) {
-                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+    async clickEdit(examId?: number) {
+        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
+        if (id) {
+            const panel = this.page.locator(`#exam-${id}`);
+            await panel.waitFor({ state: 'visible', timeout: 30_000 });
+            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+            if (await toggler.isVisible()) {
+                await toggler.click();
             }
-            await subpage.click();
+            await panel.locator(`#exam-${id}-edit`).click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-edit"]').first().click();
         }

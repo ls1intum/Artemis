@@ -10,14 +10,16 @@ export class ExamDetailsPage {
         this.page = page;
     }
 
-    async openExerciseGroups() {
-        const match = this.page.url().match(/\/exams\/(\d+)/);
-        if (match) {
-            const subpage = this.page.locator(`#exam-${match[1]}-exercise-groups`);
-            if (!(await subpage.isVisible())) {
-                await this.page.locator(`#exam-${match[1]} [tumUiPanelHeader]`).click();
+    async openExerciseGroups(examId?: number) {
+        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
+        if (id) {
+            const panel = this.page.locator(`#exam-${id}`);
+            await panel.waitFor({ state: 'visible', timeout: 30_000 });
+            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+            if (await toggler.isVisible()) {
+                await toggler.click();
             }
-            await subpage.click();
+            await panel.locator(`#exam-${id}-exercise-groups`).click();
         } else {
             await this.page.locator('[data-testid="sidebar-subpage-exercise-groups"]').first().click();
         }
