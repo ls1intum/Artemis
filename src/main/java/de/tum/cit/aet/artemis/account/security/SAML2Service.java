@@ -149,11 +149,13 @@ public class SAML2Service {
 
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
-                if (userService.prepareUserForPasswordReset(user.get())) {
+                if (userService.prepareExternalUserForPasswordSetup(user.get())) {
                     mailService.sendSAML2SetPasswordMail(MailRecipientDTO.withRecoveryKey(user.get(), null, userRecoveryKeyService.findResetKey(user.get().getId())));
                 }
                 else {
-                    log.error("User {} was created but could not be found in the database!", user.get());
+                    // Reachable only if createUser ever stops activating the account outright; kept so a change there
+                    // fails loud instead of the account silently never getting its password-setup mail.
+                    log.error("SAML2 user {} was created but is not activated, so no password-setup mail was sent.", user.get());
                 }
             }
         }
