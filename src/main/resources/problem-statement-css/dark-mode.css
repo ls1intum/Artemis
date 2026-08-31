@@ -26,10 +26,42 @@
 /* Dark body backdrop for standalone SSR output. Layout lives in embedded.css
  * so light and dark share identical padding/margin. Consumers that embed our
  * fragments in their own page are unaffected (this rule only matches when the
- * server emits <body class="... artemis-ssr-body--dark">). */
-body.artemis-ssr-body--dark {
-    background: var(--body-bg, #1e1e1e);
+ * server emits <body class="... artemis-ssr-body--dark">).
+ *
+ * A class selector rather than `body.artemis-ssr-body--dark`: the Angular client renders the statement inside a
+ * shadow root that has no `body`, and carries the class on a wrapper element instead; the standalone consumer still
+ * matches it on its document `<body>`.
+ *
+ * Unlike the sandboxed iframe this replaced, a shadow root is part of the same document, so custom properties DO
+ * inherit across the boundary: where the application defines --module-bg / --body-color, the statement now follows
+ * the app's own dark surface token, which is the panel surface the statement sits on in both hosts (the split panel
+ * on the exercise details page, the card body in the code editor). The literal fallback below is used only where the
+ * token is not defined, and matches $module-bg / $card-bg ($neutral-dark in themes/_dark-variables.scss). */
+.artemis-ssr-body--dark {
+    background: var(--module-bg, #16191d);
     color: var(--body-color, #e0e0e0);
+}
+
+/* GitHub-style alert colors: the dark variants of the light values in embedded.css,
+ * taken from the client's content/scss/_github-alerts.scss. */
+.artemis-problem-statement--dark .markdown-alert-note {
+    --markdown-alert-color: #2f81f7;
+}
+
+.artemis-problem-statement--dark .markdown-alert-tip {
+    --markdown-alert-color: #3fb950;
+}
+
+.artemis-problem-statement--dark .markdown-alert-important {
+    --markdown-alert-color: #a371f7;
+}
+
+.artemis-problem-statement--dark .markdown-alert-warning {
+    --markdown-alert-color: #d29922;
+}
+
+.artemis-problem-statement--dark .markdown-alert-caution {
+    --markdown-alert-color: #f85149;
 }
 
 /* Modal dark theme — modal lives at document.body, so variables are re-declared here. */
@@ -46,7 +78,53 @@ body.artemis-ssr-body--dark {
     --artemis-modal-danger-color: #e57373;
     --artemis-modal-danger-border: rgba(220, 53, 69, 0.25);
     --artemis-modal-danger-item-bg: rgba(220, 53, 69, 0.08);
+    --artemis-modal-not-executed-bg: rgba(153, 153, 153, 0.2);
+    --artemis-modal-not-executed-color: #e8e8e8;
     --artemis-modal-subtle-bg: rgba(255, 255, 255, 0.05);
     --artemis-modal-subtle-border: rgba(255, 255, 255, 0.1);
     --artemis-modal-bar-track: rgba(255, 255, 255, 0.1);
+}
+
+/* Monokai palette, transcribed from highlight.js/styles/monokai.css; the light values it overrides are bound
+ * in embedded.css, which is always emitted before this file. */
+.artemis-problem-statement--dark {
+    --hljs-tag: #f92672;
+    --hljs-keyword: #f92672;
+    --hljs-selector-tag: #f92672;
+    --hljs-literal: #f92672;
+    --hljs-strong: #f92672;
+    --hljs-number: #f92672;
+    --hljs-name: #f92672;
+    --hljs-code: #66d9ef;
+    --hljs-attribute: #bf79db;
+    --hljs-attr: #bf79db;
+    --hljs-symbol: #bf79db;
+    --hljs-regexp: #bf79db;
+    --hljs-link: #bf79db;
+    --hljs-string: #a6e22e;
+    --hljs-bullet: #a6e22e;
+    --hljs-subst: #a6e22e;
+    --hljs-title: #a6e22e;
+    --hljs-section: #a6e22e;
+    --hljs-emphasis: #a6e22e;
+    --hljs-type: #a6e22e;
+    --hljs-built_in: #a6e22e;
+    --hljs-selector-attr: #a6e22e;
+    --hljs-selector-pseudo: #a6e22e;
+    --hljs-addition: #a6e22e;
+    --hljs-variable: #a6e22e;
+    --hljs-template-tag: #a6e22e;
+    --hljs-template-variable: #a6e22e;
+    --hljs-class-title: #fff;
+    --hljs-comment: #75715e;
+    --hljs-quote: #75715e;
+    --hljs-deletion: #75715e;
+    --hljs-meta: #75715e;
+    --hljs-bold-weight: bold;
+
+    /* Monokai styles these three not at all, so the Visual Studio bindings have to be released rather than
+     * overwritten: an unbound property falls back to `inherit` in the generated rules. */
+    --hljs-doctag: initial;
+    --hljs-emphasis-style: initial;
+    --hljs-strong-weight: initial;
 }

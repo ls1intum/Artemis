@@ -2,6 +2,8 @@
  * Vitest tests for AdminFeatureToggleComponent.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -51,7 +53,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load all feature toggles', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.featureToggles()).toHaveLength(14);
+            expect(comp.featureToggles()).toHaveLength(15);
         });
 
         it('ngOnInit should set isActive based on active toggles', () => {
@@ -341,6 +343,32 @@ describe('AdminFeatureToggleComponentTest', () => {
             for (const classes of [active, inactive]) {
                 expect(classes).not.toMatch(/(bg|border)-(red|green|blue|gray)-\d/);
             }
+        });
+    });
+
+    describe('translation coverage', () => {
+        // A toggle added to the enum without its entry here renders as `translation-not-found[...]` on this page, and
+        // nothing else catches it: the CI translation checker only compares the two languages against each other, so a
+        // key missing from both passes it. Asserted through the component's own key builders, so renaming one of them
+        // without moving the translations turns this red as well.
+        const bundleFor = (language: 'en' | 'de'): unknown => JSON.parse(readFileSync(join('src/main/webapp/i18n', language, 'featureToggles.json'), 'utf8'));
+
+        const translationFor = (bundle: unknown, key: string): unknown =>
+            key.split('.').reduce<unknown>((node, part) => (typeof node === 'object' && node !== null ? (node as Record<string, unknown>)[part] : undefined), bundle);
+
+        it.each(['en', 'de'] as const)('names, describes and warns about every runtime feature toggle in %s', (language) => {
+            const bundle = bundleFor(language);
+
+            const missing = Object.values(FeatureToggle).flatMap((feature) =>
+                [comp.getFeatureNameKey(feature), comp.getFeatureDescriptionKey(feature), comp.getFeatureWarningKey(feature)].filter((key) => {
+                    // A truthiness check would accept an object here, i.e. a key that resolves to a nested group
+                    // rather than to a translated string, which renders just as broken on the page as a missing one.
+                    const translation = translationFor(bundle, key);
+                    return typeof translation !== 'string' || translation.trim().length === 0;
+                }),
+            );
+
+            expect(missing).toEqual([]);
         });
     });
 });

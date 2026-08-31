@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.CacheControl;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -78,6 +79,24 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
                 .setCacheControl(defaultCacheControl);
 
         registry.addResourceHandler("/exam-user/**").addResourceLocations("file:" + fileUploadPath + "/images/exam-user/").setCacheControl(defaultCacheControl);
+    }
+
+    /**
+     * Allows anonymous cross-origin reads of the KaTeX assets.
+     * <p>
+     * The server-rendered problem statement loads {@code katex.min.css} from the configured server URL, which need not be the origin the client is served from. A stylesheet
+     * may be loaded cross-origin without CORS, but the {@code @font-face} rules inside it may not: font fetches are always CORS-aware, so on any deployment where the asset
+     * origin differs from the page origin the browser would block them without this header and every formula would fall back to a system font. Verified against a real browser,
+     * not only against this configuration.
+     * <p>
+     * These are public, unauthenticated, static assets (see the {@code permitAll} entry for {@code /assets/katex/**} in {@code SecurityConfiguration}), so the wildcard is
+     * appropriate. Credentials are deliberately not allowed, which also keeps the wildcard legal.
+     *
+     * @param registry the spring registry to use
+     */
+    @Override
+    public void addCorsMappings(@NonNull CorsRegistry registry) {
+        registry.addMapping("/assets/katex/**").allowedOrigins("*").allowedMethods("GET", "HEAD").allowCredentials(false);
     }
 
     /**

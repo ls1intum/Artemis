@@ -1,0 +1,95 @@
+$step-font-size: 0.6rem;
+$step-button-size: 21px; // Make sure to keep it uneven so that centering works
+
+.stepwizard {
+    display: table;
+    width: 100%;
+    position: relative;
+}
+
+.stepwizard-title {
+    display: table-cell;
+    width: 1%;
+    padding-right: 1rem;
+}
+
+.stepwizard-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    position: relative;
+}
+
+.stepwizard-step {
+    display: table-cell;
+    text-align: center;
+    position: relative;
+}
+
+.stepwizard-circle {
+    // Every enabled circle is actionable: the click handler emits for all statuses, so the pointer must not depend on
+    // colour. A circle is disabled while no feedback dialog can be opened for the bound inputs, or when the task
+    // itself has no test id to show, and then must not advertise a click.
+    cursor: pointer;
+
+    &:disabled {
+        cursor: default;
+    }
+
+    background-color: var(--module-bg);
+    width: $step-button-size;
+    height: $step-button-size;
+    text-align: center;
+    padding: 0;
+    font-size: $step-font-size;
+    line-height: 1;
+    border-radius: 15px;
+    border: 2px solid var(--secondary, #6c757d);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    // The circles are keyboard-activatable buttons, so they need a visible focus ring of their own: the border colour
+    // already encodes the status and cannot double as the focus indicator.
+    &:focus-visible {
+        outline: 2px solid var(--link-color);
+        outline-offset: 2px;
+    }
+
+    &.stepwizard-step--failed {
+        color: var(--danger, #dc3545);
+        border-color: var(--danger, #dc3545);
+    }
+
+    &.stepwizard-step--success {
+        color: var(--success, #28a745);
+        border-color: var(--success, #28a745);
+    }
+
+    &.stepwizard-step--not-executed,
+    &.stepwizard-step--no-result {
+        color: var(--secondary, #6c757d);
+        font-size: 0.4rem;
+    }
+}
+
+.stepwizard-row-line {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    border-top: 3px solid var(--gray-500, #adb5bd);
+}
+
+.icon-success {
+    color: var(--success, #28a745);
+}
+
+.icon-fail {
+    color: var(--danger, #dc3545);
+}
+
+.icon-neutral {
+    color: var(--secondary, #6c757d);
+}

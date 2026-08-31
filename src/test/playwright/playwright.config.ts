@@ -118,6 +118,16 @@ export default defineConfig({
                 viewport: { width: 1920, height: 1080 },
             },
         },
+        // Tests with @sequential tag. These mutate global server state (e.g. a feature toggle) that decides how
+        // other suites render, so they must not run while anything else does. `run-tests.sh` runs this project in
+        // its own invocation with --workers 1, after the parallel projects have finished.
+        {
+            name: 'sequential-tests',
+            grep: /@sequential/,
+            grepInvert: /@multi-node/,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
+        },
         // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and
         // are skipped by the single-node fast pipeline. The multi-node runner opts in explicitly.
         {

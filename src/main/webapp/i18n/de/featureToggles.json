@@ -188,6 +188,11 @@
                     "name": "Globale Suche",
                     "description": "Aktiviert eine einheitliche Suchoberfläche, die über Cmd+K/Strg+K erreichbar ist und es Nutzer:innen ermöglicht, schnell über Kurse, Aufgaben, Vorlesungen und andere Inhalte zu suchen.",
                     "disableWarning": "Nutzer:innen haben keinen Zugriff auf die globale Suchfunktion und müssen manuell durch die Oberfläche navigieren."
+                },
+                "SsrProblemStatement": {
+                    "name": "Serverseitige Aufgabenstellung",
+                    "description": "Rendert die Aufgabenstellung einer Programmieraufgabe auf dem Server statt im Browser, überall dort, wo sie nur gelesen wird. Ausgeschaltet nutzen alle Ansichten wieder den clientseitigen Renderer.",
+                    "disableWarning": "Aufgabenstellungen werden wieder im Browser gerendert. Lesende verlieren die serverseitig gerenderten Diagramme und die beibehaltene Scroll-Position bei einer Ergebnisaktualisierung."
                 }
             }
         }

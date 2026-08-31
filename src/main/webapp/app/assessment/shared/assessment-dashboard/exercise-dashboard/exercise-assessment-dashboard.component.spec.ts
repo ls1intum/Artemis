@@ -1,5 +1,6 @@
 import { MockInstance, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -40,7 +41,7 @@ import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercise/subm
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExtensionPointDirective } from 'app/foundation/extension-point/extension-point.directive';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
@@ -227,7 +228,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockComponent(CollapsableAssessmentInstructionsComponent),
         MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
         MockComponent(LanguageTableCellComponent),
-        MockComponent(ProgrammingExerciseInstructionComponent),
+        MockComponent(ProblemStatementRendererComponent),
         MockComponent(ButtonComponent),
         MockComponent(ResultComponent),
         MockDirective(ExtensionPointDirective),
@@ -264,8 +265,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             providers,
         })
             .overrideComponent(ExerciseAssessmentDashboardComponent, {
-                remove: { imports: [TutorLeaderboardComponent] },
-                add: { imports: [MockComponent(TutorLeaderboardComponent)] },
+                // ProblemStatementRendererComponent is a standalone import of ExerciseAssessmentDashboardComponent, so
+                // merely listing MockComponent(ProblemStatementRendererComponent) in this TestBed module's own imports
+                // (above) does not replace it there; the real class stays bound to the template unless removed here.
+                remove: { imports: [TutorLeaderboardComponent, ProblemStatementRendererComponent] },
+                add: { imports: [MockComponent(TutorLeaderboardComponent), MockComponent(ProblemStatementRendererComponent)] },
             })
             .compileComponents();
         fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
@@ -791,6 +795,23 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.sortMoreFeedbackRows();
 
         expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests(), expect.any(Function), false);
+    });
+
+    it('should bind shared live updates for the programming problem statement, a staff view of the template participation', () => {
+        const programmingExerciseForStatement = {
+            ...programmingExercise,
+            problemStatement: 'Some problem statement',
+            templateParticipation: { id: 99 },
+            tutorParticipations: [{ status: TutorParticipationStatus.NOT_PARTICIPATED }],
+        } as ProgrammingExercise;
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: programmingExerciseForStatement, headers: new HttpHeaders() })));
+
+        comp.loadAll();
+        fixture.detectChanges();
+
+        // ng-mocks models a signal input as the signal itself, so the bound value is read by calling it.
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: () => string };
+        expect(renderer.liveUpdates()).toBe('shared');
     });
 
     it('should return submission language', () => {

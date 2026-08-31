@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
@@ -15,7 +16,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
 import { Component, input, output, signal } from '@angular/core';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -64,7 +65,7 @@ describe('AssessmentInstructionsComponent', () => {
                     imports: [
                         ExpandableSectionComponent,
                         StructuredGradingInstructionsAssessmentLayoutComponent,
-                        ProgrammingExerciseInstructionComponent,
+                        ProblemStatementRendererComponent,
                         SecureLinkDirective,
                         ButtonComponent,
                         TranslateDirective,
@@ -75,7 +76,7 @@ describe('AssessmentInstructionsComponent', () => {
                     imports: [
                         MockComponent(ExpandableSectionComponent),
                         MockComponent(StructuredGradingInstructionsAssessmentLayoutComponent),
-                        MockComponent(ProgrammingExerciseInstructionComponent),
+                        MockComponent(ProblemStatementRendererComponent),
                         MockDirective(SecureLinkDirective),
                         MockComponent(ButtonComponent),
                         MockDirective(TranslateDirective),
@@ -133,6 +134,16 @@ describe('AssessmentInstructionsComponent', () => {
         fixture.detectChanges();
 
         expect(comp.sampleSolutionExplanation()).toBeUndefined();
+    });
+
+    it('should bind shared live updates for the programming problem statement, a staff view', () => {
+        const programmingExercise = { id: 1, type: ExerciseType.PROGRAMMING, templateParticipation: { id: 5 } } as ProgrammingExercise;
+        fixture.componentRef.setInput('exercise', programmingExercise);
+        fixture.detectChanges();
+
+        // ng-mocks models a signal input as the signal itself, so the bound value is read by calling it.
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: () => string };
+        expect(renderer.liveUpdates()).toBe('shared');
     });
 
     it('should convert the grading instructions to html', () => {

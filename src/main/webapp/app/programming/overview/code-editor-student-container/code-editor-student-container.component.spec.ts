@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ResultService } from 'app/exercise/result/result.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
@@ -13,6 +14,16 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
+import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 
 describe('CodeEditorStudentContainerComponent', () => {
     let comp: CodeEditorStudentContainerComponent;
@@ -73,4 +84,79 @@ describe('CodeEditorStudentContainerComponent', () => {
             expect(getParticipationSubmissionCountSpy).not.toHaveBeenCalled();
         },
     );
+});
+
+describe('CodeEditorStudentContainerComponent problem statement binding', () => {
+    let comp: CodeEditorStudentContainerComponent;
+    let fixture: ComponentFixture<CodeEditorStudentContainerComponent>;
+    let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
+    let submissionPolicyService: SubmissionPolicyService;
+
+    const studentParticipation: ProgrammingExerciseStudentParticipation = {
+        id: 21,
+        exercise: { id: 42, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false },
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: ResultService, useClass: MockResultService },
+                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                { provide: ActivatedRoute, useValue: { params: of({ participationId: studentParticipation.id }) } },
+                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(DomainService),
+                MockProvider(SubmissionPolicyService),
+                MockProvider(AlertService),
+            ],
+        })
+            // The real children (code editor, updating result, ...) need infrastructure this spec does not set up
+            // (Monaco, resize observers, ...); only the problem-statement-renderer binding under test stays real.
+            .overrideComponent(CodeEditorStudentContainerComponent, {
+                remove: {
+                    imports: [
+                        TranslateDirective,
+                        CodeEditorContainerComponent,
+                        IncludedInScoreBadgeComponent,
+                        CodeEditorRepositoryIsLockedComponent,
+                        UpdatingResultComponent,
+                        ProgrammingExerciseStudentTriggerBuildButtonComponent,
+                        ProblemStatementRendererComponent,
+                        AdditionalFeedbackComponent,
+                    ],
+                },
+                add: {
+                    imports: [
+                        MockDirective(TranslateDirective),
+                        MockComponent(CodeEditorContainerComponent),
+                        MockComponent(IncludedInScoreBadgeComponent),
+                        MockComponent(CodeEditorRepositoryIsLockedComponent),
+                        MockComponent(UpdatingResultComponent),
+                        MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
+                        MockComponent(ProblemStatementRendererComponent),
+                        MockComponent(AdditionalFeedbackComponent),
+                    ],
+                },
+            })
+            .compileComponents();
+        fixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
+        comp = fixture.componentInstance;
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        submissionPolicyService = TestBed.inject(SubmissionPolicyService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it("binds personal live updates for the student's own participation", () => {
+        vi.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult').mockReturnValue(of(studentParticipation));
+        vi.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
+
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        // ng-mocks models a signal input as the signal itself, so the bound value is read by calling it.
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: () => string };
+        expect(renderer.liveUpdates()).toBe('personal');
+    });
 });

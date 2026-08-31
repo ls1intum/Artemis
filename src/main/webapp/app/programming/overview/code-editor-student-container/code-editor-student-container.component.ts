@@ -24,7 +24,7 @@ import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons'
 import { isManualResult as isManualResultFunction } from 'app/exercise/result/result.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ProgrammingExerciseInstructionComponent } from '../../shared/instructions-render/programming-exercise-instruction.component';
+import { ProblemStatementRendererComponent } from '../../shared/instructions-render/ssr/problem-statement-renderer.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { CodeEditorRepositoryIsLockedComponent } from 'app/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
@@ -42,7 +42,7 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
         CodeEditorRepositoryIsLockedComponent,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
-        ProgrammingExerciseInstructionComponent,
+        ProblemStatementRendererComponent,
         AdditionalFeedbackComponent,
     ],
 })

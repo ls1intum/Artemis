@@ -1,0 +1,27 @@
+.ssr-status {
+    display: flex;
+    justify-content: center;
+}
+
+// Mirrors programming-exercise-instruction.scss's scroll chain: the legacy renderer scrolls only
+// `.instructions__content__markdown` (height: inherit; overflow: auto) and keeps its step wizard outside that box, so
+// the wizard stays pinned while the statement scrolls. The same split is reproduced here with a column flex host and a
+// single scrolling child, so the wizard and the status banners never scroll out of view.
+// `height: 100%` below only resolves to a real value where a bounded ancestor exists (the two code editor hosts, via
+// problem-statement-renderer.component.scss's `:host > *` rule, which turns this element into a definite-height flex
+// item). On the other four hosts the percentage falls back to `auto`, the column then sizes to its content, and
+// `.ssr-scroll-area` never overflows, so no nested scrollbar appears there.
+:host {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.ssr-scroll-area {
+    flex: 1 1 auto;
+
+    // Without this a flex item refuses to shrink below its content height, which would push the scrollbar back up to
+    // the nearest scrollable ancestor and take the pinned chrome with it.
+    min-height: 0;
+    overflow-y: auto;
+}

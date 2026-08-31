@@ -188,6 +188,11 @@
                     "name": "Global Search",
                     "description": "Enables a unified search interface accessible via Cmd+K/Ctrl+K that allows users to quickly search across courses, exercises, lectures, and other content.",
                     "disableWarning": "Users will not have access to the global search functionality and must navigate manually through the interface."
+                },
+                "SsrProblemStatement": {
+                    "name": "Server-Side Problem Statement",
+                    "description": "Renders the problem statement of a programming exercise on the server instead of in the browser, wherever it is shown read-only. Turning it off returns every view to the client-side renderer.",
+                    "disableWarning": "Problem statements will be rendered in the browser again. Readers lose the server-rendered diagrams and the retained scroll position on a result update."
                 }
             }
         }

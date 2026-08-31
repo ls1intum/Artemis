@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequestDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInputDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInputDTO;
+import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingConfiguration;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
 
 @Profile(PROFILE_CORE)
@@ -42,8 +43,11 @@ public class ProblemStatementRenderingResource {
 
     private final ProblemStatementRenderingService renderingService;
 
-    public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService) {
+    private final int maxTestResults;
+
+    public ProblemStatementRenderingResource(ProblemStatementRenderingService renderingService, ProblemStatementRenderingConfiguration renderingConfiguration) {
         this.renderingService = renderingService;
+        this.maxTestResults = renderingConfiguration.getMaxTestResults();
     }
 
     /**
@@ -66,15 +70,18 @@ public class ProblemStatementRenderingResource {
         log.debug("REST request to render problem statement (stateless)");
 
         Map<Long, TestFeedbackInputDTO> testResults = null;
-        if (renderRequest.testResults() != null && !renderRequest.testResults().isEmpty()) {
+        if (renderRequest.testResults() != null) {
+            if (renderRequest.testResults().size() > maxTestResults) {
+                return unprocessable("Too many test results", "testResults contains " + renderRequest.testResults().size() + " entries, the maximum is " + maxTestResults + ".");
+            }
             testResults = new HashMap<>();
             for (TestFeedbackInputDTO input : renderRequest.testResults()) {
                 if (testResults.containsKey(input.testId())) {
-                    ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT,
-                            "Duplicate test id " + input.testId() + " in testResults. Each test id must appear at most once.");
-                    problem.setTitle("Duplicate test id");
-                    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(problem);
+                    return unprocessable("Duplicate test id", "Duplicate test id " + input.testId() + " in testResults. Each test id must appear at most once.");
                 }
+                // Two distinct test ids may legitimately share a test name (no DB uniqueness constraint on
+                // test_name), so a duplicate name is not rejected here. TestFeedbackLookup treats such a name as
+                // ambiguous and resolves it to not-executed instead of picking one of the two tests.
                 testResults.put(input.testId(), input);
             }
         }
@@ -85,8 +92,19 @@ public class ProblemStatementRenderingResource {
         Locale locale = Locale.forLanguageTag(lang);
 
         RenderedProblemStatementDTO result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode(),
-                renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), renderRequest.shouldInlineImages());
+                renderRequest.shouldIncludeJs(), renderRequest.shouldIncludeCss(), renderRequest.shouldInlineImages(), Boolean.TRUE.equals(renderRequest.allTestsPassed()));
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
+    }
+
+    private static ResponseEntity<?> unprocessable(String title, String detail) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_CONTENT, detail);
+        problem.setTitle(title);
+        // The renderer shows a rejected render in place, above the statement it could not replace. Without this flag the
+        // client's ErrorHandlerInterceptor would raise a global toast for the same failure, so the user would be told
+        // twice, once in a message that names the endpoint's internals. Same contract as AccessForbiddenAlertException:
+        // the component handling the error displays the more concrete message itself.
+        problem.setProperty("skipAlert", true);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(problem);
     }
 }

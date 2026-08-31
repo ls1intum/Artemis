@@ -177,10 +177,10 @@
                             <div [innerHTML]="formattedProblemStatement()" class="no-bottom-space"></div>
                         } @else {
                             <!-- Programming exercises have a couple of custom render modules, so we load the instructions component here.-->
-                            <jhi-programming-exercise-instructions
+                            <jhi-problem-statement-renderer
                                 [exercise]="programmingExercise()"
                                 [participation]="programmingExercise().templateParticipation!"
-                                [personalParticipation]="false"
+                                [liveUpdates]="'shared'"
                             />
                         }
                     </jhi-info-panel>

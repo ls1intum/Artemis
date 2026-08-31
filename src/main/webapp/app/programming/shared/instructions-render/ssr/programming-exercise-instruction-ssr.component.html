@@ -1,0 +1,24 @@
+<jhi-programming-exercise-instruction-ssr-step-wizard [tasks]="tasks()" [interactive]="canOpenFeedback()" (taskSelected)="openTaskFeedback($event)" />
+@if (isLoading()) {
+    <!-- role="status" plus a name, not aria-busy alone: aria-busy marks the region as changing but announces
+         nothing and gives the spinner no text alternative, so a screen reader user gets no signal at all. -->
+    <div class="ssr-status" role="status" aria-busy="true" [attr.aria-label]="'artemisApp.programmingExercise.problemStatement.renderLoading' | artemisTranslate">
+        <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
+    </div>
+}
+@if (initialLoadFailed()) {
+    <tum-ui-message severity="warn" class="mb-3" [text]="errorMessageKey() | artemisTranslate" />
+}
+@if (refreshFailed()) {
+    <tum-ui-message severity="info" class="mb-3" [text]="'artemisApp.programmingExercise.problemStatement.renderStale' | artemisTranslate" />
+}
+<div class="ssr-scroll-area">
+    <jhi-programming-exercise-instruction-ssr-content
+        [html]="renderedHtml()"
+        [tasks]="tasks()"
+        [interactive]="canOpenFeedback()"
+        [linkTargets]="linkTargets()"
+        [attr.aria-busy]="isRefreshing()"
+        (taskActivated)="onTaskActivated($event)"
+    />
+</div>

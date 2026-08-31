@@ -1,5 +1,7 @@
 import { vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,6 +16,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ProblemStatementRendererComponent } from 'app/programming/shared/instructions-render/ssr/problem-statement-renderer.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -37,6 +41,9 @@ describe('DetailOverviewList', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            // The details are rendered inside `@defer (on idle)` blocks, so a test that asserts on their content has to
+            // drive the block itself instead of waiting for an idle callback that never fires deterministically.
+            deferBlockBehavior: DeferBlockBehavior.Manual,
             providers: [
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },
@@ -45,6 +52,10 @@ describe('DetailOverviewList', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
+            .overrideComponent(DetailOverviewListComponent, {
+                remove: { imports: [ProblemStatementRendererComponent] },
+                add: { imports: [MockComponent(ProblemStatementRendererComponent)] },
+            })
             .compileComponents()
             .then(() => {
                 modelingService = TestBed.inject(ModelingExerciseService);
@@ -88,6 +99,25 @@ describe('DetailOverviewList', () => {
         expect(titleDetailValue).toBeDefined();
         expect(titleDetailTitle.textContent).toContain('title');
         expect(titleDetailValue.textContent).toContain('A Title');
+    });
+
+    it('should bind shared live updates for the programming problem statement, a staff view of the template participation', async () => {
+        const exercise = { id: 1, templateParticipation: { id: 5 } } as ProgrammingExercise;
+        fixture.componentRef.setInput('sections', [
+            {
+                headline: 'headline.1',
+                details: [{ type: DetailType.ProgrammingProblemStatement, title: 'problemStatement', data: { exercise } }],
+            },
+        ]);
+        fixture.detectChanges();
+
+        const [problemStatementBlock] = await fixture.getDeferBlocks();
+        await problemStatementBlock.render(DeferBlockState.Complete);
+        fixture.detectChanges();
+
+        // ng-mocks models a signal input as the signal itself, so the bound value is read by calling it.
+        const renderer = fixture.debugElement.query(By.directive(ProblemStatementRendererComponent)).componentInstance as unknown as { liveUpdates: () => string };
+        expect(renderer.liveUpdates()).toBe('shared');
     });
 
     it('should download apollon Diagram', () => {

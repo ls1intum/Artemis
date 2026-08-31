@@ -1,0 +1,11 @@
+:host {
+    display: block;
+}
+
+/*
+ * The statement lives in this component's shadow root, and the render endpoint ships its own self-contained
+ * stylesheet (embedded.css / dark-mode.css) into that shadow root along with the markup, the highlight.js palette
+ * included. Nothing else is styled here: the global themes and the UI kit's CSS do not cross the shadow boundary,
+ * so all statement styling has to come from the server's stylesheet, and duplicating any of it here would create a
+ * second source of truth that could drift.
+ */

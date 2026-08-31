@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,17 +26,22 @@ public final class PlantUmlTaskColorResolver {
     /** Captures a single test identifier inside {@code testsColor(...)}. */
     private static final String TESTS_COLOR_INNER = "(\\s*[^()\\s]+(?:\\([^()]*\\))?)";
 
-    /** {@code <color:testsColor(testName)>text</color>}. Group 1: test identifier, Group 2: inner text. */
-    private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(" + TESTS_COLOR_INNER + "\\)>(.*?)</color>");
+    /**
+     * {@code <color:testsColor(testName)>text</color>}. Group 1: test identifier, Group 2: inner text.
+     * <p>
+     * The inner text is bounded rather than open-ended, because an unbounded match makes an opening tag without a
+     * closing one scan the whole remaining source, which is quadratic: 4500 unclosed tags within the request limit
+     * cost a second of CPU. The bound cannot change the outcome for anything renderable, because
+     * {@code PlantUmlService} rejects a diagram longer than 10 000 characters outright. {@code .} excludes line
+     * terminators, so a tag left open at the end of a line is unaffected either way.
+     */
+    private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(" + TESTS_COLOR_INNER + "\\)>(.{0,10000}?)</color>");
 
     /** {@code #testsColor(testName)}. Group 1: test identifier. */
     private static final Pattern TESTS_COLOR_ARROW_PATTERN = Pattern.compile("#testsColor\\(" + TESTS_COLOR_INNER + "\\)");
 
     /** {@code #text:testsColor(testName)}. Group 1: test identifier. */
     private static final Pattern TESTS_COLOR_TEXT_PATTERN = Pattern.compile("#text:testsColor\\(" + TESTS_COLOR_INNER + "\\)");
-
-    /** {@code <testid>NNN</testid>}. */
-    private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
 
     private PlantUmlTaskColorResolver() {
     }
@@ -46,62 +50,38 @@ public final class PlantUmlTaskColorResolver {
      * Rewrites every {@code testsColor(...)} token in the given PlantUML source to a concrete color
      * (green, red, or grey) based on the test results. Other PlantUML content is returned unchanged.
      *
-     * @param source      the PlantUML source text
-     * @param testResults map of test id → feedback, or {@code null} if no results are available
+     * @param source         the PlantUML source text
+     * @param testResults    map of test id → feedback, or {@code null} if no results are available
+     * @param allTestsPassed whether the request declared that every test passed although it carries no per-test
+     *                           feedback. Only honored when {@code testResults} is {@code null}: individual test
+     *                           outcomes always win, so a request that carries both never colors a failing test green.
      * @return PlantUML source with test-color tokens resolved
      */
-    public static String resolve(String source, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
-        Map<String, TestFeedbackInputDTO> byName = buildByNameLookup(testResults);
+    public static String resolve(String source, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean allTestsPassed) {
+        TestFeedbackLookup lookup = TestFeedbackLookup.of(testResults);
+        // Callers hand over the raw request flag, so the predicate is applied here, once, on the same two inputs the
+        // task renderer uses: task markers and the diagram beside them must never disagree.
+        boolean allPassed = allTestsPassed && testResults == null;
 
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
-            String color = resolveColor(match.group(1).trim(), testResults, byName);
+            String color = colorFor(lookup, match.group(1), allPassed);
             return Matcher.quoteReplacement("<color:" + color + ">" + match.group(2) + "</color>");
         });
         // Text coloring must be checked before plain arrow/element coloring to avoid partial matches.
-        resolved = TESTS_COLOR_TEXT_PATTERN.matcher(resolved).replaceAll(match -> {
-            String color = resolveColor(match.group(1).trim(), testResults, byName);
-            return Matcher.quoteReplacement("#text:" + color);
-        });
-        resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> {
-            String color = resolveColor(match.group(1).trim(), testResults, byName);
-            return Matcher.quoteReplacement("#" + color);
-        });
+        resolved = TESTS_COLOR_TEXT_PATTERN.matcher(resolved).replaceAll(match -> Matcher.quoteReplacement("#text:" + colorFor(lookup, match.group(1), allPassed)));
+        resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> Matcher.quoteReplacement("#" + colorFor(lookup, match.group(1), allPassed)));
         return resolved;
     }
 
-    /**
-     * Strips {@code <testid>N</testid>} wrappers from the given text, leaving the numeric identifier.
-     * Used to clean up PlantUML source so the layout engine does not see unknown XML-looking tokens.
-     *
-     * @param text the source text potentially containing {@code <testid>N</testid>} wrappers
-     * @return the text with those wrappers replaced by their numeric identifier
-     */
-    public static String stripTestIdWrappers(String text) {
-        return TESTID_PATTERN.matcher(text).replaceAll("$1");
-    }
-
-    private static Map<String, TestFeedbackInputDTO> buildByNameLookup(@Nullable Map<Long, TestFeedbackInputDTO> testResults) {
-        if (testResults == null) {
-            return Map.of();
+    private static String colorFor(TestFeedbackLookup lookup, String testRef, boolean allPassed) {
+        if (allPassed) {
+            // No feedback can resolve at all in this case, so every reference (by id or by name) is green.
+            return "green";
         }
-        Map<String, TestFeedbackInputDTO> byName = new HashMap<>();
-        for (TestFeedbackInputDTO detail : testResults.values()) {
-            byName.put(detail.testName(), detail);
-        }
-        return byName;
-    }
-
-    private static String resolveColor(String testRef, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Map<String, TestFeedbackInputDTO> byName) {
-        if (testResults == null) {
-            return "grey";
-        }
-        Matcher idMatcher = TESTID_PATTERN.matcher(testRef);
-        if (idMatcher.matches()) {
-            long testId = Long.parseLong(idMatcher.group(1));
-            TestFeedbackInputDTO detail = testResults.get(testId);
-            return detail == null ? "grey" : detail.passed() ? "green" : "red";
-        }
-        TestFeedbackInputDTO detail = byName.get(testRef);
-        return detail == null ? "grey" : detail.passed() ? "green" : "red";
+        return switch (lookup.outcomeOf(testRef)) {
+            case PASSED -> "green";
+            case FAILED -> "red";
+            case NOT_EXECUTED -> "grey";
+        };
     }
 }

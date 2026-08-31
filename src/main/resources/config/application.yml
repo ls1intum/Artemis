@@ -36,6 +36,8 @@ artemis:
     file-upload-path: uploads
     feedback:
         max-feedback-length: 20000  # Maximum length for feedback text before truncation
+    problem-statement-rendering:
+        max-test-results: 1000  # Maximum number of test results accepted in a single stateless problem-statement render request
     submission-export-path: exports
     temp-path: ./tmp                                # a folder in which temporary files are stored, e.g. for the programming exercise import from file
     bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value

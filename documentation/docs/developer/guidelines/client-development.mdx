@@ -518,6 +518,38 @@ Do one of these:
 - `else` goes on the same line from the closing curly brace.
 - Use 4 spaces per indentation.
 
+### Rendering untrusted markup
+
+Markup the application did not author itself is rendered inside a **shadow root**, never directly into this document.
+The server-side problem statement renderer is the case this exists for: a problem statement is authored by course
+staff, passes a jsoup safelist on the server and DOMPurify in the browser, and is then injected into the shadow root of
+the content component.
+
+The shadow root isolates the statement's **CSS**, not its scripts: it is same-origin, so it is not a security boundary.
+What keeps a sanitizer bypass from reaching the application is the sanitization itself, not any origin barrier. The
+statement is therefore protected by two independent sanitizers, and the client assembly (`assembleShadowContent` in
+`app/programming/shared/instructions-render/ssr/problem-statement-frame.util.ts`) lets nothing executable through:
+
+- **The fragment is sanitized with DOMPurify** after the server's jsoup safelist, which also covers the SVG a diagram
+  emits that the server safelist deliberately does not see. Every `<script>` is removed, and no event-handler attribute
+  survives, so no author markup runs.
+- **Nothing about the viewer goes into the shadow root.** `data-feedback` and `data-result` (the reader's own results)
+  are stripped before injection: without an origin boundary the statement shares the page's credentials, so observable
+  data must not sit in a DOM a bypass could read.
+- **Same-origin images the server could not inline are replaced by their alt text**, and retained external images get
+  `referrerpolicy="no-referrer"`. The client requests `inlineImages: true`, so local files arrive as `data:` URIs.
+- **Clicks and keyboard activation are handled by the content component**, not by native navigation: every statement
+  anchor (HTML and SVG) has its default cancelled and is opened only if it is one of the hrefs the render actually
+  contained, so a click can never navigate the application away or open an arbitrary URL.
+
+An earlier version of this renderer put the statement in a sandboxed iframe for script and origin isolation on top of
+the sanitization. That was dropped in favour of the double jsoup + DOMPurify sanitization: the iframe added a
+cross-document `postMessage` protocol and a per-engine cookie caveat of its own, and the same attack surface (a single
+sanitizer bypass equals a compromise) already exists in the legacy `[innerHtml]` renderer that ships today. The
+trade-off is deliberate and documented in the pull request. jsdom implements no layout and its shadow-root focus
+handling is incomplete, so the rendering, highlighting and interactivity are asserted in the Playwright layout spec
+rather than in Vitest.
+
 ### Cloning objects
 
 Copy objects with the helpers in `app/foundation/util/deep-clone.util` (thin wrappers over lodash `cloneDeep`). **Never** use `structuredClone()`, object spread (`{ ...obj }`), or `Object.assign` on an object — enforced in production client code by `localRules/prefer-deep-clone`.
@@ -525,7 +557,7 @@ Copy objects with the helpers in `app/foundation/util/deep-clone.util` (thin wra
 | Helper                       | Replaces                                           | Use for                                                    |
 | ---------------------------- | -------------------------------------------------- | ---------------------------------------------------------- |
 | `deepClone(x)`               | `{ ...x }`, `Object.assign({}, x)`                 | A plain copy                                               |
-| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression          |
+| `cloneWith(x, { a, b })`     | `{ ...x, a, b }`, `Object.assign({}, x, { a, b })` | A copy with some fields changed, as one expression         |
 | `hydrate(new Course(), dto)` | `Object.assign(new Course(), dto)`                 | Giving a parsed server DTO a prototype so its methods work |
 
 `cloneWith` deep-clones its **source** and applies the **overrides by reference**, exactly as object spread does — so
@@ -627,7 +659,7 @@ Two things worth knowing when you do clone:
   cloned that way looks alive yet is disconnected from the original's subscribers.
 
 `equal: () => false` also only reaches consumers that read the signal in the **declaring component's own** template. If
-the object is passed to a child `input()`, the child is *not* notified: Angular compares a property binding with
+the object is passed to a child `input()`, the child is _not_ notified: Angular compares a property binding with
 `Object.is` before it reaches the input, so the same reference never arrives, and an input signal does not inherit the
 producer's `equal`. When a child binds the whole object, hand it a new top-level reference built field by field —
 `Exam.withSameValues` and `StudentExam.withSameValues` do exactly that.

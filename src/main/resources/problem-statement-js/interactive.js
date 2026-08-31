@@ -1,18 +1,15 @@
 /**
  * Interactive feedback modal for the server-rendered problem statement.
  *
- * Attached to each .artemis-task[data-feedback] inside every .artemis-problem-statement
- * container on the page. Click (or Enter/Space) on a task opens a modal showing the
- * associated test feedback; the modal is appended to document.body so it is not clipped
- * by host-page overflow / transform stacking contexts, and carries a dark class when its
- * owning container is dark so CSS variables alone handle theming.
+ * Attached to each .artemis-task[data-feedback] inside every .artemis-problem-statement on the page. The task
+ * attribute lists the test ids it can show; the entries themselves are carried once by the container. Click (or
+ * Enter/Space) on a task opens a modal showing the associated test feedback.
  *
- * Assumptions:
- * - katex / KaTeX is irrelevant here; feedback is plain text.
- * - The server escapes every attribute (names, messages) before it reaches this file;
- *   this file never assigns to innerHTML.
- * - __i18n is optionally injected as a literal object before this IIFE runs; fallbacks
- *   in English are used if a key is missing.
+ * The modal is appended to document.body so it is not clipped by host-page overflow or transform stacking
+ * contexts, and carries a dark class when its owning container is dark, so CSS variables alone handle theming.
+ *
+ * The server escapes every name and message before it reaches this file, which never assigns to innerHTML.
+ * __i18n is optionally injected as a literal object before this IIFE runs; a missing key falls back to English.
  */
 (function () {
     'use strict';
@@ -40,23 +37,57 @@
     let currentOpener = null;
     let previouslyFocused = null;
 
+    /** Parsed once per container, since every task in it reads the same payload. */
+    const feedbackByContainer = new WeakMap();
+
+    /**
+     * The feedback entries of the statement the given task belongs to, keyed by test id.
+     *
+     * @param {Element} task the task element
+     * @returns {Object} the entries, or an empty object when the container carries none
+     */
+    function documentFeedback(task) {
+        const container = task.closest('.artemis-problem-statement');
+        if (!container) {
+            return {};
+        }
+        if (feedbackByContainer.has(container)) {
+            return feedbackByContainer.get(container);
+        }
+        let parsed = {};
+        const raw = container.getAttribute('data-feedback');
+        if (raw) {
+            try {
+                const candidate = JSON.parse(raw);
+                if (candidate && typeof candidate === 'object' && !Array.isArray(candidate)) {
+                    parsed = candidate;
+                }
+            } catch (e) {
+                parsed = {};
+            }
+        }
+        feedbackByContainer.set(container, parsed);
+        return parsed;
+    }
+
     function init() {
         const tasks = document.querySelectorAll('.artemis-task[data-feedback]');
         for (const task of tasks) {
             if (task.hasAttribute(INIT_ATTR)) {
                 continue;
             }
+            // The task names the test ids it can show; the entries themselves live once on the container, because a
+            // statement may repeat the same marker thousands of times and every entry may carry a long message.
             const raw = task.getAttribute('data-feedback');
-            if (!raw || raw === '[]') {
+            if (!raw) {
                 continue;
             }
-            let feedback;
-            try {
-                feedback = JSON.parse(raw);
-            } catch (e) {
-                continue;
-            }
-            if (!Array.isArray(feedback) || feedback.length === 0) {
+            const byTestId = documentFeedback(task);
+            const feedback = raw
+                .split(',')
+                .map((id) => byTestId[id.trim()])
+                .filter((entry) => entry !== undefined);
+            if (feedback.length === 0) {
                 continue;
             }
             feedbackByTask.set(task, feedback);
@@ -139,8 +170,9 @@
         const result = resultSummaryOf(container);
         const isDark = container && container.classList && container.classList.contains(DARK_CONTAINER_CLASS);
 
-        const passed = feedback.filter((item) => item.passed);
-        const failed = feedback.filter((item) => !item.passed);
+        const passed = feedback.filter((item) => item.passed === true);
+        const failed = feedback.filter((item) => item.passed === false);
+        const notExecuted = feedback.filter((item) => item.passed !== true && item.passed !== false);
 
         const backdrop = buildBackdrop(isDark);
         const { modal, body } = buildModalShell(taskName, isDark);
@@ -158,6 +190,9 @@
 
         if (failed.length > 0) {
             body.appendChild(buildFeedbackGroup(t('failedTests', 'Failed Tests'), failed, 'failed'));
+        }
+        if (notExecuted.length > 0) {
+            body.appendChild(buildFeedbackGroup(t('notExecutedTests', 'Not Executed Tests'), notExecuted, 'not-executed'));
         }
         if (passed.length > 0) {
             body.appendChild(buildFeedbackGroup(t('passedTests', 'Passed Tests'), passed, 'passed'));
@@ -311,7 +346,9 @@
 
         const headerRow = el('div', { cls: 'artemis-feedback-item__header', parent: itemDiv });
 
-        const iconClass = kind === 'passed' ? 'fa artemis-icon-success' : 'fa artemis-icon-fail';
+        // Three groups reach this: passed, failed and not-executed. Mapping everything that is not `passed` to the
+        // fail icon would show unexecuted tests as failed ones, which is the opposite of what the group heading says.
+        const iconClass = kind === 'passed' ? 'fa artemis-icon-success' : kind === 'failed' ? 'fa artemis-icon-fail' : 'fa artemis-icon-no-result';
         const nameWrap = el('div', { cls: 'artemis-feedback-item__name' });
         el('i', { cls: iconClass, attrs: { 'aria-hidden': 'true' }, parent: nameWrap });
         el('strong', { cls: 'artemis-feedback-item__name-text', text: item.name || '', parent: nameWrap });

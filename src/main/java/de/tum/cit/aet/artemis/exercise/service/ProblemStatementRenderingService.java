@@ -10,20 +10,32 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.node.AbstractVisitor;
+import org.commonmark.node.Code;
+import org.commonmark.node.FencedCodeBlock;
+import org.commonmark.node.IndentedCodeBlock;
+import org.commonmark.node.Node;
+import org.commonmark.node.SourceSpan;
+import org.commonmark.parser.IncludeSourceSpans;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
@@ -54,20 +66,9 @@ import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
  * Stateless renderer for problem-statement markdown.
  * <p>
  * The client sends markdown plus optional test feedback, and this service returns a self-contained HTML
- * document ready for embedding. The pipeline, in order, is:
- * <ol>
- * <li>Mask fenced and inline code blocks so downstream passes do not process their contents.</li>
- * <li>Extract PlantUML diagrams, render them server-side via {@link PlantUmlService}, sanitize the SVG,
- * and replace each diagram with an opaque placeholder.</li>
- * <li>Apply math compatibility rewrites and extract math formulas to placeholders.</li>
- * <li>Expand {@code [task]} syntax into HTML task spans with feedback data.</li>
- * <li>Strip remaining {@code <testid>} wrappers from prose (code blocks are still masked, so code
- * examples keep theirs).</li>
- * <li>Restore masked code blocks; then restore math-formula placeholders.</li>
- * <li>Render CommonMark and re-inject the sanitized SVGs.</li>
- * <li>Wrap everything in a full HTML document, include KaTeX / embedded CSS / interactive JS as needed,
- * and compute a content hash.</li>
- * </ol>
+ * document ready for embedding. Everything that must not be treated as markdown (code, diagrams, formulas) is
+ * masked out before the Artemis-specific syntax is expanded, and put back once CommonMark has run and the output
+ * has passed the safelist. The numbered steps of {@link #render} are the authoritative account of that order.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -76,13 +77,22 @@ public class ProblemStatementRenderingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
-    private static final String RENDERER_VERSION = "1.0.0";
+    /**
+     * Identifies the semantics of the renderer's output, independent of the input markdown. It is folded into
+     * {@link #computeContentHash} so that a change to what/how content is rendered (not just a change to the
+     * input) invalidates renderings the client has already cached under the old hash. Bump this whenever a
+     * change alters the HTML or interactive script the renderer emits for the same input: for example a fix to
+     * task-status or diagram-colour derivation, a new or changed Markdown extension, or a change to
+     * sanitization/escaping. The value itself does not need to follow strict semver; any distinct string is
+     * enough to invalidate the cache.
+     */
+    private static final String RENDERER_VERSION = "1.6.0";
 
     /**
      * KaTeX is served from the client's own copy, the one declared in {@code package.json} and copied out of
-     * {@code node_modules} by the Angular build. The server used to pull a second copy as a webjar, which meant shipping
-     * two versions of the same library - and the webjar's generated POM carried an npm version range, which Gradle cannot
-     * resolve without asking the repository for a version list on every build.
+     * {@code node_modules} by the Angular build. There is deliberately no server-side webjar: it would ship a second
+     * version of the same library, and its generated POM carries an npm version range that Gradle cannot resolve
+     * without asking the repository for a version list on every build.
      */
     private static final String KATEX_BASE_PATH = "/assets/katex";
 
@@ -111,43 +121,64 @@ public class ProblemStatementRenderingService {
 
     private static final String CODE_BLOCK_PLACEHOLDER_SUFFIX = "\u0000";
 
-    /** Fenced code blocks ({@code ```...```}) and inline code ({@code `...`}). */
-    private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("```[\\s\\S]*?```|`[^`\n]+`");
+    private static final String PLANTUML_START = "@startuml";
 
-    private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([\\s\\S]*?)@enduml");
+    private static final String PLANTUML_END = "@enduml";
 
     /**
      * Matches the task syntax: {@code [task][Task Name](testId1,testId2,...)}.
      * <p>
-     * The test list is written as an unrolled loop - a run of non-parenthesis characters, then any number of parenthesised
-     * groups each followed by another such run. The earlier shape repeated a group once per comma
-     * ({@code (?:,[^(),]+...)*}), and Java's matcher recurses per repetition, so an unclosed task with twenty thousand
-     * commas raised a {@link StackOverflowError}. Commas are now absorbed by the character class, which does not recurse,
-     * and the parenthesised groups that remain are bounded to a hundred, because Java recurses per repetition however the
-     * loop is written: twenty thousand {@code ()} pairs overflowed the stack even in the unrolled form. A task list with
-     * more than a hundred parenthesised entries is not real content, and beyond the bound the task simply does not match
-     * and is rendered as written.
+     * A test identifier is typically a {@code <testid>123</testid>} value and may carry one level of parenthesised
+     * suffix (for example {@code testClass(Vehicle)}). The list is therefore written as an unrolled loop: a run of
+     * non-parenthesis characters, then any number of parenthesised groups each followed by another such run. Commas
+     * are absorbed by the character class rather than driving a repetition, because Java's matcher recurses per
+     * repetition and an unclosed task with twenty thousand commas would overflow the stack. For the same reason the
+     * parenthesised groups are bounded to a hundred. A task list with more than a hundred parenthesised entries is
+     * not real content, and beyond the bound the task does not match and is rendered as written.
      * <p>
-     * It accepts a slightly wider list than before, for instance one with empty entries; the caller already discards
-     * entries that are not test identifiers. Original note: test identifiers
-     * are typically {@code <testid>123</testid>} values. Each identifier may carry one level of
-     * parenthesized suffix (e.g. {@code testClass(Vehicle)}).
+     * The list is matched loosely, so empty entries are accepted; the caller discards everything that is not a test
+     * identifier.
      * <p>
      * Named groups: {@code name} (task display name), {@code tests} (comma-separated test identifiers).
      */
     private static final Pattern TASK_PATTERN = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>[^()]*(?:\\([^()]*\\)[^()]*){0,100})\\)");
 
-    private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
-
+    /**
+     * Start of the marker that stands in for a diagram between extraction and re-injection.
+     * <p>
+     * It is plain HTML because it has to survive {@link Jsoup#clean}, and {@code data-svg-index} is on the span
+     * safelist so that it does. That is exactly why the marker alone cannot identify a diagram: an author can write
+     * the same span into their markdown, it passes the safelist unchanged, and the injection pass would then hand
+     * every copy the same SVG. One diagram plus a markdown body full of markers turns a 100 KB request into tens of
+     * megabytes and walks straight past {@link #MAX_PLANTUML_DIAGRAMS}, which is the limit that is supposed to bound
+     * this. The per-render token appended below is what makes the marker unforgeable: the author writes their
+     * markdown before it exists, so a forged span simply fails to match and stays the inert empty span it looks
+     * like. Same principle as the null byte in {@link #CODE_BLOCK_PLACEHOLDER_PREFIX}, which the request DTO rejects
+     * in markdown for the same reason.
+     */
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
 
     private static final String SVG_PLACEHOLDER_SUFFIX = "\"></span>";
 
+    /** Bytes of randomness per render token, matching the 128 bits the frame nonce and generation use. Never stored. */
+    private static final int PLACEHOLDER_TOKEN_BYTES = 16;
+
+    private static final SecureRandom PLACEHOLDER_RANDOM = new SecureRandom();
+
     private static final Safelist HTML_SAFELIST = buildSafelist();
 
-    private static final List<org.commonmark.Extension> COMMONMARK_EXTENSIONS = List.of(TablesExtension.create(), StrikethroughExtension.create());
+    private static final List<org.commonmark.Extension> COMMONMARK_EXTENSIONS = List.of(TablesExtension.create(), StrikethroughExtension.create(), AutolinkExtension.create(),
+            GitHubAlertExtension.create());
 
-    private static final Parser COMMONMARK_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).build();
+    /** Source spans are on because the alert extension matches its marker against the markdown as authored. */
+    private static final Parser COMMONMARK_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES).build();
+
+    /**
+     * Parser used only to locate code constructs before the transformation passes run. It carries the same
+     * extensions as the rendering parser so both agree on what is code, and it is the only one that needs source
+     * spans, which the rendering parse would otherwise pay for without using them.
+     */
+    private static final Parser SPAN_PARSER = Parser.builder().extensions(COMMONMARK_EXTENSIONS).includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES).build();
 
     private final PlantUmlService plantUmlService;
 
@@ -175,30 +206,39 @@ public class ProblemStatementRenderingService {
     /**
      * Renders the given markdown into a self-contained HTML document.
      *
-     * @param markdown      the raw problem statement markdown
-     * @param testResults   client-provided test results keyed by test id, or {@code null}
-     * @param resultSummary client-provided submission summary, or {@code null}
-     * @param locale        the locale for user-visible text (task stats, modal labels)
-     * @param darkMode      if {@code true}, PlantUML renders in dark theme and the container carries a dark marker class
-     * @param includeJs     if {@code true}, the interactive feedback modal JS is included
-     * @param includeCss    if {@code true}, embedded CSS and KaTeX CSS are included
-     * @param inlineImages  if {@code true}, images are embedded as Base64 data URIs; otherwise they stay as absolute URLs
+     * @param markdown       the raw problem statement markdown
+     * @param testResults    client-provided test results keyed by test id, or {@code null}
+     * @param resultSummary  client-provided submission summary, or {@code null}
+     * @param locale         the locale for user-visible text (task stats, modal labels)
+     * @param darkMode       if {@code true}, PlantUML renders in dark theme and the container carries a dark marker class
+     * @param includeJs      if {@code true}, the interactive feedback modal JS is included
+     * @param includeCss     if {@code true}, embedded CSS and KaTeX CSS are included
+     * @param inlineImages   if {@code true}, images are embedded as Base64 data URIs; otherwise they stay as absolute URLs
+     * @param allTestsPassed if {@code true}, the client reported a successful result that carries no per-test feedback,
+     *                           so every test counts as passed. Only honored when {@code testResults} is {@code null}.
      * @return the rendered problem statement DTO
      */
     public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, @Nullable ResultSummaryInputDTO resultSummary, Locale locale,
-            boolean darkMode, boolean includeJs, boolean includeCss, boolean inlineImages) {
+            boolean darkMode, boolean includeJs, boolean includeCss, boolean inlineImages, boolean allTestsPassed) {
 
         if (markdown == null || markdown.isBlank()) {
             return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
         }
 
+        // Individual test outcomes always win: the flag is only a substitute for feedback the client does not have. A
+        // request carrying both is decided by the feedback. The diagram colors apply the same predicate to the same
+        // two inputs inside PlantUmlTaskColorResolver, so status, counts and colors can never disagree.
+        boolean allPassed = allTestsPassed && testResults == null;
+
         // 1. Mask code blocks so downstream passes skip over them.
         List<String> codeBlocks = new ArrayList<>();
         String processed = maskCodeBlocks(markdown, codeBlocks);
 
-        // 2. Extract PlantUML diagrams. The sanitized SVG is held out and re-injected after CommonMark.
+        // 2. Extract PlantUML diagrams. The sanitized SVG is held out and re-injected after CommonMark. The token
+        // ties the two halves together across the sanitizer, so only a marker this render wrote is ever replaced.
+        String placeholderToken = randomPlaceholderToken();
         List<String> inlineSvgs = new ArrayList<>();
-        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode);
+        processed = extractPlantUmlDiagrams(processed, inlineSvgs, testResults, darkMode, allTestsPassed, placeholderToken);
 
         // 3. Normalize math notation, then extract formulas (still while code blocks are masked).
         processed = MathFormulaExtractor.applyCompatibility(processed);
@@ -206,11 +246,12 @@ public class ProblemStatementRenderingService {
         processed = MathFormulaExtractor.extract(processed, mathFormulas);
 
         // 4. Expand tasks.
-        processed = extractTasks(processed, testResults, locale);
+        Set<Long> feedbackTestIds = new LinkedHashSet<>();
+        processed = extractTasks(processed, testResults, locale, allPassed, feedbackTestIds);
 
         // 5. Strip leftover <testid>N</testid> wrappers in prose/PlantUML placeholders. Code blocks are
         // still masked, so their contents stay untouched and display as written.
-        processed = TESTID_PATTERN.matcher(processed).replaceAll("$1");
+        processed = TestReferenceParser.stripTestIdWrappers(processed);
 
         // 6. Restore masked content.
         processed = restoreCodeBlocks(processed, codeBlocks);
@@ -232,12 +273,17 @@ public class ProblemStatementRenderingService {
             html = inlineMarkdownImages(html);
         }
 
-        // 8. Inject the earlier PlantUML SVGs (jsoup's HTML safelist would strip them, so we inject afterwards).
-        html = IndexedPlaceholders.replaceAll(html, SVG_PLACEHOLDER_PREFIX, SVG_PLACEHOLDER_SUFFIX, inlineSvgs.size(), inlineSvgs::get);
+        // 8. Inject the earlier PlantUML SVGs and the GitHub-alert octicons (jsoup's HTML safelist would strip
+        // any SVG, so both are injected afterwards).
+        // A marker that does not carry this render's token was written by the author, not by step 2, and is left
+        // exactly as it is. The token is gone from the output either way, so the content hash stays stable.
+        html = IndexedPlaceholders.replaceAll(html, SVG_PLACEHOLDER_PREFIX + placeholderToken + "-", SVG_PLACEHOLDER_SUFFIX, inlineSvgs.size(), inlineSvgs::get);
+        html = GitHubAlertExtension.injectIcons(html);
 
         String containerClass = darkMode ? "artemis-problem-statement artemis-problem-statement--dark" : "artemis-problem-statement";
         String resultAttr = buildResultAttribute(resultSummary);
-        html = "<div class=\"" + containerClass + "\"" + resultAttr + ">" + html + "</div>";
+        String feedbackAttr = buildDocumentFeedbackAttribute(feedbackTestIds, testResults);
+        html = "<div class=\"" + containerClass + "\"" + resultAttr + feedbackAttr + ">" + html + "</div>";
 
         if (includeCss) {
             StringBuilder css = new StringBuilder();
@@ -254,8 +300,8 @@ public class ProblemStatementRenderingService {
         }
 
         // Gated by includeJs like every other script: KaTeX is JavaScript, so a caller asking for a document without
-        // JavaScript has to get one. Without these scripts the formulas stay as their source text, which the placeholder
-        // now carries, rather than rendering as nothing.
+        // JavaScript has to get one. Without these scripts the formulas display as the source text the placeholder
+        // carries rather than as nothing.
         if (includeJs && !mathFormulas.isEmpty()) {
             html += "<script src=\"" + HtmlEscaper.escapeAttribute(serverUrl) + KATEX_BASE_PATH + "/katex.min.js\"></script>";
             if (KATEX_AUTO_RENDER_JS != null) {
@@ -274,22 +320,41 @@ public class ProblemStatementRenderingService {
         return new RenderedProblemStatementDTO(document, contentHash, RENDERER_VERSION, interactiveScript);
     }
 
-    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode) {
-        Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
+    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean darkMode,
+            boolean allTestsPassed, String placeholderToken) {
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
+        int copiedUpTo = 0;
 
-        while (matcher.find()) {
+        while (true) {
+            int start = markdown.indexOf(PLANTUML_START, copiedUpTo);
+            if (start < 0) {
+                break;
+            }
+            int endMarker = markdown.indexOf(PLANTUML_END, start + PLANTUML_START.length());
+            if (endMarker < 0) {
+                // No closing marker after this opening one, so no complete diagram can follow it either, and the rest
+                // is left untouched. Bailing out here keeps the scan linear: searching to the end of the input once
+                // per opening marker costs 2.4 seconds of CPU for 9000 unclosed `@startuml` lines, which fit well
+                // within the 100 000-character request limit.
+                break;
+            }
+            int end = endMarker + PLANTUML_END.length();
+            sb.append(markdown, copiedUpTo, start);
+            copiedUpTo = end;
+
             if (diagramIndex >= MAX_PLANTUML_DIAGRAMS) {
-                matcher.appendReplacement(sb, Matcher.quoteReplacement("<div class=\"alert alert-warning\">Diagram limit exceeded</div>"));
+                sb.append("<div class=\"alert alert-warning\">Diagram limit exceeded</div>");
                 continue;
             }
 
-            String fullMatch = matcher.group(0);
+            String fullMatch = markdown.substring(start, end);
             String diagramId = "uml-" + diagramIndex;
-            String resolvedSource = PlantUmlTaskColorResolver.resolve(fullMatch, testResults);
-            // Strip <testid> wrappers inside PlantUML — the layout engine does not understand them.
-            resolvedSource = PlantUmlTaskColorResolver.stripTestIdWrappers(resolvedSource);
+            // The raw request flag, not the derived one: the resolver applies the identical predicate to the same
+            // testResults, which keeps its documented contract true for every caller.
+            String resolvedSource = PlantUmlTaskColorResolver.resolve(fullMatch, testResults, allTestsPassed);
+            // Strip <testid> wrappers inside PlantUML: the layout engine does not understand them.
+            resolvedSource = TestReferenceParser.stripTestIdWrappers(resolvedSource);
 
             String inlineSvg;
             try {
@@ -306,48 +371,68 @@ public class ProblemStatementRenderingService {
             }
             inlineSvgs.add(inlineSvg);
 
-            String replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\">" + SVG_PLACEHOLDER_PREFIX + diagramIndex + SVG_PLACEHOLDER_SUFFIX
-                    + "</div>";
-
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+            sb.append("<div class=\"artemis-diagram\" data-diagram-id=\"").append(diagramId).append("\">").append(SVG_PLACEHOLDER_PREFIX).append(placeholderToken).append('-')
+                    .append(diagramIndex).append(SVG_PLACEHOLDER_SUFFIX).append("</div>");
             diagramIndex++;
         }
-        matcher.appendTail(sb);
+        sb.append(markdown, copiedUpTo, markdown.length());
         return sb.toString();
     }
 
-    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale) {
+    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackInputDTO> testResults, Locale locale, boolean allPassed, Set<Long> feedbackTestIds) {
         Matcher matcher = TASK_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
+        // Loop-invariant: the lookup only depends on the request's test results.
+        TestFeedbackLookup lookup = TestFeedbackLookup.of(testResults);
 
         while (matcher.find()) {
             String taskName = matcher.group("name");
             String testsStr = matcher.group("tests");
 
-            // Separators alone are not a reference: "[task][Name](,)" names no test. Without stripping them the task
-            // would count as referencing tests, and with test results present computeTaskTestStatus would find nothing
-            // failed and nothing unexecuted among its (empty) ids and report success for a task that tests nothing.
-            boolean hasTestRefs = testsStr != null && !testsStr.replace(",", "").isBlank();
+            List<String> authoredRefs = TestReferenceParser.splitTestReferences(testsStr);
+            // Separators alone are not a reference: "[task][Name](,)" names no test. The parser already drops blank
+            // references, so deriving the flag from the parsed list keeps a task that references nothing from being
+            // reported as successful by computeTaskTestStatus, which would otherwise find nothing failed and nothing
+            // unexecuted among its (empty) ids.
+            boolean hasTestRefs = !authoredRefs.isEmpty();
 
             List<Long> testIds = new ArrayList<>();
-            if (testsStr != null && !testsStr.isEmpty()) {
-                Matcher testIdMatcher = TESTID_PATTERN.matcher(testsStr);
-                while (testIdMatcher.find()) {
-                    testIds.add(Long.parseLong(testIdMatcher.group(1)));
+            int unresolvedRefs = 0;
+            for (String ref : authoredRefs) {
+                Long authoredId = TestReferenceParser.extractTestId(ref);
+                if (authoredId != null) {
+                    // An authored id stays authoritative even when no feedback carries it: it then counts as not executed.
+                    testIds.add(authoredId);
+                    continue;
+                }
+                TestFeedbackInputDTO named = lookup.resolve(ref);
+                if (named != null) {
+                    testIds.add(named.testId());
+                }
+                else {
+                    unresolvedRefs++;
                 }
             }
 
-            // A task may reference tests by name (e.g. on an unbuilt exercise) instead of by <testid>, possibly
-            // mixed with ids. Name refs cannot be mapped to feedback here; detect whether any unresolved ref remains
-            // by stripping the <testid> wrappers and the separators and checking for leftover content.
-            boolean hasUnresolvedRefs = hasTestRefs && !TESTID_PATTERN.matcher(testsStr).replaceAll("").replace(",", "").isBlank();
+            String testStatus = computeTaskTestStatus(testIds, hasTestRefs, unresolvedRefs > 0, testResults, allPassed);
+            int authoredCount = authoredRefs.size();
+            // The counts are computed independently of the status, so they must follow the same signal. Otherwise an
+            // all-passed task would render green while reporting every one of its tests as not executed, and the
+            // success count would be the number of *resolvable* ids ("1 of 3 passed") rather than all authored tests:
+            // without test results a name-only reference cannot resolve at all.
+            int successCount = allPassed ? authoredCount : countPassedTests(testIds, testResults);
+            int notExecutedCount = allPassed ? 0 : unresolvedRefs + countNotExecutedTests(testIds, testResults);
 
-            String testStatus = computeTaskTestStatus(testIds, hasTestRefs, hasUnresolvedRefs, testResults);
-            int successCount = countPassedTests(testIds, testResults);
-            int total = testIds.size();
-
-            boolean hasFeedback = testResults != null && !testIds.isEmpty();
-            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, total, hasFeedback ? testResults : null, locale);
+            // Only emit data-feedback when at least one referenced test actually has feedback. Authored ids are always
+            // added to testIds, so `!testIds.isEmpty()` alone would emit an empty attribute for an empty (but present)
+            // result map, which the CSS reads as "this task can be opened". This gates data-feedback only: the stats
+            // line below is driven by whether the task's outcome is known at all, not by whether any of *this* task's
+            // tests are among the results.
+            boolean hasFeedback = testResults != null && testIds.stream().anyMatch(testResults::containsKey);
+            if (hasFeedback) {
+                testIds.stream().filter(testResults::containsKey).forEach(feedbackTestIds::add);
+            }
+            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, authoredCount, notExecutedCount, testResults, hasFeedback, allPassed, locale);
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml));
         }
@@ -355,16 +440,22 @@ public class ProblemStatementRenderingService {
         return sb.toString();
     }
 
-    private String buildTaskHtml(String taskName, List<Long> testIds, String testStatus, int successCount, int total, @Nullable Map<Long, TestFeedbackInputDTO> testResults,
-            Locale locale) {
+    private String buildTaskHtml(String taskName, List<Long> testIds, String testStatus, int successCount, int authoredCount, int notExecutedCount,
+            @Nullable Map<Long, TestFeedbackInputDTO> testResults, boolean hasFeedback, boolean allPassed, Locale locale) {
         String testIdsStr = testIds.stream().map(String::valueOf).collect(Collectors.joining(","));
 
         StringBuilder html = new StringBuilder();
         html.append("<span class=\"artemis-task artemis-task-").append(testStatus).append("\" data-task-name=\"").append(HtmlEscaper.escapeAttribute(taskName))
-                .append("\" data-test-ids=\"").append(testIdsStr).append("\" data-test-status=\"").append(testStatus).append("\"");
+                .append("\" data-test-ids=\"").append(testIdsStr).append("\" data-test-status=\"").append(testStatus).append("\" data-authored-count=\"").append(authoredCount)
+                .append("\" data-not-executed-count=\"").append(notExecutedCount).append("\"");
 
-        if (testResults != null) {
-            html.append(" data-feedback=\"").append(buildFeedbackJson(testIds, testResults)).append("\"");
+        if (hasFeedback) {
+            // The ids this task can show feedback for, not the feedback itself. The payload is emitted once per
+            // document (see buildDocumentFeedbackAttribute): a statement may repeat the same task marker thousands of
+            // times within the request limit, and carrying a copy of every message on every marker turned a 100 KB
+            // request into tens of megabytes of response.
+            String feedbackIds = new LinkedHashSet<>(testIds).stream().filter(testResults::containsKey).map(String::valueOf).collect(Collectors.joining(","));
+            html.append(" data-feedback=\"").append(feedbackIds).append("\"");
         }
 
         html.append(">");
@@ -375,8 +466,10 @@ public class ProblemStatementRenderingService {
         };
         html.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
         html.append(HtmlEscaper.escapeText(taskName));
-        if (testResults != null && !testIds.isEmpty()) {
-            String statsText = messageSource.getMessage("exercise.problemStatement.taskStats", new Object[] { successCount, total }, locale);
+        // An all-passed task has no test results, but it does know its outcome, so it shows the same stats line
+        // ("n of n tests passed") instead of the "no result" text a missing result would otherwise produce.
+        if ((testResults != null || allPassed) && authoredCount > 0) {
+            String statsText = messageSource.getMessage("exercise.problemStatement.taskStats", new Object[] { successCount, authoredCount }, locale);
             html.append(" <span class=\"artemis-task-stats\">").append(HtmlEscaper.escapeText(statsText)).append("</span>");
         }
         else if ("no-result".equals(testStatus)) {
@@ -391,29 +484,46 @@ public class ProblemStatementRenderingService {
         return html.toString();
     }
 
-    private String buildFeedbackJson(List<Long> testIds, Map<Long, TestFeedbackInputDTO> testResults) {
-        List<Map<String, Object>> feedbackList = new ArrayList<>();
-        for (Long testId : testIds) {
+    /**
+     * The feedback payload of the whole document, keyed by test id, as a {@code data-feedback} attribute for the
+     * container element. Emitted once rather than per task: the entry for a given test is identical wherever it
+     * appears, and each one may carry a 5000-character message, so repeating it per task marker let a request within
+     * the size limits expand into tens of megabytes. Task elements name the ids they can show and look them up here.
+     *
+     * @param feedbackTestIds the ids at least one task can show feedback for, in the order they were first authored
+     * @param testResults     the request's test results
+     * @return the attribute including its leading space, or an empty string when no task can show feedback
+     */
+    private String buildDocumentFeedbackAttribute(Set<Long> feedbackTestIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+        if (testResults == null || feedbackTestIds.isEmpty()) {
+            return "";
+        }
+        Map<String, Map<String, Object>> byTestId = new LinkedHashMap<>();
+        for (Long testId : feedbackTestIds) {
             TestFeedbackInputDTO detail = testResults.get(testId);
-            if (detail != null) {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("name", detail.testName());
-                entry.put("passed", detail.passed());
-                if (detail.credits() != null) {
-                    entry.put("credits", detail.credits());
-                }
-                if (detail.message() != null && !detail.message().isBlank()) {
-                    entry.put("message", detail.message());
-                }
-                feedbackList.add(entry);
+            if (detail == null) {
+                continue;
             }
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("name", detail.testName());
+            entry.put("passed", detail.passed());
+            if (detail.credits() != null) {
+                entry.put("credits", detail.credits());
+            }
+            if (detail.message() != null && !detail.message().isBlank()) {
+                entry.put("message", detail.message());
+            }
+            byTestId.put(String.valueOf(testId), entry);
+        }
+        if (byTestId.isEmpty()) {
+            return "";
         }
         try {
-            return HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(feedbackList));
+            return " data-feedback=\"" + HtmlEscaper.escapeAttribute(objectMapper.writeValueAsString(byTestId)) + "\"";
         }
         catch (JsonProcessingException e) {
             log.error("Failed to serialize feedback JSON", e);
-            return "[]";
+            return "";
         }
     }
 
@@ -430,23 +540,27 @@ public class ProblemStatementRenderingService {
         }
     }
 
-    private static String computeTaskTestStatus(List<Long> testIds, boolean hasTestRefs, boolean hasUnresolvedRefs, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+    private static String computeTaskTestStatus(List<Long> testIds, boolean hasTestRefs, boolean hasUnresolvedRefs, @Nullable Map<Long, TestFeedbackInputDTO> testResults,
+            boolean allPassed) {
         if (!hasTestRefs) {
+            // A task without references has nothing that could have passed, so it stays "no tests" even when the
+            // request declares that every test passed.
             return "no-tests";
         }
         if (testResults == null) {
-            return "no-result";
+            // A successful result without any feedback means every test passed; without that signal nothing is known.
+            return allPassed ? "success" : "no-result";
         }
         boolean anyFailed = false;
         // Unresolved (name-only) refs cannot be matched to feedback, so they count as not executed.
         boolean anyNotExecuted = hasUnresolvedRefs;
         for (Long testId : testIds) {
             TestFeedbackInputDTO detail = testResults.get(testId);
-            if (detail == null) {
-                anyNotExecuted = true;
-            }
-            else if (!detail.passed()) {
-                anyFailed = true;
+            switch (TestFeedbackLookup.outcomeOf(detail)) {
+                case FAILED -> anyFailed = true;
+                case NOT_EXECUTED -> anyNotExecuted = true;
+                case PASSED -> {
+                }
             }
         }
         if (anyFailed) {
@@ -464,16 +578,30 @@ public class ProblemStatementRenderingService {
         }
         int success = 0;
         for (Long testId : testIds) {
-            TestFeedbackInputDTO detail = testResults.get(testId);
-            if (detail != null && detail.passed()) {
+            if (TestFeedbackLookup.outcomeOf(testResults.get(testId)) == TestOutcome.PASSED) {
                 success++;
             }
         }
         return success;
     }
 
+    private static int countNotExecutedTests(List<Long> testIds, @Nullable Map<Long, TestFeedbackInputDTO> testResults) {
+        int notExecuted = 0;
+        for (Long testId : testIds) {
+            TestFeedbackInputDTO detail = testResults == null ? null : testResults.get(testId);
+            if (TestFeedbackLookup.outcomeOf(detail) == TestOutcome.NOT_EXECUTED) {
+                notExecuted++;
+            }
+        }
+        return notExecuted;
+    }
+
     private String renderWithCommonMark(String markdown) {
-        String html = commonMarkRenderer.render(COMMONMARK_PARSER.parse(markdown));
+        Node document = COMMONMARK_PARSER.parse(markdown);
+        // Applied here rather than as a parser post processor: the alert marker has to be read from the markdown the
+        // author wrote, and a post processor is handed the AST alone.
+        GitHubAlertExtension.applyAlerts(document, markdown);
+        String html = commonMarkRenderer.render(document);
         return Jsoup.clean(html, HTML_SAFELIST);
     }
 
@@ -593,19 +721,60 @@ public class ProblemStatementRenderingService {
     }
 
     /**
-     * Replaces fenced code blocks and inline code with opaque placeholders so downstream passes
-     * (PlantUML, math, tasks, testid stripping) skip their contents.
+     * Replaces every code construct with an opaque placeholder so downstream passes (PlantUML, math, tasks, testid
+     * stripping) skip their contents.
+     * <p>
+     * The spans come from CommonMark itself rather than from a regex. A regex has to enumerate the syntaxes it knows,
+     * and the ones it forgets silently become expandable: a {@code [task]} inside a tilde fence, an indented block or a
+     * multi-backtick inline span would be rewritten into generated markup even though the author wrote it to be
+     * displayed. The parser recognizes exactly what it will later render as code, which removes that class of gap.
      */
     private static String maskCodeBlocks(String markdown, List<String> codeBlocks) {
-        Matcher matcher = CODE_BLOCK_PATTERN.matcher(markdown);
-        StringBuilder sb = new StringBuilder();
-        while (matcher.find()) {
-            int index = codeBlocks.size();
-            codeBlocks.add(matcher.group());
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(CODE_BLOCK_PLACEHOLDER_PREFIX + index + CODE_BLOCK_PLACEHOLDER_SUFFIX));
+        List<int[]> ranges = new ArrayList<>();
+        SPAN_PARSER.parse(markdown).accept(new AbstractVisitor() {
+
+            @Override
+            public void visit(FencedCodeBlock fencedCodeBlock) {
+                addRange(fencedCodeBlock);
+            }
+
+            @Override
+            public void visit(IndentedCodeBlock indentedCodeBlock) {
+                addRange(indentedCodeBlock);
+            }
+
+            @Override
+            public void visit(Code code) {
+                addRange(code);
+            }
+
+            private void addRange(Node node) {
+                List<SourceSpan> spans = node.getSourceSpans();
+                if (spans.isEmpty()) {
+                    return;
+                }
+                SourceSpan last = spans.getLast();
+                ranges.add(new int[] { spans.getFirst().getInputIndex(), last.getInputIndex() + last.getLength() });
+            }
+        });
+
+        // A code span can only ever sit inside a code block, never the other way round, and the visitor reports the
+        // block before descending. Sorting by start and dropping anything that begins inside the previous range keeps
+        // the outermost one, so no placeholder is ever nested into another.
+        ranges.sort(Comparator.comparingInt(range -> range[0]));
+        StringBuilder masked = new StringBuilder();
+        int copiedUpTo = 0;
+        for (int[] range : ranges) {
+            if (range[0] < copiedUpTo) {
+                continue;
+            }
+            masked.append(markdown, copiedUpTo, range[0]);
+            masked.append(CODE_BLOCK_PLACEHOLDER_PREFIX).append(codeBlocks.size()).append(CODE_BLOCK_PLACEHOLDER_SUFFIX);
+            codeBlocks.add(markdown.substring(range[0], range[1]));
+            copiedUpTo = range[1];
         }
-        matcher.appendTail(sb);
-        return sb.toString();
+        masked.append(markdown, copiedUpTo, markdown.length());
+        return masked.toString();
     }
 
     private static String restoreCodeBlocks(String markdown, List<String> codeBlocks) {
@@ -614,8 +783,12 @@ public class ProblemStatementRenderingService {
 
     private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
-        safelist.addAttributes("div", "class", "data-diagram-id", "data-result");
-        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode");
+        // The GFM strikethrough extension renders `~~text~~` as <del>, which jsoup's relaxed safelist does not carry.
+        // Without this the tag is dropped and the text renders unmarked instead of struck through.
+        safelist.addTags("del");
+        safelist.addAttributes("div", "class", "data-diagram-id", "data-result", "data-feedback");
+        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index", "data-formula", "data-display-mode",
+                "data-authored-count", "data-not-executed-count", "data-alert-type");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");
         safelist.addAttributes("p", "class");
@@ -643,6 +816,21 @@ public class ProblemStatementRenderingService {
         }
     }
 
+    /**
+     * A fresh token for this render's diagram markers, as lowercase hex.
+     * <p>
+     * Hex so it needs no escaping inside the attribute it lives in, and so it cannot terminate the marker early.
+     * It does not have to stay secret after the response is written; it only has to be unknowable to whoever wrote
+     * the markdown, which is guaranteed because it is drawn after the request arrives.
+     *
+     * @return the token, without separators
+     */
+    private static String randomPlaceholderToken() {
+        byte[] bytes = new byte[PLACEHOLDER_TOKEN_BYTES];
+        PLACEHOLDER_RANDOM.nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
+    }
+
     private static String computeHash(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -660,7 +848,7 @@ public class ProblemStatementRenderingService {
         }
         String prefix = "exercise.problemStatement.modal.";
         Map<String, String> i18n = new LinkedHashMap<>();
-        for (String key : List.of("feedbackTitle", "close", "score", "points", "of", "submitted", "commit", "failedTests", "passedTests")) {
+        for (String key : List.of("feedbackTitle", "close", "score", "points", "of", "submitted", "commit", "failedTests", "passedTests", "notExecutedTests")) {
             i18n.put(key, messageSource.getMessage(prefix + key, null, key, locale));
         }
         try {

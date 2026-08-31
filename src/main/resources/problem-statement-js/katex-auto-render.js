@@ -17,7 +17,14 @@
             katex.render(formula, el, {
                 displayMode: displayMode,
                 throwOnError: false,
-                output: 'html'
+                output: 'html',
+                // KaTeX leaves maxSize at Infinity, so `\rule{1000000000em}{1000000000em}` asks the consumer to lay
+                // out a box no engine can afford. The Angular client sets the same bound in
+                // `problem-statement-frame.util.ts`; this script is the path a consumer takes when it asks for the
+                // document with includeJs, which is the default, so the limit has to be here as well or the
+                // standalone consumer is the only one left without it.
+                maxSize: 100,
+                maxExpand: 1000
             });
         } catch (e) {
             el.textContent = formula;

@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.exercise.service.TestReferenceParser;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -219,13 +220,15 @@ public class ProgrammingExerciseTaskService {
     }
 
     private Optional<ProgrammingExerciseTestCase> findTestCaseFromProblemStatement(String testName, Set<ProgrammingExerciseTestCase> testCases) {
-        if (testName.startsWith(TESTID_START)) {
-            Long id = extractTestId(testName);
+        // Resolution goes through the shared grammar, which matches a wrapper anywhere in the reference rather than
+        // only at its start. A reference such as `testName<testid>5</testid>` is authored in practice; gating on the
+        // prefix made this method fall through to the name lookup for it, so the task silently lost that test case
+        // while the problem-statement renderer resolved the very same reference by id.
+        Long id = TestReferenceParser.extractTestId(testName);
+        if (id != null) {
             return testCases.stream().filter(tc -> tc.getId().equals(id)).findFirst();
         }
-        else {
-            return testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
-        }
+        return testCases.stream().filter(tc -> tc.getTestName().equals(testName)).findFirst();
     }
 
     /**
@@ -262,44 +265,13 @@ public class ProgrammingExerciseTaskService {
      * Example: "testInsert(InsertMock, 1),testClass[SortStrategy],testWithBraces()" results in the following list
      * ["testInsert(InsertMock, 1)", "testClass[SortStrategy]", "testWithBraces()"]
      *
+     * See {@link TestReferenceParser#splitTestReferences(String)} for the grammar and implementation.
+     *
      * @param capturedTestCaseNames the captured test case names matched from the problem statement
      * @return test case names
      */
     private List<String> extractTestCaseNames(String capturedTestCaseNames) {
-        List<String> testCaseNames = new ArrayList<>();
-        if ("".equals(capturedTestCaseNames)) {
-            return testCaseNames;
-        }
-
-        int numberUnclosedRoundedBrackets = 0;
-        StringBuilder currentTestCaseName = new StringBuilder();
-        for (int i = 0; i < capturedTestCaseNames.length(); i++) {
-            char currentChar = capturedTestCaseNames.charAt(i);
-
-            // check potential split
-            if (currentChar == ',' && numberUnclosedRoundedBrackets == 0) {
-                String currentName = currentTestCaseName.toString().strip();
-                if (!currentName.isEmpty()) {
-                    testCaseNames.add(currentName);
-                }
-                currentTestCaseName = new StringBuilder();
-                continue;
-            }
-
-            // count the numbers of brackets
-            if (currentChar == '(') {
-                numberUnclosedRoundedBrackets++;
-            }
-            else if (currentChar == ')') {
-                numberUnclosedRoundedBrackets--;
-            }
-
-            currentTestCaseName.append(currentChar);
-        }
-
-        testCaseNames.add(currentTestCaseName.toString().trim());
-
-        return testCaseNames;
+        return TestReferenceParser.splitTestReferences(capturedTestCaseNames);
     }
 
     /**
