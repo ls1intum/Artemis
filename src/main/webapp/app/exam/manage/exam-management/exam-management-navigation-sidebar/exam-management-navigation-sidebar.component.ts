@@ -3,8 +3,7 @@ import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { faChevronRight, faClipboard, faEye, faFlaskVial, faGraduationCap, faInfoCircle, faListAlt, faThList, faUser, faVial, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faEye, faFlaskVial, faGraduationCap, faInfoCircle, faListAlt, faThList, faUser, faVial, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NavigationEnd, Router, RouterModule } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -12,7 +11,7 @@ import { SidebarSubpageItem } from 'app/exam/manage/exam-management/exam-managem
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-management-navigation-sidebar',
@@ -22,7 +21,7 @@ import { TumUiTooltipDirective } from '@tumaet/ui-angular';
         CourseTitleBarTitleComponent,
         CourseSidebarToggleButtonComponent,
         DocumentationButtonComponent,
-        NgbCollapse,
+        TumUiPanelComponent,
         FaIconComponent,
         RouterModule,
         SidebarSubpageItem,
@@ -45,7 +44,6 @@ export class ExamManagementNavigationSidebarComponent {
     readonly documentationType: DocumentationType = 'Exams';
 
     // Icons
-    readonly faChevronRight = faChevronRight;
     readonly faListAlt = faListAlt;
     readonly faInfoCircle = faInfoCircle;
     readonly faThList = faThList;
