@@ -46,6 +46,15 @@ class LinkPreviewUrlValidatorTest {
         assertThatThrownBy(() -> validator.validateAndResolve(URI.create("https://example.com"))).isInstanceOf(UnknownHostException.class);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "64:ff9b::8.8.8.8", "64:ff9b::10.0.0.1", "64:ff9b::172.16.0.1", "64:ff9b::192.168.0.1", "64:ff9b:1::1", "64:ff9b:1:a00:0:100::",
+            "64:ff9b:1:ac10:0:100::", "64:ff9b:1:c0a8:0:100::" })
+    void rejectsIpv4Ipv6TranslationAddress(String address) throws Exception {
+        var validator = new LinkPreviewUrlValidator(host -> new InetAddress[] { InetAddress.getByName(address) });
+
+        assertThatThrownBy(() -> validator.validateAndResolve(URI.create("https://example.com"))).isInstanceOf(UnknownHostException.class);
+    }
+
     @Test
     void rejectsResultContainingNonPublicAddress() throws Exception {
         var validator = new LinkPreviewUrlValidator(host -> new InetAddress[] { InetAddress.getByName("93.184.216.34"), InetAddress.getByName("127.0.0.1") });

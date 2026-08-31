@@ -106,7 +106,28 @@ final class LinkPreviewUrlValidator {
         boolean uniqueLocalAddress = (first & 0xFE) == 0xFC;
         boolean documentationAddress = first == 0x20 && second == 0x01 && third == 0x0D && fourth == 0xB8;
         boolean embeddedIpv4Address = isEmbeddedIpv4Address(address);
-        return !uniqueLocalAddress && !documentationAddress && !embeddedIpv4Address;
+        boolean ipv4Ipv6TranslationAddress = isIpv4Ipv6TranslationAddress(address);
+        return !uniqueLocalAddress && !documentationAddress && !embeddedIpv4Address && !ipv4Ipv6TranslationAddress;
+    }
+
+    private boolean isIpv4Ipv6TranslationAddress(byte[] address) {
+        // Both standardized IPv4/IPv6 translation prefixes start with 64:ff9b.
+        if (address[0] != 0 || address[1] != 0x64 || address[2] != (byte) 0xFF || address[3] != (byte) 0x9B) {
+            return false;
+        }
+
+        // 64:ff9b:1::/48 is reserved for local-use translation.
+        if (address[4] == 0 && address[5] == 1) {
+            return true;
+        }
+
+        // 64:ff9b::/96 is the well-known translation prefix.
+        for (int i = 4; i < 12; i++) {
+            if (address[i] != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean isEmbeddedIpv4Address(byte[] address) {
