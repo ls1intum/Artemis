@@ -1,4 +1,6 @@
 <a
+    [id]="'exam-' + subjectId() + '-' + (subpage() || 'detail')"
+    [attr.data-testid]="'sidebar-subpage-' + (subpage() || 'detail')"
     [routerLink]="subpage() ? [subjectId(), subpage()] : [subjectId()]"
     routerLinkActive="active"
     [routerLinkActiveOptions]="{ exact: !subpage() }"

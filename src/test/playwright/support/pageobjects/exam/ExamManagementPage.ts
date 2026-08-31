@@ -47,14 +47,22 @@ export class ExamManagementPage {
      * Opens the exercise groups page.
      */
     async openExerciseGroups(examId: number) {
-        await this.page.locator(`#exercises-button-${examId}-groups`).click();
+        const subpage = this.page.locator(`#exam-${examId}-exercise-groups`);
+        if (!(await subpage.isVisible())) {
+            await this.page.locator(`#exam-${examId} [tumUiPanelHeader]`).click();
+        }
+        await subpage.click();
     }
 
     /**
      * Opens the student registration page.
      */
     async openStudentRegistration(examId: number) {
-        await this.page.locator(`#student-button-${examId}`).click();
+        const subpage = this.page.locator(`#exam-${examId}-students`);
+        if (!(await subpage.isVisible())) {
+            await this.page.locator(`#exam-${examId} [tumUiPanelHeader]`).click();
+        }
+        await subpage.click();
     }
 
     /**
@@ -90,21 +98,36 @@ export class ExamManagementPage {
      * Opens the test run page.
      */
     async openTestRun() {
-        await this.page.locator(`#testrun-button`).click();
+        const match = this.page.url().match(/\/exams\/(\d+)/);
+        if (match) {
+            await this.page.locator(`#exam-${match[1]}-test-runs`).click();
+        } else {
+            await this.page.locator('[data-testid="sidebar-subpage-test-runs"]').first().click();
+        }
     }
 
     /**
      * Opens the exam grading system page.
      */
     async openGradingKey() {
-        await this.page.locator('a', { hasText: 'Grading Key' }).click();
+        const match = this.page.url().match(/\/exams\/(\d+)/);
+        if (match) {
+            await this.page.locator(`#exam-${match[1]}-grading`).click();
+        } else {
+            await this.page.locator('[data-testid="sidebar-subpage-grading"]').first().click();
+        }
     }
 
     /**
      * Opens the exam scores page.
      */
     async openScoresPage() {
-        await this.page.locator('#scores-button').click();
+        const match = this.page.url().match(/\/exams\/(\d+)/);
+        if (match) {
+            await this.page.locator(`#exam-${match[1]}-scores`).click();
+        } else {
+            await this.page.locator('[data-testid="sidebar-subpage-scores"]').first().click();
+        }
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
@@ -195,7 +218,12 @@ export class ExamManagementPage {
     }
 
     async clickEdit() {
-        await this.page.locator('#editButton').click();
+        const match = this.page.url().match(/\/exams\/(\d+)/);
+        if (match) {
+            await this.page.locator(`#exam-${match[1]}-edit`).click();
+        } else {
+            await this.page.locator('[data-testid="sidebar-subpage-edit"]').first().click();
+        }
     }
 
     /*

@@ -11,7 +11,12 @@ export class ExamDetailsPage {
     }
 
     async openExerciseGroups() {
-        await this.page.locator(`#exercises-button-groups`).click();
+        const match = this.page.url().match(/\/exams\/(\d+)/);
+        if (match) {
+            await this.page.locator(`#exam-${match[1]}-exercise-groups`).click();
+        } else {
+            await this.page.locator('[data-testid="sidebar-subpage-exercise-groups"]').first().click();
+        }
     }
 
     async checkItemChecked(checklistItem: ExamChecklistItem) {
@@ -65,12 +70,7 @@ export class ExamDetailsPage {
      * @param examTitle the exam title to confirm the deletion
      */
     async deleteExam(examTitle: string) {
-        // The exam-detail page wraps all controls in `@if (exam)`, so the delete
-        // button only appears after the GET /exams/{id} round-trip finishes.
-        // Under multi-node load that round-trip can creep past Playwright's default
-        // action timeout, eating into the 60s test budget. Wait for the title (same
-        // @if block) explicitly with a generous timeout so the subsequent click is fast.
-        await this.page.locator('#exam-detail-title').waitFor({ state: 'visible', timeout: 30_000 });
+        await this.page.locator('#exam-delete').waitFor({ state: 'visible', timeout: 30_000 });
         await this.page.locator('#exam-delete').click();
         const deleteButton = this.page.getByTestId('delete-dialog-confirm-button');
         await expect(deleteButton).toBeDisabled();
