@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * Build-verification helper for exercise-variant generation: polls the build result for a commit and
@@ -88,10 +89,12 @@ public class VariantBuildVerificationService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public VariantBuildVerificationService(TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, GitService gitService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -99,6 +102,7 @@ public class VariantBuildVerificationService {
         this.gitService = gitService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -154,8 +158,9 @@ public class VariantBuildVerificationService {
         int pollCount = 0;
         while (System.currentTimeMillis() - startTime < TIMEOUT) {
             try {
-                Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+                Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
                 if (result.isPresent() && isFreshEnough(result.get(), notBefore)) {
+                    attachTestCaseFeedback(result.get(), exercise, repositoryType);
                     log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
                     warnIfCommitMismatch(repositoryType, exercise.getId(), commitHash, result.get());
                     return new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED);
@@ -224,8 +229,9 @@ public class VariantBuildVerificationService {
                 RepositoryType repositoryType = entry.getKey();
                 PendingBuild pendingBuild = pending.get(repositoryType);
                 try {
-                    Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(entry.getValue().getId());
+                    Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(entry.getValue().getId());
                     if (result.isPresent() && isFreshEnough(result.get(), pendingBuild.triggeredAt())) {
+                        attachTestCaseFeedback(result.get(), exercise, repositoryType);
                         warnIfCommitMismatch(repositoryType, exercise.getId(), pendingBuild.commitHash(), result.get());
                         outcomes.put(repositoryType,
                                 new BuildResultOutcome(result.get(), hasReachedTargetResult(repositoryType, result.get()) ? BuildResultState.SUCCESS : BuildResultState.FAILED));
@@ -245,6 +251,19 @@ public class VariantBuildVerificationService {
             outcomes.put(repositoryType, new BuildResultOutcome(null, BuildResultState.TIMED_OUT));
         }
         return outcomes;
+    }
+
+    /**
+     * Attaches the automatic test-case and SCA feedback, which lives in typed tables, as legacy {@link Feedback}
+     * views so {@link #describeBuildResult} can render the per-test summary. The loaded result graph is detached,
+     * so the exercise context is passed explicitly (mirrors {@code HyperionCodeGenerationExecutionService}).
+     *
+     * @param result         the freshly polled build result
+     * @param exercise       the exercise the result belongs to
+     * @param repositoryType the repository the result belongs to
+     */
+    private void attachTestCaseFeedback(Result result, ProgrammingExercise exercise, RepositoryType repositoryType) {
+        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, exercise, repositoryType == RepositoryType.SOLUTION || repositoryType == RepositoryType.TESTS);
     }
 
     private ProgrammingExerciseParticipation resolveParticipation(ProgrammingExercise exercise, RepositoryType repositoryType) {

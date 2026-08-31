@@ -13,7 +13,7 @@ export class LocalCIGuard implements CanActivate {
 
     canActivate(): boolean {
         if (!this.profileService.isProfileActive(PROFILE_LOCALCI)) {
-            void this.router.navigate(['/course-management']);
+            void this.router.navigate(['/courses']);
             return false;
         }
         return true;

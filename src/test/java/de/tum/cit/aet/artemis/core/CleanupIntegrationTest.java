@@ -223,6 +223,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         nonOrphanTeamScore.setExercise(oldExercise);
         Team team = new Team();
         team.setShortName("team");
+        team.setExercise(oldExercise);
         nonOrphanTeamScore.setTeam(team);
         teamRepository.save(team);
         nonOrphanTeamScore = teamScoreRepository.save(nonOrphanTeamScore);
@@ -248,6 +249,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         assertThat(counts.orphanTextBlockForOrphanResults()).isEqualTo(1);
         assertThat(counts.orphanRating()).isEqualTo(1);
         assertThat(counts.orphanResultsWithoutParticipation()).isEqualTo(1);
+        // no unreferenced message is old enough to be collected yet, see the grace period
+        assertThat(counts.orphanFeedbackMessage()).isZero();
 
         var responseBody = request.delete("/api/core/admin/cleanup/orphans", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 

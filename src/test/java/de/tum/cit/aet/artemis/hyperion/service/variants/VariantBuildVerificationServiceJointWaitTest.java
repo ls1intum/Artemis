@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 
 /**
  * Unit tests for the joint {@code waitForBuildResults} (performance lever B1): the solution and template builds
@@ -65,7 +66,7 @@ class VariantBuildVerificationServiceJointWaitTest {
         when(templateRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
 
         service = new VariantBuildVerificationService(templateRepository, solutionRepository, submissionRepository, resultRepository, mock(GitService.class),
-                mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class));
+                mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), mock(ProgrammingFeedbackSynthesizerService.class));
     }
 
     private Map<RepositoryType, PendingBuild> pending() {
@@ -85,7 +86,7 @@ class VariantBuildVerificationServiceJointWaitTest {
     }
 
     private void stubResult(long participationId, Result result) {
-        when(resultRepository.findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc(participationId)).thenReturn(Optional.of(result));
+        when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)).thenReturn(Optional.of(result));
     }
 
     @Test
@@ -124,7 +125,8 @@ class VariantBuildVerificationServiceJointWaitTest {
         stubResult(TEMPLATE_PARTICIPATION_ID, freshResult(0.0, 5));
 
         service = new VariantBuildVerificationService(templateRepository, emptySolutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository,
-                mock(GitService.class), mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class));
+                mock(GitService.class), mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class),
+                mock(ProgrammingFeedbackSynthesizerService.class));
 
         Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, pending());
 
