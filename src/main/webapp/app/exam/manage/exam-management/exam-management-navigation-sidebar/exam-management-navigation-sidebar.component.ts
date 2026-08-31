@@ -112,4 +112,14 @@ export class ExamManagementNavigationSidebarComponent {
             return newSet;
         });
     }
+
+    onPanelClick(examId: number, event: MouseEvent) {
+        // prevent collapse when clicking inside content
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('.tum-ui-panel-content-container') || target?.closest('.tum-ui-panel-toggler')) {
+            return;
+        }
+
+        this.toggleExam(examId);
+    }
 }

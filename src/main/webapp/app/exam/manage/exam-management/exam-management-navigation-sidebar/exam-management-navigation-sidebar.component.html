@@ -18,7 +18,13 @@
                 <div class="scrollable-content flex flex-col gap-2">
                     @for (exam of exams(); track exam.id) {
                         <div [id]="'exam-' + exam.id">
-                            <tum-ui-panel [toggleable]="true" [collapsed]="!expandedExams().has(exam.id!)" [toggleAriaLabel]="exam.title" (click)="toggleExam(exam.id!)">
+                            <tum-ui-panel
+                                [toggleable]="true"
+                                [collapsed]="!expandedExams().has(exam.id!)"
+                                (collapsedChange)="toggleExam(exam.id!)"
+                                [toggleAriaLabel]="exam.title"
+                                (click)="onPanelClick(exam.id!, $event)"
+                            >
                                 <div tumUiPanelHeader class="flex items-center gap-2 min-w-0 mr-2 flex-1 cursor-pointer select-none">
                                     <fa-icon
                                         [icon]="exam.testExam ? faVial : faGraduationCap"
