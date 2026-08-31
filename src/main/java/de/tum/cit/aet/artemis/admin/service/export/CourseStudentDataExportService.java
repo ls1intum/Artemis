@@ -56,6 +56,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
@@ -113,11 +114,13 @@ public class CourseStudentDataExportService {
 
     private final ObjectMapper objectMapper;
 
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public CourseStudentDataExportService(ParticipationRepository participationRepository, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupApi> tutorialGroupApi,
-            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            ObjectMapper objectMapper) {
+            GradingScaleRepository gradingScaleRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, ObjectMapper objectMapper,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.participationRepository = participationRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -131,6 +134,7 @@ public class CourseStudentDataExportService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -218,6 +222,13 @@ public class CourseStudentDataExportService {
                 log.info("No participations found for course {}", courseId);
                 return Optional.empty();
             }
+
+            // the automatic test-case and SCA feedback of programming results lives in JSON-ignored typed
+            // tables - attach the synthesized legacy views (two grouped queries for all results) so the
+            // exported CSV keeps containing the automatic feedback
+            List<Result> latestResults = participations.stream().map(this::getLatestSubmission).filter(Objects::nonNull).map(this::getLatestResult).filter(Objects::nonNull)
+                    .toList();
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(latestResults);
 
             List<String> lines = new ArrayList<>();
             lines.add("ExerciseId,ExerciseTitle,ParticipantLogin,ParticipantName,ParticipationType,SubmissionDate,Score,Rated,Successful,FeedbackCount,FeedbackDetails");
