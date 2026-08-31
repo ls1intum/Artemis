@@ -85,10 +85,16 @@ public Path exportRepositoryToZipFile(VcsRepositoryUri uri, Path targetDirectory
 ```
 
 `WITH_HISTORY` uses `writeZip`; `WORKING_TREE_ONLY` uses JGit's `ArchiveCommand`. Both write through
-`Files.newOutputStream` straight into the destination directory. A repository whose `HEAD` does not resolve
-(unborn after a failed setup) is reported as an export error instead of producing today's silent zero-byte
-zip. The duplicated student-repository naming in `getRepositoryWithParticipation` and
-`exportStudentRepositoryInMemory` moves into one helper.
+`Files.newOutputStream` straight into the destination directory. A repository that cannot be read — because
+its `HEAD` does not resolve, or because it was never created — is reported as an export error instead of
+producing today's silent zero-byte zip, and the partially written file is removed, since the callers zip
+whole directories and an unreadable archive inside one of them hides the failure. The duplicated
+student-repository naming in `getRepositoryWithParticipation` and `exportStudentRepositoryInMemory` moves
+into one helper.
+
+Removing the clone from the instructor path leaves `getRepositoryWithParticipation`'s `zipOutput` branch, the
+`zipFiles` helper it was the only caller of, and the service's `ZipFileService` dependency unreachable; all
+three go.
 
 ### Wiring
 
