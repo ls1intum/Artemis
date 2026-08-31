@@ -903,8 +903,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
 
         int maxDecimalPlaces = getMaxPointsDecimalPlaces();
-        // QuizExercise#getMaxPoints() is a floating-point sum of its question points (e.g. 0.1 + 0.2 == 0.30000000000000004),
-        // so a valid quiz can appear to violate the precision limit purely due to binary floating-point rounding.
+        // Quiz max points is a floating-point sum of question points (e.g. 0.1 + 0.2 == 0.30000000000000004), so skip it here.
         if (!(this instanceof QuizExercise) && !hasValidDecimalPrecision(getMaxPoints(), maxDecimalPlaces)) {
             throw new BadRequestAlertException("The max points must not have more than " + maxDecimalPlaces + " decimal places", "Exercise", "maxScoreInvalid");
         }
@@ -923,15 +922,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         }
     }
 
-    /**
-     * Determines the maximum number of decimal places allowed for this exercise's max points and bonus points.
-     * Programming exercises use the course's {@link Course#getAccuracyOfScores()} setting when the course can already
-     * be resolved (checked at write-time only - lowering a course's accuracy later never retroactively invalidates
-     * persisted exercises, it only applies on the next save). All other cases fall back to
-     * {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_POINTS_DECIMAL_PLACES}.
-     *
-     * @return the maximum number of decimal places allowed for this exercise
-     */
+    // Programming exercises use the course's accuracyOfScores when resolvable at write-time; otherwise falls back to MAX_POINTS_DECIMAL_PLACES.
     private int getMaxPointsDecimalPlaces() {
         if (this instanceof ProgrammingExercise) {
             Course course = getCourseViaExerciseGroupOrCourseMember();
@@ -942,15 +933,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         return MAX_POINTS_DECIMAL_PLACES;
     }
 
-    /**
-     * Checks that a points value (if present) does not exceed the given number of decimal places. Trailing zeros are
-     * stripped before checking scale, since {@code BigDecimal.valueOf(100.0).scale()} is 1 (not 0) - {@code Double#toString}
-     * always renders a fractional digit, which would wrongly reject whole numbers when {@code maxDecimalPlaces} is 0.
-     *
-     * @param points           the points value to check, may be {@code null}
-     * @param maxDecimalPlaces the maximum number of decimal places allowed
-     * @return true if the value is null or has a valid decimal precision, false otherwise
-     */
+    // Trailing zeros are stripped before checking scale: BigDecimal.valueOf(100.0).scale() is 1, not 0, which would wrongly reject whole numbers.
     private static boolean hasValidDecimalPrecision(Double points, int maxDecimalPlaces) {
         return points == null || BigDecimal.valueOf(points).stripTrailingZeros().scale() <= maxDecimalPlaces;
     }
