@@ -87,7 +87,7 @@ export class CourseGroupMembershipComponent implements OnInit {
 
     /**
      * Load all users of given course group.
-     * Redirect to course-management when given course group is in predefined standard course groups.
+     * Redirect to the course overview when the course group is invalid.
      */
     loadAll = () => {
         this.isLoading.set(true);
@@ -98,7 +98,7 @@ export class CourseGroupMembershipComponent implements OnInit {
             this.paramSub = this.route.params.subscribe((params) => {
                 const slug: CourseRoleSlug = params['courseRoleSlug'];
                 if (!courseRoleSegments.includes(slug)) {
-                    void this.router.navigate(['/course-management']);
+                    void this.router.navigate(['/courses']);
                     return;
                 }
                 this.courseRoleSlug.set(slug);
