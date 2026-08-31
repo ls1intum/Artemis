@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.web;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -113,6 +114,9 @@ public class TextUnitResource {
         Set<Long> originalCompetencyIds = existingTextUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
                 .collect(Collectors.toSet());
 
+        // Snapshot the content-bearing field before the update so the Atlas content-changed event only fires on a real edit.
+        String previousContent = existingTextUnit.getContent();
+
         // copy all attributes
         existingTextUnit.setContent(textUnitDto.content());
         existingTextUnit.setName(textUnitDto.name());
@@ -128,6 +132,11 @@ public class TextUnitResource {
         if (competencyProgressApi.isPresent()) {
             // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingTextUnit);
+        }
+
+        // Notify the Atlas auto-orchestration pipeline only when the learning-relevant content actually changed.
+        if (!Objects.equals(previousContent, savedTextUnit.getContent())) {
+            lectureUnitService.publishContentChangedEvent(savedTextUnit);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -175,6 +184,11 @@ public class TextUnitResource {
         // From now on, only use persistedUnit
         textUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+
+        // A newly created unit with non-blank content introduces learning-relevant content; notify the pipeline.
+        if (persistedUnit.getContent() != null && !persistedUnit.getContent().isBlank()) {
+            lectureUnitService.publishContentChangedEvent(persistedUnit);
+        }
 
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {

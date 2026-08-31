@@ -98,6 +98,21 @@ public interface LectureUnitRepository extends ArtemisJpaRepository<LectureUnit,
             """)
     List<LectureUnit> findAllByIdsWithLecture(@Param("ids") Collection<Long> ids);
 
+    /**
+     * Loads a single lecture unit together with its parent lecture (and, transitively, the lecture's course) in one query.
+     * Used by the Atlas orchestrator tools, which run with no open session and must scope a unit to its course without a lazy traversal.
+     *
+     * @param lectureUnitId the id of the lecture unit to load
+     * @return the lecture unit with its lecture eagerly fetched, or empty when no unit has the given id
+     */
+    @Query("""
+            SELECT lu
+            FROM LectureUnit lu
+                JOIN FETCH lu.lecture
+            WHERE lu.id = :lectureUnitId
+            """)
+    Optional<LectureUnit> findWithLectureById(@Param("lectureUnitId") long lectureUnitId);
+
     default LectureUnit findByIdWithCompletedUsersElseThrow(long lectureUnitId) {
         return getValueElseThrow(findByIdWithCompletedUsers(lectureUnitId), lectureUnitId);
     }

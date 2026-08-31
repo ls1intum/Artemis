@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.atlas.dto.OrchestratorDefaultsDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastInstructorInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 
@@ -69,6 +70,15 @@ public class CompetencyOrchestrationResource {
         return ResponseEntity.status(httpStatusFor(result)).body(result);
     }
 
+    @PostMapping("lecture-units/{lectureUnitId}/run")
+    @EnforceAtLeastInstructorInLectureUnit
+    @FeatureToggle(Feature.AtlasAgent)
+    public ResponseEntity<CompetencyOrchestrationResultDTO> runForLectureUnit(@PathVariable Long lectureUnitId) {
+        log.info("REST request to run Atlas orchestrator for lecture unit: {}", lectureUnitId);
+        CompetencyOrchestrationResultDTO result = competencyOrchestrationService.runLectureUnitWithQueuedFlush(lectureUnitId);
+        return ResponseEntity.status(httpStatusFor(result)).body(result);
+    }
+
     /** Maps orchestration outcome to HTTP status so frontend error handling does not need to parse the response body. */
     private static HttpStatus httpStatusFor(CompetencyOrchestrationResultDTO result) {
         return switch (result.status()) {
@@ -79,7 +89,7 @@ public class CompetencyOrchestrationResource {
                 case NO_CHAT_CLIENT -> HttpStatus.SERVICE_UNAVAILABLE;
                 case LLM_ERROR -> HttpStatus.BAD_GATEWAY;
                 case INTERNAL_ERROR -> HttpStatus.INTERNAL_SERVER_ERROR;
-                case UNSUPPORTED_EXERCISE -> HttpStatus.UNPROCESSABLE_CONTENT;
+                case UNSUPPORTED_EXERCISE, UNSUPPORTED_LEARNING_OBJECT -> HttpStatus.UNPROCESSABLE_CONTENT;
             };
         };
     }

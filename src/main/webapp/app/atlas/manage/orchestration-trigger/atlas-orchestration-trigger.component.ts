@@ -38,9 +38,11 @@ export class AtlasOrchestrationTriggerComponent {
     private readonly alertService = inject(AlertService);
     private readonly profileService = inject(ProfileService);
 
-    readonly exercise = input.required<Exercise>();
+    readonly exercise = input<Exercise>();
+    readonly lectureUnitId = input<number>();
     /** Button CSS classes, so each host page can match its own action-bar styling (solid vs outline). */
     readonly buttonClass = input<string>('btn btn-primary btn-sm');
+    readonly showLabel = input(true);
 
     /**
      * Whether the Atlas module is enabled on this instance. Owned here so host pages stay free of Atlas
@@ -59,14 +61,17 @@ export class AtlasOrchestrationTriggerComponent {
 
     async triggerAtlasOrchestrator() {
         const exerciseId = this.exercise()?.id;
-        if (!exerciseId || this.orchestrationRunning()) {
+        const lectureUnitId = this.lectureUnitId();
+        if ((!exerciseId && !lectureUnitId) || (exerciseId && lectureUnitId) || this.orchestrationRunning()) {
             return;
         }
         this.orchestrationRunning.set(true);
         try {
             // Backend returns 2xx only for SUCCESS; IN_PROGRESS (409) and FAILED (422/500/502/503)
             // surface as HttpErrorResponse and are handled in the catch block below.
-            const result = await this.competencyOrchestrationApiService.runForExercise(exerciseId);
+            const result = exerciseId
+                ? await this.competencyOrchestrationApiService.runForExercise(exerciseId)
+                : await this.competencyOrchestrationApiService.runForLectureUnit(lectureUnitId!);
             // PARTIAL responds with 207 (MULTI_STATUS, still 2xx), so both SUCCESS and PARTIAL land here.
             // summary/appliedActions may be omitted from the response when empty (@JsonInclude(NON_EMPTY)).
             const summary = result.summary?.trim() ?? '';

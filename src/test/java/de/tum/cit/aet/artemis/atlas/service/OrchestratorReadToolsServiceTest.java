@@ -31,6 +31,10 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -49,6 +53,9 @@ class OrchestratorReadToolsServiceTest {
     @Mock
     private ContentExtractionService contentExtractionService;
 
+    @Mock
+    private LectureUnitRepositoryApi lectureUnitRepositoryApi;
+
     private OrchestratorReadToolsService service;
 
     private ToolContext toolContext;
@@ -57,7 +64,8 @@ class OrchestratorReadToolsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new OrchestratorReadToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, contentExtractionService);
+        service = new OrchestratorReadToolsService(new ObjectMapper(), courseCompetencyRepository, exerciseRepository, contentExtractionService,
+                Optional.of(lectureUnitRepositoryApi));
         Map<String, Object> ctx = new HashMap<>();
         ctx.put(OrchestratorToolContextKeys.COURSE_ID_KEY, COURSE_ID);
         workerReadCount = new AtomicInteger();
@@ -150,6 +158,61 @@ class OrchestratorReadToolsServiceTest {
 
         assertThat(result).contains("does not belong to the current course");
         verify(contentExtractionService, never()).extractContent(examExercise, false);
+    }
+
+    @Test
+    void getLectureUnitContent_courseScopedUnit_extractsAndSanitizes() {
+        Course course = courseWithId(COURSE_ID);
+        TextUnit unit = lectureUnitInCourse(40L, "Recursion basics", course);
+        when(lectureUnitRepositoryApi.findWithLectureById(40L)).thenReturn(Optional.of(unit));
+        when(contentExtractionService.extractContent(unit, false))
+                .thenReturn(new ExtractedContentDTO("Recursion basics", "A recursive function calls itself.", Map.of("lectureUnitType", "text")));
+
+        String result = service.getLectureUnitContent(40L, toolContext);
+
+        assertThat(result).contains("Recursion basics").contains("A recursive function calls itself.").contains("text");
+        assertThat(workerReadCount).hasValue(1);
+    }
+
+    @Test
+    void getLectureUnitContent_exerciseUnit_isRejectedWithoutExtraction() {
+        ExerciseUnit exerciseUnit = new ExerciseUnit();
+        Lecture lecture = new Lecture();
+        lecture.setCourse(courseWithId(COURSE_ID));
+        exerciseUnit.setLecture(lecture);
+        when(lectureUnitRepositoryApi.findWithLectureById(40L)).thenReturn(Optional.of(exerciseUnit));
+
+        String result = service.getLectureUnitContent(40L, toolContext);
+
+        assertThat(result).contains("not a readable lecture unit");
+        verify(contentExtractionService, never()).extractContent(exerciseUnit, false);
+    }
+
+    @Test
+    void getLectureUnitContent_differentCourse_isRejected() {
+        TextUnit unit = lectureUnitInCourse(40L, "Foreign", courseWithId(COURSE_ID + 1));
+        when(lectureUnitRepositoryApi.findWithLectureById(40L)).thenReturn(Optional.of(unit));
+
+        String result = service.getLectureUnitContent(40L, toolContext);
+
+        assertThat(result).contains("not a readable lecture unit");
+    }
+
+    @Test
+    void getLectureUnitContent_missingCourseContext_returnsError() {
+        String result = service.getLectureUnitContent(40L, new ToolContext(Map.of()));
+
+        assertThat(result).contains("No course context");
+    }
+
+    private static TextUnit lectureUnitInCourse(long id, String name, Course course) {
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        TextUnit unit = new TextUnit();
+        unit.setId(id);
+        unit.setName(name);
+        unit.setLecture(lecture);
+        return unit;
     }
 
     private static Course courseWithId(long id) {

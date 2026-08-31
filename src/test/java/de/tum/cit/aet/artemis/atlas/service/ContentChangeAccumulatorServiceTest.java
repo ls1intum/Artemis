@@ -6,15 +6,22 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasOrchestratorProperties;
+import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.atlas.dto.CourseAutoOrchestrationConfigDTO;
 import de.tum.cit.aet.artemis.atlas.service.ContentChangeAccumulatorService.BatchClaim;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
@@ -237,6 +244,96 @@ class ContentChangeAccumulatorServiceTest {
         clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
         assertThat(service.listDueCourseIds()).doesNotContain(courseId);
         assertThat(service.claimDueBatch(courseId)).as("a flushed course has nothing to claim").isEmpty();
+    }
+
+    @Test
+    void recordLectureUnit_claimDrainsBothExerciseAndLectureUnitSets() {
+        service.record(1L, 10L);
+        service.recordLectureUnit(1L, 30L);
+        service.recordLectureUnit(1L, 31L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+
+        Optional<BatchClaim> claim = service.claimDueBatch(1L);
+        assertThat(claim).isPresent();
+        assertThat(claim.get().exerciseIds()).containsExactly(10L);
+        assertThat(claim.get().lectureUnitIds()).containsExactlyInAnyOrder(30L, 31L);
+
+        // The bucket is drained: a second claim finds nothing.
+        assertThat(service.claimDueBatch(1L)).isEmpty();
+    }
+
+    @Test
+    void listDueCourseIds_includesCoursesWithOnlyLectureUnitChanges() {
+        service.recordLectureUnit(1L, 30L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+
+        assertThat(service.listDueCourseIds()).containsExactly(1L);
+    }
+
+    @Test
+    void requeueAfterFailedRun_reMergesBothSets() {
+        service.record(1L, 10L);
+        service.recordLectureUnit(1L, 30L);
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+
+        service.requeueAfterFailedRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+
+        clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+        BatchClaim requeued = service.claimDueBatch(1L).orElseThrow();
+        assertThat(requeued.exerciseIds()).containsExactly(10L);
+        assertThat(requeued.lectureUnitIds()).containsExactly(30L);
+    }
+
+    @Test
+    void requeueAfterConcurrentRun_reMergesBothSetsAndRefundsQuota() {
+        service.record(1L, 10L);
+        service.recordLectureUnit(1L, 30L);
+
+        // More requeue cycles than the daily cap: the reservation must be refunded each time so the mixed batch stays claimable.
+        for (int i = 0; i < DAILY_CAP + 2; i++) {
+            clock.advanceSeconds(DEBOUNCE_WINDOW_SECONDS + 1);
+            BatchClaim claim = service.claimDueBatch(1L).orElseThrow();
+            assertThat(claim.exerciseIds()).containsExactly(10L);
+            assertThat(claim.lectureUnitIds()).containsExactly(30L);
+            service.requeueAfterConcurrentRun(1L, claim.exerciseIds(), claim.lectureUnitIds());
+        }
+    }
+
+    @Test
+    void accumulator_serializationRoundTrip_preservesBothSets() throws Exception {
+        Instant now = Instant.parse("2026-04-24T12:00:00Z");
+        LocalDate today = LocalDate.of(2026, 4, 24);
+        ContentChangeAccumulator original = new ContentChangeAccumulator(Set.of(10L, 11L), Set.of(30L), now, 2, today);
+
+        ContentChangeAccumulator roundTripped = serializeDeserialize(original);
+
+        assertThat(roundTripped.exerciseIds()).containsExactlyInAnyOrder(10L, 11L);
+        assertThat(roundTripped.lectureUnitIds()).containsExactly(30L);
+        assertThat(roundTripped.dailyRunCount()).isEqualTo(2);
+        assertThat(roundTripped.lastEventTime()).isEqualTo(now);
+    }
+
+    @Test
+    void accumulator_nullLectureUnitIds_isGuardedToEmpty() {
+        // Rolling-upgrade safety: an entry serialized by an older node (before lectureUnitIds existed) deserializes
+        // with a null component; the compact constructor must coerce it to an empty set rather than propagate null.
+        Instant now = Instant.parse("2026-04-24T12:00:00Z");
+        ContentChangeAccumulator acc = new ContentChangeAccumulator(Set.of(10L), null, now, 0, LocalDate.of(2026, 4, 24));
+
+        assertThat(acc.lectureUnitIds()).isEmpty();
+        assertThat(acc.hasContent()).isTrue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> T serializeDeserialize(T value) throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (ObjectOutputStream out = new ObjectOutputStream(bytes)) {
+            out.writeObject(value);
+        }
+        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            return (T) in.readObject();
+        }
     }
 
     /**

@@ -74,6 +74,12 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -86,6 +92,9 @@ class CompetencyOrchestrationServiceTest {
 
     @Mock
     private ExerciseTestRepository exerciseRepository;
+
+    @Mock
+    private LectureUnitRepositoryApi lectureUnitRepositoryApi;
 
     @Mock
     private ContentExtractionService contentExtractionService;
@@ -216,7 +225,7 @@ class CompetencyOrchestrationServiceTest {
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
         when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(foreignQueued, clicked));
         stubRunMap();
-        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(77L))));
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(77L), Set.of())));
         when(contentExtractionService.extractContent(clicked)).thenThrow(new RuntimeException("stop after queued"));
 
         CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runWithQueuedFlush(20L);
@@ -237,7 +246,7 @@ class CompetencyOrchestrationServiceTest {
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
         when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(queued, clicked));
         stubRunMap();
-        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L))));
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L), Set.of())));
         when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenReturn(new ExtractedContentDTO("Title", "Body", Map.of()));
         when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         // Fail at render so we exercise the single-batch preparation path (queued + clicked) without driving the LLM.
@@ -503,7 +512,7 @@ class CompetencyOrchestrationServiceTest {
         when(exerciseRepository.findByIdElseThrow(20L)).thenReturn(clicked);
         when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(clicked));
         stubRunMap();
-        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L))));
+        when(contentChangeAccumulatorService.claimBatchNow(COURSE_ID)).thenReturn(Optional.of(new BatchClaim(Set.of(33L), Set.of())));
         // A transient failure before any competency mutation -> FAILED.
         when(contentExtractionService.extractContent(any(ProgrammingExercise.class))).thenThrow(new RuntimeException("transient"));
 
@@ -512,7 +521,7 @@ class CompetencyOrchestrationServiceTest {
         assertThat(result.status()).isEqualTo(FAILED);
         // claimBatchNow drained and reset the bucket; on FAILED the drained queued id (33) and the clicked id (20)
         // must be requeued so the course's other pending changes are not silently lost.
-        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(33L, 20L));
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(33L, 20L), Set.of());
     }
 
     @Test
@@ -566,7 +575,7 @@ class CompetencyOrchestrationServiceTest {
         ArgumentCaptor<Map<String, String>> modelCaptor = ArgumentCaptor.forClass(Map.class);
         verify(templateService).render(anyString(), modelCaptor.capture());
         String renderedChanges = modelCaptor.getValue().get("exerciseChanges");
-        assertThat(renderedChanges).contains("[UPDATE id=10]").contains("Survivor Title").contains("Survivor problem body").doesNotContain("[UPDATE id=12]");
+        assertThat(renderedChanges).contains("[UPDATE exercise id=10]").contains("Survivor Title").contains("Survivor problem body").doesNotContain("[UPDATE exercise id=12]");
         verify(runMap).remove(COURSE_ID);
     }
 
@@ -593,8 +602,70 @@ class CompetencyOrchestrationServiceTest {
 
         assertThat(result.status()).isEqualTo(SUCCESS);
         // Only the extraction-failed quiz (12) is requeued — the healthy exercise was orchestrated, not requeued.
-        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L), Set.of());
         verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runBatch_lectureUnitsInBatch_extractsAndRendersLectureUnitEntries() {
+        ProgrammingExercise exercise = courseExercise(10L);
+        TextUnit lectureUnit = courseTextUnit(30L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of(exercise));
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(lectureUnit));
+        stubRunMap();
+        when(contentExtractionService.extractContent(exercise)).thenReturn(new ExtractedContentDTO("Exercise Title", "Exercise body", Map.of()));
+        when(contentExtractionService.extractContent(lectureUnit))
+                .thenReturn(new ExtractedContentDTO("Unit Title", "Unit learning text", Map.of("lectureUnitType", "text", "source", "https://example.test/unit")));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(10L), Set.of(30L));
+
+        assertThat(result.status()).isEqualTo(FAILED);
+        verify(contentExtractionService).extractContent(lectureUnit);
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, String>> modelCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(templateService).render(anyString(), modelCaptor.capture());
+        String renderedChanges = modelCaptor.getValue().get("exerciseChanges");
+        assertThat(renderedChanges).contains("[UPDATE exercise id=10]").contains("[UPDATE lecture-unit id=30]").contains("Unit learning text")
+                .contains("Source metadata: source=https://example.test/unit");
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runBatch_blankContentLectureUnitOnly_returnsNoOp() {
+        AttachmentVideoUnit lectureUnit = courseAttachmentVideoUnit(30L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of());
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(lectureUnit));
+        stubRunMap();
+        // A file/video-only unit yields blank learning text; source metadata must not make it eligible.
+        when(contentExtractionService.extractContent(lectureUnit))
+                .thenReturn(new ExtractedContentDTO("Unit Title", "  ", Map.of("lectureUnitType", "attachment", "videoSource", "https://video.test/30")));
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(), Set.of(30L));
+
+        assertThat(result.status()).isEqualTo(NO_OP);
+        verify(orchestratorPlanningToolsService, never()).listCompetencyIndex(anyLong());
+        verify(runMap).remove(COURSE_ID);
+    }
+
+    @Test
+    void runBatch_onlineUnitWithSourceOnly_isRenderedWithoutFetchingSource() {
+        OnlineUnit lectureUnit = courseOnlineUnit(31L);
+        when(exerciseRepository.findAllById(any())).thenReturn(List.<Exercise>of());
+        when(lectureUnitRepositoryApi.findAllByIdsWithLecture(any())).thenReturn(List.<LectureUnit>of(lectureUnit));
+        stubRunMap();
+        when(contentExtractionService.extractContent(lectureUnit))
+                .thenReturn(new ExtractedContentDTO("External notes", "", Map.of("lectureUnitType", "online", "source", "https://example.test/notes")));
+        when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
+        when(templateService.render(anyString(), anyMap())).thenThrow(new RuntimeException("stop after prepare"));
+
+        createServiceWithRunMap(mock(ChatClient.class)).runBatch(COURSE_ID, Set.of(), Set.of(31L));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, String>> modelCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(templateService).render(anyString(), modelCaptor.capture());
+        assertThat(modelCaptor.getValue().get("exerciseChanges")).contains("[UPDATE lecture-unit id=31]").contains("source=https://example.test/notes");
     }
 
     @Test
@@ -612,7 +683,7 @@ class CompetencyOrchestrationServiceTest {
         when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
         // The requeue of the skipped id (12) blows up — this runs only after mutations have committed.
-        doThrow(new RuntimeException("hazelcast down")).when(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        doThrow(new RuntimeException("hazelcast down")).when(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L), Set.of());
 
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
         ChatClient mockChatClient = mock(ChatClient.class);
@@ -627,7 +698,7 @@ class CompetencyOrchestrationServiceTest {
 
         // The committed-mutation result is preserved as SUCCESS despite the requeue failure.
         assertThat(result.get().status()).isEqualTo(SUCCESS);
-        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L));
+        verify(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L), Set.of());
         verify(runMap).remove(COURSE_ID);
     }
 
@@ -698,10 +769,11 @@ class CompetencyOrchestrationServiceTest {
     }
 
     private CompetencyOrchestrationService createService(@Nullable ChatClient chatClient) {
-        return new CompetencyOrchestrationService(exerciseRepository, contentExtractionService, orchestratorPlanningToolsService, templateService, delegationService, chatClient,
-                new AtlasToolSurface(orchestratorReadToolCallbackProvider), new AtlasToolSurface(orchestratorPlanningToolCallbackProvider),
-                new AtlasToolSurface(orchestratorDelegationToolCallbackProvider), new AtlasToolSurface(orchestratorTerminalToolCallbackProvider),
-                Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService, llmTokenUsageService, userRepository, shortlistService);
+        return new CompetencyOrchestrationService(exerciseRepository, Optional.of(lectureUnitRepositoryApi), contentExtractionService, orchestratorPlanningToolsService,
+                templateService, delegationService, chatClient, new AtlasToolSurface(orchestratorReadToolCallbackProvider),
+                new AtlasToolSurface(orchestratorPlanningToolCallbackProvider), new AtlasToolSurface(orchestratorDelegationToolCallbackProvider),
+                new AtlasToolSurface(orchestratorTerminalToolCallbackProvider), Optional.of(distributedDataProvider), properties, contentChangeAccumulatorService,
+                llmTokenUsageService, userRepository, shortlistService);
     }
 
     private static ChatResponse completeVerified(Map<String, Object> context, ChatResponse response) {
@@ -775,5 +847,41 @@ class CompetencyOrchestrationServiceTest {
         course.setId(COURSE_ID);
         exercise.setCourse(course);
         return exercise;
+    }
+
+    private static TextUnit courseTextUnit(long id) {
+        Course course = new Course();
+        course.setId(COURSE_ID);
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        TextUnit unit = new TextUnit();
+        unit.setId(id);
+        unit.setName("Unit " + id);
+        unit.setLecture(lecture);
+        return unit;
+    }
+
+    private static AttachmentVideoUnit courseAttachmentVideoUnit(long id) {
+        AttachmentVideoUnit unit = new AttachmentVideoUnit();
+        unit.setId(id);
+        unit.setName("Unit " + id);
+        unit.setLecture(courseLecture());
+        return unit;
+    }
+
+    private static OnlineUnit courseOnlineUnit(long id) {
+        OnlineUnit unit = new OnlineUnit();
+        unit.setId(id);
+        unit.setName("Unit " + id);
+        unit.setLecture(courseLecture());
+        return unit;
+    }
+
+    private static Lecture courseLecture() {
+        Course course = new Course();
+        course.setId(COURSE_ID);
+        Lecture lecture = new Lecture();
+        lecture.setCourse(course);
+        return lecture;
     }
 }

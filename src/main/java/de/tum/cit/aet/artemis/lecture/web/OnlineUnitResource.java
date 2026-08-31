@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -120,6 +121,10 @@ public class OnlineUnitResource {
         Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
                 .collect(Collectors.toSet());
 
+        // Snapshot the content-bearing fields before the update so the Atlas content-changed event only fires on a real edit.
+        String previousDescription = existingOnlineUnit.getDescription();
+        String previousSource = existingOnlineUnit.getSource();
+
         // copy all attributes
         existingOnlineUnit.setDescription(onlineUnitDto.description());
         existingOnlineUnit.setSource(onlineUnitDto.source());
@@ -136,6 +141,11 @@ public class OnlineUnitResource {
         if (competencyProgressApi.isPresent()) {
             // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
+        }
+
+        // Notify the Atlas auto-orchestration pipeline only when the learning-relevant content (description or source) actually changed.
+        if (!Objects.equals(previousDescription, savedOnlineUnit.getDescription()) || !Objects.equals(previousSource, savedOnlineUnit.getSource())) {
+            lectureUnitService.publishContentChangedEvent(savedOnlineUnit);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -187,6 +197,9 @@ public class OnlineUnitResource {
         // From now on, only use persistedUnit
         onlineUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
+
+        // A newly created online unit carries learning-relevant content (a required source, optionally a description); notify the pipeline.
+        lectureUnitService.publishContentChangedEvent(persistedUnit);
 
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
