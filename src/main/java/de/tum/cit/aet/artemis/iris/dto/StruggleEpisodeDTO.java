@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.List;
 
+import jakarta.validation.constraints.Size;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -12,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * would drop it, causing a cross-repo break).
  */
 @JsonInclude
-public record StruggleEpisodeDTO(String episodeId, boolean isNew, List<StruggleEpisodeHintDTO> hints) {
+public record StruggleEpisodeDTO(@Size(max = 64) String episodeId, boolean isNew, List<StruggleEpisodeHintDTO> hints) {
 
     public StruggleEpisodeDTO {
         hints = hints != null ? hints : List.of();

@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -16,6 +17,7 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.CannotAcquireLockException;
 
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
@@ -83,6 +85,37 @@ class PyrisStatusUpdateStruggleTest {
         inOrder.verify(pyrisJobService).removeJob(job);                                 // remove the JOB-MAP entry FIRST so the trailing duplicate 403s
         inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
         inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);    // marker freed only AFTER handleDecision (jobId, userId, exerciseId)
+    }
+
+    @Test
+    void decisionCallback_whenHandleDecisionThrows_stillCompletesClientAndReleasesMarker() {
+        // handleDecision emits its own silent frame on every deliberate drop, but an unexpected failure (e.g. a
+        // lock-timeout DataAccessException while recording the ambient decision) escapes after the job was already
+        // removed. Without the dispatcher completing the client, its in-flight decide would hang until timeout.
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "ambient", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
+        doThrow(new CannotAcquireLockException("deadlock")).when(irisStruggleInterventionService).handleDecision(job, update);
+
+        service.handleStatusUpdate(job, update);
+
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        inOrder.verify(pyrisJobService).removeJob(job);
+        inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
+        inOrder.verify(irisStruggleInterventionService).emitTerminalCompletion(job);    // client completed despite the failure
+        inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("t", 3L, 42L);    // marker still freed
+    }
+
+    @Test
+    void confirmCloseCallback_whenHandlerThrows_stillCompletesClientAndReleasesMarker() {
+        var update = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, true, null, null);
+        doThrow(new CannotAcquireLockException("deadlock")).when(irisStruggleInterventionService).handleConfirmClose(confirmCloseJob, update);
+
+        service.handleStatusUpdate(confirmCloseJob, update);
+
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        inOrder.verify(pyrisJobService).removeJob(confirmCloseJob);
+        inOrder.verify(irisStruggleInterventionService).handleConfirmClose(confirmCloseJob, update);
+        inOrder.verify(irisStruggleInterventionService).emitTerminalCompletion(confirmCloseJob);
+        inOrder.verify(pyrisJobService).releaseStruggleInFlightMarker("cc", 3L, 42L);
     }
 
     @Test

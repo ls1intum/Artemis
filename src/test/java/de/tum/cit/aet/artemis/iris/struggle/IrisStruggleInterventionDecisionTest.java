@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -215,6 +216,79 @@ class IrisStruggleInterventionDecisionTest {
 
         verify(irisAmbientDecisionRepository).refreshIfUnconsumed(3L, 42L, "ep-123", "Re-check the logic.");
         verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
+    }
+
+    @Test
+    void ambient_previousOfferAlreadyRevealed_emitsSilentNotAmbient() {
+        // The episode's prior offer was already revealed: refreshIfUnconsumed matches no unconsumed row (0) and the
+        // insert collides with the consumed row (unique constraint). Nothing fresh is revealable, so the client is
+        // completed silently rather than pointed at a reveal that would return the stale, already-used row.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisAmbientDecisionRepository.refreshIfUnconsumed(3L, 42L, "ep-123", "Re-check the logic.")).thenReturn(0);
+        when(irisAmbientDecisionRepository.save(any(IrisAmbientDecision.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
+                null, null);
+
+        service.handleDecision(jobWithEpisode, update);
+
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
+        verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
+    }
+
+    @Test
+    void ambient_overlongEpisodeId_emitsSilentNotAmbient_recordsNothing() {
+        // Defence at the recording boundary (the trigger also bean-validates the id): an id past the 64-char column
+        // width records nothing, so no ambient pointer is announced - a reveal would 409. Complete silently instead.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        String overlong = "e".repeat(65);
+        var overlongJob = new StruggleInterventionJob("t3", 7L, 42L, 3L, "decide", overlong, null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
+                null, null);
+
+        service.handleDecision(overlongJob, update);
+
+        // Rejected before any repository work: the blank/length guard runs before refresh and insert.
+        verify(irisAmbientDecisionRepository, never()).refreshIfUnconsumed(anyLong(), anyLong(), any(), any());
+        verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "silent".equals(e.action())));
+        verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
+    }
+
+    @Test
+    void ambient_blankEpisodeId_emitsSilentNotAmbient_recordsNothing() {
+        // A blank id passes the trigger's @Size(max=64) but a reveal rejects it, so it must not be announced as an
+        // ambient offer. Recording returns false and the client is completed silently instead.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        var blankJob = new StruggleInterventionJob("t4", 7L, 42L, 3L, "decide", "  ", null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
+                null, null);
+
+        service.handleDecision(blankJob, update);
+
+        verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "silent".equals(e.action())));
+        verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
+    }
+
+    @Test
+    void ambient_lateArrivalOnTerminalEpisode_emitsSilent_skipsRecording() {
+        // The student already dismissed this episode (a terminal outcome exists). A late ambient decision must not
+        // resurface: the same gate the active path applies. No recording, no ambient pointer, just a silent completion.
+        when(irisMessageRepository.findEpisodeOutcomes("ep-123", 3L)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
+                null, null);
+
+        service.handleDecision(jobWithEpisode, update);
+
+        verify(irisAmbientDecisionRepository, never()).refreshIfUnconsumed(anyLong(), anyLong(), any(), any());
+        verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
+        verify(irisChatSessionService, never()).getCurrentSessionOrCreateIfNotExists(any(), eq(42L), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
+        verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
     }
 
     @Test

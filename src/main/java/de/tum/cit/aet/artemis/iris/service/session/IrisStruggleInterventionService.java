@@ -326,6 +326,13 @@ public class IrisStruggleInterventionService {
                         statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId, null, null, null, statusUpdate.rationale()));
             }
             case "ambient" -> {
+                // Skip if this episode is already terminal (late ambient arriving after the student dismissed) - the
+                // same late-arrival gate the active path applies. A stale offer must not resurface after a terminal
+                // outcome; emit a silent completion so the client's in-flight decide still clears.
+                if (episodeId != null && isEpisodeTerminal(episodeId, user.getId())) {
+                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                    break;
+                }
                 // Pull model (spec §5): do NOT persist. Resolve the session only to supply its id on the event
                 // so the client knows which session to reveal into when the student clicks (A10/C2).
                 var session = resolveProactiveSession(user, job.exerciseId());
@@ -336,13 +343,19 @@ public class IrisStruggleInterventionService {
                     break;
                 }
                 // Record what we are about to offer BEFORE telling the client about it, so a reveal that races the
-                // event still finds the decision. Without an episode id the offer is unaddressable by a reveal, so
-                // there is nothing to record; the pointer is still emitted for the client's own bookkeeping.
-                if (episodeId != null) {
-                    recordAmbientDecision(user.getId(), job.exerciseId(), episodeId, result);
+                // event still finds the decision. With an episode id, announce the ambient pointer ONLY when recording
+                // left a revealable decision behind it: an over-long id or an episode whose previous offer was already
+                // revealed records nothing, and pointing the client at a reveal that would 409 helps no one, so
+                // complete it silently instead. Without an episode id there is nothing a reveal could address; the
+                // pointer is still emitted for the client's own bookkeeping, exactly as before.
+                boolean announce = episodeId == null || recordAmbientDecision(user.getId(), job.exerciseId(), episodeId, result);
+                if (announce) {
+                    irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "ambient", result, session.getId(), null,
+                            statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId, null, null, null, statusUpdate.rationale()));
                 }
-                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "ambient", result, session.getId(), null,
-                        statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId, null, null, null, statusUpdate.rationale()));
+                else {
+                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
+                }
             }
             default -> {
                 // silent (or downgraded): emit a noop completion frame so the client's in-flight decide always clears.
@@ -483,22 +496,29 @@ public class IrisStruggleInterventionService {
      * @param exerciseId the exercise the hint belongs to
      * @param episodeId  the client-allocated episode id, never null here
      * @param hintText   the hint as authored by Pyris
+     * @return {@code true} when the triple now carries a revealable (unconsumed) decision the client may be
+     *         pointed at; {@code false} when nothing revealable was recorded (over-long id, or an episode whose
+     *         previous offer the student already revealed). The caller announces an ambient pointer only on
+     *         {@code true}, so it never sends the client to a reveal that would 409.
      */
-    private void recordAmbientDecision(long userId, long exerciseId, String episodeId, String hintText) {
+    private boolean recordAmbientDecision(long userId, long exerciseId, String episodeId, String hintText) {
+        // Reject a blank or over-long episode id FIRST, before any refresh or insert. A reveal rejects a blank id
+        // outright, and an over-long id fails on the column width; either way the client would be told an offer exists
+        // that a reveal can never materialise. This has to precede refreshIfUnconsumed: a legacy unconsumed row with a
+        // blank id would otherwise be refreshed, return true, and get announced as an unrevealable offer. The trigger
+        // already bounds the length via bean validation; this is the defence at the recording boundary for any path
+        // that reaches here unvalidated, and it also covers the blank case bean validation cannot express.
+        if (episodeId.isBlank() || episodeId.length() > MAX_EPISODE_ID_LENGTH) {
+            log.warn("Refusing to record an ambient decision for exercise={} user={}: episode id is blank or exceeds the {}-character limit (length {})", exerciseId, userId,
+                    MAX_EPISODE_ID_LENGTH, episodeId.length());
+            return false;
+        }
         // Refresh in place without loading the row first. This callback runs outside a transaction, so anything read
         // here would be detached, and saving a detached aggregate merges EVERY column: a reveal committing between
         // the read and the save would be overwritten, resetting consumedAt and consumedMessageId to NULL and making
         // an already-revealed offer revealable a second time.
         if (irisAmbientDecisionRepository.refreshIfUnconsumed(userId, exerciseId, episodeId, hintText) > 0) {
-            return;
-        }
-        // Reject an over-long episode id before the insert rather than after. Without this the insert fails on the
-        // column width, the catch below swallows it as "already present", and the client is still told an offer
-        // exists that was never recorded - a reveal would then 409.
-        if (episodeId.length() > MAX_EPISODE_ID_LENGTH) {
-            log.warn("Refusing to record an ambient decision for exercise={} user={}: episode id is {} characters, the limit is {}", exerciseId, userId, episodeId.length(),
-                    MAX_EPISODE_ID_LENGTH);
-            return;
+            return true;
         }
         // Zero rows: either no offer exists for this episode yet, or the student already revealed the previous one.
         // Try to insert and let the unique constraint on (user, exercise, episode) decide between the two.
@@ -510,12 +530,15 @@ public class IrisStruggleInterventionService {
         decision.setCreatedAt(ZonedDateTime.now());
         try {
             irisAmbientDecisionRepository.save(decision);
+            return true;
         }
         catch (DataIntegrityViolationException ex) {
-            // Either a concurrent callback inserted first, or a consumed row already occupies this triple. Both are
-            // correct outcomes: the student gets an offer either way, and a revealed offer must never be resurrected.
-            // The catch stays on the insert alone so a constraint failure elsewhere cannot be misreported as this case.
+            // A consumed row already occupies this triple: the student already revealed the previous offer for this
+            // episode, so there is nothing fresh to reveal and no ambient pointer should be announced. (Single-flight
+            // over the job lock rules out a concurrent unconsumed insert for the same episode.) The catch stays on the
+            // insert alone so a constraint failure elsewhere cannot be misreported as this case.
             log.debug("Ambient decision for episode {} not recorded: already present", episodeId);
+            return false;
         }
     }
 

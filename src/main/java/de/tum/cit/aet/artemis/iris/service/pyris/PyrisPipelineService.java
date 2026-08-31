@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
+import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
@@ -49,6 +50,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
@@ -251,6 +253,27 @@ public class PyrisPipelineService {
                         intent, episode, proactivityMode),
                 (runId, runState, error) -> {
                     if (runState == PyrisRunState.FAILED) {
+                        // Preparation/connector failure: Pyris never accepted the run, so no async status callback will
+                        // arrive to complete the client's in-flight request. Emit the terminal frame here before
+                        // releasing the slot. Kept inline rather than delegating to
+                        // IrisStruggleInterventionService#emitTerminalCompletion, which would introduce a bean cycle
+                        // (that service already depends on this one); the frame shape mirrors it.
+                        try {
+                            if (pyrisJobService.getJob(jobToken) instanceof StruggleInterventionJob failedJob) {
+                                if ("confirm_close".equals(failedJob.intent())) {
+                                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(failedJob.exerciseId(), failedJob.episodeId()));
+                                }
+                                else {
+                                    irisChatWebsocketService.sendStruggleEvent(user,
+                                            StruggleInterventionEventDTO.silentDecide(failedJob.exerciseId(), null, failedJob.episodeId(), null));
+                                }
+                            }
+                        }
+                        catch (Exception e) {
+                            // A missing completion frame degrades to the client's own timeout; never let it block the
+                            // slot release, which matters more.
+                            log.warn("Could not emit terminal completion for failed struggle pipeline job {} exercise {} user {}", jobToken, exerciseId, user.getId(), e);
+                        }
                         pyrisJobService.releaseStruggleInFlightJob(jobToken, user.getId(), exerciseId);
                     }
                 });

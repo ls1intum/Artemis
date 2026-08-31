@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.Map;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.NonNull;
@@ -29,7 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSigna
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisStruggleInterventionRequestDTO(@NotNull PyrisStruggleSignalDTO struggleSignal, @NonNull Map<String, String> uncommittedFiles, @Nullable String intent,
-        @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
+        @Valid @Nullable StruggleEpisodeDTO episode, @Nullable String confirmReason, @Nullable String requestToken, @Nullable String proactivityMode) {
 
     public IrisStruggleInterventionRequestDTO {
         uncommittedFiles = uncommittedFiles != null ? uncommittedFiles : Map.of();

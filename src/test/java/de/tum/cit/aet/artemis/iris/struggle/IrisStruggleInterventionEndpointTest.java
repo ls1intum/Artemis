@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
+import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionAcceptedDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleSignalDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -121,6 +122,18 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         // @Valid + @NotNull on the request body rejects a null struggleSignal synchronously (400) instead of
         // returning 202 and only failing later in the async send (which would leak the single-flight slot).
         var invalid = new IrisStruggleInterventionRequestDTO(null, Map.of("src/Sum.java", "class Sum {}"), null, null, null, null, null);
+        request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", invalid, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void overlongEpisodeId_isBadRequest() throws Exception {
+        // @Valid cascade + @Size(max=64) on the episode id rejects a client-supplied id wider than the
+        // proactive_episode_id column synchronously (400), before the single-flight slot is reserved.
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
+                List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
+        var episode = new StruggleEpisodeDTO("e".repeat(65), true, List.of());
+        var invalid = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, episode, null, null, null);
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", invalid, HttpStatus.BAD_REQUEST);
     }
 }

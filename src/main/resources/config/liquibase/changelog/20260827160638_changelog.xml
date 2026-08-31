@@ -111,4 +111,39 @@
         </createIndex>
     </changeSet>
 
+    <!--
+    Deletion paths. iris_ambient_decision carries user_id and exercise_id as plain columns (deliberately not JPA
+    associations: the reveal must not trust a client-supplied hint, so the row is the server's own copy). Without
+    foreign keys, deleting a user or an exercise would leave orphaned decisions behind. These cascade the delete,
+    matching iris_session, which cascades on the same jhi_user / exercise references. Deleting a course cascades
+    through its exercises, so no separate course FK is needed. Split into their own precondition-guarded changesets
+    so a database that already created the table (without the keys) still picks them up.
+    -->
+    <changeSet id="20260827160638-5-add-iris-ambient-decision-user-fk" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyName="fk_iris_ambient_decision_user_id" foreignKeyTableName="iris_ambient_decision"/></not>
+        </preConditions>
+        <!-- A database that created the table before these keys existed may already hold rows whose user was deleted
+             (no FK then enforced it). Adding the constraint would fail validating them. Drop such orphans first; the
+             row is only the server's own copy of an offer whose owner no longer exists, so it is safe to delete. On a
+             fresh install this matches nothing. -->
+        <delete tableName="iris_ambient_decision">
+            <where>NOT EXISTS (SELECT 1 FROM jhi_user u WHERE u.id = user_id)</where>
+        </delete>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="iris_ambient_decision" constraintName="fk_iris_ambient_decision_user_id"
+                                 referencedColumnNames="id" referencedTableName="jhi_user" onDelete="CASCADE" onUpdate="RESTRICT"/>
+    </changeSet>
+
+    <changeSet id="20260827160638-6-add-iris-ambient-decision-exercise-fk" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyName="fk_iris_ambient_decision_exercise_id" foreignKeyTableName="iris_ambient_decision"/></not>
+        </preConditions>
+        <!-- Same guard for the exercise reference: drop rows whose exercise was already deleted before this FK. -->
+        <delete tableName="iris_ambient_decision">
+            <where>NOT EXISTS (SELECT 1 FROM exercise e WHERE e.id = exercise_id)</where>
+        </delete>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_ambient_decision" constraintName="fk_iris_ambient_decision_exercise_id"
+                                 referencedColumnNames="id" referencedTableName="exercise" onDelete="CASCADE" onUpdate="RESTRICT"/>
+    </changeSet>
+
 </databaseChangeLog>

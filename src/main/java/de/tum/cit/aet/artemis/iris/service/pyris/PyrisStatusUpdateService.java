@@ -128,6 +128,13 @@ public class PyrisStatusUpdateService {
                 try {
                     irisStruggleInterventionService.handleConfirmClose(job, statusUpdate);
                 }
+                catch (Exception e) {
+                    // handleConfirmClose emits its own completion on every deliberate early return, but an unexpected
+                    // failure (e.g. a DataAccessException while persisting the closing message) would otherwise escape
+                    // after the job was already removed, hanging the client's in-flight confirm_close. Complete it here.
+                    log.error("handleConfirmClose failed for struggle job {} exercise {} user {}; emitting terminal completion", job.jobId(), job.exerciseId(), job.userId(), e);
+                    irisStruggleInterventionService.emitTerminalCompletion(job);
+                }
                 finally {
                     pyrisJobService.releaseStruggleInFlightMarker(job.jobId(), job.userId(), job.exerciseId());
                 }
@@ -145,6 +152,14 @@ public class PyrisStatusUpdateService {
             pyrisJobService.removeJob(job);   // drop the JOB-MAP entry FIRST so the trailing duplicate is rejected (403)...
             try {
                 irisStruggleInterventionService.handleDecision(job, statusUpdate);
+            }
+            catch (Exception e) {
+                // handleDecision emits its own silent frame on every deliberate drop, but an unexpected failure
+                // (e.g. a DataAccessException from recording the ambient decision) would otherwise escape after the
+                // job was already removed, leaving the client's in-flight decide to hang until its own timeout.
+                // Complete it here before releasing the marker.
+                log.error("handleDecision failed for struggle job {} exercise {} user {}; emitting terminal completion", job.jobId(), job.exerciseId(), job.userId(), e);
+                irisStruggleInterventionService.emitTerminalCompletion(job);
             }
             finally {
                 // ...but free the (userId, exerciseId) in-flight marker only AFTER handleDecision returns —
