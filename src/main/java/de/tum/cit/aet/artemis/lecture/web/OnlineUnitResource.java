@@ -19,7 +19,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -47,7 +46,6 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
-import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.OnlineUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
@@ -73,17 +71,13 @@ public class OnlineUnitResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
-
     public OnlineUnitResource(LectureRepository lectureRepository, OnlineUnitRepository onlineUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
-            ApplicationEventPublisher applicationEventPublisher) {
+            LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.lectureRepository = lectureRepository;
         this.onlineUnitRepository = onlineUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
-        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     /**
@@ -151,7 +145,7 @@ public class OnlineUnitResource {
 
         // Notify the Atlas auto-orchestration pipeline only when the learning-relevant content (description or source) actually changed.
         if (!Objects.equals(previousDescription, savedOnlineUnit.getDescription()) || !Objects.equals(previousSource, savedOnlineUnit.getSource())) {
-            applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(savedOnlineUnit));
+            lectureUnitService.publishContentChangedEvent(savedOnlineUnit);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -205,7 +199,7 @@ public class OnlineUnitResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
         // A newly created online unit carries learning-relevant content (a required source, optionally a description); notify the pipeline.
-        applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(persistedUnit));
+        lectureUnitService.publishContentChangedEvent(persistedUnit);
 
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {

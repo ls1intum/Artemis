@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
@@ -53,7 +52,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUpdateIntent;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.HiddenPageInfoDTO;
@@ -103,13 +101,11 @@ public class AttachmentVideoUnitResource {
 
     private final YouTubeUrlService youTubeUrlService;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
-
     public AttachmentVideoUnitResource(AttachmentVideoUnitRepository attachmentVideoUnitRepository, LectureRepository lectureRepository,
             LectureUnitProcessingService lectureUnitProcessingService, AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService,
             AttachmentVideoUnitService attachmentVideoUnitService, Optional<CompetencyProgressApi> competencyProgressApi, SlideSplitterService slideSplitterService,
             FileService fileService, LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
-            YouTubeUrlService youTubeUrlService, ApplicationEventPublisher applicationEventPublisher) {
+            YouTubeUrlService youTubeUrlService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -122,7 +118,6 @@ public class AttachmentVideoUnitResource {
         this.lectureUnitService = lectureUnitService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.youTubeUrlService = youTubeUrlService;
-        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     /**
@@ -191,7 +186,7 @@ public class AttachmentVideoUnitResource {
                 file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
         if (!Objects.equals(previousDescription, savedAttachmentVideoUnit.getDescription())) {
-            applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(savedAttachmentVideoUnit));
+            lectureUnitService.publishContentChangedEvent(savedAttachmentVideoUnit);
         }
 
         if (notificationText != null && attachment != null) {
@@ -303,7 +298,7 @@ public class AttachmentVideoUnitResource {
 
         // A newly created attachment/video unit with a non-blank description carries learning-relevant text; notify the pipeline.
         if (persistedUnit.getDescription() != null && !persistedUnit.getDescription().isBlank()) {
-            applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(persistedUnit));
+            lectureUnitService.publishContentChangedEvent(persistedUnit);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {

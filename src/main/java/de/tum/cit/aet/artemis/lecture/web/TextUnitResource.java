@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.TextUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
@@ -60,17 +58,13 @@ public class TextUnitResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
-
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
-            ApplicationEventPublisher applicationEventPublisher) {
+            LectureUnitService lectureUnitService, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
-        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     /**
@@ -142,7 +136,7 @@ public class TextUnitResource {
 
         // Notify the Atlas auto-orchestration pipeline only when the learning-relevant content actually changed.
         if (!Objects.equals(previousContent, savedTextUnit.getContent())) {
-            applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(savedTextUnit));
+            lectureUnitService.publishContentChangedEvent(savedTextUnit);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -193,7 +187,7 @@ public class TextUnitResource {
 
         // A newly created unit with non-blank content introduces learning-relevant content; notify the pipeline.
         if (persistedUnit.getContent() != null && !persistedUnit.getContent().isBlank()) {
-            applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(persistedUnit));
+            lectureUnitService.publishContentChangedEvent(persistedUnit);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
