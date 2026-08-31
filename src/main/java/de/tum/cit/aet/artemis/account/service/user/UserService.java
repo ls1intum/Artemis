@@ -516,10 +516,13 @@ public class UserService {
     }
 
     /**
-     * Performs soft-delete on the user based on login string
+     * Legacy implementation retained temporarily for compatibility tests and migrations. Production deletion paths must
+     * use {@code PermanentUserDeletionService}; no new tombstones may be created. Remove this method together with the
+     * {@code is_deleted} compatibility column after legacy tombstones have drained.
      *
      * @param login user login string
      */
+    @Deprecated(forRemoval = true)
     public void softDeleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             // Covers the participation and repository tokens and the SSH keys this method used to delete individually,

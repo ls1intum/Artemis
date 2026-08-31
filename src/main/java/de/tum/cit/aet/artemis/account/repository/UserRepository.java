@@ -60,8 +60,9 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
  * Spring Data JPA repository for the User entity.<br>
  * <br>
  * <p>
- * <b>Note</b>: Please keep in mind that the User entities are soft-deleted when adding new queries to this repository.
- * If you don't need deleted user entities, add `WHERE user.deleted = FALSE` to your query.
+ * <b>Legacy compatibility:</b> New lifecycle operations physically delete users and never create new soft-deleted rows.
+ * Existing {@code deleted = false} filters must remain until installations have purged all tombstones created by older
+ * releases. See https://github.com/ls1intum/Artemis/issues/13614.
  * </p>
  */
 @Profile(PROFILE_CORE)

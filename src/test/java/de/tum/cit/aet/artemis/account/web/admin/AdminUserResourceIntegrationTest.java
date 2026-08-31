@@ -8,7 +8,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -23,11 +26,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -44,6 +53,21 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private PermanentUserDeletionService permanentUserDeletionService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private TeamUtilService teamUtilService;
+
+    @Autowired
+    private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Nested
     class AdminTryingToEscalatePrivilegesUpdateUser {
@@ -286,7 +310,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addSuperAdmin(TEST_PREFIX + "test4");
             User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test4superadmin");
 
-            mockMvc.perform(delete("/api/account/admin/users/" + superUser.getLogin())).andExpect(status().isForbidden());
+            mockMvc.perform(delete("/api/account/admin/users/" + superUser.getLogin()).contentType(MediaType.APPLICATION_JSON).content("{\"impactFingerprint\":\"irrelevant\"}"))
+                    .andExpect(status().isForbidden());
 
             // Verify user was not deleted
             assertThat(userUtilService.userExistsWithLogin(superUser.getLogin())).isTrue();
@@ -298,11 +323,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             // Create a regular user
             User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser4");
 
-            mockMvc.perform(delete("/api/account/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
+            permanentlyDeleteUser(regularUser.getLogin());
 
-            // Verify user was soft deleted
-            User deletedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
-            assertThat(deletedUser.isDeleted()).isTrue();
+            assertThat(userTestRepository.findById(regularUser.getId())).isEmpty();
         }
     }
 
@@ -316,11 +339,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addSuperAdmin(TEST_PREFIX + "test5");
             User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test5superadmin");
 
-            mockMvc.perform(delete("/api/account/admin/users/" + superUser.getLogin())).andExpect(status().isOk());
+            permanentlyDeleteUser(superUser.getLogin());
 
-            // Verify user was soft deleted
-            User deletedUser = userTestRepository.findById(superUser.getId()).orElseThrow();
-            assertThat(deletedUser.isDeleted()).isTrue();
+            assertThat(userTestRepository.findById(superUser.getId())).isEmpty();
         }
 
         @Test
@@ -329,11 +350,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             // Create a regular user
             User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser5");
 
-            mockMvc.perform(delete("/api/account/admin/users/" + regularUser.getLogin())).andExpect(status().isOk());
+            permanentlyDeleteUser(regularUser.getLogin());
 
-            // Verify user was soft deleted
-            User deletedUser = userTestRepository.findById(regularUser.getId()).orElseThrow();
-            assertThat(deletedUser.isDeleted()).isTrue();
+            assertThat(userTestRepository.findById(regularUser.getId())).isEmpty();
         }
     }
 
@@ -531,7 +550,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser4");
             User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser4admin");
 
-            mockMvc.perform(delete("/api/account/admin/users/" + adminUser.getLogin())).andExpect(status().isForbidden());
+            mockMvc.perform(delete("/api/account/admin/users/" + adminUser.getLogin()).contentType(MediaType.APPLICATION_JSON).content("{\"impactFingerprint\":\"irrelevant\"}"))
+                    .andExpect(status().isForbidden());
 
             // Verify user was not deleted
             User unchangedUser = userTestRepository.findById(adminUser.getId()).orElseThrow();
@@ -551,8 +571,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser6");
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser6admin");
 
-            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isForbidden());
+            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("users", List
+                    .of(Map.of("login", adminUser1.getLogin(), "impactFingerprint", "irrelevant"), Map.of("login", adminUser2.getLogin(), "impactFingerprint", "irrelevant"))))))
+                    .andExpect(status().isOk());
 
             // Verify users were not deleted
             User unchangedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
@@ -639,11 +660,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser10");
             User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser10admin");
 
-            mockMvc.perform(delete("/api/account/admin/users/" + adminUser.getLogin())).andExpect(status().isOk());
+            permanentlyDeleteUser(adminUser.getLogin());
 
-            // Verify user was soft deleted
-            User deletedUser = userTestRepository.findById(adminUser.getId()).orElseThrow();
-            assertThat(deletedUser.isDeleted()).isTrue();
+            assertThat(userTestRepository.findById(adminUser.getId())).isEmpty();
         }
 
         @Test
@@ -659,14 +678,10 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
             userUtilService.addAdmin(TEST_PREFIX + "adminuser12");
             User adminUser2 = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser12admin");
 
-            mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(List.of(adminUser1.getLogin(), adminUser2.getLogin())))).andExpect(status().isOk());
+            permanentlyDeleteUsers(List.of(adminUser1.getLogin(), adminUser2.getLogin()));
 
-            // Verify users were soft deleted
-            User deletedUser1 = userTestRepository.findById(adminUser1.getId()).orElseThrow();
-            User deletedUser2 = userTestRepository.findById(adminUser2.getId()).orElseThrow();
-            assertThat(deletedUser1.isDeleted()).isTrue();
-            assertThat(deletedUser2.isDeleted()).isTrue();
+            assertThat(userTestRepository.findById(adminUser1.getId())).isEmpty();
+            assertThat(userTestRepository.findById(adminUser2.getId())).isEmpty();
         }
     }
 
@@ -814,5 +829,66 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
             assertThat(userActivityService.findCredentialsChangedDate(user.getId())).as("editing a name is not a credential change and must not log the user out").isNull();
         }
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void permanentDeletionRejectsAnUnconfirmedImpact() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "staleimpact");
+
+        mockMvc.perform(
+                delete("/api/account/admin/users/" + user.getLogin()).contentType(MediaType.APPLICATION_JSON).content("{\"impactFingerprint\":\"not-the-previewed-impact\"}"))
+                .andExpect(status().isConflict());
+
+        assertThat(userTestRepository.findById(user.getId())).isPresent();
+    }
+
+    @Test
+    void automaticDeletionIsBlockedWhileACourseReferenceRemains() {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "retainedcourse");
+        var course = courseUtilService.addEmptyCourse();
+        userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT);
+
+        var result = permanentUserDeletionService.deleteAutomatically(user.getId());
+
+        assertThat(result.status()).isEqualTo(UserDeletionResultStatus.BLOCKED);
+        assertThat(userTestRepository.findById(user.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void forcedDeletionRemovesAStudentFromTheirTeamWithoutDeletingTheSharedTeam() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "teamstudent");
+        User teammate = userUtilService.createAndSaveUser(TEST_PREFIX + "teammate");
+        User owner = userUtilService.createAndSaveUser(TEST_PREFIX + "teamowner");
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = textExerciseUtilService.createTeamTextExercise(course, null, null, null);
+        var team = teamUtilService.createTeam(Set.of(user, teammate), owner, exercise, TEST_PREFIX + "retainedteam");
+
+        permanentlyDeleteUser(user.getLogin());
+
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team WHERE id = ?", Long.class, team.getId())).isOne();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ? AND student_id = ?", Long.class, team.getId(), user.getId())).isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ? AND student_id = ?", Long.class, team.getId(), teammate.getId())).isOne();
+    }
+
+    private void permanentlyDeleteUser(String login) throws Exception {
+        String impactResponse = mockMvc.perform(get("/api/account/admin/users/" + login + "/deletion-impact")).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString();
+        String fingerprint = objectMapper.readTree(impactResponse).path("impactFingerprint").asText();
+        mockMvc.perform(delete("/api/account/admin/users/" + login).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(Map.of("impactFingerprint", fingerprint)))).andExpect(status().isOk());
+    }
+
+    private void permanentlyDeleteUsers(List<String> logins) throws Exception {
+        String impactResponse = mockMvc
+                .perform(post("/api/account/admin/users/deletion-impact").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(logins)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        List<Map<String, String>> confirmations = new ArrayList<>();
+        for (var userImpact : objectMapper.readTree(impactResponse).path("users")) {
+            confirmations.add(Map.of("login", userImpact.path("login").asText(), "impactFingerprint", userImpact.path("impactFingerprint").asText()));
+        }
+        mockMvc.perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("users", confirmations))))
+                .andExpect(status().isOk());
     }
 }

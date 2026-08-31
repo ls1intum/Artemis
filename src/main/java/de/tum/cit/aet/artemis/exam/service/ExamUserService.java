@@ -197,6 +197,26 @@ public class ExamUserService {
     }
 
     /**
+     * Permanently deletes all exam registrations of a user and returns their identity image and signature paths. The
+     * account-deletion orchestrator schedules those files only after its database transaction commits.
+     *
+     * @param userId the id of the user whose exam registrations should be deleted
+     * @return image paths that must be deleted after the surrounding transaction commits
+     */
+    public List<Path> deleteAllForUser(long userId) {
+        List<ExamUser> examUsers = examUserRepository.findAllByUserId(userId);
+        List<Path> imagePaths = new ArrayList<>();
+        for (ExamUser examUser : examUsers) {
+            Optional.ofNullable(examUser.getSigningImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_SIGNATURE))
+                    .ifPresent(imagePaths::add);
+            Optional.ofNullable(examUser.getStudentImagePath()).map(URI::create).map(uri -> FilePathConverter.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
+                    .ifPresent(imagePaths::add);
+        }
+        examUserRepository.deleteAll(examUsers);
+        return imagePaths;
+    }
+
+    /**
      * Contains the information about an exam user with image
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

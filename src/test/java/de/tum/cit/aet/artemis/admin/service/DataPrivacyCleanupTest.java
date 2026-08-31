@@ -66,8 +66,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
  * ({@link CourseDataRetentionService#warnAndArchiveDueCourses()}) produces a real archive that actually contains the
  * students' submissions, and the real reset phase ({@link CourseDataRetentionService#resetDueCourses()}) then deletes the
  * student data while keeping the course material and the archive backup, and</li>
- * <li>the not-enrolled-user soft-delete ({@link DataCleanupService#deleteNotEnrolledUsers()}), which anonymizes user
- * accounts.</li>
+ * <li>the not-enrolled-user permanent deletion ({@link DataCleanupService#deleteNotEnrolledUsers()}), which only removes
+ * accounts after all blocking domain references have been cleaned.</li>
  * </ul>
  * These are the operations where a wrong gate would silently destroy data, so every test asserts both the intended
  * deletion <b>and</b> that everything outside the gate survives. The selection/gating logic in isolation is additionally
@@ -271,11 +271,8 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         userActivityService.recordDeletionWarning(originalLogin, ZonedDateTime.now().minusDays(31).toInstant());
         dataCleanupService.deleteNotEnrolledUsers();
 
-        // The warned, past-grace account is soft-deleted and anonymized (login/email replaced, deactivated).
-        User deleted = userRepository.findById(toDeleteId).orElseThrow();
-        assertThat(deleted.isDeleted()).isTrue();
-        assertThat(deleted.getActivated()).isFalse();
-        assertThat(deleted.getLogin()).isNotEqualTo(originalLogin);
+        // The warned, past-grace account has no blocking references and is physically deleted.
+        assertThat(userRepository.findById(toDeleteId)).isEmpty();
 
         // Enrolled and recently-active users are untouched; the Iris bot is never deleted even when warned past grace.
         assertThat(userRepository.findById(enrolled.getId())).get().extracting(User::isDeleted).isEqualTo(false);

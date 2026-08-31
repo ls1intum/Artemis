@@ -28,21 +28,8 @@
                     }
                 </div>
                 <div class="flex items-center justify-center gap-2 md:justify-end">
-                    <jhi-delete-users-button (deletionCompleted)="deleteNotEnrolledUsersComplete()" />
-                    <button
-                        tumUiButton
-                        severity="danger"
-                        size="small"
-                        [renderButtonStyle]="false"
-                        jhiDeleteButton
-                        [entityTitle]="selectedUsers().length.toString()"
-                        deleteQuestion="artemisApp.userManagement.batch.delete.question"
-                        deleteConfirmationText="artemisApp.userManagement.batch.delete.typeNumberToConfirm"
-                        [buttonSize]="ButtonSize.SMALL"
-                        (delete)="deleteAllSelectedUsers()"
-                        [dialogError]="dialogError"
-                        [disabled]="!selectedUsers().length"
-                    >
+                    <jhi-delete-users-button (deletionRequested)="openPermanentDeletionDialog($event)" />
+                    <button tumUiButton severity="danger" size="small" [renderButtonStyle]="false" (click)="deleteAllSelectedUsers()" [disabled]="!selectedUsers().length">
                         <fa-icon [icon]="faTrash" />
                     </button>
                     <tum-ui-button
@@ -219,11 +206,7 @@
                                         variant="outlined"
                                         [renderButtonStyle]="false"
                                         [renderButtonText]="false"
-                                        jhiDeleteButton
-                                        [entityTitle]="user.login!"
-                                        deleteQuestion="artemisApp.userManagement.delete.question"
-                                        (delete)="deleteUser(user.login!)"
-                                        [dialogError]="dialogError"
+                                        (click)="deleteUser(user.login!)"
                                         [disabled]="!currentAccount() || currentAccount()?.login === user.login"
                                         [tumUiTooltip]="'entity.action.delete' | artemisTranslate"
                                     >
@@ -407,5 +390,58 @@
             'artemisApp.userManagement.filter.modal.close' | artemisTranslate
         }}</tum-ui-button>
         <tum-ui-button size="small" (clicked)="applyFilter()" data-testid="apply-filter-button">{{ 'artemisApp.userManagement.filter.apply' | artemisTranslate }}</tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>
+<tum-ui-dialog
+    [(visible)]="deletionDialogVisible"
+    size="large"
+    [header]="'artemisApp.userManagement.permanentDeletion.title' | artemisTranslate"
+    (onHide)="closePermanentDeletionDialog()"
+>
+    @if (deletionImpact(); as impact) {
+        <div class="flex flex-col gap-4">
+            <tum-ui-message severity="error">
+                <span jhiTranslate="artemisApp.userManagement.permanentDeletion.irreversible"></span>
+            </tum-ui-message>
+            @if (deletionOverridesRetention()) {
+                <tum-ui-message severity="warning">
+                    <span jhiTranslate="artemisApp.userManagement.permanentDeletion.retentionOverride"></span>
+                </tum-ui-message>
+            }
+            <p jhiTranslate="artemisApp.userManagement.permanentDeletion.summary" [translateValues]="{ users: impact.users.length, objects: impact.totalAffectedObjects }"></p>
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th jhiTranslate="artemisApp.userManagement.permanentDeletion.category"></th>
+                        <th jhiTranslate="artemisApp.userManagement.permanentDeletion.action"></th>
+                        <th jhiTranslate="artemisApp.userManagement.permanentDeletion.count"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (category of impact.categories; track category.category + category.action) {
+                        <tr>
+                            <td>{{ 'artemisApp.userManagement.permanentDeletion.categories.' + category.category | artemisTranslate }}</td>
+                            <td>{{ 'artemisApp.userManagement.permanentDeletion.actions.' + category.action | artemisTranslate }}</td>
+                            <td>{{ category.count }}</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <label for="permanent-deletion-confirmation">
+                {{ 'artemisApp.userManagement.permanentDeletion.confirmation' | artemisTranslate: { confirmation: permanentDeletionConfirmationExpected() } }}
+            </label>
+            <input tumUiInput id="permanent-deletion-confirmation" [ngModel]="deletionConfirmation()" (ngModelChange)="deletionConfirmation.set($event)" autocomplete="off" />
+        </div>
+    }
+    <ng-template #footer>
+        <tum-ui-button size="small" severity="secondary" (clicked)="closePermanentDeletionDialog()">
+            {{ 'entity.action.cancel' | artemisTranslate }}
+        </tum-ui-button>
+        <tum-ui-button size="small" severity="warning" [disabled]="deletionLoading()" (clicked)="deactivateInstead()">
+            {{ 'artemisApp.userManagement.permanentDeletion.deactivateInstead' | artemisTranslate }}
+        </tum-ui-button>
+        <tum-ui-button size="small" severity="danger" [disabled]="!permanentDeletionConfirmed() || deletionLoading()" (clicked)="confirmPermanentDeletion()">
+            {{ 'artemisApp.userManagement.permanentDeletion.confirm' | artemisTranslate }}
+        </tum-ui-button>
     </ng-template>
 </tum-ui-dialog>
