@@ -562,7 +562,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         String resetKeyHash = userRecoveryKeyService.findResetKeyHash(userPasswordResetInit.get().getId());
 
         // verify key has been changed by the request
-        assertThat(resetKeyId).isEqualTo(resetKeyIdBefore);
+        assertThat(resetKeyId).isNotEqualTo(resetKeyIdBefore);
         assertThat(resetKeyHash).isNotEqualTo(resetKeyHashBefore);
 
         // finish password reset
