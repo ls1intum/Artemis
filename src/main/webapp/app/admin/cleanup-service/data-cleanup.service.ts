@@ -24,6 +24,7 @@ export interface OrphanCleanupCountDTO extends CleanupCount {
     orphanTextBlockForOrphanResults: number;
     orphanRating: number;
     orphanResultsWithoutParticipation: number;
+    orphanFeedbackMessage: number;
 }
 
 export interface PlagiarismComparisonCleanupCountDTO extends CleanupCount {
