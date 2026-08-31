@@ -389,6 +389,13 @@ public class ComplaintService {
             throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ") + " for an uncompleted result.",
                     ENTITY_NAME, "complaintOrRequestMoreFeedbackNotCompleted");
         }
+        // A preliminary Athena result is a feedback suggestion the student asked for, not a tutor's assessment. There is
+        // no assessor to address, complaining about it would send it to the very tutor who has not assessed it yet, and
+        // the complained result is filtered out of the assessment dashboard, which used to fail the whole request.
+        if (result.isAthenaBased()) {
+            throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "a complaint" : "a more feedback request") + " for preliminary AI feedback.",
+                    ENTITY_NAME, "complaintOrRequestMoreFeedbackAthena");
+        }
         if (!result.isRated() && !exercise.getAllowComplaintsForAutomaticAssessments()) {
             throw new BadRequestAlertException("Cannot submit " + (type == ComplaintType.COMPLAINT ? "complaint" : "more feedback request ")
                     + " for an unrated result with no complaints on automatic assessment.", ENTITY_NAME, "complaintOrRequestMoreFeedbackNotGraded");

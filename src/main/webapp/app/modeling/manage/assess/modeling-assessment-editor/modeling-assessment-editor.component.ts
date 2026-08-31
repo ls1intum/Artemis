@@ -95,7 +95,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly model = signal<UMLModel | undefined>(undefined);
     readonly modelingExercise = signal<ModelingExercise | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
-    readonly result = signal<Result | undefined>(undefined);
+    /**
+     * The feedback list is edited in place — by the assessment editor and by the Athena suggestions that arrive later —
+     * while children read it through `result()?.feedbacks`. `equal: () => false` makes re-setting the same reference
+     * notify, so those readers see the new feedback. Replacing the object instead would detach the submission and
+     * participation the children already hold.
+     */
+    readonly result = signal<Result | undefined>(undefined, { equal: () => false });
     referencedFeedback: Feedback[] = [];
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     automaticFeedback: Feedback[] = [];
@@ -302,6 +308,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.result.set(this.modelingAssessmentService.convertResult(this.result()!));
         } else if (this.result()) {
             this.result()!.feedbacks = [];
+            this.result.set(this.result());
         }
 
         this.handleFeedback(this.result()?.feedbacks);
@@ -334,6 +341,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.feedbackSuggestions = suggestions;
             if (this.result()) {
                 this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+                // The canvas reads the feedback through `result()?.feedbacks`. Editing that array in place leaves the
+                // signal's reference untouched, so without this the referenced suggestions never reach Apollon: they
+                // are listed beside the diagram but neither drawn as assessments nor highlighted on their elements.
+                this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);
         } finally {

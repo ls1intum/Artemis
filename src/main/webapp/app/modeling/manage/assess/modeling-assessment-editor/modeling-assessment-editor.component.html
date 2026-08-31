@@ -58,6 +58,24 @@
                             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
                         />
                     </jhi-modeling-assessment>
+
+                    <!-- A complaint is about this assessment, so it belongs beside the diagram rather than at the end of
+                         the feedback pane, where the tutor had to scroll past every feedback item to reach it. It takes
+                         its height from the canvas, which shrinks, so the page still never scrolls. -->
+                    @if (complaint(); as complaint) {
+                        <section class="modeling-assessment-page__complaint">
+                            <jhi-assessment-complaint-alert [complaint]="complaint" />
+                            <jhi-complaints-for-tutor-form
+                                [complaint]="complaint"
+                                [zeroIndent]="false"
+                                [exercise]="modelingExercise()"
+                                [isAssessor]="isAssessor()"
+                                [submission]="submission()"
+                                [isTestRun]="isTestRun()"
+                                (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+                            />
+                        </section>
+                    }
                 </div>
 
                 <div assessmentWorkspaceInstructions>
@@ -67,12 +85,8 @@
                 </div>
 
                 <div assessmentWorkspaceDetails class="modeling-assessment-page__details">
-                    <!-- The page itself does not scroll, so the shared layout's banner and complaint form — both
-                         appended below the assessment — would be clipped out of reach. Both live in this pane instead:
-                         it scrolls, which is exactly what the banner tells the tutor to do, and the banner sits at the
-                         top of it so the cue is seen before the scrolling starts. -->
-                    <jhi-assessment-complaint-alert [complaint]="complaint()" />
-
+                    <!-- Feedback and notes only. The complaint alert and its form sit beside the diagram instead, so
+                         answering a complaint never means scrolling past the whole feedback list to find it. -->
                     @if (result()?.id) {
                         <jhi-unreferenced-feedback
                             [feedbacks]="unreferencedFeedback()"
@@ -90,18 +104,6 @@
                     }
 
                     <jhi-assessment-note [assessmentNote]="result()?.assessmentNote" (onAssessmentNoteChange)="onAssessmentNoteChange($event)" />
-
-                    @if (complaint(); as complaint) {
-                        <jhi-complaints-for-tutor-form
-                            [complaint]="complaint"
-                            [zeroIndent]="false"
-                            [exercise]="modelingExercise()"
-                            [isAssessor]="isAssessor()"
-                            [submission]="submission()"
-                            [isTestRun]="isTestRun()"
-                            (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
-                        />
-                    }
 
                     @if ((hasAutomaticFeedback() || highlightMissingFeedback()) && !result()?.completionDate) {
                         <section class="modeling-assessment-highlights">

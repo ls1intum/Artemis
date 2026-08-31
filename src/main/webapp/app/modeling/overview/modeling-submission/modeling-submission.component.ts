@@ -20,7 +20,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
@@ -215,9 +215,21 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
     }
 
-    /** Exam submissions are complained about from the exam summary, and the feedback view is already read-only. */
+    /**
+     * Exam submissions are complained about from the exam summary, and the feedback view is already read-only.
+     *
+     * The last two conditions mirror what {@link ComplaintsStudentViewComponent} itself allows: a practice run is not
+     * graded, and preliminary Athena feedback is a suggestion rather than an assessment. Without them this wrapper
+     * would draw its separator and padding around a component that renders nothing.
+     */
     protected showComplaintSection(): boolean {
-        return !!this.result() && !this.examMode() && !this.isFeedbackView();
+        return (
+            !!this.result() &&
+            !this.examMode() &&
+            !this.isFeedbackView() &&
+            !isPracticeMode(this.participation()) &&
+            this.result()!.assessmentType !== AssessmentType.AUTOMATIC_ATHENA
+        );
     }
 
     /**

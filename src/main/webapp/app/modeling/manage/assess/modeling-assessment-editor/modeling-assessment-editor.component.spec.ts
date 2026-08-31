@@ -170,7 +170,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         } as unknown as ModelingSubmission;
     };
 
-    it('should place the complaint banner and form in its own scrollable pane rather than under the assessment', async () => {
+    it('should place the complaint banner and form beside the diagram, not in the scrolling feedback pane', async () => {
         vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
         vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>));
 
@@ -181,11 +181,16 @@ describe('ModelingAssessmentEditorComponent', () => {
         const layout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance as AssessmentLayoutComponent;
         expect(layout.showComplaintSection()).toBe(false);
 
-        // Both halves stay together, inside the pane that actually scrolls.
+        // Both halves stay together in the canvas column, so answering a complaint needs no scrolling; the feedback
+        // pane keeps only the feedback and the notes.
+        const canvas = fixture.debugElement.query(By.css('[assessmentWorkspaceCanvas]'));
+        expect(canvas.query(By.directive(AssessmentComplaintAlertComponent))).not.toBeNull();
+        expect(canvas.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+
         const pane = fixture.debugElement.query(By.css('[assessmentWorkspaceDetails]'));
         expect(pane).not.toBeNull();
-        expect(pane.query(By.directive(AssessmentComplaintAlertComponent))).not.toBeNull();
-        expect(pane.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+        expect(pane.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
+        expect(pane.query(By.directive(ComplaintsForTutorComponent))).toBeNull();
     });
 
     // Artemis is path-routed, so the assessment URL lives in the path and `window.location.hash` is always empty.
@@ -806,6 +811,32 @@ describe('ModelingAssessmentEditorComponent', () => {
             // is content of the canvas component, and its top-left directive is what mounts it into the chrome.
             expect(fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).query(By.directive(FeedbackSuggestionsBannerComponent))).not.toBeNull();
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(true);
+        });
+
+        it('should hand a referenced suggestion to the canvas, so Apollon can draw and highlight it', async () => {
+            const submission = getSubmissionWithData();
+            submission.participation!.exercise!.feedbackSuggestionModule = 'module_modeling_llm';
+            component.submission.set(submission);
+            component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module_modeling_llm' } as ModelingExercise);
+            component.result.set({ id: 7, feedbacks: [] } as unknown as Result);
+
+            // The shape AthenaService builds for a referenced modeling suggestion.
+            const referencedSuggestion = new Feedback();
+            referencedSuggestion.type = FeedbackType.AUTOMATIC;
+            referencedSuggestion.reference = 'Class:node-1';
+            referencedSuggestion.referenceId = 'node-1';
+            referencedSuggestion.referenceType = 'Class';
+            vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([referencedSuggestion]));
+
+            await (component as any).fetchAndApplyFeedbackSuggestions();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // The feedback array is edited in place, so this only holds while the result signal still notifies its
+            // readers. Without that the suggestion is listed beside the diagram but never reaches the canvas.
+            const canvas = fixture.debugElement.query(By.directive(ModelingAssessmentComponent));
+            expect(canvas.componentInstance.resultFeedbacks()).toContain(referencedSuggestion);
+            expect(component.highlightedElements().get('node-1')).toBeDefined();
         });
 
         it('should leave the region unoccupied, and the island unrendered, when there is no notice', async () => {

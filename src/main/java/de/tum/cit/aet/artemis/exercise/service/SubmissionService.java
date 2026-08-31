@@ -906,10 +906,16 @@ public class SubmissionService {
             }
 
             // add each submission with its complaint to the DTO
-            submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
-                // get the complaint which belongs to the submission
+            submissions.forEach(submission -> {
+                // Read the complained result before the results are narrowed below: dropping the Athena results also
+                // drops the complained one when the complaint sits on an Athena result, and asking the submission a
+                // second time would then answer null.
+                Result resultWithComplaint = submission.getResultWithComplaint();
+                if (resultWithComplaint == null) {
+                    return;
+                }
                 submission.setResults(submission.getNonAthenaResults());
-                Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
+                Complaint complaintOfSubmission = complaintMap.get(resultWithComplaint.getId());
                 prepareComplaintAndSubmission(complaintOfSubmission, submission);
                 submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
             });

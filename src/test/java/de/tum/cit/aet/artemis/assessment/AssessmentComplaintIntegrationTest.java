@@ -261,6 +261,21 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
+    void submitComplaintAboutPreliminaryAthenaFeedback_isRejected() throws Exception {
+        // Preliminary AI feedback is a suggestion the student asked for, not a tutor's assessment: there is no assessor
+        // to address, and the complained result is filtered out of the assessment dashboard.
+        modelingAssessment.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(modelingAssessment);
+
+        request.post("/api/assessment/complaints", complaintRequest, HttpStatus.BAD_REQUEST);
+
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
         // 3 weeks is already past the due date
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(4));
@@ -578,6 +593,27 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         final var params = new LinkedMultiValueMap<String, String>();
         request.getList("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.FORBIDDEN, Complaint.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getComplaintsForAssessmentDashboard_complaintOnAthenaResult_doesNotFailTheRequest() throws Exception {
+        // Complaints on preliminary AI feedback are rejected now, but instances that took one before still hold the
+        // rows. The dashboard drops the Athena results from every submission, so the complained result disappears
+        // while it is being read, which used to answer 500 for the whole exercise.
+        complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        complaint.getResult().setHasComplaint(true);
+        complaint.getResult().setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(complaint.getResult());
+        complaintRepo.save(complaint);
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var submissionWithComplaintDTOs = request.getList("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK,
+                SubmissionWithComplaintDTO.class, params);
+
+        // The submission carries only the Athena result, so it is skipped rather than reported - but the request stands.
+        assertThat(submissionWithComplaintDTOs).as("the dashboard answers instead of failing").isEmpty();
     }
 
     @Test

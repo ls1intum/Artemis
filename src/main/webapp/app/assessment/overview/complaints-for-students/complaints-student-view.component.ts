@@ -2,8 +2,9 @@ import { Component, Injector, OnInit, Renderer2, afterNextRender, inject, input,
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -117,11 +118,31 @@ export class ComplaintsStudentViewComponent implements OnInit {
      * Determines whether to show the section
      */
     private getSectionVisibility(): boolean {
+        if (!this.isAboutAnAssessment()) {
+            return false;
+        }
         if (this.isExamMode()) {
             return this.isWithinExamReviewPeriod();
         } else {
             return !!(this.course()?.complaintsEnabled || this.course()?.requestMoreFeedbackEnabled);
         }
+    }
+
+    /**
+     * Whether there is a tutor assessment to complain about at all.
+     *
+     * Practice participations are not graded, so there is nothing to review, and the server rejects a complaint on one.
+     * Preliminary Athena feedback is a suggestion the student requested rather than an assessment: it carries no
+     * assessor, so a complaint about it would go to a tutor who has not looked at the submission yet.
+     *
+     * `testRun` on the participation means practice mode for a course exercise; the component's own `testRun` input is
+     * the unrelated exam test run, which does allow complaints.
+     */
+    private isAboutAnAssessment(): boolean {
+        if (!this.isExamMode() && isPracticeMode(this.participation())) {
+            return false;
+        }
+        return this.result()?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA;
     }
 
     /**
