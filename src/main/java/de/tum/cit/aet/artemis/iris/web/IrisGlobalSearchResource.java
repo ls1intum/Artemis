@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for Iris global search.
@@ -40,6 +43,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchRe
 @RequestMapping("api/iris/")
 public class IrisGlobalSearchResource {
 
+    private static final String ENTITY_NAME = "iris";
+
     private final PyrisConnectorService pyrisConnectorService;
 
     private final PyrisJobService pyrisJobService;
@@ -48,16 +53,22 @@ public class IrisGlobalSearchResource {
 
     private final UserAiPreferenceService userAiPreferenceService;
 
+    private final IrisSettingsService irisSettingsService;
+
     public IrisGlobalSearchResource(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, UserRepository userRepository,
-            UserAiPreferenceService userAiPreferenceService) {
+            UserAiPreferenceService userAiPreferenceService, IrisSettingsService irisSettingsService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
         this.userRepository = userRepository;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
      * POST api/iris/lecture-search: Search for lecture units using Pyris.
+     * <p>
+     * Courses with Iris switched off in the course settings are dropped from the requested scope, so content search respects the same toggle as every other Iris feature.
+     * Disabling a course does not remove what was already ingested, which is why the scope has to be narrowed here rather than relying on an empty index.
      *
      * @param requestDTO the search request containing query, limit, and optional courseIds filter
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
@@ -65,7 +76,15 @@ public class IrisGlobalSearchResource {
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid PyrisLectureSearchRequestDTO requestDTO) {
-        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), requestDTO.courseIds()));
+        var courseIds = requestDTO.courseIds();
+        if (courseIds != null && !courseIds.isEmpty()) {
+            courseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(courseIds);
+            if (courseIds.isEmpty()) {
+                // suppress the error alert with skipAlert: true so that the client can fall back to its standard metadata search
+                throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Iris is disabled for the requested courses", ENTITY_NAME, "iris.course_disabled", true);
+            }
+        }
+        return ResponseEntity.ok(pyrisConnectorService.searchLectures(requestDTO.query(), requestDTO.limit(), courseIds));
     }
 
     /**
