@@ -267,6 +267,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.loadingInitialSubmission.set(false);
+        // The component is reused when assessing the next submission. Clear all assessment-specific state before
+        // processing the new result, in particular when that result has no feedback and handleFeedback returns early.
+        this.referencedFeedback = [];
+        this.unreferencedFeedback.set([]);
+        this.feedbackSuggestions = [];
+        this.hasAutomaticFeedback.set(false);
+        this.loadingFeedbackSuggestions.set(false);
+        this.highlightedElements.set(undefined!);
         this.submission.set(submission);
         const studentParticipation = this.submission()!.participation as StudentParticipation;
         this.modelingExercise.set(studentParticipation.exercise);
