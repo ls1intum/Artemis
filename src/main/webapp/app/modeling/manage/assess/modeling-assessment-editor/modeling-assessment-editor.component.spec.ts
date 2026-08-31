@@ -50,6 +50,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -333,6 +334,33 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.assessmentNotPossibleYet()).toBeUndefined();
             expect(component.submission()).toBeDefined();
         });
+
+        it('should clear feedback when the next submission has no feedback', async () => {
+            const firstSubmission = getSubmissionWithData();
+            const secondSubmission = deepClone(firstSubmission);
+            secondSubmission.id = 2;
+            secondSubmission.results = [{ id: 2375, correctionRound: 0, feedbacks: [] } as unknown as Result];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValueOnce(of(firstSubmission)).mockReturnValueOnce(of(secondSubmission));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+            expect(component.referencedFeedback).toHaveLength(1);
+            component.loadingFeedbackSuggestions.set(true);
+            component.highlightedElements.set(new Map([['element', 'red']]));
+            component.feedbackSuggestions = [createTestFeedback()];
+            component.hasAutomaticFeedback.set(true);
+
+            paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
+            await fixture.whenStable();
+
+            expect(component.referencedFeedback).toHaveLength(0);
+            expect(component.unreferencedFeedback()).toHaveLength(0);
+            expect(component.loadingFeedbackSuggestions()).toBe(false);
+            expect(component.highlightedElements()).toBeUndefined();
+            expect(component.feedbackSuggestions).toHaveLength(0);
+            expect(component.hasAutomaticFeedback()).toBe(false);
+        });
+
         it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
                 convertToParamMap({
