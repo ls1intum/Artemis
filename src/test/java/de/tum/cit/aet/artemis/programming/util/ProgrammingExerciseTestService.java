@@ -1597,9 +1597,9 @@ public class ProgrammingExerciseTestService {
         // template repository of a different project key instead left the exported repository without any commit, which
         // used to produce a zero-byte archive that this test accepted as a successful export.
         String projectKey = exercise.getProjectKey();
-        seedBareRepositoryWithCommit(projectKey, projectKey.toLowerCase() + "-solution", "some-file.java");
+        seedBareRepositoryWithCommit(projectKey, exercise.generateRepositoryName(RepositoryType.SOLUTION), "some-file.java");
         if (includeTests) {
-            seedBareRepositoryWithCommit(projectKey, projectKey.toLowerCase() + "-tests", "some-test-file.java");
+            seedBareRepositoryWithCommit(projectKey, exercise.generateRepositoryName(RepositoryType.TESTS), "some-test-file.java");
         }
 
         var url = "/api/programming/programming-exercises/" + exercise.getId() + "/export-student-requested-repository?includeTests=" + includeTests;

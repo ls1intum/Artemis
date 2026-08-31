@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,9 +29,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
+import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.RepositoryExportContent;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.programming.util.ZipTestUtil;
@@ -69,6 +70,9 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     private ProgrammingExerciseExportService programmingExerciseExportService;
 
     @Autowired
+    private TemplateProgrammingExerciseParticipationTestRepository templateParticipationTestRepository;
+
+    @Autowired
     private TempFileUtilService tempFileUtilService;
 
     private ProgrammingExercise programmingExercise;
@@ -98,7 +102,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         List<String> exportErrors = new ArrayList<>();
 
         List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, exportErrors,
-                ARCHIVAL_OPTIONS);
+                ARCHIVAL_OPTIONS, RepositoryExportContent.WORKING_TREE_ONLY);
 
         assertThat(exportErrors).isEmpty();
         assertThat(exportedRepositories).hasSize(2).doesNotHaveDuplicates().allSatisfy(path -> {
@@ -116,7 +120,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         Path outputDir = tempFileUtilService.createTempDirectory("archival-export-content");
 
         List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, new ArrayList<>(),
-                ARCHIVAL_OPTIONS);
+                ARCHIVAL_OPTIONS, RepositoryExportContent.WORKING_TREE_ONLY);
 
         assertThat(exportedRepositories).hasSize(1);
         byte[] zipContent = Files.readAllBytes(exportedRepositories.getFirst());
@@ -142,7 +146,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         List<String> exportErrors = new ArrayList<>();
 
         List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, List.of(savedParticipation), Map.of(), outputDir,
-                exportErrors, ARCHIVAL_OPTIONS);
+                exportErrors, ARCHIVAL_OPTIONS, RepositoryExportContent.WORKING_TREE_ONLY);
 
         assertThat(exportedRepositories).isEmpty();
         assertThat(exportErrors).isNotEmpty();
@@ -158,7 +162,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         Path outputDir = tempFileUtilService.createTempDirectory("archival-export-naming");
 
         List<Path> exportedRepositories = programmingExerciseExportService.exportStudentRepositories(programmingExercise, participations, Map.of(), outputDir, new ArrayList<>(),
-                ARCHIVAL_OPTIONS);
+                ARCHIVAL_OPTIONS, RepositoryExportContent.WORKING_TREE_ONLY);
 
         assertThat(exportedRepositories.getFirst().getFileName().toString()).contains(TEST_PREFIX + "student1");
     }
@@ -170,8 +174,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseRepositories_shouldWriteOneZipPerRepositoryWithHistory() throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
-        seedBaseRepositoryContent();
+        createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         Path outputDir = tempFileUtilService.createTempDirectory("instructor-export");
@@ -197,7 +200,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseRepositories_shouldProduceAnExtractableWorkingRepository() throws Exception {
-        seedBaseRepositoryContent();
+        createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         Path outputDir = tempFileUtilService.createTempDirectory("instructor-export-usable");
 
@@ -225,8 +228,7 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseRepositories_shouldNotDiscloseTheInternalRepositoryPath() throws Exception {
-        RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
-        seedBaseRepositoryContent();
+        createAndSeedBaseRepositories();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         Path outputDir = tempFileUtilService.createTempDirectory("instructor-export-config");
@@ -252,23 +254,36 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         return participations;
     }
 
-    private void seedBaseRepositoryContent() throws Exception {
+    /** Creates the template, solution and tests repositories for the exercise and pushes one commit into each. */
+    private void createAndSeedBaseRepositories() throws Exception {
         var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         RepositoryExportTestUtil.writeFilesAndPush(baseRepositories.templateRepository(), Map.of("src/Main.java", "public class Main {}"), "template");
         RepositoryExportTestUtil.writeFilesAndPush(baseRepositories.solutionRepository(), Map.of("src/Main.java", "public class Main { int solved; }"), "solution");
         RepositoryExportTestUtil.writeFilesAndPush(baseRepositories.testsRepository(), Map.of("test/MainTest.java", "public class MainTest {}"), "tests");
     }
 
-    /** Kept to document that the export must not fail when a repository URI was never configured (legacy courses). */
+    /**
+     * Exercises from old courses can have a participation without a repository URI. The export has to report that and
+     * carry on with the remaining repositories rather than failing outright.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testExportProgrammingExerciseRepositories_shouldReportMissingRepositoryUrisAsErrors() throws IOException {
-        programmingExercise.setTemplateParticipation(null);
+    void testExportProgrammingExerciseRepositories_shouldReportMissingRepositoryUrisAsErrors() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        // The export reloads the exercise, so the URI has to be cleared in the database rather than on this instance.
+        var templateParticipation = templateParticipationTestRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        templateParticipation.setRepositoryUri((String) null);
+        templateParticipationTestRepository.save(templateParticipation);
+
         Path outputDir = tempFileUtilService.createTempDirectory("instructor-export-missing");
         List<String> exportErrors = new ArrayList<>();
 
-        programmingExerciseExportService.exportProgrammingExerciseRepositories(programmingExercise, false, false, outputDir, exportErrors, new ArrayList<>());
+        List<Path> exportedRepositories = programmingExerciseExportService.exportProgrammingExerciseRepositories(programmingExercise, false, false, outputDir, exportErrors,
+                new ArrayList<>());
 
-        assertThat(exportErrors).isNotEmpty();
+        assertThat(exportErrors).anyMatch(error -> error.contains("the repository uri is not defined"));
+        // The solution and tests repositories are unaffected and still make it into the export.
+        assertThat(exportedRepositories).hasSize(2);
     }
 }

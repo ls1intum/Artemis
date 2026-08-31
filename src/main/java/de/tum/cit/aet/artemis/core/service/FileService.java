@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -73,8 +74,14 @@ public class FileService implements DisposableBean {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
+    /**
+     * Cancels the pending cleanups and shuts the scheduler down, so that a cleanup scheduled while the context is closing
+     * is rejected rather than added to a pool nobody cancels afterwards, and so that the pool's non-daemon threads do not
+     * outlive the bean.
+     */
     @Override
     public void destroy() {
+        executor.shutdownNow();
         futures.forEach(future -> future.cancel(true));
         futures.clear();
     }
@@ -161,20 +168,29 @@ public class FileService implements DisposableBean {
         if (path == null) {
             return;
         }
+        // Pruned here rather than by the task itself: a zero-minute delay can run the task before its future is even
+        // assigned, so a self-removing task has nothing to remove itself from.
         futures.removeIf(ScheduledFuture::isDone);
-        futures.add(executor.schedule(() -> {
-            try {
-                deletion.run();
-            }
-            catch (IOException e) {
-                if (Files.exists(path)) {
-                    log.error("Deleting {} did not work", path, e);
+        try {
+            futures.add(executor.schedule(() -> {
+                try {
+                    deletion.run();
                 }
-                else {
-                    log.debug("Deleting {} did not complete because it was removed concurrently", path, e);
+                catch (IOException e) {
+                    if (Files.exists(path)) {
+                        log.error("Deleting {} did not work", path, e);
+                    }
+                    else {
+                        log.debug("Deleting {} did not complete because it was removed concurrently", path, e);
+                    }
                 }
-            }
-        }, delayInMinutes, TimeUnit.MINUTES));
+            }, delayInMinutes, TimeUnit.MINUTES));
+        }
+        catch (RejectedExecutionException e) {
+            // The context is shutting down. Leaving the path behind is the correct outcome: it is a temporary path that
+            // the next start cleans up, and failing the caller's request over it would be worse.
+            log.debug("Not scheduling the deletion of {} because the scheduler is shutting down", path);
+        }
     }
 
     @FunctionalInterface

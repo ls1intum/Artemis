@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.RepositoryExportContent;
 import de.tum.cit.aet.artemis.modeling.api.ModelingApollonApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
@@ -160,10 +161,10 @@ public class DataExportExerciseCreationService {
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
 
-        // NOTE: repositoryExportOptions.filterLateSubmissions must be false here because we do not want to filter any submissions for the data export. With no rewriting option
-        // set, the export streams each repository from its bare repository into exerciseDir, so no working directory is needed at all.
+        // NOTE: repositoryExportOptions.filterLateSubmissions must be false here because we do not want to filter any submissions for the data export.
+        // The export asks for the history: a data export is the student's own copy of their work, so their commits belong in it.
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, Map.of(), exerciseDir,
-                Collections.synchronizedList(new ArrayList<>()), repositoryExportOptions);
+                Collections.synchronizedList(new ArrayList<>()), repositoryExportOptions, RepositoryExportContent.WITH_HISTORY);
 
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, user.getId());
     }

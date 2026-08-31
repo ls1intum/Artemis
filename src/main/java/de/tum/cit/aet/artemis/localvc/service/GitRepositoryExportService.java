@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.eclipse.jgit.api.ArchiveCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -55,6 +56,9 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 public class GitRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(GitRepositoryExportService.class);
+
+    /** Suffix an archive carries while it is still being written. */
+    private static final String PARTIAL_EXPORT_SUFFIX = ".part";
 
     private final GitService gitService;
 
@@ -145,41 +149,39 @@ public class GitRepositoryExportService {
      * @param zipFilename     the desired filename for the zip, with or without the {@code .zip} extension
      * @param content         whether the archive should carry the git history
      * @return the path of the written zip file
-     * @throws IOException if the repository cannot be read or the zip cannot be written; no file is left behind in that
-     *                         case, so a failed export cannot leave a truncated archive for a later step to pick up
+     * @throws IOException if the repository cannot be read or the zip cannot be written; the archive only appears under
+     *                         its final name once it is complete, so a failed export cannot leave a truncated file for a
+     *                         later step to pick up
      */
     public Path exportRepositoryToZipFile(VcsRepositoryUri repositoryUri, Path targetDirectory, String zipFilename, RepositoryExportContent content) throws IOException {
         Files.createDirectories(targetDirectory);
         Path zipFilePath = targetDirectory.resolve(sanitizeZipFilename(zipFilename));
+        // Written under a temporary name and moved into place only on success. The callers zip whole directories, and a
+        // truncated archive inside one of them is far harder to diagnose than a missing repository plus a reported error.
+        // A move also covers the failures a catch block cannot, such as running out of memory on a large repository.
+        Path partialFilePath = targetDirectory.resolve(zipFilePath.getFileName() + PARTIAL_EXPORT_SUFFIX);
 
-        try (Repository bareRepository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-                OutputStream outputStream = Files.newOutputStream(zipFilePath)) {
-            if (content == RepositoryExportContent.WITH_HISTORY) {
-                InMemoryRepositoryBuilder.writeZip(bareRepository, outputStream);
+        try {
+            try (Repository bareRepository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
+                    OutputStream outputStream = Files.newOutputStream(partialFilePath)) {
+                if (content == RepositoryExportContent.WITH_HISTORY) {
+                    InMemoryRepositoryBuilder.writeZip(bareRepository, outputStream);
+                }
+                else {
+                    writeSnapshotArchive(bareRepository, outputStream);
+                }
             }
-            else {
-                writeSnapshotArchive(bareRepository, outputStream);
+            catch (GitAPIException e) {
+                throw new IOException("Could not archive the repository " + repositoryUri, e);
             }
+            FileUtils.moveFile(partialFilePath.toFile(), zipFilePath.toFile());
         }
-        catch (GitAPIException e) {
-            deleteIncompleteExport(zipFilePath);
-            throw new IOException("Could not archive the repository " + repositoryUri, e);
-        }
-        catch (IOException | RuntimeException e) {
-            deleteIncompleteExport(zipFilePath);
-            throw e;
+        finally {
+            if (!FileUtils.deleteQuietly(partialFilePath.toFile()) && Files.exists(partialFilePath)) {
+                log.error("Could not delete the incomplete export {}", partialFilePath);
+            }
         }
         return zipFilePath;
-    }
-
-    /**
-     * Removes the file a failed export left behind. The callers zip whole directories, so an empty or truncated archive
-     * inside one of them is far harder to diagnose than a missing repository plus a reported export error.
-     */
-    private void deleteIncompleteExport(Path zipFilePath) {
-        if (!FileUtils.deleteQuietly(zipFilePath.toFile()) && Files.exists(zipFilePath)) {
-            log.error("Could not delete the incomplete export {}", zipFilePath);
-        }
     }
 
     /**
@@ -193,9 +195,9 @@ public class GitRepositoryExportService {
      * @throws IOException     if IO operations fail
      */
     public InputStreamResource exportRepositorySnapshot(VcsRepositoryUri repositoryUri, String filename) throws GitAPIException, IOException {
-        Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-        byte[] zipData = createInMemoryZipArchive(repository);
-        return createZipInputStreamResource(zipData, filename);
+        try (Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false)) {
+            return createZipInputStreamResource(createInMemoryZipArchive(repository), filename);
+        }
     }
 
     /**
@@ -209,9 +211,9 @@ public class GitRepositoryExportService {
      * @throws IOException if IO operations fail
      */
     public InputStreamResource exportRepositoryWithFullHistoryToMemory(VcsRepositoryUri repositoryUri, String filename) throws IOException {
-        Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false);
-        byte[] zipData = InMemoryRepositoryBuilder.buildZip(repository);
-        return createZipInputStreamResource(zipData, filename);
+        try (Repository repository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false)) {
+            return createZipInputStreamResource(InMemoryRepositoryBuilder.buildZip(repository), filename);
+        }
     }
 
     /**
@@ -327,7 +329,7 @@ public class GitRepositoryExportService {
      * archive looks like an empty repository and hides the failure.
      *
      * @param repository   the bare repository to archive
-     * @param outputStream the stream the archive is written to
+     * @param outputStream the stream the archive is written to; it stays open, so the caller keeps ownership of it
      * @throws GitAPIException if the archive command fails
      * @throws IOException     if the repository has no commits or cannot be read
      */
@@ -337,7 +339,8 @@ public class GitRepositoryExportService {
             throw new IOException("Cannot archive the repository " + repository.getRemoteRepositoryUri() + " because HEAD does not resolve, so it has no commits");
         }
         try (Git git = new Git(repository)) {
-            git.archive().setFormat("zip").setTree(treeId).setOutputStream(outputStream).call();
+            // Close-shielded because ArchiveCommand closes the stream it is handed, which is not this method's contract.
+            git.archive().setFormat("zip").setTree(treeId).setOutputStream(CloseShieldOutputStream.wrap(outputStream)).call();
         }
     }
 }

@@ -165,8 +165,8 @@ public class InMemoryRepositoryBuilder {
     }
 
     /**
-     * Resolves the commit to export, preferring the repository's own branch over {@code HEAD} so that an exercise using a
-     * branch other than the configured default is exported correctly.
+     * Resolves the commit to export. {@code branch} comes from the repository's symbolic {@code HEAD}, so the fallback
+     * only matters for a repository whose {@code HEAD} is detached; both lookups failing means it has no commits at all.
      *
      * @param bareRepository the bare repository to read from
      * @param branch         the branch reported by the repository
@@ -212,6 +212,12 @@ public class InMemoryRepositoryBuilder {
      * with matching {@code .idx} and writes both under {@code .git/objects/pack/}.
      * The pack file name is computed as the SHA-1 of its content, as in standard Git.
      *
+     * <p>
+     * Both files are written straight into the ZIP entry. Buffering them first would put two copies of the entire pack
+     * on the heap, which matters because this runs for every instructor repository of every exercise while a course is
+     * being archived. JGit can name the pack before writing it, since the name is derived from the object list that
+     * {@code preparePack} produced rather than from the serialized bytes.
+     *
      * @param bareRepository  the bare repository the objects are read from
      * @param commitId        tip commit that defines reachability for the pack
      * @param zipOutputStream open ZIP stream to receive pack and index entries
@@ -219,10 +225,6 @@ public class InMemoryRepositoryBuilder {
      * @throws IOException if pack/index creation or ZIP writes fail
      */
     private static void createGitIndex(Repository bareRepository, ObjectId commitId, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
-        // Create pack + index
-        byte[] packBytes;
-        byte[] idxBytes;
-        String packHashHex;
         try (ObjectReader reader = bareRepository.newObjectReader();
                 ObjectWalk objectWalk = new ObjectWalk(reader);
                 PackWriter packWriter = new PackWriter(new PackConfig(bareRepository), reader)) {
@@ -234,21 +236,29 @@ public class InMemoryRepositoryBuilder {
             // This drives the traversal from `objectWalk` and prevents null ids inside preparePack
             packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, Set.of(commitId), PackWriter.NONE, PackWriter.NONE);
 
-            // Write .pack and derive its canonical name from JGit
-            ByteArrayOutputStream packOut = new ByteArrayOutputStream();
-            packWriter.writePack(NullProgressMonitor.INSTANCE, NullProgressMonitor.INSTANCE, packOut);
-            packBytes = packOut.toByteArray();
-            packHashHex = packWriter.computeName().name();
-
-            // Write .idx
-            ByteArrayOutputStream idxOut = new ByteArrayOutputStream();
-            packWriter.writeIndex(idxOut);
-            idxBytes = idxOut.toByteArray();
+            String packHashHex = packWriter.computeName().name();
+            writeGitEntry(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".pack",
+                    out -> packWriter.writePack(NullProgressMonitor.INSTANCE, NullProgressMonitor.INSTANCE, out));
+            writeGitEntry(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".idx", packWriter::writeIndex);
         }
+    }
 
-        // Place pack + idx into .git/objects/pack/
-        putGitBytes(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".pack", packBytes);
-        putGitBytes(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".idx", idxBytes);
+    /**
+     * Opens a {@code .git/} entry and lets the writer stream its content straight into the ZIP, so nothing has to be
+     * buffered on the heap first. The ZIP stream is close-shielded because the writers close what they are given.
+     */
+    private static void writeGitEntry(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String relPath, GitEntryWriter writer) throws IOException {
+        String full = ".git/" + relPath;
+        ensureParentDirs(zipOutputStream, createdDirs, full);
+        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(full));
+        writer.writeTo(CloseShieldOutputStream.wrap(zipOutputStream));
+        zipOutputStream.closeArchiveEntry();
+    }
+
+    @FunctionalInterface
+    private interface GitEntryWriter {
+
+        void writeTo(OutputStream outputStream) throws IOException;
     }
 
     // ---- Helpers ----------------------------------------------------------------
@@ -338,20 +348,6 @@ public class InMemoryRepositoryBuilder {
         zipOutputStream.putArchiveEntry(zipEntry);
         zipOutputStream.write(bytes);
         zipOutputStream.closeArchiveEntry();
-    }
-
-    /**
-     * Converts a byte array to lowercase hexadecimal without separators.
-     *
-     * @param bytes input bytes
-     * @return hex string, two characters per byte
-     */
-    private static String toHex(byte[] bytes) {
-        StringBuilder stringBuilder = new StringBuilder(bytes.length * 2);
-        for (byte b : bytes) {
-            stringBuilder.append("%02x".formatted(b));
-        }
-        return stringBuilder.toString();
     }
 
 }

@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.service.FileUtilUnitTest.FILE_WITH_UNIX_LINE_ENDINGS;
 import static de.tum.cit.aet.artemis.core.service.FileUtilUnitTest.exportTestRootPath;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -93,6 +96,26 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         assertThat(createdDirectories).hasSize(callCount).allSatisfy(directory -> assertThat(directory).isDirectory());
+    }
+
+    /**
+     * The pending deletions used to be kept in a map keyed by path, so scheduling a second cleanup for the same path
+     * dropped the first future. That task then ran anyway but could no longer be cancelled at shutdown. Two schedules for
+     * one path must therefore leave two cancellable futures behind, and neither of them may report an error when the
+     * other one got there first.
+     */
+    @Test
+    void testScheduleDirectoryPathForRecursiveDeletion_shouldTrackEveryScheduleForTheSamePath() throws IOException {
+        Path directory = createTempTargetDirectory("testDuplicateDeletionSchedules");
+
+        assertThatNoException().isThrownBy(() -> {
+            fileService.scheduleDirectoryPathForRecursiveDeletion(directory, 0);
+            fileService.scheduleDirectoryPathForRecursiveDeletion(directory, 0);
+        });
+
+        // Both cleanups target the same path, and the second one finds it already gone. That is expected, not an error,
+        // so the directory is simply removed and nothing is left behind.
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(directory).doesNotExist());
     }
 
     @Test
