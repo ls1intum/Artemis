@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { DebugElement, ElementRef, signal } from '@angular/core';
+import { DebugElement, ElementRef, type WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Navigation, NavigationEnd, Params, Router } from '@angular/router';
@@ -61,6 +61,7 @@ import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-me
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -73,6 +74,7 @@ describe('CourseLectureDetailsComponent', () => {
     let debugElement: DebugElement;
     let lectureService: LectureService;
     let routerEvents: Subject<NavigationEnd>;
+    let currentNavigation: WritableSignal<Navigation>;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -112,6 +114,7 @@ describe('CourseLectureDetailsComponent', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         routerEvents = new Subject<NavigationEnd>();
+        currentNavigation = signal({ id: 1 } as Navigation);
 
         await TestBed.configureTestingModule({
             imports: [
@@ -187,7 +190,7 @@ describe('CourseLectureDetailsComponent', () => {
                         },
                     },
                 },
-                MockProvider(Router, { events: routerEvents, currentNavigation: signal({ id: 1 } as Navigation) }),
+                MockProvider(Router, { events: routerEvents, currentNavigation }),
                 MockProvider(ScienceService),
                 MockProvider(IrisSettingsService),
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -638,10 +641,12 @@ describe('CourseLectureDetailsComponent', () => {
             lectureId = '1',
             eventId = ++navigationId,
             urlAfterRedirects = `/courses/1/lectures/${lectureId}`,
+            state?: unknown,
         ) => {
             const activatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.snapshot.params = { lectureId };
             activatedRoute.snapshot.queryParams = queryParams as Params;
+            currentNavigation.set({ id: eventId, extras: { state } } as Navigation);
             routerEvents.next(new NavigationEnd(eventId, urlAfterRedirects, urlAfterRedirects));
         };
 
@@ -703,15 +708,19 @@ describe('CourseLectureDetailsComponent', () => {
             expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
         });
 
-        it('should ignore unrelated navigations that preserve handled deep-link parameters', () => {
+        it('should ignore unmarked discussion query changes but handle marked repeated deep-link navigations', () => {
             respondWith([attachmentUnit(7)]);
             reInit();
 
             emitNavigationWithQueryParams({ unit: '7', page: '4', postId: '5' }, '1', 12, '/courses/1/lectures/1?unit=7&page=4&postId=5');
             const first = courseLecturesDetailsComponent.deepLink();
             emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 13, '/courses/1/lectures/1?unit=7&page=4');
-
             expect(courseLecturesDetailsComponent.deepLink()).toBe(first);
+
+            emitNavigationWithQueryParams({ unit: '7', page: '4' }, '1', 14, '/courses/1/lectures/1?unit=7&page=4', LECTURE_DEEP_LINK_NAVIGATION_STATE);
+            const second = courseLecturesDetailsComponent.deepLink();
+            expect(second).not.toBe(first);
+            expect(second).toEqual(first);
         });
 
         it('should not publish the current activation NavigationEnd a second time', () => {

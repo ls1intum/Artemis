@@ -9,6 +9,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { GlobalSearchLectureResultsComponent } from './global-search-lecture-results.component';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 const mockResult: LectureSearchResult = {
     course: { id: 1, name: 'Advanced Web Development' },
@@ -175,7 +176,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             component.handleKeydown(event);
 
             expect(preventDefaultSpy).toHaveBeenCalled();
-            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams });
+            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: mockResult.lectureUnit.queryParams, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         });
 
         it('should not navigate when Enter is pressed with no selection', () => {
@@ -270,7 +271,12 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
             pipelineComponent.handleKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
 
-            expect(navigateSpy).toHaveBeenCalledWith([mockResult.lectureUnit.link], { queryParams: { unrelated: 'kept', unit: 1, page: 3 } });
+            expect(navigateSpy).toHaveBeenCalledWith(
+                [mockResult.lectureUnit.link],
+                expect.objectContaining({
+                    queryParams: { unrelated: 'kept', unit: 1, page: 3 },
+                }),
+            );
         });
 
         it('should not call the search service for a whitespace-only query', () => {

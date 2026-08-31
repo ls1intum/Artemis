@@ -44,7 +44,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { ScienceService } from 'app/foundation/science/science.service';
 import { InformationBox, InformationBoxComponent, InformationBoxContent } from 'app/shared-ui/information-box/information-box.component';
 import { IrisMessageContextDTO, IrisSlidesContextDTO, IrisVideoContextDTO, LectureContextsProvider } from 'app/iris/shared/entities/iris-message-context-dto.model';
-import { LectureDeepLink, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
+import { LectureDeepLink, isLectureDeepLinkNavigationState, parseLectureDeepLink } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 export interface LectureUnitCompletionEvent {
@@ -267,11 +267,13 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         }
         const previous = this.lastDeepLinkNavigation;
         const current = this.currentDeepLinkNavigation(event.urlAfterRedirects);
+        const isMarkedDeepLinkNavigation = isLectureDeepLinkNavigationState(this.router.currentNavigation()?.extras?.state);
         this.lastDeepLinkNavigation = current;
         return (
             !previous ||
             current.routeKey !== previous.routeKey ||
             current.deepLinkKey !== previous.deepLinkKey ||
+            (!!current.deepLinkKey && isMarkedDeepLinkNavigation) ||
             (!!current.deepLinkKey && current.urlAfterRedirects === previous.urlAfterRedirects)
         );
     }

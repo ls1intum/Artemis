@@ -7,6 +7,7 @@ import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { provideHttpClient } from '@angular/common/http';
 import { escapeHtml, formatCitationLabel, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('IrisCitationTextComponent', () => {
     let fixture: ComponentFixture<IrisCitationTextComponent>;
@@ -166,7 +167,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation();
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7, page: 3 } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7, page: 3 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         });
 
         it('drops a page a citation cannot be honoured with, as a URL carrying the same value would be', () => {
@@ -174,7 +175,12 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:7:0:::Key:]');
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7 } });
+            expect(navigate).toHaveBeenCalledWith(
+                ['/courses', '1', 'lectures', '1'],
+                expect.objectContaining({
+                    queryParams: { unit: 7 },
+                }),
+            );
         });
     });
 

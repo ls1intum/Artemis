@@ -6,6 +6,12 @@ export interface LectureDeepLink {
     readonly page?: number;
 }
 
+export const LECTURE_DEEP_LINK_NAVIGATION_STATE = { lectureDeepLink: true } as const;
+
+export function isLectureDeepLinkNavigationState(state: unknown): boolean {
+    return !!state && typeof state === 'object' && (state as Record<string, unknown>)['lectureDeepLink'] === true;
+}
+
 export function lectureDeepLink(unitId: number, timestamp?: number, page?: number): LectureDeepLink | undefined {
     if (!Number.isInteger(unitId) || unitId <= 0) {
         return undefined;
