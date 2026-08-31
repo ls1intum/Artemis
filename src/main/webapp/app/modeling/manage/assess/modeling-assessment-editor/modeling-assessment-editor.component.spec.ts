@@ -313,7 +313,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.referencedFeedback).toHaveLength(1);
             component.loadingFeedbackSuggestions.set(true);
             component.highlightedElements.set(new Map([['element', 'red']]));
-            component.feedbackSuggestions = [createTestFeedback()];
             component.hasAutomaticFeedback.set(true);
 
             paramMapSubject.next(convertToParamMap({ submissionId: '2', courseId: '1', exerciseId: '1' }));
@@ -323,7 +322,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.unreferencedFeedback()).toHaveLength(0);
             expect(component.loadingFeedbackSuggestions()).toBe(false);
             expect(component.highlightedElements()).toBeUndefined();
-            expect(component.feedbackSuggestions).toHaveLength(0);
             expect(component.hasAutomaticFeedback()).toBe(false);
         });
 
