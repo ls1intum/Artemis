@@ -125,6 +125,8 @@ public class OIDCAuthenticationSuccessHandler implements AuthenticationSuccessHa
     private void renderCallbackPage(HttpServletResponse response, String deepLink, boolean isError, String errorMessage) throws IOException {
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("text/html;charset=UTF-8");
+        response.setHeader(HttpHeaders.CACHE_CONTROL, "no-store");
+        response.setHeader(HttpHeaders.PRAGMA, "no-cache");
 
         Context context = new Context();
         context.setVariable("deepLink", deepLink);
