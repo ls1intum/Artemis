@@ -327,6 +327,38 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.hasAutomaticFeedback()).toBe(false);
         });
 
+        it('should fetch feedback suggestions when Athena grading feedback is enabled and only automatic feedback exists', async () => {
+            // Every other test here uses a course with athenaGradingFeedbackEnabled left unset, so the suggestion
+            // fetch this component triggers after loading a submission (only for assessments that are still new) was
+            // never exercised.
+            const submission = getSubmissionWithData();
+            (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestion = { ...new Feedback(), reference: 'element:1', type: FeedbackType.MANUAL };
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).toHaveBeenCalledOnce();
+            expect(component.feedbackSuggestions).toEqual([suggestion]);
+            expect(component.referencedFeedback).toContainEqual(suggestion);
+            expect(component.loadingFeedbackSuggestions()).toBe(false);
+        });
+
+        it('should not fetch feedback suggestions when Athena grading feedback is disabled', async () => {
+            const submission = getSubmissionWithData();
+            submission.results![0].feedbacks = [];
+            vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
+            const suggestionsSpy = vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback()]));
+
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            expect(suggestionsSpy).not.toHaveBeenCalled();
+        });
+
         it('call ngOnInit with submissionId set to new', async () => {
             paramMapSubject.next(
                 convertToParamMap({
