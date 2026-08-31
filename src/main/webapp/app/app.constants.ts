@@ -43,6 +43,8 @@ export const MODULE_FEATURE_HYPERION = 'hyperion';
 
 export const MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = 'hyperion-exercise-generation';
 
+export const MODULE_FEATURE_DEIMOS = 'deimos';
+
 export const MODULE_FEATURE_IRIS = 'iris';
 
 export const MODULE_FEATURE_EXAM = 'exam';
@@ -79,6 +81,7 @@ export type ModuleFeature =
     | typeof MODULE_FEATURE_ATLAS
     | typeof MODULE_FEATURE_HYPERION
     | typeof MODULE_FEATURE_HYPERION_EXERCISE_GENERATION
+    | typeof MODULE_FEATURE_DEIMOS
     | typeof MODULE_FEATURE_IRIS
     | typeof MODULE_FEATURE_EXAM
     | typeof MODULE_FEATURE_PLAGIARISM

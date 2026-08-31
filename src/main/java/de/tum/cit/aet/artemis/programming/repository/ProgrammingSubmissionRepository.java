@@ -343,4 +343,13 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             """)
     boolean existsNewerSuccessfulTestResultForParticipationAndCommitHash(@Param("participationId") long participationId, @Param("testsCommitHash") String testsCommitHash,
             @Param("baselineLatestResultId") Long baselineLatestResultId);
+
+    @Query("""
+            SELECT s
+            FROM ProgrammingSubmission s
+            WHERE s.participation.id = :participationId
+                AND s.commitHash IS NOT NULL
+            ORDER BY s.submissionDate ASC, s.id ASC
+            """)
+    List<ProgrammingSubmission> findByParticipationIdOrderBySubmissionDateAsc(@Param("participationId") long participationId);
 }

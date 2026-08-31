@@ -468,6 +468,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
 
     /**
+     * The name of the module feature used for Deimos malicious participation analysis functionality.
+     */
+    public static final String MODULE_FEATURE_DEIMOS = "deimos";
+
+    /**
      * The name of the module feature used for Iris / Pyris functionality.
      */
     public static final String MODULE_FEATURE_IRIS = "iris";
@@ -556,6 +561,8 @@ public final class Constants {
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    public static final String DEIMOS_ENABLED_PROPERTY_NAME = "artemis.deimos.enabled";
 
     public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
 

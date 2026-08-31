@@ -99,6 +99,11 @@ class ArtemisConfigHelperTest {
         assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
     }
 
+    @Test
+    void testDeimosProperty() {
+        testProperty(artemisConfigHelper::isDeimosEnabled, Constants.DEIMOS_ENABLED_PROPERTY_NAME);
+    }
+
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {
         mockProperty(propertyName, true);
         assertThat(propertyTest.apply(mockEnv)).isTrue();
