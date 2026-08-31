@@ -12,7 +12,7 @@
         </div>
     </tum-ui-message>
 }
-@if (requiresAiExperienceOptIn()) {
+@if (!isLoading() && isAssessor() && !resultCompletionDate() && requiresAiExperienceOptIn()) {
     <tum-ui-message severity="secondary">
         <div class="flex items-center gap-2">
             <fa-icon [icon]="faInfoCircle" size="lg" />

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
@@ -78,7 +79,23 @@ describe('FeedbackSuggestionsBannerComponent', () => {
         expect(fixture.debugElement.query(By.directive(FaIconComponent))).toBeTruthy();
     });
 
+    it('should hide the opt-in hint when the assessor is not the current user or the result is already completed', () => {
+        fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
+        fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
+        fixture.componentRef.setInput('isAssessor', false);
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions'))).toBeFalsy();
+
+        fixture.componentRef.setInput('isAssessor', true);
+        fixture.componentRef.setInput('resultCompletionDate', dayjs());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#enable-ai-feedback-suggestions'))).toBeFalsy();
+    });
+
     it('should emit optIn when the opt-in hint button is clicked', () => {
+        fixture.componentRef.setInput('isAssessor', true);
         fixture.componentRef.setInput('isFeedbackSuggestionsEnabled', true);
         fixture.componentRef.setInput('requiresAiExperienceOptIn', true);
         fixture.detectChanges();
