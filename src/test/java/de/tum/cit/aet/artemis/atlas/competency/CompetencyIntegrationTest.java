@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.atlas.competency;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.Assumptions;
@@ -282,6 +283,15 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
 
         assertThat(manuallyCreated).singleElement().satisfies(competency -> assertThat(competency.generatedByAi()).isFalse());
         assertThat(generatedFromDescription).singleElement().satisfies(competency -> assertThat(competency.generatedByAi()).isTrue());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldRejectNullEntriesForBulkCreation() throws Exception {
+        var requestBody = Collections.singletonList((CourseCompetencyRequestDTO) null);
+
+        request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", requestBody, HttpStatus.BAD_REQUEST);
+        request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk/generated-from-description", requestBody, HttpStatus.BAD_REQUEST);
     }
 
     private static Competency competencyForBulkCreation(String title) {

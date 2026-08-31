@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -183,7 +184,8 @@ public class CompetencyResource {
      */
     @PostMapping("courses/{courseId}/competencies/bulk")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId, @RequestBody List<@Valid CourseCompetencyRequestDTO> competencies)
+    public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetencies(@PathVariable Long courseId,
+            @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies)
             throws URISyntaxException {
         return createCompetencies(courseId, competencies, false, "competency creation");
     }
@@ -199,7 +201,7 @@ public class CompetencyResource {
     @PostMapping("courses/{courseId}/competencies/bulk/generated-from-description")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> createCompetenciesGeneratedFromDescription(@PathVariable Long courseId,
-            @RequestBody List<@Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
+            @RequestBody List<@NotNull @Valid CourseCompetencyRequestDTO> competencies) throws URISyntaxException {
         return createCompetencies(courseId, competencies, true, "competency creation from course description");
     }
 
