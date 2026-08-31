@@ -33,7 +33,7 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
 
     test.describe.serial('Handling complaints', () => {
         test('Tutor can assess a submission', async ({ login, page, courseManagement, exerciseAssessment, modelingExerciseAssessment, toggleSidebar }) => {
-            await login(tutor, '/course-management');
+            await login(tutor, '/courses');
             await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
             await toggleSidebar();
             await courseManagement.checkIfStudentSubmissionExists(studentOne.displayName!);
