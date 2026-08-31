@@ -315,8 +315,8 @@ public class CourseOverviewResource {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         log.debug("Request to get all courses user {} has access to with exams, lectures, exercises, participations, submissions and results + calculated scores", user.getLogin());
-        Set<Course> courses = courseService.findAllActiveWithExercisesForUser(user);
-        log.debug("courseService.findAllActiveWithExercisesForUser done");
+        Set<Course> courses = courseService.findAllForDashboardWithExercisesForUser(user);
+        log.debug("courseService.findAllForDashboardWithExercisesForUser done");
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
 
         log.debug("courseService.fetchParticipationsWithSubmissionsAndResultsForCourses done");

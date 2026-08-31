@@ -164,7 +164,8 @@ public class ProgrammingExerciseParticipationResource {
         filterParticipationSubmissionResults(participation);
         // hide details that should not be shown to the students
         Set<Result> results = participation.getSubmissions().isEmpty() ? Set.of() : participation.getSubmissions().iterator().next().getResults();
-        resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
+        // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
+        resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, results);
         return ResponseEntity.ok(participation);
     }
 
@@ -263,7 +264,8 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
-        result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
+        // the automatic test-case and SCA feedback lives in the compact typed tables and has to be attached as legacy views before filtering
+        result.ifPresent(value -> resultService.attachAutomaticFeedbackAndFilterSensitiveInformation(participation, List.of(value)));
 
         return result.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
