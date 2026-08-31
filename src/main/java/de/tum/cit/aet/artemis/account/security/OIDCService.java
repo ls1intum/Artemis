@@ -98,7 +98,7 @@ public class OIDCService extends OidcUserService {
             actualUser = localUser.get();
             String firstName = oidcUser.getAttribute(firstNameClaimKey);
             String lastName = oidcUser.getAttribute(lastNameClaimKey);
-            String email = oidcUser.getAttribute(emailClaimKey);
+            String email = User.canonicalEmail(oidcUser.getAttribute(emailClaimKey));
             boolean isUpdated = false;
 
             if (firstName != null && !firstName.isBlank() && !Objects.equals(actualUser.getFirstName(), firstName)) {
@@ -109,7 +109,7 @@ public class OIDCService extends OidcUserService {
                 actualUser.setLastName(lastName);
                 isUpdated = true;
             }
-            if (email != null && !email.isBlank() && !Objects.equals(actualUser.getEmail(), email)) {
+            if (email != null && !Objects.equals(actualUser.getEmail(), email)) {
                 userCreationService.validateEmailIsAvailable(email, actualUser.getId());
                 actualUser.setEmail(email);
                 isUpdated = true;

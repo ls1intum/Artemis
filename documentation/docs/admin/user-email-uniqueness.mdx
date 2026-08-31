@@ -90,6 +90,12 @@ Before upgrading to the release containing the database constraint, check these 
 New SAML2, OIDC, and LDAP accounts whose asserted email is already assigned are rejected during provisioning. Existing externally managed accounts remain usable while their
 legacy conflicts are reviewed, provided the external directory does not attempt to change their email to a conflicting value.
 
+## Internal admin account
+
+`artemis.user-management.internal-admin.email` is one fixed address and defaults to a placeholder, so it can already belong to another account, for example a previous internal
+admin that was renamed. When Artemis has to create the internal admin and finds the configured address taken, it creates the account without an email address and logs a
+warning naming the setting. Point the setting at an unused address if the internal admin needs one, for instance to receive the password reset email.
+
 ## Verify readiness
 
 The database migration can complete when the detection query returns no rows. Run it immediately before the upgrade to catch conflicts introduced since the previous review.
