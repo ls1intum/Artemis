@@ -38,7 +38,6 @@ import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-t
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
 import {
@@ -59,7 +58,6 @@ import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular'
     imports: [
         AssessmentLayoutComponent,
         ComplaintsForTutorComponent,
-        AssessmentComplaintAlertComponent,
         TranslateDirective,
         ModelingAssessmentComponent,
         AssessmentWorkspaceComponent,

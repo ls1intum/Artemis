@@ -61,10 +61,11 @@
 
                     <!-- A complaint is about this assessment, so it belongs beside the diagram rather than at the end of
                          the feedback pane, where the tutor had to scroll past every feedback item to reach it. It takes
-                         its height from the canvas, which shrinks, so the page still never scrolls. -->
+                         its height from the canvas, which shrinks, so the page still never scrolls.
+                         No `jhi-assessment-complaint-alert` here on purpose: it only says "scroll down to review the
+                         complaint", which is both wrong and redundant once the form is the next thing on screen. -->
                     @if (complaint(); as complaint) {
                         <section class="modeling-assessment-page__complaint">
-                            <jhi-assessment-complaint-alert [complaint]="complaint" />
                             <jhi-complaints-for-tutor-form
                                 [complaint]="complaint"
                                 [zeroIndent]="false"

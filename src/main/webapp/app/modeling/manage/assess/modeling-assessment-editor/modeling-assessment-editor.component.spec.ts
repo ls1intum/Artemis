@@ -181,16 +181,15 @@ describe('ModelingAssessmentEditorComponent', () => {
         const layout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance as AssessmentLayoutComponent;
         expect(layout.showComplaintSection()).toBe(false);
 
-        // Both halves stay together in the canvas column, so answering a complaint needs no scrolling; the feedback
-        // pane keeps only the feedback and the notes.
+        // The form sits in the canvas column, so answering a complaint needs no scrolling; the feedback pane keeps only
+        // the feedback and the notes, and the "scroll down to review the complaint" banner is gone from both.
         const canvas = fixture.debugElement.query(By.css('[assessmentWorkspaceCanvas]'));
-        expect(canvas.query(By.directive(AssessmentComplaintAlertComponent))).not.toBeNull();
         expect(canvas.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
 
         const pane = fixture.debugElement.query(By.css('[assessmentWorkspaceDetails]'));
         expect(pane).not.toBeNull();
-        expect(pane.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
         expect(pane.query(By.directive(ComplaintsForTutorComponent))).toBeNull();
+        expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
     });
 
     // Artemis is path-routed, so the assessment URL lives in the path and `window.location.hash` is always empty.
