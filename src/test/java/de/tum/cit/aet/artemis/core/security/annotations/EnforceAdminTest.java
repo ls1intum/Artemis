@@ -12,7 +12,7 @@ class EnforceAdminTest {
         PreAuthorize preAuthorize = EnforceAdmin.class.getAnnotation(PreAuthorize.class);
 
         assertThat(preAuthorize).isNotNull();
-        assertThat(preAuthorize.value()).contains("hasRole('ADMIN')").contains("@userRepository.isActiveAdmin(authentication.name)")
+        assertThat(preAuthorize.value()).contains("hasRole('ADMIN')").contains("@userRepository.isAdmin(authentication.name)")
                 .contains("@passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()");
     }
 }

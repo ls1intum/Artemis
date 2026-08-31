@@ -178,6 +178,16 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         admin = userRepository.save(admin);
 
+        User inactiveSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactivesuperadmin");
+        inactiveSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
+        inactiveSuperAdmin.setActivated(false);
+        inactiveSuperAdmin = userRepository.save(inactiveSuperAdmin);
+
+        User deletedSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedsuperadmin");
+        deletedSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
+        deletedSuperAdmin.setDeleted(true);
+        deletedSuperAdmin = userRepository.save(deletedSuperAdmin);
+
         // Create a regular user
         User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
@@ -186,6 +196,8 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
         // Test that regular admin is not identified as super admin
         assertThat(userRepository.isSuperAdmin(admin.getLogin())).isFalse();
+        assertThat(userRepository.isSuperAdmin(inactiveSuperAdmin.getLogin())).isFalse();
+        assertThat(userRepository.isSuperAdmin(deletedSuperAdmin.getLogin())).isFalse();
 
         // Test that regular user is not identified as super admin
         assertThat(userRepository.isSuperAdmin(regularUser.getLogin())).isFalse();
@@ -207,37 +219,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         admin.setDeleted(false);
         admin = userRepository.save(admin);
 
-        // Create an inactive admin user (still has admin authority, so should return true)
-        User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
-        inactiveAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
-        inactiveAdmin.setActivated(false);
-        inactiveAdmin = userRepository.save(inactiveAdmin);
-
-        // Create a regular user
-        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
-
-        // Test that super admin, regular admin, and inactive admin (has authority) are identified as admin
-        assertThat(userRepository.isAdmin(superAdmin.getLogin())).isTrue();
-        assertThat(userRepository.isAdmin(admin.getLogin())).isTrue();
-        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isTrue();
-
-        // Test that regular user is not identified as admin
-        assertThat(userRepository.isAdmin(regularUser.getLogin())).isFalse();
-
-        // Test with non-existent user
-        assertThat(userRepository.isAdmin("nonexistentuser")).isFalse();
-    }
-
-    @Test
-    void testIsActiveAdmin() {
-        User activeAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "activeadmin");
-        activeAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
-        activeAdmin = userRepository.save(activeAdmin);
-
-        User activeSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "activesuperadmin");
-        activeSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
-        activeSuperAdmin = userRepository.save(activeSuperAdmin);
-
+        // Create an inactive admin user
         User inactiveAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactiveadmin");
         inactiveAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         inactiveAdmin.setActivated(false);
@@ -248,38 +230,20 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         deletedAdmin.setDeleted(true);
         deletedAdmin = userRepository.save(deletedAdmin);
 
-        assertThat(userRepository.isActiveAdmin(activeAdmin.getLogin())).isTrue();
-        assertThat(userRepository.isActiveAdmin(activeSuperAdmin.getLogin())).isTrue();
-        assertThat(userRepository.isActiveAdmin(inactiveAdmin.getLogin())).isFalse();
-        assertThat(userRepository.isActiveAdmin(deletedAdmin.getLogin())).isFalse();
-        assertThat(userRepository.isActiveAdmin("nonexistentuser")).isFalse();
-    }
+        // Create a regular user
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser");
 
-    @Test
-    void testIsActiveSuperAdmin() {
-        User activeSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "activesuperadmin");
-        activeSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
-        activeSuperAdmin = userRepository.save(activeSuperAdmin);
+        // Test that active admin accounts are identified as admin
+        assertThat(userRepository.isAdmin(superAdmin.getLogin())).isTrue();
+        assertThat(userRepository.isAdmin(admin.getLogin())).isTrue();
+        assertThat(userRepository.isAdmin(inactiveAdmin.getLogin())).isFalse();
+        assertThat(userRepository.isAdmin(deletedAdmin.getLogin())).isFalse();
 
-        User inactiveSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "inactivesuperadmin");
-        inactiveSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
-        inactiveSuperAdmin.setActivated(false);
-        inactiveSuperAdmin = userRepository.save(inactiveSuperAdmin);
+        // Test that regular user is not identified as admin
+        assertThat(userRepository.isAdmin(regularUser.getLogin())).isFalse();
 
-        User deletedSuperAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "deletedsuperadmin");
-        deletedSuperAdmin.setAuthorities(Set.of(Authority.SUPER_ADMIN_AUTHORITY));
-        deletedSuperAdmin.setDeleted(true);
-        deletedSuperAdmin = userRepository.save(deletedSuperAdmin);
-
-        User activeAdmin = userUtilService.createAndSaveUser(TEST_PREFIX + "activeadmin");
-        activeAdmin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
-        activeAdmin = userRepository.save(activeAdmin);
-
-        assertThat(userRepository.isActiveSuperAdmin(activeSuperAdmin.getLogin())).isTrue();
-        assertThat(userRepository.isActiveSuperAdmin(inactiveSuperAdmin.getLogin())).isFalse();
-        assertThat(userRepository.isActiveSuperAdmin(deletedSuperAdmin.getLogin())).isFalse();
-        assertThat(userRepository.isActiveSuperAdmin(activeAdmin.getLogin())).isFalse();
-        assertThat(userRepository.isActiveSuperAdmin("nonexistentuser")).isFalse();
+        // Test with non-existent user
+        assertThat(userRepository.isAdmin("nonexistentuser")).isFalse();
     }
 
     @Test
