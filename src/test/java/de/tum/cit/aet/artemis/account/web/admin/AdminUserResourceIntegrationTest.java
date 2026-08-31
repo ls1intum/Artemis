@@ -832,15 +832,43 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "staleactoradmin", roles = "ADMIN")
     void permanentDeletionRejectsAnUnconfirmedImpact() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX + "staleactor");
         User user = userUtilService.createAndSaveUser(TEST_PREFIX + "staleimpact");
+        String initialImpactResponse = mockMvc.perform(get("/api/account/admin/users/" + user.getLogin() + "/deletion-impact")).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString();
+        var initialImpact = objectMapper.readTree(initialImpactResponse);
+        String initialFingerprint = initialImpact.path("impactFingerprint").asText();
+        assertThat(initialFingerprint).isNotBlank();
+        assertThat(initialImpact.path("automaticEligible").asBoolean()).isTrue();
+        assertThat(initialImpact.path("retentionOverrideRequired").asBoolean()).isFalse();
 
-        mockMvc.perform(
-                delete("/api/account/admin/users/" + user.getLogin()).contentType(MediaType.APPLICATION_JSON).content("{\"impactFingerprint\":\"not-the-previewed-impact\"}"))
-                .andExpect(status().isConflict());
+        var course = courseUtilService.addEmptyCourse();
+        userUtilService.enrollUserInCourse(user, course, CourseRole.STUDENT);
 
+        String changedImpactResponse = mockMvc.perform(get("/api/account/admin/users/" + user.getLogin() + "/deletion-impact")).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString();
+        var changedImpact = objectMapper.readTree(changedImpactResponse);
+        assertThat(changedImpact.path("impactFingerprint").asText()).isNotEqualTo(initialFingerprint);
+        assertThat(changedImpact.path("automaticEligible").asBoolean()).isFalse();
+        assertThat(changedImpact.path("retentionOverrideRequired").asBoolean()).isTrue();
+        assertThat(changedImpact.path("categories")).anySatisfy(category -> {
+            assertThat(category.path("category").asText()).isEqualTo("COURSE_MEMBERSHIP");
+            assertThat(category.path("action").asText()).isEqualTo("REMOVE_MEMBERSHIP");
+            assertThat(category.path("count").asLong()).isOne();
+        });
+
+        String deletionResponse = mockMvc
+                .perform(delete("/api/account/admin/users/" + user.getLogin()).contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("impactFingerprint", initialFingerprint))))
+                .andExpect(status().isConflict()).andReturn().getResponse().getContentAsString();
+        var deletionResult = objectMapper.readTree(deletionResponse);
+
+        assertThat(deletionResult.path("status").asText()).isEqualTo("PLAN_CHANGED");
+        assertThat(deletionResult.path("reason").asText()).isEqualTo("impactChanged");
         assertThat(userTestRepository.findById(user.getId())).isPresent();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ? AND course_id = ?", Long.class, user.getId(), course.getId())).isOne();
     }
 
     @Test
@@ -852,12 +880,55 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         var result = permanentUserDeletionService.deleteAutomatically(user.getId());
 
         assertThat(result.status()).isEqualTo(UserDeletionResultStatus.BLOCKED);
+        assertThat(result.reason()).isEqualTo("remainingReferences");
         assertThat(userTestRepository.findById(user.getId())).isPresent();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ? AND course_id = ?", Long.class, user.getId(), course.getId())).isOne();
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "bulkactoradmin", roles = "ADMIN")
+    void bulkDeletionCommitsEligibleUsersAndReportsAChangedPlanIndependently() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX + "bulkactor");
+        User unchangedUser = userUtilService.createAndSaveUser(TEST_PREFIX + "bulkunchanged");
+        User changedUser = userUtilService.createAndSaveUser(TEST_PREFIX + "bulkchanged");
+        List<String> logins = List.of(unchangedUser.getLogin(), changedUser.getLogin());
+        String impactResponse = mockMvc
+                .perform(post("/api/account/admin/users/deletion-impact").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(logins)))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        var impacts = objectMapper.readTree(impactResponse).path("users");
+        assertThat(impacts).hasSize(2);
+
+        var course = courseUtilService.addEmptyCourse();
+        userUtilService.enrollUserInCourse(changedUser, course, CourseRole.STUDENT);
+
+        List<Map<String, String>> confirmations = new ArrayList<>();
+        for (var impact : impacts) {
+            confirmations.add(Map.of("login", impact.path("login").asText(), "impactFingerprint", impact.path("impactFingerprint").asText()));
+        }
+        String deletionResponse = mockMvc
+                .perform(delete("/api/account/admin/users").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("users", confirmations))))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        var results = objectMapper.readTree(deletionResponse);
+
+        assertThat(results).anySatisfy(result -> {
+            assertThat(result.path("login").asText()).isEqualTo(unchangedUser.getLogin());
+            assertThat(result.path("status").asText()).isEqualTo("DELETED");
+        });
+        assertThat(results).anySatisfy(result -> {
+            assertThat(result.path("login").asText()).isEqualTo(changedUser.getLogin());
+            assertThat(result.path("status").asText()).isEqualTo("PLAN_CHANGED");
+            assertThat(result.path("reason").asText()).isEqualTo("impactChanged");
+        });
+        assertThat(userTestRepository.findById(unchangedUser.getId())).isEmpty();
+        assertThat(userTestRepository.findById(changedUser.getId())).isPresent();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ? AND course_id = ?", Long.class, changedUser.getId(), course.getId()))
+                .isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "teamactoradmin", roles = "ADMIN")
     void forcedDeletionRemovesAStudentFromTheirTeamWithoutDeletingTheSharedTeam() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX + "teamactor");
         User user = userUtilService.createAndSaveUser(TEST_PREFIX + "teamstudent");
         User teammate = userUtilService.createAndSaveUser(TEST_PREFIX + "teammate");
         User owner = userUtilService.createAndSaveUser(TEST_PREFIX + "teamowner");
@@ -867,6 +938,7 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
         permanentlyDeleteUser(user.getLogin());
 
+        assertThat(userTestRepository.findById(user.getId())).isEmpty();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team WHERE id = ?", Long.class, team.getId())).isOne();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ? AND student_id = ?", Long.class, team.getId(), user.getId())).isZero();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM team_student WHERE team_id = ? AND student_id = ?", Long.class, team.getId(), teammate.getId())).isOne();

@@ -5,16 +5,21 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +40,8 @@ public class UserDeletionPlanService {
     private static final String POLICY_VERSION = "2";
 
     private final JdbcTemplate jdbcTemplate;
+
+    private volatile Set<String> availableTableNames;
 
     public UserDeletionPlanService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
@@ -88,6 +95,21 @@ public class UserDeletionPlanService {
         return jdbcTemplate.queryForList("SELECT id FROM jhi_user WHERE is_deleted = TRUE", Long.class);
     }
 
+    /**
+     * Returns the policies applicable to the active deployment. The registry deliberately includes optional modules,
+     * while their tables are absent when the corresponding profile is disabled.
+     *
+     * @return policies whose referenced table exists in the active database schema
+     */
+    public List<UserDeletionReferencePolicy> availablePolicies() {
+        Set<String> tables = availableTableNames();
+        return List.of(UserDeletionReferencePolicy.values()).stream().filter(policy -> tables.contains(policy.tableName())).toList();
+    }
+
+    public boolean isTableAvailable(String tableName) {
+        return availableTableNames().contains(tableName);
+    }
+
     private Map<Long, Map<UserDeletionReferencePolicy, Long>> countReferences(List<Long> userIds) {
         Map<Long, Map<UserDeletionReferencePolicy, Long>> result = new LinkedHashMap<>();
         userIds.forEach(userId -> result.put(userId, new EnumMap<>(UserDeletionReferencePolicy.class)));
@@ -97,10 +119,11 @@ public class UserDeletionPlanService {
 
         if (userIds.size() == 1) {
             long userId = userIds.getFirst();
+            List<UserDeletionReferencePolicy> policies = availablePolicies();
             List<String> statements = new ArrayList<>();
-            Object[] parameters = new Object[UserDeletionReferencePolicy.values().length];
+            Object[] parameters = new Object[policies.size()];
             int index = 0;
-            for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
+            for (UserDeletionReferencePolicy policy : policies) {
                 statements.add("SELECT '" + policy.name() + "' AS policy_name, COUNT(*) AS reference_count FROM " + policy.tableName() + " WHERE " + policy.columnName() + " = ?");
                 parameters[index++] = userId;
             }
@@ -113,12 +136,35 @@ public class UserDeletionPlanService {
 
         String placeholders = String.join(", ", userIds.stream().map(ignored -> "?").toList());
         Object[] parameters = userIds.toArray();
-        for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
+        for (UserDeletionReferencePolicy policy : availablePolicies()) {
             String sql = "SELECT " + policy.columnName() + ", COUNT(*) FROM " + policy.tableName() + " WHERE " + policy.columnName() + " IN (" + placeholders + ") GROUP BY "
                     + policy.columnName();
-            jdbcTemplate.query(sql, resultSet -> result.get(resultSet.getLong(1)).put(policy, resultSet.getLong(2)), parameters);
+            jdbcTemplate.query(sql, resultSet -> {
+                result.get(resultSet.getLong(1)).put(policy, resultSet.getLong(2));
+            }, parameters);
         }
         return result;
+    }
+
+    private Set<String> availableTableNames() {
+        Set<String> cached = availableTableNames;
+        if (cached != null) {
+            return cached;
+        }
+        synchronized (this) {
+            if (availableTableNames == null) {
+                availableTableNames = jdbcTemplate.execute((ConnectionCallback<Set<String>>) connection -> {
+                    Set<String> tables = new HashSet<>();
+                    try (ResultSet resultSet = connection.getMetaData().getTables(connection.getCatalog(), connection.getSchema(), "%", new String[] { "TABLE" })) {
+                        while (resultSet.next()) {
+                            tables.add(resultSet.getString("TABLE_NAME").toLowerCase(Locale.ROOT));
+                        }
+                    }
+                    return Set.copyOf(tables);
+                });
+            }
+            return availableTableNames;
+        }
     }
 
     private String fingerprint(long userId, Map<UserDeletionReferencePolicy, Long> counts) {

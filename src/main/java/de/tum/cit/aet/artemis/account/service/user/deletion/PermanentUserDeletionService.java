@@ -149,7 +149,10 @@ public class PermanentUserDeletionService {
         long userId = user.getId();
         String login = user.getLogin();
         String imageUrl = user.getImageUrl();
-        List<Path> filesToDeleteAfterCommit = new ArrayList<>(dataExportApi.deleteAllForUser(userId));
+        List<Path> filesToDeleteAfterCommit = new ArrayList<>();
+        if (userDeletionPlanService.isTableAvailable("data_export")) {
+            filesToDeleteAfterCommit.addAll(dataExportApi.deleteAllForUser(userId));
+        }
         boolean forced = mode == UserDeletionMode.ADMIN_FORCED;
 
         accountCredentialRevocationService.revokeAllCredentials(user, "permanent user deletion");
@@ -158,13 +161,27 @@ public class PermanentUserDeletionService {
 
         if (forced) {
             detachSharedActorReferences(userId);
-            cleanupTeams(userId);
-            cleanupParticipations(userId);
-            cleanupStudentExams(userId, filesToDeleteAfterCommit);
-            cleanupComplaints(userId);
-            cleanupPlagiarismCases(userId);
-            cleanupCommunication(userId);
-            cleanupTutorParticipations(userId);
+            if (userDeletionPlanService.isTableAvailable("team_student")) {
+                cleanupTeams(userId);
+            }
+            if (userDeletionPlanService.isTableAvailable("participation")) {
+                cleanupParticipations(userId);
+            }
+            if (userDeletionPlanService.isTableAvailable("student_exam") || userDeletionPlanService.isTableAvailable("exam_user")) {
+                cleanupStudentExams(userId, filesToDeleteAfterCommit);
+            }
+            if (userDeletionPlanService.isTableAvailable("complaint")) {
+                cleanupComplaints(userId);
+            }
+            if (userDeletionPlanService.isTableAvailable("plagiarism_case")) {
+                cleanupPlagiarismCases(userId);
+            }
+            if (userDeletionPlanService.isTableAvailable("post")) {
+                cleanupCommunication(userId);
+            }
+            if (userDeletionPlanService.isTableAvailable("tutor_participation")) {
+                cleanupTutorParticipations(userId);
+            }
         }
 
         entityManager.flush();
@@ -177,13 +194,16 @@ public class PermanentUserDeletionService {
             throw new IllegalStateException("Expected to delete one user row, deleted " + deleted);
         }
 
+        // Science events store the login as an identity rather than a foreign key. Rename that identity inside this
+        // transaction so a failure rolls back the complete deletion instead of surfacing after the user row is gone.
+        scienceEventApi.ifPresent(api -> api.renameIdentity(login, "deleted-user-" + userId));
         auditEventRepository.add(new AuditEvent(actor, AUDIT_EVENT_TYPE,
                 Map.of("targetUserId", userId, "mode", mode.name(), "affectedObjects", impact.totalAffectedObjects(), "outcome", UserDeletionResultStatus.DELETED.name())));
-        scheduleExternalCleanupAfterCommit(userId, login, imageUrl, filesToDeleteAfterCommit);
+        scheduleExternalCleanupAfterCommit(imageUrl, filesToDeleteAfterCommit);
     }
 
     private void detachSharedActorReferences(long userId) {
-        for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
+        for (UserDeletionReferencePolicy policy : userDeletionPlanService.availablePolicies()) {
             if (policy.action() == UserDeletionAction.DETACH_ACTOR && policy != UserDeletionReferencePolicy.TEAM_OWNER) {
                 jdbcTemplate.update("UPDATE " + policy.tableName() + " SET " + policy.columnName() + " = NULL WHERE " + policy.columnName() + " = ?", userId);
             }
@@ -317,7 +337,7 @@ public class PermanentUserDeletionService {
     }
 
     private void executeDirectReferencePolicies(long userId, boolean forced) {
-        for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
+        for (UserDeletionReferencePolicy policy : userDeletionPlanService.availablePolicies()) {
             if (!forced && policy.automaticBlocker()) {
                 continue;
             }
@@ -330,7 +350,7 @@ public class PermanentUserDeletionService {
         }
     }
 
-    private void scheduleExternalCleanupAfterCommit(long userId, String login, @Nullable String imageUrl, List<Path> filesToDelete) {
+    private void scheduleExternalCleanupAfterCommit(@Nullable String imageUrl, List<Path> filesToDelete) {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 
             @Override
@@ -339,7 +359,6 @@ public class PermanentUserDeletionService {
                 if (imageUrl != null) {
                     fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUrl), FilePathType.PROFILE_PICTURE), 0);
                 }
-                scienceEventApi.ifPresent(api -> api.renameIdentity(login, "deleted-user-" + userId));
             }
         });
     }

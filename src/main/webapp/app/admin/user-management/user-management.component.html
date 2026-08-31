@@ -29,7 +29,7 @@
                 </div>
                 <div class="flex items-center justify-center gap-2 md:justify-end">
                     <jhi-delete-users-button (deletionRequested)="openPermanentDeletionDialog($event)" />
-                    <button tumUiButton severity="danger" size="small" [renderButtonStyle]="false" (click)="deleteAllSelectedUsers()" [disabled]="!selectedUsers().length">
+                    <button tumUiButton severity="danger" size="small" (click)="deleteAllSelectedUsers()" [disabled]="!selectedUsers().length">
                         <fa-icon [icon]="faTrash" />
                     </button>
                     <tum-ui-button
@@ -204,8 +204,6 @@
                                         severity="danger"
                                         size="small"
                                         variant="outlined"
-                                        [renderButtonStyle]="false"
-                                        [renderButtonText]="false"
                                         (click)="deleteUser(user.login!)"
                                         [disabled]="!currentAccount() || currentAccount()?.login === user.login"
                                         [tumUiTooltip]="'entity.action.delete' | artemisTranslate"
@@ -404,7 +402,7 @@
                 <span jhiTranslate="artemisApp.userManagement.permanentDeletion.irreversible"></span>
             </tum-ui-message>
             @if (deletionOverridesRetention()) {
-                <tum-ui-message severity="warning">
+                <tum-ui-message severity="warn">
                     <span jhiTranslate="artemisApp.userManagement.permanentDeletion.retentionOverride"></span>
                 </tum-ui-message>
             }
@@ -437,7 +435,7 @@
         <tum-ui-button size="small" severity="secondary" (clicked)="closePermanentDeletionDialog()">
             {{ 'entity.action.cancel' | artemisTranslate }}
         </tum-ui-button>
-        <tum-ui-button size="small" severity="warning" [disabled]="deletionLoading()" (clicked)="deactivateInstead()">
+        <tum-ui-button size="small" severity="warn" [disabled]="deletionLoading()" (clicked)="deactivateInstead()">
             {{ 'artemisApp.userManagement.permanentDeletion.deactivateInstead' | artemisTranslate }}
         </tum-ui-button>
         <tum-ui-button size="small" severity="danger" [disabled]="!permanentDeletionConfirmed() || deletionLoading()" (clicked)="confirmPermanentDeletion()">
