@@ -44,17 +44,21 @@ final class LinkPreviewHttpClient {
      * Retrieves a response from one of the previously resolved addresses.
      *
      * @param validatedUrl        the validated URL and its resolved addresses
-     * @param requestTimeout      the maximum duration of the request
+     * @param requestDeadline     the deadline shared by the entire redirect chain
      * @param maximumResponseSize the maximum response body size in bytes
      * @return the response status, headers, and body
      * @throws IOException if the request fails or the response is invalid
      */
-    static Response get(LinkPreviewUrlValidator.ValidatedUrl validatedUrl, Duration requestTimeout, int maximumResponseSize) throws IOException {
-        long deadline = System.nanoTime() + requestTimeout.toNanos();
-        try (Socket socket = openSocket(validatedUrl, deadline)) {
+    static Response get(LinkPreviewUrlValidator.ValidatedUrl validatedUrl, RequestDeadline requestDeadline, int maximumResponseSize) throws IOException {
+        return get(validatedUrl, requestDeadline, maximumResponseSize, (SSLSocketFactory) SSLSocketFactory.getDefault());
+    }
+
+    static Response get(LinkPreviewUrlValidator.ValidatedUrl validatedUrl, RequestDeadline requestDeadline, int maximumResponseSize, SSLSocketFactory sslSocketFactory)
+            throws IOException {
+        try (Socket socket = openSocket(validatedUrl, requestDeadline, sslSocketFactory)) {
             writeRequest(socket.getOutputStream(), validatedUrl.uri());
 
-            try (InputStream inputStream = new BufferedInputStream(new DeadlineInputStream(socket.getInputStream(), socket, deadline))) {
+            try (InputStream inputStream = new BufferedInputStream(new DeadlineInputStream(socket.getInputStream(), socket, requestDeadline))) {
                 ResponseHead responseHead = readResponseHead(inputStream);
                 byte[] body = responseHead.statusCode() >= 200 && responseHead.statusCode() < 300 ? readResponseBody(inputStream, responseHead, maximumResponseSize) : new byte[0];
                 return new Response(responseHead.statusCode(), responseHead.headers(), body);
@@ -62,7 +66,7 @@ final class LinkPreviewHttpClient {
         }
     }
 
-    private static Socket openSocket(LinkPreviewUrlValidator.ValidatedUrl validatedUrl, long deadline) throws IOException {
+    private static Socket openSocket(LinkPreviewUrlValidator.ValidatedUrl validatedUrl, RequestDeadline requestDeadline, SSLSocketFactory sslSocketFactory) throws IOException {
         URI uri = validatedUrl.uri();
         int port = getPort(uri);
         IOException lastException = null;
@@ -70,9 +74,9 @@ final class LinkPreviewHttpClient {
         for (InetAddress address : validatedUrl.addresses()) {
             Socket socket = SocketFactory.getDefault().createSocket();
             try {
-                socket.connect(new InetSocketAddress(address, port), timeoutMillis(deadline, CONNECT_TIMEOUT)); // nosemgrep
+                socket.connect(new InetSocketAddress(address, port), requestDeadline.timeoutMillis(CONNECT_TIMEOUT)); // nosemgrep
                 if ("https".equalsIgnoreCase(uri.getScheme())) {
-                    return createSecureSocket(socket, uri.getHost(), port, deadline);
+                    return createSecureSocket(socket, uri.getHost(), port, requestDeadline, sslSocketFactory);
                 }
                 return socket;
             }
@@ -88,15 +92,15 @@ final class LinkPreviewHttpClient {
         throw new IOException("The link preview host did not resolve to an address");
     }
 
-    private static Socket createSecureSocket(Socket socket, String host, int port, long deadline) throws IOException {
-        SSLSocket secureSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(socket, host, port, true);
+    private static Socket createSecureSocket(Socket socket, String host, int port, RequestDeadline requestDeadline, SSLSocketFactory sslSocketFactory) throws IOException {
+        SSLSocket secureSocket = (SSLSocket) sslSocketFactory.createSocket(socket, host, port, true);
         try {
             SSLParameters sslParameters = secureSocket.getSSLParameters();
             sslParameters.setEndpointIdentificationAlgorithm("HTTPS");
             sslParameters.setServerNames(List.of(new SNIHostName(host)));
             sslParameters.setApplicationProtocols(new String[] { "http/1.1" });
             secureSocket.setSSLParameters(sslParameters);
-            secureSocket.setSoTimeout(timeoutMillis(deadline, null));
+            secureSocket.setSoTimeout(requestDeadline.timeoutMillis(null));
             secureSocket.startHandshake();
             return secureSocket;
         }
@@ -346,18 +350,6 @@ final class LinkPreviewHttpClient {
         throw new IOException("The link preview response included an oversized header line");
     }
 
-    private static int timeoutMillis(long deadline, Duration maximumTimeout) throws SocketTimeoutException {
-        long remainingNanos = deadline - System.nanoTime();
-        if (remainingNanos <= 0) {
-            throw new SocketTimeoutException("Link preview request timed out");
-        }
-        if (maximumTimeout != null) {
-            remainingNanos = Math.min(remainingNanos, maximumTimeout.toNanos());
-        }
-        long timeoutMillis = Math.max(1, Math.ceilDiv(remainingNanos, 1_000_000));
-        return (int) Math.min(Integer.MAX_VALUE, timeoutMillis);
-    }
-
     private static void closeQuietly(Socket socket) {
         try {
             socket.close();
@@ -381,16 +373,42 @@ final class LinkPreviewHttpClient {
     private record Line(String value, int byteCount) {
     }
 
+    static final class RequestDeadline {
+
+        private final long startedAt = System.nanoTime();
+
+        private final long timeoutNanos;
+
+        RequestDeadline(Duration requestTimeout) {
+            if (requestTimeout.isZero() || requestTimeout.isNegative()) {
+                throw new IllegalArgumentException("The link preview request timeout must be positive");
+            }
+            timeoutNanos = requestTimeout.toNanos();
+        }
+
+        private int timeoutMillis(Duration maximumTimeout) throws SocketTimeoutException {
+            long remainingNanos = timeoutNanos - (System.nanoTime() - startedAt);
+            if (remainingNanos <= 0) {
+                throw new SocketTimeoutException("Link preview request timed out");
+            }
+            if (maximumTimeout != null) {
+                remainingNanos = Math.min(remainingNanos, maximumTimeout.toNanos());
+            }
+            long timeoutMillis = Math.max(1, Math.ceilDiv(remainingNanos, 1_000_000));
+            return (int) Math.min(Integer.MAX_VALUE, timeoutMillis);
+        }
+    }
+
     private static final class DeadlineInputStream extends FilterInputStream {
 
         private final Socket socket;
 
-        private final long deadline;
+        private final RequestDeadline requestDeadline;
 
-        private DeadlineInputStream(InputStream inputStream, Socket socket, long deadline) {
+        private DeadlineInputStream(InputStream inputStream, Socket socket, RequestDeadline requestDeadline) {
             super(inputStream);
             this.socket = socket;
-            this.deadline = deadline;
+            this.requestDeadline = requestDeadline;
         }
 
         @Override
@@ -406,7 +424,7 @@ final class LinkPreviewHttpClient {
         }
 
         private void prepareRead() throws IOException {
-            socket.setSoTimeout(timeoutMillis(deadline, null));
+            socket.setSoTimeout(requestDeadline.timeoutMillis(null));
         }
     }
 }

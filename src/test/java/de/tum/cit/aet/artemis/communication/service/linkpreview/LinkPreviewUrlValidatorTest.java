@@ -18,7 +18,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 class LinkPreviewUrlValidatorTest {
 
     @Test
-    void acceptsPublicResolvedAddresses() throws Exception {
+    void retainsOnlyPublicIpv4ResolvedAddresses() throws Exception {
         InetAddress[] addresses = { InetAddress.getByName("93.184.216.34"), InetAddress.getByName("2606:4700:4700::1111") };
         var validator = new LinkPreviewUrlValidator(host -> addresses);
         URI uri = URI.create("https://example.com/page");
@@ -26,7 +26,7 @@ class LinkPreviewUrlValidatorTest {
         var result = validator.validateAndResolve(uri);
 
         assertThat(result.uri()).isEqualTo(uri);
-        assertThat(result.addresses()).containsExactly(addresses);
+        assertThat(result.addresses()).containsExactly(addresses[0]);
     }
 
     @ParameterizedTest
@@ -39,17 +39,8 @@ class LinkPreviewUrlValidatorTest {
     }
 
     @ParameterizedTest
-    @MethodSource("nonPublicAddresses")
-    void rejectsNonPublicResolvedAddress(String address) throws Exception {
-        var validator = new LinkPreviewUrlValidator(host -> new InetAddress[] { InetAddress.getByName(address) });
-
-        assertThatThrownBy(() -> validator.validateAndResolve(URI.create("https://example.com"))).isInstanceOf(UnknownHostException.class);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "64:ff9b::8.8.8.8", "64:ff9b::10.0.0.1", "64:ff9b::172.16.0.1", "64:ff9b::192.168.0.1", "64:ff9b:1::1", "64:ff9b:1:a00:0:100::",
-            "64:ff9b:1:ac10:0:100::", "64:ff9b:1:c0a8:0:100::" })
-    void rejectsIpv4Ipv6TranslationAddress(String address) throws Exception {
+    @MethodSource("unsupportedAddresses")
+    void rejectsNonPublicIpv4AndIpv6OnlyResults(String address) throws Exception {
         var validator = new LinkPreviewUrlValidator(host -> new InetAddress[] { InetAddress.getByName(address) });
 
         assertThatThrownBy(() -> validator.validateAndResolve(URI.create("https://example.com"))).isInstanceOf(UnknownHostException.class);
@@ -71,10 +62,9 @@ class LinkPreviewUrlValidatorTest {
         assertThatThrownBy(() -> validator.validateAndResolve(URI.create("https://example.com"))).isInstanceOf(UnknownHostException.class);
     }
 
-    private static Stream<Arguments> nonPublicAddresses() {
-        return Stream
-                .of("0.0.0.1", "10.0.0.1", "100.64.0.1", "127.0.0.1", "169.254.0.1", "172.16.0.1", "192.0.0.1", "192.0.2.1", "192.88.99.1", "192.168.0.1", "198.18.0.1",
-                        "198.51.100.1", "203.0.113.1", "224.0.0.1", "240.0.0.1", "::", "::1", "fe80::1", "fc00::1", "2001:db8::1", "ff02::1", "::ffff:127.0.0.1")
+    private static Stream<Arguments> unsupportedAddresses() {
+        return Stream.of("0.0.0.1", "10.0.0.1", "100.64.0.1", "127.0.0.1", "169.254.0.1", "172.16.0.1", "192.0.0.1", "192.0.2.1", "192.88.99.1", "192.168.0.1", "198.18.0.1",
+                "198.51.100.1", "203.0.113.1", "224.0.0.1", "240.0.0.1", "::", "::1", "fe80::1", "fc00::1", "2001:db8::1", "2606:4700:4700::1111", "ff02::1", "::ffff:127.0.0.1")
                 .map(Arguments::of);
     }
 }

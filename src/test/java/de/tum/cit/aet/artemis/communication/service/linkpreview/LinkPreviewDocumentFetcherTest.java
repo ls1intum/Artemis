@@ -148,6 +148,25 @@ class LinkPreviewDocumentFetcherTest {
                 .hasMessageContaining("timed out");
     }
 
+    @Test
+    void boundsEntireRedirectChainDuration() {
+        httpServer.createContext("/slow-redirect", exchange -> {
+            try {
+                Thread.sleep(300);
+                redirect(exchange, url("/slow-redirect"));
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            catch (IOException ignored) {
+                // The client closes the response when the redirect chain duration is exceeded.
+            }
+        });
+
+        assertThatThrownBy(() -> LinkPreviewDocumentFetcher.fetch(url("/slow-redirect"), this::validatedUrl, Duration.ofMillis(500))).isInstanceOf(IOException.class)
+                .hasMessageContaining("timed out");
+    }
+
     private String url(String path) {
         return "http://example.com:" + httpServer.getAddress().getPort() + path;
     }

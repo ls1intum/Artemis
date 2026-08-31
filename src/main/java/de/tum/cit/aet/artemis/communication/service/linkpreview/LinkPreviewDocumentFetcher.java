@@ -39,10 +39,11 @@ public final class LinkPreviewDocumentFetcher {
 
     static Document fetch(String url, UrlResolver urlResolver, Duration requestTimeout) throws IOException {
         URI currentUri = createUri(url);
+        LinkPreviewHttpClient.RequestDeadline requestDeadline = new LinkPreviewHttpClient.RequestDeadline(requestTimeout);
 
         for (int redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount++) {
             LinkPreviewUrlValidator.ValidatedUrl validatedUrl = urlResolver.resolve(currentUri);
-            LinkPreviewHttpClient.Response response = LinkPreviewHttpClient.get(validatedUrl, requestTimeout, MAX_RESPONSE_SIZE);
+            LinkPreviewHttpClient.Response response = LinkPreviewHttpClient.get(validatedUrl, requestDeadline, MAX_RESPONSE_SIZE);
             if (!isRedirect(response.statusCode())) {
                 if (response.statusCode() < 200 || response.statusCode() >= 300) {
                     throw new IOException("Link preview request returned status " + response.statusCode());
