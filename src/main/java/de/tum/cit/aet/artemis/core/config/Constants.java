@@ -36,6 +36,16 @@ public final class Constants {
     public static final int MAX_PACKAGE_NAME_LENGTH = 100;
 
     /**
+     * The maximum allowed length (in characters) of the build plan configuration stored for a programming exercise build config.
+     */
+    public static final int MAX_BUILD_PLAN_CONFIGURATION_LENGTH = 1024 * 1024;
+
+    /**
+     * The maximum allowed length (in characters) of the docker flags stored for a programming exercise build config.
+     */
+    public static final int MAX_DOCKER_FLAGS_LENGTH = 8 * 1024;
+
+    /**
      * The default REST/URL-path prefix for accessing file uploads.
      * Don't use this constant elsewhere than in the Presentation-Layer to reduce
      * coupling between the persistence layer {@link de.tum.cit.aet.artemis.core.domain.DomainObject }) and the
@@ -153,6 +163,19 @@ public final class Constants {
 
     public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
+    /**
+     * Stride encoding a typed automatic feedback row into one synthetic negative feedback id:
+     * {@code -(rowId * STRIDE)} for a test-case row and {@code -(rowId * STRIDE + 1)} for an SCA row.
+     * <p>
+     * The two tables have independent id sequences, so the low bit is what tells a test-case view from an
+     * SCA view; without it the same client-visible id could mean either. Shared between the Java
+     * encoder/decoder (ProgrammingFeedbackSynthesizerService) and the JPQL feedback-analysis query that
+     * builds the same ids in the database, so the two sides cannot drift. Ids stay JavaScript-safe on the
+     * client as long as {@code rowId * STRIDE} is below {@code Number.MAX_SAFE_INTEGER}, which allows
+     * ~4.5e15 rows per table.
+     */
+    public static final long SYNTHETIC_FEEDBACK_ID_STRIDE = 2L;
+
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 
     // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
@@ -254,6 +277,8 @@ public final class Constants {
     public static final String IMPORT_TEAMS = "IMPORT_TEAMS";
 
     public static final String RE_EVALUATE_RESULTS = "RE_EVALUATE_RESULTS";
+
+    public static final String UPDATE_GRADING_CONFIGURATION = "UPDATE_GRADING_CONFIGURATION";
 
     public static final String RESET_GRADING = "RESET_GRADING";
 
@@ -434,6 +459,11 @@ public final class Constants {
      * The name of the module feature used for Hyperion functionality.
      */
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
+
+    /**
+     * The name of the module feature used for Deimos malicious participation analysis functionality.
+     */
+    public static final String MODULE_FEATURE_DEIMOS = "deimos";
 
     /**
      * The name of the module feature used for Iris / Pyris functionality.
@@ -619,6 +649,11 @@ public final class Constants {
      * The name of the property used to enable or disable Weaviate integration.
      */
     public static final String WEAVIATE_ENABLED_PROPERTY_NAME = "artemis.weaviate.enabled";
+
+    /**
+     * The name of the property used to enable or disable the Deimos malicious participation analysis module.
+     */
+    public static final String DEIMOS_ENABLED_PROPERTY_NAME = "artemis.deimos.enabled";
 
     /**
      * The name of the property that selects how build agents authenticate against the local VC of the core nodes: with
