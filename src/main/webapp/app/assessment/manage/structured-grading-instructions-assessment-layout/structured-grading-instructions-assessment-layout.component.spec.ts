@@ -364,6 +364,42 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         });
     });
 
+    it('should arm the instruction on Enter/Space when no editable feedback list is mounted', () => {
+        fixture.componentRef.setInput('readonly', false);
+        fixture.componentRef.setInput('criteria', undefined);
+        fixture.detectChanges();
+        const instruction = { id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction;
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        const armSpy = vi.spyOn(selectionService, 'armInstruction');
+
+        expect(comp.selectable()).toBe(false);
+        comp.onInstructionKeydown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent, instruction);
+
+        expect(armSpy).toHaveBeenCalledExactlyOnceWith(instruction);
+    });
+
+    it('should not arm the instruction on Enter/Space when a feedback list host is registered', () => {
+        fixture.componentRef.setInput('readonly', false);
+        fixture.componentRef.setInput('criteria', undefined);
+        fixture.detectChanges();
+        const instruction = { id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction;
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        selectionService.register({
+            appliedInstructionIds: signal(new Set()),
+            appliedInstructionCounts: signal(new Map()),
+            removableInstructionIds: signal(new Set()),
+            applyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+        } as GradingInstructionSelectionHost);
+        const armSpy = vi.spyOn(selectionService, 'armInstruction');
+
+        expect(comp.selectable()).toBe(true);
+        comp.onInstructionKeydown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent, instruction);
+
+        expect(armSpy).not.toHaveBeenCalled();
+    });
+
     it('should keep the usage count when no editable feedback list is mounted', () => {
         fixture.componentRef.setInput('readonly', false);
         fixture.componentRef.setInput('criteria', [

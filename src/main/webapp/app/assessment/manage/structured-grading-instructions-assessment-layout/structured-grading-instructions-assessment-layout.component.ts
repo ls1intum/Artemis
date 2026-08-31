@@ -258,8 +258,9 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /**
-     * Keyboard stand-in for drag-and-drop when there is no checkbox ({@link selectable} is false): Enter/Space apply
-     * the instruction the same way a drop onto the feedback list would.
+     * Keyboard stand-in for drag-and-drop when there is no checkbox ({@link selectable} is false): Enter/Space arm
+     * the instruction for the next feedback drop. Does not use {@link GradingInstructionSelectionService.setApplied},
+     * which no-ops without a registered host.
      */
     onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
         if (this.selectable() || !this.isDraggable(instruction)) {
@@ -269,7 +270,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             return;
         }
         event.preventDefault();
-        this.selectionService.setApplied(instruction, true);
+        this.selectionService.armInstruction(instruction);
     }
 
     /**

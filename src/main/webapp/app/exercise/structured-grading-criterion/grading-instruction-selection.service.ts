@@ -38,6 +38,12 @@ const NO_APPLIED_COUNTS: ReadonlyMap<number, number> = new Map<number, number>()
 export class GradingInstructionSelectionService {
     private readonly host = signal<GradingInstructionSelectionHost | undefined>(undefined);
 
+    /**
+     * Instruction armed by keyboard (Enter/Space) when no feedback-list host is registered. Consumed by the next
+     * structured-grading drop onto a feedback element — the drag-and-drop stand-in without a checkbox host.
+     */
+    private readonly armedInstruction = signal<GradingInstruction | undefined>(undefined);
+
     /** True while an editable feedback list is mounted. */
     readonly isSelectable = computed(() => this.host() !== undefined);
 
@@ -94,6 +100,20 @@ export class GradingInstructionSelectionService {
         } else {
             host.unapplyInstruction(instruction);
         }
+    }
+
+    /**
+     * Arms an instruction for the next feedback drop when no host is registered (keyboard stand-in for drag).
+     */
+    armInstruction(instruction: GradingInstruction): void {
+        this.armedInstruction.set(instruction);
+    }
+
+    /** Takes and clears the keyboard-armed instruction, if any. */
+    consumeArmedInstruction(): GradingInstruction | undefined {
+        const instruction = this.armedInstruction();
+        this.armedInstruction.set(undefined);
+        return instruction;
     }
 
     /** Adds one more application of the instruction in the registered feedback list. */

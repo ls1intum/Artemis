@@ -175,9 +175,14 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         return Feedback.hasContent(this.currentFeedback());
     }
 
-    /** Textarea writes through ngModel in place — bump {@link contentRevision} so save enablement tracks it. */
-    protected onDetailTextChange(): void {
-        this.contentRevision.update((revision) => revision + 1);
+    /**
+     * Writes the comment onto a fresh {@link currentFeedback} copy so edits stay aligned with {@link stepCredits}
+     * and {@link updateFeedback} after the working copy is replaced.
+     */
+    protected onDetailTextChange(detailText: string): void {
+        const feedback = deepClone(this.currentFeedback());
+        feedback.detailText = detailText;
+        this.currentFeedback.set(feedback);
     }
 
     /**

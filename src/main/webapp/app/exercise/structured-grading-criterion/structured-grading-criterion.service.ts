@@ -1,7 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { getPositiveAndCappedTotalScore } from 'app/exercise/util/exercise.utils';
 
@@ -19,6 +20,8 @@ export interface AssessmentScore {
 
 @Injectable({ providedIn: 'root' })
 export class StructuredGradingCriterionService {
+    private readonly selectionService = inject(GradingInstructionSelectionService);
+
     /**
      * Connects the structured grading instructions with the feedback of a submission element
      * @param {Event} event - The drop event
@@ -29,8 +32,11 @@ export class StructuredGradingCriterionService {
     updateFeedbackWithStructuredGradingInstructionEvent(feedback: Feedback, event: Event) {
         event.preventDefault();
         try {
-            const data = (event as DragEvent).dataTransfer!.getData('text/plain');
-            const instruction = parseJson<GradingInstruction>(data);
+            const data = (event as DragEvent).dataTransfer?.getData('text/plain');
+            const instruction = data ? parseJson<GradingInstruction>(data) : this.selectionService.consumeArmedInstruction();
+            if (!instruction) {
+                return;
+            }
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
         } catch (err) {

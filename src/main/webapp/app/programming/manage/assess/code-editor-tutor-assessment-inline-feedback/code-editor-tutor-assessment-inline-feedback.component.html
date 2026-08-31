@@ -115,8 +115,8 @@
                         tumUiTextarea
                         class="inline-feedback__textarea"
                         rows="3"
-                        [(ngModel)]="feedback.detailText"
-                        (ngModelChange)="onDetailTextChange()"
+                        [ngModel]="currentFeedback().detailText"
+                        (ngModelChange)="onDetailTextChange($event)"
                         #detailText
                         [attr.aria-labelledby]="'feedback-label-' + codeLine()"
                         [placeholder]="
