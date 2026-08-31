@@ -94,13 +94,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return the affected user identifiers, ordered for a stable administrator report
      */
     @Query("""
-            SELECT user.id
+            SELECT DISTINCT user.id
             FROM User user
+                JOIN User otherUser
+                    ON LOWER(otherUser.email) = LOWER(user.email)
+                        AND otherUser.id <> user.id
             WHERE user.email IS NOT NULL
                 AND TRIM(user.email) <> ''
-                AND (SELECT COUNT(otherUser.id)
-                     FROM User otherUser
-                     WHERE LOWER(otherUser.email) = LOWER(user.email)) > 1
             ORDER BY user.id
             """)
     List<Long> findUserIdsWithDuplicatedEmail();
