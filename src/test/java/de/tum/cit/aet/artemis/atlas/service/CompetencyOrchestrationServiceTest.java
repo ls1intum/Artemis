@@ -49,6 +49,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 
@@ -394,6 +395,25 @@ class CompetencyOrchestrationServiceTest {
     }
 
     @Test
+    void run_verifiedCompletionFollowedByDelegation_returnsPartial() {
+        prepareLlmRun(27L);
+        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("ignored assistant text"))));
+        when(delegationService.delegateOrchestratorRound(anyString(), anyString(), any(OpenAiChatOptions.Builder.class), anyMap(), any(ToolCallbackProvider.class),
+                any(ToolCallbackProvider.class), any(ToolCallbackProvider.class), any(ToolCallbackProvider.class))).thenAnswer(invocation -> {
+                    Map<String, Object> context = invocation.getArgument(3);
+                    ChatResponse completedResponse = completeVerified(context, response);
+                    OrchestratorToolHelpers.markDelegation(new ToolContext(context));
+                    return completedResponse;
+                });
+
+        CompetencyOrchestrationResultDTO result = createServiceWithRunMap(mock(ChatClient.class)).run(27L);
+
+        assertThat(result.status()).isEqualTo(PARTIAL);
+        assertThat(result.failureReason()).isEqualTo(LLM_ERROR);
+        assertThat(result.appliedActions()).hasSize(1);
+    }
+
+    @Test
     void run_unverifiedWithoutActions_returnsFailed() {
         prepareLlmRun(23L);
         ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage("ignored assistant text"))));
@@ -694,6 +714,9 @@ class CompetencyOrchestrationServiceTest {
             OrchestratorToolContextKeys.AppliedActionsBuffer buffer = (OrchestratorToolContextKeys.AppliedActionsBuffer) context
                     .get(OrchestratorToolContextKeys.APPLIED_ACTIONS_KEY);
             buffer.actions().add(action);
+        }
+        if (verified) {
+            OrchestratorToolHelpers.markIndexRead(new ToolContext(context));
         }
         @SuppressWarnings("unchecked")
         AtomicReference<OrchestrationCompletionDTO> completionHolder = (AtomicReference<OrchestrationCompletionDTO>) context

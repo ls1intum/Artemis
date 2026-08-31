@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -591,6 +592,9 @@ public class CompetencyOrchestrationService {
         OrchestrationCompletionDTO completion = completionHolder.get();
         if (completion == null) {
             throw new IllegalStateException("Main orchestrator returned without calling completeOrchestration.");
+        }
+        if (completion.verified() && !OrchestratorToolHelpers.hasFreshVerificationRead(new ToolContext(toolContext))) {
+            throw new IllegalStateException("Main orchestrator verification became stale after a later worker delegation.");
         }
         return completion;
     }
