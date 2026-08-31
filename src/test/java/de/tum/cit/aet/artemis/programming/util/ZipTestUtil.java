@@ -6,12 +6,16 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.input.CloseShieldInputStream;
 import org.springframework.core.io.InputStreamResource;
 
 public final class ZipTestUtil {
@@ -45,6 +49,30 @@ public final class ZipTestUtil {
                 return data.length;
             }
         };
+    }
+
+    /**
+     * Extracts every entry of the given zip into the target directory, preserving the directory structure.
+     *
+     * @param zipContent the zip file content
+     * @param targetDir  the directory to extract into; must already exist
+     */
+    public static void extractZip(byte[] zipContent, Path targetDir) throws IOException {
+        Path normalizedTarget = targetDir.toAbsolutePath().normalize();
+        try (var zipInputStream = new ZipInputStream(new ByteArrayInputStream(zipContent))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                Path resolved = normalizedTarget.resolve(entry.getName()).normalize();
+                assertThat(resolved).as("zip entry must stay inside the target directory").startsWithRaw(normalizedTarget);
+                if (entry.isDirectory()) {
+                    Files.createDirectories(resolved);
+                }
+                else {
+                    Files.createDirectories(resolved.getParent());
+                    FileUtils.copyInputStreamToFile(CloseShieldInputStream.wrap(zipInputStream), resolved.toFile());
+                }
+            }
+        }
     }
 
     /**

@@ -13,6 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.lib.Constants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -183,6 +186,35 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         for (Path exportedRepository : exportedRepositories) {
             assertThat(exportedRepository).isRegularFile().hasParent(outputDir);
             ZipTestUtil.verifyZipContainsGitDirectory(Files.readAllBytes(exportedRepository));
+        }
+    }
+
+    /**
+     * The synthetic {@code .git} directory is assembled by hand, so the only meaningful check is whether Git accepts the
+     * result: the extracted archive must open, resolve its branch, and report a clean working tree, which it only does if
+     * the serialized index agrees with the files that were written next to it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseRepositories_shouldProduceAnExtractableWorkingRepository() throws Exception {
+        seedBaseRepositoryContent();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        Path outputDir = tempFileUtilService.createTempDirectory("instructor-export-usable");
+
+        List<Path> exportedRepositories = programmingExerciseExportService.exportProgrammingExerciseRepositories(programmingExercise, false, false, outputDir, new ArrayList<>(),
+                new ArrayList<>());
+
+        assertThat(exportedRepositories).isNotEmpty();
+        Path extractedDir = tempFileUtilService.createTempDirectory("instructor-export-extracted");
+        ZipTestUtil.extractZip(Files.readAllBytes(exportedRepositories.getFirst()), extractedDir);
+
+        try (Git git = Git.open(extractedDir.toFile())) {
+            assertThat(git.getRepository().resolve(Constants.HEAD)).as("HEAD of the extracted repository").isNotNull();
+            assertThat(git.log().call()).as("commits reachable in the extracted repository").isNotEmpty();
+            Status status = git.status().call();
+            assertThat(status.getUntracked()).as("untracked files: the serialized index must cover the extracted working tree").isEmpty();
+            assertThat(status.getMissing()).as("missing files: the extracted working tree must cover the serialized index").isEmpty();
+            assertThat(status.getModified()).as("modified files: index entries must match the extracted file contents").isEmpty();
         }
     }
 
