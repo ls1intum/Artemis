@@ -82,8 +82,11 @@ One unprefixed key, `artemis:distributed-data-schema`, records the current versi
 the analogue of the `artemis_version` table.
 
 The consequence is the important part: a new release cannot see an old release's keys at all. Incompatibility stops
-being something to detect and becomes something that cannot happen. A rollback also works, because the previous release
-still finds its own namespace intact.
+being something to detect and becomes something that cannot happen.
+
+Namespacing alone would also make rollback safe, since the previous release would still find its own keys. That is
+deliberately given up: see the drain-and-delete decision in step 4, which trades it for flat memory and a store with
+no accumulating dead namespaces. A rollback is still detected and refused rather than silently reading nothing.
 
 ### 3. Per-structure carry-over policy
 
@@ -110,7 +113,7 @@ have prevented that outage with no migration code at all.
 
 ### 4. Migration steps
 
-A `DistributedDataMigration` declares `fromVersion`, `toVersion`, and the carry-over work. The default step copies the
+A `DistributedDataMigration` declares `fromVersion`, `toVersion`, and the carry-over work. The default step moves the
 structures marked carry over verbatim; a step only needs custom code when a carried-over type changed shape, in which
 case it reads the old namespace with the old type and writes the new.
 
