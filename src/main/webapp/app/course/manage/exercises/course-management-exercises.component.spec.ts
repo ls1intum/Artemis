@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -163,6 +164,18 @@ describe('Course Management Exercises Component', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="create-first-exercise-button"]')).not.toBeNull();
         expect(fixture.nativeElement.textContent).toContain('artemisApp.exerciseManagement.noExercisesYet');
         expect(fixture.nativeElement.textContent).not.toContain('artemisApp.exerciseManagement.noExercisesMatch');
+    });
+
+    it('opens the create modal when the create-first-exercise button is clicked', () => {
+        course.exercises = [];
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const createFirstButton = fixture.debugElement.query(By.css('[data-testid="create-first-exercise-button"]'));
+        createFirstButton.triggerEventHandler('clicked', null);
+
+        expect(comp.addModalVisible()).toBe(true);
+        expect(comp.addModalMode()).toBe('create');
     });
 
     it('does not show the create-first button in the empty state to non-editors', () => {
