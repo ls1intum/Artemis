@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -37,6 +38,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -46,13 +49,12 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionOwnerDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -72,8 +74,6 @@ public class SubmissionService {
     private static final String ENTITY_NAME = "submission";
 
     private final ExerciseDateService exerciseDateService;
-
-    private final CourseRepository courseRepository;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -97,10 +97,15 @@ public class SubmissionService {
 
     private final Optional<AthenaApi> athenaApi;
 
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
+            FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
+            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
+            ScaFeedbackRepository scaFeedbackRepository) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -109,11 +114,12 @@ public class SubmissionService {
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
         this.exerciseDateService = exerciseDateService;
-        this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
         this.feedbackService = feedbackService;
         this.athenaApi = athenaApi;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -124,9 +130,9 @@ public class SubmissionService {
      * @param currentUser the current user with groups and authorities
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
-        // Fetch course from database to make sure client didn't change groups
-        final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
-        final var course = courseRepository.findByIdElseThrow(courseId);
+        // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
+        // the client could have tampered with. Re-reading it by id would only repeat a row we are already holding.
+        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
             throw new AccessForbiddenException();
         }
@@ -135,22 +141,15 @@ public class SubmissionService {
         // user of the participation is the same as the user who executes this call (or student in the team).
         // This prevents injecting submissions to other users.
         if (submission.getId() != null) {
-            Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
-            if (existingSubmission.isEmpty()) {
+            // Ask the database who owns the submission instead of loading it: the entity drags in its participation,
+            // exercise, exercise group, exam and course through eager associations, which is several statements to
+            // compare a login. This runs on every autosave.
+            SubmissionOwnerDTO owner = submissionRepository.findOwnerBySubmissionId(submission.getId()).orElseThrow(AccessForbiddenException::new);
+            if (owner.studentLogin() != null && !owner.studentLogin().equals(currentUser.getLogin())) {
                 throw new AccessForbiddenException();
             }
-
-            StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
-            if (participation != null) {
-                Optional<User> user = participation.getStudent();
-                if (user.isPresent() && !user.get().equals(currentUser)) {
-                    throw new AccessForbiddenException();
-                }
-
-                Optional<Team> team = participation.getTeam();
-                if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
-                    throw new AccessForbiddenException();
-                }
+            if (owner.teamShortName() != null && !authCheckService.isStudentInTeam(course, owner.teamShortName(), currentUser)) {
+                throw new AccessForbiddenException();
             }
         }
     }
@@ -194,8 +193,7 @@ public class SubmissionService {
         if (examMode) {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toCollection(ArrayList::new));
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
@@ -373,7 +371,7 @@ public class SubmissionService {
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                     exercise.filterSensitiveInformation();
-                    submission.setResults(new ArrayList<>());
+                    submission.setResults(new HashSet<>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -431,7 +429,36 @@ public class SubmissionService {
     public Set<Feedback> copyFeedbackToNewResult(Result newResult, Result oldResult) {
         Collection<Feedback> oldFeedback = oldResult.getFeedbacks();
         copyFeedbackToResult(newResult, oldFeedback);
+        copyTypedFeedbackToResult(newResult, oldResult);
         return newResult.getFeedbacks();
+    }
+
+    /**
+     * Copies the typed automatic feedback (test-case and SCA rows) of the old result to the new result.
+     * The rows are loaded from the database (the old result's collections may be uninitialized) and the
+     * copies share the deduplicated message rows. No-op for results of non-programming exercises.
+     *
+     * @param newResult the result to copy the typed feedback to
+     * @param oldResult the result to copy the typed feedback from
+     */
+    protected void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+        if (oldResult == null || oldResult.getId() == null) {
+            return;
+        }
+        // fetch the shared message rows eagerly: the copies keep the message reference, and the new result
+        // may be synthesized for serialization right away (e.g. exam test-run drafts) - a lazy proxy would
+        // fail there with a LazyInitializationException
+        testCaseFeedbackRepository.findWithTestCaseAndMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyTestCaseFeedback)
+                .forEach(newResult::addTestCaseFeedback);
+        scaFeedbackRepository.findWithMessageByResultIds(List.of(oldResult.getId())).stream().map(feedbackService::copyScaFeedback).forEach(newResult::addScaFeedback);
+
+        // Insert the copies right away when the target result already exists: a synthesized legacy view is addressed by the id of the row it comes from, so every caller that
+        // serializes the new result afterwards needs those ids. The rows are new, so this persists them in place - the ids land on these very instances and the eagerly
+        // fetched test cases and messages above survive, both of which a merge copy would lose. A result that is not persisted yet gets its rows through the caller's save.
+        if (newResult.getId() != null) {
+            newResult.setTestCaseFeedbacks(testCaseFeedbackRepository.saveAll(newResult.getTestCaseFeedbacks()));
+            newResult.setScaFeedbacks(scaFeedbackRepository.saveAll(newResult.getScaFeedbacks()));
+        }
     }
 
     /**
@@ -466,6 +493,8 @@ public class SubmissionService {
         }
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Set before copying the feedback, which saves the result: the result owns the foreign key to its submission.
+        newResult.setSubmission(submission);
         copyFeedbackToNewResult(newResult, oldResult);
         return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
     }
@@ -483,8 +512,18 @@ public class SubmissionService {
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
         setExerciseIdFromSubmission(submission, newResult);
+        // Set before the first save below: copyFeedbackToResult saves the result, and the result owns the foreign key
+        // to its submission, so leaving it for copyResultContentAndAddToSubmission would insert a result without one.
+        newResult.setSubmission(submission);
         updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
-        copyFeedbackToResult(newResult, feedbacks);
+        List<Feedback> feedbackToCopy = new ArrayList<>(feedbacks);
+        if (submission.getParticipation().getExercise() instanceof ProgrammingExercise) {
+            // The client echoes the automatic test-case and SCA feedback items it received (synthesized
+            // from the typed collections, hence without ids) - they are copied as typed rows below instead.
+            feedbackToCopy.removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback()));
+        }
+        copyFeedbackToResult(newResult, feedbackToCopy);
+        copyTypedFeedbackToResult(newResult, oldResult);
         newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
         return newResult;
     }
@@ -613,8 +652,13 @@ public class SubmissionService {
         // copy feedback from automatic result
         if (existingAutomaticResult.isPresent()) {
             draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            // also saves the draft assessment
             draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
+            // copyFeedbackToNewResult saves the draft before the typed test-case/SCA copies are attached -
+            // save again so the typed rows are persisted with the draft. Deliberately keep (and return) the
+            // original object instead of the merge result: the merge replaces the eagerly fetched test-case
+            // and message associations of the copies with uninitialized proxies, which would break the
+            // synthesized serialization of the draft.
+            resultRepository.save(draftAssessment);
         }
 
         return draftAssessment;
@@ -640,11 +684,16 @@ public class SubmissionService {
             result.setAssessor(userRepository.getUser());
         }
 
+        // The round this result belongs to is stored on the result itself. This is the one place where a manual result
+        // for a correction round is created or claimed, so it is also where a result that predates the column gets its
+        // round the first time a tutor opens it.
+        result.setCorrectionRound(correctionRound);
         result.setAssessmentType(AssessmentType.MANUAL);
-        // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = resultRepository.save(result);
-        result.setAssessor(assessor);
+        // Deliberately keep (and return) the object the submission's result set already holds instead of the
+        // merge result: the set ignores re-adding an equal copy, so a caller that adds the returned result back
+        // would keep the stale instance. Returning the original also avoids the assessor (and every other
+        // association) turning into an uninitialized proxy, which the merge result does.
+        resultRepository.save(result);
         return result;
     }
 

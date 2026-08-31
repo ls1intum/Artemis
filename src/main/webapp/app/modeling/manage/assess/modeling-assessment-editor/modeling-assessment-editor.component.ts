@@ -28,6 +28,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
+import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -102,6 +103,13 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly hasAutomaticFeedback = signal(false);
     readonly hasAssessmentDueDatePassed = signal<boolean>(false);
     readonly correctionRound = signal(0);
+    /**
+     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
+     * without a submission being loaded for it. That value must not become the round of the page on its own: the round
+     * is sent to the server as the round to request and then indexes the results that come back, and those two may not
+     * disagree. It therefore only reaches {@link correctionRound} when a load starts.
+     */
+    private correctionRoundFromUrl = 0;
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
     // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
@@ -157,7 +165,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.route.queryParamMap.subscribe((queryParams) => {
             this.isTestRun.set(queryParams.get('testRun') === 'true');
-            this.correctionRound.set(Number(queryParams.get('correction-round')));
+            // The URL decides the round, and an unusable value means the first one; see parseCorrectionRound for why
+            // Number() alone will not do. Only remembered here, not shown yet; see correctionRoundFromUrl.
+            this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
         this.route.paramMap.subscribe((params) => {
             // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
@@ -174,6 +184,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
             const submissionId = params.get('submissionId');
             this.resultId.set(Number(params.get('resultId')) || 0);
+            // Taken from the URL once per load, so that the round the submission is requested with is also the round
+            // its results are indexed by, even when the parameter has changed since the last load.
+            this.correctionRound.set(this.correctionRoundFromUrl);
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
             } else {
@@ -216,8 +229,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
                 if (!submission) {
-                    // there are no unassessed submissions
+                    // there are no unassessed submissions — leave the loading state the request entered, so the page
+                    // says so instead of staying blank behind the loading flags
                     this.submission.set(undefined);
+                    this.loadingInitialSubmission.set(false);
+                    this.isLoading.set(false);
                     return;
                 }
 
@@ -236,14 +252,22 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.loadingInitialSubmission.set(false);
+        // The component is reused when assessing the next submission. Clear all assessment-specific state before
+        // processing the new result, in particular when that result has no feedback and handleFeedback returns early.
+        this.referencedFeedback = [];
+        this.unreferencedFeedback.set([]);
+        this.feedbackSuggestions = [];
+        this.hasAutomaticFeedback.set(false);
+        this.loadingFeedbackSuggestions.set(false);
+        this.highlightedElements.set(undefined!);
         this.submission.set(submission);
         const studentParticipation = this.submission()!.participation as StudentParticipation;
         this.modelingExercise.set(studentParticipation.exercise);
         this.course.set(getCourseFromExercise(this.modelingExercise()));
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(submission, this.resultId()));
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            this.correctionRound.set(submission.results?.findIndex((result) => result.id === this.resultId())!);
+            // Read off the result, not off its position in the results array.
+            this.correctionRound.set(this.result()?.correctionRound ?? 0);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission(), this.correctionRound()));
         }

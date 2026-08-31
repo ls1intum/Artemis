@@ -33,8 +33,19 @@ public class TextSubmissionApi extends AbstractTextApi {
         return textSubmissionRepository.save(textSubmission);
     }
 
+    /**
+     * Saves a text submission on behalf of a module that cannot reach the text service directly.
+     * <p>
+     * The team websocket is the only caller and never goes through the exam submission gate, so no participation is
+     * passed on and the service resolves it from the authenticated user.
+     *
+     * @param textSubmission the submission to save
+     * @param exercise       the exercise it belongs to
+     * @param user           the user who initiated the save
+     * @return the saved submission, with details hidden for the given user
+     */
     public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user) {
-        var submission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user);
+        var submission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user, null);
         textSubmissionService.hideDetails(submission, user);
         return submission;
     }

@@ -505,7 +505,7 @@
                                                                                 }}
                                                                             </a>
                                                                         } @else {
-                                                                            @if (!!submission.results && !!submission.results[correctionRound]) {
+                                                                            @if (!!getSubmissionResultByCorrectionRound(submission, correctionRound)) {
                                                                                 <a
                                                                                     [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
                                                                                     [queryParams]="getAssessmentQueryParams(correctionRound)"
