@@ -430,7 +430,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         assertThat(resultRepository.findById(result1Id)).isEmpty();
         assertThat(resultRepository.findById(result2Id)).isPresent();
         // Use a query that eagerly fetches feedbacks to avoid LazyInitializationException
-        Result survivingResult = resultRepository.findResultWithFeedbacksAndTestCasesById(result2Id).orElseThrow();
+        Result survivingResult = resultRepository.findResultWithFeedbacksById(result2Id).orElseThrow();
         assertThat(survivingResult.getFeedbacks()).isNotEmpty();
     }
 

@@ -434,7 +434,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             FROM Submission submission
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
             WHERE submission.id = :submissionId
@@ -446,7 +445,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             FROM Submission submission
                 LEFT JOIN FETCH submission.results r
                 LEFT JOIN FETCH r.feedbacks f
-                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
                 LEFT JOIN FETCH submission.participation p

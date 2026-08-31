@@ -8,8 +8,6 @@ import static java.time.ZonedDateTime.now;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +29,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.admin.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -65,7 +62,6 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -79,6 +75,8 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+import de.tum.cit.aet.artemis.programming.service.TestCasePointsService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -94,8 +92,6 @@ public class ExerciseService {
     private static final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
     private final AuthorizationCheckService authCheckService;
-
-    private final ExerciseDateService exerciseDateService;
 
     private final TeamRepository teamRepository;
 
@@ -141,14 +137,19 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
+    private final TestCasePointsService testCasePointsService;
+
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
             UserRepository userRepository, ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService,
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
-            RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
-            Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService) {
+            RatingService ratingService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, Optional<ExamLiveEventsApi> examLiveEventsApi,
+            GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
+            ParticipationFilterService participationFilterService, TestCasePointsService testCasePointsService,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -165,7 +166,6 @@ public class ExerciseService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.feedbackRepository = feedbackRepository;
-        this.exerciseDateService = exerciseDateService;
         this.ratingService = ratingService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.quizBatchService = quizBatchService;
@@ -173,6 +173,8 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
+        this.testCasePointsService = testCasePointsService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -547,121 +549,6 @@ public class ExerciseService {
     }
 
     /**
-     * Gets the exercise statistics by setting values for each field of the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     * Exercises with an assessment due date (or due date if there is no assessment due date) in the past are limited to the five most recent
-     *
-     * @param courseId                 the id of the course
-     * @param amountOfStudentsInCourse the amount of students in the course
-     * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     */
-    public List<CourseManagementOverviewExerciseStatisticsDTO> getStatisticsForCourseManagementOverview(Long courseId, Integer amountOfStudentsInCourse) {
-        // We only display the latest five past exercises in the client, only calculate statistics for those
-        List<Exercise> pastExercises = exerciseRepository.getPastExercisesForCourseManagementOverview(courseId, now());
-
-        Comparator<Exercise> exerciseDateComparator = Comparator.comparing(
-                exercise -> exercise.getAssessmentDueDate() != null ? exercise.getAssessmentDueDate() : exercise.getDueDate(), Comparator.nullsLast(Comparator.naturalOrder()));
-
-        List<Exercise> lastFivePastExercises = pastExercises.stream().sorted(exerciseDateComparator.reversed()).limit(5).toList();
-        Map<Long, Double> averageScoreById = new HashMap<>();
-        if (!lastFivePastExercises.isEmpty()) {
-            // Calculate the average score for all five exercises at once
-            var averageScoreForExercises = participantScoreRepository.findAverageScoreForExercises(lastFivePastExercises);
-            for (var averageScoreForExercise : averageScoreForExercises) {
-                averageScoreById.put(averageScoreForExercise.exerciseId(), averageScoreForExercise.averageScore());
-            }
-        }
-
-        // Fill statistics for all exercises potentially displayed on the client
-        var exercisesForManagementOverview = exerciseRepository.getActiveExercisesForCourseManagementOverview(courseId, now());
-        exercisesForManagementOverview.addAll(lastFivePastExercises);
-        return generateCourseManagementDTOs(exercisesForManagementOverview, amountOfStudentsInCourse, averageScoreById);
-    }
-
-    /**
-     * Generates a <code>CourseManagementOverviewExerciseStatisticsDTO</code> for each given exercise
-     *
-     * @param exercisesForManagementOverview a set of exercises to generate the statistics for
-     * @param amountOfStudentsInCourse       the amount of students in the course
-     * @param averageScoreById               the average score for each exercise indexed by exerciseId
-     * @return A list of filled <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     */
-    private List<CourseManagementOverviewExerciseStatisticsDTO> generateCourseManagementDTOs(Set<Exercise> exercisesForManagementOverview, Integer amountOfStudentsInCourse,
-            Map<Long, Double> averageScoreById) {
-        List<CourseManagementOverviewExerciseStatisticsDTO> statisticsDTOS = new ArrayList<>();
-        for (var exercise : exercisesForManagementOverview) {
-            var exerciseId = exercise.getId();
-            var exerciseStatisticsDTO = new CourseManagementOverviewExerciseStatisticsDTO();
-            exerciseStatisticsDTO.setExerciseId(exerciseId);
-            exerciseStatisticsDTO.setExerciseMaxPoints(exercise.getMaxPoints());
-
-            participantScoreRepository.setAverageScoreForStatisticsDTO(exerciseStatisticsDTO, averageScoreById, exercise);
-            setStudentsAndParticipationsAmountForStatisticsDTO(exerciseStatisticsDTO, amountOfStudentsInCourse, exercise);
-            setAssessmentsAndSubmissionsForStatisticsDTO(exerciseStatisticsDTO, exercise);
-
-            statisticsDTOS.add(exerciseStatisticsDTO);
-        }
-        return statisticsDTOS;
-    }
-
-    /**
-     * Sets the amount of students, participations and teams for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     * Only the amount of students in the course is set if the exercise has ended, the rest is set to zero
-     *
-     * @param exerciseStatisticsDTO    the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
-     * @param amountOfStudentsInCourse the amount of students in the course
-     * @param exercise                 the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     */
-    private void setStudentsAndParticipationsAmountForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Integer amountOfStudentsInCourse,
-            Exercise exercise) {
-        exerciseStatisticsDTO.setNoOfStudentsInCourse(amountOfStudentsInCourse);
-
-        if (amountOfStudentsInCourse != null && amountOfStudentsInCourse != 0 && exerciseDateService.isBeforeLatestDueDate(exercise)) {
-            if (exercise.getMode() == ExerciseMode.TEAM) {
-                Long teamParticipations = exerciseRepository.getTeamParticipationCountById(exercise.getId());
-                var participations = teamParticipations == null ? 0 : Math.toIntExact(teamParticipations);
-                exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
-
-                Integer teams = teamRepository.getNumberOfTeamsForExercise(exercise.getId());
-                exerciseStatisticsDTO.setNoOfTeamsInCourse(teams);
-                exerciseStatisticsDTO.setParticipationRateInPercent(teams == null || teams == 0 ? 0.0 : Math.round(participations * 1000.0 / teams) / 10.0);
-            }
-            else {
-                Long studentParticipations = exerciseRepository.getStudentParticipationCountById(exercise.getId(), exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-                var participations = studentParticipations == null ? 0 : Math.toIntExact(studentParticipations);
-                exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(participations);
-
-                exerciseStatisticsDTO.setParticipationRateInPercent(Math.round(participations * 1000.0 / amountOfStudentsInCourse) / 10.0);
-            }
-        }
-        else {
-            exerciseStatisticsDTO.setNoOfParticipatingStudentsOrTeams(0);
-            exerciseStatisticsDTO.setParticipationRateInPercent(0D);
-        }
-    }
-
-    /**
-     * Sets the amount of rated assessments and submissions done for the given <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     * The amounts are set to zero if the assessment due date has passed
-     *
-     * @param exerciseStatisticsDTO the <code>CourseManagementOverviewExerciseStatisticsDTO</code> to set the amounts for
-     * @param exercise              the exercise corresponding to the <code>CourseManagementOverviewExerciseStatisticsDTO</code>
-     */
-    private void setAssessmentsAndSubmissionsForStatisticsDTO(CourseManagementOverviewExerciseStatisticsDTO exerciseStatisticsDTO, Exercise exercise) {
-        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
-            exerciseStatisticsDTO.setNoOfRatedAssessments(0L);
-            exerciseStatisticsDTO.setNoOfSubmissionsInTime(0L);
-            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(0D);
-        }
-        else {
-            long numberOfRatedAssessments = resultRepository.countNumberOfRatedResultsForExercise(exercise.getId());
-            long noOfSubmissionsInTime = submissionRepository.countByExerciseIdSubmittedBeforeDueDate(exercise.getId());
-            exerciseStatisticsDTO.setNoOfRatedAssessments(numberOfRatedAssessments);
-            exerciseStatisticsDTO.setNoOfSubmissionsInTime(noOfSubmissionsInTime);
-            exerciseStatisticsDTO.setNoOfAssessmentsDoneInPercent(noOfSubmissionsInTime == 0 ? 0 : Math.round(numberOfRatedAssessments * 1000.0 / noOfSubmissionsInTime) / 10.0);
-        }
-    }
-
-    /**
      * Checks the exercise structured grading instructions if any of them is associated with the feedback
      * then, sets the corresponding exercise field
      *
@@ -715,6 +602,16 @@ public class ExerciseService {
             results.addAll(resultRepository.getResultForExampleSubmissions(exercise.getExampleSubmissions()));
         }
 
+        // programming results need their (lazy) typed automatic feedback for the score re-calculation below
+        if (exercise instanceof ProgrammingExercise) {
+            programmingFeedbackSynthesizerService.hydrateTypedFeedback(results);
+        }
+
+        // the derived points map is identical for all results of the exercise (except for the solution
+        // participation), so compute each variant at most once instead of loading the test cases per result
+        Map<Long, Double> pointsForStudentResults = null;
+        Map<Long, Double> pointsForSolutionResults = null;
+
         // re-calculate the results after updating the feedback
         for (Result result : results) {
             if (!feedbackToBeDeleted.isEmpty()) {
@@ -731,7 +628,20 @@ public class ExerciseService {
                 resultRepository.submitResult(result, exercise);
             }
             else {
-                result.calculateScoreForProgrammingExercise(programmingExercise);
+                Map<Long, Double> pointsByTestCaseId;
+                if (TestCasePointsService.isForSolutionParticipation(result)) {
+                    if (pointsForSolutionResults == null) {
+                        pointsForSolutionResults = testCasePointsService.calculateTestCasePoints(programmingExercise, true);
+                    }
+                    pointsByTestCaseId = pointsForSolutionResults;
+                }
+                else {
+                    if (pointsForStudentResults == null) {
+                        pointsForStudentResults = testCasePointsService.calculateTestCasePoints(programmingExercise, false);
+                    }
+                    pointsByTestCaseId = pointsForStudentResults;
+                }
+                result.calculateScoreForProgrammingExercise(programmingExercise, pointsByTestCaseId);
                 resultRepository.save(result);
             }
         }
