@@ -1,6 +1,44 @@
 @if (course()) {
-    <div class="flex h-full w-full">
-        <div [class.sidebar-collapsed]="isCollapsed()">
+    <div class="exam-management-layout">
+        <!-- Dynamic Exam Header -->
+        <div class="exam-management-header module-bg p-2 rounded-md">
+            <div class="flex flex-1 flex-wrap justify-between gap-2 items-center w-full title-bar-actions-wrapper">
+                <!-- Left side: Sidebar button, Exam title, Chevron, and Subpage title -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Sidebar collapse button to reopen it -->
+                    @if (isCollapsed()) {
+                        <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
+                    }
+                    <!-- Current exam title -->
+                    @if (currentExam()) {
+                        <h5 class="flex items-center gap-2 mb-0">
+                            <a
+                                class="exam-title-link tab-link inline-flex items-center gap-2 rounded-md"
+                                [routerLink]="['/course-management', course().id, 'exams', currentExam()!.id]"
+                            >
+                                <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" />
+                                <span>{{ currentExam()!.title }}</span>
+                            </a>
+                        </h5>
+                    }
+                    <!-- Inject page specific title -->
+                    @if (courseTitleBarService.titleTemplate()) {
+                        @if (currentExam()) {
+                            <fa-icon class="text-secondary" [icon]="faChevronRight" />
+                        }
+                        <ng-container *ngTemplateOutlet="courseTitleBarService.titleTemplate()!" />
+                    }
+                </div>
+                <!-- Right side: Inject actions template -->
+                @if (courseTitleBarService.actionsTemplate()) {
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <ng-container *ngTemplateOutlet="courseTitleBarService.actionsTemplate()!" />
+                    </div>
+                }
+            </div>
+        </div>
+        <!-- sidebar -->
+        <div class="exam-management-sidebar" [class.sidebar-collapsed]="isCollapsed()">
             <jhi-exam-management-navigation-sidebar
                 [isCollapsed]="isCollapsed()"
                 [pageTitle]="pageTitle()"
@@ -9,50 +47,10 @@
                 (toggleSidebar)="toggleSidebar()"
             />
         </div>
-        <!-- right side: header bar and child route content -->
-        <div class="flex flex-col flex-1 overflow-hidden">
-            <!-- Dynamic Exam Header -->
-            <div class="exam-management-header module-bg p-2 rounded-md">
-                <div class="flex flex-1 flex-wrap justify-between gap-2 items-center w-full title-bar-actions-wrapper">
-                    <!-- Left side: Sidebar button, Exam title, Chevron, and Subpage title -->
-                    <div class="flex items-center gap-2">
-                        <!-- Sidebar collapse button to reopen it -->
-                        @if (isCollapsed()) {
-                            <jhi-course-sidebar-toggle-button [isCollapsed]="isCollapsed()" (toggleSidebar)="toggleSidebar()" />
-                        }
-                        <!-- Current exam title -->
-                        @if (currentExam()) {
-                            <h5 class="flex items-center gap-2 mb-0">
-                                <a
-                                    class="exam-title-link tab-link inline-flex items-center gap-2 rounded-md"
-                                    [routerLink]="['/course-management', course().id, 'exams', currentExam()!.id]"
-                                >
-                                    <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" />
-                                    <span>{{ currentExam()!.title }}</span>
-                                </a>
-                            </h5>
-                        }
-                        <!-- Inject page specific title -->
-                        @if (courseTitleBarService.titleTemplate()) {
-                            @if (currentExam()) {
-                                <fa-icon class="text-secondary" [icon]="faChevronRight" />
-                            }
-                            <ng-container *ngTemplateOutlet="courseTitleBarService.titleTemplate()!" />
-                        }
-                    </div>
-                    <!-- Right side: Inject actions template -->
-                    @if (courseTitleBarService.actionsTemplate()) {
-                        <div class="flex flex-wrap gap-2 items-center">
-                            <ng-container *ngTemplateOutlet="courseTitleBarService.actionsTemplate()!" />
-                        </div>
-                    }
-                </div>
-            </div>
-            <!-- child route content -->
-            <div class="module-bg rounded-md scrollable-content p-3 flex-1">
-                <!-- page content -->
-                <router-outlet />
-            </div>
+        <!-- child route content -->
+        <div class="exam-management-content module-bg rounded-md scrollable-content p-3">
+            <!-- page content -->
+            <router-outlet />
         </div>
     </div>
 }
