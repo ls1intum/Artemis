@@ -287,17 +287,16 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     private String loadAndFormatTestCaseFeedback(long resultId) {
-        // Re-fetch the result with feedbacks + test cases eagerly loaded; the persistedSubmission
-        // returned from the repository above is detached, so result.getFeedbacks() would otherwise
-        // hit a LazyInitializationException.
-        var resultWithFeedbacks = resultRepository.findResultWithFeedbacksAndTestCasesById(resultId);
-        if (resultWithFeedbacks.isEmpty() || resultWithFeedbacks.get().getFeedbacks().isEmpty()) {
+        // The automatic test feedback lives in the typed test_case_feedback table - load it (with test case
+        // and message eagerly fetched, the entities here are detached) for the failure diagnostics.
+        var typedFeedback = testCaseFeedbackRepository.findWithTestCaseAndMessageByResultId(resultId);
+        if (typedFeedback.isEmpty()) {
             return "(no feedback recorded)";
         }
-        return resultWithFeedbacks.get().getFeedbacks().stream().map(feedback -> {
-            String name = feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : feedback.getText();
+        return typedFeedback.stream().map(feedback -> {
+            String name = feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : "(unknown test)";
             String status = Boolean.TRUE.equals(feedback.isPositive()) ? "PASS" : "FAIL";
-            String detail = feedback.getDetailText();
+            String detail = feedback.getMessageText();
             return "  - " + name + " [" + status + "]" + (detail != null && !detail.isBlank() ? ": " + detail : "");
         }).sorted().collect(Collectors.joining(System.lineSeparator()));
     }
