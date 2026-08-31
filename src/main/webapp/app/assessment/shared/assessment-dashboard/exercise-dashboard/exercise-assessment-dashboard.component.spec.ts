@@ -756,7 +756,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(firstCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBeNull();
         expect(secondCorrectionToggles).toHaveLength(1);
         expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).toBe(secondCorrectionToggles[0]);
-        expect(secondCorrectionRound.querySelector('[data-testid="correction-round-header"].d-flex.align-items-center.justify-content-between')).not.toBeNull();
+        expect(secondCorrectionRound.querySelector('[data-testid="correction-round-header"].mb-3.flex.w-full.items-center.justify-between')).not.toBeNull();
     });
 
     it('should show the second correction toggle before the instructor participates', () => {

@@ -248,11 +248,11 @@
             isExamMode() &&
             !isTestRun()
         ) {
-            <div class="d-flex align-items-center justify-content-between gap-2" data-testid="correction-round-1">
-                <div class="d-flex align-items-center gap-1">
-                    <h4 class="mb-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
+            <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-1">
+                <div class="flex items-center gap-1">
+                    <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
                     <fa-icon
-                        class="text-secondary"
+                        class="text-muted-color"
                         [icon]="faQuestionCircle"
                         ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
                     />
@@ -366,21 +366,21 @@
                     @for (correctionRound of correctionRoundIndices(); track correctionRound) {
                         <div [attr.data-testid]="'correction-round-' + correctionRound">
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
-                                <div class="d-flex align-items-center justify-content-between gap-2" data-testid="correction-round-header">
-                                    <div class="d-flex align-items-center gap-1">
+                                <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
+                                    <div class="flex items-center gap-1">
                                         @if (!isExamMode()) {
-                                            <h4 class="mb-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
+                                            <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
                                         }
                                         @if (isExamMode()) {
                                             <h4
-                                                class="mb-0"
+                                                class="m-0"
                                                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
                                                 [translateValues]="{ round: correctionRound + 1 }"
                                             ></h4>
                                         }
                                         @if (correctionRound > 0) {
                                             <fa-icon
-                                                class="text-secondary"
+                                                class="text-muted-color"
                                                 [icon]="faQuestionCircle"
                                                 ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
                                             />
