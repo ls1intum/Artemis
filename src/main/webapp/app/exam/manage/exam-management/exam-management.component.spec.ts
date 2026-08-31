@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { Observable, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Event, NavigationEnd, Router, convertToParamMap } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -22,9 +22,9 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AlertService } from 'app/foundation/service/alert.service';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -37,10 +37,26 @@ describe('Exam Management Component', () => {
     let service: ExamManagementService;
     let courseManagementService: CourseManagementService;
     let eventManager: EventManager;
+    let alertService: AlertService;
+    let routerEventsSubject: Subject<Event>;
 
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any as ActivatedRoute;
+    let mockRoute: any;
+    let mockRouter: any;
 
     beforeEach(async () => {
+        routerEventsSubject = new Subject<Event>();
+        mockRouter = {
+            events: routerEventsSubject.asObservable(),
+            url: '/course-management/456/exams',
+            navigate: vi.fn(),
+        };
+        mockRoute = {
+            snapshot: {
+                paramMap: convertToParamMap({ courseId: course.id }),
+                firstChild: undefined,
+            },
+        };
+
         await TestBed.configureTestingModule({
             imports: [
                 ExamManagementComponent,
@@ -57,9 +73,10 @@ describe('Exam Management Component', () => {
                 LocalStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
-                { provide: Router, useClass: MockRouter },
-                { provide: ActivatedRoute, useValue: route },
+                { provide: Router, useValue: mockRouter },
+                { provide: ActivatedRoute, useValue: mockRoute },
                 EventManager,
+                AlertService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -70,6 +87,7 @@ describe('Exam Management Component', () => {
         service = TestBed.inject(ExamManagementService);
         courseManagementService = TestBed.inject(CourseManagementService);
         eventManager = TestBed.inject(EventManager);
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {
@@ -90,6 +108,16 @@ describe('Exam Management Component', () => {
         expect(comp.course()).toEqual(course);
     });
 
+    it('should handle error when courseManagementService.find fails', () => {
+        const errorResponse = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(throwError(() => errorResponse));
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        comp.ngOnInit();
+
+        expect(alertSpy).toHaveBeenCalled();
+    });
+
     it('should call loadAllExamsForCourse on init', () => {
         // GIVEN
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
@@ -105,6 +133,17 @@ describe('Exam Management Component', () => {
         expect(comp.exams()).toEqual([exam]);
     });
 
+    it('should handle error when findAllExamsForCourse fails', () => {
+        comp.course.set(course);
+        const errorResponse = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(throwError(() => errorResponse));
+        const alertSpy = vi.spyOn(alertService, 'error');
+
+        comp.loadAllExamsForCourse();
+
+        expect(alertSpy).toHaveBeenCalled();
+    });
+
     it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes', () => {
         // GIVEN
         comp.course.set(course);
@@ -118,5 +157,72 @@ describe('Exam Management Component', () => {
         // THEN
         expect(service.findAllExamsForCourse).toHaveBeenCalledOnce();
         expect(comp.exams()).toEqual([exam]);
+    });
+
+    it('should toggle sidebar collapsed state', () => {
+        expect(comp.isCollapsed()).toBe(false);
+        comp.toggleSidebar();
+        expect(comp.isCollapsed()).toBe(true);
+        comp.toggleSidebar();
+        expect(comp.isCollapsed()).toBe(false);
+    });
+
+    it('should set page title', () => {
+        comp.setPageTitle('New Title');
+        expect(comp.pageTitle()).toBe('New Title');
+    });
+
+    it('should update currentExam when route has child with examId', () => {
+        comp.exams.set([exam]);
+        mockRoute.snapshot.firstChild = {
+            firstChild: undefined,
+            paramMap: convertToParamMap({ examId: exam.id }),
+        };
+
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+
+        comp.ngOnInit();
+
+        expect(comp.currentExam()).toEqual(exam);
+    });
+
+    it('should not set currentExam when url contains /import/', () => {
+        comp.exams.set([exam]);
+        mockRouter.url = '/course-management/456/exams/import/123';
+        mockRoute.snapshot.firstChild = {
+            firstChild: undefined,
+            paramMap: convertToParamMap({ examId: exam.id }),
+        };
+
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+
+        comp.ngOnInit();
+
+        expect(comp.currentExam()).toBeUndefined();
+    });
+
+    it('should update currentExam on NavigationEnd event', () => {
+        comp.exams.set([exam]);
+        mockRoute.snapshot.firstChild = {
+            firstChild: undefined,
+            paramMap: convertToParamMap({ examId: exam.id }),
+        };
+
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+
+        comp.ngOnInit();
+        expect(comp.currentExam()).toEqual(exam);
+
+        // Simulate navigating to page without examId
+        mockRoute.snapshot.firstChild = undefined;
+        routerEventsSubject.next(new NavigationEnd(1, '/course-management/456/exams', '/course-management/456/exams'));
+
+        expect(comp.currentExam()).toBeUndefined();
     });
 });

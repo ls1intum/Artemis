@@ -551,15 +551,20 @@ describe('ExamStudentsComponent', () => {
     });
 
     describe('handleGenerateStudentExams', () => {
-        it('should show a confirmation dialog when student exams already exist', () => {
+        it('should show a confirmation dialog when student exams already exist and call generateStudentExams on accept', () => {
             fixture.detectChanges();
             component.studentExamCount.set(2);
+            const generateSpy = vi.spyOn(examManagementService, 'generateStudentExams').mockReturnValue(of(new HttpResponse({ body: [] as any })));
             const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((options: any) => {
+                options.accept();
+                return confirmationService;
+            });
 
             component.handleGenerateStudentExams();
 
             expect(confirmSpy).toHaveBeenCalled();
+            expect(generateSpy).toHaveBeenCalledWith(course.id, examWithCourse.id);
         });
 
         it('should call generateStudentExams directly when no student exams exist yet', () => {
@@ -573,10 +578,52 @@ describe('ExamStudentsComponent', () => {
         });
     });
 
+    describe('studentExamsMenuActions', () => {
+        it('should trigger handleGenerateStudentExams when first item command is executed', () => {
+            fixture.detectChanges();
+            const handleSpy = vi.spyOn(component, 'handleGenerateStudentExams').mockImplementation(() => {});
+            const items = component.studentExamsMenuActions();
+
+            items[0].command!({} as any);
+
+            expect(handleSpy).toHaveBeenCalled();
+        });
+
+        it('should trigger generateMissingStudentExams when second item command is executed', () => {
+            fixture.detectChanges();
+            const generateMissingSpy = vi.spyOn(component, 'generateMissingStudentExams').mockImplementation(() => {});
+            const items = component.studentExamsMenuActions();
+
+            items[1].command!({} as any);
+
+            expect(generateMissingSpy).toHaveBeenCalled();
+        });
+
+        it('should trigger startExercises when third item command is executed', () => {
+            fixture.detectChanges();
+            const startExercisesSpy = vi.spyOn(component, 'startExercises').mockImplementation(() => {});
+            const items = component.studentExamsMenuActions();
+
+            items[2].command!({} as any);
+
+            expect(startExercisesSpy).toHaveBeenCalled();
+        });
+    });
+
     describe('toStudentExam', () => {
         it('should return undefined when studentExamId is not set', () => {
             fixture.detectChanges();
             expect(component.toStudentExam({ id: 1 })).toBeUndefined();
+        });
+
+        it('should return StudentExam object when studentExamId is set', () => {
+            fixture.detectChanges();
+            const studentExam = component.toStudentExam({ id: 1, studentExamId: 10, started: true, submitted: false, workingTime: 3600 });
+            expect(studentExam).toBeDefined();
+            expect(studentExam?.id).toBe(10);
+            expect(studentExam?.started).toBe(true);
+            expect(studentExam?.submitted).toBe(false);
+            expect(studentExam?.workingTime).toBe(3600);
         });
 
         it('should map DTO fields to a StudentExam and set the exam reference', () => {
