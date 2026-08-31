@@ -410,10 +410,10 @@ public class LocalVCServletService {
     /**
      * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized.
      *
-     * @param request                The object containing all information about the incoming request.
+     * @param request                 The object containing all information about the incoming request.
      * @param localVCRepositoryUri    The uri of the requested repository
-     * @param user                   The user
-     * @param repositoryAction       Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
+     * @param user                    The user
+     * @param repositoryAction        Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
      * @param optionalParticipation   The participation for which the access log should be stored. If an empty Optional is provided, the method does nothing
      * @param authenticationMechanism The credential the request authenticated with, as reported by the authentication itself
      * @throws LocalVCAuthException If the user authentication fails or the user is not authorized to access a certain repository.
@@ -829,10 +829,10 @@ public class LocalVCServletService {
     /**
      * Attempts to authenticate a user with the provided participation VCS access token
      *
-     * @param user                  the user attempting authentication
-     * @param providedToken         the participation VCS access token provided by the user
-     * @param exercise              the programming exercise containing the repository the user tries to access
-     * @param localVCRepositoryUri  the URI of the local version control repository the user tries to access
+     * @param user                 the user attempting authentication
+     * @param providedToken        the participation VCS access token provided by the user
+     * @param exercise             the programming exercise containing the repository the user tries to access
+     * @param localVCRepositoryUri the URI of the local version control repository the user tries to access
      * @return {@code true} if the authentication is successful, {@code false} otherwise
      */
     private boolean tryAuthenticationWithParticipationVCSAccessToken(User user, String providedToken, ProgrammingExercise exercise,
@@ -873,7 +873,7 @@ public class LocalVCServletService {
      * guarantee nearly time-constant comparison.
      *
      * @param expectedSecret expected secret. May be null to allow for nullable types to be used with this.
-     *                       Since {@code providedSecret} is never {@code null}, this will result in {@code false.}
+     *                           Since {@code providedSecret} is never {@code null}, this will result in {@code false.}
      * @param providedSecret the value that was provided for the secret.
      * @return the result of {@code Objects.equals(expectedSecret, providedSecret)} but with a time-constant comparison.
      * @implNote The expected secret is allowed to be null to be compatible with {@link Objects#equals(Object, Object)}.
@@ -1618,7 +1618,7 @@ public class LocalVCServletService {
      * @param request             the request from the user
      * @param authorizationHeader the authorization header containing the user's credentials
      * @param clientOffered       the number of objects offered by the client in the operation, used to determine
-     *                            if the action is a clone (if 0) or a pull (if greater than 0).
+     *                                if the action is a clone (if 0) or a pull (if greater than 0).
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, String authorizationHeader, int clientOffered) {
         if (!request.getMethod().equals("POST")) {
@@ -1693,7 +1693,7 @@ public class LocalVCServletService {
      *
      * @param session       the {@link ServerSession} representing the SSH session.
      * @param clientOffered the number of objects offered by the client in the operation, used to determine
-     *                      if the action is a clone (if 0) or a pull (if greater than 0).
+     *                          if the action is a clone (if 0) or a pull (if greater than 0).
      */
     public void updateAndStoreVCSAccessLogForCloneAndPullSSH(ServerSession session, int clientOffered) {
         try {
