@@ -98,7 +98,7 @@ structures currently in use:
 | `buildJobQueue` | carry over | queued student builds, not reconstructible |
 | `processingJobs` | carry over | in-flight builds; orphan re-queue reads this map |
 | `buildResultQueue` | carry over | finished results not yet persisted; losing one loses student feedback |
-| `features` | carry over | admin-set toggles; `FeatureToggleService` seeds defaults into this map and has no DB backing, so discarding it silently re-enables anything an admin turned off |
+| `features` | carry over | the yml defaults are re-seeded at startup anyway, but a toggle an admin flipped at runtime lives only here, and it should survive an upgrade without being promoted to the database |
 | `pyris-job-map` | carry over | in-flight Iris jobs |
 | `ltiJwkMap`, `ltiStateAuthorizationRequestStore` | discard | short-lived in-flight launches; a retry costs one redirect |
 | `buildAgentInformation`, `buildAgentAddresses`, `buildAgentReportedAddresses` | discard | agents re-register on startup |
@@ -186,10 +186,10 @@ making the encoding itself any safer within one.
 
 ## Noted while classifying
 
-`FeatureToggleService` keeps admin feature toggles only in the distributed map, with no database backing. On Hazelcast
-that means a full cluster restart already resets every toggle to its default, which looks like a pre-existing latent
-bug independent of this design. On Redis the toggles survive today only because the store survives, so `features` has
-to be carried over.
+`FeatureToggleService` deliberately keeps feature toggles out of the database: the defaults come from yml and are
+seeded at startup. The distributed map is therefore the only place a runtime change made through
+`AdminFeatureToggleResource` exists. Carrying `features` over preserves those runtime changes across a version bump
+without giving the toggles database backing, which is the intended arrangement rather than a gap to close.
 
 ## Decisions
 
