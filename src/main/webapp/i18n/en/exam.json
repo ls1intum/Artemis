@@ -659,7 +659,7 @@
                 },
                 "menu": {
                     "manageStudents": "Students",
-                    "examLogistics": "Logistik",
+                    "examLogistics": "Logistics",
                     "manageStudentExams": "Manage individual exams",
                     "addStudents": "Register",
                     "importUsers": "Import from CSV",
