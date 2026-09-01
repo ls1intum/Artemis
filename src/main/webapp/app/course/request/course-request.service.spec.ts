@@ -78,10 +78,12 @@ describe('CourseRequestService', () => {
             req.flush(mockResponse);
         });
 
-        it('should create a course request without optional fields', () => {
+        it('should create a course request without an optional semester', () => {
             const baseCourseRequest: BaseCourseRequest = {
                 title: 'Minimal Course',
                 shortName: 'MC001',
+                startDate: dayjs('2025-01-01'),
+                endDate: dayjs('2025-06-30'),
                 testCourse: true,
                 reason: 'Testing purpose.',
             };

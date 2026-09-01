@@ -1,15 +1,15 @@
 import { Component, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
-import dayjs from 'dayjs/esm';
 
 import { CourseRequestService } from 'app/course/request/course-request.service';
 import { CourseRequestFormComponent } from 'app/course/request/course-request-form.component';
 import { BaseCourseRequest } from 'app/course/request/course-request.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { getCurrentAndFutureSemesters, getDefaultSemester } from 'app/foundation/util/semester-utils';
+import { getCurrentAndFutureSemesters, getDefaultSemester, getSemesterDateRange } from 'app/foundation/util/semester-utils';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { onError } from 'app/foundation/util/global.utils';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -33,15 +33,48 @@ export class CourseRequestComponent {
     readonly isSubmitting = signal(false);
     readonly dateRangeInvalid = signal(false);
 
+    private readonly defaultSemester = getDefaultSemester();
+    private readonly defaultRange = getSemesterDateRange(this.defaultSemester);
+    private previousSemester: string | undefined = this.defaultSemester;
+
     form = this.fb.group({
         title: ['', [Validators.required, Validators.maxLength(255)]],
         shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
-        semester: [getDefaultSemester(), [Validators.required]],
-        startDate: [undefined as dayjs.Dayjs | undefined],
-        endDate: [undefined as dayjs.Dayjs | undefined],
+        semester: [this.defaultSemester, [Validators.required]],
+        startDate: [this.defaultRange?.startDate, [Validators.required]],
+        endDate: [this.defaultRange?.endDate, [Validators.required]],
         testCourse: [false],
         reason: ['', [Validators.required]],
     });
+
+    constructor() {
+        this.form.controls.semester.valueChanges.pipe(takeUntilDestroyed()).subscribe((semester) => {
+            this.applySemesterDateRange(semester ?? undefined);
+        });
+    }
+
+    /**
+     * Applies the range of the newly selected semester to the two date controls, unless the user picked a date by
+     * hand. A date still follows the semester while it is empty or exactly equal to the previous semester's range.
+     *
+     * @param semester the newly selected semester
+     */
+    private applySemesterDateRange(semester: string | undefined): void {
+        const previousRange = getSemesterDateRange(this.previousSemester);
+        this.previousSemester = semester;
+        const range = getSemesterDateRange(semester);
+        if (!range) {
+            return;
+        }
+        const startDate = this.form.controls.startDate.value;
+        const endDate = this.form.controls.endDate.value;
+        if (!startDate || startDate.isSame(previousRange?.startDate)) {
+            this.form.controls.startDate.setValue(range.startDate);
+        }
+        if (!endDate || endDate.isSame(previousRange?.endDate)) {
+            this.form.controls.endDate.setValue(range.endDate);
+        }
+    }
 
     submit() {
         this.dateRangeInvalid.set(false);
@@ -49,9 +82,9 @@ export class CourseRequestComponent {
             this.form.markAllAsTouched();
             return;
         }
-        const startDate = this.form.get('startDate')!.value ?? undefined;
-        const endDate = this.form.get('endDate')!.value ?? undefined;
-        if (startDate && endDate && !startDate.isBefore(endDate)) {
+        const startDate = this.form.get('startDate')!.value!;
+        const endDate = this.form.get('endDate')!.value!;
+        if (!startDate.isBefore(endDate)) {
             this.dateRangeInvalid.set(true);
             return;
         }
@@ -73,12 +106,13 @@ export class CourseRequestComponent {
                 this.form.reset({
                     title: '',
                     shortName: '',
-                    semester: getDefaultSemester(),
-                    startDate: undefined,
-                    endDate: undefined,
+                    semester: this.defaultSemester,
+                    startDate: this.defaultRange?.startDate,
+                    endDate: this.defaultRange?.endDate,
                     testCourse: false,
                     reason: '',
                 });
+                this.previousSemester = this.defaultSemester;
                 this.dateRangeInvalid.set(false);
                 this.isSubmitting.set(false);
             },

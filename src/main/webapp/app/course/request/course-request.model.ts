@@ -20,8 +20,8 @@ export interface BaseCourseRequest {
     title: string;
     shortName: string;
     semester?: string;
-    startDate?: dayjs.Dayjs;
-    endDate?: dayjs.Dayjs;
+    startDate: dayjs.Dayjs;
+    endDate: dayjs.Dayjs;
     testCourse: boolean;
     reason: string;
 }
