@@ -31,7 +31,7 @@ import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/com
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { getSemesterDateRange, getSemesters } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -769,38 +769,22 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Applies the date range of the newly selected semester to the start and end date controls.
-     * A date is only replaced while it still follows the semester, that is when it is empty or still exactly equal
-     * to the range of the previously selected semester. Once the user has picked a date by hand, later semester
-     * changes leave it alone, so editing an existing course never discards its real dates.
+     * Applies the date range of the newly selected semester to the start and end date controls, unless the user has
+     * picked a date by hand. Once a date is set by hand, later semester changes leave it alone, so editing an
+     * existing course never discards its real dates.
      *
      * @param semester the newly selected semester
      */
     private applySemesterDateRange(semester: string | undefined): void {
-        const previousRange = getSemesterDateRange(this.previousSemester);
+        const { startDate, endDate } = applySemesterToDates(
+            semester,
+            this.previousSemester,
+            this.courseForm.controls['startDate'].value,
+            this.courseForm.controls['endDate'].value,
+        );
         this.previousSemester = semester;
-        const range = getSemesterDateRange(semester);
-        if (!range) {
-            return;
-        }
-        if (this.stillFollowsSemester(this.courseForm.controls['startDate'].value, previousRange?.startDate)) {
-            this.courseForm.controls['startDate'].setValue(range.startDate);
-        }
-        if (this.stillFollowsSemester(this.courseForm.controls['endDate'].value, previousRange?.endDate)) {
-            this.courseForm.controls['endDate'].setValue(range.endDate);
-        }
-    }
-
-    /**
-     * @param value the current value of a date control
-     * @param previouslyDerived the value the previously selected semester would have produced
-     * @return true when the value was not set by hand and may be overwritten
-     */
-    private stillFollowsSemester(value: dayjs.Dayjs | undefined, previouslyDerived: dayjs.Dayjs | undefined): boolean {
-        if (!value) {
-            return true;
-        }
-        return previouslyDerived !== undefined && dayjs(value).isSame(previouslyDerived);
+        this.courseForm.controls['startDate'].setValue(startDate);
+        this.courseForm.controls['endDate'].setValue(endDate);
     }
 
     get isValidConfiguration(): boolean {

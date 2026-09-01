@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 import {
+    applySemesterToDates,
     generateCourseShortName,
     getCurrentAndFutureSemesters,
     getCurrentSemester,
@@ -279,6 +281,44 @@ describe('getSemesterDateRange', () => {
         const range = getSemesterDateRange('WS99/00')!;
         expect(range.startDate.format('YYYY-MM-DD')).toBe('2099-10-01');
         expect(range.endDate.format('YYYY-MM-DD')).toBe('2100-03-31');
+    });
+});
+
+describe('applySemesterToDates', () => {
+    it('fills in dates that are empty', () => {
+        const result = applySemesterToDates('WS25/26', undefined, undefined, undefined);
+
+        expect(result.startDate!.format('YYYY-MM-DD')).toBe('2025-10-01');
+        expect(result.endDate!.format('YYYY-MM-DD')).toBe('2026-03-31');
+    });
+
+    it('replaces dates that still equal the previous semester range', () => {
+        const previousRange = getSemesterDateRange('WS25/26')!;
+
+        const result = applySemesterToDates('SS26', 'WS25/26', previousRange.startDate, previousRange.endDate);
+
+        expect(result.startDate!.format('YYYY-MM-DD')).toBe('2026-04-01');
+        expect(result.endDate!.format('YYYY-MM-DD')).toBe('2026-09-30');
+    });
+
+    it('passes a hand-set date through unchanged while its untouched sibling still follows the semester', () => {
+        const previousRange = getSemesterDateRange('WS25/26')!;
+        const handPickedStartDate = dayjs('2025-11-05');
+
+        const result = applySemesterToDates('SS26', 'WS25/26', handPickedStartDate, previousRange.endDate);
+
+        expect(result.startDate!.format('YYYY-MM-DD')).toBe('2025-11-05');
+        expect(result.endDate!.format('YYYY-MM-DD')).toBe('2026-09-30');
+    });
+
+    it('changes nothing for an unparseable semester', () => {
+        const startDate = dayjs('2025-11-05');
+        const endDate = dayjs('2026-01-10');
+
+        const result = applySemesterToDates('not-a-semester', 'WS25/26', startDate, endDate);
+
+        expect(result.startDate).toBe(startDate);
+        expect(result.endDate).toBe(endDate);
     });
 });
 

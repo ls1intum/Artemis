@@ -9,7 +9,7 @@ import { CourseRequestFormComponent } from 'app/course/request/course-request-fo
 import { BaseCourseRequest } from 'app/course/request/course-request.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { getCurrentAndFutureSemesters, getDefaultSemester, getSemesterDateRange } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getCurrentAndFutureSemesters, getDefaultSemester, getSemesterDateRange } from 'app/foundation/util/semester-utils';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { onError } from 'app/foundation/util/global.utils';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -55,25 +55,20 @@ export class CourseRequestComponent {
 
     /**
      * Applies the range of the newly selected semester to the two date controls, unless the user picked a date by
-     * hand. A date still follows the semester while it is empty or exactly equal to the previous semester's range.
+     * hand.
      *
      * @param semester the newly selected semester
      */
     private applySemesterDateRange(semester: string | undefined): void {
-        const previousRange = getSemesterDateRange(this.previousSemester);
+        const { startDate, endDate } = applySemesterToDates(
+            semester,
+            this.previousSemester,
+            this.form.controls.startDate.value ?? undefined,
+            this.form.controls.endDate.value ?? undefined,
+        );
         this.previousSemester = semester;
-        const range = getSemesterDateRange(semester);
-        if (!range) {
-            return;
-        }
-        const startDate = this.form.controls.startDate.value;
-        const endDate = this.form.controls.endDate.value;
-        if (!startDate || startDate.isSame(previousRange?.startDate)) {
-            this.form.controls.startDate.setValue(range.startDate);
-        }
-        if (!endDate || endDate.isSame(previousRange?.endDate)) {
-            this.form.controls.endDate.setValue(range.endDate);
-        }
+        this.form.controls.startDate.setValue(startDate);
+        this.form.controls.endDate.setValue(endDate);
     }
 
     submit() {

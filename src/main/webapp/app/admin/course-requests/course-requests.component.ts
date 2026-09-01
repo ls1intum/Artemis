@@ -25,7 +25,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { onError } from 'app/foundation/util/global.utils';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
-import { getCurrentAndFutureSemesters, getSemesterDateRange } from 'app/foundation/util/semester-utils';
+import { applySemesterToDates, getCurrentAndFutureSemesters } from 'app/foundation/util/semester-utils';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
@@ -121,25 +121,20 @@ export class CourseRequestsComponent implements OnInit {
 
     /**
      * Applies the range of the newly selected semester to the two date controls, unless the admin picked a date by
-     * hand. A date still follows the semester while it is empty or exactly equal to the previous semester's range.
+     * hand.
      *
      * @param semester the newly selected semester
      */
     private applySemesterDateRange(semester: string | undefined): void {
-        const previousRange = getSemesterDateRange(this.previousSemester);
+        const { startDate, endDate } = applySemesterToDates(
+            semester,
+            this.previousSemester,
+            this.editForm.controls.startDate.value ?? undefined,
+            this.editForm.controls.endDate.value ?? undefined,
+        );
         this.previousSemester = semester;
-        const range = getSemesterDateRange(semester);
-        if (!range) {
-            return;
-        }
-        const startDate = this.editForm.controls.startDate.value;
-        const endDate = this.editForm.controls.endDate.value;
-        if (!startDate || startDate.isSame(previousRange?.startDate)) {
-            this.editForm.controls.startDate.setValue(range.startDate);
-        }
-        if (!endDate || endDate.isSame(previousRange?.endDate)) {
-            this.editForm.controls.endDate.setValue(range.endDate);
-        }
+        this.editForm.controls.startDate.setValue(startDate);
+        this.editForm.controls.endDate.setValue(endDate);
     }
 
     ngOnInit() {

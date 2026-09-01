@@ -45,6 +45,46 @@ export function getSemesterDateRange(semester: string | undefined): SemesterDate
 }
 
 /**
+ * Applies a newly selected semester's range to a course date pair, keeping any date the user set by hand.
+ * A date follows the semester while it is empty or still exactly equal to the previously selected semester's
+ * range; once it differs, it was set by hand and is returned unchanged.
+ *
+ * @param semester         the newly selected semester
+ * @param previousSemester the semester that was selected before, or undefined on first selection
+ * @param startDate        the current start date
+ * @param endDate          the current end date
+ * @returns the dates to use, with any hand-set value passed through unchanged
+ */
+export function applySemesterToDates(
+    semester: string | undefined,
+    previousSemester: string | undefined,
+    startDate: dayjs.Dayjs | undefined,
+    endDate: dayjs.Dayjs | undefined,
+): { startDate: dayjs.Dayjs | undefined; endDate: dayjs.Dayjs | undefined } {
+    const range = getSemesterDateRange(semester);
+    if (!range) {
+        return { startDate, endDate };
+    }
+    const previousRange = getSemesterDateRange(previousSemester);
+    return {
+        startDate: stillFollowsSemester(startDate, previousRange?.startDate) ? range.startDate : startDate,
+        endDate: stillFollowsSemester(endDate, previousRange?.endDate) ? range.endDate : endDate,
+    };
+}
+
+/**
+ * @param value the current value of a date control
+ * @param previouslyDerived the value the previously selected semester would have produced
+ * @return true when the value was not set by hand and may be overwritten
+ */
+function stillFollowsSemester(value: dayjs.Dayjs | undefined, previouslyDerived: dayjs.Dayjs | undefined): boolean {
+    if (!value) {
+        return true;
+    }
+    return previouslyDerived !== undefined && value.isSame(previouslyDerived);
+}
+
+/**
  * Gets a list of semesters in the form 'WS18/19', 'SS18', ... in descending order.
  * Starts from 2018 and goes one year into the future.
  *

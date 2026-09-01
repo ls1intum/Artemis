@@ -86,18 +86,17 @@ export class CourseRequestService {
     }
 
     private convertDTOToResponse(dto: CourseRequestDTO): CourseRequest {
-        // Every request created going forward carries both dates; a legacy request predating that requirement can
-        // still arrive without them, in which case the client model asserts a guarantee the server does not hold.
         const response: CourseRequest = {
             title: dto.title,
             shortName: dto.shortName,
             testCourse: dto.testCourse,
             reason: dto.reason,
-            startDate: convertDateStringFromServer(dto.startDate)!,
-            endDate: convertDateStringFromServer(dto.endDate)!,
         };
         response.id = dto.id;
         response.semester = dto.semester;
+        // A legacy request predating the mandatory dates can still arrive without them, so this stays optional.
+        response.startDate = convertDateStringFromServer(dto.startDate);
+        response.endDate = convertDateStringFromServer(dto.endDate);
         response.status = dto.status;
         response.createdDate = convertDateStringFromServer(dto.createdDate);
         response.processedDate = convertDateStringFromServer(dto.processedDate);
