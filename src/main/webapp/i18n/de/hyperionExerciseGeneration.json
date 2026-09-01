@@ -1,6 +1,32 @@
 {
     "artemisApp": {
         "hyperion": {
+            "wholeExerciseWizard": {
+                "title": "Programmieraufgabe generieren",
+                "intro": "Beschreibe das Lehrziel und die wesentlichen Vorgaben. Artemis legt eine unveröffentlichte Java-Aufgabe an, generiert Aufgabenstellung, Vorlage, Lösung und Tests gemeinsam und prüft die KI-Änderungen vor dem Speichern.",
+                "steps": {
+                    "configure": "Konfigurieren",
+                    "generate": "Generieren"
+                },
+                "fields": {
+                    "title": "Aufgabentitel",
+                    "shortName": "Kurzname",
+                    "shortNameHint": "3–19 Buchstaben und Ziffern, beginnend mit einem Buchstaben.",
+                    "points": "Punkte",
+                    "releaseDate": "Veröffentlichungsdatum",
+                    "dueDate": "Abgabefrist",
+                    "buildTool": "Build-Werkzeug",
+                    "difficulty": "Schwierigkeit",
+                    "brief": "Beschreibung der Lehrperson",
+                    "briefPlaceholder": "Beispiel: Studierende implementieren einen generischen, größenbeschränkten Stack in Java. Er unterstützt push, pop, peek und size; leere Zugriffe werfen eine eigene Exception. Teste generische Typen, Kapazitätsgrenzen und Randfälle.",
+                    "briefHint": "Beschreibe Lernziel, geforderte Implementierung, öffentliche API, wichtige Randfälle und vorgeschriebene oder verbotene Techniken. Schreibe nicht die vollständige Lösung."
+                },
+                "actions": {
+                    "generate": "Aufgabe generieren",
+                    "openEditor": "Code-Editor öffnen"
+                },
+                "startFailed": "Die Aufgabe wurde angelegt, aber die Generierung konnte nicht gestartet werden. Öffne die erstellte Aufgabe, um es erneut zu versuchen oder sie zu entfernen."
+            },
             "generationActivity": {
                 "panelTitle": "KI-Aktivität",
                 "title": "Generierungsaktivität",

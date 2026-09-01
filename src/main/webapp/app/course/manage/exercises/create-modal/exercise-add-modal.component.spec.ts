@@ -142,14 +142,13 @@ describe('ExerciseAddModalComponent', () => {
             expect(emitted).toEqual([false]);
         });
 
-        it('opens programming creation in whole-exercise generation mode', () => {
+        it('opens the standalone programming generation wizard without navigating', () => {
             fixture.componentRef.setInput('courseId', 42);
 
-            (component as unknown as { navigateToProgrammingGeneration: () => void }).navigateToProgrammingGeneration();
+            (component as unknown as { openProgrammingGeneration: () => void }).openProgrammingGeneration();
 
-            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'new'], {
-                state: { wholeExerciseGeneration: true },
-            });
+            expect(navigateSpy).not.toHaveBeenCalled();
+            expect(component.generationWizardVisible()).toBe(true);
         });
     });
 

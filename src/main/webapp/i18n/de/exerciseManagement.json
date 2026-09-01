@@ -68,6 +68,7 @@
                 },
                 "cta": {
                     "create": "Erstellen",
+                    "generate": "Generieren",
                     "select": "Auswählen",
                     "configure": "Generierung konfigurieren"
                 },

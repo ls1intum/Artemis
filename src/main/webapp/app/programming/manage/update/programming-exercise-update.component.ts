@@ -844,21 +844,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Saves the programming exercise with AI preparation.
      */
     saveWithAi() {
-        const generationBrief = this.exerciseProblemComponent()?.generationBrief()?.trim() || this.exerciseProblemComponent()?.userPrompt()?.trim();
-        const generationInput = generationBrief || this.programmingExercise.problemStatement?.trim();
-        if ((generationInput?.length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH) {
+        if ((this.programmingExercise.problemStatement?.trim().length ?? 0) < MIN_MEANINGFUL_SPEC_LENGTH) {
             this.alertService.warning('artemisApp.hyperion.generationActivity.meaningfulSpecRequired');
             return;
         }
         if (!this.hasFutureReleaseDate()) {
             this.alertService.warning('artemisApp.hyperion.generationActivity.unavailableHint');
             return;
-        }
-        // Whole-exercise generation accepts the instructor's requirements directly. Persisting them as the shell's
-        // initial statement keeps setup valid and makes a failed run inspectable; a successful run replaces them with
-        // the verified student-facing statement. The separate "Generate Draft Problem Statement" action stays optional.
-        if (generationBrief) {
-            this.programmingExercise.problemStatement = generationBrief;
         }
         this.saveWithModalCheck(() => this.saveExerciseWithAi());
     }

@@ -68,6 +68,7 @@
                 },
                 "cta": {
                     "create": "Create",
+                    "generate": "Generate",
                     "select": "Select",
                     "configure": "Configure generation"
                 },

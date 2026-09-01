@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Type, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -16,6 +16,7 @@ import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dia
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
+import { WholeExerciseGenerationWizardComponent } from 'app/hyperion/exercise-generation/create/whole-exercise-generation-wizard.component';
 
 export type AddModalMode = 'create' | 'import' | 'export' | 'unified';
 
@@ -69,7 +70,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
     styleUrl: './exercise-add-modal.component.scss',
-    imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, WholeExerciseGenerationWizardComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
@@ -109,12 +110,15 @@ export class ExerciseAddModalComponent {
     );
 
     readonly activeTab = signal<'create' | 'generate' | 'import' | 'export'>('create');
+    readonly generationWizardVisible = signal(false);
+    private readonly generationWizard = viewChild(WholeExerciseGenerationWizardComponent);
     protected readonly generationEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faLayerGroup = faLayerGroup;
+    protected readonly faKeyboard = faKeyboard;
 
     private readonly router = inject(Router);
     private readonly dialogService = inject(DialogService);
@@ -146,12 +150,20 @@ export class ExerciseAddModalComponent {
         this.activeTab.set(tab);
     }
 
-    protected navigateToProgrammingGeneration(): void {
-        const id = this.courseId();
-        if (id !== undefined) {
-            void this.router.navigate(['/course-management', id, 'programming-exercises', 'new'], { state: { wholeExerciseGeneration: true } });
-        }
+    protected openProgrammingGeneration(): void {
+        this.generationWizard()?.reset();
         this.close();
+        this.generationWizardVisible.set(true);
+    }
+
+    protected closeProgrammingGeneration(): void {
+        this.generationWizardVisible.set(false);
+    }
+
+    protected backToGenerationTypes(): void {
+        this.generationWizardVisible.set(false);
+        this.activeTab.set('generate');
+        this.visibleChange.emit(true);
     }
 
     /**

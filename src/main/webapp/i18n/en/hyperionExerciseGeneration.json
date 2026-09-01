@@ -1,6 +1,32 @@
 {
     "artemisApp": {
         "hyperion": {
+            "wholeExerciseWizard": {
+                "title": "Generate programming exercise",
+                "intro": "Describe the teaching goal and essential constraints. Artemis will provision an unreleased Java exercise, generate its statement, template, solution, and tests together, and verify them before saving AI changes.",
+                "steps": {
+                    "configure": "Configure",
+                    "generate": "Generate"
+                },
+                "fields": {
+                    "title": "Exercise title",
+                    "shortName": "Short name",
+                    "shortNameHint": "3–19 letters and numbers, starting with a letter.",
+                    "points": "Points",
+                    "releaseDate": "Release date",
+                    "dueDate": "Due date",
+                    "buildTool": "Build tool",
+                    "difficulty": "Difficulty",
+                    "brief": "Instructor brief",
+                    "briefPlaceholder": "For example: Students implement a generic bounded stack in Java. It supports push, pop, peek and size; empty access throws a dedicated exception. Test generic types, capacity limits and edge cases.",
+                    "briefHint": "State what students should learn and implement, the required public API, important edge cases, and any technique that must or must not be used. Do not write the full solution."
+                },
+                "actions": {
+                    "generate": "Generate exercise",
+                    "openEditor": "Open code editor"
+                },
+                "startFailed": "The exercise was provisioned, but generation could not be started. Open the created exercise to retry or remove it."
+            },
             "generationActivity": {
                 "panelTitle": "AI activity",
                 "title": "Generation activity",
