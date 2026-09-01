@@ -396,6 +396,10 @@ export class ProgrammingExerciseService {
         if (copy.solutionParticipation) {
             copy.solutionParticipation = _omit(copy.solutionParticipation, ['exercise', 'results']);
         }
+        // Each competency link back-references this exercise, which would make the payload circular.
+        if (copy.competencyLinks) {
+            copy.competencyLinks = copy.competencyLinks.map((link) => _omit(link, ['exercise']));
+        }
 
         return copy as ProgrammingExercise;
     }
