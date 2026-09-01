@@ -307,7 +307,7 @@ public class GlobalSearchResource {
      */
     private FilterBuildResult buildSearchableItemFilter(User user, Long courseId, Set<String> requestedTypes) {
         // Decide if the filters should be applied
-        boolean isAdmin = authCheckService.isAdmin(user);
+        boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
         boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
                 || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
 

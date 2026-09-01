@@ -254,11 +254,8 @@ public class SecurityConfiguration {
     /**
      * Defines the hierarchy of roles within the application's security context.
      * <p>
-     * This method configures and returns a {@link RoleHierarchy} bean that establishes a clear hierarchy among
-     * different user roles. By setting this hierarchy, the application can enforce security rules in a nuanced manner,
-     * acknowledging that some roles inherently include the permissions of others beneath them.
-     * The hierarchy defined here starts with the most privileged role, 'ROLE_ADMIN', and cascades down to the least,
-     * 'ROLE_ANONYMOUS', ensuring a structured and scalable approach to role-based access control.
+     * Administrator identity and teaching roles are separate. Administrators remain regular users, but only explicit teaching authorities or passkey-backed administrator elevation
+     * can satisfy teaching-role authorization.
      * </p>
      *
      * @return A {@link RoleHierarchy} instance with a predefined hierarchy of roles, ready to be used by the
@@ -266,7 +263,11 @@ public class SecurityConfiguration {
      */
     @Bean
     public RoleHierarchy roleHierarchy() {
-        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPER_ADMIN > ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
+        return RoleHierarchyImpl.fromHierarchy("""
+                ROLE_SUPER_ADMIN > ROLE_ADMIN
+                ROLE_ADMIN > ROLE_USER
+                ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS
+                """);
     }
 
     /**

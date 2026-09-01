@@ -24,6 +24,8 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 
+import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.PasskeyAuthenticationService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -36,6 +38,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceRoleInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceRoleInLectureUnit;
+import de.tum.cit.aet.artemis.core.service.AdminAccessService;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 class AuthorizationArchitectureTest extends AbstractArchitectureTest {
@@ -62,6 +67,23 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
         ArchRule rule = noMethods().that().areDeclaredInClassesThat().areAnnotatedWith(RestController.class).should().beAnnotatedWith(PreAuthorize.class)
                 .because("All endpoints should be secured using the Artemis enforcement annotations. Refer to the server guidelines in our documentation.");
         rule.check(productionClasses);
+    }
+
+    @Test
+    void testCurrentCallerAuthorizationDoesNotUseAdministratorAccountClassification() {
+        noClasses().that().doNotHaveFullyQualifiedName(AuthorizationCheckService.class.getName()).should().callMethod(AuthorizationCheckService.class, "isAdmin")
+                .because("current-caller authorization must use request-bound administrator elevation instead of account classification").check(productionClasses);
+
+        noClasses().that().doNotHaveFullyQualifiedName(AuthorizationCheckService.class.getName()).and().doNotHaveFullyQualifiedName(ExamRegistrationService.class.getName())
+                .should().callMethod(AuthorizationCheckService.class, "isAdmin", User.class)
+                .because("isAdmin(User) classifies arbitrary accounts; current-caller authorization must use request-bound administrator elevation").check(productionClasses);
+    }
+
+    @Test
+    void testPasskeyAuthenticationForAdministratorElevationIsCentralized() {
+        noClasses().that().doNotHaveFullyQualifiedName(AdminAccessService.class.getName()).and().doNotHaveFullyQualifiedName(PasskeyAuthenticationService.class.getName()).should()
+                .dependOnClassesThat().haveFullyQualifiedName(PasskeyAuthenticationService.class.getName())
+                .because("normal endpoints must obtain administrator elevation through AdminAccessService instead of validating passkeys directly").check(productionClasses);
     }
 
     @Test

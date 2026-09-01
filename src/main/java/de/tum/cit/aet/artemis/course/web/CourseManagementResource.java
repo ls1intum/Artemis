@@ -137,7 +137,7 @@ public class CourseManagementResource {
     @EnforceAtLeastEditor
     public ResponseEntity<List<Course>> getCoursesWithQuizExercises() {
         User user = userRepository.getUserWithAuthorities();
-        if (authCheckService.isAdmin(user)) {
+        if (authCheckService.isCurrentUserAdminAccessEnabled()) {
             return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises());
         }
         else {

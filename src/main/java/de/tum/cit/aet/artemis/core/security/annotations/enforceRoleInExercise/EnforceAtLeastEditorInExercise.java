@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("hasRole('EDITOR')")
+@PreAuthorize("isAuthenticated()")
 @EnforceRoleInExercise(Role.EDITOR)
 public @interface EnforceAtLeastEditorInExercise {
 

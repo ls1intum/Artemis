@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.EnumSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -50,10 +51,14 @@ public class AuthorizationCheckService {
 
     private final TeamRepository teamRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository) {
+    private final AdminAccessService adminAccessService;
+
+    public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository,
+            AdminAccessService adminAccessService) {
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.teamRepository = teamRepository;
+        this.adminAccessService = adminAccessService;
     }
 
     // Adaptive: if the caller pre-loaded course roles (e.g. dashboard endpoints that call
@@ -133,7 +138,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return hasCourseRoleAtLeast(user, course, CourseRole.EDITOR) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.EDITOR) || hasAdminAccess(user);
     }
 
     /**
@@ -157,7 +162,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(long courseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastEditorInCourse(login, courseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInCourse(login, courseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -248,7 +253,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return hasCourseRoleAtLeast(user, course, CourseRole.TEACHING_ASSISTANT) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.TEACHING_ASSISTANT) || hasAdminAccess(user);
     }
 
     /**
@@ -272,7 +277,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(long courseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInCourse(login, courseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInCourse(login, courseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -298,7 +303,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return hasCourseRoleAtLeast(user, course, CourseRole.STUDENT) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.STUDENT) || hasAdminAccess(user);
     }
 
     /**
@@ -310,7 +315,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInCourse(long courseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastStudentInCourse(login, courseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInCourse(login, courseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -372,8 +377,16 @@ public class AuthorizationCheckService {
     public void checkHasAtLeastRoleInCourseElseThrow(@NonNull Role role, @NonNull Course course, @Nullable User user) {
         // Note: the consumer is necessary to get an exhaustive check for the switch expression here, also see https://stackoverflow.com/questions/66204407
         Consumer<User> consumer = switch (role) {
-            case SUPER_ADMIN -> this::checkIsSuperAdminElseThrow;
-            case ADMIN -> this::checkIsAdminElseThrow;
+            case SUPER_ADMIN -> userOrNull -> {
+                if (!isSuperAdmin(userOrNull) || !hasAdminAccess(userOrNull)) {
+                    throw new AccessForbiddenException();
+                }
+            };
+            case ADMIN -> userOrNull -> {
+                if (!hasAdminAccess(userOrNull)) {
+                    throw new AccessForbiddenException();
+                }
+            };
             case INSTRUCTOR -> userOrNull -> checkIsAtLeastInstructorInCourseElseThrow(course, userOrNull);
             case EDITOR -> userOrNull -> checkIsAtLeastEditorInCourseElseThrow(course, userOrNull);
             case TEACHING_ASSISTANT -> userOrNull -> checkIsAtLeastTeachingAssistantInCourseElseThrow(course, userOrNull);
@@ -407,7 +420,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(@NonNull Course course, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        return hasCourseRoleAtLeast(user, course, CourseRole.INSTRUCTOR) || isAdmin(user);
+        return hasCourseRoleAtLeast(user, course, CourseRole.INSTRUCTOR) || hasAdminAccess(user);
     }
 
     /**
@@ -431,7 +444,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(long courseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastInstructorInCourse(login, courseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInCourse(login, courseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -587,7 +600,7 @@ public class AuthorizationCheckService {
             throw new AccessForbiddenException();
         }
         user = loadUserIfNeeded(user);
-        if (isAdmin(user)) {
+        if (hasAdminAccess(user)) {
             return true;
         }
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -604,7 +617,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAllowedToSeeLectureUnit(@NonNull LectureUnit lectureUnit, @Nullable User user) {
         user = loadUserIfNeeded(user);
-        if (isAdmin(user)) {
+        if (hasAdminAccess(user)) {
             return true;
         }
         Course course = lectureUnit.getLecture().getCourse();
@@ -675,6 +688,28 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAdmin(@NonNull String login) {
         return userRepository.isAdmin(login);
+    }
+
+    /**
+     * Checks whether the current request may exercise the global administrator override. Use this method for data selection and current-caller authorization. Use
+     * {@link #isAdmin(User)} only to classify an arbitrary account independently of the current request.
+     *
+     * @return true if administrator elevation is active for the current request
+     */
+    @CheckReturnValue
+    public boolean isCurrentUserAdminAccessEnabled() {
+        return adminAccessService.isAdminElevationActive();
+    }
+
+    /**
+     * Preserves account classification for genuinely arbitrary users and internal processing, while requiring request elevation when the supplied user is the current caller.
+     */
+    private boolean hasAdminAccess(@Nullable User user) {
+        if (user == null) {
+            return isCurrentUserAdminAccessEnabled();
+        }
+        boolean isCurrentUser = SecurityUtils.getCurrentUserLogin().filter(login -> Objects.equals(login, user.getLogin())).isPresent();
+        return isCurrentUser ? isCurrentUserAdminAccessEnabled() : isAdmin(user);
     }
 
     /**
@@ -807,8 +842,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInCourse(Role role, long courseId) {
         return switch (role) {
-            case SUPER_ADMIN -> isSuperAdmin();
-            case ADMIN -> isAdmin();
+            case SUPER_ADMIN -> isSuperAdmin() && isCurrentUserAdminAccessEnabled();
+            case ADMIN -> isCurrentUserAdminAccessEnabled();
             case INSTRUCTOR -> isAtLeastInstructorInCourse(courseId);
             case EDITOR -> isAtLeastEditorInCourse(courseId);
             case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInCourse(courseId);
@@ -832,7 +867,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastStudentInExercise(login, exerciseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInExercise(login, exerciseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -844,7 +879,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -880,7 +915,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastEditorInExercise(login, exerciseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInExercise(login, exerciseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -892,7 +927,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInExercise(long exerciseId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastInstructorInExercise(login, exerciseId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInExercise(login, exerciseId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -917,8 +952,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInExercise(Role role, long exerciseId) {
         return switch (role) {
-            case SUPER_ADMIN -> isSuperAdmin();
-            case ADMIN -> isAdmin();
+            case SUPER_ADMIN -> isSuperAdmin() && isCurrentUserAdminAccessEnabled();
+            case ADMIN -> isCurrentUserAdminAccessEnabled();
             case INSTRUCTOR -> isAtLeastInstructorInExercise(exerciseId);
             case EDITOR -> isAtLeastEditorInExercise(exerciseId);
             case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInExercise(exerciseId);
@@ -942,7 +977,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInLectureUnit(long lectureUnitId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastStudentInLectureUnit(login, lectureUnitId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInLectureUnit(login, lectureUnitId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -954,7 +989,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInLectureUnit(long lectureUnitId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLectureUnit(login, lectureUnitId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLectureUnit(login, lectureUnitId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -966,7 +1001,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInLectureUnit(long lectureUnitId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastEditorInLectureUnit(login, lectureUnitId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInLectureUnit(login, lectureUnitId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -978,7 +1013,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInLectureUnit(long lectureUnitId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLectureUnit(login, lectureUnitId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLectureUnit(login, lectureUnitId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -990,7 +1025,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastStudentInLecture(long lectureId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastStudentInLecture(login, lectureId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastStudentInLecture(login, lectureId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -1002,7 +1037,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInLecture(long lectureId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLecture(login, lectureId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastTeachingAssistantInLecture(login, lectureId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -1014,7 +1049,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastEditorInLecture(long lectureId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastEditorInLecture(login, lectureId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastEditorInLecture(login, lectureId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -1026,7 +1061,7 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastInstructorInLecture(long lectureId) {
         final var userLogin = SecurityUtils.getCurrentUserLogin();
-        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLecture(login, lectureId)).isPresent();
+        return userLogin.filter(login -> userRepository.isAtLeastInstructorInLecture(login, lectureId)).isPresent() || isCurrentUserAdminAccessEnabled();
     }
 
     /**
@@ -1039,8 +1074,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInLectureUnit(Role role, long lectureUnitId) {
         return switch (role) {
-            case SUPER_ADMIN -> isSuperAdmin();
-            case ADMIN -> isAdmin();
+            case SUPER_ADMIN -> isSuperAdmin() && isCurrentUserAdminAccessEnabled();
+            case ADMIN -> isCurrentUserAdminAccessEnabled();
             case INSTRUCTOR -> isAtLeastInstructorInLectureUnit(lectureUnitId);
             case EDITOR -> isAtLeastEditorInLectureUnit(lectureUnitId);
             case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInLectureUnit(lectureUnitId);
@@ -1065,8 +1100,8 @@ public class AuthorizationCheckService {
     @CheckReturnValue
     public boolean isAtLeastRoleInLecture(Role role, long lectureId) {
         return switch (role) {
-            case SUPER_ADMIN -> isSuperAdmin();
-            case ADMIN -> isAdmin();
+            case SUPER_ADMIN -> isSuperAdmin() && isCurrentUserAdminAccessEnabled();
+            case ADMIN -> isCurrentUserAdminAccessEnabled();
             case INSTRUCTOR -> isAtLeastInstructorInLecture(lectureId);
             case EDITOR -> isAtLeastEditorInLecture(lectureId);
             case TEACHING_ASSISTANT -> isAtLeastTeachingAssistantInLecture(lectureId);

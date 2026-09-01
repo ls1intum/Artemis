@@ -78,7 +78,7 @@ public class RatingResource {
     @GetMapping("results/{resultId}/rating")
     @EnforceAtLeastStudent
     public ResponseEntity<Optional<Integer>> getRatingForResult(@PathVariable Long resultId) {
-        if (!authCheckService.isAdmin()) {
+        if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
             checkIfUserIsOwnerOfSubmissionElseThrow(resultId);
         }
         Optional<Rating> rating = ratingService.findRatingByResultId(resultId);
