@@ -246,11 +246,15 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     List<Submission> getLockedSubmissionsAndResultsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     /**
-     * Get all currently locked submissions for all users in the given exam.
+     * Get all currently locked submissions across the given exercises (used for an exam).
      * These are all submissions for which users started, but did not yet finish the assessment.
+     * <p>
+     * Filters the denormalized {@code result.exerciseId} instead of walking submission → participation → exercise →
+     * exercise group → exam, mirroring {@link #countLockedSubmissionsByExerciseIds}. Example results are excluded
+     * explicitly, because the join this replaced went through the participation and example submissions have none.
      *
-     * @param examId the id of the course
-     * @return currently locked submissions for the given exam
+     * @param exerciseIds the ids of the exam's exercises
+     * @return currently locked submissions across the given exercises, each carrying only its locked results
      */
     @Query("""
             SELECT DISTINCT s
@@ -259,9 +263,10 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE r.assessor.id IS NOT NULL
                 AND r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND r.completionDate IS NULL
-                AND s.participation.exercise.exerciseGroup.exam.id = :examId
+                AND r.exerciseId IN :exerciseIds
+                AND (r.exampleResult IS NULL OR r.exampleResult = FALSE)
             """)
-    List<Submission> getLockedSubmissionsAndResultsByExamId(@Param("examId") Long examId);
+    List<Submission> getLockedSubmissionsAndResultsByExerciseIds(@Param("exerciseIds") Collection<Long> exerciseIds);
 
     /**
      * Checks if a submission for the given participation exists.

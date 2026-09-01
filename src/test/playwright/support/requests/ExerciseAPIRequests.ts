@@ -1,8 +1,8 @@
 import dayjs from 'dayjs';
 import { Page } from 'playwright-core';
 
-import { Course } from 'app/course/shared/entities/course.model';
-import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import type { Course } from 'app/course/shared/entities/course.model';
+import type { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
@@ -32,7 +32,7 @@ import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UpdateModelingExerciseDTO } from 'app/modeling/shared/entities/modeling-exercise-update-dto.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import type { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -54,6 +54,14 @@ type PatchProgrammingExerciseTestVisibilityDto = {
 const RETRY_DELAY: number = 3000;
 // Align with BUILD_FINISH_TIMEOUT so solution builds have enough time to complete even under CI load
 const MAX_RETRIES: number = Math.ceil(BUILD_FINISH_TIMEOUT / RETRY_DELAY);
+
+function fileUploadDateToString(date: dayjs.Dayjs | string | undefined): string | undefined {
+    return date === undefined || typeof date === 'string' ? date : dayjsToString(date);
+}
+
+function fileUploadCategoriesToStrings(categories: unknown[] | undefined): string[] | undefined {
+    return categories?.map((category) => (typeof category === 'string' ? category : JSON.stringify(category)));
+}
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
@@ -349,14 +357,18 @@ export class ExerciseAPIRequests {
      * @returns A Promise<FileUploadExercise> representing the file upload exercise created.
      */
     async createFileUploadExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Upload ' + generateUUID()): Promise<FileUploadExercise> {
-        const template = {
+        const uploadExercise = {
             ...fileUploadExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
+            ...this.toExerciseReference(body),
         };
-        const uploadExercise = Object.assign({}, template, body);
+        const exerciseGroup = 'exerciseGroup' in body ? body.exerciseGroup : undefined;
         const response = await this.page.request.post(UPLOAD_EXERCISE_BASE, { data: uploadExercise });
-        return this.withKnownExerciseGroup(await response.json(), 'exerciseGroup' in body ? body.exerciseGroup : undefined);
+        if (!response.ok()) {
+            throw new Error(`Failed to create file upload exercise: ${response.status()} ${await response.text()}`);
+        }
+        return this.withKnownExerciseGroup((await response.json()) as FileUploadExercise, exerciseGroup);
     }
 
     /**
@@ -373,17 +385,49 @@ export class ExerciseAPIRequests {
      * enabling complaints to be filed.
      */
     async updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = dayjs()) {
-        const newAssessmentDueDate = dayjsToString(due.subtract(1, 'minute'));
-        const newDueDate = dayjsToString(due.subtract(2, 'minutes'));
-        const newReleaseDate = dayjsToString(due.subtract(2, 'hours'));
-
+        if (exercise.id === undefined) {
+            throw new Error('Cannot update a file upload exercise without an ID');
+        }
+        if (exercise.title === undefined) {
+            throw new Error('Cannot update a file upload exercise without a title');
+        }
         const updateDto = {
-            ...exercise,
-            releaseDate: newReleaseDate,
-            dueDate: newDueDate,
-            assessmentDueDate: newAssessmentDueDate,
+            id: exercise.id,
+            title: exercise.title,
+            channelName: exercise.channelName,
+            shortName: exercise.shortName,
+            problemStatement: exercise.problemStatement,
+            categories: fileUploadCategoriesToStrings(exercise.categories),
+            difficulty: exercise.difficulty,
+            maxPoints: exercise.maxPoints,
+            bonusPoints: exercise.bonusPoints,
+            includedInOverallScore: exercise.includedInOverallScore,
+            allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments ?? false,
+            allowFeedbackRequests: exercise.allowFeedbackRequests ?? false,
+            presentationScoreEnabled: exercise.presentationScoreEnabled ?? false,
+            secondCorrectionEnabled: exercise.secondCorrectionEnabled ?? false,
+            feedbackSuggestionModule: exercise.feedbackSuggestionModule,
+            gradingInstructions: exercise.gradingInstructions,
+            releaseDate: dayjsToString(due.subtract(2, 'hours')),
+            startDate: fileUploadDateToString(exercise.startDate),
+            dueDate: dayjsToString(due.subtract(2, 'minutes')),
+            assessmentDueDate: dayjsToString(due.subtract(1, 'minute')),
+            exampleSolutionPublicationDate: fileUploadDateToString(exercise.exampleSolutionPublicationDate),
+            exampleSolution: exercise.exampleSolution,
+            filePattern: exercise.filePattern,
+            courseId: exercise.course?.id,
+            exerciseGroupId: exercise.exerciseGroup?.id,
+            gradingCriteria: exercise.gradingCriteria ?? [],
+            competencyLinks: (exercise.competencyLinks ?? []).map((link) => ({
+                competency: { id: link.competency?.id },
+                weight: link.weight ?? 1,
+            })),
         };
-        return this.page.request.put(UPLOAD_EXERCISE_BASE, { data: updateDto });
+        const response = await this.page.request.put(`${UPLOAD_EXERCISE_BASE}/${exercise.id}`, { data: updateDto });
+        if (!response.ok()) {
+            throw new Error(`Failed to update file upload exercise assessment due date: ${response.status()} ${await response.text()}`);
+        }
+        return response;
     }
 
     /**
