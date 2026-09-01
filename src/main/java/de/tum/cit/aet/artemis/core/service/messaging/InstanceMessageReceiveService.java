@@ -86,60 +86,73 @@ public class InstanceMessageReceiveService {
     @PostConstruct
     public void init() {
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExercise((message.getMessageObject()));
-            processSchedulePotentialAthenaExercise((message.getMessageObject()));
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleProgrammingExercise((message.getMessageObject()));
+                processSchedulePotentialAthenaExercise((message.getMessageObject()));
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExerciseCancel(message.getMessageObject());
-            processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleProgrammingExerciseCancel(message.getMessageObject());
+                processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processSchedulePotentialAthenaExercise(message.getMessageObject());
+            SecurityUtils.runAsSystem(() -> {
+                processSchedulePotentialAthenaExercise(message.getMessageObject());
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
+            SecurityUtils.runAsSystem(() -> {
+                processPotentialAthenaExerciseScheduleCancel(message.getMessageObject());
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processRemoveNonActivatedUser((message.getMessageObject()));
+            SecurityUtils.runAsSystem(() -> {
+                processRemoveNonActivatedUser((message.getMessageObject()));
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelRemoveNonActivatedUser((message.getMessageObject()));
+            SecurityUtils.runAsSystem(() -> {
+                processCancelRemoveNonActivatedUser((message.getMessageObject()));
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.EXERCISE_RELEASED_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleExerciseReleasedNotification((message.getMessageObject()));
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleExerciseReleasedNotification((message.getMessageObject()));
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleAssessedExerciseSubmittedNotification((message.getMessageObject()));
+            });
         });
         hazelcastInstance.<Long[]>getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleQuizStart(message.getMessageObject());
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleQuizStart(message.getMessageObject());
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelQuizStart(message.getMessageObject());
+            SecurityUtils.runAsSystem(() -> {
+                processCancelQuizStart(message.getMessageObject());
+            });
         });
 
         // Add listeners for slide unhide messages
         hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleSlideUnhide(message.getMessageObject());
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleSlideUnhide(message.getMessageObject());
+            });
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelSlideUnhide(message.getMessageObject());
+            SecurityUtils.runAsSystem(() -> {
+                processCancelSlideUnhide(message.getMessageObject());
+            });
         });
     }
 

@@ -109,7 +109,8 @@ public class ProgrammingTriggerService {
      */
     @Async
     public void triggerInstructorBuildForExercise(long exerciseId) throws EntityNotFoundException {
-        // Async can't access the authentication object. We need to do any security checks before this point.
+        // The caller's context reaches this thread when there is one; this stands in for the paths that have none.
+        // Security checks still belong before this point, since the stand-in is not a user.
         SecurityUtils.setAuthorizationObject();
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 

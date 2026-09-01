@@ -49,6 +49,7 @@ class AdminSbomResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @BeforeEach
     void setUp() {
+        userUtilService.addAdmin(TEST_PREFIX);
         osvRequestMockProvider.enableMockingOfRequests();
         // Clear vulnerability cache to ensure each test starts fresh
         var cache = cacheManager.getCache(VULNERABILITY_CACHE_NAME);

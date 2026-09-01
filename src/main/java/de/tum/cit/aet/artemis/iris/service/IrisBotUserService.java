@@ -60,6 +60,8 @@ public class IrisBotUserService {
      */
     public void ensureIrisBotUserExists() {
         try {
+            // Reachable from a request as well as from the scheduler, so the caller's principal is kept when there is
+            // one: forcing the system principal here would strip the acting user for the rest of that request.
             SecurityUtils.setAuthorizationObject();
             Optional<User> existingBot = userRepository.findOneWithAuthoritiesByLogin(IRIS_BOT_LOGIN);
             if (existingBot.isPresent()) {

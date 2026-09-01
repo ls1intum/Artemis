@@ -457,8 +457,9 @@ public class MetricsBean {
         }
         var startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         updateActiveAdminsMetrics();
 
@@ -477,8 +478,9 @@ public class MetricsBean {
         }
         var startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         var activeSince = ZonedDateTime.now().minusDays(14);
 
@@ -621,7 +623,7 @@ public class MetricsBean {
      * NOTE: only active on scheduling node
      */
     private void registerPublicArtemisMetrics() {
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
 
         activeUserMultiGauge = MultiGauge.builder("artemis.statistics.public.active_users").description("Number of active users within the last period, specified in days")
                 .register(meterRegistry);
@@ -657,8 +659,9 @@ public class MetricsBean {
 
         final long startDate = System.currentTimeMillis();
 
-        // The authorization object has to be set because this method is not called by a user but by the scheduler
-        SecurityUtils.setAuthorizationObject();
+        // Not called by a user but by the scheduler, on a pooled thread, so install the system principal rather
+        // than inherit whatever the previous task left behind.
+        SecurityUtils.setSystemAuthorizationObject();
 
         final ZonedDateTime now = ZonedDateTime.now();
 
