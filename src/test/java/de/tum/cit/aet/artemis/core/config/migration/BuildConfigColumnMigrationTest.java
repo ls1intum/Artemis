@@ -43,11 +43,12 @@ class BuildConfigColumnMigrationTest {
     void migrationIsGatedToMySqlOnly() throws Exception {
         Element changeSet = loadChangeSet();
 
-        Element preConditions = singleElement(changeSet, "preConditions");
+        Element preConditions = singleDirectChild(changeSet, "preConditions");
         assertThat(preConditions.getAttribute("onFail")).isEqualTo("MARK_RAN");
 
-        // The dbms guard must live inside that same preConditions block, not merely somewhere in the changeSet.
-        Element dbms = singleElement(preConditions, "dbms");
+        // The dbms guard must live inside that same preConditions block, not merely somewhere in the changeSet. It is
+        // looked up as a descendant because Liquibase may nest preconditions inside <and> / <or> wrappers.
+        Element dbms = singleDescendant(preConditions, "dbms");
         assertThat(dbms.getAttribute("type")).isEqualTo("mysql");
     }
 
@@ -55,7 +56,7 @@ class BuildConfigColumnMigrationTest {
     void migrationNarrowsBothColumnsToMediumText() throws Exception {
         Element changeSet = loadChangeSet();
 
-        List<Element> modifications = elements(changeSet, "modifyDataType");
+        List<Element> modifications = directChildElements(changeSet, "modifyDataType");
         assertThat(modifications).as("both columns must be narrowed").hasSize(2);
 
         List<String> columns = new ArrayList<>();
@@ -72,7 +73,7 @@ class BuildConfigColumnMigrationTest {
         Element changeSet = loadChangeSet();
 
         List<String> statements = new ArrayList<>();
-        for (Element sql : elements(changeSet, "sql")) {
+        for (Element sql : directChildElements(changeSet, "sql")) {
             statements.add(normalize(sql.getTextContent()));
         }
         assertThat(statements).as("one NULL-reset statement per column").hasSize(2);
@@ -120,29 +121,48 @@ class BuildConfigColumnMigrationTest {
 
     private List<String> directChildElementNames(Element parent) {
         List<String> names = new ArrayList<>();
-        NodeList children = parent.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            Node child = children.item(i);
-            if (child.getNodeType() == Node.ELEMENT_NODE) {
-                names.add(child.getNodeName());
-            }
+        for (Element child : directChildElements(parent)) {
+            names.add(child.getNodeName());
         }
         return names;
     }
 
-    private Element singleElement(Element parent, String tagName) {
-        List<Element> found = elements(parent, tagName);
-        assertThat(found).as("exactly one <%s> expected", tagName).hasSize(1);
+    private Element singleDirectChild(Element parent, String tagName) {
+        List<Element> found = directChildElements(parent, tagName);
+        assertThat(found).as("exactly one direct <%s> child expected", tagName).hasSize(1);
         return found.get(0);
     }
 
-    private List<Element> elements(Element parent, String tagName) {
+    /**
+     * Returns the migration operations of the given type as DIRECT children only, so operations nested in a
+     * {@code <rollback>} (or any other wrapper) cannot satisfy the forward-migration assertions.
+     */
+    private List<Element> directChildElements(Element parent, String tagName) {
         List<Element> result = new ArrayList<>();
-        NodeList nodes = parent.getElementsByTagName(tagName);
-        for (int i = 0; i < nodes.getLength(); i++) {
-            result.add((Element) nodes.item(i));
+        for (Element child : directChildElements(parent)) {
+            if (child.getNodeName().equals(tagName)) {
+                result.add(child);
+            }
         }
         return result;
+    }
+
+    private List<Element> directChildElements(Element parent) {
+        List<Element> result = new ArrayList<>();
+        NodeList children = parent.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node child = children.item(i);
+            if (child.getNodeType() == Node.ELEMENT_NODE) {
+                result.add((Element) child);
+            }
+        }
+        return result;
+    }
+
+    private Element singleDescendant(Element parent, String tagName) {
+        NodeList nodes = parent.getElementsByTagName(tagName);
+        assertThat(nodes.getLength()).as("exactly one <%s> descendant expected", tagName).isEqualTo(1);
+        return (Element) nodes.item(0);
     }
 
     private String normalize(String sql) {
