@@ -188,12 +188,12 @@ describe('Exam Management Component', () => {
         expect(comp.currentExam()).toEqual(exam);
     });
 
-    it('should not set currentExam when url contains /import/', () => {
+    it('should not set currentExam on direct exam import route', () => {
         comp.exams.set([exam]);
-        mockRouter.url = '/course-management/456/exams/import/123';
         mockRoute.snapshot.firstChild = {
             firstChild: undefined,
             paramMap: convertToParamMap({ examId: exam.id }),
+            routeConfig: { path: 'import/:examId' },
         };
 
         const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
@@ -203,6 +203,23 @@ describe('Exam Management Component', () => {
         comp.ngOnInit();
 
         expect(comp.currentExam()).toBeUndefined();
+    });
+
+    it('should set currentExam on exercise import route within an exam', () => {
+        comp.exams.set([exam]);
+        mockRoute.snapshot.firstChild = {
+            firstChild: undefined,
+            paramMap: convertToParamMap({ examId: exam.id, exerciseGroupId: 789, exerciseId: 101 }),
+            routeConfig: { path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/import/:exerciseId' },
+        };
+
+        const responseFakeCourse = { body: course as Course } as HttpResponse<Course>;
+        vi.spyOn(courseManagementService, 'find').mockReturnValue(of(responseFakeCourse));
+        vi.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of({ body: [exam] } as HttpResponse<Exam[]>));
+
+        comp.ngOnInit();
+
+        expect(comp.currentExam()).toEqual(exam);
     });
 
     it('should update currentExam on NavigationEnd event', () => {

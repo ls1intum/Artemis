@@ -162,6 +162,12 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         expect(component.expandedExams().size).toBe(0);
     });
 
+    it('should unsubscribe from router events when destroyed', () => {
+        expect(routerEventsSubject.observed).toBe(true);
+        fixture.destroy();
+        expect(routerEventsSubject.observed).toBe(false);
+    });
+
     it('should toggle exam on header click in onPanelClick', () => {
         const toggleSpy = vi.spyOn(component, 'toggleExam');
         const headerElement = document.createElement('div');
