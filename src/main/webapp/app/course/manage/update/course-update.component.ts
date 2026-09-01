@@ -715,6 +715,16 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Whether both dates are set but in the wrong order. Kept separate from a missing date, which the date picker
+     * reports itself through its required-field message.
+     *
+     * @return true when both dates exist and the start date is not before the end date
+     */
+    get isDateOrderInvalid(): boolean {
+        return !this.atLeastOneDateNotExisting() && !dayjs(this.course.startDate).isBefore(this.course.endDate);
+    }
+
+    /**
      * Returns whether the enrollment start and end dates are valid
      * @return true if the dates are valid
      */

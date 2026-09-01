@@ -143,10 +143,10 @@
                             id="field_startDate"
                             labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
                             formControlName="startDate"
-                            [error]="!isValidDate"
+                            [error]="isDateOrderInvalid"
                             [requiredField]="true"
                         />
-                        @if (!isValidDate) {
+                        @if (isDateOrderInvalid) {
                             <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.startDate.invalid"></span>
                         }
                     </div>
@@ -155,10 +155,10 @@
                             id="field_endDate"
                             labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
                             formControlName="endDate"
-                            [error]="!isValidDate"
+                            [error]="isDateOrderInvalid"
                             [requiredField]="true"
                         />
-                        @if (!isValidDate) {
+                        @if (isDateOrderInvalid) {
                             <span class="invalid-feedback" jhiTranslate="artemisApp.course.form.endDate.invalid"></span>
                         }
                     </div>

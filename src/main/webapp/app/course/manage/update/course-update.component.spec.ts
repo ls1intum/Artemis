@@ -821,6 +821,25 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('isDateOrderInvalid', () => {
+        it('should be false when both dates are empty, even though isValidDate is false', () => {
+            comp.course = new Course();
+            comp.course.startDate = undefined;
+            comp.course.endDate = undefined;
+
+            expect(comp.isDateOrderInvalid).toBe(false);
+            expect(comp.isValidDate).toBe(false);
+        });
+
+        it('should be true when the start date is after the end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+
+            expect(comp.isDateOrderInvalid).toBe(true);
+        });
+    });
+
     describe('isValidEnrollmentPeriod', () => {
         it('should handle valid dates', () => {
             comp.course = new Course();
