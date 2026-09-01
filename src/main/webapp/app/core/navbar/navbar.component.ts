@@ -784,23 +784,37 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['exams'], targetPath: [...baseStudentPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseStudentPath, 'exercises'] },
             { urlParts: ['lectures'], targetPath: [...baseStudentPath, 'lectures'] },
+            { urlParts: ['tutorial-groups', 'tutorial-groups-checklist'], targetPath: [...baseStudentPath, 'tutorial-groups'] },
             { urlParts: ['communication'], targetPath: [...baseStudentPath, 'communication'] },
             { urlParts: ['learning-path-management'], targetPath: [...baseStudentPath, 'learning-path'] },
             { urlParts: ['competency-management'], targetPath: [...baseStudentPath, 'competencies'] },
             { urlParts: ['faqs'], targetPath: [...baseStudentPath, 'faq'] },
-            { urlParts: ['tutorial-groups', 'tutorial-groups-checklist'], targetPath: [...baseStudentPath, 'tutorial-groups'] },
             { urlParts: ['course-statistics'], targetPath: [...baseStudentPath, 'statistics'] },
         ];
+
         const matchedRoute = routeMappings.find((route) => {
             return route.urlParts.some((urlPart) => url.includes(urlPart));
         });
-
-        if (matchedRoute) {
-            const isExerciseRoute = matchedRoute.urlParts.includes('exercises');
-            const exerciseId = isExerciseRoute ? /\/(?:[^/]+-)?exercises\/(\d+)(?:\/|$)/.exec(url)?.[1] : undefined;
-            return exerciseId ? [...matchedRoute.targetPath, exerciseId] : matchedRoute.targetPath;
+        if (!matchedRoute) {
+            return baseStudentPath;
         }
-        return baseStudentPath;
+
+        const exerciseId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'exercises', /\/(?:[^/]+-)?exercises\/(\d+)(?:\/|$)/);
+        if (exerciseId) {
+            return [...matchedRoute.targetPath, exerciseId];
+        }
+
+        const lectureId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'lectures', /\/lectures\/(\d+)(?:\/|$)/);
+        if (lectureId) {
+            return [...matchedRoute.targetPath, lectureId];
+        }
+
+        const tutorialGroupId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'tutorial-groups', /\/tutorial-groups\/(\d+)(?:\/|$)/);
+        if (tutorialGroupId) {
+            return [...matchedRoute.targetPath, tutorialGroupId];
+        }
+
+        return matchedRoute.targetPath;
     }
 
     private getManagementViewLinkFromRoute(url: string, courseId: string, isAtLeastEditor: boolean, isAtLeastInstructor: boolean): string[] {
@@ -809,27 +823,19 @@ export class NavbarComponent implements OnInit, OnDestroy {
             { urlParts: ['exams'], targetPath: [...baseManagementPath, 'exams'] },
             { urlParts: ['exercises'], targetPath: [...baseManagementPath, 'exercises'] },
             { urlParts: ['lectures'], targetPath: [...baseManagementPath, 'lectures'] },
+            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups'] },
             { urlParts: ['communication'], targetPath: [...baseManagementPath, 'communication'] },
             { urlParts: ['learning-path'], targetPath: [...baseManagementPath, 'learning-path-management'] },
             { urlParts: ['competencies'], targetPath: [...baseManagementPath, 'competency-management'] },
             { urlParts: ['faq'], targetPath: [...baseManagementPath, 'faqs'] },
             { urlParts: ['statistics'], targetPath: [...baseManagementPath, 'course-statistics'] },
-            { urlParts: ['tutorial-groups'], targetPath: [...baseManagementPath, 'tutorial-groups'] },
         ];
 
         const matchedRoute = routeMappings.find((route) => {
             return route.urlParts.some((urlPart) => url.includes(urlPart));
         });
-
         if (!matchedRoute) {
             return baseManagementPath;
-        }
-
-        const isExerciseRoute = matchedRoute.urlParts.includes('exercises');
-        const exerciseId = isExerciseRoute ? /\/exercises\/(?:[^/]+-exercises\/)?(\d+)(?:\/|$)/.exec(url)?.[1] : undefined;
-        const exercise = this.courseStorageService.getCourse(Number(courseId))?.exercises?.find((exercise) => exercise.id === Number(exerciseId));
-        if (exerciseId && exercise?.type) {
-            return [...baseManagementPath, `${exercise.type}-exercises`, exerciseId];
         }
 
         const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
@@ -840,7 +846,29 @@ export class NavbarComponent implements OnInit, OnDestroy {
             return baseManagementPath;
         }
 
+        const exerciseId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'exercises', /\/exercises\/(?:[^/]+-exercises\/)?(\d+)(?:\/|$)/);
+        if (exerciseId) {
+            const exerciseType = this.courseStorageService.getCourse(Number(courseId))?.exercises?.find((exercise) => exercise.id === Number(exerciseId))?.type;
+            if (exerciseType) {
+                return [...baseManagementPath, `${exerciseType}-exercises`, exerciseId];
+            }
+        }
+
+        const lectureId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'lectures', /\/lectures\/(\d+)(?:\/|$)/);
+        if (lectureId) {
+            return [...matchedRoute.targetPath, lectureId];
+        }
+
+        const tutorialGroupId = this.extractEntityIdIfMatchedRouteHasRoutePart(url, matchedRoute, 'tutorial-groups', /\/tutorial-groups\/(\d+)(?:\/|$)/);
+        if (tutorialGroupId) {
+            return [...matchedRoute.targetPath, tutorialGroupId];
+        }
+
         return matchedRoute.targetPath;
+    }
+
+    private extractEntityIdIfMatchedRouteHasRoutePart(url: string, matchedRoute: PerspectiveRouteMapping, routePart: string, idPattern: RegExp): string | undefined {
+        return matchedRoute.urlParts.includes(routePart) ? idPattern.exec(url)?.[1] : undefined;
     }
 
     toggleNavbar() {
@@ -994,4 +1022,9 @@ class Breadcrumb {
 interface PerspectiveSwitchLinks {
     studentViewLink: string[];
     managementViewLink: string[];
+}
+
+interface PerspectiveRouteMapping {
+    urlParts: string[];
+    targetPath: string[];
 }

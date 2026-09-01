@@ -275,7 +275,7 @@ describe('NavbarComponent', () => {
         it.each([
             ['/course-management/123/exams/1/edit', ['/courses', '123', 'exams']],
             ['/course-management/123/exercises/new', ['/courses', '123', 'exercises']],
-            ['/course-management/123/lectures/1/details', ['/courses', '123', 'lectures']],
+            ['/course-management/123/lectures/1/details', ['/courses', '123', 'lectures', '1']],
             ['/course-management/123/communication?conversationId=123', ['/courses', '123', 'communication']],
             ['/course-management/123/learning-path-management', ['/courses', '123', 'learning-path']],
             ['/course-management/123/competency-management', ['/courses', '123', 'competencies']],
@@ -302,6 +302,24 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exercises', '41']);
         });
 
+        it.each(['/course-management/123/lectures/41', '/course-management/123/lectures/41/edit', '/course-management/123/lectures/41/unit-management'])(
+            'should link from lecture management route %s to the student lecture detail',
+            (url) => {
+                router.setUrl(url);
+
+                expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'lectures', '41']);
+            },
+        );
+
+        it.each(['/course-management/123/tutorial-groups/41', '/course-management/123/tutorial-groups/41/edit', '/course-management/123/tutorial-groups/41/registrations'])(
+            'should link from tutorial group management route %s to the student tutorial group detail',
+            (url) => {
+                router.setUrl(url);
+
+                expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'tutorial-groups', '41']);
+            },
+        );
+
         it('should not treat a nested exam exercise as a course exercise', () => {
             router.setUrl('/course-management/123/exams/7/exercise-groups/8/text-exercises/41');
 
@@ -323,12 +341,13 @@ describe('NavbarComponent', () => {
         it.each([
             { url: '/courses/123/exams/1', course: tutorCourse, expected: ['/course-management', '123', 'exams'] },
             { url: '/courses/123/exercises/programming-exercises/1', course: tutorCourse, expected: ['/course-management', '123', 'exercises'] },
-            { url: '/courses/123/lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures'] },
+            { url: '/courses/123/lectures/1', course: editorCourse, expected: ['/course-management', '123', 'lectures', '1'] },
             { url: '/courses/123/communication?conversationId=123', course: tutorCourse, expected: ['/course-management', '123', 'communication'] },
             { url: '/courses/123/learning-path', course: instructorCourse, expected: ['/course-management', '123', 'learning-path-management'] },
             { url: '/courses/123/competencies', course: instructorCourse, expected: ['/course-management', '123', 'competency-management'] },
             { url: '/courses/123/faq', course: tutorCourse, expected: ['/course-management', '123', 'faqs'] },
             { url: '/courses/123/tutorial-groups', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups'] },
+            { url: '/courses/123/tutorial-groups/41', course: tutorCourse, expected: ['/course-management', '123', 'tutorial-groups', '41'] },
             { url: '/courses/123/statistics', course: tutorCourse, expected: ['/course-management', '123', 'course-statistics'] },
         ])('should link from student route $url to corresponding management route', ({ url, course, expected }) => {
             const accountService = TestBed.inject(AccountService);
