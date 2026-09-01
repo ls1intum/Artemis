@@ -121,7 +121,7 @@ export const Failed: Story = {
     },
 };
 
-/** A cancelled run has no running stage. Skipped stages read as "never ran": dashed marker, dashed connector. */
+/** A cancelled run has no running stage. Skipped stages carry the skip glyph and a dashed connector. */
 export const Cancelled: Story = {
     args: {
         steps: ladder('complete', 'complete', 'skipped', 'skipped', 'skipped'),

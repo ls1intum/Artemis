@@ -42,11 +42,16 @@
     --tum-ui-step-ink-color: var(--tumaet-ui-state-danger);
 }
 
-// "Never ran" reads from the shape, not only from the muted colour: the marker is dashed, and so is the connector
-// that leads into it.
+// A skipped stage keeps the solid marker every other stage has, so the ladder reads as one family and the state
+// comes from the skip glyph and the muted colour. "Never travelled" is carried by the dashed rail leading into it.
 :host([data-state='skipped']) {
-    --tum-ui-step-marker-border-style: dashed;
     --tum-ui-step-label-color: var(--tumaet-ui-muted-color);
+}
+
+// The skip glyph is a filled shape where the check and the cross are strokes, so at the same size it would carry more
+// ink than a finished stage and pull the eye to the part of the ladder that matters least.
+:host([data-state='skipped']) .tum-ui-step-marker {
+    font-size: calc(var(--tumaet-ui-font-size-xs) * 0.85);
 }
 
 :host(:has(+ tum-ui-step[data-state='current'])) {

@@ -80,7 +80,7 @@ describe('TumUiStepComponent', () => {
         withState('failed');
         expect(renderedIcon()).toBe('xmark');
         withState('skipped');
-        expect(renderedIcon()).toBe('slash');
+        expect(renderedIcon()).toBe('forward-step');
     });
 
     it('renders a hollow marker for a pending step and a running indicator for the current one', () => {

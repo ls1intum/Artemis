@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCheck, faSlash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faForwardStep, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TUM_UI_TRANSLATOR, TumUiTranslationKey } from '../i18n/tum-ui-translations';
 import { TumUiStepperService } from './tum-ui-stepper.service';
 
@@ -13,7 +13,7 @@ const STEP_STATE_ICON: Record<TumUiStepState, IconProp | undefined> = {
     current: undefined,
     complete: faCheck,
     failed: faXmark,
-    skipped: faSlash,
+    skipped: faForwardStep,
 };
 
 /** Package wording used when the consumer supplies no `stateLabel`, so the state is never colour-only. */

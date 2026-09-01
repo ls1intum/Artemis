@@ -293,7 +293,9 @@ export const StatusUnavailable: Story = {
         statusLabel: 'Status unavailable',
         elapsed: '—',
         cancellable: false,
-        stages: stageNames.map((label): RunStage => ({ label, state: 'skipped', stateLabel: 'Unknown' })),
+        // `pending` rather than `skipped`: the skip glyph would claim these stages did not run, and the truth is
+        // that nothing could be read about them at all. An empty ladder makes no claim; the dot and the message do.
+        stages: stageNames.map((label): RunStage => ({ label, state: 'pending', stateLabel: 'Unknown' })),
         artifacts: [],
         artifactsEmptyText: 'Artifacts cannot be listed while the status is unavailable.',
         outcome: {

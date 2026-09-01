@@ -126,19 +126,20 @@ state, for the live detail line of the running stage.
 
 State semantics:
 
-| State      | Marker                   | Connector leading into the stage |
-| ---------- | ------------------------ | -------------------------------- |
-| `pending`  | hollow circle, muted     | grey                             |
-| `current`  | spinner, primary         | primary                          |
-| `complete` | check, success           | success                          |
-| `failed`   | cross, danger            | danger                           |
-| `skipped`  | slash in a dashed circle | grey, dashed                     |
+| State      | Marker               | Connector leading into the stage |
+| ---------- | -------------------- | -------------------------------- |
+| `pending`  | hollow circle, muted | grey                             |
+| `current`  | spinner, primary     | primary                          |
+| `complete` | check, success       | success                          |
+| `failed`   | cross, danger        | danger                           |
+| `skipped`  | skip glyph, muted    | grey, dashed                     |
 
 The connector between two markers always carries the state of the stage it leads **into**, so a
 colour never runs past the stage that earned it: the ladder is green between finished stages, blue
-up to and stopping at the running one, and grey after it. `skipped` is drawn as GitHub draws a
-skipped job — a slash in a dashed circle, with a dashed connector — so "never ran" is legible
-without reading the label. Nothing is drawn before the first marker or after the last one.
+up to and stopping at the running one, and grey after it. `skipped` keeps the solid marker every
+other stage has and states itself with the standard skip glyph, the same way `complete` and
+`failed` use a check and a cross; the dashed connector leading into it is what says the ladder
+never travelled that far. Nothing is drawn before the first marker or after the last one.
 
 The connector is a two-pixel element inside a marker column that is exactly as wide as the marker.
 It is centred with `inset-inline-start: 50%` and `translateX(-50%)` (`inset-block-start` and
