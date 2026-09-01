@@ -245,6 +245,9 @@ public class UserTestService {
     public void deleteUsers(String currentUserLogin) throws Exception {
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        // The endpoint resolves the authenticated login against the database, so the caller has to hold the admin
+        // authority there. It also has to stay inside the deleted batch, otherwise "except self" asserts nothing.
+        userUtilService.addAdminAuthorityTo(currentUserLogin);
 
         var users = Stream.of("student1", "tutor1", "editor1", "instructor1")
                 .map(login -> userTestRepository.findOneByLogin(TEST_PREFIX + login).orElseThrow(() -> new IllegalArgumentException("User not found: " + TEST_PREFIX + login)))
