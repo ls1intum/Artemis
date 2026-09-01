@@ -240,12 +240,17 @@ public class InMemoryRepositoryBuilder {
      * @throws IOException if the ZIP entry cannot be written
      */
     private static void writeGitConfig(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
+        // symlinks = false because a zip has no symlink type: the working tree stores a symlink as a plain file holding
+        // the link target, while the index still records mode 120000. Without this, git on a symlink-capable system
+        // compares the two and reports a type change, so a freshly extracted archive would be dirty before it is
+        // touched.
         String config = """
                 [core]
                     repositoryformatversion = 0
                     filemode = true
                     bare = false
                     logallrefupdates = true
+                    symlinks = false
                 """;
         putGitBytes(zipOutputStream, createdDirs, "config", config.getBytes(StandardCharsets.UTF_8));
     }

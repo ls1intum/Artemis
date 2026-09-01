@@ -117,6 +117,15 @@ class InMemoryRepositoryBuilderTest {
 
         assertThat(ZipTestUtil.readEntryAsString(archive, "link.txt")).as("the symlink entry must carry its target as text").isEqualTo("target.txt");
         assertThat(ZipTestUtil.readEntryAsString(archive, "target.txt")).isEqualTo("the target");
+
+        // Content alone is not enough: the index still records mode 120000 for the entry, so unless the archive's config
+        // tells git that symlinks are stored as plain files, a freshly extracted repository reports a type change and
+        // the "usable repository" the export advertises is dirty before anyone has touched it.
+        Path extracted = tempDir.resolve("symlink-extracted");
+        ZipTestUtil.extractZip(archive, extracted);
+        try (Git exported = Git.open(extracted.toFile())) {
+            assertThat(exported.status().call().isClean()).as("a freshly extracted archive containing a symlink must not be dirty").isTrue();
+        }
     }
 
     /**
