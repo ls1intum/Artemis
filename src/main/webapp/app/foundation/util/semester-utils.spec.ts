@@ -270,6 +270,16 @@ describe('getSemesterDateRange', () => {
     it.each(['', undefined, 'WS2025', '2025W', 'nonsense'])('returns undefined for %s', (semester) => {
         expect(getSemesterDateRange(semester as string | undefined)).toBeUndefined();
     });
+
+    it('returns undefined when the year after the slash is not the following year', () => {
+        expect(getSemesterDateRange('WS20/99')).toBeUndefined();
+    });
+
+    it('handles a winter semester that wraps the century', () => {
+        const range = getSemesterDateRange('WS99/00')!;
+        expect(range.startDate.format('YYYY-MM-DD')).toBe('2099-10-01');
+        expect(range.endDate.format('YYYY-MM-DD')).toBe('2100-03-31');
+    });
 });
 
 describe('getSemesters with an extra value', () => {

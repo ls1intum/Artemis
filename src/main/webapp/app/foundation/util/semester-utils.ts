@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 
-const WINTER_SEMESTER_PATTERN = /^WS(\d{2})\/\d{2}$/;
+const WINTER_SEMESTER_PATTERN = /^WS(\d{2})\/(\d{2})$/;
 const SUMMER_SEMESTER_PATTERN = /^SS(\d{2})$/;
 
 export interface SemesterDateRange {
@@ -22,8 +22,12 @@ export function getSemesterDateRange(semester: string | undefined): SemesterDate
     }
     const winter = WINTER_SEMESTER_PATTERN.exec(semester);
     if (winter) {
-        // the second group is always the following year, so derive it rather than parsing it, which also avoids a century wrap
-        const startYear = 2000 + Number(winter[1]);
+        const startYearShort = Number(winter[1]);
+        // the pair after the slash must be the following year; anything else is not a semester we can map
+        if (Number(winter[2]) !== (startYearShort + 1) % 100) {
+            return undefined;
+        }
+        const startYear = 2000 + startYearShort;
         return {
             startDate: dayjs(new Date(startYear, 9, 1)).startOf('day'),
             endDate: dayjs(new Date(startYear + 1, 2, 31)).endOf('day'),
