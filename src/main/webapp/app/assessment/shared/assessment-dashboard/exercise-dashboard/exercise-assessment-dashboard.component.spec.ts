@@ -773,6 +773,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(secondCorrectionRound.querySelector('[data-testid="toggle-second-correction"]')).not.toBeNull();
     });
 
+    it('should not add configured correction rounds to test runs', () => {
+        comp.exam.set(exam);
+        comp.numberOfAssessmentsOfCorrectionRounds.update((correctionRounds) => correctionRounds.slice(0, 1));
+
+        expect(comp.correctionRoundIndices()).toEqual([0, 1]);
+
+        comp.isTestRun.set(true);
+
+        expect(comp.correctionRoundIndices()).toEqual([0]);
+    });
+
     it('should check if complaint locked', () => {
         comp.exercise.set(exercise);
         const complaintService = TestBed.inject(ComplaintService);
