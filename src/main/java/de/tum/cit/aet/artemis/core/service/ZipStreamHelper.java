@@ -7,9 +7,9 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -29,35 +29,37 @@ final class ZipStreamHelper {
 
     static void createZipFileFromPathStreamToMemory(ByteArrayOutputStream byteArrayOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter,
             Set<String> ignoredFileNames) throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(byteArrayOutputStream)) {
+        try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(byteArrayOutputStream)) {
             addPathsToZipStream(zipOutputStream, paths, pathsRoot, extraFilter, ignoredFileNames);
         }
     }
 
     static void createZipFileFromPathStream(Path zipFilePath, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter, Set<String> ignoredFileNames)
             throws IOException {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
+        try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(Files.newOutputStream(zipFilePath))) {
             addPathsToZipStream(zipOutputStream, paths, pathsRoot, extraFilter, ignoredFileNames);
         }
     }
 
-    static void addPathsToZipStream(ZipOutputStream zipOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter, Set<String> ignoredFileNames) {
+    static void addPathsToZipStream(ZipArchiveOutputStream zipOutputStream, Stream<Path> paths, Path pathsRoot, @Nullable Predicate<Path> extraFilter,
+            Set<String> ignoredFileNames) {
         try (Stream<Path> pathsStream = paths) {
             pathsStream.filter(path -> Files.isReadable(path) && !Files.isDirectory(path)).filter(path -> extraFilter == null || extraFilter.test(path))
                     .filter(path -> !ignoredFileNames.contains(path.getFileName().toString())).forEach(path -> {
                         String relativePath = pathsRoot.relativize(path).toString().replace('\\', '/');
-                        ZipEntry zipEntry = new ZipEntry(relativePath);
+                        ZipArchiveEntry zipEntry = new ZipArchiveEntry(relativePath);
+                        FileModeUtil.applyUnixMode(zipEntry, path);
                         copyToZipFile(zipOutputStream, path, zipEntry);
                     });
         }
     }
 
-    private static void copyToZipFile(ZipOutputStream zipOutputStream, Path path, ZipEntry zipEntry) {
+    private static void copyToZipFile(ZipArchiveOutputStream zipOutputStream, Path path, ZipArchiveEntry zipEntry) {
         try {
             if (Files.exists(path)) {
-                zipOutputStream.putNextEntry(zipEntry);
+                zipOutputStream.putArchiveEntry(zipEntry);
                 FileUtils.copyFile(path.toFile(), zipOutputStream);
-                zipOutputStream.closeEntry();
+                zipOutputStream.closeArchiveEntry();
             }
         }
         catch (IOException e) {

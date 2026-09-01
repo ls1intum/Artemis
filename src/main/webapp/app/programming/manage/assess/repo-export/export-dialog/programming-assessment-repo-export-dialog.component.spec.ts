@@ -122,6 +122,54 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(exportReposStub).toHaveBeenCalledOnce();
     });
 
+    // Reached from the exercise scores page, where the dialog opens with no preselected participations: exporting
+    // then sent an empty participant list and the server answered 404. Nothing is selected, so there is nothing to
+    // request in the first place.
+    it('should not send a request when neither participations nor participants are selected', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = '';
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+        const byParticipations = vi.spyOn(repoExportService, 'exportReposByParticipations');
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers');
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byParticipations).not.toHaveBeenCalled();
+        expect(byIdentifiers).not.toHaveBeenCalled();
+        expect(comp.exportInProgress).toBe(false);
+    });
+
+    // A list of only separators and blanks is the same as an empty selection and must not reach the server either.
+    it('should not send a request when the participant list holds only separators', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = ' , ,, ';
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers');
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byIdentifiers).not.toHaveBeenCalled();
+    });
+
+    // Blank entries around a real login must be dropped rather than sent as empty path segments.
+    it('should drop blank entries from the participant list', async () => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = ' ab12cde, ,cd34efg ';
+        const httpResponse = createBlobHttpResponse();
+        const byIdentifiers = vi.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+        fixture.detectChanges();
+        comp.repositoryExportOptions.exportAllParticipants = false;
+
+        comp.exportRepos();
+        await fixture.whenStable();
+
+        expect(byIdentifiers).toHaveBeenCalledWith(exerciseId, ['ab12cde', 'cd34efg'], comp.repositoryExportOptions);
+    });
+
     it('Should not change the ExportOptions during export', async () => {
         comp.participationIdList = [];
         comp.participantIdentifierList = 'ab12cde, cd34efg';

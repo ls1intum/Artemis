@@ -5,8 +5,10 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -14,6 +16,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,6 +124,40 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
         // empty directories must not disappear when replacing zip4j's addFolder behavior
         assertThat(entryNames).contains(contentDir.getFileName() + "/" + contentDir.relativize(emptyDir) + "/");
         assertThat(entryNames).doesNotContain(ignoredStandaloneFile.getFileName().toString(), contentDir.getFileName() + "/" + ignoredNestedFile.getFileName());
+    }
+
+    /**
+     * A repository exported this way carries an executable {@code gradlew}. Storing it without its permissions makes
+     * the extracted file non-executable, and because git tracks the executable bit, every extracted student repository
+     * reports a spurious modification before anyone has touched it.
+     */
+    @Test
+    void testCreateZipFile_keepsTheExecutableBit() throws IOException {
+        Path contentDir = tempFileUtilService.createTempDirectory("executable-content");
+        Path executableFile = contentDir.resolve("gradlew");
+        FileUtils.writeStringToFile(executableFile.toFile(), "#!/bin/sh\n", StandardCharsets.UTF_8);
+        Files.setPosixFilePermissions(executableFile, PosixFilePermissions.fromString("rwxr-xr-x"));
+        Path regularFile = contentDir.resolve("build.gradle");
+        FileUtils.writeStringToFile(regularFile.toFile(), "plugins {}\n", StandardCharsets.UTF_8);
+        Files.setPosixFilePermissions(regularFile, PosixFilePermissions.fromString("rw-r--r--"));
+
+        Path zipFilePath = tempFileUtilService.createTempDirectory("executable-zip").resolve("repository.zip");
+        zipFileService.createZipFile(zipFilePath, List.of(contentDir));
+
+        String prefix = contentDir.getFileName().toString() + "/";
+        assertThat(unixModeOf(zipFilePath, prefix + "gradlew")).as("the executable bit of gradlew must survive the export").isEqualTo(0755);
+        assertThat(unixModeOf(zipFilePath, prefix + "build.gradle")).as("a regular file must not become executable").isEqualTo(0644);
+    }
+
+    /**
+     * Returns the unix permission bits an entry was stored with, or 0 when the zip records none.
+     */
+    private static int unixModeOf(Path zipFilePath, String entryName) throws IOException {
+        try (org.apache.commons.compress.archivers.zip.ZipFile zipFile = org.apache.commons.compress.archivers.zip.ZipFile.builder().setPath(zipFilePath).get()) {
+            ZipArchiveEntry entry = zipFile.getEntry(entryName);
+            assertThat(entry).as("entry %s must be in the archive", entryName).isNotNull();
+            return entry.getUnixMode() & 0777;
+        }
     }
 
     @Test
