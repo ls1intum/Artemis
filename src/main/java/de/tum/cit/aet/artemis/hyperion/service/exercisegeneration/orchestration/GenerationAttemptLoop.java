@@ -331,7 +331,7 @@ class GenerationAttemptLoop {
             }
             // Snapshot the approved SPEC.md because each verification restore resets and must re-seed the tmpfs workspace.
             String specDocumentSnapshot = GenerationOrchestrationService.readSpecDocument(sandbox, sessionId);
-            progress.phase(Phase.VERIFYING, "Building the solution and starter code against the generated tests");
+            emitPhase(Phase.VERIFYING, "Building the solution and starter code against the generated tests");
             verification = verifyCandidate(artifacts, specDocumentSnapshot);
             emit(verification.report());
             if (!verification.mechanicallyVerified() && artifacts.extractionFailed().isEmpty()) {
@@ -346,7 +346,7 @@ class GenerationAttemptLoop {
 
             // Reviewing a candidate that cannot build or grade would spend provider quota on findings against artifacts the next attempt must replace anyway.
             if (verification.mechanicallyVerified()) {
-                progress.phase(Phase.REVIEWING, "Reviewing learning-goal coverage and testing deliberately broken solutions");
+                emitPhase(Phase.REVIEWING, "Reviewing learning-goal coverage and testing deliberately broken solutions");
                 GenerationOutcome cancelledDuringReview = reviewCandidate(attempt, artifacts, specDocumentSnapshot);
                 if (cancelledDuringReview != null) {
                     return cancelledDuringReview;
@@ -413,7 +413,7 @@ class GenerationAttemptLoop {
         recordAttempt();
         boolean stagedAttempt = useStagedGeneration && attempt == 1;
         if (stagedAttempt) {
-            progress.phase(Phase.DESIGNING, "Designing the learning task and creating the specification, code, and tests");
+            emitPhase(Phase.DESIGNING, "Designing the learning task and creating the specification, code, and tests");
             StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox,
                     sessionId, cancelled, usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies,
                     conceptSelectionApplies, spec -> {
@@ -926,6 +926,13 @@ class GenerationAttemptLoop {
 
     private void emit(String message) {
         GenerationOrchestrationService.emit(progress, message);
+    }
+
+    /** The stage an instructor sees, attached to the progress line that announces it. The sink is absent in headless runs. */
+    private void emitPhase(Phase phase, String message) {
+        if (progress != null) {
+            progress.phase(phase, message);
+        }
     }
 
     /** The same progress line every other stage emits, with this round's counts attached so the persisted transcript is machine-readable without parsing the prose. */

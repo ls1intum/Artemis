@@ -38,6 +38,10 @@ export function storybookStoryFromHash(hash: string): string {
             return 'feedback-progress-bar--docs';
         case 'feedback-progress-spinner':
             return 'feedback-progress-spinner--docs';
+        case 'feedback-status-dot':
+            return 'feedback-status-dot--docs';
+        case 'feedback-stepper':
+            return 'feedback-stepper--docs';
         case 'forms-autocomplete':
             return 'forms-autocomplete--docs';
         case 'forms-checkbox':
@@ -70,6 +74,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'overlays-popover--docs';
         case 'overlays-tooltip':
             return 'overlays-tooltip--docs';
+        case 'patterns-agent-run':
+            return 'patterns-agent-run--docs';
         default:
             return DEFAULT_STORY;
     }

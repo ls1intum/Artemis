@@ -14,10 +14,10 @@ class HyperionCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
         return 0;
     }
 
-    // Threshold 9: the inner enums of ExerciseGenerationEventDTO (Type, CompletionStatus, TerminationReason) and ChecklistActionRequestDTO (ActionType), plus the dto-package
-    // enums QuizQuestionGenerationLanguage, QuizQuestionGenerationType, GenerationMode, ExerciseGenerationAccountingState and ExerciseGenerationArtifactCompleteness.
+    // Threshold 10: the inner enums of ExerciseGenerationEventDTO (Type, Phase, CompletionStatus, TerminationReason) and ChecklistActionRequestDTO (ActionType), plus the
+    // dto-package enums QuizQuestionGenerationLanguage, QuizQuestionGenerationType, GenerationMode, ExerciseGenerationAccountingState and ExerciseGenerationArtifactCompleteness.
     @Override
     protected int dtoNameEndingThreshold() {
-        return 9;
+        return 10;
     }
 }
