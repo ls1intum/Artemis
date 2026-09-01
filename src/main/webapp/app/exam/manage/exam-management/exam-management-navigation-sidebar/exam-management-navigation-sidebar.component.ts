@@ -66,7 +66,7 @@ export class ExamManagementNavigationSidebarComponent {
                 filter((event) => event instanceof NavigationEnd),
                 takeUntilDestroyed(),
             )
-            .subscribe(this.expandActiveExam);
+            .subscribe(() => this.expandActiveExam());
 
         // Check initial URL
         this.expandActiveExam();
