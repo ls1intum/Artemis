@@ -19,7 +19,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
  * <li>The passkey must be super admin approved</li>
  * </ul>
  * <p>
- * If passkey authentication is disabled in the configuration, only the SUPER_ADMIN role check is enforced.
+ * If passkey authentication is disabled in the configuration, only the passkey requirements are skipped. The
+ * SUPER_ADMIN role and current-account validation remain enforced.
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
