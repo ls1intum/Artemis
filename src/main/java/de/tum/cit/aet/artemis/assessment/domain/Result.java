@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -90,6 +91,7 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     @ManyToOne
     @JsonIgnoreProperties({ "results" })
+    @JoinColumn(nullable = false)
     private Submission submission;
 
     // Stored as a Set: feedback ordering is not semantically meaningful — every consumer that cares about
@@ -105,6 +107,23 @@ public class Result extends DomainObject implements Comparable<Result> {
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     private Set<Feedback> feedbacks = new HashSet<>();
 
+    /**
+     * Automatic test-case feedback of programming exercises, split out of {@link #feedbacks} into a compact
+     * table (one row per executed test; credits and visibility derived from the test case). Only populated
+     * for programming-exercise results. See {@link TestCaseFeedback}.
+     */
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<TestCaseFeedback> testCaseFeedbacks = new HashSet<>();
+
+    /**
+     * Static-code-analysis feedback of programming exercises, split out of {@link #feedbacks} into a
+     * structured table. Only populated for programming-exercise results. See {@link ScaFeedback}.
+     */
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private Set<ScaFeedback> scaFeedbacks = new HashSet<>();
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn()
     private User assessor;
@@ -112,6 +131,17 @@ public class Result extends DomainObject implements Comparable<Result> {
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
     private AssessmentType assessmentType;
+
+    /**
+     * Which correction round this result belongs to: 0 for the first correction, 1 for the second, and so on. Null for
+     * automatic and Athena results, which are not correction rounds.
+     * <p>
+     * This used to be the position of the result inside its submission's result list, which is why that list carried an
+     * order column. Keeping the round here means a result can be written without loading and re-saving the whole
+     * submission just so Hibernate can renumber the list.
+     */
+    @Column(name = "correction_round")
+    private Integer correctionRound;
 
     @Column(name = "has_complaint")
     private Boolean hasComplaint;
@@ -376,6 +406,99 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
+     * Returns the live, mutable set of test-case feedback rows attached to this result. Only meaningful for
+     * programming-exercise results; empty otherwise.
+     *
+     * @return the live {@link Set} of test-case feedback; mutations are persisted by the Hibernate session
+     */
+    @JsonIgnore
+    public Set<TestCaseFeedback> getTestCaseFeedbacks() {
+        return testCaseFeedbacks;
+    }
+
+    /**
+     * Replaces the test-case feedback collection, wiring the owning side of each row. Orphaned rows are
+     * deleted via {@code orphanRemoval}. Replaces the field reference for the same lazy-initialization
+     * reason as {@link #setFeedbacks(Collection)}.
+     *
+     * @param testCaseFeedbacks the new collection (may be {@code null} or empty to clear)
+     */
+    public void setTestCaseFeedbacks(Collection<TestCaseFeedback> testCaseFeedbacks) {
+        Set<TestCaseFeedback> newSet = new HashSet<>();
+        if (testCaseFeedbacks != null) {
+            for (TestCaseFeedback feedback : testCaseFeedbacks) {
+                if (feedback == null) {
+                    continue;
+                }
+                feedback.setResult(this);
+                newSet.add(feedback);
+            }
+        }
+        this.testCaseFeedbacks = newSet;
+    }
+
+    /**
+     * Adds the given test-case feedback to this result, wiring the owning side. Requires the target
+     * collection to be initialized — use {@link #setTestCaseFeedbacks(Collection)} on detached results with
+     * uninitialized collections.
+     *
+     * @param feedback the test-case feedback to attach
+     */
+    public void addTestCaseFeedback(TestCaseFeedback feedback) {
+        if (feedback == null) {
+            return;
+        }
+        feedback.setResult(this);
+        this.testCaseFeedbacks.add(feedback);
+    }
+
+    /**
+     * Returns the live, mutable set of static-code-analysis feedback rows attached to this result. Only
+     * meaningful for programming-exercise results; empty otherwise.
+     *
+     * @return the live {@link Set} of SCA feedback; mutations are persisted by the Hibernate session
+     */
+    @JsonIgnore
+    public Set<ScaFeedback> getScaFeedbacks() {
+        return scaFeedbacks;
+    }
+
+    /**
+     * Replaces the SCA feedback collection, wiring the owning side of each row. See
+     * {@link #setTestCaseFeedbacks(Collection)}.
+     *
+     * @param scaFeedbacks the new collection (may be {@code null} or empty to clear)
+     */
+    public void setScaFeedbacks(Collection<ScaFeedback> scaFeedbacks) {
+        Set<ScaFeedback> newSet = new HashSet<>();
+        if (scaFeedbacks != null) {
+            for (ScaFeedback feedback : scaFeedbacks) {
+                if (feedback == null) {
+                    continue;
+                }
+                feedback.setResult(this);
+                newSet.add(feedback);
+            }
+        }
+        this.scaFeedbacks = newSet;
+    }
+
+    /**
+     * Adds the given SCA feedback to this result, wiring the owning side. Requires the target collection to
+     * be initialized — use {@link #setScaFeedbacks(Collection)} on detached results with uninitialized
+     * collections.
+     *
+     * @param feedback the SCA feedback to attach
+     */
+    public void addScaFeedback(ScaFeedback feedback) {
+        if (feedback == null) {
+            return;
+        }
+        feedback.setResult(this);
+        this.scaFeedbacks.add(feedback);
+    }
+
+    /**
      * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
      * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
@@ -455,6 +578,15 @@ public class Result extends DomainObject implements Comparable<Result> {
         return assessmentType;
     }
 
+    @Nullable
+    public Integer getCorrectionRound() {
+        return correctionRound;
+    }
+
+    public void setCorrectionRound(@Nullable Integer correctionRound) {
+        this.correctionRound = correctionRound;
+    }
+
     public Result assessmentType(AssessmentType assessmentType) {
         this.assessmentType = assessmentType;
         return this;
@@ -466,10 +598,13 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * Determines the assessment type based on the feedback types. Sets the type to SEMI_AUTOMATIC if any feedback is automatic or automatically adapted.
+     * Automatic test-case and SCA feedback live in their own collections, so their (initialized) presence also makes the result SEMI_AUTOMATIC.
      */
     public void determineAssessmentType() {
         setAssessmentType(AssessmentType.MANUAL);
-        if (feedbacks.stream().filter(Objects::nonNull)
+        boolean hasAutomaticTypedFeedback = (Hibernate.isInitialized(testCaseFeedbacks) && !testCaseFeedbacks.isEmpty())
+                || (Hibernate.isInitialized(scaFeedbacks) && !scaFeedbacks.isEmpty());
+        if (hasAutomaticTypedFeedback || feedbacks.stream().filter(Objects::nonNull)
                 .anyMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC || feedback.getType() == FeedbackType.AUTOMATIC_ADAPTED)) {
             setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
@@ -601,6 +736,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     public void filterSensitiveFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
         var filteredFeedback = createFilteredFeedbacks(removeHiddenFeedback, exercise);
         setFeedbacks(filteredFeedback);
+        filterSensitiveTypedFeedbacks(removeHiddenFeedback, exercise);
 
         if (exercise instanceof ProgrammingExercise) {
             updateTestCaseCount();
@@ -608,9 +744,39 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
+     * Removes test-case feedback that should not be passed to the student from the (initialized) typed
+     * collections: visibility is derived from the test case. Also strips test names when the exercise
+     * hides them. Like {@link #filterSensitiveFeedbacks(boolean, Exercise)}, this must only be called on
+     * detached entities right before serialization — on an attached entity {@code orphanRemoval} would
+     * delete the filtered rows.
+     *
+     * @param removeHiddenFeedback true if feedback with visibility 'after due date' should also be removed
+     * @param exercise             used to check if students can see the test case names
+     */
+    private void filterSensitiveTypedFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
+        if (Hibernate.isInitialized(testCaseFeedbacks)) {
+            var filtered = testCaseFeedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())
+                    .collect(Collectors.toCollection(HashSet::new));
+            this.testCaseFeedbacks = filtered;
+
+            if (exercise instanceof ProgrammingExercise programmingExercise && !Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
+                filtered.stream().filter(feedback -> feedback.getTestCase() != null).forEach(feedback -> feedback.getTestCase().setTestName(null));
+            }
+        }
+        // SCA feedback has no visibility concept (it is always visible together with the result)
+    }
+
+    /**
      * Updates the testCaseCount and passedTestCaseCount attributes after filtering the feedback.
+     * Test-case feedback lives in {@link #testCaseFeedbacks}; the legacy branch over {@link #feedbacks}
+     * only matters for unsaved results whose typed collections were not populated (e.g. in tests).
      */
     private void updateTestCaseCount() {
+        if (Hibernate.isInitialized(testCaseFeedbacks) && !testCaseFeedbacks.isEmpty()) {
+            setTestCaseCount(testCaseFeedbacks.size());
+            setPassedTestCaseCount((int) testCaseFeedbacks.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
+            return;
+        }
         var testCaseFeedback = feedbacks.stream().filter(Objects::nonNull).filter(Feedback::isTestFeedback).toList();
 
         // TODO: this is not good code!
@@ -682,11 +848,23 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Calculates the total score for programming exercises. Do not use it for other exercise types
+     * Calculates the total score for programming exercises. Do not use it for other exercise types.
+     * <p>
+     * Test-case feedback does not store credits — they are derived from the test-case configuration.
+     * Callers therefore pass the derived points per test case (see
+     * {@code ProgrammingExerciseGradingService#calculateTestCasePoints}).
      *
+     * @param pointsByTestCaseId derived points per test-case id for passed tests
      * @return calculated totalScore
      */
-    public Double calculateTotalPointsForProgrammingExercises() {
+    public Double calculateTotalPointsForProgrammingExercises(Map<Long, Double> pointsByTestCaseId) {
+        if (!Hibernate.isInitialized(testCaseFeedbacks) || !Hibernate.isInitialized(scaFeedbacks)) {
+            // The automatic points come from these collections, so scoring without them would not fail - it would
+            // quietly return a score that is missing every automatic test. Say so instead of relying on whether a
+            // session happens to be open (none of the callers runs in one).
+            throw new IllegalStateException(
+                    "The typed automatic feedback of result " + getId() + " has to be loaded before its score is calculated, see ProgrammingFeedbackSynthesizerService");
+        }
         double totalPoints = 0.0;
         double scoreAutomaticTests = 0.0;
         ProgrammingExercise programmingExercise = (ProgrammingExercise) submission.getParticipation().getExercise();
@@ -694,19 +872,29 @@ public class Result extends DomainObject implements Comparable<Result> {
         var gradingInstructions = new HashMap<Long, Integer>(); // { instructionId: noOfEncounters }
 
         for (Feedback feedback : feedbacks) {
+            if (feedback.isSynthesizedView()) {
+                // A view of one of the typed rows summed below. Counting it here as well would award the automatic
+                // points twice for every result that was passed through the synthesizer before being scored.
+                continue;
+            }
             if (feedback.getGradingInstruction() != null) {
                 totalPoints = feedback.computeTotalScore(totalPoints, gradingInstructions);
             }
             else {
-                // In case no structured grading instruction was applied on the assessment model we just sum the feedback credit. We differentiate between automatic test and
-                // automatic SCA feedback (automatic test feedback has to be capped)
-                if (feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()) {
-                    scoreAutomaticTests += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
-                }
-                else {
-                    totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
-                }
+                // In case no structured grading instruction was applied on the assessment model we just sum the feedback credit (manual, unreferenced, adapted, and legacy rows).
+                totalPoints += Objects.requireNonNullElse(feedback.getCredits(), 0.0);
             }
+        }
+
+        // Automatic test feedback: derived points for passed tests (capped below)
+        for (TestCaseFeedback testCaseFeedback : testCaseFeedbacks) {
+            if (Boolean.TRUE.equals(testCaseFeedback.isPositive()) && testCaseFeedback.getTestCase() != null) {
+                scoreAutomaticTests += pointsByTestCaseId.getOrDefault(testCaseFeedback.getTestCase().getId(), 0.0);
+            }
+        }
+        // Static code analysis feedback: negative credits from the graded penalty
+        for (ScaFeedback scaFeedback : scaFeedbacks) {
+            totalPoints += scaFeedback.getCredits();
         }
         /*
          * Calculated score from automatic test feedbacks, is capped to max points + bonus points, see also see {@link ProgrammingExerciseGradingService#updateScore}
@@ -728,12 +916,14 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * calculates the score for programming exercises
+     * Calculates and sets the score for programming exercises.
      *
-     * @param exercise the exercise
+     * @param exercise           the exercise
+     * @param pointsByTestCaseId derived points per test-case id for passed tests (see
+     *                               {@code ProgrammingExerciseGradingService#calculateTestCasePoints})
      */
-    public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise) {
-        double totalPoints = calculateTotalPointsForProgrammingExercises();
+    public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise, Map<Long, Double> pointsByTestCaseId) {
+        double totalPoints = calculateTotalPointsForProgrammingExercises(pointsByTestCaseId);
         setScore(totalPoints, exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember());
     }
 

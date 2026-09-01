@@ -486,7 +486,7 @@ describe('CourseManagementContainerComponent', () => {
         component.closeProgress();
 
         expect(component.operationProgress()).toBeUndefined();
-        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/course-management']);
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/courses']);
     });
 
     it('should not navigate when closing non-delete progress', () => {

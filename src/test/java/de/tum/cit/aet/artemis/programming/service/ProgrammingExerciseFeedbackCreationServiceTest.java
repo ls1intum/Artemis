@@ -9,7 +9,8 @@ import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -42,8 +43,11 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     }
 
     private String createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful) {
-        var activeTestCases = testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true);
-        return feedbackCreationService.createFeedbackFromTestCase(testName, testMessages, successful, programmingExercise, activeTestCases).getDetailText();
+        // pass all test cases (not only active ones) so that the message-processing pipeline is exercised
+        // regardless of the fixture's active flags
+        var testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        return feedbackCreationService.createFeedbackFromTestCase(testName, testMessages, successful, programmingExercise, testCases).map(TestCaseFeedback::getMessageText)
+                .orElse(null);
     }
 
     @Test
@@ -347,13 +351,11 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     void staticCodeAnalysisReportNotTruncatedFurther() {
         final StaticCodeAnalysisReportDTO scaReport = createStaticCodeAnalysisReportDTO();
 
-        final List<Feedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
+        final List<ScaFeedback> scaFeedbacks = feedbackCreationService.createFeedbackFromStaticCodeAnalysisReports(List.of(scaReport));
         assertThat(scaFeedbacks).hasSize(1);
 
-        final Feedback scaFeedback = scaFeedbacks.getFirst();
-        assertThat(scaFeedback.getHasLongFeedbackText()).isFalse();
-        assertThat(scaFeedback.getLongFeedback()).isEmpty();
-        assertThat(scaFeedback.getDetailText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)
+        final ScaFeedback scaFeedback = scaFeedbacks.getFirst();
+        assertThat(scaFeedback.getMessageText()).hasSizeGreaterThan(Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH)
                 .hasSizeLessThanOrEqualTo(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
     }
 
