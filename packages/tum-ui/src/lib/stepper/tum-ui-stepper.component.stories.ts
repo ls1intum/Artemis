@@ -1,43 +1,45 @@
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { expect } from 'storybook/test';
 
+import { TumUiButtonComponent } from '../button/tum-ui-button.component';
 import { TumUiStepComponent, TumUiStepState } from './tum-ui-step.component';
 import { TumUiStepperComponent, TumUiStepperOrientation } from './tum-ui-stepper.component';
 
 interface StepperStoryStep {
     label: string;
     state: TumUiStepState;
-    stateLabel: string;
     detail?: string;
 }
+
+type StepperStoryWidth = 'default' | 'narrow' | 'wide';
 
 interface StepperStoryArgs {
     orientation: TumUiStepperOrientation;
     ariaLabel: string;
     /** Width of the presentation wrapper, so a story can show how labels behave in a narrow column. */
-    width: string;
+    width: StepperStoryWidth;
     steps: readonly StepperStoryStep[];
 }
 
 const orientations: TumUiStepperOrientation[] = ['vertical', 'horizontal'];
 const states: TumUiStepState[] = ['pending', 'current', 'complete', 'failed', 'skipped'];
 
-const stages = ['Prepare workspace', 'Design', 'Build and test', 'Review and repair', 'Save'];
-
-const stateWord: Record<TumUiStepState, string> = {
-    pending: 'Pending',
-    current: 'Running',
-    complete: 'Complete',
-    failed: 'Failed',
-    skipped: 'Skipped',
+const widthClass: Record<StepperStoryWidth, string> = {
+    default: 'tum-ui-story-ladder',
+    narrow: 'tum-ui-story-ladder-narrow',
+    wide: 'tum-ui-story-ladder-wide',
 };
 
+const stages = ['Prepare workspace', 'Plan', 'Build and test', 'Review and repair', 'Publish'];
+
 function ladder(...ladderStates: TumUiStepState[]): StepperStoryStep[] {
-    return stages.map((label, index) => ({ label, state: ladderStates[index], stateLabel: stateWord[ladderStates[index]] }));
+    return stages.map((label, index) => ({ label, state: ladderStates[index] }));
 }
 
 const running = ladder('complete', 'current', 'pending', 'pending', 'pending');
-running[1].detail = 'Drafting the problem statement.';
+running[1].detail = 'Drafting the plan.';
 
 const meta = {
     title: 'Feedback/Stepper',
@@ -50,8 +52,8 @@ const meta = {
     ],
     args: {
         orientation: 'vertical',
-        ariaLabel: 'Generation progress',
-        width: '30rem',
+        ariaLabel: 'Run stages',
+        width: 'default',
         steps: running,
     },
     argTypes: {
@@ -59,26 +61,32 @@ const meta = {
             control: 'select',
             options: orientations,
         },
+        width: {
+            control: 'select',
+            options: Object.keys(widthClass),
+        },
         steps: {
             control: 'object',
-            description: `Stage list. Each entry carries one of: ${states.join(', ')}.`,
+            description: `Stage list. Each entry carries one of: ${states.join(', ')}. A stage without a \`stateLabel\` is named by the package state word.`,
         },
     },
     parameters: {
         layout: 'padded',
     },
     render: ({ width, ...args }) => ({
-        props: { ...args, width },
+        props: { ...args },
         template: `
-            <tum-ui-stepper [orientation]="orientation" [ariaLabel]="ariaLabel" [style.width]="width" style="max-width: 100%;">
-                @for (step of steps; track step.label) {
-                    <tum-ui-step [state]="step.state" [label]="step.label" [stateLabel]="step.stateLabel">
-                        @if (step.detail) {
-                            {{ step.detail }}
-                        }
-                    </tum-ui-step>
-                }
-            </tum-ui-stepper>
+            <div class="${widthClass[width]}">
+                <tum-ui-stepper [orientation]="orientation" [ariaLabel]="ariaLabel">
+                    @for (step of steps; track step.label) {
+                        <tum-ui-step [state]="step.state" [label]="step.label">
+                            @if (step.detail) {
+                                {{ step.detail }}
+                            }
+                        </tum-ui-step>
+                    }
+                </tum-ui-stepper>
+            </div>
         `,
     }),
 } satisfies Meta<StepperStoryArgs>;
@@ -89,28 +97,31 @@ type Story = StoryObj<StepperStoryArgs>;
 
 export const Default: Story = {};
 
-/** Nothing has started yet, so no stage claims progress. */
+/** Nothing has started yet, so no stage claims progress and every connector stays grey. */
 export const AllPending: Story = {
     args: {
         steps: ladder('pending', 'pending', 'pending', 'pending', 'pending'),
     },
 };
 
-/** The running stage carries the only spinner and the only `aria-current`. */
+/**
+ * The running stage carries the only spinner and the only `aria-current`. The travelled connector stops at that
+ * stage: the segment leading into it is blue, everything after it is grey.
+ */
 export const Running: Story = {
     args: {
         steps: ladder('complete', 'complete', 'current', 'pending', 'pending'),
     },
 };
 
-/** A failed stage stops the ladder: everything after it stays pending. */
+/** A failed stage stops the ladder: the connector into it is red, and everything after it stays pending. */
 export const Failed: Story = {
     args: {
         steps: ladder('complete', 'complete', 'failed', 'pending', 'pending'),
     },
 };
 
-/** A cancelled run has no running stage, so the ladder shows no spinner at all. */
+/** A cancelled run has no running stage. Skipped stages read as "never ran": dashed marker, dashed connector. */
 export const Cancelled: Story = {
     args: {
         steps: ladder('complete', 'complete', 'skipped', 'skipped', 'skipped'),
@@ -126,20 +137,168 @@ export const Complete: Story = {
 export const Horizontal: Story = {
     args: {
         orientation: 'horizontal',
-        width: '52rem',
+        width: 'wide',
     },
 };
 
 /** Long labels in a narrow column wrap; a stage name is never truncated and never overflows the ladder. */
 export const LongLabels: Story = {
     args: {
-        width: '17rem',
+        width: 'narrow',
         steps: [
-            { label: 'Arbeitsverzeichnis vorbereiten', state: 'complete', stateLabel: 'Complete' },
-            { label: 'Aufgabenstellung und Bewertungsschema entwerfen', state: 'current', stateLabel: 'Running', detail: 'Konsistenzprüfung der Teilaufgaben läuft.' },
-            { label: 'Referenzlösung erstellen und Testdurchlauf ausführen', state: 'pending', stateLabel: 'Pending' },
-            { label: 'Überprüfung und automatische Fehlerbehebung', state: 'pending', stateLabel: 'Pending' },
-            { label: 'Ergebnis speichern', state: 'pending', stateLabel: 'Pending' },
+            { label: 'Arbeitsverzeichnis vorbereiten', state: 'complete' },
+            { label: 'Aufgabenstellung und Bewertungsschema entwerfen', state: 'current', detail: 'Konsistenzprüfung der Teilschritte läuft.' },
+            { label: 'Referenzlösung erstellen und Testdurchlauf ausführen', state: 'pending' },
+            { label: 'Überprüfung und automatische Fehlerbehebung', state: 'pending' },
+            { label: 'Ergebnis speichern', state: 'pending' },
         ],
+    },
+};
+
+/**
+ * A stage name that is more than a string: the projected `[tumUiStepLabel]` slot renders in the same line as the
+ * `label` input, so a link or a count needs no second element and no wrapper around the step.
+ */
+export const ProjectedLabel: Story = {
+    render: () => ({
+        template: `
+            <div class="tum-ui-story-ladder">
+                <tum-ui-stepper ariaLabel="Run stages">
+                    <tum-ui-step state="complete" label="Prepare workspace" />
+                    <tum-ui-step state="failed">
+                        <span tumUiStepLabel>Build and test — <a href="#log">open log</a></span>
+                        2 of 18 checks failed.
+                    </tum-ui-step>
+                    <tum-ui-step label="Publish" />
+                </tum-ui-stepper>
+            </div>
+        `,
+    }),
+};
+
+const transitionTimeline: readonly TumUiStepState[][] = [
+    ['pending', 'pending', 'pending'],
+    ['current', 'pending', 'pending'],
+    ['complete', 'current', 'pending'],
+    ['complete', 'complete', 'current'],
+    ['complete', 'complete', 'failed'],
+];
+
+const transitionLabels = ['Prepare workspace', 'Build and test', 'Publish'];
+
+/** Story-only driver: it holds the ladder state so a reader can step through the transitions by hand. */
+@Component({
+    selector: 'tum-ui-stepper-transition-demo',
+    imports: [TumUiButtonComponent, TumUiStepComponent, TumUiStepperComponent],
+    template: `
+        <div class="tum-ui-story-stack tum-ui-story-ladder">
+            <div class="tum-ui-story-actions">
+                <tum-ui-button size="small" [disabled]="atEnd()" (clicked)="advance()">Advance</tum-ui-button>
+                <tum-ui-button size="small" severity="secondary" variant="outlined" [disabled]="atStart()" (clicked)="reset()">Reset</tum-ui-button>
+            </div>
+            <tum-ui-stepper ariaLabel="Run stages">
+                @for (label of labels; track label; let index = $index) {
+                    <tum-ui-step [state]="ladder()[index]" [label]="label" />
+                }
+            </tum-ui-stepper>
+        </div>
+    `,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+})
+class StepperTransitionDemoComponent {
+    protected readonly labels = transitionLabels;
+    protected readonly step = signal(0);
+    protected readonly ladder = computed(() => transitionTimeline[this.step()]);
+    protected readonly atStart = computed(() => this.step() === 0);
+    protected readonly atEnd = computed(() => this.step() === transitionTimeline.length - 1);
+
+    protected advance(): void {
+        this.step.update((step) => Math.min(step + 1, transitionTimeline.length - 1));
+    }
+
+    protected reset(): void {
+        this.step.set(0);
+    }
+}
+
+/**
+ * The transitions themselves: advancing the ladder moves a stage from pending through current and complete into
+ * failed, and every marker, label and connector fades between the two colours instead of snapping. Under
+ * `prefers-reduced-motion: reduce` the same change applies instantly.
+ */
+export const StateTransitions: Story = {
+    decorators: [moduleMetadata({ imports: [StepperTransitionDemoComponent] })],
+    render: () => ({
+        template: '<tum-ui-stepper-transition-demo />',
+    }),
+    play: async ({ canvas, userEvent }) => {
+        const stages = () => canvas.getAllByRole('listitem').map((stage) => stage.textContent?.replace(/\s+/g, ' ').trim());
+        const current = () => canvas.getAllByRole('listitem').filter((stage) => stage.getAttribute('aria-current') === 'step');
+
+        await expect(stages()[0]).toBe('Prepare workspace Not started');
+        await expect(current()).toHaveLength(0);
+
+        const advance = canvas.getByRole('button', { name: 'Advance' });
+        await userEvent.click(advance);
+        await expect(stages()[0]).toBe('Prepare workspace In progress');
+        await expect(current()).toHaveLength(1);
+
+        await userEvent.click(advance);
+        await expect(stages()[0]).toBe('Prepare workspace Done');
+        await expect(stages()[1]).toBe('Build and test In progress');
+
+        await userEvent.click(advance);
+        await userEvent.click(advance);
+        await expect(stages()[2]).toBe('Publish Failed');
+        await expect(current()).toHaveLength(0);
+    },
+};
+
+/**
+ * Measured proof that the connector is centred on the marker, in both orientations. The unit test cannot do this:
+ * jsdom performs no layout, so every rectangle it reports is empty. Here the marker and its connector are measured
+ * in a real browser and their centres must agree within half a pixel.
+ */
+export const ConnectorAlignment: Story = {
+    tags: ['!dev', '!autodocs'],
+    render: () => ({
+        template: `
+            <div class="tum-ui-story-stack tum-ui-story-ladder-wide">
+                <tum-ui-stepper ariaLabel="Vertical alignment probe" data-testid="vertical-ladder">
+                    <tum-ui-step state="complete" label="Prepare workspace">A detail line that makes this stage taller than its marker.</tum-ui-step>
+                    <tum-ui-step state="current" label="Build and test" />
+                </tum-ui-stepper>
+                <tum-ui-stepper orientation="horizontal" ariaLabel="Horizontal alignment probe" data-testid="horizontal-ladder">
+                    <tum-ui-step state="complete" label="Prepare workspace">A detail line that makes this stage taller than its marker.</tum-ui-step>
+                    <tum-ui-step state="current" label="Build and test" />
+                </tum-ui-stepper>
+            </div>
+        `,
+    }),
+    play: async ({ canvas }) => {
+        for (const [ladder, axis] of [
+            ['vertical-ladder', 'x'],
+            ['horizontal-ladder', 'y'],
+        ] as const) {
+            const step = canvas.getByTestId(ladder).querySelector('tum-ui-step')!;
+            const marker = step.querySelector('.tum-ui-step-marker')!.getBoundingClientRect();
+            const connector = step.querySelector('.tum-ui-step-connector')!.getBoundingClientRect();
+
+            const markerCentre = axis === 'x' ? marker.left + marker.width / 2 : marker.top + marker.height / 2;
+            const connectorCentre = axis === 'x' ? connector.left + connector.width / 2 : connector.top + connector.height / 2;
+
+            await expect(connector.width, `${ladder} connector is drawn`).toBeGreaterThan(0);
+            await expect(connector.height, `${ladder} connector is drawn`).toBeGreaterThan(0);
+            await expect(Math.abs(connectorCentre - markerCentre), `${ladder} connector centre`).toBeLessThanOrEqual(0.5);
+        }
+
+        // The connector of the leading step reaches the marker of the step it leads into, whatever the content height.
+        const [first, second] = Array.from(canvas.getByTestId('vertical-ladder').querySelectorAll('tum-ui-step'));
+        const connector = first.querySelector('.tum-ui-step-connector')!.getBoundingClientRect();
+        const nextMarker = second.querySelector('.tum-ui-step-marker')!.getBoundingClientRect();
+        await expect(Math.abs(connector.bottom - nextMarker.top), 'connector meets the next marker').toBeLessThanOrEqual(0.5);
+
+        // Nothing is drawn out of the stage that ends the ladder.
+        await expect(second.querySelector('.tum-ui-step-connector')!.getBoundingClientRect().height).toBe(0);
     },
 };

@@ -44,6 +44,10 @@ describe('TumUiStepperComponent', () => {
         expect(steps()).toHaveLength(4);
     });
 
+    it('keeps an explicit list role, which the steps depend on', () => {
+        expect(list().getAttribute('role')).toBe('list');
+    });
+
     it('exposes every step as a list item of that list', () => {
         for (const step of steps()) {
             expect(step.getAttribute('role')).toBe('listitem');

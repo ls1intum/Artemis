@@ -94,55 +94,93 @@ one stage of it. Use it when a job runs through a known, ordered list of stages 
 to see how far it got and where it stopped. Do not use it for navigation between form steps — it
 has no selection, no focus order, and no click target.
 
-The stepper renders a real `<ol>` and projects its steps into it. A step publishes `role="listitem"`
-rather than being an `<li>`, because package components use element selectors.
+The stepper renders a real `<ol>` with an explicit `role="list"` and projects its steps into it. A
+step publishes `role="listitem"` rather than being an `<li>`, because package components use element
+selectors — and the list keeps its role explicitly, because a flex `<ol>` without markers loses list
+semantics in some browsers and would orphan every step.
 
-| Component        | Input         | Type                                                            | Default      | Purpose                                                       |
-| ---------------- | ------------- | --------------------------------------------------------------- | ------------ | ------------------------------------------------------------- |
-| `tum-ui-stepper` | `orientation` | `'vertical' \| 'horizontal'`                                    | `'vertical'` | Layout direction of the ladder                                |
-| `tum-ui-stepper` | `ariaLabel`   | `string`                                                        | –            | Accessible name of the step list                              |
-| `tum-ui-step`    | `state`       | `'pending' \| 'current' \| 'complete' \| 'failed' \| 'skipped'` | `'pending'`  | Progress state of this stage                                  |
-| `tum-ui-step`    | `label`       | `string` (required)                                             | –            | Visible stage name                                            |
-| `tum-ui-step`    | `icon`        | `IconProp`                                                      | –            | Overrides the marker icon, including the running indicator    |
-| `tum-ui-step`    | `stateLabel`  | `string`                                                        | –            | Translated state word, rendered for assistive technology only |
+| Component        | Input         | Type                                                            | Default      | Purpose                                                           |
+| ---------------- | ------------- | --------------------------------------------------------------- | ------------ | ----------------------------------------------------------------- |
+| `tum-ui-stepper` | `orientation` | `'vertical' \| 'horizontal'`                                    | `'vertical'` | Layout direction of the ladder                                    |
+| `tum-ui-stepper` | `ariaLabel`   | `string`                                                        | –            | Accessible name of the step list                                  |
+| `tum-ui-step`    | `state`       | `'pending' \| 'current' \| 'complete' \| 'failed' \| 'skipped'` | `'pending'`  | Progress state of this stage                                      |
+| `tum-ui-step`    | `label`       | `string`                                                        | –            | Visible stage name; omit it when projecting `[tumUiStepLabel]`    |
+| `tum-ui-step`    | `icon`        | `IconProp`                                                      | –            | Overrides the marker icon, including the running indicator        |
+| `tum-ui-step`    | `stateLabel`  | `string`                                                        | package word | Overrides the hidden state word rendered for assistive technology |
 
-The default content slot of a step renders under the label in every state; use it for the live
-detail line of the running stage.
+A step has two content slots. `[tumUiStepLabel]` renders in the same line as `label`, for a stage
+name that needs a link, a count, or a badge; the default slot renders under the label in every
+state, for the live detail line of the running stage.
 
 ```html
 <tum-ui-stepper ariaLabel="Run stages">
-    <tum-ui-step state="complete" label="Prepare workspace" stateLabel="Complete" />
-    <tum-ui-step state="current" label="Design" stateLabel="Running">Drafting the task description.</tum-ui-step>
-    <tum-ui-step label="Save" stateLabel="Pending" />
+    <tum-ui-step state="complete" label="Prepare workspace" />
+    <tum-ui-step state="current" label="Design">Drafting the task description.</tum-ui-step>
+    <tum-ui-step state="failed">
+        <span tumUiStepLabel>Build and test — <a href="#log">open log</a></span>
+        2 of 18 checks failed.
+    </tum-ui-step>
+    <tum-ui-step label="Save" />
 </tum-ui-stepper>
 ```
+
+State semantics:
+
+| State      | Marker                   | Connector leading into the stage |
+| ---------- | ------------------------ | -------------------------------- |
+| `pending`  | hollow circle, muted     | grey                             |
+| `current`  | spinner, primary         | primary                          |
+| `complete` | check, success           | success                          |
+| `failed`   | cross, danger            | danger                           |
+| `skipped`  | slash in a dashed circle | grey, dashed                     |
+
+The connector between two markers always carries the state of the stage it leads **into**, so a
+colour never runs past the stage that earned it: the ladder is green between finished stages, blue
+up to and stopping at the running one, and grey after it. `skipped` is drawn as GitHub draws a
+skipped job — a slash in a dashed circle, with a dashed connector — so "never ran" is legible
+without reading the label. Nothing is drawn before the first marker or after the last one.
+
+The connector is a two-pixel element inside a marker column that is exactly as wide as the marker.
+It is centred with `inset-inline-start: 50%` and `translateX(-50%)` (`inset-block-start` and
+`translateY(-50%)` when horizontal), never with arithmetic on spacing tokens, and no negative
+margin takes part in the layout. `Feedback/Stepper → ConnectorAlignment` measures marker and
+connector in a real browser and fails if their centres drift apart.
 
 Accessibility:
 
 - Exactly one step may be `current`; it is the only one that carries `aria-current="step"`.
 - `pending` and `skipped` steps carry `aria-disabled="true"`.
-- Always pass `stateLabel` with the translated state word. It is appended to the accessible name
-  and is what keeps the state readable when the marker colour is not perceivable. The component
-  does not invent the word, because translation belongs to the host.
+- The hidden state word is always rendered. It falls back to the package translation
+  (`tumUi.step.pending`, `.current`, `.complete`, `.failed`, `.skipped`), so a forgotten
+  `stateLabel` can never leave the state conveyed by colour alone. Pass `stateLabel` when the
+  domain has a better word than "In progress".
 - The running marker spins only under `prefers-reduced-motion: no-preference`. Under reduced motion
-  it renders a static filled marker instead of a stopped spinner.
+  it renders a static filled marker instead of a stopped spinner, and the colour change between two
+  states applies instantly instead of fading over 180 ms.
 
 ### Status dot
 
-`tum-ui-status-dot` is the compact one-line state indicator: a coloured dot plus its state word.
+`tum-ui-status-dot` is the compact one-line state indicator: a dot plus its state word.
 Use it in a run header, a table cell, or a list row. Use `tum-ui-tag` instead when the state needs
 a filled badge, and `tum-ui-message` when the state needs an explanation.
 
-| Input       | Type                                                                      | Default | Purpose                                          |
-| ----------- | ------------------------------------------------------------------------- | ------- | ------------------------------------------------ |
-| `state`     | `'queued' \| 'running' \| 'success' \| 'warning' \| 'error' \| 'neutral'` | –       | Semantic state (required)                        |
-| `label`     | `string` (required)                                                       | –       | Translated state word; it is the accessible name |
-| `showLabel` | `boolean`                                                                 | `true`  | Renders the label visually                       |
-| `live`      | `boolean`                                                                 | `false` | Announces changes by adding `role="status"`      |
+| Input       | Type                                                                                   | Default | Purpose                                          |
+| ----------- | -------------------------------------------------------------------------------------- | ------- | ------------------------------------------------ |
+| `state`     | `'queued' \| 'running' \| 'success' \| 'warning' \| 'error' \| 'neutral' \| 'unknown'` | –       | Semantic state (required)                        |
+| `label`     | `string` (required)                                                                    | –       | Translated state word; it is the accessible name |
+| `showLabel` | `boolean`                                                                              | `true`  | Renders the label visually                       |
+| `live`      | `boolean`                                                                              | `false` | Announces changes by adding `role="status"`      |
 
 ```html
 <tum-ui-status-dot [state]="run.status" [label]="statusWord()" [live]="true" />
 ```
+
+Three states share the muted colour and are told apart by shape, so a static screenshot separates
+them:
+
+- `neutral` — no particular state, a filled dot.
+- `queued` — accepted and waiting, a ring with a slow pulse.
+- `unknown` — the state could not be determined, a dashed ring that deliberately never animates.
 
 Accessibility:
 
@@ -151,13 +189,17 @@ Accessibility:
 - Enable `live` only where the change is reported once. Ten dots on a page must not become ten
   live regions.
 - Only `queued` and `running` pulse, and only under `prefers-reduced-motion: no-preference`.
-  Terminal states carry no animation.
+  Terminal states, `neutral` and `unknown` carry no animation.
+- The colour change between two states fades over 180 ms and applies instantly under reduced
+  motion.
 
 ### Composing a run screen
 
-`Patterns/Agent Run` in Storybook composes card, status dot, stepper, panel, message, and button
-into the screen a long-running job needs, with one story per state a review has to sign off. It is
-a composition page: it adds no component and no styling contract, and product-specific labels stay
+`Patterns/Run status` in Storybook composes card, status dot, stepper, panel, message, and button
+into the screen a long-running job needs, with one story per state a review has to sign off — down
+to `StatusUnavailable`, where the dot is `unknown`, the ladder is dashed and motionless, and a
+message offers the one action that can close the gap. It is a composition page: it adds no
+component and no styling contract, its wording is product-neutral, and product-specific labels stay
 in the application.
 
 ## Consuming the package

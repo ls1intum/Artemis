@@ -1,4 +1,4 @@
-import { TumUiTableDirective, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumUiStatusDotComponent, TumUiTableDirective } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { GenerationSandboxJob } from 'app/localci/shared/entities/generation-sandbox-job.model';
@@ -20,7 +20,16 @@ interface GenerationJobRow {
     selector: 'jhi-hyperion-generation-jobs-table',
     templateUrl: './hyperion-generation-jobs-table.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [RouterLink, TumUiTableDirective, TumUiTagComponent, TranslateDirective, ArtemisTranslatePipe, ArtemisDatePipe, ArtemisDurationFromSecondsPipe, ArtemisTimeAgoPipe],
+    imports: [
+        RouterLink,
+        TumUiStatusDotComponent,
+        TumUiTableDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        ArtemisDatePipe,
+        ArtemisDurationFromSecondsPipe,
+        ArtemisTimeAgoPipe,
+    ],
 })
 export class HyperionGenerationJobsTableComponent {
     readonly jobs = input.required<GenerationSandboxJob[]>();

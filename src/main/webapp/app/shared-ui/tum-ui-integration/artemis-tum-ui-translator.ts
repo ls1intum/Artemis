@@ -37,6 +37,11 @@ const ARTEMIS_TRANSLATION_KEYS = {
     'tumUi.select.clear': 'entity.action.clear',
     'tumUi.select.empty': 'global.generic.emptyList',
     'tumUi.table.actions': 'entity.actions',
+    'tumUi.step.pending': 'global.stepState.pending',
+    'tumUi.step.current': 'global.stepState.current',
+    'tumUi.step.complete': 'global.stepState.complete',
+    'tumUi.step.failed': 'global.stepState.failed',
+    'tumUi.step.skipped': 'global.stepState.skipped',
     'tumUi.table.noResults': 'global.search.noResultsFound',
     'tumUi.table.searchPlaceholder': 'global.search.searchPlaceholder',
 } as const satisfies Readonly<Record<TumUiTranslationKey, string>>;

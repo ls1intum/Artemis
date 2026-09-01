@@ -17,6 +17,13 @@
             "expand": "Expand",
             "collapse": "Collapse"
         },
+        "stepState": {
+            "pending": "Not started",
+            "current": "In progress",
+            "complete": "Done",
+            "failed": "Failed",
+            "skipped": "Skipped"
+        },
         "weekdays": {
             "monday": "Monday",
             "tuesday": "Tuesday",

@@ -1,8 +1,69 @@
-// Only the in-flight states pulse, and only when motion is welcome. Terminal states carry no animation at all, so
-// there is nothing to switch off under reduced motion.
+// Colour alone never separates two states: `neutral`, `queued` and `unknown` share the muted colour and are told
+// apart by their shape — a filled dot, a ring, and a dashed ring.
+:host {
+    --tum-ui-status-dot-size: calc(var(--tumaet-ui-spacing) * 2);
+    --tum-ui-status-dot-fill: var(--tumaet-ui-muted-color);
+    --tum-ui-status-dot-edge: transparent;
+    --tum-ui-status-dot-edge-style: solid;
+}
+
+:host([data-state='running']) {
+    --tum-ui-status-dot-fill: var(--tumaet-ui-state-info);
+}
+
+:host([data-state='success']) {
+    --tum-ui-status-dot-fill: var(--tumaet-ui-state-success);
+}
+
+:host([data-state='warning']) {
+    --tum-ui-status-dot-fill: var(--tumaet-ui-state-warning);
+}
+
+:host([data-state='error']) {
+    --tum-ui-status-dot-fill: var(--tumaet-ui-state-danger);
+}
+
+// Waiting to start: an outline, not a filled dot, so a screenshot separates it from `neutral`. A ring needs a little
+// more room than a filled dot to read as a ring at all, hence the slightly larger size.
+:host([data-state='queued']) {
+    --tum-ui-status-dot-size: calc(var(--tumaet-ui-spacing) * 2.5);
+    --tum-ui-status-dot-fill: transparent;
+    --tum-ui-status-dot-edge: var(--tumaet-ui-muted-color);
+}
+
+// The state could not be determined — a broken outline, and deliberately motionless.
+:host([data-state='unknown']) {
+    --tum-ui-status-dot-size: calc(var(--tumaet-ui-spacing) * 2.5);
+    --tum-ui-status-dot-fill: transparent;
+    --tum-ui-status-dot-edge: var(--tumaet-ui-muted-color);
+    --tum-ui-status-dot-edge-style: dashed;
+}
+
+.tum-ui-status-dot-indicator {
+    display: block;
+    width: var(--tum-ui-status-dot-size);
+    height: var(--tum-ui-status-dot-size);
+    box-sizing: border-box;
+    flex-shrink: 0;
+    border: 2px var(--tum-ui-status-dot-edge-style) var(--tum-ui-status-dot-edge);
+    border-radius: 50%;
+    background: var(--tum-ui-status-dot-fill);
+}
+
+// Only the in-flight states pulse, and only when motion is welcome. Terminal states, `neutral` and `unknown` carry no
+// animation at all, so there is nothing to switch off under reduced motion.
 @media (prefers-reduced-motion: no-preference) {
-    .tum-ui-status-dot-pulse {
+    :host([data-state='queued']) .tum-ui-status-dot-indicator,
+    :host([data-state='running']) .tum-ui-status-dot-indicator {
         animation: tum-ui-status-dot-pulse 1.8s ease-in-out infinite;
+    }
+
+    // The pulse owns `opacity`, so the state change transitions only the colours.
+    .tum-ui-status-dot-indicator {
+        transition:
+            border-color 180ms ease-out,
+            background-color 180ms ease-out,
+            color 180ms ease-out;
     }
 }
 

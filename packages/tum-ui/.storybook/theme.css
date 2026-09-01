@@ -59,3 +59,126 @@ body {
     align-items: center;
     gap: calc(var(--tumaet-ui-spacing) * 2);
 }
+
+.tum-ui-story-stack {
+    display: flex;
+    max-width: 100%;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 5);
+}
+
+.tum-ui-story-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.tum-ui-story-legend {
+    display: grid;
+    justify-content: start;
+    column-gap: calc(var(--tumaet-ui-spacing) * 8);
+    grid-template-columns: auto auto;
+    row-gap: calc(var(--tumaet-ui-spacing) * 3);
+}
+
+.tum-ui-story-legend code {
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+}
+
+/* Presentation widths for the stepper stories: a stage ladder is read in a column, and the column width decides
+   whether its labels wrap. */
+.tum-ui-story-ladder {
+    width: 30rem;
+    max-width: 100%;
+}
+
+.tum-ui-story-ladder-narrow {
+    width: 17rem;
+    max-width: 100%;
+}
+
+.tum-ui-story-ladder-wide {
+    width: 52rem;
+    max-width: 100%;
+}
+
+/* Run status pattern: the frame a long-running job is reported in. */
+.tum-ui-story-run-card {
+    display: block;
+    width: min(46rem, 100%);
+}
+
+.tum-ui-story-run-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: calc(var(--tumaet-ui-spacing) * 5) calc(var(--tumaet-ui-spacing) * 5) 0;
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.tum-ui-story-run-identity {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.tum-ui-story-run-title {
+    margin: 0;
+    font-size: var(--tumaet-ui-font-size-lg);
+    font-weight: 600;
+    line-height: var(--tumaet-ui-line-height-lg);
+}
+
+.tum-ui-story-run-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.tum-ui-story-run-state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.tum-ui-story-run-elapsed {
+    color: var(--tumaet-ui-muted-color);
+    font-variant-numeric: tabular-nums;
+}
+
+.tum-ui-story-run-body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 5);
+}
+
+.tum-ui-story-run-artifacts {
+    display: flex;
+    margin: 0;
+    flex-direction: column;
+    padding: 0;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    list-style: none;
+}
+
+.tum-ui-story-run-artifact {
+    display: flex;
+    justify-content: space-between;
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.tum-ui-story-run-note,
+.tum-ui-story-run-artifact-meta {
+    margin: 0;
+    color: var(--tumaet-ui-muted-color);
+}
+
+.tum-ui-story-run-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}

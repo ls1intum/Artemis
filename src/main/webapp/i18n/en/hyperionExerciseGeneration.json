@@ -42,13 +42,6 @@
                     "review": "Review and repair",
                     "save": "Save the draft"
                 },
-                "stageState": {
-                    "pending": "Not started",
-                    "current": "In progress",
-                    "complete": "Done",
-                    "failed": "Failed",
-                    "skipped": "Skipped"
-                },
                 "status": {
                     "queued": "Waiting to start",
                     "running": "Generating",

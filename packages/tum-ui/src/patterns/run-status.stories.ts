@@ -1,70 +1,63 @@
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 
-import { TumUiButtonComponent } from '../button/tum-ui-button.component';
-import { TumUiCardComponent } from '../card/tum-ui-card.component';
-import { TumUiChipComponent } from '../chip/tum-ui-chip.component';
-import { TumUiMessageComponent, TumUiMessageSeverity } from '../message/tum-ui-message.component';
-import { TumUiPanelComponent } from '../panel/tum-ui-panel.component';
-import { TumUiStatusDotComponent, TumUiStatusDotState } from '../status-dot/tum-ui-status-dot.component';
-import { TumUiStepComponent, TumUiStepState } from './tum-ui-step.component';
-import { TumUiStepperComponent } from './tum-ui-stepper.component';
+import { TumUiButtonComponent } from '../lib/button/tum-ui-button.component';
+import { TumUiCardComponent } from '../lib/card/tum-ui-card.component';
+import { TumUiChipComponent } from '../lib/chip/tum-ui-chip.component';
+import { TumUiMessageComponent, TumUiMessageSeverity } from '../lib/message/tum-ui-message.component';
+import { TumUiPanelComponent } from '../lib/panel/tum-ui-panel.component';
+import { TumUiStatusDotComponent, TumUiStatusDotState } from '../lib/status-dot/tum-ui-status-dot.component';
+import { TumUiStepComponent, TumUiStepState } from '../lib/stepper/tum-ui-step.component';
+import { TumUiStepperComponent } from '../lib/stepper/tum-ui-stepper.component';
 
-interface AgentRunStage {
+interface RunStage {
     label: string;
     state: TumUiStepState;
-    stateLabel: string;
+    /** Overrides the package state word when the domain has a better one; the ladder falls back to the package word. */
+    stateLabel?: string;
     /** Live detail line rendered under the stage; the running stage uses it to report what it is doing right now. */
     detail?: string;
 }
 
-interface AgentRunArtifact {
+interface RunArtifact {
     name: string;
     meta: string;
 }
 
-interface AgentRunOutcome {
+interface RunOutcome {
     severity: TumUiMessageSeverity;
     text: string;
 }
 
-interface AgentRunStoryArgs {
+interface RunStatusStoryArgs {
     title: string;
-    meta: readonly string[];
+    tags: readonly string[];
     status: TumUiStatusDotState;
     statusLabel: string;
     elapsed: string;
     cancellable: boolean;
-    stages: readonly AgentRunStage[];
-    artifacts: readonly AgentRunArtifact[];
+    stages: readonly RunStage[];
+    artifacts: readonly RunArtifact[];
     artifactsEmptyText: string;
-    outcome?: AgentRunOutcome;
+    outcome?: RunOutcome;
     primaryAction?: string;
     secondaryAction?: string;
 }
 
-const stageNames = ['Prepare workspace', 'Design', 'Build and test', 'Review and repair', 'Save'];
+const stageNames = ['Prepare workspace', 'Plan', 'Build and test', 'Review and repair', 'Publish'];
 
-const stateWord: Record<TumUiStepState, string> = {
-    pending: 'Pending',
-    current: 'Running',
-    complete: 'Complete',
-    failed: 'Failed',
-    skipped: 'Skipped',
-};
-
-function stages(...states: TumUiStepState[]): AgentRunStage[] {
-    return stageNames.map((label, index) => ({ label, state: states[index], stateLabel: stateWord[states[index]] }));
+function stages(...states: TumUiStepState[]): RunStage[] {
+    return stageNames.map((label, index) => ({ label, state: states[index] }));
 }
 
-function withDetail(list: AgentRunStage[], label: string, detail: string): AgentRunStage[] {
+function withDetail(list: RunStage[], label: string, detail: string): RunStage[] {
     return list.map((stage) => (stage.label === label ? { ...stage, detail } : stage));
 }
 
-const artifacts: AgentRunArtifact[] = [
-    { name: 'Problem statement', meta: '4.2 kB' },
-    { name: 'Reference solution', meta: '11 files' },
-    { name: 'Test suite', meta: '18 cases' },
+const artifacts: RunArtifact[] = [
+    { name: 'Summary', meta: '4.2 kB' },
+    { name: 'Generated files', meta: '11 files' },
+    { name: 'Check report', meta: '18 cases' },
 ];
 
 /**
@@ -72,10 +65,11 @@ const artifacts: AgentRunArtifact[] = [
  * status, the stage ladder, a live detail line, an artifacts panel, and a terminal outcome block.
  *
  * This page adds no new component and no new styling contract. It exists so the states a reviewer has to sign off —
- * queued, running, repairing, and each way the run can end — can be compared side by side in both themes.
+ * queued, running, repairing, and each way the run can end — can be compared side by side in both themes. Everything
+ * a story arranges is a `.tum-ui-story-*` class in the Storybook theme, so no story invents component styling.
  */
 const meta = {
-    title: 'Patterns/Agent Run',
+    title: 'Patterns/Run status',
     decorators: [
         moduleMetadata({
             imports: [
@@ -91,13 +85,13 @@ const meta = {
         }),
     ],
     args: {
-        title: 'Generate exercise from outline',
-        meta: ['Programming', 'Java', 'Started 14:02'],
+        title: 'Nightly data import',
+        tags: ['Batch', 'High priority', 'Started 14:02'],
         status: 'running',
         statusLabel: 'Running',
         elapsed: '01:12',
         cancellable: true,
-        stages: withDetail(stages('complete', 'current', 'pending', 'pending', 'pending'), 'Design', 'Drafting the task description and the grading criteria.'),
+        stages: withDetail(stages('complete', 'current', 'pending', 'pending', 'pending'), 'Plan', 'Working out the order of the remaining stages.'),
         artifacts: [],
         artifactsEmptyText: 'Artifacts appear here as stages finish.',
     },
@@ -107,29 +101,26 @@ const meta = {
     render: (args) => ({
         props: { ...args },
         template: `
-            <tum-ui-card style="display: block; width: min(46rem, 100%);">
-                <div
-                    tumUiCardHeader
-                    style="display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.25rem 0;"
-                >
-                    <div style="display: flex; min-width: 0; flex-direction: column; gap: 0.5rem;">
-                        <h2 style="margin: 0; font-size: var(--tumaet-ui-font-size-lg); line-height: var(--tumaet-ui-line-height-lg); font-weight: 600;">{{ title }}</h2>
-                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                            @for (chip of meta; track chip) {
-                                <tum-ui-chip size="small" [label]="chip" />
+            <tum-ui-card class="tum-ui-story-run-card">
+                <div tumUiCardHeader class="tum-ui-story-run-header">
+                    <div class="tum-ui-story-run-identity">
+                        <h2 class="tum-ui-story-run-title">{{ title }}</h2>
+                        <div class="tum-ui-story-run-tags">
+                            @for (tag of tags; track tag) {
+                                <tum-ui-chip size="small" [label]="tag" />
                             }
                         </div>
                     </div>
-                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem;">
+                    <div class="tum-ui-story-run-state">
                         <tum-ui-status-dot [state]="status" [label]="statusLabel" [live]="true" />
-                        <span style="color: var(--tumaet-ui-muted-color); font-variant-numeric: tabular-nums;">{{ elapsed }}</span>
+                        <span class="tum-ui-story-run-elapsed">{{ elapsed }}</span>
                         @if (cancellable) {
                             <tum-ui-button severity="secondary" variant="outlined" size="small">Cancel</tum-ui-button>
                         }
                     </div>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                <div class="tum-ui-story-run-body">
                     <tum-ui-stepper ariaLabel="Run stages">
                         @for (stage of stages; track stage.label) {
                             <tum-ui-step [state]="stage.state" [label]="stage.label" [stateLabel]="stage.stateLabel">
@@ -142,16 +133,16 @@ const meta = {
 
                     <tum-ui-panel header="Artifacts" [toggleable]="true">
                         @if (artifacts.length) {
-                            <ul style="display: flex; flex-direction: column; gap: 0.5rem; margin: 0; padding: 0; list-style: none;">
+                            <ul class="tum-ui-story-run-artifacts">
                                 @for (artifact of artifacts; track artifact.name) {
-                                    <li style="display: flex; justify-content: space-between; gap: 1rem;">
+                                    <li class="tum-ui-story-run-artifact">
                                         <span>{{ artifact.name }}</span>
-                                        <span style="color: var(--tumaet-ui-muted-color);">{{ artifact.meta }}</span>
+                                        <span class="tum-ui-story-run-artifact-meta">{{ artifact.meta }}</span>
                                     </li>
                                 }
                             </ul>
                         } @else {
-                            <p style="margin: 0; color: var(--tumaet-ui-muted-color);">{{ artifactsEmptyText }}</p>
+                            <p class="tum-ui-story-run-note">{{ artifactsEmptyText }}</p>
                         }
                     </tum-ui-panel>
 
@@ -161,7 +152,7 @@ const meta = {
                 </div>
 
                 @if (primaryAction || secondaryAction) {
-                    <div tumUiCardFooter style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                    <div tumUiCardFooter class="tum-ui-story-run-footer">
                         @if (secondaryAction) {
                             <tum-ui-button severity="secondary" variant="text">{{ secondaryAction }}</tum-ui-button>
                         }
@@ -173,30 +164,32 @@ const meta = {
             </tum-ui-card>
         `,
     }),
-} satisfies Meta<AgentRunStoryArgs>;
+} satisfies Meta<RunStatusStoryArgs>;
 
 export default meta;
 
-type Story = StoryObj<AgentRunStoryArgs>;
+type Story = StoryObj<RunStatusStoryArgs>;
 
-/** Accepted but not started: nothing claims progress, and the only action is to take the run back. */
+/** Accepted but not started: the status dot is a ring, nothing claims progress, and the only action is to take the run back. */
 export const Queued: Story = {
     args: {
         status: 'queued',
         statusLabel: 'Queued',
         elapsed: '00:00',
+        // Nothing has started, so a start time on the header would contradict the state the ladder is showing.
+        tags: ['Batch', 'High priority', 'Queued 14:02'],
         stages: stages('pending', 'pending', 'pending', 'pending', 'pending'),
     },
 };
 
-/** The one running stage owns the spinner, the live detail line, and `aria-current`. */
+/** The one running stage owns the spinner, the live detail line, and `aria-current`; the blue rail stops there. */
 export const Running: Story = {};
 
 /** Repair is a stage, not a separate mode: the ladder keeps its shape and the detail line carries the attempt count. */
 export const RepairLoop: Story = {
     args: {
         elapsed: '03:47',
-        stages: withDetail(stages('complete', 'complete', 'complete', 'current', 'pending'), 'Review and repair', 'Attempt 2 of 3 — re-running the two failing test cases.'),
+        stages: withDetail(stages('complete', 'complete', 'complete', 'current', 'pending'), 'Review and repair', 'Attempt 2 of 3 — re-running the two failing checks.'),
         artifacts,
     },
 };
@@ -243,7 +236,7 @@ export const PartiallySaved: Story = {
         statusLabel: 'Partially saved',
         elapsed: '06:03',
         cancellable: false,
-        stages: withDetail(stages('complete', 'complete', 'complete', 'complete', 'complete'), 'Save', '3 of 5 artifacts stored.'),
+        stages: withDetail(stages('complete', 'complete', 'complete', 'complete', 'complete'), 'Publish', '3 of 5 artifacts stored.'),
         artifacts,
         outcome: {
             severity: 'warn',
@@ -289,20 +282,24 @@ export const Cancelled: Story = {
     },
 };
 
-/** Progress could not be read. The screen says so instead of showing a stale ladder as if it were live. */
+/**
+ * Progress could not be read. Every signal says "we cannot tell you" rather than "nothing is happening": the status
+ * dot is a broken ring, the whole ladder is dashed and muted, nothing spins anywhere, the elapsed time is a dash, and
+ * the outcome block explains the gap and offers the one action that can close it.
+ */
 export const StatusUnavailable: Story = {
     args: {
-        status: 'neutral',
+        status: 'unknown',
         statusLabel: 'Status unavailable',
         elapsed: '—',
         cancellable: false,
-        stages: stageNames.map((label) => ({ label, state: 'pending', stateLabel: 'Unknown' })),
+        stages: stageNames.map((label): RunStage => ({ label, state: 'skipped', stateLabel: 'Unknown' })),
         artifacts: [],
         artifactsEmptyText: 'Artifacts cannot be listed while the status is unavailable.',
         outcome: {
             severity: 'secondary',
-            text: 'The run may still be going. Its progress could not be read — reload to try again.',
+            text: 'The run may still be going. Its progress could not be read, so nothing below is live.',
         },
-        primaryAction: 'Reload status',
+        primaryAction: 'Retry',
     },
 };

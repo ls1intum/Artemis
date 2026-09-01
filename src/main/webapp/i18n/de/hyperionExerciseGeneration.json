@@ -42,13 +42,6 @@
                     "review": "Prüfen und nachbessern",
                     "save": "Entwurf speichern"
                 },
-                "stageState": {
-                    "pending": "Noch nicht begonnen",
-                    "current": "Läuft",
-                    "complete": "Fertig",
-                    "failed": "Fehlgeschlagen",
-                    "skipped": "Übersprungen"
-                },
                 "status": {
                     "queued": "Wartet auf den Start",
                     "running": "Generierung läuft",

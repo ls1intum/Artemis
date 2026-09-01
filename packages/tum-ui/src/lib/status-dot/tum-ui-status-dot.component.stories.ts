@@ -1,9 +1,20 @@
 import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
+import { expect } from 'storybook/test';
 
 import { TumUiStatusDotComponent, TumUiStatusDotState } from './tum-ui-status-dot.component';
 
-const states: TumUiStatusDotState[] = ['queued', 'running', 'success', 'warning', 'error', 'neutral'];
+const states: TumUiStatusDotState[] = ['queued', 'running', 'success', 'warning', 'error', 'neutral', 'unknown'];
+
+const stateWord: Record<TumUiStatusDotState, string> = {
+    queued: 'Queued',
+    running: 'Running',
+    success: 'Succeeded',
+    warning: 'Needs review',
+    error: 'Failed',
+    neutral: 'Not run',
+    unknown: 'Status unavailable',
+};
 
 const meta = {
     title: 'Feedback/Status Dot',
@@ -28,6 +39,7 @@ type Story = StoryObj<TumUiStatusDotComponent>;
 
 export const Default: Story = {};
 
+/** Accepted but not started yet: a ring rather than a filled dot, so a screenshot separates it from `neutral`. */
 export const Queued: Story = {
     args: {
         state: 'queued',
@@ -63,10 +75,22 @@ export const Error: Story = {
     },
 };
 
+/** No particular state — the thing exists and is simply not running. */
 export const Neutral: Story = {
     args: {
         state: 'neutral',
-        label: 'Unknown',
+        label: 'Not run',
+    },
+};
+
+/**
+ * The state could not be determined. It is not `neutral` ("no particular state") and not `queued` ("waiting"): the
+ * broken ring says the reading itself failed, and it deliberately does not animate.
+ */
+export const Unknown: Story = {
+    args: {
+        state: 'unknown',
+        label: 'Status unavailable',
     },
 };
 
@@ -81,7 +105,8 @@ export const WithoutLabel: Story = {
 
 /**
  * Review sheet: every state next to its word. A reviewer reads down the column to confirm that the state is legible
- * without the colour, in both themes.
+ * without the colour, in both themes. The three muted states differ in shape: `neutral` is filled, `queued` is a
+ * ring, `unknown` is a broken ring.
  */
 export const AllStates: Story = {
     decorators: [moduleMetadata({ imports: [TumUiStatusDotComponent] })],
@@ -90,22 +115,60 @@ export const AllStates: Story = {
     },
     render: () => ({
         props: {
-            rows: [
-                { state: 'queued', label: 'Queued' },
-                { state: 'running', label: 'Running' },
-                { state: 'success', label: 'Succeeded' },
-                { state: 'warning', label: 'Needs review' },
-                { state: 'error', label: 'Failed' },
-                { state: 'neutral', label: 'Unknown' },
-            ],
+            rows: states.map((state) => ({ state, label: stateWord[state] })),
         },
         template: `
-            <div style="display: grid; grid-template-columns: auto auto; justify-content: start; column-gap: 2rem; row-gap: 0.75rem;">
+            <div class="tum-ui-story-legend">
                 @for (row of rows; track row.state) {
                     <tum-ui-status-dot [state]="row.state" [label]="row.label" />
-                    <code style="font-size: 0.875rem; color: var(--tumaet-ui-muted-color);">{{ row.state }}</code>
+                    <code>{{ row.state }}</code>
                 }
             </div>
         `,
     }),
+};
+
+/**
+ * Measured proof of the two contracts a unit test in jsdom cannot see: the muted states differ in shape, and only the
+ * in-flight states animate. jsdom evaluates neither `var()` substitution nor `prefers-reduced-motion`, so the check
+ * runs in a real browser instead.
+ */
+export const StateShapes: Story = {
+    tags: ['!dev', '!autodocs'],
+    decorators: [moduleMetadata({ imports: [TumUiStatusDotComponent] })],
+    parameters: {
+        layout: 'padded',
+    },
+    render: () => ({
+        props: {
+            rows: states.map((state) => ({ state, label: stateWord[state] })),
+        },
+        template: `
+            <div class="tum-ui-story-legend">
+                @for (row of rows; track row.state) {
+                    <tum-ui-status-dot [state]="row.state" [label]="row.label" [attr.data-testid]="'dot-' + row.state" />
+                    <code>{{ row.state }}</code>
+                }
+            </div>
+        `,
+    }),
+    play: async ({ canvas }) => {
+        const indicator = (state: TumUiStatusDotState) => getComputedStyle(canvas.getByTestId(`dot-${state}`).querySelector('.tum-ui-status-dot-indicator')!);
+
+        const neutral = indicator('neutral');
+        const queued = indicator('queued');
+        const unknown = indicator('unknown');
+
+        await expect(neutral.backgroundColor, 'neutral is filled').not.toBe('rgba(0, 0, 0, 0)');
+        await expect(queued.backgroundColor, 'queued is hollow').toBe('rgba(0, 0, 0, 0)');
+        await expect(unknown.backgroundColor, 'unknown is hollow').toBe('rgba(0, 0, 0, 0)');
+        await expect(queued.borderTopStyle, 'queued is a solid ring').toBe('solid');
+        await expect(unknown.borderTopStyle, 'unknown is a broken ring').toBe('dashed');
+        await expect(queued.borderTopColor, 'the ring carries the muted colour').toBe(neutral.backgroundColor);
+
+        for (const state of states) {
+            const animated = indicator(state).animationName !== 'none';
+            await expect(animated, `${state} animates`).toBe(state === 'queued' || state === 'running');
+        }
+    },
 };

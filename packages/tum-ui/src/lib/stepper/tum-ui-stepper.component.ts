@@ -15,6 +15,9 @@ const STEPPER_LIST_ORIENTATION: Record<TumUiStepperOrientation, string> = {
  *
  * The stepper is a status display, not a navigation control: its steps are neither clickable nor focusable. Project
  * `tum-ui-step` children in the order they run.
+ *
+ * The list keeps an explicit `role="list"`, because a flex `<ol>` without markers loses its list semantics in some
+ * browsers and every step depends on that list to carry its `role="listitem"`.
  */
 @Component({
     selector: 'tum-ui-stepper',

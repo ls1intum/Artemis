@@ -26,11 +26,14 @@
                 @let job = row.job;
                 <tr [attr.data-stale]="job.stale || null">
                     <td>
-                        @if (job.stale) {
-                            <tum-ui-tag severity="warn" [value]="'artemisApp.buildAgents.generationSandboxes.snapshotUnavailable' | artemisTranslate" />
-                        } @else {
-                            <tum-ui-tag severity="info" [value]="'artemisApp.buildAgents.generationSandboxes.running' | artemisTranslate" />
-                        }
+                        <!-- The same status vocabulary the instructor-facing run surfaces use, so one job reads the same everywhere. -->
+                        <tum-ui-status-dot
+                            [state]="job.stale ? 'unknown' : 'running'"
+                            [label]="
+                                (job.stale ? 'artemisApp.buildAgents.generationSandboxes.snapshotUnavailable' : 'artemisApp.buildAgents.generationSandboxes.running')
+                                    | artemisTranslate
+                            "
+                        />
                     </td>
                     <td>
                         @if (job.courseId) {

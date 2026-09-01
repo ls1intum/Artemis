@@ -47,19 +47,22 @@ describe('TumUiStatusDotComponent', () => {
         expect(host.getAttribute('role')).toBe('status');
     });
 
-    it('animates the in-flight states only', () => {
-        for (const state of ['queued', 'running'] as const) {
+    it('reports every state it supports for styling and inspection', () => {
+        for (const state of ['queued', 'running', 'success', 'warning', 'error', 'neutral', 'unknown'] as const) {
             withState(state);
-            expect(dot().classList).toContain('tum-ui-status-dot-pulse');
-        }
-        for (const state of ['success', 'warning', 'error', 'neutral'] as const) {
-            withState(state);
-            expect(dot().classList).not.toContain('tum-ui-status-dot-pulse');
+            expect(host.getAttribute('data-state')).toBe(state);
         }
     });
 
-    it('reports the state for styling and inspection', () => {
-        withState('error');
-        expect(host.getAttribute('data-state')).toBe('error');
+    // The dot's shape and its pulse are pure CSS driven by `data-state`, and jsdom evaluates neither `@media
+    // (prefers-reduced-motion)` nor `var()` substitution. The visible contract — `neutral` filled, `queued` a ring,
+    // `unknown` a dashed ring, and only `queued` and `running` animating — is asserted in a real browser by the
+    // `StateShapes` play function of the status dot story.
+    it('keeps one indicator element whatever the state is', () => {
+        for (const state of ['queued', 'running', 'success', 'warning', 'error', 'neutral', 'unknown'] as const) {
+            withState(state);
+            expect(fixture.debugElement.queryAll(By.css('.tum-ui-status-dot-indicator'))).toHaveLength(1);
+            expect(dot().getAttribute('aria-hidden')).toBe('true');
+        }
     });
 });

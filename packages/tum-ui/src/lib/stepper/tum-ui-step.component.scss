@@ -1,19 +1,167 @@
-// The marker sits on top of the connector line and masks it with its opaque background. Half the marker (three
-// spacing units) plus half the two-pixel line centres it on the connector, in both writing directions.
-.tum-ui-step-marker {
-    margin-inline-start: calc(-1 * (var(--tumaet-ui-spacing) * 3 + 1px));
+// The step is a two-track grid: a marker track that is exactly as wide as the marker, and the content track. The
+// connector lives inside the marker track, so centring it is `inset-inline-start: 50%` plus `translateX(-50%)` and
+// never arithmetic on spacing tokens. No negative margin takes part in the layout.
+:host {
+    --tum-ui-step-marker-size: calc(var(--tumaet-ui-spacing) * 6);
+    --tum-ui-step-connector-width: 2px;
+
+    // Distance the connector travels out of this step into the next one; it is also the step's trailing padding.
+    --tum-ui-step-lead: calc(var(--tumaet-ui-spacing) * 6);
+    --tum-ui-step-edge-color: var(--tumaet-ui-border-color);
+    --tum-ui-step-ink-color: var(--tumaet-ui-muted-color);
+    --tum-ui-step-label-color: var(--tumaet-ui-text-color);
+    --tum-ui-step-marker-border-style: solid;
+
+    // The connector reports the state of the step it leads into, so it is set from the following sibling below.
+    --tum-ui-step-connector-color: var(--tumaet-ui-border-color);
+    --tum-ui-step-connector-style: solid;
+
+    display: grid;
+    grid-template-columns: var(--tum-ui-step-marker-size) 1fr;
+    column-gap: calc(var(--tumaet-ui-spacing) * 3);
+    padding-block-end: var(--tum-ui-step-lead);
 }
 
-:host([data-orientation='horizontal']) .tum-ui-step-marker {
-    margin-inline-start: 0;
-    margin-block-start: calc(-1 * (var(--tumaet-ui-spacing) * 3 + 1px));
-}
-
-// The trailing connector would point at a step that does not exist. Keeping the border and only clearing its colour
-// preserves the layout of the last step.
-:host(:last-child) {
-    border-color: transparent;
+// A step that ends the ladder has nothing to lead into, so it carries neither the trailing room nor a connector.
+:host(:not(:has(+ tum-ui-step))) {
     padding-block-end: 0;
+}
+
+:host([data-state='current']) {
+    --tum-ui-step-edge-color: var(--tumaet-ui-primary-color);
+    --tum-ui-step-ink-color: var(--tumaet-ui-primary-color);
+}
+
+:host([data-state='complete']) {
+    --tum-ui-step-edge-color: var(--tumaet-ui-state-success);
+    --tum-ui-step-ink-color: var(--tumaet-ui-state-success);
+}
+
+:host([data-state='failed']) {
+    --tum-ui-step-edge-color: var(--tumaet-ui-state-danger);
+    --tum-ui-step-ink-color: var(--tumaet-ui-state-danger);
+}
+
+// "Never ran" reads from the shape, not only from the muted colour: the marker is dashed, and so is the connector
+// that leads into it.
+:host([data-state='skipped']) {
+    --tum-ui-step-marker-border-style: dashed;
+    --tum-ui-step-label-color: var(--tumaet-ui-muted-color);
+}
+
+:host(:has(+ tum-ui-step[data-state='current'])) {
+    --tum-ui-step-connector-color: var(--tumaet-ui-primary-color);
+}
+
+:host(:has(+ tum-ui-step[data-state='complete'])) {
+    --tum-ui-step-connector-color: var(--tumaet-ui-state-success);
+}
+
+:host(:has(+ tum-ui-step[data-state='failed'])) {
+    --tum-ui-step-connector-color: var(--tumaet-ui-state-danger);
+}
+
+:host(:has(+ tum-ui-step[data-state='skipped'])) {
+    --tum-ui-step-connector-style: dashed;
+}
+
+.tum-ui-step-marker-track {
+    position: relative;
+    grid-column: 1;
+    grid-row: 1;
+    width: var(--tum-ui-step-marker-size);
+}
+
+.tum-ui-step-marker {
+    display: flex;
+    box-sizing: border-box;
+    width: var(--tum-ui-step-marker-size);
+    height: var(--tum-ui-step-marker-size);
+    align-items: center;
+    justify-content: center;
+    border-width: 2px;
+    border-style: var(--tum-ui-step-marker-border-style);
+    border-color: var(--tum-ui-step-edge-color);
+    border-radius: 50%;
+    background: var(--tumaet-ui-content-background);
+    color: var(--tum-ui-step-ink-color);
+    font-size: var(--tumaet-ui-font-size-xs);
+    line-height: var(--tumaet-ui-line-height-xs);
+}
+
+// The connector is the leading edge of the step it points at. It starts at the trailing edge of this step's marker
+// and ends at the top of the next one, which is `--tum-ui-step-lead` past this step's content box.
+.tum-ui-step-connector {
+    position: absolute;
+    display: none;
+    box-sizing: border-box;
+    width: var(--tum-ui-step-connector-width);
+    border-inline-start: var(--tum-ui-step-connector-width) var(--tum-ui-step-connector-style) var(--tum-ui-step-connector-color);
+    inset-block-start: var(--tum-ui-step-marker-size);
+    inset-block-end: calc(-1 * var(--tum-ui-step-lead));
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+}
+
+.tum-ui-step-content {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: var(--tumaet-ui-spacing);
+}
+
+.tum-ui-step-label {
+    color: var(--tum-ui-step-label-color);
+    font-weight: 500;
+    overflow-wrap: break-word;
+}
+
+.tum-ui-step-detail {
+    min-width: 0;
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+    line-height: var(--tumaet-ui-line-height-sm);
+}
+
+.tum-ui-step-detail:empty {
+    display: none;
+}
+
+:host(:has(+ tum-ui-step)) .tum-ui-step-connector {
+    display: block;
+}
+
+:host([data-orientation='horizontal']) {
+    min-width: calc(var(--tumaet-ui-spacing) * 40);
+    flex: 1 1 0%;
+    grid-template-columns: 1fr;
+    grid-template-rows: var(--tum-ui-step-marker-size) auto;
+    padding-block-end: 0;
+    padding-inline-end: var(--tum-ui-step-lead);
+    row-gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+:host([data-orientation='horizontal']:not(:has(+ tum-ui-step))) {
+    padding-inline-end: 0;
+}
+
+:host([data-orientation='horizontal']) .tum-ui-step-marker-track {
+    grid-row: 1;
+    width: auto;
+    height: var(--tum-ui-step-marker-size);
+}
+
+// Same construction rotated: the connector is centred on the marker row by `inset-block-start: 50%` and
+// `translateY(-50%)`, and it travels towards the inline end, so it follows the writing direction.
+:host([data-orientation='horizontal']) .tum-ui-step-connector {
+    width: auto;
+    height: var(--tum-ui-step-connector-width);
+    border-inline-start: 0 none;
+    border-block-start: var(--tum-ui-step-connector-width) var(--tum-ui-step-connector-style) var(--tum-ui-step-connector-color);
+    inset-block-start: 50%;
+    inset-block-end: auto;
+    inset-inline: var(--tum-ui-step-marker-size) calc(-1 * var(--tum-ui-step-lead));
+    transform: translateY(-50%);
 }
 
 // A `current` marker animates only when motion is welcome. Under reduced motion a frozen spinner would read as a
@@ -43,6 +191,16 @@
 
     .tum-ui-step-running-fallback {
         display: none;
+    }
+
+    // A stage that changes state fades from one colour into the next instead of snapping.
+    .tum-ui-step-marker,
+    .tum-ui-step-connector,
+    .tum-ui-step-label {
+        transition:
+            border-color 180ms ease-out,
+            background-color 180ms ease-out,
+            color 180ms ease-out;
     }
 }
 
