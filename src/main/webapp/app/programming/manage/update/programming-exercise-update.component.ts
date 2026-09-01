@@ -1287,12 +1287,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      * Fallback for the grading form as a whole. It stays because the timeline it contains has no validator of
      * its own, so this is the only thing that reports an invalid timeline. It is skipped when a grading field
      * already reported the cause, which would otherwise duplicate e.g. missing points as a second, vaguer line.
+     *
+     * An invalid timeline is not such a duplicate: it is a separate cause that only this message names. Suppressing
+     * it alongside a field error would hide the timeline until that field is fixed, so the deduplication applies
+     * only when the named fields are the whole story.
      */
     private validateGradingSection(validationErrorReasons: ValidationReason[]): void {
         if (this.exerciseGradingComponent()?.formValid !== false) {
             return;
         }
-        if (validationErrorReasons.some((reason) => GRADING_FIELD_REASON_KEYS.has(reason.translateKey))) {
+        const isLifecycleInvalid = this.exerciseGradingComponent()?.lifecycleComponent()?.formValid === false;
+        if (!isLifecycleInvalid && validationErrorReasons.some((reason) => GRADING_FIELD_REASON_KEYS.has(reason.translateKey))) {
             return;
         }
         validationErrorReasons.push({
