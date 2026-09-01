@@ -891,10 +891,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // not overwrite them with null (null mode breaks the non-null column, null score fails validateGeneralSettings).
         var src = ImportTextExerciseDTO.of(textExercise);
         var dto = new ImportTextExerciseDTO(src.id(), src.title(), src.channelName(), src.shortName(), src.problemStatement(), src.categories(), src.difficulty(), null,
-                src.maxPoints(), src.bonusPoints(), null, src.allowComplaintsForAutomaticAssessments(), src.allowFeedbackRequests(), src.presentationScoreEnabled(),
-                src.secondCorrectionEnabled(), src.gradingInstructions(), src.releaseDate(), src.startDate(), src.dueDate(), src.assessmentDueDate(),
-                src.exampleSolutionPublicationDate(), src.exampleSolution(), src.courseId(), src.exerciseGroupId(), src.teamAssignmentConfig(), src.plagiarismDetectionConfig(),
-                src.gradingCriteria(), src.competencyLinks());
+                src.maxPoints(), src.bonusPoints(), null, src.allowComplaintsForAutomaticAssessments(), src.presentationScoreEnabled(), src.secondCorrectionEnabled(),
+                src.gradingInstructions(), src.releaseDate(), src.startDate(), src.dueDate(), src.assessmentDueDate(), src.exampleSolutionPublicationDate(), src.exampleSolution(),
+                src.courseId(), src.exerciseGroupId(), src.teamAssignmentConfig(), src.plagiarismDetectionConfig(), src.gradingCriteria(), src.competencyLinks());
 
         var newTextExerciseDto = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), dto, TextExerciseResponseDTO.class,
                 HttpStatus.CREATED);

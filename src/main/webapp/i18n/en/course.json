@@ -244,7 +244,7 @@
                 },
                 "gradingFeedbackEnabled": {
                     "label": "Grading Feedback Suggestions Enabled",
-                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for all exercise types."
+                    "tooltip": "When enabled, Athena will suggest feedback to tutors on submissions for text, programming, and modeling exercises."
                 },
                 "formativeFeedbackEnabled": {
                     "label": "Formative Feedback Requests Enabled",

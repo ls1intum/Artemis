@@ -1217,7 +1217,7 @@ public class CourseTestService {
         assertThat(projectedTeamExercise.studentAssignedTeamIdComputed()).isTrue();
 
         var projectedProgrammingExercise = exercises.exercises().stream().filter(exercise -> exercise.id().equals(programmingExercise.getId())).findFirst().orElseThrow();
-        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("manual feedback action remains available").isTrue();
+        assertThat(projectedProgrammingExercise.allowFeedbackRequests()).as("reflects the course-level Athena formative feedback setting").isTrue();
         assertThat(projectedProgrammingExercise.allowOnlineEditor()).as("online editor action remains available").isTrue();
         assertThat(projectedProgrammingExercise.allowOfflineIde()).as("clone and offline IDE actions remain available").isTrue();
         assertThat(projectedProgrammingExercise.studentParticipations()).as("graded and practice programming participations are projected").hasSize(2);
