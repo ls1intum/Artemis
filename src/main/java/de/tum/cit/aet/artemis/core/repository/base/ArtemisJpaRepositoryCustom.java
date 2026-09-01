@@ -109,4 +109,18 @@ public interface ArtemisJpaRepositoryCustom<T, ID> {
      * @return the entity that satisfies the given specification
      */
     T findOneBySpecOrElseThrow(Specification<T> spec);
+
+    /**
+     * Re-read the entity's state from the database, discarding whatever the current persistence context holds for it,
+     * including already-initialized collections.
+     *
+     * <p>
+     * Needed where a pessimistic lock has to actually protect a collection: a query does NOT refresh an entity that
+     * the persistence context already manages, so re-running a fetch join after taking the lock hands back the same
+     * stale collection. Use this sparingly and only right after acquiring a lock; the default way to read data stays
+     * a plain repository query.
+     *
+     * @param entity the managed entity to refresh
+     */
+    void refresh(T entity);
 }

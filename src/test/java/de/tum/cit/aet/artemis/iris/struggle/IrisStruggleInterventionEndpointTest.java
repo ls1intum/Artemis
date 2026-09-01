@@ -136,4 +136,45 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
         var invalid = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, episode, null, null, null);
         request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", invalid, HttpStatus.BAD_REQUEST);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void blankEpisodeId_isBadRequest() throws Exception {
+        // A blank id passes @Size but would be persisted verbatim by an active decision and then key the
+        // terminal-outcome gate: once one blank-id episode ended, every later blank-id intervention for this student
+        // would be read as that same finished episode and suppressed. Reject it at the boundary (400) instead.
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
+                List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
+        var episode = new StruggleEpisodeDTO("   ", true, List.of());
+        var invalid = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, episode, null, null, null);
+        request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", invalid, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void emptyEpisodeId_isBadRequest() throws Exception {
+        // Same rejection for the empty string, the shape a client bug produces most easily.
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
+                List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
+        var episode = new StruggleEpisodeDTO("", true, List.of());
+        var invalid = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, episode, null, null, null);
+        request.postWithoutResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", invalid, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void episodeWithoutId_isStillAccepted() throws Exception {
+        // The episode object stays optional as a whole: a null id keeps the legacy no-episode behaviour and must not
+        // be swept up by the blank rejection above.
+        irisRequestMockProvider.mockStruggleInterventionResponse(dto -> assertThat(dto.struggleSignal()).isNotNull());
+
+        var signal = new PyrisStruggleSignalDTO(new PyrisStruggleSignalDTO.AlertDTO(540, "FM", List.of("FM"), 0.72, "armed", false, false),
+                List.of(new PyrisStruggleSignalDTO.TickDTO(530, 0.6)), 540);
+        var episode = new StruggleEpisodeDTO(null, true, List.of());
+        var body = new IrisStruggleInterventionRequestDTO(signal, Map.of("src/Sum.java", "class Sum {}"), null, episode, null, null, null);
+
+        var accepted = request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/struggle-intervention", body, StruggleInterventionAcceptedDTO.class,
+                HttpStatus.ACCEPTED);
+        assertThat(accepted.accepted()).isTrue();
+    }
 }

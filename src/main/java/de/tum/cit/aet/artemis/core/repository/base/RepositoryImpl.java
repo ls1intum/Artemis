@@ -19,6 +19,8 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> implements
 
     private final JpaEntityInformation<T, ?> entityInformation;
 
+    private final EntityManager entityManager;
+
     /**
      * Creates a new {@link SimpleJpaRepository} to manage objects of the given {@link JpaEntityInformation}.
      *
@@ -28,6 +30,7 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> implements
     public RepositoryImpl(JpaEntityInformation<T, ?> entityInformation, EntityManager entityManager) {
         super(entityInformation, entityManager);
         this.entityInformation = entityInformation;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -169,5 +172,17 @@ public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> implements
     public T findOneBySpecOrElseThrow(Specification<T> spec) {
         Optional<T> optional = findOneBySpec(spec);
         return optional.orElseThrow(() -> new EntityNotFoundException(entityInformation.getEntityName()));
+    }
+
+    /**
+     * Re-read the entity's state from the database, discarding whatever the current persistence context holds for it,
+     * including already-initialized collections. This is the one place allowed to reach for the EntityManager, because
+     * no repository query can express "refresh what is already managed".
+     *
+     * @param entity the managed entity to refresh
+     */
+    @Override
+    public void refresh(T entity) {
+        entityManager.refresh(entity);
     }
 }

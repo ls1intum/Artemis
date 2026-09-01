@@ -275,6 +275,26 @@ class IrisStruggleInterventionDecisionTest {
     }
 
     @Test
+    void active_blankEpisodeId_persistsNoEpisodeAndSkipsTheTerminalLookup() {
+        // A job can carry a blank id even though the trigger endpoint now rejects one: job entries live in the
+        // distributed map with a TTL, so a run minted before that validation can still be handled after a deployment.
+        // A blank id must never reach the terminal-outcome lookup or the persisted column - it would key every
+        // episode-scoped query, making the first blank-id episode to end swallow every later one.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageService.saveMessage(any(), any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+        var blankJob = new StruggleInterventionJob("t9", 7L, 42L, 3L, "decide", "   ", null, null, null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "active", 0.9, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null,
+                null);
+
+        service.handleDecision(blankJob, update);
+
+        verify(irisMessageRepository, never()).findEpisodeOutcomes(argThat(id -> id == null || id.isBlank()), anyLong());
+        verify(irisMessageService).saveMessage(argThat(m -> m.getProactiveEpisodeId() == null), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "active".equals(e.action()) && e.episodeId() == null));
+    }
+
+    @Test
     void ambient_lateArrivalOnTerminalEpisode_emitsSilent_skipsRecording() {
         // The student already dismissed this episode (a terminal outcome exists). A late ambient decision must not
         // resurface: the same gate the active path applies. No recording, no ambient pointer, just a silent completion.

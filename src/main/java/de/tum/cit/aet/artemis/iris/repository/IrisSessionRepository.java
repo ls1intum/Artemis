@@ -4,9 +4,12 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.persistence.LockModeType;
+
 import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -46,6 +49,49 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
     @NonNull
     default IrisSession findByIdWithMessagesElseThrow(long sessionId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithMessages(sessionId), sessionId);
+    }
+
+    /**
+     * Take a write lock on the session row so that appending a message can serialize against a concurrent append to
+     * the same session. Callers lock first and then load the messages, inside one transaction.
+     *
+     * <p>
+     * The messages are deliberately NOT fetch-joined here: PostgreSQL rejects {@code FOR UPDATE} on the nullable side
+     * of an outer join, which is exactly what {@code LEFT JOIN FETCH s.messages} produces.
+     *
+     * <p>
+     * Scope, deliberately narrow: the lock is on the parent row and is a COOPERATIVE mutex, so it only serializes
+     * writers that take it. What it guarantees is that two concurrent appends through
+     * {@code IrisMessageService#saveMessage} cannot lose each other's message. It does NOT make the whole aggregate
+     * safe. These still touch the same rows without taking it, and remain out of scope here:
+     * {@code setSessionTitle}, {@code updateLatestSuggestions} and {@code applyContextChange} merge the session
+     * aggregate (they do not intend to change the collection, but a cascade merge carries whatever collection state
+     * they hold), and {@code deleteSupersededProactiveMessage} plus the proactive-outcome update write message rows
+     * directly. Closing those means either routing every one of them through this lock or dropping the
+     * {@code @OrderColumn} that forces the collection to be written from the owner side; both are larger changes than
+     * the append race this method exists to fix.
+     *
+     * @param sessionId the session to lock
+     * @return the locked session, if it exists
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT s
+            FROM IrisSession s
+            WHERE s.id = :sessionId
+            """)
+    Optional<IrisSession> findByIdWithWriteLock(@Param("sessionId") long sessionId);
+
+    /**
+     * {@link #findByIdWithWriteLock} or throw if the session does not exist.
+     *
+     * @param sessionId the session to lock
+     * @return the locked session
+     * @throws EntityNotFoundException if no session with that id exists
+     */
+    @NonNull
+    default IrisSession findByIdWithWriteLockElseThrow(long sessionId) throws EntityNotFoundException {
+        return getValueElseThrow(findByIdWithWriteLock(sessionId), sessionId);
     }
 
     /**

@@ -294,7 +294,12 @@ public class IrisStruggleInterventionService {
         }
         log.info("Struggle intervention exercise={} user={} rawAction={} confidence={} finalAction={}", job.exerciseId(), job.userId(), action, confidence, finalAction);
 
-        String episodeId = job.episodeId();
+        String episodeId = usableEpisodeId(job.episodeId());
+        // A job that carried an id we cannot use is NOT the same as one that carried none. Both stop the id from
+        // reaching any lookup or column, but a legacy job without an episode still gets its ambient bookkeeping
+        // pointer below, while an unusable id stays silent: it can never be revealed, so pointing the client at it
+        // would only produce a 409.
+        boolean carriedUnusableEpisodeId = job.episodeId() != null && episodeId == null;
         String result = statusUpdate.result();
 
         if (result == null || result.isEmpty()) {
@@ -355,7 +360,7 @@ public class IrisStruggleInterventionService {
                 // revealed records nothing, and pointing the client at a reveal that would 409 helps no one, so
                 // complete it silently instead. Without an episode id there is nothing a reveal could address; the
                 // pointer is still emitted for the client's own bookkeeping, exactly as before.
-                boolean announce = episodeId == null || recordAmbientDecision(user.getId(), job.exerciseId(), episodeId, result);
+                boolean announce = episodeId == null ? !carriedUnusableEpisodeId : recordAmbientDecision(user.getId(), job.exerciseId(), episodeId, result);
                 if (announce) {
                     irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "decide", "ambient", result, session.getId(), null,
                             statusUpdate.anchorFile(), statusUpdate.anchorLine(), statusUpdate.inlineHint(), confidence, episodeId, null, null, null, statusUpdate.rationale()));
@@ -394,7 +399,7 @@ public class IrisStruggleInterventionService {
      */
     public void handleConfirmClose(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
         var user = userRepository.findByIdElseThrow(job.userId());
-        String episodeId = job.episodeId();
+        String episodeId = usableEpisodeId(job.episodeId());
         String confirmReason = job.confirmReason();
         boolean resolved = statusUpdate.resolved() != null ? statusUpdate.resolved() : false;
 
@@ -566,7 +571,7 @@ public class IrisStruggleInterventionService {
     public void emitTerminalCompletion(StruggleInterventionJob job) {
         try {
             var user = userRepository.findByIdElseThrow(job.userId());
-            String episodeId = job.episodeId();
+            String episodeId = usableEpisodeId(job.episodeId());
             if ("confirm_close".equals(job.intent())) {
                 irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId));
             }
@@ -579,6 +584,27 @@ public class IrisStruggleInterventionService {
             // matters more than the notification, and a missing frame degrades to the client's own timeout.
             log.warn("Could not emit terminal completion for struggle job {} exercise {} user {}", job.jobId(), job.exerciseId(), job.userId(), e);
         }
+    }
+
+    /**
+     * The episode id a callback may actually use as an identity, or null when the job carries none it can.
+     *
+     * <p>
+     * A blank id is not an identity: persisted on a message it would key every episode-scoped lookup, so the first
+     * blank-id episode to end would make every later one read as that same finished episode. An over-long id does not
+     * fit {@code proactive_episode_id} either. The trigger endpoint rejects both, but a job is not covered by that
+     * validation: the job map keeps entries with a TTL, so a run minted before this validation existed can still have
+     * its callback handled by this code after a deployment. Treating such an id as "no episode" degrades to the
+     * well-defined legacy path instead of corrupting the episode keyspace.
+     *
+     * @param episodeId the id stamped on the job, possibly null
+     * @return the id when it can serve as an identity, null otherwise
+     */
+    private static @Nullable String usableEpisodeId(@Nullable String episodeId) {
+        if (episodeId == null || episodeId.isBlank() || episodeId.length() > MAX_EPISODE_ID_LENGTH) {
+            return null;
+        }
+        return episodeId;
     }
 
     private record PersistedProactive(IrisChatSession session, IrisMessage saved) {
@@ -650,6 +676,12 @@ public class IrisStruggleInterventionService {
      *         established yet (no row persisted - the caller should back-fill once a row exists)
      */
     public boolean writeEpisodeOutcome(String episodeId, IrisProactiveOutcome outcome, long userId) {
+        if (episodeId == null || episodeId.isBlank()) {
+            // A blank id is not an episode identity, and treating it as one is how distinct episodes end up sharing
+            // an outcome. The trigger endpoint rejects blank ids outright, but this method is also reached from the
+            // {episodeId} path variable, which validation does not cover.
+            return false;
+        }
         var episodeRows = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId);
         if (episodeRows.isEmpty()) {
             return false;  // DEFERRED: no row persisted yet for this episode under this user's scope; client must back-fill

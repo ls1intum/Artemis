@@ -16,9 +16,14 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -33,6 +38,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -128,6 +135,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     private AtomicBoolean pipelineDone;
 
@@ -278,6 +288,77 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         var messages = request.getList(messagesUrl(session), HttpStatus.OK, IrisMessageResponseDTO.class);
 
         assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactlyInAnyOrder(m1.getId(), m2.getId(), m3.getId(), m4.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void concurrentSavesToTheSameSessionKeepEveryMessage() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        int writers = 4;
+        var start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(writers);
+        try {
+            var futures = new ArrayList<Future<IrisMessage>>();
+            for (int i = 0; i < writers; i++) {
+                futures.add(executor.submit(() -> {
+                    // Every writer holds its OWN session instance, loaded before any of them appends: exactly the
+                    // shape of the race, where a normal chat request and a proactive callback both carry the same
+                    // message list. saveMessage merges the whole aggregate with orphanRemoval, so an unserialized
+                    // writer deletes the row another writer has just committed.
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    start.await();
+                    return irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.LLM);
+                }));
+            }
+            start.countDown();
+            for (var future : futures) {
+                assertThat(future.get(30, TimeUnit.SECONDS)).as("every concurrent append must succeed").isNotNull();
+            }
+        }
+        finally {
+            executor.shutdownNow();
+        }
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        assertThat(reloaded.getMessages()).as("no concurrently committed message may be dropped by another writer's stale collection").hasSize(writers);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void appendInsideAnOuterTransactionDoesNotDropAConcurrentlyCommittedMessage() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        var outer = new TransactionTemplate(transactionManager);
+
+        outer.execute(status -> {
+            // Pre-load the session WITH its messages inside the outer transaction: the shape revealAmbient produces,
+            // where the session is resolved before the append. From here the persistence context manages an
+            // initialized collection, and a later fetch join does NOT refresh it - only an explicit refresh does.
+            var managed = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+            assertThat(managed.getMessages()).isEmpty();
+
+            // Meanwhile a separate transaction commits a message for the same session.
+            var concurrent = Executors.newSingleThreadExecutor();
+            try {
+                concurrent.submit(() -> {
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    return irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.USER);
+                }).get(30, TimeUnit.SECONDS);
+            }
+            catch (Exception e) {
+                throw new IllegalStateException("the concurrent append must succeed", e);
+            }
+            finally {
+                concurrent.shutdownNow();
+            }
+
+            // Append through the stale managed instance. Without the refresh under the lock, the merge writes back a
+            // collection that never saw the concurrent row and orphanRemoval deletes it again.
+            irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(managed), managed, IrisMessageSender.LLM);
+            return null;
+        });
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        assertThat(reloaded.getMessages()).as("the concurrently committed message must survive an append made from an already-managed session").hasSize(2);
     }
 
     @ParameterizedTest
