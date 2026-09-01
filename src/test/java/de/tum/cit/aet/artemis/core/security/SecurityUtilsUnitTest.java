@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
@@ -201,5 +202,47 @@ class SecurityUtilsUnitTest {
         // authentication.name, including Spring Security expressions.
         assertThat(SecurityUtils.makeAuthorizationObject("student1").getName()).isEqualTo("student1");
         assertThat(SecurityUtils.makeAuthorizationObject("student1").getPrincipal()).isEqualTo("student1");
+    }
+
+    @Test
+    void testRunAsSystemReplacesAStalePrincipalAndRestoresIt() {
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication stale = new UsernamePasswordAuthenticationToken("leftover-from-a-previous-task", "password", List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        securityContext.setAuthentication(stale);
+        SecurityContextHolder.setContext(securityContext);
+        List<String> seen = new ArrayList<>();
+
+        SecurityUtils.runAsSystem(() -> seen.add(String.valueOf(SecurityUtils.getCurrentUserLogin().orElse("system"))));
+
+        // A pooled background thread carries leftovers, which are not an identity: the work runs as the system.
+        assertThat(seen).containsExactly("system");
+        // Restored, so calling this part way through a call chain does not disturb the caller.
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(stale);
+    }
+
+    @Test
+    void testRunAsSystemRestoresEvenWhenTheWorkThrows() {
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication previous = new UsernamePasswordAuthenticationToken("instructor1", "password", List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        securityContext.setAuthentication(previous);
+        SecurityContextHolder.setContext(securityContext);
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> SecurityUtils.runAsSystem(() -> {
+            throw new IllegalStateException("boom");
+        }));
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isSameAs(previous);
+    }
+
+    @Test
+    void testSetSystemAuthorizationObjectDiscardsAStalePrincipal() {
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        securityContext.setAuthentication(new UsernamePasswordAuthenticationToken("leftover", "password", List.of(new SimpleGrantedAuthority("ROLE_USER"))));
+        SecurityContextHolder.setContext(securityContext);
+
+        SecurityUtils.setSystemAuthorizationObject();
+
+        assertThat(SecurityUtils.getCurrentUserLogin()).isEmpty();
+        assertThat(SecurityUtils.isAuthenticated()).isTrue();
     }
 }

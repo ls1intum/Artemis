@@ -7,11 +7,13 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import de.tum.cit.aet.artemis.core.async.ExceptionHandlingAsyncTaskExecutor;
 import de.tum.cit.aet.artemis.core.config.Constants;
 
 /**
@@ -62,5 +64,43 @@ class SpringSecurityAuditorAwareTest {
         SecurityUtils.setAuthorizationObject();
 
         assertThat(auditorAware.getCurrentAuditor()).contains(Constants.SYSTEM_ACCOUNT);
+    }
+
+    @Test
+    void testWorkSubmittedByAUserIsAuditedAsThatUser() throws Exception {
+        ThreadPoolTaskExecutor delegate = new ThreadPoolTaskExecutor();
+        delegate.setCorePoolSize(1);
+        delegate.setMaxPoolSize(1);
+        delegate.afterPropertiesSet();
+        try {
+            ExceptionHandlingAsyncTaskExecutor executor = new ExceptionHandlingAsyncTaskExecutor(delegate);
+            authenticateAs("instructor1");
+
+            // The point of propagating the context: work a user triggered is attributed to that user rather than to
+            // the system account, which is what an asynchronously saved audited entity would otherwise record.
+            assertThat(executor.submit(() -> auditorAware.getCurrentAuditor().orElseThrow()).get()).isEqualTo("instructor1");
+        }
+        finally {
+            delegate.destroy();
+        }
+    }
+
+    @Test
+    void testWorkWithNoSubmittingUserIsAuditedAsTheSystem() throws Exception {
+        ThreadPoolTaskExecutor delegate = new ThreadPoolTaskExecutor();
+        delegate.setCorePoolSize(1);
+        delegate.setMaxPoolSize(1);
+        delegate.afterPropertiesSet();
+        try {
+            ExceptionHandlingAsyncTaskExecutor executor = new ExceptionHandlingAsyncTaskExecutor(delegate);
+
+            assertThat(executor.submit(() -> {
+                SecurityUtils.setAuthorizationObject();
+                return auditorAware.getCurrentAuditor().orElseThrow();
+            }).get()).isEqualTo(Constants.SYSTEM_ACCOUNT);
+        }
+        finally {
+            delegate.destroy();
+        }
     }
 }
