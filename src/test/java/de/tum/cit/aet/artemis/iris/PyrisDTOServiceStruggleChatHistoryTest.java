@@ -44,7 +44,7 @@ class PyrisDTOServiceStruggleChatHistoryTest {
         var pending = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, null, null, "consider null input");
         var normal = msg(IrisMessageSender.LLM, null, null, null, "here is the answer");
 
-        var out = new PyrisDTOService(null).toPyrisMessageDTOListForStruggle(List.of(dismissed, engaged, reply, pending, normal));
+        var out = new PyrisDTOService(null, null).toPyrisMessageDTOListForStruggle(List.of(dismissed, engaged, reply, pending, normal));
 
         assertThat(firstText(out.get(0))).isEqualTo("(proactive hint, dismissed) try edge cases");
         assertThat(firstText(out.get(1))).isEqualTo("(proactive hint, engaged) check the loop bound");
@@ -58,7 +58,7 @@ class PyrisDTOServiceStruggleChatHistoryTest {
         var older = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, null, null, "first hint");
         var newer = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, null, null, "second hint");
 
-        var out = new PyrisDTOService(null).toPyrisMessageDTOListForStruggle(List.of(older, newer));
+        var out = new PyrisDTOService(null, null).toPyrisMessageDTOListForStruggle(List.of(older, newer));
 
         assertThat(firstText(out.get(0))).isEqualTo("(proactive hint, ignored) first hint");
         assertThat(firstText(out.get(1))).isEqualTo("(proactive hint) second hint");
@@ -70,7 +70,7 @@ class PyrisDTOServiceStruggleChatHistoryTest {
         var hint = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, null, null, "early hint", base);
         var lateReply = msg(IrisMessageSender.USER, null, null, null, "much later", base.plusMinutes(30));
 
-        var out = new PyrisDTOService(null).toPyrisMessageDTOListForStruggle(List.of(hint, lateReply));
+        var out = new PyrisDTOService(null, null).toPyrisMessageDTOListForStruggle(List.of(hint, lateReply));
 
         // A reply 30 min later is too late to count as engagement with this hint -> pending, not engaged.
         assertThat(firstText(out.get(0))).isEqualTo("(proactive hint) early hint");
@@ -83,10 +83,10 @@ class PyrisDTOServiceStruggleChatHistoryTest {
         var interrupted = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, IrisProactiveOutcome.INTERRUPTED, null, "left mid-hint");
         var later = msg(IrisMessageSender.LLM, IrisMessageOrigin.PROACTIVE_STRUGGLE, null, null, "new hint");
 
-        var neutral = new PyrisDTOService(null).toPyrisMessageDTOListForStruggle(List.of(interrupted));
+        var neutral = new PyrisDTOService(null, null).toPyrisMessageDTOListForStruggle(List.of(interrupted));
         assertThat(firstText(neutral.get(0))).isEqualTo("(proactive hint) left mid-hint");
 
-        var superseded = new PyrisDTOService(null).toPyrisMessageDTOListForStruggle(List.of(interrupted, later));
+        var superseded = new PyrisDTOService(null, null).toPyrisMessageDTOListForStruggle(List.of(interrupted, later));
         assertThat(firstText(superseded.get(0))).isEqualTo("(proactive hint, ignored) left mid-hint");
     }
 }

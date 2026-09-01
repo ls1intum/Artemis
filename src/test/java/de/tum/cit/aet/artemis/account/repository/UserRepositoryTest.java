@@ -478,4 +478,36 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         // the lookup by email has to stay case-insensitive, just like the entity based findOneByEmailIgnoreCase it replaces
         assertThat(userRepository.isInternalUserByEmailIgnoreCase(internalUser.getEmail().toUpperCase(Locale.ROOT))).contains(true);
     }
+
+    /**
+     * The active user metrics exclude test users in Java instead of joining {@code jhi_user} into the (very hot)
+     * submission aggregation, so the ids of all test users have to be retrievable on their own.
+     */
+    @Test
+    void testFindAllTestUserIdsReturnsOnlyTestUsers() {
+        User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regular");
+        User testUser = UserFactory.generateActivatedUser(TEST_PREFIX + "flagged");
+        testUser.setTestUser(true);
+        testUser = userRepository.save(testUser);
+
+        Set<Long> testUserIds = userRepository.findAllTestUserIds();
+
+        assertThat(testUserIds).contains(testUser.getId()).doesNotContain(regularUser.getId());
+    }
+
+    /**
+     * Soft-deleted test users stay in the exclusion set: they must never be counted as active users, and keeping them
+     * avoids a second predicate on the hot path.
+     */
+    @Test
+    void testFindAllTestUserIdsIncludesSoftDeletedTestUsers() {
+        User deletedTestUser = UserFactory.generateActivatedUser(TEST_PREFIX + "deletedflagged");
+        deletedTestUser.setTestUser(true);
+        deletedTestUser.setDeleted(true);
+        deletedTestUser = userRepository.save(deletedTestUser);
+
+        Set<Long> testUserIds = userRepository.findAllTestUserIds();
+
+        assertThat(testUserIds).contains(deletedTestUser.getId());
+    }
 }
