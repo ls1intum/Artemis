@@ -6,7 +6,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.dto.PasswordResetKey;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
 
 /**
  * DTO carrying the user fields needed to send a mail and to render mail templates.
@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.dto.PasswordResetKey;
  * (e.g. {@code user.login}, {@code user.activationKey}, {@code user.getName()}).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKey resetKey) {
+public record MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName, String activationKey, @Nullable PasswordResetKeyDTO resetKey) {
 
     public MailRecipientDTO(String email, String langKey, String login, String firstName, String lastName) {
         this(email, langKey, login, firstName, lastName, null, null);
@@ -60,7 +60,7 @@ public record MailRecipientDTO(String email, String langKey, String login, Strin
      * @param resetKey the reset key to render, or null
      * @return the recipient carrying the given key
      */
-    public static MailRecipientDTO withResetKeyFrom(User user, PasswordResetKey resetKey) {
+    public static MailRecipientDTO withResetKeyFrom(User user, PasswordResetKeyDTO resetKey) {
         return new MailRecipientDTO(user.getEmail(), user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, resetKey);
     }
 

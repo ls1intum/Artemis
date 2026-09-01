@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
-import de.tum.cit.aet.artemis.core.dto.PasswordResetKey;
+import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -340,13 +340,13 @@ public class UserService {
      * @param user user requesting reset
      * @return The newly created reset key for resetting the password; {@code Optional.empty()} iff. not eligible.
      */
-    public Optional<PasswordResetKey> prepareUserForPasswordReset(User user) {
+    public Optional<PasswordResetKeyDTO> prepareUserForPasswordReset(User user) {
         if (user.getActivated() && user.isInternal()) {
             String resetKeyId = RandomUtil.generateResetKeyId();
             String resetKeySecret = RandomUtil.generateResetKeySecret();
             String resetKeyHash = passwordService.hashPassword(resetKeySecret);
             userRecoveryKeyService.storeResetKey(user.getId(), resetKeyId, resetKeyHash, Instant.now());
-            return Optional.of(new PasswordResetKey(resetKeyId, resetKeySecret));
+            return Optional.of(new PasswordResetKeyDTO(resetKeyId, resetKeySecret));
         }
         return Optional.empty();
     }
