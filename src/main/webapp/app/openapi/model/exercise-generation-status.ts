@@ -28,6 +28,8 @@ export interface ExerciseGenerationStatus {
     /** Whether the reported usage is a complete account of a generation run\'s provider spend */
     accountingState: ExerciseGenerationStatusAccountingStateEnum;
     effortProfile?: string;
+    /** Whether an unsaved candidate from this run is actually retained and readable */
+    artifactsRetained: boolean;
 }
 
 export type ExerciseGenerationStatusModeEnum = 'GENERATE' | 'ADAPT';

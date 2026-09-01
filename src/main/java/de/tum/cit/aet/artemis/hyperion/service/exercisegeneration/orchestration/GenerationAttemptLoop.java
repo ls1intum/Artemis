@@ -89,7 +89,7 @@ class GenerationAttemptLoop {
             GenerationWorkspaceService.WorkspaceSeed workspaceSeed, Map<String, String> testsSeedSnapshot, Map<String, String> placeholderReplacements,
             Map<RepositoryType, Map<String, String>> baselineRepositoryFiles, @Nullable String baselineProblemStatement, Set<String> baselineGradedTestNames, String sourceBrief,
             boolean specStageApplies, boolean conceptSelectionApplies, String systemPrompt, String firstPrompt, SandboxAgentTools baseTools, Object tools,
-            BooleanSupplier cancelled, @Nullable GenerationProgressSink progress, Consumer<ChatResponse> usageSink) {
+            BooleanSupplier cancelled, @Nullable GenerationProgressSink progress, Consumer<ChatResponse> usageSink, AuthoringStageCapture capture) {
     }
 
     private record CandidateArtifacts(Map<RepositoryType, Map<String, String>> candidateFiles, Set<String> extractionFailed, VerificationRequest verificationRequest,
@@ -170,6 +170,9 @@ class GenerationAttemptLoop {
     private final GenerationProgressSink progress;
 
     private final Consumer<ChatResponse> usageSink;
+
+    /** The run's guarded workspace read-back: it holds the sandbox teardown gate and the latest authoring-stage snapshot this loop falls back to. */
+    private final AuthoringStageCapture capture;
 
     // Java/GENERATE is the only contract StagedGenerationRunner supports (see its javadoc); every other mode and language uses the single, open-ended agent-loop call.
     private final boolean useStagedGeneration;
@@ -295,6 +298,7 @@ class GenerationAttemptLoop {
         this.cancelled = context.cancelled();
         this.progress = context.progress();
         this.usageSink = context.usageSink();
+        this.capture = context.capture();
         this.useStagedGeneration = dependencies.stagedGenerationEnabled() && context.mode() == GenerationMode.GENERATE
                 && context.exercise().getProgrammingLanguage() == ProgrammingLanguage.JAVA;
         this.specStageApplies = context.specStageApplies();
@@ -427,7 +431,7 @@ class GenerationAttemptLoop {
                     conceptSelectionApplies, spec -> {
                         specSnapshot.set(spec);
                         jobService.recordSpecDocument(exercise.getId(), jobId, spec);
-                    });
+                    }, capture::recordStageBoundary);
             loopResult = stagedOutcome.result();
             stagedTerminationReason = stagedOutcome.terminationReason();
             carriedConversation = stagedOutcome.conversation();
@@ -486,15 +490,9 @@ class GenerationAttemptLoop {
             if (lastMechanicallyVerifiedCandidate != null) {
                 return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
             }
-            Map<RepositoryType, Map<String, String>> erroredFiles = GenerationOrchestrationService.changedCapturedRepositoryFiles(baselineRepositoryFiles,
-                    service.captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements));
-            String erroredStatement = workspace.extractProblemStatement(sandbox, sessionId).trim();
-            boolean statementChanged = !Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), erroredStatement);
-            if (statementChanged || !erroredFiles.isEmpty()) {
-                return new GenerationOutcome(loopResult, null, sessionId, service, sandbox, erroredFiles, erroredStatement,
-                        SpecFidelityReport.qualityReviewUnavailable("The agent stopped before verification; the partial candidate requires manual review."),
-                        workspaceSeed.repositoryHeads(), GenerationOrchestrationService.readSpecDocument(sandbox, sessionId),
-                        GenerationOrchestrationService.readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
+            GenerationOutcome partial = capture.partialOutcome(loopResult, "The agent stopped before verification; the partial candidate requires manual review.");
+            if (partial != null) {
+                return partial;
             }
             service.destroyQuietly(sandbox, sessionId);
             return GenerationOutcome.error(loopResult);
@@ -507,32 +505,18 @@ class GenerationAttemptLoop {
 
     /** Reads all candidate artifacts back and preserves extraction failures so verification can distinguish them from empty repositories. */
     private CandidateArtifacts captureArtifacts(SeededStructuralTests seededStructuralTests) {
-        GenerationWorkspaceService.RepositoryExtraction producedTests = workspace.extractRepository(sandbox, sessionId, RepositoryType.TESTS,
-                workspaceSeed.repositoryMetadata().getOrDefault(RepositoryType.TESTS, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY));
-        GenerationWorkspaceService.RepositoryExtraction producedTemplate = workspace.extractRepository(sandbox, sessionId, RepositoryType.TEMPLATE,
-                workspaceSeed.repositoryMetadata().getOrDefault(RepositoryType.TEMPLATE, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY));
-        GenerationWorkspaceService.RepositoryExtraction producedSolution = workspace.extractRepository(sandbox, sessionId, RepositoryType.SOLUTION,
-                workspaceSeed.repositoryMetadata().getOrDefault(RepositoryType.SOLUTION, GenerationWorkspaceService.RepositorySeedMetadata.EMPTY));
-        producedTests = GenerationOrchestrationService.replacePlaceholders(producedTests, placeholderReplacements);
-        producedTemplate = GenerationOrchestrationService.replacePlaceholders(producedTemplate, placeholderReplacements);
-        producedSolution = GenerationOrchestrationService.replacePlaceholders(producedSolution, placeholderReplacements);
-        producedFilesByType.put(RepositoryType.TESTS, producedTests.files());
-        producedFilesByType.put(RepositoryType.TEMPLATE, producedTemplate.files());
-        producedFilesByType.put(RepositoryType.SOLUTION, producedSolution.files());
-        // Persistence trims the statement before saving. Canonicalize it before verification so both stages consume the same value.
-        producedProblemStatement = workspace.extractProblemStatement(sandbox, sessionId).trim();
+        AuthoringStageCapture.CandidateReadBack readBack = capture.readBackCandidate();
+        producedProblemStatement = readBack.problemStatement();
         Set<String> extractionFailed = new LinkedHashSet<>();
-        addIfExtractionFailed(extractionFailed, producedTests, RepositoryType.TESTS);
-        addIfExtractionFailed(extractionFailed, producedTemplate, RepositoryType.TEMPLATE);
-        addIfExtractionFailed(extractionFailed, producedSolution, RepositoryType.SOLUTION);
+        readBack.repositories().forEach((type, extraction) -> {
+            producedFilesByType.put(type, extraction.files());
+            addIfExtractionFailed(extractionFailed, extraction, type);
+        });
         Map<RepositoryType, Map<String, String>> candidateFiles = copyProducedFiles(producedFilesByType);
-        if (extractionFailed.isEmpty()) {
-            if (hasProducedChanges(baselineRepositoryFiles, producedFilesByType, baselineProblemStatement, producedProblemStatement)) {
-                lastExtractedCandidate = new ExtractedCandidate(loopResult, candidateFiles, producedProblemStatement);
-            }
+        if (extractionFailed.isEmpty() && hasProducedChanges(baselineRepositoryFiles, producedFilesByType, baselineProblemStatement, producedProblemStatement)) {
+            lastExtractedCandidate = new ExtractedCandidate(loopResult, candidateFiles, producedProblemStatement);
         }
-        // Capture the grading plan with the repositories and statement so verification and persistence decide on the same immutable candidate.
-        String testPlanSnapshot = GenerationOrchestrationService.readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
+        String testPlanSnapshot = readBack.testPlanJson();
         VerificationRequest verificationRequest = new VerificationRequest(testsSeedSnapshot, baselineRepositoryFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()),
                 baselineRepositoryFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), candidateFiles.getOrDefault(RepositoryType.TESTS, Map.of()),
                 candidateFiles.getOrDefault(RepositoryType.TEMPLATE, Map.of()), candidateFiles.getOrDefault(RepositoryType.SOLUTION, Map.of()), Set.copyOf(extractionFailed),
@@ -933,7 +917,7 @@ class GenerationAttemptLoop {
         if (lastMechanicallyVerifiedCandidate != null) {
             return service.preserveCandidate(lastMechanicallyVerifiedCandidate, sandbox, sessionId, workspaceSeed);
         }
-        return service.stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement, cancelledResult);
+        return service.stopOrPreserve(sandbox, sessionId, capture, cancelledResult);
     }
 
     private void emit(String message) {

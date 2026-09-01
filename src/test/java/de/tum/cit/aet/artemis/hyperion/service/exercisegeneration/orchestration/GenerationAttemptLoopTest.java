@@ -168,9 +168,12 @@ class GenerationAttemptLoopTest {
     private GenerationAttemptLoop newLoop(GenerationMode mode, int maxGenerationAttempts, int maxSemanticRepairs, boolean stagedGenerationEnabled, BooleanSupplier cancelled) {
         GenerationAttemptLoop.Dependencies dependencies = new GenerationAttemptLoop.Dependencies(workspace, agentLoopRunner, verifier, structuralOracleSeeder, specFidelityCritic,
                 jobService, stagedGenerationRunner, new AgentTranscriptWriter(""), stagedGenerationEnabled, 100, maxGenerationAttempts, maxSemanticRepairs);
-        GenerationAttemptLoop.RunContext context = new GenerationAttemptLoop.RunContext(exercise, mode, "job-1", sandbox, SESSION_ID,
-                new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of()), Map.of(), Map.of(), Map.of(), null, Set.of(), "Build a bubble sort exercise.", true, true,
-                "SYSTEM_PROMPT", "FIRST_PROMPT", baseTools, baseTools, cancelled, progressLines::add, usageSink);
+        GenerationWorkspaceService.WorkspaceSeed workspaceSeed = new GenerationWorkspaceService.WorkspaceSeed(Map.of(), Map.of());
+        AuthoringStageCapture capture = new AuthoringStageCapture(service, workspace, sandbox, SESSION_ID,
+                new SandboxSessionLifecycle(SESSION_ID, () -> service.destroyQuietly(sandbox, SESSION_ID)), workspaceSeed, Map.of(), Map.of(), null);
+        GenerationAttemptLoop.RunContext context = new GenerationAttemptLoop.RunContext(exercise, mode, "job-1", sandbox, SESSION_ID, workspaceSeed, Map.of(), Map.of(), Map.of(),
+                null, Set.of(), "Build a bubble sort exercise.", true, true, "SYSTEM_PROMPT", "FIRST_PROMPT", baseTools, baseTools, cancelled, progressLines::add, usageSink,
+                capture);
         return new GenerationAttemptLoop(service, dependencies, context);
     }
 
@@ -197,8 +200,8 @@ class GenerationAttemptLoopTest {
     @Test
     void preservesTheStagedRunnersSpecificFailureReason() {
         AgentLoopResult failed = new AgentLoopResult(AgentLoopResult.Status.ERROR, 2, "No exercise concept passed.");
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(failed, null, List.of(), TerminationReason.NO_ADMISSIBLE_CONCEPT));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(failed, null, List.of(), TerminationReason.NO_ADMISSIBLE_CONCEPT));
 
         GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 1, 0, true);
         GenerationOutcome outcome = loop.run();
@@ -227,8 +230,8 @@ class GenerationAttemptLoopTest {
 
     @Test
     void unresolvedPreFreezeSpecificationFindingsCannotDisappearFromTheFinalReview() {
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("R1 mandates an unrequested implementation technique")));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("R1 mandates an unrequested implementation technique")));
 
         GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, true);
         loop.run();
@@ -243,8 +246,8 @@ class GenerationAttemptLoopTest {
     @Test
     void aCleanTextOnlyRetryCannotEraseAnInconclusivePreFreezeSpecificationReview() {
         String unresolved = "The automated specification quality review was inconclusive, so the contract requires instructor review.";
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(unresolved)));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(unresolved)));
         when(specFidelityCritic.critique(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(SpecFidelityReport.qualityReviewUnavailable("The full-artifact review did not complete."), SpecFidelityReport.empty());
 
@@ -260,8 +263,8 @@ class GenerationAttemptLoopTest {
     @Test
     void unresolvedConceptFindingsBecomeBlockingConceptAdmissionFindingEntries() {
         String conceptFinding = "The concept review admitted no candidate. This exercise was built from candidate 2, which the review rejected least.";
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of(conceptFinding)));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of(conceptFinding)));
 
         GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, true);
         loop.run();
@@ -275,8 +278,8 @@ class GenerationAttemptLoopTest {
     @Test
     void aConceptTheReviewAdmittedWithFindingsDoesNotEndTheRunAsNoAdmissibleConcept() {
         // NO_ADMISSIBLE_CONCEPT means no candidate was usable at all; this run proceeded with one, so it must be told apart from that dead end.
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
 
         GenerationAttemptLoop loop = newLoop(GenerationMode.GENERATE, 2, 1, true);
         loop.run();
@@ -288,8 +291,8 @@ class GenerationAttemptLoopTest {
     @Test
     void anUnadmittedConceptCannotAuthorizeValidatedWitnessAdoption() {
         // A contested concept gates autonomous witness adoption like a contested specification: adopting a proven counterexample would deepen a design choice under objection.
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of(), null, List.of("The concept review admitted no candidate.")));
         sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
@@ -317,8 +320,8 @@ class GenerationAttemptLoopTest {
 
     @Test
     void anUnapprovedSpecificationCannotAuthorizeValidatedWitnessAdoption() {
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
         sandbox.withFile(SPEC_PATH, "## Rules\nR1. The result is selected cyclically.");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/CycleTest.java", "class CycleTest {}"), false));
@@ -420,8 +423,8 @@ class GenerationAttemptLoopTest {
 
     @Test
     void anInconclusivePendingMutantRecheckUnderAnUnapprovedSpecificationNeverBecomesCurrentSurvivorEvidence() {
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
@@ -622,8 +625,8 @@ class GenerationAttemptLoopTest {
 
     @Test
     void unapprovedSpecificationCannotAuthorizeASemanticMutantReferenceRepair() {
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null, List.of("The specification review was inconclusive.")));
         sandbox.withFile(SPEC_PATH, "## Rules\nR1. Return the mathematically nearest value.");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryType.TESTS), any()))
                 .thenReturn(new GenerationWorkspaceService.RepositoryExtraction(Map.of("test/NearestTest.java", "class NearestTest {}"), false));

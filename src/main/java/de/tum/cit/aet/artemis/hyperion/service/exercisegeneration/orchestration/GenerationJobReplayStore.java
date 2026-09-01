@@ -517,7 +517,7 @@ final class GenerationJobReplayStore {
                 }
                 return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), !transcript.done(), transcript.mode(), transcript.events(),
                         latestFileChangesFor(key, transcript.jobId()), false, null, null, true, !transcript.done() && active.cancellable(), transcript.specDocument())
-                        .withEffortProfile(transcript.effortProfile()));
+                        .withEffortProfile(transcript.effortProfile()).withArtifactsRetained(hasRetainedArtifacts(key, transcript.jobId(), user)));
             }
             if (transcript == null) {
                 return Optional.empty();
@@ -531,11 +531,21 @@ final class GenerationJobReplayStore {
             }
             // Owner-only, like the usage aggregate: which configuration ran is part of the account a caller is asked to review, and a sanitized view carries none of it.
             return Optional.of(new ExerciseGenerationStatusDTO(transcript.jobId(), false, transcript.mode(), transcript.events(), latestFileChangesFor(key, transcript.jobId()),
-                    false, null, null, true, false, transcript.specDocument()).withEffortProfile(transcript.effortProfile()));
+                    false, null, null, true, false, transcript.specDocument()).withEffortProfile(transcript.effortProfile())
+                    .withArtifactsRetained(hasRetainedArtifacts(key, transcript.jobId(), user)));
         }
         finally {
             jobMap().unlock(key);
         }
+    }
+
+    /**
+     * Whether this run actually retained an unsaved candidate the caller may read back. Read from the retained snapshot rather than remembered from when the run ended, so the
+     * status can never promise work that the retention bounds dropped, that a newer run superseded, or whose TTL has since expired.
+     */
+    private boolean hasRetainedArtifacts(String key, String jobId, User user) {
+        GenerationJobService.JobArtifacts retained = artifactMap().get(key);
+        return retained != null && retained.jobId().equals(jobId) && retained.userLogin().equals(user.getLogin()) && !retained.artifacts().isEmpty();
     }
 
     /** Removes a matching completed run's replay after its live changes were undone. */

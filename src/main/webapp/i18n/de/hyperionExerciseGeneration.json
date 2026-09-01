@@ -119,6 +119,7 @@
                     "cancelledTitle": "Du hast diesen Durchlauf abgebrochen",
                     "cancelledBody": "In deine Aufgabe wurde nichts geschrieben. Der Aufgabenentwurf ist weiterhin vorhanden und leer — starte erneut oder lösche ihn.",
                     "retained": "Was Artemis erarbeitet hat, bleibt zur Ansicht erhalten. Teil deiner Aufgabe ist es nicht.",
+                    "nothingRetained": "Von diesem Durchlauf konnte nichts aufbewahrt werden, es gibt also nichts anzusehen. Deine Aufgabe ist unverändert — starte einfach erneut.",
                     "technicalDetails": "Technische Details anzeigen",
                     "disclaimer": "Mit KI erzeugt. Prüfe Aufgabenstellung, Tests und Musterlösung, bevor du diese Aufgabe freigibst."
                 },

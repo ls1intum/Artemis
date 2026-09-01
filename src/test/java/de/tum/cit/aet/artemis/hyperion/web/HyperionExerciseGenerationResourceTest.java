@@ -453,7 +453,7 @@ class HyperionExerciseGenerationResourceTest {
     void getExerciseGenerationStatusPreservesUsageAndAccountingStateThroughRevertRemap() {
         ExerciseGenerationUsageDTO usage = new ExerciseGenerationUsageDTO(2, 3, 9, 2, 100, 50, 0, false, 0.25, false, List.of("model"), List.of(), false);
         ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null, true, false, null,
-                usage, ExerciseGenerationAccountingState.INCOMPLETE, null);
+                usage, ExerciseGenerationAccountingState.INCOMPLETE, null, false);
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));
@@ -722,7 +722,7 @@ class HyperionExerciseGenerationResourceTest {
     @Test
     void getExerciseGenerationStatus_carriesTheResolvedEffortProfileThrough() {
         ExerciseGenerationStatusDTO status = new ExerciseGenerationStatusDTO("job-42", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null, true, false, null,
-                null, ExerciseGenerationAccountingState.COMPLETE, "thorough");
+                null, ExerciseGenerationAccountingState.COMPLETE, "thorough", false);
         when(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(1L)).thenReturn(Optional.of(testExercise));
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.getStatus(testUser, testExercise)).thenReturn(Optional.of(status));

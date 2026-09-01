@@ -698,6 +698,36 @@ class StagedGenerationRunnerTest {
         assertThat(approvedSpecs.approved("s")).contains(VALID_SPEC_DOCUMENT);
     }
 
+    /**
+     * Each authoring stage announces itself once as the run leaves it, so the orchestrator can snapshot the repositories while the sandbox is still alive. Without this, a run
+     * that dies before verification has never captured anything: the only durable snapshot is the mechanically verified checkpoint, taken after verification passes.
+     */
+    @Test
+    void everyAuthoringStageAnnouncesItsBoundaryOnceAsTheRunLeavesIt() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"), completed(2, "build"),
+                completed(1, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
+        List<GenerationStage> boundaries = new java.util.ArrayList<>();
+
+        runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true, true, null,
+                boundaries::add);
+
+        assertThat(boundaries).containsExactly(GenerationStage.SPEC, GenerationStage.TESTS, GenerationStage.STATEMENT);
+    }
+
+    /** A stage that stops the run never reaches its boundary, so nothing is snapshotted for a stage that produced no accepted output. */
+    @Test
+    void aStageThatStopsTheRunAnnouncesNoBoundary() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(1, "spec"));
+        sandbox.specMarkdown = null;
+        List<GenerationStage> boundaries = new java.util.ArrayList<>();
+
+        runner.run(exercise, baseTools, baseTools, "brief", "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, null, () -> SeededStructuralTests.EMPTY, true, true, null,
+                boundaries::add);
+
+        assertThat(boundaries).isEmpty();
+    }
+
     @Test
     void cancellationBetweenPhasesStopsBeforeTheNextAgentCall() {
         AtomicInteger completedAgentCalls = new AtomicInteger();

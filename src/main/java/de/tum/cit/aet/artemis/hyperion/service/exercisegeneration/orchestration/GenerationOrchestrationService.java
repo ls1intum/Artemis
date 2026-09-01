@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -111,6 +112,14 @@ public class GenerationOrchestrationService {
 
     private final GenerationAttemptLoop.Dependencies attemptLoopDependencies;
 
+    /**
+     * The teardown gate of every sandbox session this node currently owns, keyed by session id. Every destroy route — the node-local cancel hook, this class's terminal
+     * {@link #destroyQuietly}, and {@link GenerationOutcome#close()} — resolves the session's gate here, so there is one teardown route rather than two racing ones. The entry
+     * is removed by the run's own terminal {@link #destroyQuietly}, which is the last of those routes to run; a session whose outcome is never closed leaves its container to
+     * {@code InteractiveSandboxReaperService}.
+     */
+    private final Map<String, SandboxSessionLifecycle> sessionLifecycles = new ConcurrentHashMap<>();
+
     // Required: with the package-private test constructor also present, Spring cannot pick an injection constructor without it.
     @Autowired
     public GenerationOrchestrationService(Optional<InteractiveSandbox> interactiveSandbox, GenerationWorkspaceService workspace, AgentLoopRunner agentLoopRunner,
@@ -208,6 +217,7 @@ public class GenerationOrchestrationService {
         GenerationWorkspaceService.WorkspaceSeed workspaceSeed = null;
         Map<String, String> placeholderReplacements = Map.of();
         Map<RepositoryType, Map<String, String>> baselineRepositoryFiles = Map.of();
+        AuthoringStageCapture capture = null;
         GenerationAttemptLoop attemptLoop = null;
         boolean checkpointRunStarted = false;
         SandboxSessionSpecDTO sessionSpec = workspace.sessionSpec(exercise,
@@ -219,7 +229,10 @@ public class GenerationOrchestrationService {
             emit(progress, "Setting up the build environment");
             sessionId = sandbox.createSession(sessionSpec);
             String activeSessionId = sessionId;
-            jobService.registerCancelHook(jobId, () -> sandbox.destroySession(activeSessionId));
+            SandboxSessionLifecycle lifecycle = registerSessionLifecycle(sandbox, activeSessionId);
+            // The hook runs on GenerationJobService's cancellation executor, not this thread. It goes through the lifecycle so a cancellation cannot destroy the session while a
+            // capture path is copying its work out; the lifecycle defers the teardown to the capture instead of blocking that shared executor here.
+            jobService.registerCancelHook(jobId, lifecycle::requestDestroy);
 
             emit(progress, mode == GenerationMode.GENERATE ? "Preparing a clean exercise workspace" : "Loading the existing exercise");
             // Snapshot the seeded tests-repo harness so the verifier can reject later tampering against this exact baseline.
@@ -228,16 +241,16 @@ public class GenerationOrchestrationService {
             Map<String, String> testsSeedSnapshot = replacePlaceholders(workspaceSeed.testsSeedSnapshot(), placeholderReplacements);
             structuralOracleSeeder.captureBaseline(sessionId, workspaceSeed.testsSeedSnapshot());
             baselineRepositoryFiles = replacePlaceholdersByRepository(workspaceSeed.repositoryTextFiles(), placeholderReplacements);
+            capture = new AuthoringStageCapture(this, workspace, sandbox, sessionId, lifecycle, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
+                    baselineProblemStatement);
             if (cancelled.getAsBoolean()) {
-                return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
-                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
+                return stopOrPreserve(sandbox, sessionId, capture, new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
             }
 
             emit(progress, "Checking the build environment");
             Optional<String> buildEnvironmentFailure = checkBuildEnvironment(sandbox, sessionId, exercise);
             if (cancelled.getAsBoolean()) {
-                return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
-                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
+                return stopOrPreserve(sandbox, sessionId, capture, new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
             }
             if (buildEnvironmentFailure.isPresent()) {
                 destroyQuietly(sandbox, sessionId);
@@ -263,7 +276,7 @@ public class GenerationOrchestrationService {
             attemptLoop = new GenerationAttemptLoop(this, runDependencies,
                     new GenerationAttemptLoop.RunContext(exercise, mode, jobId, sandbox, sessionId, workspaceSeed, testsSeedSnapshot, placeholderReplacements,
                             baselineRepositoryFiles, baselineProblemStatement, baselineGradedTestNames, sourceBrief, mode == GenerationMode.GENERATE, !statementAuthoritative,
-                            systemPrompt, firstPrompt, baseTools, tools, cancelled, progress, effectiveUsageSink));
+                            systemPrompt, firstPrompt, baseTools, tools, cancelled, progress, effectiveUsageSink, capture));
             GenerationOutcome decidedInLoop = attemptLoop.run();
             if (decidedInLoop != null) {
                 return decidedInLoop.withTermination(attemptLoop.terminationReason());
@@ -289,8 +302,7 @@ public class GenerationOrchestrationService {
                 if (verifiedCheckpoint != null && workspaceSeed != null) {
                     return preserveCandidate(verifiedCheckpoint, sandbox, sessionId, workspaceSeed).withTermination(TerminationReason.CANCELLED);
                 }
-                return stopOrPreserve(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles, baselineProblemStatement,
-                        new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
+                return stopOrPreserve(sandbox, sessionId, capture, new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
             }
             if (verifiedCheckpoint != null && workspaceSeed != null) {
                 log.warn("Exercise generation failed while repairing a mechanically verified candidate for exercise {}; preserving the verified checkpoint ({})", exercise.getId(),
@@ -307,8 +319,7 @@ public class GenerationOrchestrationService {
                         SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the captured candidate could be fully verified."), workspaceSeed.repositoryHeads(),
                         readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json")).withTermination(TerminationReason.RUN_FAILED);
             }
-            GenerationOutcome diagnosticError = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
-                    baselineProblemStatement);
+            GenerationOutcome diagnosticError = captureUnexpectedFailure(capture);
             if (diagnosticError != null) {
                 log.warn("Exercise generation failed after producing diagnostic artifacts for exercise {} ({})", exercise.getId(), e.getClass().getSimpleName(), e);
                 return diagnosticError.withTermination(TerminationReason.RUN_FAILED);
@@ -332,11 +343,8 @@ public class GenerationOrchestrationService {
                 candidate.reviewReport(), workspaceSeed.repositoryHeads(), candidate.specDocument(), candidate.testPlanJson());
     }
 
-    GenerationOutcome stopOrPreserve(InteractiveSandbox sandbox, @Nullable String sessionId, GenerationWorkspaceService.@Nullable WorkspaceSeed workspaceSeed,
-            Map<String, String> placeholderReplacements, Map<RepositoryType, Map<String, String>> baselineRepositoryFiles, @Nullable String baselineProblemStatement,
-            AgentLoopResult cancelledResult) {
-        GenerationOutcome diagnosticOutcome = captureUnexpectedFailure(sandbox, sessionId, workspaceSeed, placeholderReplacements, baselineRepositoryFiles,
-                baselineProblemStatement);
+    GenerationOutcome stopOrPreserve(InteractiveSandbox sandbox, @Nullable String sessionId, @Nullable AuthoringStageCapture capture, AgentLoopResult cancelledResult) {
+        GenerationOutcome diagnosticOutcome = captureUnexpectedFailure(capture);
         if (diagnosticOutcome != null) {
             return diagnosticOutcome;
         }
@@ -344,40 +352,11 @@ public class GenerationOrchestrationService {
         return GenerationOutcome.cancelled(cancelledResult);
     }
 
-    private @Nullable GenerationOutcome captureUnexpectedFailure(InteractiveSandbox sandbox, @Nullable String sessionId,
-            GenerationWorkspaceService.@Nullable WorkspaceSeed workspaceSeed, Map<String, String> placeholderReplacements,
-            Map<RepositoryType, Map<String, String>> baselineRepositoryFiles, @Nullable String baselineProblemStatement) {
-        if (sessionId == null || workspaceSeed == null) {
-            return null;
-        }
-        try {
-            workspace.cleanTransientBuildOutputs(sandbox, sessionId);
-        }
-        catch (RuntimeException cleanupFailure) {
-            log.debug("Could not clean transient outputs before diagnostic capture: {}", cleanupFailure.getMessage());
-        }
-        Map<RepositoryType, Map<String, String>> files = Map.of();
-        try {
-            files = changedCapturedRepositoryFiles(baselineRepositoryFiles, captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements));
-        }
-        catch (RuntimeException extractionFailure) {
-            log.debug("Could not extract every repository after generation failed: {}", extractionFailure.getMessage());
-        }
-        String statement;
-        try {
-            statement = workspace.extractProblemStatement(sandbox, sessionId).trim();
-        }
-        catch (RuntimeException extractionFailure) {
-            statement = baselineProblemStatement == null ? "" : baselineProblemStatement.trim();
-        }
-        boolean statementChanged = !Objects.equals(baselineProblemStatement == null ? "" : baselineProblemStatement.trim(), statement);
-        if (!statementChanged && files.isEmpty()) {
-            return null;
-        }
-        AgentLoopResult loopResult = AgentLoopResult.outsideSession(AgentLoopResult.Status.ERROR, "Generation stopped unexpectedly before verification completed.");
-        return new GenerationOutcome(loopResult, null, sessionId, this, sandbox, files, statement,
-                SpecFidelityReport.qualityReviewUnavailable("Generation stopped before the candidate could be fully verified."), workspaceSeed.repositoryHeads(),
-                readSpecDocument(sandbox, sessionId), readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"));
+    private @Nullable GenerationOutcome captureUnexpectedFailure(@Nullable AuthoringStageCapture capture) {
+        // Null before the workspace was seeded: there is no session content to read back and nothing to fall back to either.
+        return capture == null ? null
+                : capture.partialOutcome(AgentLoopResult.outsideSession(AgentLoopResult.Status.ERROR, "Generation stopped unexpectedly before verification completed."),
+                        "Generation stopped before the candidate could be fully verified.");
     }
 
     Map<RepositoryType, Map<String, String>> captureRepositoryFiles(InteractiveSandbox sandbox, String sessionId, GenerationWorkspaceService.WorkspaceSeed workspaceSeed,
@@ -633,7 +612,27 @@ public class GenerationOrchestrationService {
         }
     }
 
+    /** Opens the single teardown gate for a freshly created session, so cancel hook, terminal close, and error paths all destroy it through the same route. */
+    private SandboxSessionLifecycle registerSessionLifecycle(InteractiveSandbox sandbox, String sessionId) {
+        SandboxSessionLifecycle lifecycle = new SandboxSessionLifecycle(sessionId, () -> destroySessionNow(sandbox, sessionId));
+        sessionLifecycles.put(sessionId, lifecycle);
+        return lifecycle;
+    }
+
     void destroyQuietly(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId) {
+        SandboxSessionLifecycle lifecycle = sessionId == null ? null : sessionLifecycles.get(sessionId);
+        if (lifecycle != null) {
+            // Destroys now, or as soon as an in-flight capture releases the session. Never twice, however many routes ask.
+            lifecycle.requestDestroy();
+            // This is the run's own terminal teardown — the cancel hook is already deregistered and no capture can start — so the gate has no further readers. Dropping it here
+            // rather than inside the teardown is what keeps a cancellation that already destroyed the session from being followed by a second, unguarded destroy.
+            sessionLifecycles.remove(sessionId, lifecycle);
+            return;
+        }
+        destroySessionNow(sandbox, sessionId);
+    }
+
+    private void destroySessionNow(@Nullable InteractiveSandbox sandbox, @Nullable String sessionId) {
         structuralOracleSeeder.forget(sessionId);
         approvedSpecs.forget(sessionId);
         if (sandbox != null && sessionId != null) {

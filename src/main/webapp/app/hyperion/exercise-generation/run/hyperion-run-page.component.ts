@@ -218,7 +218,10 @@ export class HyperionRunPageComponent {
             checks,
             testCountKey: verdict ? (verdict.testCount === 1 ? 'artemisApp.hyperion.generation.verdict.oneTest' : 'artemisApp.hyperion.generation.verdict.tests') : undefined,
             testCountParams: verdict ? { count: verdict.testCount } : undefined,
-            retained: !this.savedToExercise(),
+            // Only the server knows whether a candidate survived: a run whose sandbox died before its work was copied
+            // out has nothing to inspect, and telling the instructor otherwise sends them looking for files that are gone.
+            retained: !this.savedToExercise() && this.facade.artifactsRetained(),
+            nothingRetained: !this.savedToExercise() && !this.facade.artifactsRetained(),
             // The server's own prose is English and technical; it belongs behind the disclosure, never in the headline.
             serverMessages: [...(terminal?.message ? [terminal.message] : []), ...(verdict?.reasons ?? [])],
             events: this.events(),

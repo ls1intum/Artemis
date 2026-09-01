@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -25,9 +26,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +59,7 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoo
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityReport;
@@ -290,8 +295,8 @@ class GenerationOrchestrationServiceTest {
     @Test
     void stagedGenerationEnabled_generateJava_delegatesToStagedGenerationRunnerInsteadOfTheSingleAgentLoopCall() {
         GenerationOrchestrationService stagedService = newService(true);
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
 
         try (GenerationOutcome outcome = stagedService.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, () -> false, null, null, null)) {
@@ -299,7 +304,7 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(stagedGenerationRunner, times(1)).run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(),
-                anyBoolean(), any());
+                anyBoolean(), any(), any());
         verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
     }
 
@@ -309,8 +314,8 @@ class GenerationOrchestrationServiceTest {
         String draft = "# Draft playlist exercise\n\nThis generated draft is long enough to look authoritative but may have omitted explicit requirements.";
         String sourceBrief = "Teach Strategy with three playlist strategies. Students must create the interface. Include a UML diagram.";
         when(exercise.getProblemStatement()).thenReturn(draft);
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         ArgumentCaptor<String> prompt = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> rawBrief = ArgumentCaptor.forClass(String.class);
@@ -323,7 +328,7 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(stagedGenerationRunner).run(any(), any(), any(), prompt.capture(), rawBrief.capture(), any(), any(), anyString(), any(), any(), any(), any(),
-                specStageApplies.capture(), conceptSelectionApplies.capture(), any());
+                specStageApplies.capture(), conceptSelectionApplies.capture(), any(), any());
         assertThat(specStageApplies.getValue()).isTrue();
         assertThat(conceptSelectionApplies.getValue()).isTrue();
         assertThat(prompt.getValue()).contains("PRIMARY SOURCE REQUIREMENTS", sourceBrief).doesNotContain("CURRENT AI-GENERATED DRAFT", draft);
@@ -336,8 +341,8 @@ class GenerationOrchestrationServiceTest {
         GenerationOrchestrationService stagedService = newService(true);
         String statement = "# Elevator dispatch\n\nUse the supplied strategies to choose one reachable request globally, with deterministic ties.";
         when(exercise.getProblemStatement()).thenReturn(statement);
-        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any()))
-                .thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenReturn(new StagedGenerationRunner.StagedRunOutcome(completed(), null));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         ArgumentCaptor<String> rawBrief = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Boolean> specStageApplies = ArgumentCaptor.forClass(Boolean.class);
@@ -348,7 +353,7 @@ class GenerationOrchestrationServiceTest {
         }
 
         verify(stagedGenerationRunner).run(any(), any(), any(), anyString(), rawBrief.capture(), any(), any(), anyString(), any(), any(), any(), any(), specStageApplies.capture(),
-                conceptSelectionApplies.capture(), any());
+                conceptSelectionApplies.capture(), any(), any());
         assertThat(specStageApplies.getValue()).isTrue();
         assertThat(conceptSelectionApplies.getValue()).isFalse();
         assertThat(rawBrief.getValue()).contains("STARTING PROBLEM STATEMENT", statement);
@@ -1770,5 +1775,143 @@ class GenerationOrchestrationServiceTest {
             verify(specFidelityCritic, never()).forSettings(any());
             verify(stagedGenerationRunner, never()).forSettings(any(), any(), any());
         }
+    }
+
+    // === Sandbox teardown versus artifact capture (job a1f1d61a) ===
+
+    /** Records the node-local cancel hook the run registers, so a test can dispatch it the way {@code GenerationJobService} does: on another pool, mid-run. */
+    private AtomicReference<Runnable> captureCancelHook() {
+        AtomicReference<Runnable> hook = new AtomicReference<>();
+        doAnswer(invocation -> {
+            hook.set(invocation.getArgument(1));
+            return null;
+        }).when(jobService).registerCancelHook(eq(JOB_ID), any());
+        return hook;
+    }
+
+    /**
+     * Runs the cancel hook the way the production dispatch does — on {@code GenerationJobService}'s cancellation executor rather than the generation thread — and asserts that it
+     * came back. A hook that blocked here would stall every unrelated cancellation queued behind it on that shared executor.
+     */
+    private static void dispatchOnCancellationExecutor(Runnable cancelHook) {
+        Thread cancellationExecutor = new Thread(cancelHook, "cancellation-executor");
+        cancellationExecutor.start();
+        try {
+            cancellationExecutor.join(TimeUnit.SECONDS.toMillis(5));
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        assertThat(cancellationExecutor.isAlive()).as("the cancel hook must not block on the capture that is in flight").isFalse();
+    }
+
+    /**
+     * The incident: the provider threw during authoring, {@code markUncertain} requested a system cancellation, and the cancel hook destroyed the session while the diagnostic
+     * capture was copying the repositories out — so all three copy-outs failed and the run retained nothing.
+     */
+    @Test
+    void aCancellationArrivingWhileTheWorkIsCopiedOut_isDeferredAndEveryCopyOutStillSucceeds() {
+        AtomicReference<Runnable> cancelHook = captureCancelHook();
+        AtomicBoolean cancelled = new AtomicBoolean();
+        List<String> sandboxEvents = java.util.Collections.synchronizedList(new ArrayList<>());
+        AtomicBoolean sessionDestroyed = new AtomicBoolean();
+        doAnswer(invocation -> {
+            sandboxEvents.add("destroy");
+            sessionDestroyed.set(true);
+            return null;
+        }).when(sandbox).destroySession(SESSION_ID);
+        when(workspace.extractRepository(any(), anyString(), any(), any())).thenAnswer(invocation -> {
+            RepositoryType type = invocation.getArgument(2);
+            sandboxEvents.add("copyOut:" + type.name());
+            if (sessionDestroyed.get()) {
+                throw new IllegalStateException("Remote sandbox operation COPY_OUT failed: session " + SESSION_ID + " is not active on this build agent");
+            }
+            if (type == RepositoryType.SOLUTION) {
+                // The observed timing: the destroy is queued about a second before the capture path runs, and lands while it is mid-copy.
+                dispatchOnCancellationExecutor(cancelHook.get());
+            }
+            return new GenerationWorkspaceService.RepositoryExtraction(Map.of("src/Attempt.java", "candidate from " + type), false);
+        });
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            cancelled.set(true);
+            throw new IllegalStateException("OpenAIIoException while streaming the provider response");
+        });
+
+        try (GenerationOutcome outcome = service.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, cancelled::get, null, null, null)) {
+            assertThat(outcome.capturedProducedFiles()).as("the work the failed run produced is retained rather than lost with the session").containsKeys(RepositoryType.SOLUTION,
+                    RepositoryType.TEMPLATE, RepositoryType.TESTS);
+        }
+
+        assertThat(sandboxEvents).containsSubsequence("copyOut:SOLUTION", "copyOut:TEMPLATE", "copyOut:TESTS", "destroy");
+        assertThat(sandboxEvents).last().as("the session is torn down only once its work has been copied out").isEqualTo("destroy");
+        verify(sandbox, times(1)).destroySession(SESSION_ID);
+    }
+
+    /** Once the session really is gone, the capture path must skip its copy-outs rather than issue calls that can only fail and log "Could not extract … files". */
+    @Test
+    void aCaptureStartingAfterTheSessionWasDestroyed_issuesNoCopyOutsAtAll() {
+        AtomicReference<Runnable> cancelHook = captureCancelHook();
+        AtomicBoolean cancelled = new AtomicBoolean();
+        when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenAnswer(invocation -> {
+            cancelled.set(true);
+            dispatchOnCancellationExecutor(cancelHook.get());
+            throw new IllegalStateException("OpenAIIoException while streaming the provider response");
+        });
+
+        try (GenerationOutcome outcome = service.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, cancelled::get, null, null, null)) {
+            assertThat(outcome.capturedProducedFiles()).isEmpty();
+        }
+
+        verify(workspace, never()).extractRepository(any(), anyString(), any(), any());
+        verify(workspace, never()).cleanTransientBuildOutputs(any(), anyString());
+        verify(workspace, never()).extractProblemStatement(any(), anyString());
+        verify(sandbox, times(1)).destroySession(SESSION_ID);
+    }
+
+    /** A run that dies during the artifacts stage keeps what that stage authored, because the stage boundary snapshotted it while the sandbox was still alive. */
+    @Test
+    void aProviderFailureAfterAnAuthoringStageBoundary_retainsThatStagesSnapshot() {
+        GenerationOrchestrationService stagedService = newService(true);
+        AtomicReference<Runnable> cancelHook = captureCancelHook();
+        AtomicBoolean cancelled = new AtomicBoolean();
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenAnswer(invocation -> {
+                    Consumer<GenerationStage> stageBoundarySink = invocation.getArgument(15);
+                    stageBoundarySink.accept(GenerationStage.TESTS);
+                    // markUncertain -> requestSystemCancellation -> the hook is dispatched on the cancellation executor, and the session dies.
+                    cancelled.set(true);
+                    dispatchOnCancellationExecutor(cancelHook.get());
+                    throw new IllegalStateException("OpenAIIoException while streaming the provider response");
+                });
+
+        try (GenerationOutcome outcome = stagedService.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, cancelled::get, null, null,
+                null)) {
+            assertThat(outcome.capturedProducedFiles()).as("the snapshot taken at the end of the artifacts stage survives the dead session").containsKey(RepositoryType.SOLUTION);
+            assertThat(outcome.capturedProducedFiles().get(RepositoryType.SOLUTION)).containsKey("src/Attempt.java");
+        }
+
+        // Three: the stage boundary's own copy-out. The dead session is never asked again.
+        verify(workspace, times(3)).extractRepository(any(), anyString(), any(), any());
+    }
+
+    /** Without a completed stage there is nothing to fall back to, and the run must still not issue copy-outs against a destroyed session. */
+    @Test
+    void aProviderFailureBeforeAnyStageBoundary_retainsNothingAndStillIssuesNoCopyOuts() {
+        GenerationOrchestrationService stagedService = newService(true);
+        AtomicReference<Runnable> cancelHook = captureCancelHook();
+        AtomicBoolean cancelled = new AtomicBoolean();
+        when(stagedGenerationRunner.run(any(), any(), any(), anyString(), anyString(), any(), any(), anyString(), any(), any(), any(), any(), anyBoolean(), anyBoolean(), any(),
+                any())).thenAnswer(invocation -> {
+                    cancelled.set(true);
+                    dispatchOnCancellationExecutor(cancelHook.get());
+                    throw new IllegalStateException("OpenAIIoException while streaming the provider response");
+                });
+
+        try (GenerationOutcome outcome = stagedService.generate(exercise, user, "Build a bubble sort exercise.", JOB_ID, GenerationMode.GENERATE, cancelled::get, null, null,
+                null)) {
+            assertThat(outcome.capturedProducedFiles()).isEmpty();
+        }
+
+        verify(workspace, never()).extractRepository(any(), anyString(), any(), any());
     }
 }

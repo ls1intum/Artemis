@@ -102,6 +102,13 @@ export class HyperionGenerationActivityFacade {
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
     /** The design document the agent wrote before touching any code, as retained by the server for this run. */
     readonly specDocument = signal<string | undefined>(undefined);
+    /**
+     * Whether an unsaved candidate is really retained and readable, as opposed to merely not saved.
+     *
+     * The server derives this from the retained snapshot itself, so it turns false again once the retention window
+     * closes. Nothing may promise the instructor their work was kept without consulting it.
+     */
+    readonly artifactsRetained = signal<boolean>(false);
     readonly completionStatus = signal<HyperionGenerationCompletionStatus | undefined>(undefined);
     readonly liveExerciseChanged = signal<boolean | undefined>(undefined);
     readonly revertAvailable = signal<boolean>(false);
@@ -335,6 +342,7 @@ export class HyperionGenerationActivityFacade {
                     if (!sameJob || status.specDocument !== undefined) {
                         this.specDocument.set(status.specDocument);
                     }
+                    this.artifactsRetained.set(status.artifactsRetained === true);
                     const events = mergeEvents(sameJob ? this.events() : [], status.events ?? []);
                     this.events.set(events);
                     const retainedFileChanges = status.fileChanges ?? [];
@@ -633,6 +641,7 @@ export class HyperionGenerationActivityFacade {
         this.liveExerciseChanged.set(undefined);
         this.events.set([]);
         this.specDocument.set(undefined);
+        this.artifactsRetained.set(false);
         this.clearFileChanges();
         this.generationReverted.next(result.completedAt);
         this.alertService.success(
@@ -726,6 +735,7 @@ export class HyperionGenerationActivityFacade {
         this.events.set([]);
         this.verdict.set(undefined);
         this.specDocument.set(undefined);
+        this.artifactsRetained.set(false);
         this.completionStatus.set(undefined);
         this.liveExerciseChanged.set(undefined);
         this.revertAvailable.set(false);

@@ -41,6 +41,8 @@ function status(partial: Partial<HyperionGenerationStatus>): HyperionGenerationS
         ownedByCaller: true,
         cancellable: false,
         accountingState: 'COMPLETE',
+        // Retention is something the server has to assert; a test that does not say so has kept nothing.
+        artifactsRetained: false,
         ...partial,
     };
 }
@@ -145,6 +147,30 @@ describe('HyperionRunPageComponent', () => {
         expect(outcome!.textContent).toContain('artemisApp.hyperion.generation.outcome.failedTitle');
         // The English server sentence belongs behind the disclosure, never in the headline.
         expect(outcome!.textContent).not.toContain('gradle exited with code 1');
+    });
+
+    it('promises the work was kept only when the server says a candidate survived', () => {
+        const failure = [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'ERROR', terminationReason: 'AGENT_ERROR' })];
+
+        render(status({ events: failure, artifactsRetained: true }));
+        expect(testId('hyperion-run-outcome')!.textContent).toContain('artemisApp.hyperion.generation.outcome.retained');
+        expect(testId('hyperion-run-nothing-retained')).toBeNull();
+    });
+
+    it('says nothing was kept when the run died before its work could be copied out', () => {
+        // The observed incident: the sandbox was torn down while the artifacts were being extracted, so every
+        // copy-out failed. Claiming the work is there sends the instructor looking for files that do not exist.
+        render(
+            status({
+                events: [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'ERROR', terminationReason: 'AGENT_ERROR' })],
+                artifactsRetained: false,
+            }),
+        );
+
+        const outcome = testId('hyperion-run-outcome')!;
+        expect(testId('hyperion-run-nothing-retained')).not.toBeNull();
+        expect(outcome.textContent).toContain('artemisApp.hyperion.generation.outcome.nothingRetained');
+        expect(outcome.textContent).not.toContain('artemisApp.hyperion.generation.outcome.retained"');
     });
 
     it('offers Cancel while the run is going and the caller owns it', () => {

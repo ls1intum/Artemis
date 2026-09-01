@@ -24,12 +24,13 @@ import {
 
 type TestGenerationEvent = Omit<HyperionGenerationEvent, 'timestamp'> & { timestamp?: string };
 type TestGenerationMessage = TestGenerationEvent | ExerciseGenerationFileChange;
-type TestGenerationStatus = Omit<HyperionGenerationStatus, 'events' | 'revertAvailable' | 'ownedByCaller' | 'cancellable' | 'accountingState'> & {
+type TestGenerationStatus = Omit<HyperionGenerationStatus, 'events' | 'revertAvailable' | 'ownedByCaller' | 'cancellable' | 'accountingState' | 'artifactsRetained'> & {
     events: TestGenerationEvent[];
     revertAvailable?: boolean;
     ownedByCaller?: boolean;
     cancellable?: boolean;
     accountingState?: HyperionGenerationStatus['accountingState'];
+    artifactsRetained?: boolean;
 };
 
 function normalizeEvent(event: TestGenerationEvent): HyperionGenerationEvent {
@@ -48,6 +49,8 @@ function normalizeStatus(status: TestGenerationStatus): HyperionGenerationStatus
         ownedByCaller: status.ownedByCaller ?? true,
         cancellable: status.cancellable ?? status.running,
         accountingState: status.accountingState ?? (status.running ? 'PENDING' : 'COMPLETE'),
+        // Retention is something the server has to assert; a test that does not say so has kept nothing.
+        artifactsRetained: status.artifactsRetained ?? false,
     };
 }
 
@@ -1664,6 +1667,7 @@ describe('HyperionGenerationActivityComponent', () => {
             ownedByCaller: true,
             cancellable: true,
             accountingState: 'PENDING',
+            artifactsRetained: false,
         };
         const stoppedStatus = { ...runningStatus, running: false, events: [{ type: 'CANCELLED' as const, message: 'Cancelled' }], accountingState: 'COMPLETE' as const };
         service.getStatus = vi
@@ -1794,6 +1798,7 @@ describe('HyperionGenerationActivityComponent', () => {
             ownedByCaller: true,
             cancellable: true,
             accountingState: 'PENDING',
+            artifactsRetained: false,
         });
 
         expect(component.running()).toBe(false);

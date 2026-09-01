@@ -9,6 +9,9 @@
             @if (view().retained) {
                 <p class="m-0 text-sm wrap-anywhere" jhiTranslate="artemisApp.hyperion.generation.outcome.retained"></p>
             }
+            @if (view().nothingRetained) {
+                <p class="m-0 text-sm wrap-anywhere" jhiTranslate="artemisApp.hyperion.generation.outcome.nothingRetained" data-testid="hyperion-run-nothing-retained"></p>
+            }
         </div>
     </tum-ui-message>
 

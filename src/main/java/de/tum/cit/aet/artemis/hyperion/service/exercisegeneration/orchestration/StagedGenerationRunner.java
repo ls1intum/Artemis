@@ -281,7 +281,14 @@ public class StagedGenerationRunner {
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
             Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, @Nullable Consumer<String> specSink) {
         return run(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, specStageApplies,
-                specStageApplies, specSink);
+                specStageApplies, specSink, null);
+    }
+
+    public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
+            InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
+            Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies, @Nullable Consumer<String> specSink) {
+        return run(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress, structuralSeedHook, specStageApplies,
+                conceptSelectionApplies, specSink, null);
     }
 
     /**
@@ -306,24 +313,27 @@ public class StagedGenerationRunner {
      * @param conceptSelectionApplies whether the model must invent a concept first; false when an authoritative statement already fixes it
      * @param specSink                receives the gate-approved SPEC.md snapshot right after the spec gate passes, which is also the orchestrator's frozen copy for the critic and
      *                                    repair prompts; may be {@code null}
+     * @param stageBoundarySink       receives each authoring stage once the run leaves it, so the caller can snapshot the workspace while the sandbox is still alive; may be
+     *                                    {@code null}
      * @return one aggregated {@link AgentLoopResult} — summed turns, the first {@code ERROR}/{@code CANCELLED} status encountered or else the last stage's status, and the last
      *         stage's final message (with the failing gate's report appended, if a gate failed) — together with the carried conversation
      */
     public StagedRunOutcome run(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief, Map<String, String> seedTestsFiles,
             InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> progress,
-            Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies, @Nullable Consumer<String> specSink) {
+            Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies, @Nullable Consumer<String> specSink,
+            @Nullable Consumer<GenerationStage> stageBoundarySink) {
         // Owned here rather than threaded through the stage machine below, so that objections raised against a concept the run proceeded with anyway leave through every exit:
         // gate failure, wall clock, cancellation, or a clean finish.
         List<String> conceptFindings = new ArrayList<>();
         StagedRunOutcome outcome = runStages(exercise, baseTools, tools, briefPrompt, sourceBrief, seedTestsFiles, sandbox, sessionId, cancelled, usageSink, progress,
-                structuralSeedHook, specStageApplies, conceptSelectionApplies, specSink, conceptFindings);
+                structuralSeedHook, specStageApplies, conceptSelectionApplies, specSink, stageBoundarySink, conceptFindings);
         return conceptFindings.isEmpty() ? outcome : outcome.withConceptFindings(conceptFindings);
     }
 
     private StagedRunOutcome runStages(ProgrammingExercise exercise, SandboxAgentTools baseTools, Object tools, String briefPrompt, String sourceBrief,
             Map<String, String> seedTestsFiles, InteractiveSandbox sandbox, String sessionId, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> progress, Supplier<SeededStructuralTests> structuralSeedHook, boolean specStageApplies, boolean conceptSelectionApplies,
-            @Nullable Consumer<String> specSink, List<String> conceptFindings) {
+            @Nullable Consumer<String> specSink, @Nullable Consumer<GenerationStage> stageBoundarySink, List<String> conceptFindings) {
         Instant startedAt = clock.get();
         boolean continuous = stagedContext == StagedContext.CONTINUOUS;
         int remainingPool = POOL_HARD_CAP;
@@ -743,6 +753,12 @@ public class StagedGenerationRunner {
                 allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], 0, allocatablePool(stage, remainingPool));
             }
 
+            // The run is leaving this stage, whether its gate passed or it exhausted its re-entries: the last moment its output exists in a live sandbox and the natural place
+            // to snapshot it. Deliberately here and not per turn — a per-turn copy-out of three repositories would cost a relay round trip every turn to capture states this
+            // boundary captures anyway.
+            if (stageBoundarySink != null) {
+                stageBoundarySink.accept(stage);
+            }
         }
         return finish(exercise, lastStatus, totalTurns, lastFinalMessage, archivedConversation, conversation, unresolvedSpecificationFindings);
     }

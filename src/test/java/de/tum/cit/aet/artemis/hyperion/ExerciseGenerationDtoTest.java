@@ -129,7 +129,7 @@ class ExerciseGenerationDtoTest {
         ExerciseGenerationUsageDTO usage = new ExerciseGenerationUsageDTO(2, 3, 17, 4, 100, 50, 40, true, 0.25, false, List.of("model-a", "model-b"),
                 List.of("response-a", "response-b"), true);
         JsonNode json = mapper.readTree(mapper.writeValueAsString(new ExerciseGenerationStatusDTO("job", false, GenerationMode.GENERATE, List.of(), List.of(), false, null, null,
-                true, false, null, usage, ExerciseGenerationAccountingState.COMPLETE, null)));
+                true, false, null, usage, ExerciseGenerationAccountingState.COMPLETE, null, false)));
 
         assertThat(json.get("accountingState").asText()).isEqualTo("COMPLETE");
         assertThat(json.get("usage").get("modelCalls").asLong()).isEqualTo(2);

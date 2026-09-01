@@ -774,6 +774,47 @@ class GenerationJobServiceTest {
         assertThat(jobService.getRetainedArtifacts(owner, exercise)).isEmpty();
     }
 
+    /** The client is asked to tell an instructor whether there is anything to look at, so the status has to answer that from the retained snapshot rather than assume there is. */
+    @Test
+    void status_reportsNoRetainedArtifacts_forATerminalRunThatKeptNothing() {
+        long exerciseId = 620L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed."), true);
+        jobService.clearJob(exerciseId, jobId);
+
+        assertThat(jobService.getStatus(owner, exercise)).get().extracting(ExerciseGenerationStatusDTO::artifactsRetained).isEqualTo(false);
+    }
+
+    @Test
+    void status_reportsRetainedArtifacts_onceTheRunActuallyRetainedACandidate() {
+        long exerciseId = 621L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed."), true);
+        jobService.retainUnsavedArtifacts(exerciseId, jobId, owner.getLogin(), retainedArtifacts(jobId));
+        jobService.clearJob(exerciseId, jobId);
+
+        assertThat(jobService.getStatus(owner, exercise)).get().extracting(ExerciseGenerationStatusDTO::artifactsRetained).isEqualTo(true);
+    }
+
+    /** The retained candidate is owner-only, so the sanitized view another instructor sees must not advertise work it may not read. */
+    @Test
+    void status_doesNotAdvertiseARetainedCandidateToAnotherInstructor() {
+        long exerciseId = 622L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise, "go", GenerationMode.GENERATE);
+        jobService.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "Generation failed."), true);
+        jobService.retainUnsavedArtifacts(exerciseId, jobId, owner.getLogin(), retainedArtifacts(jobId));
+        jobService.clearJob(exerciseId, jobId);
+
+        assertThat(jobService.getStatus(user("other"), exercise)).get().extracting(ExerciseGenerationStatusDTO::artifactsRetained).isEqualTo(false);
+        assertThat(jobService.getStatus(owner, exercise)).get().extracting(ExerciseGenerationStatusDTO::artifactsRetained).isEqualTo(true);
+    }
+
     private static ExerciseGenerationRetainedArtifactsDTO retainedArtifacts(String jobId) {
         return new ExerciseGenerationRetainedArtifactsDTO(jobId, ExerciseGenerationArtifactCompleteness.COMPLETE, "Problem statement", "# Spec",
                 List.of(new ExerciseGenerationRetainedFileDTO(ExerciseGenerationFileChangeDTO.REPOSITORY_TEMPLATE, "src/Main.java", "public class Main {}")));

@@ -26,8 +26,10 @@ export interface HyperionRunOutcomeView {
     /** The translated "n tests" line under the checks, or `undefined` when no verdict was reported. */
     testCountKey?: string;
     testCountParams?: Record<string, number>;
-    /** Whether the run ended without saving, so the work is only kept for inspection. */
+    /** Whether the run ended without saving and its work really is kept, so there is something to inspect. */
     retained: boolean;
+    /** Whether the run ended without saving and kept nothing, which the instructor must be told rather than left to discover. */
+    nothingRetained: boolean;
     /** Raw English server prose. Never the primary message; only ever shown under technical details. */
     serverMessages: readonly string[];
     events: readonly HyperionGenerationEvent[];

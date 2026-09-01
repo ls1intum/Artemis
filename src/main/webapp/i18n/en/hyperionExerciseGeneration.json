@@ -119,6 +119,7 @@
                     "cancelledTitle": "You cancelled this run",
                     "cancelledBody": "Nothing was written to your exercise. The draft exercise is still there and empty — run it again or delete it.",
                     "retained": "The work Artemis had done is kept so you can look at it. It is not part of your exercise.",
+                    "nothingRetained": "Nothing from this run could be kept, so there is nothing to inspect. Your exercise is unchanged — run it again when you are ready.",
                     "technicalDetails": "Show technical details",
                     "disclaimer": "Generated with AI. Check the problem statement, the tests, and the sample solution before releasing this exercise."
                 },
