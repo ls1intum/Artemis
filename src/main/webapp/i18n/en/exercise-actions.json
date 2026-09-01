@@ -11,8 +11,6 @@
             "startExercise": "Start exercise",
             "startPractice": "Start practice",
             "resumeExercise": "Resume exercise",
-            "requestManualFeedback": "Request feedback",
-            "requestManualFeedbackTooltip": "Send a manual feedback request before the due date for review.",
             "requestAutomaticFeedback": "Request AI feedback",
             "resumeExercisePractice": "Resume practice in exercise",
             "resumeExerciseError": "Error trying to resume the exercise",

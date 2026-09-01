@@ -36,7 +36,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StartPracticeModeButtonComponent } from 'app/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { RequestFeedbackButtonComponent } from 'app/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
@@ -108,17 +108,18 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 add: { imports: [MockComponent(CodeButtonComponent), MockComponent(RequestFeedbackButtonComponent)] },
             })
             .compileComponents();
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        profileService = TestBed.inject(ProfileService);
+        getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
+        // Set up before createComponent: ExerciseDetailsStudentActionsComponent.athenaEnabled reads this at construction time, not reactively.
+        getProfileInfoSub.mockReturnValue({
+            sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+            activeModuleFeatures: [MODULE_FEATURE_TEXT, MODULE_FEATURE_ATHENA],
+        } as unknown as ProfileInfo);
         fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        courseExerciseService = TestBed.inject(CourseExerciseService);
-        profileService = TestBed.inject(ProfileService);
         router = TestBed.inject(Router) as unknown as MockRouter;
-        getProfileInfoSub = vi.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({
-            sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
-            activeModuleFeatures: [MODULE_FEATURE_TEXT],
-        } as unknown as ProfileInfo);
         startExerciseStub = vi.spyOn(courseExerciseService, 'startExercise');
         resumeStub = vi.spyOn(courseExerciseService, 'resumeProgrammingExercise');
     });

@@ -21,7 +21,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
@@ -55,7 +54,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [RequestFeedbackButtonComponent, NgbTooltipModule],
+            imports: [RequestFeedbackButtonComponent],
             providers: [
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -761,7 +760,7 @@ describe('RequestFeedbackButtonComponent', () => {
         expect(alertService.warning).toHaveBeenCalled();
     });
 
-    it('should show link button when Athena is disabled', async () => {
+    it('should not render any button when Athena is disabled', async () => {
         vi.useFakeTimers();
         setAthenaEnabled(false);
         const participation = createParticipation();
@@ -770,29 +769,8 @@ describe('RequestFeedbackButtonComponent', () => {
 
         await initAndTick();
 
-        const link = debugElement.query(By.css('a.btn'));
-        expect(link).not.toBeNull();
-    });
-
-    it('should call requestFeedback when link is clicked with Athena disabled', async () => {
-        vi.useFakeTimers();
-        setAthenaEnabled(false);
-        const participation = createParticipation();
-        const exercise = createBaseExercise(ExerciseType.TEXT, false, participation);
-        setupComponentInputs(exercise);
-
-        vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
-
-        await initAndTick();
-
-        const link = debugElement.query(By.css('a.btn'));
-        expect(link).not.toBeNull();
-
-        vi.spyOn(component, 'requestFeedback');
-        link.nativeElement.click();
-        await vi.advanceTimersByTimeAsync(0);
-
-        expect(component.requestFeedback).toHaveBeenCalled();
+        expect(debugElement.query(By.css('button'))).toBeNull();
+        expect(debugElement.query(By.css('a.btn'))).toBeNull();
     });
 
     it('should return early from ngOnInit if exercise has no id', async () => {
