@@ -796,7 +796,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         });
 
         if (matchedRoute) {
-            return matchedRoute.targetPath;
+            const isExerciseRoute = matchedRoute.urlParts.includes('exercises');
+            const exerciseId = isExerciseRoute ? /\/(?:[^/]+-)?exercises\/(\d+)(?:\/|$)/.exec(url)?.[1] : undefined;
+            return exerciseId ? [...matchedRoute.targetPath, exerciseId] : matchedRoute.targetPath;
         }
         return baseStudentPath;
     }

@@ -283,6 +283,25 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(expectedLink);
         });
 
+        it.each([
+            '/course-management/123/text-exercises/41',
+            '/course-management/123/modeling-exercises/41/edit',
+            '/course-management/123/file-upload-exercises/41/exercise-statistics',
+            '/course-management/123/programming-exercises/41/grading/test-cases',
+            '/course-management/123/quiz-exercises/41/preview',
+            '/course-management/123/exercises/41/teams',
+        ])('should link from course exercise management route %s to the generic student exercise detail', (url) => {
+            router.setUrl(url);
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exercises', '41']);
+        });
+
+        it('should not treat a nested exam exercise as a course exercise', () => {
+            router.setUrl('/course-management/123/exams/7/exercise-groups/8/text-exercises/41');
+
+            expect(component.perspectiveSwitchLinks()?.studentViewLink).toEqual(['/courses', '123', 'exams']);
+        });
+
         it('should default student view link to the course overview when route has no student equivalent', () => {
             router.setUrl('/course-management/123/build-overview');
 
