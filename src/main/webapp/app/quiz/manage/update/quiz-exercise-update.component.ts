@@ -1,7 +1,6 @@
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -13,9 +12,9 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -38,7 +37,6 @@ import {
     faArrowLeft,
     faCircleNotch,
     faClock,
-    faExclamationCircle,
     faFloppyDisk,
     faGear,
     faGraduationCap,
@@ -80,6 +78,9 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
+/** Largest delay setTimeout accepts before its signed 32-bit truncation makes it fire immediately. */
+const MAX_TIMEOUT_DELAY = 2_147_483_647;
+
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-update.component.html',
@@ -98,6 +99,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         CompetencySelectionPrimengComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
+        TumUiTooltipDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
@@ -118,8 +120,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private courseService = inject(CourseManagementService);
     private quizExerciseService = inject(QuizExerciseService);
     private router = inject(Router);
-    private translateService = inject(TranslateService);
-    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
     private exerciseService = inject(ExerciseService);
     private alertService = inject(AlertService);
     private exerciseGroupService = inject(ExerciseGroupService);
@@ -180,7 +180,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     // Icons
     faPlus = faPlus;
     faXmark = faXmark;
-    faExclamationCircle = faExclamationCircle;
     faArrowLeft = faArrowLeft;
     faWrench = faWrench;
     faWandMagicSparkles = faWandMagicSparkles;
@@ -259,6 +258,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     /**
      * Initialize variables and load course and quiz from server.
      */
+    constructor() {
+        super();
+        this.destroyRef.onDestroy(() => clearTimeout(this.savedQuizStartTimer));
+    }
+
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
@@ -397,6 +401,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         // Assign savedEntity to identify local changes
         this.savedEntity = this.quizExercise().id && !this.isImport() ? deepClone(this.quizExercise()) : new QuizExercise(undefined, undefined);
+        this.watchSavedQuizStart();
 
         this.cacheValidation();
     }
@@ -626,6 +631,17 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         });
     }
 
+    /** Target of the save button's aria-describedby; the tooltip text is mirrored under this id. */
+    protected readonly saveReasonsId = 'quiz-save-invalid-reasons';
+
+    // The save button is aria-disabled rather than disabled so it stays focusable and can explain itself,
+    // which leaves it clickable — hence the guard.
+    onSaveClick() {
+        if (!this.isSaveDisabled()) {
+            this.validateItemLimit();
+        }
+    }
+
     validateItemLimit() {
         const dragAndDropQuestions = this.quizExercise().quizQuestions?.filter((question) => {
             return question.type === this.DRAG_AND_DROP;
@@ -748,6 +764,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.quizExercise().isEditable = this.quizExercise().isEditable ?? isQuizEditable(this.quizExercise());
         this.exerciseService.validateDate(this.quizExercise());
         this.savedEntity = deepClone(this.quizExercise());
+        this.watchSavedQuizStart();
 
         if (isCreate) {
             // Update the browser URL from /new to /<id>/edit without Angular navigation.
@@ -886,6 +903,32 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         return !!(this.savedEntity && this.savedEntity.quizBatches && this.savedEntity.quizBatches.some((batch) => dayjs(batch.startTime).isBefore(dayjs())));
     }
 
+    /** Signal mirror of {@link hasSavedQuizStarted}, so the reason for a blocked save can depend on the clock. */
+    private readonly savedQuizStarted = signal(false);
+    private savedQuizStartTimer?: ReturnType<typeof setTimeout>;
+
+    /**
+     * Re-arms the tick that flips {@link savedQuizStarted} at the earliest saved batch start still ahead of us.
+     * Called wherever savedEntity is replaced, since a plain field cannot notify on its own.
+     */
+    private watchSavedQuizStart(): void {
+        clearTimeout(this.savedQuizStartTimer);
+        this.savedQuizStarted.set(this.hasSavedQuizStarted);
+        if (this.savedQuizStarted()) {
+            return;
+        }
+        const now = dayjs();
+        const upcomingStarts = (this.savedEntity?.quizBatches ?? []).map((batch) => dayjs(batch.startTime)).filter((start) => start.isValid() && start.isAfter(now));
+        if (!upcomingStarts.length) {
+            return;
+        }
+        const nextStart = upcomingStarts.reduce((earliest, start) => (start.isBefore(earliest) ? start : earliest));
+        // setTimeout truncates its delay to a signed 32-bit int, so anything past ~24.8 days would fire at once and
+        // declare the quiz started weeks early. Sleep in chunks and re-arm until the start time is actually reached.
+        const delay = Math.min(nextStart.diff(now) + 1, MAX_TIMEOUT_DELAY);
+        this.savedQuizStartTimer = setTimeout(() => this.watchSavedQuizStart(), delay);
+    }
+
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
         this.quizExercise().includedInOverallScore = includedInOverallScore;
         this.cacheValidation();
@@ -897,6 +940,18 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return [];
         }
         // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
+        // isValidQuiz() ignores the date flags even though isSaveDisabled() honours them, so without these the
+        // save button can disable with nothing to explain it.
+        if (this.quizExercise().dueDateError) {
+            invalidReasons.push({ translateKey: 'artemisApp.quizExercise.dueDateError', translateValues: {} });
+        }
+        if (this.hasErrorInQuizBatches()) {
+            invalidReasons.push({
+                translateKey:
+                    this.quizExercise().quizMode === QuizMode.SYNCHRONIZED ? 'artemisApp.quizExercise.startTimeErrorSynchronized' : 'artemisApp.quizExercise.startTimeError',
+                translateValues: {},
+            });
+        }
         return super.computeInvalidReasons().concat(invalidReasons);
     }
 
@@ -913,14 +968,32 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     get saveButtonTooltip(): string {
-        if (!this.quizExercise().isEditable) {
-            if (this.quizExercise().quizEnded) {
-                return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
-            }
-            return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
-        }
-        return '';
+        return this.uneditableReason();
     }
+
+    /**
+     * Set while the quiz cannot be edited at all; takes precedence over the validation reasons.
+     * Depends on {@link savedQuizStarted} rather than {@link hasSavedQuizStarted}, so the explanation appears the
+     * moment a saved batch starts under an open editor instead of only after the next edit.
+     */
+    readonly uneditableReason = computed<string>(() => {
+        this.currentLocale();
+        const quizExercise = this.quizExercise();
+        if (!quizExercise || (quizExercise.isEditable && !this.savedQuizStarted())) {
+            return '';
+        }
+        return quizExercise.quizEnded
+            ? this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleAfterEnd')
+            : this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
+    });
+
+    /** Everything blocking the save button that can be put into words; empty when nothing is wrong. */
+    readonly saveBlockedReasons = computed<string[]>(() => {
+        const uneditableReason = this.uneditableReason();
+        return uneditableReason ? [uneditableReason] : this.invalidReasonTexts();
+    });
+
+    readonly isSaveTooltipDisabled = computed<boolean>(() => !this.saveBlockedReasons().length);
 
     hasErrorInQuizBatches(): boolean {
         return !!this.quizExercise()?.quizBatches?.some((batch) => batch.startTimeError);

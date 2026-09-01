@@ -70,6 +70,7 @@
                         pInputText
                         [class.ng-invalid]="isQuestionTitleLengthLimitReached()"
                         [(ngModel)]="shortAnswerQuestion.title"
+                        (ngModelChange)="questionUpdated.emit()"
                         [maxlength]="MAX_QUESTION_TITLE_LENGTH"
                         name="short-answer-question-title-reevaluate-{{ questionIndex() }}"
                         placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"

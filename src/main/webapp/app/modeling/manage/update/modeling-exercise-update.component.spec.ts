@@ -29,7 +29,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { Component, input, output, signal, viewChild } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgModel, ValidationErrors } from '@angular/forms';
+import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -67,6 +68,16 @@ global.ResizeObserver = MockResizeObserverClass as unknown as typeof ResizeObser
 @Component({ selector: 'jhi-title-channel-name', template: '' })
 class StubTitleChannelNameComponent {
     isValid = signal(true);
+}
+
+// Settable stand-ins so each test can drive both branches of the title/channel wiring.
+class MockTitleChannelNameComponent {
+    channelFieldDisplayed = true;
+    isChannelFieldDisplayed = () => this.channelFieldDisplayed;
+    titleErrors: ValidationErrors | undefined = undefined;
+    get field_title(): NgModel {
+        return { control: { errors: this.titleErrors } } as NgModel;
+    }
 }
 
 // Stub for ExerciseTitleChannelNameComponent - must match the actual component's interface
@@ -113,6 +124,12 @@ class StubMarkdownEditorMonacoComponent {
     markdown = input<string>('');
     domainActions = input<unknown[]>([]);
     markdownChange = output<string>();
+}
+
+@Component({ selector: 'jhi-exercise-feedback-suggestion-options', template: '' })
+class StubExerciseFeedbackSuggestionOptionsComponent {
+    exercise = input<ModelingExercise>();
+    dueDate = input<dayjs.Dayjs>();
 }
 
 describe('ModelingExerciseUpdateComponent', () => {
@@ -249,6 +266,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         ModelingExerciseTimelineComponent,
                         StubMarkdownEditorMonacoComponent,
                         StubModelingEditorComponent,
+                        StubExerciseFeedbackSuggestionOptionsComponent,
                         ExerciseGroupTimelineLockStubComponent,
                     ],
                 },
@@ -695,6 +713,109 @@ describe('ModelingExerciseUpdateComponent', () => {
             comp.onMarkdownEditorKeydown(event);
 
             expect(stopPropagationSpy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('getInvalidReasons', () => {
+        let course: Course;
+        let titleChannelNameComponentMock: MockTitleChannelNameComponent;
+
+        const filledInExercise = (title: string) => {
+            const exercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            exercise.title = title;
+            exercise.channelName = 'valid-title';
+            exercise.mode = ExerciseMode.INDIVIDUAL;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            exercise.maxPoints = 10;
+            exercise.bonusPoints = 0;
+            return exercise;
+        };
+
+        beforeEach(async () => {
+            course = createCourse();
+            const modelingExercise = createModelingExercise(course);
+
+            routeData$.next({ modelingExercise });
+            routeUrl$.next([{ path: 'new' }] as UrlSegment[]);
+
+            fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // The type-based viewChild never matches the selector-registered stub, so override the signal
+            // directly. Scoped to this block's own fixture.
+            titleChannelNameComponentMock = new MockTitleChannelNameComponent();
+            (comp as unknown as { exerciseTitleChannelNameComponent: unknown }).exerciseTitleChannelNameComponent = () => ({
+                titleChannelNameComponent: () => titleChannelNameComponentMock,
+            });
+        });
+
+        it('should report the mandatory fields of an untouched creation form', () => {
+            comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
+            comp.isExamMode.set(false);
+
+            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.undefined');
+            expect(translateKeys).toContain('artemisApp.exercise.form.points.undefined');
+        });
+
+        it('documents a known client/server gap: the client accepts a 2-char title, but the server requires 3+ for every exercise type', () => {
+            comp.modelingExercise = filledInExercise('ab');
+            comp.isExamMode.set(false);
+            comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+
+            expect(comp.getInvalidReasons()).toEqual([]);
+        });
+
+        it('should forward the timeline reasons', () => {
+            comp.modelingExercise = filledInExercise('Valid title');
+            comp.isExamMode.set(false);
+            comp.timelineStatus.set({
+                valid: false,
+                empty: true,
+                invalidItems: [{ labelStringKey: 'artemisApp.exercise.dueDate', reasonKey: 'artemisApp.exercise.form.timeline.required', dateName: 'Due Date' }],
+            });
+
+            expect(comp.getInvalidReasons()).toEqual([{ translateKey: 'artemisApp.exercise.form.timeline.required', translateValues: { dateName: 'Due Date' } }]);
+        });
+
+        it('should report a disallowed title', () => {
+            comp.modelingExercise = filledInExercise('Valid title');
+            comp.isExamMode.set(false);
+            comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.titleErrors = { disallowedValue: true };
+
+            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.title.disallowedValue');
+        });
+
+        it('should require a channel name when the channel field is displayed', () => {
+            const exercise = filledInExercise('Valid title');
+            exercise.channelName = undefined;
+            comp.modelingExercise = exercise;
+            comp.isExamMode.set(false);
+            comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.channelFieldDisplayed = true;
+
+            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).toContain('artemisApp.exercise.form.channelName.empty');
+        });
+
+        it('should not require a channel name when the channel field is hidden', () => {
+            const exercise = filledInExercise('Valid title');
+            exercise.channelName = undefined;
+            comp.modelingExercise = exercise;
+            comp.isExamMode.set(false);
+            comp.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
+            titleChannelNameComponentMock.channelFieldDisplayed = false;
+
+            const translateKeys = comp.getInvalidReasons().map((reason) => reason.translateKey);
+
+            expect(translateKeys).not.toContain('artemisApp.exercise.form.channelName.empty');
         });
     });
 });

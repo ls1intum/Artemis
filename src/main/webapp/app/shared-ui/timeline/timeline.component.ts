@@ -25,9 +25,16 @@ export interface TimelineItem {
     orderCheckAgainst?: TimelineItem[];
 }
 
+export interface InvalidTimelineItem {
+    labelStringKey: string;
+    reasonKey: string;
+    dateName: string;
+}
+
 export interface TimelineStatus {
     valid: boolean;
     empty: boolean;
+    invalidItems: InvalidTimelineItem[];
 }
 
 type InternalTimelineItem = TimelineItem & {
@@ -201,9 +208,36 @@ export class TimelineComponent {
 
     private computeExerciseTimelineStatus(): TimelineStatus {
         const items = this.internalTimelineItems();
+        const invalidItems = items.flatMap((item) => {
+            const reasonKey = this.determineInvalidReasonKey(item);
+            if (!reasonKey) {
+                return [];
+            }
+            return [{ labelStringKey: item.labelStringKey, reasonKey, dateName: this.translateService.instant(item.labelStringKey) }];
+        });
         return {
-            valid: items.every((item) => !item.hasInvalidDateOrder && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput),
+            valid: invalidItems.length === 0,
             empty: items.some((item) => item.date() === undefined),
+            invalidItems,
         };
+    }
+
+    /** Mirrors the tooltip precedence in {@link computeInternalTimelineItems}. */
+    private determineInvalidReasonKey(item: InternalTimelineItem): string | undefined {
+        if (item.isInvalidInput) {
+            return 'artemisApp.exercise.form.timeline.invalidInput';
+        }
+        if (item.hasInvalidDateOrder) {
+            return this.validationMode() === TimelineValidationMode.SEQUENTIALLY_STRICT
+                ? 'artemisApp.exercise.form.timeline.strictOrder'
+                : 'artemisApp.exercise.form.timeline.order';
+        }
+        if (item.isInputRequiredButUndefined) {
+            return 'artemisApp.exercise.form.timeline.required';
+        }
+        if (item.isOtherRequiredItemDateUndefined) {
+            return 'artemisApp.exercise.form.timeline.otherRequired';
+        }
+        return undefined;
     }
 }

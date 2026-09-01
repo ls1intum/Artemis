@@ -278,7 +278,7 @@ describe('ExamUpdateComponent', () => {
             newExamWithoutExercises.id = 2;
             newExamWithoutExercises.title = 'Test Exam';
             component.exam = newExamWithoutExercises;
-            component.timelineStatus.set({ valid: true, empty: false });
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
 
             const now = dayjs();
             newExamWithoutExercises.visibleDate = now.add(2, 'hours');
@@ -300,7 +300,7 @@ describe('ExamUpdateComponent', () => {
             newExam.id = 3;
             newExam.title = 'Test Exam';
             component.exam = newExam;
-            component.timelineStatus.set({ valid: true, empty: false });
+            component.timelineStatus.set({ valid: true, empty: false, invalidItems: [] });
 
             const now = dayjs();
             newExam.visibleDate = now.add(2, 'hours');

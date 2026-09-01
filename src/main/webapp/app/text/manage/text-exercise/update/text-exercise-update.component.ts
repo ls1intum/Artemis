@@ -9,7 +9,7 @@ import { TextExerciseService } from '../service/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, ValidationReason, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { FormsModule, NgForm, NgModel } from '@angular/forms';
@@ -47,6 +47,7 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { TextExerciseTimelineComponent } from 'app/text/manage/text-exercise/text-exercise-timeline/text-exercise-timeline.component';
+import { getCommonExerciseInvalidReasons, getPlagiarismInvalidReasons } from 'app/exercise/util/exercise-validation.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 @Component({
@@ -121,7 +122,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     }
     backupExercise!: TextExercise; // set in ngOnInit() from the route-resolved exercise before save() reads it
     readonly isSaving = signal(false);
-    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
     readonly exerciseCategories = signal<ExerciseCategory[]>([]);
     readonly existingCategories = signal<ExerciseCategory[]>([]);
     notificationText?: string;
@@ -275,6 +276,25 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 },
             ]);
         }
+    }
+
+    /** Every reason the exercise cannot be saved; drives the footer's disabled state and its tooltip. */
+    getInvalidReasons(): ValidationReason[] {
+        if (!this.textExercise) {
+            return [];
+        }
+        const titleChannelNameComponent = this.exerciseTitleChannelNameComponent()?.titleChannelNameComponent();
+        return [
+            ...getCommonExerciseInvalidReasons(this.textExercise, {
+                isExamMode: this.isExamMode(),
+                minTitleLength: 3,
+                isTitleDisallowed: !!titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue,
+                isChannelNameRequired: !!titleChannelNameComponent?.isChannelFieldDisplayed(),
+                timelineStatus: this.timelineStatus(),
+                isExampleSolutionPublicationDateInputValid: this.solutionPublicationDateField()?.dateInput?.valid ?? true,
+            }),
+            ...getPlagiarismInvalidReasons(this.exerciseUpdatePlagiarismComponent()),
+        ];
     }
 
     /**

@@ -19,6 +19,12 @@
             },
             "filePattern": "File Pattern",
             "filePatternInfo": "Here you can specify a comma-separated list of allowed file extensions, without periods (e.g. 'png, pdf').",
+            "form": {
+                "filePattern": {
+                    "undefined": "You need to specify a file pattern.",
+                    "minlength": "The file pattern must be at least {{ min }} characters long!"
+                }
+            },
             "submitSuccessful": "Your answer was submitted successfully! You may submit again or wait for your feedback.",
             "submitDueDateMissed": "Your answer was submitted successfully! You may submit again or wait for your feedback. As you missed the due date, your score will not be counted.",
             "error": "An error occurred. Please try again later.",

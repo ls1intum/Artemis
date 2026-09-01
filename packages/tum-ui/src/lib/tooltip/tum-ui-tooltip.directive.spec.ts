@@ -9,7 +9,7 @@ import { TumUiTooltipDirective } from './tum-ui-tooltip.directive';
     imports: [TumUiTooltipDirective],
 })
 class TooltipHostComponent {
-    text = signal('Help text');
+    text = signal<string | readonly string[]>('Help text');
 }
 
 describe('TumUiTooltipDirective', () => {
@@ -126,6 +126,29 @@ describe('TumUiTooltipDirective', () => {
         expect(button.getAttribute('aria-describedby')).toBeTruthy();
         fixture.componentInstance.text.set('');
         appRef.tick();
+        expect(bubble()).toBeNull();
+        expect(button.getAttribute('aria-describedby')).toBeNull();
+    });
+
+    it('renders several reasons as a list and clamps wider than the one-line form', () => {
+        const appRef = TestBed.inject(ApplicationRef);
+        fixture.componentInstance.text.set(['First reason', 'Second reason']);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+        appRef.tick();
+
+        const items = Array.from(bubble()!.querySelectorAll('li')).map((item) => item.textContent?.trim());
+        expect(items).toEqual(['First reason', 'Second reason']);
+        expect(bubble()!.className).toContain('max-w-100');
+    });
+
+    it('stays hidden when the content is an empty list', () => {
+        fixture.componentInstance.text.set([]);
+        fixture.detectChanges();
+        button.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(1);
+
         expect(bubble()).toBeNull();
         expect(button.getAttribute('aria-describedby')).toBeNull();
     });

@@ -1,4 +1,4 @@
-import { ComponentRef, Directive, ElementRef, OnDestroy, effect, inject, input, numberAttribute } from '@angular/core';
+import { ComponentRef, Directive, ElementRef, OnDestroy, computed, effect, inject, input, numberAttribute } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { FlexibleConnectedPositionStrategy, OverlayRef } from '@angular/cdk/overlay';
 import { Subscription, fromEvent } from 'rxjs';
@@ -22,10 +22,16 @@ export class TumUiTooltipDirective implements OnDestroy {
     private readonly overlayService = inject(TumUiOverlayService);
     private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
-    readonly content = input.required<string>({ alias: 'tumUiTooltip' });
+    /** A plain hint, or several reasons to render as a bulleted list. */
+    readonly content = input.required<string | readonly string[]>({ alias: 'tumUiTooltip' });
     readonly placement = input<TumUiOverlayPlacement>('top', { alias: 'tumUiTooltipPlacement' });
     readonly showDelayMs = input(150, { transform: numberAttribute });
     readonly hideDelayMs = input(100, { transform: numberAttribute });
+
+    private readonly text = computed(() => (Array.isArray(this.content()) ? '' : (this.content() as string)));
+    private readonly items = computed(() => (Array.isArray(this.content()) ? (this.content() as readonly string[]) : []));
+    // An empty array is truthy, so emptiness has to be asked of the normalised forms rather than of the input.
+    private readonly isEmpty = computed(() => !this.text() && this.items().length === 0);
 
     private overlayRef?: OverlayRef;
     private contentRef?: ComponentRef<TumUiTooltipContentComponent>;
@@ -42,11 +48,12 @@ export class TumUiTooltipDirective implements OnDestroy {
     constructor() {
         effect(() => {
             // Read content unconditionally so changes remain tracked while the tooltip is hidden.
-            const text = this.content();
-            if (!text) {
+            const [text, items, isEmpty] = [this.text(), this.items(), this.isEmpty()];
+            if (isEmpty) {
                 this.hideNow();
             } else {
                 this.contentRef?.setInput('text', text);
+                this.contentRef?.setInput('items', items);
             }
         });
     }
@@ -80,7 +87,7 @@ export class TumUiTooltipDirective implements OnDestroy {
     private scheduleShow(): void {
         clearTimeout(this.hideTimer);
         clearTimeout(this.showTimer);
-        if (this.overlayRef?.hasAttached() || !this.content()) {
+        if (this.overlayRef?.hasAttached() || this.isEmpty()) {
             return;
         }
         this.showTimer = setTimeout(() => this.show(), this.showDelayMs());
@@ -119,7 +126,8 @@ export class TumUiTooltipDirective implements OnDestroy {
             this.contentRef?.setInput('placement', appliedPlacement);
         });
         this.contentRef = this.overlayRef.attach(new ComponentPortal(TumUiTooltipContentComponent));
-        this.contentRef.setInput('text', this.content());
+        this.contentRef.setInput('text', this.text());
+        this.contentRef.setInput('items', this.items());
         this.contentRef.setInput('id', this.tooltipId);
         this.contentRef.setInput('placement', appliedPlacement);
         const contentElement = this.contentRef.location.nativeElement as HTMLElement;

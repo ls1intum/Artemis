@@ -569,6 +569,21 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(eventDownSpy).toHaveBeenCalledOnce();
     });
 
+    it('should reset the question title and notify the parent', () => {
+        const backup = new ShortAnswerQuestion();
+        backup.title = 'backupQuestion';
+        component.backupQuestion = backup;
+        component.shortAnswerQuestion.title = 'edited title';
+        const questionUpdatedSpy = vi.spyOn(component.questionUpdated, 'emit');
+
+        component.resetQuestionTitle();
+
+        expect(component.shortAnswerQuestion.title).toBe(backup.title);
+        // re-evaluate recomputes its cached validity from this event; a programmatic model change does not
+        // trigger the template's (ngModelChange), so the component has to emit it explicitly
+        expect(questionUpdatedSpy).toHaveBeenCalledOnce();
+    });
+
     it('should reset the question', () => {
         const backup = new ShortAnswerQuestion();
         backup.title = 'backupQuestion';

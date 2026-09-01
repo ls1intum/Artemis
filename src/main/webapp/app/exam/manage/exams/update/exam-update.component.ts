@@ -93,7 +93,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     readonly isSaving = signal(false);
     readonly isImport = signal(false);
     readonly isImportInSameCourse = signal(false);
-    readonly timelineStatus = signal<TimelineStatus>({ valid: false, empty: true });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: false, empty: true, invalidItems: [] });
 
     readonly hideChannelNameInput = signal(false);
     private originalStartDate?: dayjs.Dayjs;

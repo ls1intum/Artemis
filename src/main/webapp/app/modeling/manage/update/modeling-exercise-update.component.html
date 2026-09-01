@@ -146,7 +146,8 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col">
-                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label
+                        ><span class="text-state-danger" aria-hidden="true">*</span>
                         <input
                             type="number"
                             required
@@ -208,7 +209,7 @@
         [isImport]="isImport()"
         [isCreation]="!modelingExercise.id"
         [isSaving]="isSaving()"
-        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || modelingExercise.exampleSolutionPublicationDateError)"
+        [invalidReasons]="getInvalidReasons()"
         (onCancel)="previousState()"
         (save)="save()"
         [(notificationText)]="notificationText"

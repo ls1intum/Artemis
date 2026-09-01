@@ -76,7 +76,7 @@ describe('ExamTimelineComponent', () => {
         fixture.detectChanges();
         const emitSpy = vi.spyOn(component.timelineStatusChange, 'emit');
         const timeline = fixture.debugElement.query(By.directive(TimelineComponent)).componentInstance as TimelineComponent;
-        const status = { valid: false, empty: true };
+        const status = { valid: false, empty: true, invalidItems: [] };
 
         timeline.timelineStatusChange.emit(status);
 

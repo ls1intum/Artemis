@@ -333,7 +333,8 @@
                     "undefined": "You need to specify a title.",
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!",
                     "disallowedValue": "The title is already used for another exercise!",
-                    "maxlength": "The title can be at most {{max}} characters long!"
+                    "maxlength": "The title can be at most {{max}} characters long!",
+                    "minlength": "The title must be at least {{ min }} characters long!"
                 },
                 "channelName": {
                     "empty": "You need to specify a channel name."
@@ -369,11 +370,23 @@
                 },
                 "minTeamSize": {
                     "min": "The minimal team size must not be less than 1 person.",
-                    "max": "The minimal team size must not exceed 99 people."
+                    "max": "The minimal team size must not exceed 99 people.",
+                    "required": "You need to specify the minimal team size."
                 },
                 "maxTeamSize": {
                     "min": "The maximal team size must not be less than 1 person.",
-                    "max": "The maximal team size must not exceed 99 people."
+                    "max": "The maximal team size must not exceed 99 people.",
+                    "required": "You need to specify the maximal team size."
+                },
+                "timeline": {
+                    "required": "'{{ dateName }}' is required.",
+                    "order": "'{{ dateName }}' must be after or equal to all preceding dates.",
+                    "strictOrder": "'{{ dateName }}' must be after all preceding dates.",
+                    "invalidInput": "'{{ dateName }}' is not a valid date. Please use the format DD.MM.YYYY HH:mm.",
+                    "otherRequired": "'{{ dateName }}' can only be set once its preceding required date is set."
+                },
+                "exampleSolutionPublicationDate": {
+                    "invalidInput": "The Example Solution Publication Date is not a valid date. Please use the format DD.MM.YYYY HH:mm."
                 },
                 "maxPenalty": {
                     "pattern": "The maximum penalty must be between 0 and 100 percent!"

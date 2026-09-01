@@ -97,6 +97,15 @@
 @source './app/exercise/exercise-action-bar';
 @source './app/exercise/exam-exercise-row-buttons';
 @source './app/exercise/unreferenced-feedback';
+/* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are
+   still Bootstrap-heavy, so scanning them would also emit .col-11/.col-12/.bg-primary as Tailwind utilities on top of
+   Bootstrap's own. Emit just the ones they use instead. A blocked button is aria-disabled rather than disabled, so it
+   stays focusable and keeps the pointer events its tooltip needs; that also means :disabled cannot style it. */
+@source inline("sr-only");
+@source inline("hidden");
+@source inline("sm:inline");
+@source inline("aria-disabled:opacity-60");
+@source inline("aria-disabled:cursor-not-allowed");
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';

@@ -106,7 +106,7 @@ export class LectureUpdateComponent implements OnInit, LectureUnsavedChangesComp
     fileInputTouched = false;
     isNewlyCreatedExercise = false;
     readonly isChangeMadeToTitleOrPeriodSection = signal(false);
-    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true, invalidItems: [] });
     shouldDisplayDismissWarning = true;
     areSectionsValid = computed(() => this.computeAreSectionsValid());
     createLectureOptions = computed(() => this.computeCreateLectureOptions());

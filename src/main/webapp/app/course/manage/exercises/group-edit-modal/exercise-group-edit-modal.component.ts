@@ -82,7 +82,7 @@ export class ExerciseGroupEditModalComponent {
         const title = this.draftTitle().trim();
         return title.length > 0 && title.length <= MAX_TITLE_LENGTH;
     });
-    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true });
+    readonly timelineStatus = signal<TimelineStatus>({ valid: true, empty: true, invalidItems: [] });
     readonly isSaveDisabled = computed(() => !this.isTitleValid() || !this.timelineStatus().valid);
 
     constructor() {

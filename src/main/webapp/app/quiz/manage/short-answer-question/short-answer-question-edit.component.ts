@@ -679,6 +679,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
      */
     resetQuestionTitle() {
         this.shortAnswerQuestion.title = this.backupQuestion.title;
+        this.questionUpdated.emit();
     }
 
     /**

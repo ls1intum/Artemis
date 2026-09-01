@@ -151,6 +151,22 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(comp.quizExercise()).toEqual(comp.savedEntity);
     });
 
+    // The save button reads the live isValidQuiz() while its tooltip reads the cached quizIsValid(),
+    // so any path that mutates the quiz has to refresh the cache or the button disables unexplained.
+    it('should refresh the cached validity when resetting the quiz title', () => {
+        comp.ngOnInit();
+        vi.advanceTimersByTime(0);
+        comp.quizExercise().title = '';
+        comp.cacheValidation();
+        expect(comp.quizIsValid()).toBe(false);
+
+        comp.resetQuizTitle();
+
+        expect(comp.quizExercise().title).toBe(comp.savedEntity.title);
+        expect(comp.quizIsValid()).toBe(true);
+        expect(comp.invalidReasons()).toHaveLength(0);
+    });
+
     it('should clear invalid state after deleting and restoring the only question via resetAll', () => {
         comp.ngOnInit();
         vi.advanceTimersByTime(0);

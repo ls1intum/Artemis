@@ -37,7 +37,7 @@ describe('ModelingExerciseTimeline', () => {
 
     it('should forward timeline status changes from the child component', () => {
         fixture.detectChanges();
-        const timelineStatus = { valid: true, empty: false };
+        const timelineStatus = { valid: true, empty: false, invalidItems: [] };
         const emitSpy = vi.spyOn(component.timelineStatus, 'emit');
 
         const childComponent = fixture.debugElement.query(By.directive(ExerciseTimelineStubComponent)).componentInstance as ExerciseTimelineStubComponent;

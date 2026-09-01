@@ -121,7 +121,8 @@
                 </div>
                 <div class="score-fields">
                     <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points"></label
+                        ><span class="text-state-danger" aria-hidden="true">*</span>
                         <input
                             required
                             type="number"
@@ -160,7 +161,8 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern"></label>
+                    <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern"></label
+                    ><span class="text-state-danger" aria-hidden="true">*</span>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}" />
                     <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise().filePattern" />
                 </div>
@@ -183,7 +185,7 @@
         [isImport]="isImport()"
         [isCreation]="!fileUploadExercise().id"
         [isSaving]="isSaving()"
-        [isDisabled]="!!(editForm.form.invalid || !timelineStatus().valid || fileUploadExercise().exampleSolutionPublicationDateError)"
+        [invalidReasons]="getInvalidReasons()"
         (onCancel)="previousState()"
         (save)="save()"
         [notificationText]="notificationText()"

@@ -554,13 +554,13 @@ describe('ProgrammingExerciseUpdateTimelineComponent', () => {
         const formValidChangesSpy = vi.fn();
         component.formValidChanges.subscribe(formValidChangesSpy);
 
-        component.handleTimelineStatusChange({ valid: true, empty: false });
+        component.handleTimelineStatusChange({ valid: true, empty: false, invalidItems: [] });
 
         expect(component.formValid).toBe(true);
         expect(component.formEmpty).toBe(false);
         expect(formValidChangesSpy).toHaveBeenCalledWith(true);
 
-        component.handleTimelineStatusChange({ valid: false, empty: true });
+        component.handleTimelineStatusChange({ valid: false, empty: true, invalidItems: [] });
 
         expect(component.formValid).toBe(false);
         expect(component.formEmpty).toBe(true);

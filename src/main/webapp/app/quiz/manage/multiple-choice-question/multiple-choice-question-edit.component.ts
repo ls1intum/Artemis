@@ -332,6 +332,7 @@ export class MultipleChoiceQuestionEditComponent implements QuizQuestionEdit, On
      */
     resetQuestionTitle() {
         this.question().title = this.backupQuestion.title;
+        this.questionUpdated.emit();
     }
 
     resetQuestion() {
