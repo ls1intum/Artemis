@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
@@ -28,6 +30,8 @@ describe('ExerciseAddModalComponent', () => {
             imports: [ExerciseAddModalComponent],
             providers: [
                 provideRouter([]),
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: DialogService, useClass: MockDialogService },
@@ -98,6 +102,21 @@ describe('ExerciseAddModalComponent', () => {
             expect(emitted).toEqual([false]);
         });
 
+        it('describes the generate tab with the generation entry copy, not the plain programming description', () => {
+            // `unified` so the mode effect leaves the tab alone; every other mode forces its own tab on open.
+            fixture.componentRef.setInput('mode', 'unified');
+            fixture.componentRef.setInput('visible', true);
+            fixture.detectChanges();
+            component.setActiveTab('generate');
+            fixture.detectChanges();
+
+            // The dialog is appended to the body, so it is not reachable from the fixture element.
+            const card = document.body.querySelector('[data-testid="generate-programming-exercise"]');
+            expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.title');
+            expect(card?.textContent).toContain('artemisApp.hyperion.generation.entry.footnote');
+            expect(card?.textContent).not.toContain('artemisApp.exerciseManagement.addModal.cardDescription.PROGRAMMING');
+        });
+
         it('renders the translated dialog header', () => {
             fixture.componentRef.setInput('visible', true);
             fixture.detectChanges();
@@ -142,13 +161,25 @@ describe('ExerciseAddModalComponent', () => {
             expect(emitted).toEqual([false]);
         });
 
-        it('opens the standalone programming generation wizard without navigating', () => {
+        it('opens the brief dialog without navigating to the programming-exercise create page', () => {
             fixture.componentRef.setInput('courseId', 42);
 
             (component as unknown as { openProgrammingGeneration: () => void }).openProgrammingGeneration();
 
             expect(navigateSpy).not.toHaveBeenCalled();
-            expect(component.generationWizardVisible()).toBe(true);
+            expect(component.briefDialogVisible()).toBe(true);
+        });
+
+        it('returns to the generate tab when the brief dialog asks to go back', () => {
+            const emitted: boolean[] = [];
+            component.visibleChange.subscribe((v) => emitted.push(v));
+            component.briefDialogVisible.set(true);
+
+            (component as unknown as { backToGenerationTypes: () => void }).backToGenerationTypes();
+
+            expect(component.briefDialogVisible()).toBe(false);
+            expect(component.activeTab()).toBe('generate');
+            expect(emitted).toEqual([true]);
         });
     });
 

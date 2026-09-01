@@ -1,0 +1,143 @@
+<tum-ui-dialog
+    [header]="'artemisApp.hyperion.generation.brief.header' | artemisTranslate"
+    [(visible)]="visible"
+    [closable]="true"
+    [closeOnEscape]="true"
+    [dismissableMask]="false"
+    ariaDescribedBy="hyperion-brief-intro"
+    size="medium"
+>
+    <div class="flex flex-col gap-5">
+        <div>
+            <p id="hyperion-brief-intro" class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.intro"></p>
+            <p class="mt-2 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.consequences"></p>
+        </div>
+
+        @if (setupFailed()) {
+            <tum-ui-message severity="error" class="block" data-testid="hyperion-brief-setup-failed">
+                <span jhiTranslate="artemisApp.hyperion.generation.brief.setupFailed"></span>
+            </tum-ui-message>
+        }
+
+        @if (startFailed()) {
+            <tum-ui-message severity="error" class="block" data-testid="hyperion-brief-start-failed">
+                <div class="flex flex-col gap-2">
+                    <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailed"></span>
+                    @if (capacityUnavailable()) {
+                        <span jhiTranslate="error.generationCapacityUnavailable"></span>
+                    }
+                    <div class="flex flex-wrap items-center gap-2">
+                        <tum-ui-button
+                            size="small"
+                            [severity]="capacityUnavailable() ? 'primary' : 'secondary'"
+                            [variant]="capacityUnavailable() ? 'solid' : 'outlined'"
+                            [loading]="provisioning()"
+                            (clicked)="retryStart()"
+                            data-testid="hyperion-brief-start-retry"
+                        >
+                            <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailedRetry"></span>
+                        </tum-ui-button>
+                        <tum-ui-button
+                            size="small"
+                            severity="danger"
+                            variant="outlined"
+                            [loading]="deleting()"
+                            (clicked)="deleteCreatedExercise()"
+                            data-testid="hyperion-brief-start-delete"
+                        >
+                            <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailedDelete"></span>
+                        </tum-ui-button>
+                    </div>
+                    @if (deleteFailed()) {
+                        <span role="alert" jhiTranslate="artemisApp.hyperion.generation.brief.deleteFailed"></span>
+                    }
+                </div>
+            </tum-ui-message>
+        }
+
+        <section aria-labelledby="hyperion-brief-label">
+            <label id="hyperion-brief-label" for="hyperion-brief" class="mb-2 block font-semibold" jhiTranslate="artemisApp.hyperion.generation.brief.label"></label>
+            <p id="hyperion-brief-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.hint"></p>
+            <textarea
+                id="hyperion-brief"
+                tumUiTextarea
+                class="min-h-56 w-full resize-y"
+                rows="9"
+                [attr.maxlength]="maximumBriefLength"
+                [ngModel]="brief()"
+                (ngModelChange)="brief.set($event)"
+                (blur)="briefTouched.set(true)"
+                [tumUiInputInvalid]="showBriefError()"
+                [attr.aria-describedby]="showBriefError() ? 'hyperion-brief-hint hyperion-brief-error' : 'hyperion-brief-hint'"
+                [attr.aria-invalid]="showBriefError() ? true : null"
+                data-testid="hyperion-brief-input"
+            ></textarea>
+            <div class="mt-2 flex items-start justify-between gap-4 text-sm">
+                <div class="min-w-0">
+                    @if (showBriefError()) {
+                        <p id="hyperion-brief-error" class="m-0 text-state-danger" role="alert" data-testid="hyperion-brief-error">
+                            {{ 'artemisApp.hyperion.generation.brief.error' | artemisTranslate: { min: minimumBriefLength } }}
+                        </p>
+                    }
+                </div>
+                <span class="shrink-0 text-muted-color tabular-nums" data-testid="hyperion-brief-counter">
+                    {{ 'artemisApp.hyperion.generation.brief.counter' | artemisTranslate: { count: briefLength() | number, max: maximumBriefLength | number } }}
+                </span>
+            </div>
+        </section>
+
+        <tum-ui-panel [header]="'artemisApp.hyperion.generation.brief.exampleTitle' | artemisTranslate" toggleable [(collapsed)]="exampleCollapsed">
+            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.exampleText"></p>
+        </tum-ui-panel>
+
+        <section class="border-t pt-4" aria-labelledby="hyperion-brief-settings-title">
+            <h3 id="hyperion-brief-settings-title" class="mt-0 mb-1 text-base font-semibold" jhiTranslate="artemisApp.hyperion.generation.brief.settingsTitle"></h3>
+            <p class="mt-0 mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.settingsHint"></p>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <div id="hyperion-brief-build-tool-label" class="mb-2 font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.buildTool"></div>
+                    <tum-ui-select-button
+                        [options]="buildToolOptions"
+                        optionValue="value"
+                        [itemTemplate]="buildToolOption"
+                        [allowEmpty]="false"
+                        [ngModel]="projectType()"
+                        (ngModelChange)="projectType.set($event)"
+                        aria-labelledby="hyperion-brief-build-tool-label"
+                    />
+                    <ng-template #buildToolOption let-option>
+                        {{ option.labelKey | artemisTranslate }}
+                    </ng-template>
+                </div>
+
+                <div>
+                    <div id="hyperion-brief-difficulty-label" class="mb-2 font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.difficulty"></div>
+                    <tum-ui-select-button
+                        [options]="difficultyOptions"
+                        optionValue="value"
+                        [itemTemplate]="difficultyOption"
+                        [allowEmpty]="false"
+                        [ngModel]="difficulty()"
+                        (ngModelChange)="difficulty.set($event)"
+                        aria-labelledby="hyperion-brief-difficulty-label"
+                    />
+                    <ng-template #difficultyOption let-option>
+                        {{ option.labelKey | artemisTranslate }}
+                    </ng-template>
+                </div>
+            </div>
+        </section>
+
+        <p class="m-0 text-xs text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.aiNotice"></p>
+    </div>
+
+    <ng-template #footer>
+        <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="back()" data-testid="hyperion-brief-back">
+            <span jhiTranslate="entity.action.back"></span>
+        </tum-ui-button>
+        <tum-ui-button severity="primary" size="small" [disabled]="!canGenerate()" [loading]="provisioning()" (clicked)="generate()" data-testid="hyperion-brief-generate">
+            <span jhiTranslate="artemisApp.hyperion.generation.brief.generate"></span>
+        </tum-ui-button>
+    </ng-template>
+</tum-ui-dialog>

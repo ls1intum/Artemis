@@ -1,0 +1,51 @@
+<section aria-labelledby="hyperion-artifacts-title" data-testid="hyperion-artifacts">
+    <h2 id="hyperion-artifacts-title" class="mb-1 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.generation.artifacts.title"></h2>
+    <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.notSavedHint"></p>
+
+    <div class="flex flex-col gap-3">
+        <tum-ui-panel
+            [header]="'artemisApp.hyperion.generation.artifacts.specTitle' | artemisTranslate"
+            toggleable
+            [(collapsed)]="specCollapsed"
+            data-testid="hyperion-artifacts-spec"
+        >
+            <p class="mt-0 mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.specHint"></p>
+            @if (hasSpecDocument()) {
+                <pre class="m-0 max-h-96 overflow-y-auto overscroll-contain rounded-border bg-emphasis p-3 text-sm whitespace-pre-wrap wrap-anywhere">{{ specDocument() }}</pre>
+            } @else {
+                <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.specPending"></p>
+            }
+        </tum-ui-panel>
+
+        <tum-ui-panel
+            [header]="'artemisApp.hyperion.generation.artifacts.statementTitle' | artemisTranslate"
+            toggleable
+            [(collapsed)]="statementCollapsed"
+            data-testid="hyperion-artifacts-statement"
+        >
+            @if (retainedLoadFailed()) {
+                <tum-ui-message severity="error" class="mb-2 block" data-testid="hyperion-artifacts-statement-failed">
+                    <span jhiTranslate="artemisApp.hyperion.generation.artifacts.loadFailed"></span>
+                    <tum-ui-button class="ml-2" size="small" severity="secondary" variant="outlined" (clicked)="retryRetainedArtifacts()">
+                        <span jhiTranslate="artemisApp.hyperion.generation.artifacts.retryLoad"></span>
+                    </tum-ui-button>
+                </tum-ui-message>
+            }
+            @if (hasProblemStatement()) {
+                <pre class="m-0 max-h-96 overflow-y-auto overscroll-contain rounded-border bg-emphasis p-3 text-sm whitespace-pre-wrap wrap-anywhere">{{ problemStatement() }}</pre>
+            } @else if (!retainedLoading() && !retainedLoadFailed()) {
+                <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.statementPending"></p>
+            }
+        </tum-ui-panel>
+
+        <tum-ui-panel
+            [header]="'artemisApp.hyperion.generation.artifacts.filesTitle' | artemisTranslate"
+            toggleable
+            [(collapsed)]="filesCollapsed"
+            data-testid="hyperion-artifacts-files"
+        >
+            <p class="mt-0 mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.filesHint"></p>
+            <jhi-hyperion-file-change-list [files]="files()" [running]="running()" />
+        </tum-ui-panel>
+    </div>
+</section>

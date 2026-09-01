@@ -310,6 +310,6 @@
         "fileReadError": "An error occurred while reading the files of the referenced commit. Please try again.",
         "buildConfigMissing": "The programming exercise build configuration is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters.",
-        "generationCapacityUnavailable": "No build agent is currently available to run exercise generation. Please try again later, or ask your administrator to enable generation sandbox capacity on a build agent."
+        "generationCapacityUnavailable": "Artemis has no free capacity for AI generation right now. Nothing has been generated — try again in a few minutes."
     }
 }

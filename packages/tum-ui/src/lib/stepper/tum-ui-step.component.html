@@ -1,0 +1,19 @@
+<span [class]="markerClasses()" aria-hidden="true">
+    @if (markerIcon(); as icon) {
+        <fa-icon [icon]="icon" />
+    } @else if (isRunning()) {
+        <span class="tum-ui-step-running-indicator"></span>
+        <span class="tum-ui-step-running-fallback"></span>
+    }
+</span>
+<div class="tum:flex tum:min-w-0 tum:flex-col tum:gap-1">
+    <span [class]="labelClasses()">
+        {{ label() }}
+        @if (stateLabel(); as word) {
+            <span class="tum:sr-only">{{ word }}</span>
+        }
+    </span>
+    <div class="tum-ui-step-detail tum:min-w-0 tum:text-sm tum:text-muted tum:empty:hidden">
+        <ng-content />
+    </div>
+</div>

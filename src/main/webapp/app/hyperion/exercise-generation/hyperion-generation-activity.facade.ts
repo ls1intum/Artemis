@@ -100,6 +100,8 @@ export class HyperionGenerationActivityFacade {
     readonly events = signal<HyperionGenerationEvent[]>([]);
     readonly fileChanges = signal<ExerciseGenerationFileChange[]>([]);
     readonly verdict = signal<HyperionGenerationVerdict | undefined>(undefined);
+    /** The design document the agent wrote before touching any code, as retained by the server for this run. */
+    readonly specDocument = signal<string | undefined>(undefined);
     readonly completionStatus = signal<HyperionGenerationCompletionStatus | undefined>(undefined);
     readonly liveExerciseChanged = signal<boolean | undefined>(undefined);
     readonly revertAvailable = signal<boolean>(false);
@@ -119,6 +121,13 @@ export class HyperionGenerationActivityFacade {
 
     readonly canRevert = computed(() => !this.running() && !this.refreshingEditor() && !this.reverted() && this.revertAvailable());
     readonly effectiveRevertMode = computed(() => this.revertMode() ?? this.revertedMode() ?? this.mode());
+
+    /** Why the run ended, from the newest terminal event; `undefined` while it is still going. */
+    readonly terminationReason = computed(() => latestTerminalEvent(this.events())?.terminationReason);
+
+    /** The newest repair-round bookkeeping the server reported, so the review stage can say which round it is on. */
+    readonly repairRound = computed(() => this.events().findLast((event) => event.repairRound !== undefined)?.repairRound);
+
     private streamSubscription?: Subscription;
     private streamJobId?: string;
     private exerciseStateSubscription?: Subscription;
@@ -327,6 +336,10 @@ export class HyperionGenerationActivityFacade {
                     this.revertMode.set(status.revertMode);
                     this.ownedByCaller.set(status.ownedByCaller === true);
                     this.cancellable.set(status.cancellable === true);
+                    // A later poll for the same job may omit the design document; keep the one already shown rather than blanking the panel.
+                    if (!sameJob || status.specDocument !== undefined) {
+                        this.specDocument.set(status.specDocument);
+                    }
                     const events = mergeEvents(sameJob ? this.events() : [], status.events ?? []);
                     this.events.set(events);
                     const retainedFileChanges = status.fileChanges ?? [];
@@ -627,6 +640,7 @@ export class HyperionGenerationActivityFacade {
         this.completionStatus.set(undefined);
         this.liveExerciseChanged.set(undefined);
         this.events.set([]);
+        this.specDocument.set(undefined);
         this.clearFileChanges();
         this.generationReverted.next(result.completedAt);
         this.alertService.success(
@@ -720,6 +734,7 @@ export class HyperionGenerationActivityFacade {
         this.emittedTerminalJobs.clear();
         this.events.set([]);
         this.verdict.set(undefined);
+        this.specDocument.set(undefined);
         this.completionStatus.set(undefined);
         this.liveExerciseChanged.set(undefined);
         this.revertAvailable.set(false);

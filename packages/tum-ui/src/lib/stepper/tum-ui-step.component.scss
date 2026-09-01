@@ -1,0 +1,53 @@
+// The marker sits on top of the connector line and masks it with its opaque background. Half the marker (three
+// spacing units) plus half the two-pixel line centres it on the connector, in both writing directions.
+.tum-ui-step-marker {
+    margin-inline-start: calc(-1 * (var(--tumaet-ui-spacing) * 3 + 1px));
+}
+
+:host([data-orientation='horizontal']) .tum-ui-step-marker {
+    margin-inline-start: 0;
+    margin-block-start: calc(-1 * (var(--tumaet-ui-spacing) * 3 + 1px));
+}
+
+// The trailing connector would point at a step that does not exist. Keeping the border and only clearing its colour
+// preserves the layout of the last step.
+:host(:last-child) {
+    border-color: transparent;
+    padding-block-end: 0;
+}
+
+// A `current` marker animates only when motion is welcome. Under reduced motion a frozen spinner would read as a
+// broken graphic, so the running state falls back to a distinct static filled marker instead.
+.tum-ui-step-running-indicator {
+    display: none;
+}
+
+.tum-ui-step-running-fallback {
+    display: block;
+    width: calc(var(--tumaet-ui-spacing) * 2.5);
+    height: calc(var(--tumaet-ui-spacing) * 2.5);
+    border-radius: 50%;
+    background: currentcolor;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .tum-ui-step-running-indicator {
+        display: block;
+        width: calc(var(--tumaet-ui-spacing) * 3.5);
+        height: calc(var(--tumaet-ui-spacing) * 3.5);
+        border: 2px solid color-mix(in srgb, currentcolor 25%, transparent);
+        border-block-start-color: currentcolor;
+        border-radius: 50%;
+        animation: tum-ui-step-spin 0.9s linear infinite;
+    }
+
+    .tum-ui-step-running-fallback {
+        display: none;
+    }
+}
+
+@keyframes tum-ui-step-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

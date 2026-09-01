@@ -1,0 +1,59 @@
+<tum-ui-card data-testid="hyperion-run-header">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0 flex-auto">
+            <h1 class="m-0 text-xl font-semibold wrap-anywhere" data-testid="hyperion-run-title">{{ exerciseTitle() }}</h1>
+            @if (metaLabelKeys().length) {
+                <p class="mt-1 mb-0 text-sm text-muted-color" data-testid="hyperion-run-meta">
+                    @for (labelKey of metaLabelKeys(); track labelKey) {
+                        @if (!$first) {
+                            <span aria-hidden="true"> · </span>
+                        }
+                        <span>{{ labelKey | artemisTranslate }}</span>
+                    }
+                </p>
+            }
+        </div>
+
+        <div class="flex shrink-0 flex-col items-end gap-1">
+            <tum-ui-status-dot [state]="statusState()" [label]="statusLabelKey() | artemisTranslate" data-testid="hyperion-run-status" />
+            @if (elapsed(); as elapsedTime) {
+                <!-- Deliberately not announced: a clock that ticks into a live region reads the page aloud once a second. -->
+                <div class="flex items-baseline gap-2 text-sm" aria-live="off">
+                    <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.elapsed"></span>
+                    <span class="font-medium tabular-nums" data-testid="hyperion-run-elapsed">{{ elapsedTime }}</span>
+                </div>
+            }
+            <p class="m-0 text-xs text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.typicalDuration"></p>
+        </div>
+    </div>
+
+    @if (!ownedByCaller()) {
+        <p class="mt-3 mb-0 text-sm text-muted-color" data-testid="hyperion-run-other-instructor" jhiTranslate="artemisApp.hyperion.generation.run.otherInstructor"></p>
+    }
+
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+        @if (cancelAvailable()) {
+            <tum-ui-button severity="danger" variant="outlined" size="small" [loading]="cancelPending()" (clicked)="confirmCancel()" data-testid="hyperion-run-cancel">
+                <span [jhiTranslate]="cancelPending() ? 'artemisApp.hyperion.generation.actions.cancelling' : 'artemisApp.hyperion.generation.actions.cancel'"></span>
+            </tum-ui-button>
+        }
+        @if (runAgainAvailable()) {
+            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="runAgainRequested.emit()" data-testid="hyperion-run-run-again">
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.runAgain"></span>
+            </tum-ui-button>
+        }
+        @if (editorLink(); as link) {
+            <!-- The editor has many bottom panels; this navigation says which one the instructor came for. -->
+            <a tumUiButton size="small" severity="secondary" variant="outlined" [routerLink]="link" [state]="openGenerationActivityState" data-testid="hyperion-run-open-editor">
+                <span jhiTranslate="artemisApp.hyperion.generation.actions.openEditor"></span>
+            </a>
+        }
+        @if (exerciseLink(); as link) {
+            <a class="text-sm text-muted-color underline" [routerLink]="link" data-testid="hyperion-run-back">
+                <span jhiTranslate="artemisApp.hyperion.generation.run.backToExercise"></span>
+            </a>
+        }
+    </div>
+</tum-ui-card>
+
+<tum-ui-confirm-dialog [key]="cancelConfirmationKey" />

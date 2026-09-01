@@ -80,6 +80,86 @@ but its final state is not a useful reference; do not create hidden duplicates o
 by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
 or disable accessibility rules to make a story pass.
 
+## Run status components
+
+Two components report the progress of a long-running operation. Both are status displays: they are
+never clickable, never focusable, and never convey a state by colour alone. Storybook AutoDocs
+stays the canonical API reference; the tables below exist because these two components are easy to
+misuse in ways an API listing does not show.
+
+### Stepper
+
+`tum-ui-stepper` renders a progress ladder for a multi-stage operation, and `tum-ui-step` renders
+one stage of it. Use it when a job runs through a known, ordered list of stages and a person needs
+to see how far it got and where it stopped. Do not use it for navigation between form steps — it
+has no selection, no focus order, and no click target.
+
+The stepper renders a real `<ol>` and projects its steps into it. A step publishes `role="listitem"`
+rather than being an `<li>`, because package components use element selectors.
+
+| Component        | Input         | Type                                                            | Default      | Purpose                                                       |
+| ---------------- | ------------- | --------------------------------------------------------------- | ------------ | ------------------------------------------------------------- |
+| `tum-ui-stepper` | `orientation` | `'vertical' \| 'horizontal'`                                    | `'vertical'` | Layout direction of the ladder                                |
+| `tum-ui-stepper` | `ariaLabel`   | `string`                                                        | –            | Accessible name of the step list                              |
+| `tum-ui-step`    | `state`       | `'pending' \| 'current' \| 'complete' \| 'failed' \| 'skipped'` | `'pending'`  | Progress state of this stage                                  |
+| `tum-ui-step`    | `label`       | `string` (required)                                             | –            | Visible stage name                                            |
+| `tum-ui-step`    | `icon`        | `IconProp`                                                      | –            | Overrides the marker icon, including the running indicator    |
+| `tum-ui-step`    | `stateLabel`  | `string`                                                        | –            | Translated state word, rendered for assistive technology only |
+
+The default content slot of a step renders under the label in every state; use it for the live
+detail line of the running stage.
+
+```html
+<tum-ui-stepper ariaLabel="Run stages">
+    <tum-ui-step state="complete" label="Prepare workspace" stateLabel="Complete" />
+    <tum-ui-step state="current" label="Design" stateLabel="Running">Drafting the task description.</tum-ui-step>
+    <tum-ui-step label="Save" stateLabel="Pending" />
+</tum-ui-stepper>
+```
+
+Accessibility:
+
+- Exactly one step may be `current`; it is the only one that carries `aria-current="step"`.
+- `pending` and `skipped` steps carry `aria-disabled="true"`.
+- Always pass `stateLabel` with the translated state word. It is appended to the accessible name
+  and is what keeps the state readable when the marker colour is not perceivable. The component
+  does not invent the word, because translation belongs to the host.
+- The running marker spins only under `prefers-reduced-motion: no-preference`. Under reduced motion
+  it renders a static filled marker instead of a stopped spinner.
+
+### Status dot
+
+`tum-ui-status-dot` is the compact one-line state indicator: a coloured dot plus its state word.
+Use it in a run header, a table cell, or a list row. Use `tum-ui-tag` instead when the state needs
+a filled badge, and `tum-ui-message` when the state needs an explanation.
+
+| Input       | Type                                                                      | Default | Purpose                                          |
+| ----------- | ------------------------------------------------------------------------- | ------- | ------------------------------------------------ |
+| `state`     | `'queued' \| 'running' \| 'success' \| 'warning' \| 'error' \| 'neutral'` | –       | Semantic state (required)                        |
+| `label`     | `string` (required)                                                       | –       | Translated state word; it is the accessible name |
+| `showLabel` | `boolean`                                                                 | `true`  | Renders the label visually                       |
+| `live`      | `boolean`                                                                 | `false` | Announces changes by adding `role="status"`      |
+
+```html
+<tum-ui-status-dot [state]="run.status" [label]="statusWord()" [live]="true" />
+```
+
+Accessibility:
+
+- `showLabel="false"` hides the word visually but keeps it in the accessibility tree, so the dot
+  always has an accessible name. Do not hide the whole component with `aria-hidden` instead.
+- Enable `live` only where the change is reported once. Ten dots on a page must not become ten
+  live regions.
+- Only `queued` and `running` pulse, and only under `prefers-reduced-motion: no-preference`.
+  Terminal states carry no animation.
+
+### Composing a run screen
+
+`Patterns/Agent Run` in Storybook composes card, status dot, stepper, panel, message, and button
+into the screen a long-running job needs, with one story per state a review has to sign off. It is
+a composition page: it adds no component and no styling contract, and product-specific labels stay
+in the application.
+
 ## Consuming the package
 
 Import only from the package root:

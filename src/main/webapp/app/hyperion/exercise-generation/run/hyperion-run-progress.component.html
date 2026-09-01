@@ -1,0 +1,36 @@
+<tum-ui-stepper [ariaLabel]="'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate" data-testid="hyperion-run-progress">
+    @for (stage of stages(); track stage.key) {
+        <tum-ui-step
+            [state]="stage.state"
+            [label]="'artemisApp.hyperion.generation.stage.' + stage.key | artemisTranslate"
+            [stateLabel]="'artemisApp.hyperion.generation.stageState.' + stage.state | artemisTranslate"
+            [attr.data-stage]="stage.key"
+            [attr.data-state]="stage.state"
+        >
+            @if (density() === 'full' && stage.key === detailStageKey()) {
+                <!-- One live region for the whole ladder: it sits on the current step, and only one step is ever current. -->
+                <div role="status" class="text-sm text-muted-color">
+                    @if (liveMessage(); as message) {
+                        <p class="m-0 wrap-anywhere">{{ message }}</p>
+                    }
+                    @if (visibleRepairRound(); as round) {
+                        <p class="mt-1 mb-0 wrap-anywhere" data-testid="hyperion-run-repair-round">
+                            {{
+                                'artemisApp.hyperion.generation.live.repairRound'
+                                    | artemisTranslate
+                                        : {
+                                              round: round.round,
+                                              blocking: round.blocking,
+                                              advisory: round.advisory,
+                                              carriedOver: round.carriedOver,
+                                              drained: round.drained,
+                                              fresh: round.fresh,
+                                          }
+                            }}
+                        </p>
+                    }
+                </div>
+            }
+        </tum-ui-step>
+    }
+</tum-ui-stepper>

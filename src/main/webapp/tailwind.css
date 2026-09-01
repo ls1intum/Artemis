@@ -94,6 +94,9 @@
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/account/user/settings/user-settings-container/user-settings-container.component.html';
 @source './app/hyperion';
+@source './app/course/manage/exercises/create-modal';
+/* Only the code-editor container shell: its bottom-panel tab bar is Tailwind, the panels below it are not. */
+@source './app/programming/manage/code-editor/container';
 @source './app/exercise/review/adapt-exercise-dialog';
 @source './app/localci/hyperion-generation-detail';
 @source './app/localci/hyperion-generation-jobs-table';

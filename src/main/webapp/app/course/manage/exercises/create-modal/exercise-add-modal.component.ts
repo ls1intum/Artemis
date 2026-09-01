@@ -16,7 +16,7 @@ import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dia
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { WholeExerciseGenerationWizardComponent } from 'app/hyperion/exercise-generation/create/whole-exercise-generation-wizard.component';
+import { HyperionBriefDialogComponent } from 'app/hyperion/exercise-generation/create/hyperion-brief-dialog.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 export type AddModalMode = 'create' | 'import' | 'export' | 'unified';
@@ -70,8 +70,7 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
 @Component({
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
-    styleUrl: './exercise-add-modal.component.scss',
-    imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, WholeExerciseGenerationWizardComponent],
+    imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective, HyperionBriefDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
@@ -112,8 +111,8 @@ export class ExerciseAddModalComponent {
     );
 
     readonly activeTab = signal<'create' | 'generate' | 'import' | 'export'>('create');
-    readonly generationWizardVisible = signal(false);
-    private readonly generationWizard = viewChild(WholeExerciseGenerationWizardComponent);
+    readonly briefDialogVisible = signal(false);
+    private readonly briefDialog = viewChild(HyperionBriefDialogComponent);
     protected readonly generationEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
@@ -152,18 +151,15 @@ export class ExerciseAddModalComponent {
         this.activeTab.set(tab);
     }
 
+    /** Hands over to the brief dialog. Deliberately no navigation: the exercise does not exist until the brief is sent. */
     protected openProgrammingGeneration(): void {
-        this.generationWizard()?.reset();
+        this.briefDialog()?.reset();
         this.close();
-        this.generationWizardVisible.set(true);
-    }
-
-    protected closeProgrammingGeneration(): void {
-        this.generationWizardVisible.set(false);
+        this.briefDialogVisible.set(true);
     }
 
     protected backToGenerationTypes(): void {
-        this.generationWizardVisible.set(false);
+        this.briefDialogVisible.set(false);
         this.activeTab.set('generate');
         this.visibleChange.emit(true);
     }

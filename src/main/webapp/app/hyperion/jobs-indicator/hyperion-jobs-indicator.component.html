@@ -1,0 +1,75 @@
+@if (indicatorState() !== 'idle') {
+    <button
+        tumUiButton
+        variant="text"
+        severity="secondary"
+        size="small"
+        class="flex items-center gap-2"
+        data-testid="hyperion-jobs-indicator-trigger"
+        [tumUiPopoverTrigger]="tray"
+        [attr.aria-label]="'artemisApp.hyperion.jobs.ariaLabel' | artemisTranslate"
+        [title]="'artemisApp.hyperion.jobs.ariaLabel' | artemisTranslate"
+    >
+        <tum-ui-status-dot [state]="indicatorDotState()" [label]="'artemisApp.hyperion.jobs.label' | artemisTranslate" [showLabel]="false" />
+        <span jhiTranslate="artemisApp.hyperion.jobs.label"></span>
+        @if (unseenCount() > 0) {
+            <tum-ui-tag
+                rounded
+                severity="secondary"
+                data-testid="hyperion-jobs-indicator-badge"
+                [value]="unseenCount().toString()"
+                [attr.title]="'artemisApp.hyperion.jobs.unseen' | artemisTranslate: { count: unseenCount() }"
+            />
+        }
+    </button>
+    <tum-ui-popover #tray placement="bottom" [ariaLabel]="'artemisApp.hyperion.jobs.title' | artemisTranslate">
+        <div class="flex w-80 flex-col gap-2" data-testid="hyperion-jobs-indicator-tray">
+            <span class="font-semibold" jhiTranslate="artemisApp.hyperion.jobs.title"></span>
+            @if (loadFailed()) {
+                <div class="flex flex-col gap-2 border-t pt-2" data-testid="hyperion-jobs-indicator-load-failed">
+                    <span class="text-state-danger text-sm">
+                        <fa-icon [icon]="faXmark" aria-hidden="true" />
+                        <span class="ms-1" jhiTranslate="artemisApp.hyperion.jobs.loadFailed"></span>
+                    </span>
+                    <button tumUiButton variant="text" severity="secondary" size="small" class="self-start" data-testid="hyperion-jobs-indicator-retry" (click)="retry()">
+                        <span jhiTranslate="artemisApp.hyperion.jobs.retry"></span>
+                    </button>
+                </div>
+            }
+            @if (entries().length === 0) {
+                <span class="text-muted-color text-sm" data-testid="hyperion-jobs-indicator-empty" jhiTranslate="artemisApp.hyperion.jobs.empty"></span>
+            } @else {
+                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                    @for (entry of entries(); track entry.jobId) {
+                        <li class="flex items-center gap-1 border-t pt-1">
+                            <a
+                                class="rounded-border flex min-w-0 flex-1 items-center gap-2 p-1 no-underline"
+                                data-testid="hyperion-jobs-indicator-entry"
+                                [routerLink]="['/course-management', entry.courseId, 'programming-exercises', entry.exerciseId, 'generation']"
+                                (click)="openEntry(entry)"
+                            >
+                                <tum-ui-status-dot [state]="entryDotState(entry)" [label]="entryStatusKey(entry) | artemisTranslate" [showLabel]="false" />
+                                <span class="flex min-w-0 flex-col">
+                                    <span class="truncate">{{ entry.exerciseTitle }}</span>
+                                    <span class="text-muted-color truncate text-sm">{{ entryStatusKey(entry) | artemisTranslate }}</span>
+                                </span>
+                            </a>
+                            <button
+                                tumUiButton
+                                variant="text"
+                                severity="secondary"
+                                size="small"
+                                data-testid="hyperion-jobs-indicator-dismiss"
+                                [attr.aria-label]="'artemisApp.hyperion.jobs.dismiss' | artemisTranslate"
+                                [title]="'artemisApp.hyperion.jobs.dismiss' | artemisTranslate"
+                                (click)="dismiss(entry.jobId)"
+                            >
+                                <fa-icon [icon]="faXmark" />
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </tum-ui-popover>
+}

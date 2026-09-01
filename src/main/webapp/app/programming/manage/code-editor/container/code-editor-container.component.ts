@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, input, linkedSignal, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, input, linkedSignal, output, signal, untracked, viewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -37,6 +37,7 @@ import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { TumUiButtonDirective, TumUiTabComponent, TumUiTabListComponent, TumUiTabPanelComponent, TumUiTabPanelsComponent, TumUiTabsComponent } from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChevronDown, faChevronUp, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -124,6 +125,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     selectedAuxiliaryRepositoryId = input<number | undefined>();
     /** Translation key for an optional host-provided panel in the shared resizable bottom area. */
     editorBottomPanelTitle = input<string | undefined>();
+    /** Icon for that panel's tab, so it is recognisable next to the build output's terminal icon. */
+    editorBottomPanelIcon = input<IconProp | undefined>();
+    /**
+     * The tab the host would like selected and expanded *on arrival*. Every distinct value is applied exactly once:
+     * a user who then picks another tab, or collapses the panel, is not overruled while the preference stays put.
+     */
+    preferredBottomPanel = input<CodeEditorBottomPanel | undefined>();
 
     onCommitStateChange = output<CommitState>();
     onFileChanged = output<void>();
@@ -186,21 +194,53 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     /**
      * Without a build output there is no build-output tab, so the additional panel takes over.
      * Keeping the previous value when the build output reappears preserves an explicit user choice.
+     *
+     * A newly arrived {@link preferredBottomPanel} wins once, and only once: the computation compares against the
+     * preference it last acted on, so any later `set()` from a tab click survives every recomputation.
      */
-    readonly activeBottomPanel = linkedSignal<boolean, CodeEditorBottomPanel>({
-        source: this.buildable,
-        computation: (buildable, previous) => (buildable ? (previous?.value ?? CodeEditorBottomPanel.BUILD_OUTPUT) : CodeEditorBottomPanel.ADDITIONAL),
+    readonly activeBottomPanel = linkedSignal<{ buildable: boolean; preferred: CodeEditorBottomPanel | undefined }, CodeEditorBottomPanel>({
+        source: () => ({ buildable: this.buildable(), preferred: this.preferredBottomPanel() }),
+        computation: ({ buildable, preferred }, previous) => {
+            if (!buildable) {
+                return CodeEditorBottomPanel.ADDITIONAL;
+            }
+            if (preferred !== undefined && preferred !== previous?.source.preferred) {
+                return preferred;
+            }
+            return previous?.value ?? CodeEditorBottomPanel.BUILD_OUTPUT;
+        },
     });
     readonly bottomPanelCollapsed = signal(false);
+    /**
+     * The AI activity panel needs far more room than a build log, so the grid gets a taller default for it. It is
+     * derived from the selected tab rather than passed in: only this container knows which tab is showing.
+     */
+    readonly bottomPanelSize = computed<'compact' | 'expanded'>(() =>
+        this.editorBottomPanelTitle() !== undefined && this.activeBottomPanel() === CodeEditorBottomPanel.ADDITIONAL ? 'expanded' : 'compact',
+    );
     readonly CodeEditorBottomPanel = CodeEditorBottomPanel;
     readonly faChevronDown = faChevronDown;
     readonly faChevronUp = faChevronUp;
     readonly faTerminal = faTerminal;
 
     private fileTreeChangeSubscription?: Subscription;
+    /** The preference {@link expandPreferredBottomPanel} has already acted on, so arrival expands the panel once. */
+    private appliedPreferredBottomPanel?: CodeEditorBottomPanel;
 
     constructor() {
         this.initializeProperties();
+
+        // Selecting the tab is `activeBottomPanel`'s job; only the grid's collapse state has to be pushed, because it
+        // lives in DOM classes the grid owns. The guard keeps this a one-shot arrival action rather than a policy that
+        // re-expands a panel the user just collapsed.
+        effect(() => {
+            const preferred = this.preferredBottomPanel();
+            if (preferred === undefined || preferred === this.appliedPreferredBottomPanel) {
+                return;
+            }
+            this.appliedPreferredBottomPanel = preferred;
+            untracked(() => this.expandSelectedBottomPanel());
+        });
 
         effect(() => {
             const syncService = this.fileSyncService();

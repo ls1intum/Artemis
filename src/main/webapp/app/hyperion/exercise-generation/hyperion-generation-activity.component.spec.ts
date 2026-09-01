@@ -2,12 +2,15 @@ import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY, Observable, Subject, map, of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityComponent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.component';
+import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
+import { HyperionStage } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
     ExerciseGenerationFileChange,
@@ -105,6 +108,8 @@ describe('HyperionGenerationActivityComponent', () => {
             providers: [
                 { provide: HyperionExerciseGenerationService, useValue: service },
                 { provide: TranslateService, useClass: MockTranslateService },
+                // The panel links to the run page, so `routerLink` needs a router to resolve the URL against.
+                provideRouter([]),
             ],
         });
         // The status is announced through the CDK announcer, whose region lives outside the fixture.
@@ -126,12 +131,66 @@ describe('HyperionGenerationActivityComponent', () => {
         return fixture;
     }
 
+    it('keeps the header out of the scroll region so its actions never scroll away', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
+
+        const panel = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-activity"]') as HTMLElement;
+        const header = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-activity-header"]') as HTMLElement;
+        const scrollRegion = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-activity-scroll"]') as HTMLElement;
+
+        // The outer section must not scroll: that is what used to take Cancel / Run again / Undo out of view.
+        expect(panel.className).not.toContain('overflow-');
+        expect(scrollRegion.className).toContain('overflow-y-auto');
+        expect(scrollRegion.contains(header)).toBe(false);
+    });
+
+    it('reports progress through the shared run ladder rather than a log', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: true,
+            events: [{ type: 'PROGRESS', phase: 'DESIGNING', message: 'Designing the exercise' }],
+            fileChanges: [],
+        });
+
+        const ladder = fixture.debugElement.query(By.directive(HyperionRunProgressComponent));
+        expect(ladder).not.toBeNull();
+        expect(ladder.componentInstance.density()).toBe('compact');
+        expect(ladder.componentInstance.stages().find((stage: HyperionStage) => stage.key === 'design')?.state).toBe('current');
+        expect(ladder.componentInstance.liveMessage()).toBe('Designing the exercise');
+    });
+
+    it('reports the run state as a dot with its own word, and stops spinning once the run is terminal', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
+
+        const statusDot = () => fixture.nativeElement.querySelector('[data-testid="hyperion-generation-status-dot"]') as HTMLElement;
+        expect(statusDot().getAttribute('data-state')).toBe('running');
+        expect(statusDot().textContent).toContain('generation.status.running');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"] fa-icon')).not.toBeNull();
+
+        service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true });
+        fixture.detectChanges();
+
+        expect(statusDot().getAttribute('data-state')).toBe('success');
+        expect(statusDot().textContent).toContain('generation.status.saved');
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"] fa-icon')).toBeNull();
+    });
+
+    it("links to this exercise's run page once the course is known", () => {
+        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-open-run"]')).toBeNull();
+
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.detectChanges();
+
+        const openRun = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-open-run"]') as HTMLAnchorElement;
+        expect(openRun.getAttribute('href')).toBe('/course-management/7/programming-exercises/42/generation');
+    });
+
     it('shows an intentional idle state that can request generation', () => {
         const fixture = createWith(null);
         const startRequested = vi.fn();
         fixture.componentInstance.startRequested.subscribe(startRequested);
 
-        expect(fixture.componentInstance.visible()).toBe(true);
         expect(fixture.componentInstance.statusLoading()).toBe(false);
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-empty"]')).not.toBeNull();
 
@@ -204,9 +263,7 @@ describe('HyperionGenerationActivityComponent', () => {
 
         const fixture = createWith(null);
 
-        expect(fixture.componentInstance.visible()).toBe(true);
         expect(fixture.nativeElement.textContent).toContain('generationActivity.checkingStatus');
-        expect(fixture.nativeElement.querySelector('jhi-monaco-editor')).toBeNull();
     });
 
     it('bounds automatic status retries and exposes a manual retry', () => {
@@ -225,7 +282,6 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(service.getStatus).toHaveBeenCalledTimes(3);
         expect(fixture.componentInstance.statusLoading()).toBe(false);
         expect(fixture.componentInstance.statusLoadFailed()).toBe(true);
-        expect(fixture.componentInstance.visible()).toBe(true);
         vi.advanceTimersByTime(60_000);
         expect(service.getStatus).toHaveBeenCalledTimes(3);
 
@@ -442,36 +498,40 @@ describe('HyperionGenerationActivityComponent', () => {
             fileChanges: [fileChange('solution/A.java', 'write'), fileChange('tests/T.java', 'write')],
         });
         const component = fixture.componentInstance;
-        expect(component.visible()).toBe(true);
         expect(component.jobId()).toBe('j1');
         expect(component.fileChanges()).toHaveLength(2);
         expect(component.filesByRepo().map((group) => group.repo)).toEqual(['solution', 'tests']);
+        component.detailsExpanded.set(true);
+        fixture.detectChanges();
         expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file-static"]')).toHaveLength(2);
-        expect(fixture.nativeElement.querySelector('jhi-monaco-editor')).toBeNull();
     });
 
-    it('lets the instructor collapse and restore retained details', () => {
+    it('starts with the detail region collapsed and lets the instructor open it', () => {
         const fixture = createWith({ jobId: 'j1', running: false, events: [], fileChanges: [fileChange('solution/A.java', 'write')] });
         const toggle = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]') as HTMLButtonElement;
 
-        expect(toggle.getAttribute('aria-expanded')).toBe('true');
-        expect(toggle.textContent).toContain('generationActivity.hideChangedFiles');
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).not.toBeNull();
-
-        toggle.click();
-        fixture.detectChanges();
-
+        // The progress ladder is the panel's headline; the file/activity detail below it is opened on request.
+        expect(fixture.componentInstance.detailsExpanded()).toBe(false);
         expect(toggle.getAttribute('aria-expanded')).toBe('false');
-        expect(toggle.textContent).toContain('generationActivity.showChangedFiles');
+        expect(toggle.textContent).toContain('generationActivity.showDetails');
         // The panel stays mounted for aria-controls, so [hidden] is what has to hide it: it must therefore carry no
         // display utility of its own, or the layout on it would win over the attribute.
         const details = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]');
         expect(details.hidden).toBe(true);
         expect(getComputedStyle(details).display).toBe('none');
+
+        toggle.click();
+        fixture.detectChanges();
+
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(toggle.textContent).toContain('generationActivity.hideDetails');
+        expect(details.hidden).toBe(false);
     });
 
     it('keeps open details mounted when a live run completes', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [fileChange('solution/A.java', 'write')] });
+        fixture.componentInstance.detailsExpanded.set(true);
+        fixture.detectChanges();
         const disclosure = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]') as HTMLButtonElement;
         disclosure.focus();
 
@@ -661,7 +721,6 @@ describe('HyperionGenerationActivityComponent', () => {
     it('does not manufacture a file preview before the first file arrives', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
 
-        expect(fixture.nativeElement.querySelector('jhi-monaco-editor')).toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"]')).toBeNull();
     });
 
@@ -1005,7 +1064,6 @@ describe('HyperionGenerationActivityComponent', () => {
             liveExerciseChanged: undefined,
             completedAt: '',
         });
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-completion-status"]')).toBeNull();
     });
 
     it('reconciles retained fileChanges when a terminal event overtakes an earlier file message', () => {
@@ -1030,7 +1088,8 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.componentInstance.fileChanges()[0].turn).toBe(2);
     });
 
-    it('describes the inverted template check as an expected pass condition', () => {
+    // The per-check verdict strip is the run page's job; this panel reports the run's outcome and its progress ladder.
+    it("does not repeat the run page's per-check verdict breakdown", () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
 
         service.stream$.next({
@@ -1040,25 +1099,9 @@ describe('HyperionGenerationActivityComponent', () => {
         });
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.textContent).toContain('verdict.templateFailedExpected');
-        expect(fixture.nativeElement.textContent).toContain('verdict.oneTest');
-    });
-
-    it('surfaces the failed-gate reasons of a rejected verdict', () => {
-        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
-
-        service.stream$.next({
-            type: 'ERROR',
-            verdict: { mechanicallyVerified: false, solutionPassed: false, templateFailed: true, testCount: 2, reasons: ['solution failed 1 test', 'no gradable test'] },
-        });
-        fixture.detectChanges();
-
-        const reasons = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-verdict-reasons"]');
-        expect(reasons?.textContent).toContain('solution failed 1 test');
-        expect(reasons?.textContent).toContain('no gradable test');
-        const text = fixture.nativeElement.textContent;
-        expect(text).toContain('verdict.solutionFailed');
-        expect(text).not.toContain('verdict.solutionPassed');
+        expect(fixture.componentInstance.verdict()?.mechanicallyVerified).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-verdict"]')).toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('verdict.templateFailedExpected');
     });
 
     it('requests cancellation for the owner', () => {
@@ -1175,7 +1218,6 @@ describe('HyperionGenerationActivityComponent', () => {
         const component = fixture.componentInstance;
 
         component.attachToJob('j9', 'ADAPT');
-        expect(component.visible()).toBe(true);
         expect(component.jobId()).toBe('j9');
         expect(component.running()).toBe(true);
         expect(component.runningLabelKey()).toBe('artemisApp.hyperion.generationActivity.adapting');
@@ -1713,7 +1755,6 @@ describe('HyperionGenerationActivityComponent', () => {
         const component = fixture.componentInstance;
 
         expect(component.running()).toBe(false);
-        expect(component.detailsExpanded()).toBe(false);
         expect(component.events().at(-1)).toEqual({ ...terminalEvent, timestamp: '' });
         expect(component.canRevert()).toBe(canRevert);
         if ('completionStatus' in terminalEvent) {
@@ -1777,7 +1818,6 @@ describe('HyperionGenerationActivityComponent', () => {
             verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 1, reasons: [] },
             liveExerciseChanged: true,
         });
-        expect(component.detailsExpanded()).toBe(true);
         pendingStatus.next({
             jobId: 'live',
             running: true,
@@ -1793,7 +1833,6 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.events().map((event) => event.type)).toContain('DONE');
         expect(component.fileChanges()).toHaveLength(1);
         expect(component.fileChanges()[0].action).toBe('edit');
-        expect(component.detailsExpanded()).toBe(true);
     });
 
     it('resets and self-hides when the exercise is cleared', () => {

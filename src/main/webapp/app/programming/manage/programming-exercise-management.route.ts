@@ -84,6 +84,20 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        // A generation run creates a real exercise and takes many minutes, so it gets a URL: it survives a reload,
+        // it can be shared with a colleague, and an instructor can leave and come back to it.
+        path: 'programming-exercises/:exerciseId/generation',
+        loadComponent: () => import('app/hyperion/exercise-generation/run/hyperion-run-page.component').then((m) => m.HyperionRunPageComponent),
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.hyperion.generation.run.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'programming-exercises/:exerciseId/version-history',
         loadComponent: () =>
             import('app/programming/manage/version-history/programming-exercise-version-history.component').then((m) => m.ProgrammingExerciseVersionHistoryComponent),

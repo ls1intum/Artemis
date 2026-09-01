@@ -12,6 +12,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
+    // The bottom area is an inner element of this template, so the mode is flagged on the host and read from there by
+    // the (unencapsulated) stylesheet. That keeps the size policy in one place instead of a second class binding.
+    host: { '[class.editor-bottom-expanded]': "bottomPanelSize() === 'expanded'" },
     imports: [FaIconComponent, ResizableDirective, ArtemisTranslatePipe],
 })
 export class CodeEditorGridComponent {
@@ -25,6 +28,12 @@ export class CodeEditorGridComponent {
     readonly isTutorAssessment = input(false);
     readonly showEditorNavbar = input(true);
     readonly showEditorSidebarRight = input(true);
+    /**
+     * How much room the shared bottom area should take by default. `compact` suits a build log; `expanded` suits a
+     * panel that reports on a long-running job and is the reason the instructor is looking at the editor at all.
+     * It only moves the *default* — an explicit resize writes an inline height, which keeps winning and persisting.
+     */
+    readonly bottomPanelSize = input<'compact' | 'expanded'>('compact');
     readonly onResize = output<ResizeType>();
 
     readonly fileBrowserIsCollapsed = signal(false);
@@ -35,7 +44,11 @@ export class CodeEditorGridComponent {
     protected readonly resizableMinHeightMain = computed(() => Math.min(500, Math.max(192, this.viewport().height / 3)));
     protected readonly resizableMinWidthLeft = computed(() => Math.min(310, Math.max(128, this.viewport().width / 7)));
     protected readonly resizableMinWidthRight = computed(() => Math.min(500, Math.max(160, this.viewport().width / 6)));
-    protected readonly resizableMinHeightBottom = computed(() => Math.min(200, Math.max(128, this.viewport().height / 6)));
+    protected readonly resizableMinHeightBottom = computed(() =>
+        this.bottomPanelSize() === 'expanded' ? Math.min(320, Math.max(224, this.viewport().height / 3)) : Math.min(200, Math.max(128, this.viewport().height / 6)),
+    );
+    /** Upper bound a drag or keyboard resize of the bottom area may reach, before the available-height clamp. */
+    private readonly bottomPanelHeightCap = computed(() => (this.bottomPanelSize() === 'expanded' ? 900 : 600));
     protected readonly panelSizes = signal({ heightMain: 500, heightBottom: 200, widthLeft: 310, widthRight: 500 });
 
     // Keep enough space for the editor and resize grips when a sidebar grows.
@@ -201,7 +214,7 @@ export class CodeEditorGridComponent {
 
         const constraints = {
             heightMain: Math.max(this.resizableMinHeightMain(), Math.min(1200, availableHeight - (bottom?.offsetHeight ?? this.resizableMinHeightBottom()))),
-            heightBottom: Math.max(this.resizableMinHeightBottom(), Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain()))),
+            heightBottom: Math.max(this.resizableMinHeightBottom(), Math.min(this.bottomPanelHeightCap(), availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain()))),
             widthLeft: Math.max(this.resizableMinWidthLeft(), Math.min(this.viewport().width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
             widthRight: Math.max(this.resizableMinWidthRight(), Math.min(this.viewport().width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
         };

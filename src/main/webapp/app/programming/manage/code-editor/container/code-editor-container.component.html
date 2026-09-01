@@ -1,4 +1,10 @@
-<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()" [showEditorNavbar]="showNavbar()" [showEditorSidebarRight]="showEditorInstructions()">
+<jhi-code-editor-grid
+    #grid
+    [isTutorAssessment]="isTutorAssessment()"
+    [showEditorNavbar]="showNavbar()"
+    [showEditorSidebarRight]="showEditorInstructions()"
+    [bottomPanelSize]="bottomPanelSize()"
+>
     <div editorNavbar class="d-flex flex-wrap align-items-center">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
@@ -118,15 +124,22 @@
                         <tum-ui-tab-list [attr.aria-label]="'artemisApp.editor.bottomPanels' | artemisTranslate">
                             <tum-ui-tab [value]="CodeEditorBottomPanel.BUILD_OUTPUT" data-testid="build-output-tab" (click)="expandSelectedBottomPanel()">
                                 <fa-icon [icon]="faTerminal" />
-                                <span jhiTranslate="artemisApp.editor.buildOutput"></span>
+                                <!-- The tab owns its label: `buildOutput` still carries a leading `&nbsp;` for the panel header, which the tab's own gap makes wrong here. -->
+                                <span jhiTranslate="artemisApp.editor.buildOutputTab"></span>
                             </tum-ui-tab>
                             <tum-ui-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab" (click)="expandSelectedBottomPanel()">
+                                @if (editorBottomPanelIcon(); as panelIcon) {
+                                    <fa-icon [icon]="panelIcon" data-testid="editor-bottom-panel-tab-icon" />
+                                }
                                 <span [jhiTranslate]="bottomPanelTitle"></span>
                             </tum-ui-tab>
                         </tum-ui-tab-list>
                     } @else {
                         <tum-ui-tab-list [attr.aria-label]="'artemisApp.editor.bottomPanels' | artemisTranslate">
                             <tum-ui-tab [value]="CodeEditorBottomPanel.ADDITIONAL" data-testid="editor-bottom-panel-tab" (click)="expandSelectedBottomPanel()">
+                                @if (editorBottomPanelIcon(); as panelIcon) {
+                                    <fa-icon [icon]="panelIcon" data-testid="editor-bottom-panel-tab-icon" />
+                                }
                                 <span [jhiTranslate]="bottomPanelTitle"></span>
                             </tum-ui-tab>
                         </tum-ui-tab-list>

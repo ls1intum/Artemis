@@ -30,6 +30,7 @@
             "submit": "Submit",
             "submitDescription": "Stage, commit, push, build and test your changes.",
             "buildOutput": "&nbsp; Build Output",
+            "buildOutputTab": "Build Output",
             "collapseBottomPanel": "Collapse bottom panel",
             "expandBottomPanel": "Expand bottom panel",
             "resizeBottomPanel": "Resize bottom panel",

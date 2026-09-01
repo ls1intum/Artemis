@@ -1,0 +1,59 @@
+<div class="mx-auto flex max-w-4xl flex-col gap-4 p-4" data-testid="hyperion-run-page">
+    <jhi-hyperion-run-header
+        [exerciseTitle]="exercise()?.title"
+        [metaLabelKeys]="metaLabelKeys()"
+        [statusState]="statusDotState()"
+        [statusLabelKey]="statusLabelKey()"
+        [startedAt]="startedAt()"
+        [endedAt]="endedAt()"
+        [terminal]="terminal()"
+        [ownedByCaller]="ownedByCaller()"
+        [cancelAvailable]="cancelAvailable()"
+        [cancelPending]="cancelRequested()"
+        [runAgainAvailable]="runAgainAvailable()"
+        [editorLink]="editorLink()"
+        [exerciseLink]="exerciseLink()"
+        (cancelRequested)="cancel()"
+        (runAgainRequested)="runAgain()"
+    />
+
+    @if (startFailed()) {
+        <tum-ui-message severity="error" class="block" data-testid="hyperion-run-start-failed">
+            <span jhiTranslate="artemisApp.hyperion.generationActivity.startFailed"></span>
+        </tum-ui-message>
+    }
+
+    @if (statusLoadFailed()) {
+        <tum-ui-message severity="error" class="block" data-testid="hyperion-run-status-unavailable">
+            <div class="flex flex-wrap items-center gap-3">
+                <span jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"></span>
+                <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="retryStatus()" data-testid="hyperion-run-status-retry">
+                    <span jhiTranslate="artemisApp.hyperion.generation.run.retryStatus"></span>
+                </tum-ui-button>
+            </div>
+        </tum-ui-message>
+    } @else if (notStarted()) {
+        <section class="rounded-border border p-4" data-testid="hyperion-run-not-started">
+            <h2 class="mt-0 mb-1 text-base font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.notStartedTitle"></h2>
+            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.notStartedHint"></p>
+        </section>
+    } @else {
+        <section aria-labelledby="hyperion-run-progress-title">
+            <h2 id="hyperion-run-progress-title" class="mb-2 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.progressTitle"></h2>
+            <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" />
+        </section>
+
+        @if (outcomeView(); as view) {
+            <jhi-hyperion-run-outcome [view]="view" />
+        }
+
+        <jhi-hyperion-artifacts
+            [exerciseId]="exerciseId()"
+            [specDocument]="specDocument()"
+            [savedProblemStatement]="savedProblemStatement()"
+            [files]="fileChanges()"
+            [running]="running()"
+            [terminal]="terminal()"
+        />
+    }
+</div>

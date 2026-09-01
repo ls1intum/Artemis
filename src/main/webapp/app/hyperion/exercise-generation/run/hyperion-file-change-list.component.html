@@ -1,0 +1,29 @@
+@if (empty()) {
+    <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.filesPending" data-testid="hyperion-files-empty"></p>
+} @else {
+    <div class="flex flex-col gap-4" data-testid="hyperion-file-change-list">
+        @for (group of groups(); track group.repo) {
+            <section [attr.data-repo]="group.repo">
+                <h4 class="mb-2 flex items-baseline gap-2 text-sm font-semibold">
+                    <span [jhiTranslate]="group.headingKey"></span>
+                    <span class="text-xs font-normal text-muted-color tabular-nums">{{ group.count }}</span>
+                </h4>
+                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                    @for (row of group.rows; track row.key) {
+                        <li class="flex min-w-0 items-center gap-2 text-sm">
+                            <!-- The directory may be clipped at any width; the file name never is. -->
+                            <span class="flex min-w-0 flex-auto items-baseline" [title]="row.fullPath">
+                                <span class="min-w-0 truncate text-muted-color">{{ row.directory }}</span>
+                                <span class="shrink-0 font-medium">{{ row.name }}</span>
+                            </span>
+                            @if (row.writingNow) {
+                                <span class="shrink-0 text-xs text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.writingNow"></span>
+                            }
+                            <tum-ui-tag class="shrink-0" severity="secondary" [value]="row.actionLabelKey | artemisTranslate" />
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
+    </div>
+}

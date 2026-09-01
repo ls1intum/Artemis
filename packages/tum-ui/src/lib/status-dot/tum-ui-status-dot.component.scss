@@ -1,0 +1,18 @@
+// Only the in-flight states pulse, and only when motion is welcome. Terminal states carry no animation at all, so
+// there is nothing to switch off under reduced motion.
+@media (prefers-reduced-motion: no-preference) {
+    .tum-ui-status-dot-pulse {
+        animation: tum-ui-status-dot-pulse 1.8s ease-in-out infinite;
+    }
+}
+
+@keyframes tum-ui-status-dot-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
+}

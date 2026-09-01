@@ -1,50 +1,167 @@
 {
     "artemisApp": {
         "hyperion": {
-            "wholeExerciseWizard": {
-                "title": "Generate programming exercise",
-                "intro": "Describe the exercise you want to teach. Artemis drafts the problem statement, starter code, solution, and tests, then builds and checks the result before saving the draft.",
-                "draftTitle": "Java programming exercise draft",
-                "fields": {
+            "generation": {
+                "entry": {
+                    "title": "Generate with AI",
+                    "description": "Describe an exercise and Artemis writes the problem statement, starter code, sample solution, and tests, then builds and checks them before saving a draft.",
+                    "footnote": "Java with Maven or Gradle. Runs usually take 10 to 25 minutes.",
+                    "action": "Generate"
+                },
+                "brief": {
+                    "header": "Generate a programming exercise",
+                    "intro": "Describe what students should learn and build. Artemis writes the problem statement, starter code, sample solution, and tests, builds them, and checks that the sample solution passes and the starter code fails. Nothing is saved to your course until those checks pass.",
+                    "consequences": "This creates a new, unreleased Java exercise in your course right away. You can rename it, change its points, or delete it at any time.",
+                    "label": "What should students learn and build?",
+                    "hint": "Describe the learning goal, the behaviour you expect, and anything that matters for your course. You can leave API names, edge cases, and test design to Artemis.",
+                    "error": "Add a bit more detail — at least {{min}} characters — so Artemis has enough to work with.",
+                    "counter": "{{count}} of {{max}} characters",
+                    "exampleTitle": "Show an example brief",
+                    "exampleText": "Students practise generics and exception handling by implementing a bounded stack. It must preserve last-in-first-out order and reject access to an empty stack with a dedicated exception.",
+                    "settingsTitle": "Exercise settings",
+                    "settingsHint": "The draft stays unreleased until you release it. Title, points, and dates are editable afterwards.",
                     "buildTool": "Build tool",
                     "difficulty": "Difficulty",
-                    "brief": "What should students learn and build?",
-                    "briefHint": "Describe the learning goal, expected behavior, and important constraints. You can leave API names, edge cases, and test design to Artemis unless they matter for your course.",
-                    "briefError": "Add a little more detail so Artemis has enough context to design a coherent exercise.",
-                    "characters": "characters"
-                },
-                "example": {
-                    "title": "Show an example",
-                    "text": "Students practice generics and exception handling by implementing a bounded stack. It should preserve last-in-first-out order and reject access to an empty stack with a dedicated exception."
-                },
-                "settings": {
-                    "title": "Exercise settings",
-                    "hint": "The generated Java exercise stays unreleased until you review it. You can change its title, points, and schedule afterwards."
+                    "aiNotice": "Artemis uses a large language model for this. Review everything it produces before you release the exercise.",
+                    "draftTitle": "AI draft exercise",
+                    "generate": "Create draft and start generating",
+                    "setupFailed": "Artemis could not create the draft exercise. Your description is still here, so you can try again.",
+                    "startFailed": "Your draft exercise was created, but generation did not start. Nothing has been generated yet.",
+                    "startFailedRetry": "Try again",
+                    "startFailedDelete": "Delete the draft exercise",
+                    "deleteFailed": "The draft exercise could not be deleted. Open it from the exercise list and delete it there."
                 },
                 "buildTools": {
                     "maven": "Maven",
                     "gradle": "Gradle"
                 },
-                "actions": {
-                    "generate": "Generate draft exercise",
-                    "openEditor": "Open code editor",
-                    "runInBackground": "Run in background"
+                "stage": {
+                    "prepare": "Prepare workspace",
+                    "design": "Design the exercise",
+                    "build": "Build and test",
+                    "review": "Review and repair",
+                    "save": "Save the draft"
                 },
-                "startFailed": "The exercise was provisioned, but generation could not be started. Open the created exercise to retry or remove it.",
-                "setupFailed": "Artemis could not prepare the draft exercise. Your description is still here, so you can try again.",
-                "progress": {
-                    "title": "Generation progress",
-                    "hint": "You can leave this window open or continue working in the background. Progress is restored when you return.",
-                    "elapsed": "elapsed",
-                    "persistenceHint": "Artemis is working in an isolated copy. The exercise files are saved only after the solution passes and the starter code fails the intended tests.",
-                    "technicalDetails": "Technical activity",
-                    "phases": {
-                        "prepare": "Prepare workspace",
-                        "design": "Design and create the exercise",
-                        "verify": "Build and grade",
-                        "review": "Review and improve quality",
-                        "save": "Save draft"
+                "stageState": {
+                    "pending": "Not started",
+                    "current": "In progress",
+                    "complete": "Done",
+                    "failed": "Failed",
+                    "skipped": "Skipped"
+                },
+                "status": {
+                    "queued": "Waiting to start",
+                    "running": "Generating",
+                    "cancelling": "Cancelling",
+                    "saved": "Draft saved",
+                    "needsReview": "Draft saved — needs your review",
+                    "partial": "Partly saved",
+                    "failed": "Generation failed",
+                    "cancelled": "Cancelled",
+                    "unknown": "Status unavailable"
+                },
+                "run": {
+                    "title": "AI generation",
+                    "backToExercise": "Back to the exercise",
+                    "elapsed": "Elapsed",
+                    "typicalDuration": "Runs usually take 10 to 25 minutes.",
+                    "progressTitle": "Progress",
+                    "otherInstructor": "Another instructor started this run. You can follow it, but only they can cancel it.",
+                    "statusUnavailable": "The generation status could not be loaded. Nothing has been changed in your exercise.",
+                    "retryStatus": "Try again",
+                    "notStartedTitle": "No generation has run for this exercise",
+                    "notStartedHint": "Start one from the exercise list with Add exercise, then Generate."
+                },
+                "live": {
+                    "repairRound": "Review round {{round}} — {{blocking}} to fix, {{advisory}} to look at ({{carriedOver}} carried over, {{drained}} resolved, {{fresh}} new)",
+                    "checkpoint": "A working version is secured. Even if the rest fails, you get an exercise."
+                },
+                "artifacts": {
+                    "title": "What Artemis has produced so far",
+                    "notSavedHint": "None of this is in your exercise yet. It is saved only if every check passes.",
+                    "specTitle": "Exercise design",
+                    "specHint": "What Artemis decided to build, before it wrote any code.",
+                    "specPending": "Artemis is still deciding what to build.",
+                    "statementTitle": "Problem statement",
+                    "statementPending": "Not written yet.",
+                    "filesTitle": "Files",
+                    "filesHint": "Files Artemis has written so far.",
+                    "filesPending": "No files written yet.",
+                    "writingNow": "Writing now",
+                    "loadFailed": "The retained draft could not be loaded.",
+                    "retryLoad": "Try again",
+                    "action": {
+                        "write": "Added",
+                        "edit": "Changed",
+                        "delete": "Deleted"
                     }
+                },
+                "outcome": {
+                    "savedTitle": "Draft saved to your exercise",
+                    "savedBody": "The sample solution passes all {{testCount}} tests and the starter code fails them, as it should. Review the problem statement and the tests before you release the exercise.",
+                    "reviewTitle": "Draft saved — please review it",
+                    "reviewBody": "Artemis saved the draft, but not every check came back clean. Open the code editor, fix what the findings point at, then release.",
+                    "partialTitle": "Only part of the draft was saved",
+                    "partialBody": "The write-out did not finish cleanly. Open the code editor to see what is there before you run again.",
+                    "failedTitle": "Generation stopped without a result",
+                    "failedBody": "Nothing was written to your exercise.",
+                    "cancelledTitle": "You cancelled this run",
+                    "cancelledBody": "Nothing was written to your exercise. The draft exercise is still there and empty — run it again or delete it.",
+                    "retained": "The work Artemis had done is kept so you can look at it. It is not part of your exercise.",
+                    "technicalDetails": "Show technical details",
+                    "disclaimer": "Generated with AI. Check the problem statement, the tests, and the sample solution before releasing this exercise."
+                },
+                "verdict": {
+                    "title": "Checks",
+                    "solutionPasses": "Sample solution passes all tests",
+                    "solutionFails": "Sample solution does not pass the tests",
+                    "templateFails": "Starter code fails the tests, as it should",
+                    "templatePasses": "Starter code passes tests it should fail",
+                    "consistencyPassed": "Build and grading consistency checks passed",
+                    "consistencyFailed": "Build or grading consistency checks failed",
+                    "tests": "{{count}} tests",
+                    "oneTest": "1 test"
+                },
+                "terminationReason": {
+                    "CONVERGED": "Every check passed.",
+                    "REPAIR_BUDGET_EXHAUSTED": "Artemis ran out of repair attempts before every check passed.",
+                    "ATTEMPT_CAP_REACHED": "Artemis reached the maximum number of attempts for one run.",
+                    "MECHANICAL_REPAIR_EXHAUSTED": "Artemis could not get the exercise to build and grade correctly within its repair budget.",
+                    "POST_REPAIR_CORRECTION_EXHAUSTED": "Artemis ran out of attempts to correct the last round of review findings.",
+                    "NO_SCHEDULABLE_SURFACE": "There was nothing left that Artemis was allowed to change.",
+                    "REVIEW_UNAVAILABLE": "The quality review could not run.",
+                    "UNCHANGED_CANDIDATE_RESUBMITTED": "A repair attempt changed nothing, so Artemis stopped rather than repeat itself.",
+                    "REPAIR_DID_NOT_IMPROVE": "The repair attempts stopped making the exercise better.",
+                    "NO_ADMISSIBLE_CONCEPT": "Artemis could not find an exercise design that fits your description.",
+                    "CONCEPT_ADMITTED_WITH_FINDINGS": "Artemis went ahead with the best design it found, but had reservations about it.",
+                    "CANCELLED": "You cancelled the run.",
+                    "DEADLINE_EXCEEDED": "The run hit its time limit.",
+                    "TOKEN_BUDGET_EXHAUSTED": "The run hit its budget limit.",
+                    "AGENT_ERROR": "The AI model failed while working on the exercise.",
+                    "ENVIRONMENT_UNAVAILABLE": "The build environment was not available.",
+                    "RUN_FAILED": "The run failed unexpectedly.",
+                    "NOT_STARTED": "The run never started."
+                },
+                "actions": {
+                    "cancel": "Cancel generation",
+                    "cancelling": "Cancelling…",
+                    "cancelConfirmHeader": "Cancel this generation?",
+                    "cancelConfirmMessage": "Artemis stops immediately and nothing is written to your exercise. The draft exercise stays in your course.",
+                    "cancelConfirmAccept": "Cancel generation",
+                    "cancelConfirmReject": "Keep generating",
+                    "runAgain": "Run again",
+                    "openEditor": "Open code editor",
+                    "openRun": "Open the generation view"
+                },
+                "jobs": {
+                    "label": "AI generation",
+                    "ariaLabel": "AI generation runs",
+                    "title": "AI generation runs",
+                    "empty": "No generation runs yet.",
+                    "dismiss": "Dismiss this run",
+                    "unseen": "{{count}} finished runs you have not opened",
+                    "loadFailed": "The generation runs could not be loaded.",
+                    "retry": "Try again"
                 }
             },
             "generationActivity": {
@@ -74,8 +191,6 @@
                 "reverting": "Undoing…",
                 "hideDetails": "Hide details",
                 "showDetails": "Show details",
-                "hideChangedFiles": "Hide file activity",
-                "showChangedFiles": "Show file activity",
                 "changedFiles": "File activity",
                 "reviewSavedChanges": "Review saved changes",
                 "reviewSavedChangesHint": "Open the exercise version history or the exact saved repository commit.",
@@ -88,7 +203,7 @@
                     "tests": "Tests diff"
                 },
                 "recentActivity": "Recent activity",
-                "emptyTitle": "No generation activity yet",
+                "emptyTitle": "No AI activity for this exercise yet",
                 "emptyHint": "Start generation here or from the Artemis Intelligence menu.",
                 "unavailableHint": "Generation is unavailable after release or student participation.",
                 "repo": {
@@ -98,7 +213,7 @@
                     "other": "Other"
                 },
                 "persistence": {
-                    "workingCopy": "Agent working copy — not saved",
+                    "workingCopy": "Draft in progress — nothing saved to your exercise yet",
                     "saved": "Saved to exercise — ready for instructor review",
                     "savedNeedsReview": "Saved to exercise — instructor review required",
                     "notSaved": "Not saved",
@@ -114,13 +229,7 @@
                     "oneTest": "test",
                     "tests": "tests",
                     "consistencyChecksPassed": "Build and grading consistency checks passed",
-                    "consistencyChecksFailed": "Build or grading consistency checks failed",
-                    "instructorReviewRequired": "Instructor review required"
-                },
-                "completionStatus": {
-                    "SUCCESS": "Saved",
-                    "NEEDS_REVIEW": "Needs review",
-                    "PARTIAL": "Not fully saved — manual review required"
+                    "consistencyChecksFailed": "Build or grading consistency checks failed"
                 },
                 "terminalStatus": {
                     "DONE": "Generation finished",

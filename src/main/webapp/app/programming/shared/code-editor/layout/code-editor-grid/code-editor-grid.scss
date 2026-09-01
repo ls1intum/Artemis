@@ -87,6 +87,11 @@
         height: clamp(8rem, 25vh, 12.5rem);
         overflow: hidden;
 
+        /* Set by `bottomPanelSize`: a panel reporting on a long-running job needs the room a build log does not. */
+        .editor-bottom-expanded & {
+            height: clamp(18rem, 55vh, 42rem);
+        }
+
         /* Hide grip when bottom area is empty */
         .rg-bottom-bottom {
             display: none;

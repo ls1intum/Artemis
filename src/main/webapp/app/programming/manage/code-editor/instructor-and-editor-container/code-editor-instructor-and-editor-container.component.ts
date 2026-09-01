@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, co
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
-import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { CodeEditorBottomPanel, CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
@@ -83,6 +83,8 @@ const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
 };
 
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
+/** Set by the run page's "Open code editor" action so the editor opens on the AI activity tab rather than Build Output. */
+const OPEN_GENERATION_ACTIVITY_STATE = 'openGenerationActivity';
 const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
 const APPLIED_GENERATION_REFRESH_STATE = 'appliedHyperionGenerationRefresh';
 const MIN_MEANINGFUL_SPEC_LENGTH = 40;
@@ -102,6 +104,8 @@ interface ExerciseGenerationNavigationState {
     prompt?: string;
     /** Refresh marker persisted before a full page reload so the reload is not repeated for the same job. */
     appliedRefresh?: AppliedGenerationRefresh;
+    /** The instructor came here to watch a run, so the AI activity tab is the panel they want. */
+    openActivity: boolean;
 }
 
 function isAppliedGenerationRefresh(value: unknown): value is AppliedGenerationRefresh {
@@ -124,6 +128,7 @@ function readExerciseGenerationNavigationState(router: Router): ExerciseGenerati
         autoStart: state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true,
         prompt: typeof prompt === 'string' ? prompt : undefined,
         appliedRefresh: isAppliedGenerationRefresh(appliedRefresh) ? appliedRefresh : undefined,
+        openActivity: state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true || state?.[OPEN_GENERATION_ACTIVITY_STATE] === true,
     };
 }
 interface ConsistencyIssueNavigationIssue {
@@ -713,6 +718,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     });
 
     protected readonly canAdaptWithFeedback = computed(() => this.showGenerationActivity() && this.canGenerateExercise());
+
+    /**
+     * The bottom panel this editor should open on.
+     *
+     * Latching: once the AI activity panel has been asked for — because the instructor navigated here to watch a run,
+     * or because a run turns out to be in flight — the value never changes again. The container applies each distinct
+     * preference exactly once, so a latched value can never fight an instructor who then picks Build Output.
+     */
+    protected readonly preferredBottomPanel = linkedSignal<boolean, CodeEditorBottomPanel | undefined>({
+        source: () => this.navigationState.openActivity || (this.showGenerationActivity() && (this.generationActivity()?.running() ?? false)),
+        computation: (wantsActivityPanel, previous) => previous?.value ?? (wantsActivityPanel ? CodeEditorBottomPanel.ADDITIONAL : undefined),
+    });
 
     protected adaptFromThread(threadId: number): void {
         if (!this.canAdaptWithFeedback() || this.isExerciseGenerationActionBlocked()) {

@@ -1,50 +1,167 @@
 {
     "artemisApp": {
         "hyperion": {
-            "wholeExerciseWizard": {
-                "title": "Programmieraufgabe generieren",
-                "intro": "Beschreibe die Aufgabe, die du unterrichten möchtest. Artemis entwirft Aufgabenstellung, Startcode, Lösung und Tests und baut und prüft das Ergebnis, bevor der Entwurf gespeichert wird.",
-                "draftTitle": "Entwurf einer Java-Programmieraufgabe",
-                "fields": {
+            "generation": {
+                "entry": {
+                    "title": "Mit KI generieren",
+                    "description": "Beschreibe eine Aufgabe, und Artemis schreibt Aufgabenstellung, Startcode, Musterlösung und Tests, baut sie und prüft sie, bevor ein Entwurf gespeichert wird.",
+                    "footnote": "Java mit Maven oder Gradle. Ein Durchlauf dauert meist 10 bis 25 Minuten.",
+                    "action": "Generieren"
+                },
+                "brief": {
+                    "header": "Programmieraufgabe generieren",
+                    "intro": "Beschreibe, was Studierende lernen und umsetzen sollen. Artemis schreibt Aufgabenstellung, Startcode, Musterlösung und Tests, baut sie und prüft, dass die Musterlösung besteht und der Startcode scheitert. In deinen Kurs wird nichts gespeichert, bevor diese Prüfungen bestanden sind.",
+                    "consequences": "Dabei wird sofort eine neue, unveröffentlichte Java-Aufgabe in deinem Kurs angelegt. Du kannst sie jederzeit umbenennen, anders bepunkten oder löschen.",
+                    "label": "Was sollen Studierende lernen und umsetzen?",
+                    "hint": "Beschreibe das Lernziel, das erwartete Verhalten und alles, was für deinen Kurs wichtig ist. API-Namen, Randfälle und Testentwurf kannst du Artemis überlassen.",
+                    "error": "Ergänze etwas mehr Detail — mindestens {{min}} Zeichen — damit Artemis genug Grundlage hat.",
+                    "counter": "{{count}} von {{max}} Zeichen",
+                    "exampleTitle": "Beispielbeschreibung anzeigen",
+                    "exampleText": "Studierende üben Generics und Ausnahmebehandlung, indem sie einen begrenzten Stack implementieren. Er muss die Last-in-first-out-Reihenfolge einhalten und Zugriffe auf einen leeren Stack mit einer eigenen Ausnahme ablehnen.",
+                    "settingsTitle": "Aufgabeneinstellungen",
+                    "settingsHint": "Der Entwurf bleibt unveröffentlicht, bis du ihn freigibst. Titel, Punkte und Termine kannst du danach ändern.",
                     "buildTool": "Build-Werkzeug",
                     "difficulty": "Schwierigkeit",
-                    "brief": "Was sollen Studierende lernen und entwickeln?",
-                    "briefHint": "Beschreibe Lernziel, erwartetes Verhalten und wichtige Vorgaben. API-Namen, Randfälle und Testentwurf kannst du Artemis überlassen, sofern sie für deinen Kurs nicht wesentlich sind.",
-                    "briefError": "Ergänze etwas mehr Detail, damit Artemis eine zusammenhängende Aufgabe entwerfen kann.",
-                    "characters": "Zeichen"
-                },
-                "example": {
-                    "title": "Beispiel anzeigen",
-                    "text": "Studierende üben Generics und Ausnahmebehandlung, indem sie einen größenbeschränkten Stack implementieren. Er hält die Last-in-first-out-Reihenfolge ein und weist Zugriffe auf einen leeren Stack mit einer eigenen Exception zurück."
-                },
-                "settings": {
-                    "title": "Aufgabeneinstellungen",
-                    "hint": "Die generierte Java-Aufgabe bleibt unveröffentlicht, bis du sie geprüft hast. Titel, Punkte und Zeitplan kannst du anschließend ändern."
+                    "aiNotice": "Artemis nutzt dafür ein großes Sprachmodell. Prüfe alles, was dabei entsteht, bevor du die Aufgabe freigibst.",
+                    "draftTitle": "KI-Aufgabenentwurf",
+                    "generate": "Entwurf anlegen und Generierung starten",
+                    "setupFailed": "Artemis konnte den Aufgabenentwurf nicht anlegen. Deine Beschreibung bleibt erhalten, sodass du es erneut versuchen kannst.",
+                    "startFailed": "Dein Aufgabenentwurf wurde angelegt, aber die Generierung ist nicht gestartet. Es wurde noch nichts generiert.",
+                    "startFailedRetry": "Erneut versuchen",
+                    "startFailedDelete": "Aufgabenentwurf löschen",
+                    "deleteFailed": "Der Aufgabenentwurf konnte nicht gelöscht werden. Öffne ihn in der Aufgabenliste und lösche ihn dort."
                 },
                 "buildTools": {
                     "maven": "Maven",
                     "gradle": "Gradle"
                 },
-                "actions": {
-                    "generate": "Aufgabenentwurf generieren",
-                    "openEditor": "Code-Editor öffnen",
-                    "runInBackground": "Im Hintergrund fortfahren"
+                "stage": {
+                    "prepare": "Arbeitsbereich vorbereiten",
+                    "design": "Aufgabe entwerfen",
+                    "build": "Bauen und testen",
+                    "review": "Prüfen und nachbessern",
+                    "save": "Entwurf speichern"
                 },
-                "startFailed": "Die Aufgabe wurde angelegt, aber die Generierung konnte nicht gestartet werden. Öffne die erstellte Aufgabe, um es erneut zu versuchen oder sie zu entfernen.",
-                "setupFailed": "Artemis konnte den Aufgabenentwurf nicht vorbereiten. Deine Beschreibung bleibt erhalten, sodass du es erneut versuchen kannst.",
-                "progress": {
-                    "title": "Generierungsfortschritt",
-                    "hint": "Sie können dieses Fenster geöffnet lassen oder im Hintergrund weiterarbeiten. Der Fortschritt wird beim Zurückkehren wiederhergestellt.",
-                    "elapsed": "vergangen",
-                    "persistenceHint": "Artemis arbeitet in einer isolierten Kopie. Die Übungsdateien werden erst gespeichert, wenn die Musterlösung besteht und der Startcode die vorgesehenen Tests nicht besteht.",
-                    "technicalDetails": "Technische Aktivität",
-                    "phases": {
-                        "prepare": "Arbeitsbereich vorbereiten",
-                        "design": "Übung entwerfen und erstellen",
-                        "verify": "Bauen und bewerten",
-                        "review": "Qualität prüfen und verbessern",
-                        "save": "Entwurf speichern"
+                "stageState": {
+                    "pending": "Noch nicht begonnen",
+                    "current": "Läuft",
+                    "complete": "Fertig",
+                    "failed": "Fehlgeschlagen",
+                    "skipped": "Übersprungen"
+                },
+                "status": {
+                    "queued": "Wartet auf den Start",
+                    "running": "Generierung läuft",
+                    "cancelling": "Wird abgebrochen",
+                    "saved": "Entwurf gespeichert",
+                    "needsReview": "Entwurf gespeichert — bitte prüfen",
+                    "partial": "Teilweise gespeichert",
+                    "failed": "Generierung fehlgeschlagen",
+                    "cancelled": "Abgebrochen",
+                    "unknown": "Status nicht verfügbar"
+                },
+                "run": {
+                    "title": "KI-Generierung",
+                    "backToExercise": "Zurück zur Aufgabe",
+                    "elapsed": "Vergangen",
+                    "typicalDuration": "Ein Durchlauf dauert meist 10 bis 25 Minuten.",
+                    "progressTitle": "Fortschritt",
+                    "otherInstructor": "Eine andere Lehrperson hat diesen Durchlauf gestartet. Du kannst ihn verfolgen, abbrechen kann ihn nur sie.",
+                    "statusUnavailable": "Der Generierungsstatus konnte nicht geladen werden. An deiner Aufgabe wurde nichts geändert.",
+                    "retryStatus": "Erneut versuchen",
+                    "notStartedTitle": "Für diese Aufgabe lief noch keine Generierung",
+                    "notStartedHint": "Starte eine über die Aufgabenliste mit „Aufgabe hinzufügen“ und dann „Generieren“."
+                },
+                "live": {
+                    "repairRound": "Prüfrunde {{round}} — {{blocking}} zu beheben, {{advisory}} zu sichten ({{carriedOver}} übernommen, {{drained}} erledigt, {{fresh}} neu)",
+                    "checkpoint": "Eine funktionierende Fassung ist gesichert. Selbst wenn der Rest scheitert, bekommst du eine Aufgabe."
+                },
+                "artifacts": {
+                    "title": "Was Artemis bisher erzeugt hat",
+                    "notSavedHint": "Nichts davon ist bisher in deiner Aufgabe. Gespeichert wird erst, wenn alle Prüfungen bestehen.",
+                    "specTitle": "Aufgabenentwurf",
+                    "specHint": "Was Artemis bauen wollte, bevor Code geschrieben wurde.",
+                    "specPending": "Artemis entscheidet noch, was gebaut werden soll.",
+                    "statementTitle": "Aufgabenstellung",
+                    "statementPending": "Noch nicht geschrieben.",
+                    "filesTitle": "Dateien",
+                    "filesHint": "Dateien, die Artemis bisher geschrieben hat.",
+                    "filesPending": "Bisher keine Dateien geschrieben.",
+                    "writingNow": "Wird gerade geschrieben",
+                    "loadFailed": "Der aufbewahrte Entwurf konnte nicht geladen werden.",
+                    "retryLoad": "Erneut versuchen",
+                    "action": {
+                        "write": "Hinzugefügt",
+                        "edit": "Geändert",
+                        "delete": "Gelöscht"
                     }
+                },
+                "outcome": {
+                    "savedTitle": "Entwurf in deiner Aufgabe gespeichert",
+                    "savedBody": "Die Musterlösung besteht alle {{testCount}} Tests, und der Startcode scheitert daran, wie vorgesehen. Prüfe Aufgabenstellung und Tests, bevor du die Aufgabe freigibst.",
+                    "reviewTitle": "Entwurf gespeichert — bitte prüfen",
+                    "reviewBody": "Artemis hat den Entwurf gespeichert, aber nicht jede Prüfung war sauber. Öffne den Code-Editor, behebe die gemeldeten Punkte und gib die Aufgabe dann frei.",
+                    "partialTitle": "Nur ein Teil des Entwurfs wurde gespeichert",
+                    "partialBody": "Das Speichern ist nicht sauber abgeschlossen. Öffne den Code-Editor und sieh dir an, was vorhanden ist, bevor du erneut generierst.",
+                    "failedTitle": "Die Generierung endete ohne Ergebnis",
+                    "failedBody": "In deine Aufgabe wurde nichts geschrieben.",
+                    "cancelledTitle": "Du hast diesen Durchlauf abgebrochen",
+                    "cancelledBody": "In deine Aufgabe wurde nichts geschrieben. Der Aufgabenentwurf ist weiterhin vorhanden und leer — starte erneut oder lösche ihn.",
+                    "retained": "Was Artemis erarbeitet hat, bleibt zur Ansicht erhalten. Teil deiner Aufgabe ist es nicht.",
+                    "technicalDetails": "Technische Details anzeigen",
+                    "disclaimer": "Mit KI erzeugt. Prüfe Aufgabenstellung, Tests und Musterlösung, bevor du diese Aufgabe freigibst."
+                },
+                "verdict": {
+                    "title": "Prüfungen",
+                    "solutionPasses": "Musterlösung besteht alle Tests",
+                    "solutionFails": "Musterlösung besteht die Tests nicht",
+                    "templateFails": "Startcode scheitert an den Tests, wie vorgesehen",
+                    "templatePasses": "Startcode besteht Tests, an denen er scheitern sollte",
+                    "consistencyPassed": "Prüfungen zu Build und Bewertung bestanden",
+                    "consistencyFailed": "Prüfungen zu Build oder Bewertung fehlgeschlagen",
+                    "tests": "{{count}} Tests",
+                    "oneTest": "1 Test"
+                },
+                "terminationReason": {
+                    "CONVERGED": "Alle Prüfungen bestanden.",
+                    "REPAIR_BUDGET_EXHAUSTED": "Artemis hatte keine Nachbesserungsversuche mehr, bevor alle Prüfungen bestanden.",
+                    "ATTEMPT_CAP_REACHED": "Artemis hat die maximale Anzahl Versuche für einen Durchlauf erreicht.",
+                    "MECHANICAL_REPAIR_EXHAUSTED": "Artemis konnte die Aufgabe im verfügbaren Budget nicht baubar und korrekt bewertbar machen.",
+                    "POST_REPAIR_CORRECTION_EXHAUSTED": "Artemis hatte keine Versuche mehr, die letzten Prüfbefunde zu korrigieren.",
+                    "NO_SCHEDULABLE_SURFACE": "Es blieb nichts übrig, das Artemis noch ändern durfte.",
+                    "REVIEW_UNAVAILABLE": "Die Qualitätsprüfung konnte nicht ausgeführt werden.",
+                    "UNCHANGED_CANDIDATE_RESUBMITTED": "Ein Nachbesserungsversuch hat nichts geändert, deshalb hat Artemis abgebrochen statt sich zu wiederholen.",
+                    "REPAIR_DID_NOT_IMPROVE": "Die Nachbesserungen haben die Aufgabe nicht mehr verbessert.",
+                    "NO_ADMISSIBLE_CONCEPT": "Artemis hat keinen Aufgabenentwurf gefunden, der zu deiner Beschreibung passt.",
+                    "CONCEPT_ADMITTED_WITH_FINDINGS": "Artemis hat mit dem besten gefundenen Entwurf weitergearbeitet, hatte dazu aber Vorbehalte.",
+                    "CANCELLED": "Du hast den Durchlauf abgebrochen.",
+                    "DEADLINE_EXCEEDED": "Der Durchlauf hat sein Zeitlimit erreicht.",
+                    "TOKEN_BUDGET_EXHAUSTED": "Der Durchlauf hat sein Budgetlimit erreicht.",
+                    "AGENT_ERROR": "Das KI-Modell ist bei der Arbeit an der Aufgabe fehlgeschlagen.",
+                    "ENVIRONMENT_UNAVAILABLE": "Die Build-Umgebung war nicht verfügbar.",
+                    "RUN_FAILED": "Der Durchlauf ist unerwartet fehlgeschlagen.",
+                    "NOT_STARTED": "Der Durchlauf ist nie gestartet."
+                },
+                "actions": {
+                    "cancel": "Generierung abbrechen",
+                    "cancelling": "Wird abgebrochen…",
+                    "cancelConfirmHeader": "Diese Generierung abbrechen?",
+                    "cancelConfirmMessage": "Artemis stoppt sofort, und in deine Aufgabe wird nichts geschrieben. Der Aufgabenentwurf bleibt in deinem Kurs.",
+                    "cancelConfirmAccept": "Generierung abbrechen",
+                    "cancelConfirmReject": "Weiter generieren",
+                    "runAgain": "Erneut ausführen",
+                    "openEditor": "Code-Editor öffnen",
+                    "openRun": "Generierungsansicht öffnen"
+                },
+                "jobs": {
+                    "label": "KI-Generierung",
+                    "ariaLabel": "KI-Generierungsläufe",
+                    "title": "KI-Generierungsläufe",
+                    "empty": "Bisher keine Generierungsläufe.",
+                    "dismiss": "Diesen Lauf ausblenden",
+                    "unseen": "{{count}} abgeschlossene Läufe, die du noch nicht geöffnet hast",
+                    "loadFailed": "Die Generierungsläufe konnten nicht geladen werden.",
+                    "retry": "Erneut versuchen"
                 }
             },
             "generationActivity": {
@@ -58,15 +175,15 @@
                 "adaptStartFailed": "Die Anpassung konnte nicht gestartet werden.",
                 "startFailed": "Die Generierung konnte nicht gestartet werden.",
                 "meaningfulSpecRequired": "Beschreibe die Anforderungen der Aufgabe vor der Generierung mit mindestens 40 Zeichen.",
-                "saveChangesFirst": "Speichere oder verwirf deine lokalen Änderungen, bevor du eine KI-Generierung startest oder anwendest.",
-                "refreshBlockedByLocalEdits": "Die Aufgabe wurde gespeichert, aber lokale Änderungen verhindern eine sichere Aktualisierung. Kopiere benötigte Inhalte, bevor du die gespeicherte Aufgabe neu lädst.",
+                "saveChangesFirst": "Speichere oder verwirf deine lokalen Änderungen, bevor du die KI-Generierung startest oder anwendest.",
+                "refreshBlockedByLocalEdits": "Die Aufgabe wurde gespeichert, aber lokale Änderungen verhindern eine sichere Aktualisierung. Sichere alles, was du brauchst, bevor du die gespeicherte Aufgabe neu lädst.",
                 "checkingStatus": "Generierungsstatus wird geprüft…",
                 "refreshingEditor": "Der Editor wird mit der gespeicherten Aufgabe aktualisiert…",
-                "editorRefreshFailed": "Die Aufgabe wurde gespeichert, aber der Editor konnte nicht sicher aktualisiert werden. Kopiere benötigte Inhalte, bevor du die gespeicherte Aufgabe neu lädst.",
+                "editorRefreshFailed": "Die Aufgabe wurde gespeichert, aber der Editor konnte nicht sicher aktualisiert werden. Sichere alles, was du brauchst, bevor du die gespeicherte Aufgabe neu lädst.",
                 "reloadSavedExercise": "Gespeicherte Aufgabe neu laden",
                 "reloadSavedExerciseConfirmHeader": "Gespeicherte Aufgabe neu laden?",
                 "reloadSavedExerciseConfirmMessage": "Beim Neuladen wird der Editor durch die gespeicherte Aufgabe ersetzt. Alle nicht gespeicherten lokalen Änderungen gehen verloren.",
-                "statusUnavailable": "Der Generierungsstatus konnte nicht geprüft werden. KI-Aktionen und Bearbeitung bleiben bis zu einer erfolgreichen Prüfung nicht verfügbar.",
+                "statusUnavailable": "Der Generierungsstatus konnte nicht geprüft werden. KI-Aktionen und Bearbeitung bleiben gesperrt, bis die Statusprüfung gelingt.",
                 "retryStatus": "Statusprüfung wiederholen",
                 "cancel": "Abbrechen",
                 "cancelling": "Wird abgebrochen…",
@@ -74,33 +191,31 @@
                 "reverting": "Wird rückgängig gemacht…",
                 "hideDetails": "Details ausblenden",
                 "showDetails": "Details anzeigen",
-                "hideChangedFiles": "Dateiaktivität ausblenden",
-                "showChangedFiles": "Dateiaktivität anzeigen",
                 "changedFiles": "Dateiaktivität",
                 "reviewSavedChanges": "Gespeicherte Änderungen prüfen",
-                "reviewSavedChangesHint": "Öffnet den Versionsverlauf der Aufgabe oder genau den gespeicherten Repository-Commit.",
-                "reviewBlockedByLocalEdits": "Speichere oder verwirf deine lokalen Änderungen, bevor du die gespeicherten Änderungen prüfst.",
+                "reviewSavedChangesHint": "Öffne den Versionsverlauf der Aufgabe oder den genauen gespeicherten Repository-Commit.",
+                "reviewBlockedByLocalEdits": "Speichere oder verwirf deine lokalen Änderungen, bevor du die Prüfung der gespeicherten Änderungen öffnest.",
                 "reviewUnavailable": "Der gespeicherte Hyperion-Commit wurde nicht gefunden. Öffne den Repository-Verlauf und prüfe die Änderungen manuell.",
                 "reviewTarget": {
-                    "problem-statement": "Aufgabenstellungsverlauf",
-                    "solution": "Lösungs-Diff",
-                    "template": "Vorlagen-Diff",
-                    "tests": "Test-Diff"
+                    "problem-statement": "Verlauf der Aufgabenstellung",
+                    "solution": "Diff der Musterlösung",
+                    "template": "Diff des Templates",
+                    "tests": "Diff der Tests"
                 },
-                "recentActivity": "Letzte Aktivitäten",
-                "emptyTitle": "Noch keine Generierungsaktivität",
-                "emptyHint": "Starte die Generierung hier oder über das Artemis-Intelligence-Menü.",
-                "unavailableHint": "Die Generierung ist nach der Freigabe oder Teilnahme von Studierenden nicht mehr verfügbar.",
+                "recentActivity": "Letzte Aktivität",
+                "emptyTitle": "Für diese Aufgabe gibt es noch keine KI-Aktivität",
+                "emptyHint": "Starte die Generierung hier oder über das Menü „Artemis Intelligence“.",
+                "unavailableHint": "Nach Freigabe oder Teilnahme von Studierenden ist die Generierung nicht verfügbar.",
                 "repo": {
                     "solution": "Musterlösung",
-                    "template": "Vorlage",
+                    "template": "Template",
                     "tests": "Tests",
                     "other": "Sonstige"
                 },
                 "persistence": {
-                    "workingCopy": "Arbeitskopie des Agenten — nicht gespeichert",
-                    "saved": "In der Aufgabe gespeichert — bereit zur Prüfung durch Lehrende",
-                    "savedNeedsReview": "In der Aufgabe gespeichert — Prüfung durch Lehrende erforderlich",
+                    "workingCopy": "Entwurf in Arbeit — in deiner Aufgabe ist noch nichts gespeichert",
+                    "saved": "In der Aufgabe gespeichert — bereit zur Prüfung",
+                    "savedNeedsReview": "In der Aufgabe gespeichert — Prüfung erforderlich",
                     "notSaved": "Nicht gespeichert",
                     "cancelled": "Nicht gespeichert — abgebrochen",
                     "failed": "Nicht gespeichert — fehlgeschlagen",
@@ -108,26 +223,20 @@
                 },
                 "verdict": {
                     "solutionPassedExpected": "Musterlösung besteht",
-                    "solutionFailed": "Musterlösung schlägt fehl",
-                    "templateFailedExpected": "Vorlage schlägt wie vorgesehen fehl",
-                    "templatePassedUnexpected": "Vorlage besteht unerwartet",
+                    "solutionFailed": "Musterlösung besteht nicht",
+                    "templateFailedExpected": "Template scheitert an den Tests, wie erwartet",
+                    "templatePassedUnexpected": "Template besteht die Tests unerwartet",
                     "oneTest": "Test",
                     "tests": "Tests",
-                    "consistencyChecksPassed": "Build- und Bewertungskonsistenz geprüft",
-                    "consistencyChecksFailed": "Build- oder Bewertungskonsistenz fehlgeschlagen",
-                    "instructorReviewRequired": "Prüfung durch Lehrende erforderlich"
-                },
-                "completionStatus": {
-                    "SUCCESS": "Gespeichert",
-                    "NEEDS_REVIEW": "Prüfung nötig",
-                    "PARTIAL": "Nicht vollständig gespeichert — manuelle Prüfung erforderlich"
+                    "consistencyChecksPassed": "Prüfungen zu Build und Bewertung bestanden",
+                    "consistencyChecksFailed": "Prüfungen zu Build oder Bewertung fehlgeschlagen"
                 },
                 "terminalStatus": {
                     "DONE": "Generierung abgeschlossen",
                     "CANCELLED": "Abgebrochen",
                     "ERROR": "Fehlgeschlagen"
                 },
-                "revertPartialFailed": "Die KI-Änderungen konnten nicht vollständig zurückgesetzt werden. Zurückgesetzte Repositories: {{repositories}}. Bitte prüfen Sie die übrigen Repositories manuell.",
+                "revertPartialFailed": "Die KI-Änderungen konnten nicht vollständig zurückgesetzt werden. Zurückgesetzte Repositories: {{repositories}}. Prüfe die übrigen Repositories manuell.",
                 "runAgain": "Erneut ausführen",
                 "undoGeneration": "Generierung rückgängig machen",
                 "undoAdaptation": "Anpassung rückgängig machen",

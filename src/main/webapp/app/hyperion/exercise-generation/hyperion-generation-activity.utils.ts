@@ -1,6 +1,18 @@
-import { ExerciseGenerationFileChange, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ExerciseGenerationFileChange, HyperionFileChangeRepo, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 export const TERMINAL_EVENT_TYPES = new Set<HyperionGenerationEvent['type']>(['DONE', 'CANCELLED', 'ERROR']);
+
+/** The order repositories are listed in, everywhere changed files are shown. */
+export const REPO_ORDER: readonly HyperionFileChangeRepo[] = ['solution', 'template', 'tests', 'other'];
+
+/**
+ * The file change written most recently, by agent turn and then by timestamp.
+ *
+ * Used to point at the file a running agent is working on right now; `undefined` when nothing was written yet.
+ */
+export function newestFileChange(files: readonly ExerciseGenerationFileChange[]): ExerciseGenerationFileChange | undefined {
+    return files.reduce<ExerciseGenerationFileChange | undefined>((newest, file) => (newest ? newerFileChange(newest, file) : file), undefined);
+}
 
 export const MAX_RETAINED_EVENTS = 50;
 

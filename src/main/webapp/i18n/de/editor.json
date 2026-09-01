@@ -30,6 +30,7 @@
             "submit": "Absenden",
             "submitDescription": "Staged, committed, pushed, kompiliert und testet Deine Änderungen.",
             "buildOutput": "Build Ergebnisse",
+            "buildOutputTab": "Build Ergebnisse",
             "collapseBottomPanel": "Unteres Panel einklappen",
             "expandBottomPanel": "Unteres Panel ausklappen",
             "resizeBottomPanel": "Größe des unteren Panels ändern",

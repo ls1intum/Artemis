@@ -31,6 +31,8 @@
             [enableExerciseReviewComments]="true"
             [adaptReviewCommentThreadEnabled]="canAdaptWithFeedback() && !isExerciseGenerationActionBlocked()"
             [editorBottomPanelTitle]="showGenerationActivity() ? 'artemisApp.hyperion.generationActivity.panelTitle' : undefined"
+            [editorBottomPanelIcon]="showGenerationActivity() ? facArtemisIntelligence : undefined"
+            [preferredBottomPanel]="preferredBottomPanel()"
             (onFileLoad)="onFileLoad($event)"
             (onRepositoryFilesLoaded)="onRepositoryFilesLoaded()"
             (onEditorLoaded)="onEditorLoaded()"
@@ -511,6 +513,7 @@
                 @if (showGenerationActivity()) {
                     <jhi-hyperion-generation-activity
                         [exerciseId]="exercise?.id"
+                        [courseId]="course?.id"
                         [startAllowed]="canGenerateExercise()"
                         [refreshingEditor]="generationRefreshPending()"
                         [editorRefreshFailed]="generationRefreshFailed()"
