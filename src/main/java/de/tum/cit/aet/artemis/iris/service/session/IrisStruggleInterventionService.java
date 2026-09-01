@@ -317,6 +317,7 @@ public class IrisStruggleInterventionService {
         switch (finalAction) {
             case "active" -> {
                 // Skip if this episode is already terminal (late escalation arriving after the student dismissed).
+                // A dismiss that commits between this check and the append below is not caught; see isEpisodeTerminal.
                 if (episodeId != null && isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
                     irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
                     break;
@@ -345,7 +346,8 @@ public class IrisStruggleInterventionService {
             case "ambient" -> {
                 // Skip if this episode is already terminal (late ambient arriving after the student dismissed) - the
                 // same late-arrival gate the active path applies. A stale offer must not resurface after a terminal
-                // outcome; emit a silent completion so the client's in-flight decide still clears.
+                // outcome; emit a silent completion so the client's in-flight decide still clears. A dismiss that
+                // commits between this check and recordAmbientDecision below is not caught; see isEpisodeTerminal.
                 if (episodeId != null && isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
                     irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), confidence, episodeId, statusUpdate.rationale()));
                     break;
@@ -421,7 +423,8 @@ public class IrisStruggleInterventionService {
         }
 
         // Terminal gate (delivered reasons only): if the episode already has a terminal outcome (e.g. the
-        // student DISMISSED mid-flight), skip persist and emit a noop event.
+        // student DISMISSED mid-flight), skip persist and emit a noop event. Neither this check nor the
+        // persist-then-outcome pair below is atomic against a concurrent dismiss; see isEpisodeTerminal.
         if (episodeId != null && isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
             irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null,
                     episodeId, resolved, null, null, statusUpdate.rationale()));
@@ -735,6 +738,12 @@ public class IrisStruggleInterventionService {
      * already-deleted rows, non-proactive rows, other users' rows, and rows with a terminal outcome are all silent
      * noops (idempotent 204 semantics at the endpoint level).
      *
+     * <p>
+     * This is also the compensation for the check-then-write window on {@link #isEpisodeTerminal}: a hint that was
+     * persisted after its episode went terminal is removed here rather than left in the history, where it would keep
+     * being replayed to Pyris as something the tutor said. The delete is therefore not merely a client convenience,
+     * and a client that only hides such a message locally leaves the server's history wrong.
+     *
      * @param user      the requesting student
      * @param messageId the id of the message to delete
      */
@@ -893,6 +902,26 @@ public class IrisStruggleInterventionService {
      * <p>
      * Reads episode-wide: checks ALL rows tagged with the episodeId, not just the earliest, so the result is
      * stable under out-of-order persistence.
+     *
+     * <p>
+     * KNOWN AND ACCEPTED: this is a check, not a claim. Every caller reads it and then writes in a separate
+     * statement, so a terminal outcome that commits in between is not seen, and the callback persists its message
+     * (or announces its ambient offer) after the episode is already closed. The same window exists between the
+     * closing-message insert and the {@code RECOVERED} write in {@link #handleConfirmClose}.
+     *
+     * <p>
+     * It cannot be closed by locking here. The obvious mutex, the chat session, is not one: sessions are resolved as
+     * "the latest for (user, exercise)" with no uniqueness constraint, so an episode's existing row and the next
+     * append can sit in different sessions and would take different locks. Nor can the episode lock itself: before
+     * its first message row is written, an episode has no row to lock, which is also why an outcome arriving first
+     * can only be deferred. Closing it needs the episode to become a row of its own, created when the trigger is
+     * accepted (the episode id arrives synchronously in {@link #prepareTrigger}), holding the terminal outcome and
+     * serving as the mutex for the append, the reveal and the outcome write alike.
+     *
+     * <p>
+     * Until then the compensation is the client's: it drops a decide event for an episode it already closed, and
+     * removes the row through {@link #deleteSupersededProactiveMessage}, which is what that endpoint exists for. The
+     * proactive feature is off per course by default, so nothing reaches a student before this is decided.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the job's owning user; only outcomes on rows in this user's sessions are considered
