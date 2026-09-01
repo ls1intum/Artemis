@@ -1606,6 +1606,23 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
 
     /**
+     * Get the IDs of all users flagged as test users.
+     * <p>
+     * Statistics that count active users have to ignore test users. Joining {@code jhi_user} into those aggregations
+     * only to evaluate the flag makes the optimizer abandon the selective {@code submission_date} range scan, so the
+     * (small) set of test user ids is fetched separately and applied in Java instead. Soft-deleted test users are
+     * included: they must never be counted as active either.
+     *
+     * @return the ids of all users whose {@code isTestUser} flag is set
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.isTestUser = TRUE
+            """)
+    Set<Long> findAllTestUserIds();
+
+    /**
      * Get the IDs of users who have submitted at least one submission since the given date.
      * Excludes users flagged as test users, i.e. those whose {@code isTestUser} flag is set. That flag is managed
      * explicitly (admins can set or clear it independently of the login), so this no longer depends on the login
