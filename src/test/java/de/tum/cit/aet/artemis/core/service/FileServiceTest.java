@@ -20,6 +20,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -111,16 +112,30 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
      * other one got there first.
      */
     @Test
-    void testScheduleDirectoryPathForRecursiveDeletion_shouldTrackEveryScheduleForTheSamePath() throws IOException {
+    void testScheduleDirectoryPathForRecursiveDeletion_shouldTrackEveryScheduleForTheSamePath() throws Exception {
+        // Its own instance, because the shared bean's tracked deletions are whatever the rest of the context scheduled.
+        var isolatedFileService = new FileService(null, tempFileUtilService);
         Path directory = createTempTargetDirectory("testDuplicateDeletionSchedules");
 
-        assertThatNoException().isThrownBy(() -> {
-            fileService.scheduleDirectoryPathForRecursiveDeletion(directory, 0);
-            fileService.scheduleDirectoryPathForRecursiveDeletion(directory, 0);
-        });
+        // A long delay keeps both cleanups pending, so the tracking itself can be observed rather than its outcome.
+        isolatedFileService.scheduleDirectoryPathForRecursiveDeletion(directory, 60);
+        isolatedFileService.scheduleDirectoryPathForRecursiveDeletion(directory, 60);
 
-        // Both cleanups target the same path, and the second one finds it already gone. That is expected, not an error,
-        // so the directory is simply removed and nothing is left behind.
+        var trackedDeletions = isolatedFileService.pendingDeletions();
+        // Keyed by path, the second schedule replaced the first, leaving one entry and one task nobody could cancel.
+        assertThat(trackedDeletions).as("both cleanups for the same path have to stay cancellable").hasSize(2);
+
+        isolatedFileService.destroy();
+        assertThat(trackedDeletions).as("shutdown has to cancel every tracked cleanup, not just the last one").allMatch(Future::isCancelled);
+        assertThat(directory).as("a cancelled cleanup must not have run").exists();
+    }
+
+    @Test
+    void testScheduleDirectoryPathForRecursiveDeletion_shouldRemoveTheDirectory() throws IOException {
+        Path directory = createTempTargetDirectory("testScheduledDeletionRemovesDirectory");
+
+        assertThatNoException().isThrownBy(() -> fileService.scheduleDirectoryPathForRecursiveDeletion(directory, 0));
+
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> assertThat(directory).doesNotExist());
     }
 

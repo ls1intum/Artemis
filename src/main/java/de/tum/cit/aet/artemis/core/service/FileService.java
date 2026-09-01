@@ -60,6 +60,16 @@ public class FileService implements DisposableBean {
     private final Set<ScheduledFuture<?>> futures = ConcurrentHashMap.newKeySet();
 
     /**
+     * The cleanups that are still tracked for cancellation. Visible for testing: whether a schedule is tracked at all is
+     * exactly what regressed when this was a map keyed by path, and it cannot be observed from the outside otherwise.
+     *
+     * @return a snapshot of the currently tracked deletions
+     */
+    Set<ScheduledFuture<?>> pendingDeletions() {
+        return Set.copyOf(futures);
+    }
+
+    /**
      * For the JPA entities that construct this service directly to reach its path helpers. Such an instance cannot
      * broadcast cache evictions, and {@link #evictCacheForPath(Path)} reports that loudly rather than silently skipping
      * the eviction.
