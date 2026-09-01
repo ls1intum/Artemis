@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TooltipItem } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
@@ -7,7 +8,7 @@ import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.servi
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
-import { Subscription } from 'rxjs';
+import { EMPTY, startWith, switchMap } from 'rxjs';
 import { round } from 'app/foundation/util/utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ChartModule } from 'primeng/chart';
@@ -22,12 +23,13 @@ import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
     imports: [TranslateDirective, ChartModule, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
-export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {
+export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private accountService = inject(AccountService);
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
+    private destroyRef = inject(DestroyRef);
 
     readonly quizExercise = signal<QuizStatisticsOverviewResponse | undefined>(undefined);
 
@@ -38,13 +40,12 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
 
     maxScore!: number; // set in loadQuizSuccess() via calculateMaxScore() before loadData() reads it
     websocketChannelForData!: string; // set in ngOnInit() from the route params
-    private websocketSubscription?: Subscription;
 
     // Icons
     faSync = faSync;
 
     ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
             this.chartEntries.update((entries) => {
                 if (!entries.length) {
@@ -56,30 +57,24 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
                 return updated;
             });
         });
-        this.route.params.subscribe((params) => {
-            // use different REST-call if the User is a Student
-            if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.findStatisticsOverview(params['exerciseId']).subscribe((res) => {
-                    this.loadQuizSuccess(res.body!);
-                });
-            }
-
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
-
-            // ask for new Data if the websocket for new statistical data was notified
-            this.websocketSubscription = this.websocketService.subscribe<number>(this.websocketChannelForData).subscribe(() => {
-                if (this.accountService.isAtLeastTutor()) {
-                    this.quizExerciseService.findStatisticsOverview(params['exerciseId']).subscribe((res) => {
-                        this.loadQuizSuccess(res.body!);
-                    });
-                }
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = params['exerciseId'];
+                    this.websocketChannelForData = '/topic/statistic/' + exerciseId;
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
+                    }
+                    return this.websocketService.subscribe<number>(this.websocketChannelForData).pipe(
+                        startWith(exerciseId),
+                        switchMap(() => this.quizExerciseService.findStatisticsOverview(exerciseId)),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((res) => {
+                this.loadQuizSuccess(res.body!);
             });
-        });
-    }
-
-    ngOnDestroy() {
-        this.websocketSubscription?.unsubscribe();
     }
 
     /**

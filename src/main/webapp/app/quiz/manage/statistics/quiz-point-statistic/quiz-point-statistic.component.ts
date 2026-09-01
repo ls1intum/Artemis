@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TooltipItem } from 'chart.js';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
@@ -19,7 +20,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ChartModule } from 'primeng/chart';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { Subscription, filter, switchMap } from 'rxjs';
+import { EMPTY, filter, merge, startWith, switchMap } from 'rxjs';
 import { formatQuizRelativeTime } from 'app/quiz/shared/util/quiz-time.util';
 import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
@@ -36,6 +37,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     private quizExerciseService = inject(QuizExerciseService);
     private websocketService = inject(WebsocketService);
     private serverDateService = inject(ArtemisServerDateService);
+    private destroyRef = inject(DestroyRef);
 
     readonly round = round;
 
@@ -49,9 +51,7 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     readonly maxScore = signal<number>(undefined!);
     websocketChannelForData!: string; // set in ngOnInit() from the route params before use
-    quizExerciseChannel?: string;
-    private quizExerciseSubscription?: Subscription;
-    private quizDataSubscription?: Subscription;
+    quizExerciseChannel!: string; // set in ngOnInit() from the route params before use
 
     // timer
     waitingForQuizStart = false;
@@ -62,43 +62,35 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
     // Icons
     faSync = faSync;
     ngOnInit() {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
         });
-        this.route.params.subscribe((params) => {
-            // use different REST-call if the User is a Student
-            if (this.accountService.isAtLeastTutor()) {
-                this.quizExerciseService.findPointStatistic(params['exerciseId']).subscribe((res) => {
-                    this.loadQuizSuccess(res.body!);
-                });
-            }
+        this.route.params
+            .pipe(
+                switchMap((params) => {
+                    const exerciseId = Number(params['exerciseId']);
+                    this.websocketChannelForData = `/topic/statistic/${exerciseId}`;
+                    this.quizExerciseChannel = `/topic/courses/${params['courseId']}/quizExercises`;
 
-            // subscribe websocket for new statistical data
-            this.websocketChannelForData = '/topic/statistic/' + params['exerciseId'];
+                    if (!this.accountService.isAtLeastTutor()) {
+                        return EMPTY;
+                    }
 
-            if (!this.quizExerciseChannel) {
-                this.quizExerciseChannel = '/topic/courses/' + params['courseId'] + '/quizExercises';
+                    const quizStartUpdates = this.websocketService
+                        .subscribe<QuizExercise>(this.quizExerciseChannel)
+                        .pipe(filter((quiz) => this.waitingForQuizStart && exerciseId === quiz.id));
+                    const statisticUpdates = this.websocketService.subscribe<number>(this.websocketChannelForData);
 
-                // quizExercise channel => react to changes made to quizExercise (e.g. start date)
-                this.quizExerciseSubscription = this.websocketService
-                    .subscribe<QuizExercise>(this.quizExerciseChannel)
-                    .pipe(
-                        filter((quiz) => this.waitingForQuizStart && params['exerciseId'] === quiz.id),
-                        switchMap(() => this.quizExerciseService.findPointStatistic(params['exerciseId'])),
-                    )
-                    .subscribe((res) => {
-                        this.loadQuizSuccess(res.body!);
-                    });
-            }
-
-            // A statistics notification carries no counters; reload only this page's on-demand data.
-            this.quizDataSubscription = this.websocketService
-                .subscribe<number>(this.websocketChannelForData)
-                .pipe(switchMap(() => this.quizExerciseService.findPointStatistic(params['exerciseId'])))
-                .subscribe((res) => {
-                    this.loadQuizSuccess(res.body!);
-                });
-        });
+                    return merge(quizStartUpdates, statisticUpdates).pipe(
+                        startWith(exerciseId),
+                        switchMap(() => this.quizExerciseService.findPointStatistic(exerciseId)),
+                    );
+                }),
+                takeUntilDestroyed(this.destroyRef),
+            )
+            .subscribe((res) => {
+                this.loadQuizSuccess(res.body!);
+            });
 
         // update displayed times in UI regularly
         this.interval = setInterval(() => {
@@ -143,8 +135,6 @@ export class QuizPointStatisticComponent extends AbstractQuizStatisticComponent 
 
     ngOnDestroy() {
         clearInterval(this.interval);
-        this.quizExerciseSubscription?.unsubscribe();
-        this.quizDataSubscription?.unsubscribe();
     }
 
     /**

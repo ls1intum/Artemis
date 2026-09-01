@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.sql.Connection;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.sql.DataSource;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -80,6 +83,11 @@ import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import liquibase.changelog.ChangeLogParameters;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.parser.ChangeLogParserFactory;
+import liquibase.resource.ClassLoaderResourceAccessor;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -120,6 +128,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private ResultTestRepository resultRepository;
+
+    @Autowired
+    private DataSource dataSource;
 
     @BeforeEach
     void init() {
@@ -236,6 +247,29 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void calculateStatisticsOnDemand_backfillsLegacyCompletionDateThroughMigration() throws Exception {
+        QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        ZonedDateTime submissionDate = ZonedDateTime.now().minusDays(1);
+        QuizSubmission quizSubmission = createScoredSubmission(quizExercise, true, submissionDate);
+        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        Result legacyResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, quizSubmission, true, true, 100);
+        resultRepository.flush();
+        assertThat(legacyResult.getCompletionDate()).isNull();
+
+        String pointStatisticsPath = "/api/quiz/quiz-exercises/" + quizExercise.getId() + "/statistics/points";
+        JsonNode statisticsBeforeMigration = request.get(pointStatisticsPath, HttpStatus.OK, JsonNode.class).path("quizPointStatistic");
+        assertThat(statisticsBeforeMigration.path("participantsRated").asInt()).isZero();
+
+        executeResultCompletionDateBackfill();
+
+        JsonNode statisticsAfterMigration = request.get(pointStatisticsPath, HttpStatus.OK, JsonNode.class).path("quizPointStatistic");
+        assertThat(statisticsAfterMigration.path("participantsRated").asInt()).isOne();
+        JsonNode fullPointCounter = findNodeByDouble(statisticsAfterMigration.path("pointCounters"), "points", quizExercise.getOverallQuizPoints());
+        assertThat(fullPointCounter.path("ratedCounter").asInt()).isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateStatisticsOnDemand_usesLatestResultPerRatingAndTreatsNullRatedAsUnrated() throws Exception {
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         ZonedDateTime tiedCompletionDate = ZonedDateTime.now().minusMinutes(1);
@@ -303,6 +337,68 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         JsonNode incorrectAnswerCounter = findNodeByLong(questionStatistic.path("answerCounters"), "answerId", incorrectAnswer.getId());
         assertThat(incorrectAnswerCounter.path("ratedCounter").asInt()).isZero();
         assertThat(incorrectAnswerCounter.path("unRatedCounter").asInt()).isOne();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void calculateStatisticsOnDemand_includesCoursePracticeAndExcludesExamTestRuns() throws Exception {
+        ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(1);
+        QuizExercise coursePracticeQuizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        QuizSubmission coursePracticeSubmission = createScoredSubmission(coursePracticeQuizExercise, true, completionDate);
+        participationUtilService.addSubmission(coursePracticeQuizExercise, coursePracticeSubmission, TEST_PREFIX + "student1");
+        StudentParticipation coursePracticeParticipation = (StudentParticipation) coursePracticeSubmission.getParticipation();
+        coursePracticeParticipation.setTestRun(true);
+        participationRepository.saveAndFlush(coursePracticeParticipation);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, completionDate, coursePracticeSubmission, true, true, 100);
+
+        String courseStatisticsPath = "/api/quiz/quiz-exercises/" + coursePracticeQuizExercise.getId() + "/statistics";
+        JsonNode coursePointStatistic = request.get(courseStatisticsPath + "/points", HttpStatus.OK, JsonNode.class).path("quizPointStatistic");
+        assertThat(coursePointStatistic.path("participantsRated").asInt()).isOne();
+        JsonNode courseOverview = request.get(courseStatisticsPath + "/overview", HttpStatus.OK, JsonNode.class);
+        assertThat(courseOverview.path("participantsRated").asInt()).isOne();
+        MultipleChoiceQuestion courseQuestion = (MultipleChoiceQuestion) coursePracticeQuizExercise.getQuizQuestions().getFirst();
+        JsonNode courseQuestionStatistic = request.get(courseStatisticsPath + "/questions/" + courseQuestion.getId(), HttpStatus.OK, JsonNode.class).path("quizQuestionStatistic");
+        assertThat(courseQuestionStatistic.path("participantsRated").asInt()).isOne();
+        AnswerOption correctCourseAnswer = courseQuestion.getAnswerOptions().stream().filter(AnswerOption::isIsCorrect).findFirst().orElseThrow();
+        JsonNode correctCourseAnswerCounter = findNodeByLong(courseQuestionStatistic.path("answerCounters"), "answerId", correctCourseAnswer.getId());
+        assertThat(correctCourseAnswerCounter.path("ratedCounter").asInt()).isOne();
+
+        ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        userUtilService.addInstructorToCourse(TEST_PREFIX + "instructor1", exerciseGroup.getExam().getCourse());
+        QuizExercise examQuizExercise = quizExerciseService.save(QuizExerciseFactory.createQuizForExam(exerciseGroup));
+        QuizSubmission examQuizSubmission = createScoredSubmission(examQuizExercise, true, completionDate);
+        participationUtilService.addSubmission(examQuizExercise, examQuizSubmission, TEST_PREFIX + "instructor1");
+        StudentParticipation testRunParticipation = (StudentParticipation) examQuizSubmission.getParticipation();
+        testRunParticipation.setTestRun(true);
+        participationRepository.saveAndFlush(testRunParticipation);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, completionDate, examQuizSubmission, true, true, 100);
+
+        String examStatisticsPath = "/api/quiz/quiz-exercises/" + examQuizExercise.getId() + "/statistics";
+        JsonNode pointStatistic = request.get(examStatisticsPath + "/points", HttpStatus.OK, JsonNode.class).path("quizPointStatistic");
+        assertThat(pointStatistic.path("participantsRated").asInt()).isZero();
+        assertThat(pointStatistic.path("participantsUnrated").asInt()).isZero();
+        for (JsonNode pointCounter : pointStatistic.path("pointCounters")) {
+            assertThat(pointCounter.path("ratedCounter").asInt()).isZero();
+            assertThat(pointCounter.path("unRatedCounter").asInt()).isZero();
+        }
+
+        MultipleChoiceQuestion examQuestion = (MultipleChoiceQuestion) examQuizExercise.getQuizQuestions().getFirst();
+        JsonNode overviewResponse = request.get(examStatisticsPath + "/overview", HttpStatus.OK, JsonNode.class);
+        assertThat(overviewResponse.path("participantsRated").asInt()).isZero();
+        assertThat(overviewResponse.path("participantsUnrated").asInt()).isZero();
+        JsonNode overviewQuestionStatistic = findNodeByLong(overviewResponse.path("quizQuestions"), "id", examQuestion.getId()).path("quizQuestionStatistic");
+        assertThat(overviewQuestionStatistic.path("participantsRated").asInt()).isZero();
+        assertThat(overviewQuestionStatistic.path("participantsUnrated").asInt()).isZero();
+        assertThat(overviewQuestionStatistic.path("ratedCorrectCounter").asInt()).isZero();
+        assertThat(overviewQuestionStatistic.path("unRatedCorrectCounter").asInt()).isZero();
+
+        JsonNode questionStatistic = request.get(examStatisticsPath + "/questions/" + examQuestion.getId(), HttpStatus.OK, JsonNode.class).path("quizQuestionStatistic");
+        assertThat(questionStatistic.path("participantsRated").asInt()).isZero();
+        assertThat(questionStatistic.path("participantsUnrated").asInt()).isZero();
+        for (JsonNode answerCounter : questionStatistic.path("answerCounters")) {
+            assertThat(answerCounter.path("ratedCounter").asInt()).isZero();
+            assertThat(answerCounter.path("unRatedCounter").asInt()).isZero();
+        }
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -878,6 +974,18 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         quizExercise.getQuizQuestions().stream().map(question -> QuizExerciseFactory.generateSubmittedAnswerFor(question, correct)).forEach(submission::addSubmittedAnswers);
         submission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
         return submission;
+    }
+
+    private void executeResultCompletionDateBackfill() throws Exception {
+        String changeLogPath = "config/liquibase/changelog/20260827174007_changelog.xml";
+        try (Connection connection = dataSource.getConnection(); ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor()) {
+            var database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+            var changeLog = ChangeLogParserFactory.getInstance().getParser(changeLogPath, resourceAccessor).parse(changeLogPath, new ChangeLogParameters(database),
+                    resourceAccessor);
+            String changeSetId = "20260827174007-00-backfill-result-completion-date-" + database.getShortName();
+            var changeSet = changeLog.getChangeSets().stream().filter(candidate -> candidate.getId().equals(changeSetId)).findFirst().orElseThrow();
+            changeSet.execute(changeLog, database);
+        }
     }
 
     private static JsonNode findNodeByLong(JsonNode nodes, String fieldName, long value) {

@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizPointStatisticsResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -24,8 +24,9 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-const route = { params: of({ courseId: 2, exerciseId: 42 }) };
+const route = { params: of({ courseId: '2', exerciseId: '42' }) };
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
 const pointCounters = [
@@ -112,11 +113,39 @@ describe('QuizExercise Point Statistic Component', () => {
             vi.clearAllTimers();
         });
 
-        it('should cancel superseded websocket refresh requests and active requests on destroy', () => {
+        it('should refresh when a waiting quiz starts', () => {
             vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            comp.ngOnInit();
-            comp.waitingForQuizStart = true;
+            const waitingQuizExercise = cloneWith(quizExercise, { quizStarted: false });
+            quizServiceFindSpy.mockReturnValueOnce(of(new HttpResponse({ body: waitingQuizExercise }))).mockReturnValueOnce(of(new HttpResponse({ body: quizExercise })));
 
+            comp.ngOnInit();
+            expect(comp.waitingForQuizStart).toBe(true);
+            websocketService.emit('/topic/courses/2/quizExercises', { id: 42 } as QuizExercise);
+
+            expect(quizServiceFindSpy).toHaveBeenCalledTimes(2);
+            expect(quizServiceFindSpy).toHaveBeenLastCalledWith(42);
+            expect(comp.waitingForQuizStart).toBe(false);
+        });
+
+        it('should ignore a superseded initial point-statistics response', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const initialRequest = new Subject<HttpResponse<QuizPointStatisticsResponse>>();
+            const refreshRequest = new Subject<HttpResponse<QuizPointStatisticsResponse>>();
+            quizServiceFindSpy.mockReturnValueOnce(initialRequest.asObservable()).mockReturnValueOnce(refreshRequest.asObservable());
+            const initialStatistic = cloneWith(quizExercise, { maxPoints: 1 });
+            const refreshedStatistic = cloneWith(quizExercise, { maxPoints: 2 });
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/42', 42);
+            refreshRequest.next(new HttpResponse({ body: refreshedStatistic }));
+            expect(comp.quizExercise()).toBe(refreshedStatistic);
+
+            initialRequest.next(new HttpResponse({ body: initialStatistic }));
+            expect(comp.quizExercise()).toBe(refreshedStatistic);
+        });
+
+        it('should cancel superseded refresh requests and the active request on destroy', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             let nextRequestId = 0;
             const cancelledRequestIds: number[] = [];
             quizServiceFindSpy.mockImplementation(
@@ -126,19 +155,16 @@ describe('QuizExercise Point Statistic Component', () => {
                         return () => cancelledRequestIds.push(requestId);
                     }),
             );
+            comp.waitingForQuizStart = true;
+            comp.ngOnInit();
 
-            const quizExerciseChannel = '/topic/courses/2/quizExercises';
-            websocketService.emit(quizExerciseChannel, { id: 42 } as QuizExercise);
-            websocketService.emit(quizExerciseChannel, { id: 42 } as QuizExercise);
+            websocketService.emit('/topic/courses/2/quizExercises', { id: 42 } as QuizExercise);
+            websocketService.emit('/topic/statistic/42', 42);
 
-            const statisticChannel = '/topic/statistic/42';
-            websocketService.emit(statisticChannel, 42);
-            websocketService.emit(statisticChannel, 42);
-
-            expect(cancelledRequestIds).toEqual([0, 2]);
+            expect(cancelledRequestIds).toEqual([0, 1]);
 
             fixture.destroy();
-            expect(cancelledRequestIds).toEqual([0, 2, 1, 3]);
+            expect(cancelledRequestIds).toEqual([0, 1, 2]);
         });
 
         it('should not load QuizSuccess if not authorised', async () => {

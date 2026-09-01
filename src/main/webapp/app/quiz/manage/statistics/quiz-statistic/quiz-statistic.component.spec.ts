@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,6 +19,7 @@ import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statisti
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 const question = { id: 1 } as QuizQuestion;
 const course = { id: 2 } as Course;
@@ -35,6 +36,7 @@ describe('QuizStatisticComponent', () => {
     let quizService: QuizExerciseService;
     let accountService: AccountService;
     let accountSpy: MockInstance<AccountService['hasAnyAuthorityDirect']>;
+    let websocketService: MockWebsocketService;
     let router: Router;
     let quizServiceFindSpy: MockInstance<QuizExerciseService['find']>;
 
@@ -57,13 +59,12 @@ describe('QuizStatisticComponent', () => {
 
         quizService = TestBed.inject(QuizExerciseService);
         accountService = TestBed.inject(AccountService);
+        websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
         router = TestBed.inject(Router);
     });
 
     afterEach(() => {
-        if (comp) {
-            comp.ngOnDestroy();
-        }
+        fixture.destroy();
         vi.clearAllMocks();
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizStatisticsOverviewResponse;
     });
@@ -98,6 +99,44 @@ describe('QuizStatisticComponent', () => {
             expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
+        });
+
+        it('should ignore a superseded initial overview response', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            const initialRequest = new Subject<HttpResponse<QuizStatisticsOverviewResponse>>();
+            const refreshRequest = new Subject<HttpResponse<QuizStatisticsOverviewResponse>>();
+            quizServiceFindSpy.mockReturnValueOnce(initialRequest.asObservable()).mockReturnValueOnce(refreshRequest.asObservable());
+            const initialOverview = cloneWith(quizExercise, { participantsRated: 1 });
+            const refreshedOverview = cloneWith(quizExercise, { participantsRated: 2 });
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/42', 42);
+            refreshRequest.next(new HttpResponse({ body: refreshedOverview }));
+            expect(comp.quizExercise()).toBe(refreshedOverview);
+
+            initialRequest.next(new HttpResponse({ body: initialOverview }));
+            expect(comp.quizExercise()).toBe(refreshedOverview);
+        });
+
+        it('should cancel superseded overview requests and the active request on destroy', () => {
+            vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
+            let nextRequestId = 0;
+            const cancelledRequestIds: number[] = [];
+            quizServiceFindSpy.mockImplementation(
+                () =>
+                    new Observable(() => {
+                        const requestId = nextRequestId++;
+                        return () => cancelledRequestIds.push(requestId);
+                    }),
+            );
+
+            comp.ngOnInit();
+            websocketService.emit('/topic/statistic/42', 42);
+            websocketService.emit('/topic/statistic/42', 42);
+            expect(cancelledRequestIds).toEqual([0, 1]);
+
+            fixture.destroy();
+            expect(cancelledRequestIds).toEqual([0, 1, 2]);
         });
 
         it('should not load QuizSuccess if not authorised', async () => {

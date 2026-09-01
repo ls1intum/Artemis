@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -68,6 +69,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -147,12 +149,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<ExamDateApi> examDateApi;
 
+    private final Optional<LtiApi> ltiApi;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, Optional<QuizScheduleService> quizScheduleService, QuizStatisticsService quizStatisticsService,
             QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService, ExerciseService exerciseService, UserRepository userRepository,
             QuizBatchRepository quizBatchRepository, ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            Optional<ExamDateApi> examDateApi) {
+            Optional<ExamDateApi> examDateApi, Optional<LtiApi> ltiApi) {
         super();
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -171,6 +175,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.slideApi = slideApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.examDateApi = examDateApi;
+        this.ltiApi = ltiApi;
     }
 
     /**
@@ -587,6 +592,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         List<Result> results = resultRepository.findByExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         log.info("Found {} results to update for quiz re-evaluate", results.size());
         List<QuizSubmission> submissions = new ArrayList<>();
+        Map<Long, StudentParticipation> affectedParticipations = new LinkedHashMap<>();
         for (Result result : results) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
@@ -605,15 +611,20 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             // recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
             // update Successful-Flag in Result
+            Double scoreBeforeReevaluation = result.getScore();
             StudentParticipation studentParticipation = (StudentParticipation) result.getSubmission().getParticipation();
             studentParticipation.setExercise(quizExercise);
             result.evaluateQuizSubmission(quizExercise);
+            if (!Objects.equals(scoreBeforeReevaluation, result.getScore())) {
+                affectedParticipations.put(studentParticipation.getId(), studentParticipation);
+            }
 
             submissions.add(quizSubmission);
         }
         // save the updated submissions and results
         quizSubmissionRepository.saveAll(submissions);
         resultRepository.saveAll(results);
+        ltiApi.ifPresent(api -> affectedParticipations.values().forEach(api::onNewResult));
         log.info("{} results have been updated successfully for quiz re-evaluate", results.size());
     }
 
