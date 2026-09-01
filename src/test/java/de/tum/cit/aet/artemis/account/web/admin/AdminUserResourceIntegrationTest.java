@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.account.dto.UserDeletionResultStatus;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.service.user.deletion.PermanentUserDeletionService;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionMode;
+import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -56,6 +58,9 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private PermanentUserDeletionService permanentUserDeletionService;
+
+    @Autowired
+    private UserDeletionPlanService userDeletionPlanService;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -877,6 +882,17 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(deletionResult.path("reason").asText()).isEqualTo("impactChanged");
         assertThat(userTestRepository.findById(user.getId())).isPresent();
         assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM user_course_role WHERE user_id = ? AND course_id = ?", Long.class, user.getId(), course.getId())).isOne();
+    }
+
+    @Test
+    void deletionFingerprintChangesWhenTargetAuthoritiesChange() {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "authorityfingerprint");
+        String originalFingerprint = userDeletionPlanService.createImpact(user, UserDeletionMode.ADMIN_FORCED).impactFingerprint();
+
+        user.setAuthorities(Set.of(Authority.USER_AUTHORITY, Authority.ADMIN_AUTHORITY));
+        String promotedFingerprint = userDeletionPlanService.createImpact(user, UserDeletionMode.ADMIN_FORCED).impactFingerprint();
+
+        assertThat(promotedFingerprint).isNotEqualTo(originalFingerprint);
     }
 
     @Test

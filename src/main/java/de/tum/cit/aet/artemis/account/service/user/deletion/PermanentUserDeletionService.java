@@ -17,9 +17,6 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactDTO;
@@ -88,9 +85,8 @@ public class PermanentUserDeletionService {
         this.internalAdminUsername = internalAdminUsername;
     }
 
-    @Transactional
     public UserDeletionResultDTO deleteByAdmin(long userId, String expectedFingerprint, String actingAdministrator) {
-        User user = lockUser(userId);
+        User user = loadUserForDeletion(userId);
         if (isAlwaysProtected(user) || user.getLogin().equals(actingAdministrator)) {
             return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
         }
@@ -102,9 +98,8 @@ public class PermanentUserDeletionService {
         return result(user, UserDeletionResultStatus.DELETED, null);
     }
 
-    @Transactional
     public UserDeletionResultDTO deleteAutomatically(long userId) {
-        User user = lockUser(userId);
+        User user = loadUserForDeletion(userId);
         if (isAlwaysProtected(user) || AuthorizationCheckService.isAdmin(user.getAuthorities())) {
             return result(user, UserDeletionResultStatus.FORBIDDEN, "protectedUser");
         }
@@ -116,9 +111,8 @@ public class PermanentUserDeletionService {
         return result(user, UserDeletionResultStatus.DELETED, null);
     }
 
-    @Transactional
     public UserDeletionResultDTO deleteProvisional(long userId) {
-        User user = lockUser(userId);
+        User user = loadUserForDeletion(userId);
         if (user.getActivated() || user.isDeleted() || isAlwaysProtected(user)) {
             return result(user, UserDeletionResultStatus.BLOCKED, "registrationStateChanged");
         }
@@ -130,8 +124,10 @@ public class PermanentUserDeletionService {
         return result(user, UserDeletionResultStatus.DELETED, null);
     }
 
-    private User lockUser(long userId) {
+    private User loadUserForDeletion(long userId) {
         User user = userDeletionRepository.findByIdForDeletion(userId).orElseThrow(() -> new IllegalArgumentException("User " + userId + " does not exist"));
+        // The repository fetches authorities and the learner profile because this service intentionally has no
+        // transaction boundary. Both associations must remain available while the detached deletion snapshot is used.
         user.getAuthorities().size();
         return user;
     }
@@ -140,15 +136,20 @@ public class PermanentUserDeletionService {
         long userId = user.getId();
         String login = user.getLogin();
         String imageUrl = user.getImageUrl();
-        List<Path> filesToDeleteAfterCommit = new ArrayList<>();
+        List<Path> filesToDelete = new ArrayList<>();
         if (userDeletionPlanService.isTableAvailable("data_export")) {
-            filesToDeleteAfterCommit.addAll(dataExportApi.deleteAllForUser(userId));
+            filesToDelete.addAll(dataExportApi.deleteAllForUser(userId));
         }
         boolean forced = mode == UserDeletionMode.ADMIN_FORCED;
+        Long learnerProfileId = user.getLearnerProfile() != null ? user.getLearnerProfile().getId() : null;
 
         accountCredentialRevocationService.revokeAllCredentials(user, "permanent user deletion");
-        learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
-        user.setLearnerProfile(null);
+        if (learnerProfileId != null) {
+            // This service has no transaction boundary. Clear the owning foreign key with a focused repository
+            // modifying query before deleting the profile instead of relying on a managed User entity.
+            userDeletionRepository.clearLearnerProfile(userId);
+            learnerProfileApi.ifPresent(api -> api.deleteProfile(learnerProfileId));
+        }
 
         if (forced) {
             detachSharedActorReferences(userId);
@@ -159,7 +160,7 @@ public class PermanentUserDeletionService {
                 cleanupParticipations(userId);
             }
             if (userDeletionPlanService.isTableAvailable("student_exam") || userDeletionPlanService.isTableAvailable("exam_user")) {
-                cleanupStudentExams(userId, filesToDeleteAfterCommit);
+                cleanupStudentExams(userId, filesToDelete);
             }
             if (userDeletionPlanService.isTableAvailable("complaint")) {
                 cleanupComplaints(userId);
@@ -175,21 +176,18 @@ public class PermanentUserDeletionService {
             }
         }
 
-        userDeletionRepository.flushDeletionChanges();
         executeDirectReferencePolicies(userId, forced);
-        userDeletionRepository.flushDeletionChanges();
 
         int deleted = userDeletionRepository.deleteUserRow(userId);
         if (deleted != 1) {
             throw new IllegalStateException("Expected to delete one user row, deleted " + deleted);
         }
 
-        // Science events store the login as an identity rather than a foreign key. Rename that identity inside this
-        // transaction so a failure rolls back the complete deletion instead of surfacing after the user row is gone.
+        // Science events store the login as an identity rather than a foreign key. Rename it once the user row is gone.
         scienceEventApi.ifPresent(api -> api.renameIdentity(login, "deleted-user-" + userId));
         auditEventRepository.add(new AuditEvent(actor, AUDIT_EVENT_TYPE,
                 Map.of("targetUserId", userId, "mode", mode.name(), "affectedObjects", impact.totalAffectedObjects(), "outcome", UserDeletionResultStatus.DELETED.name())));
-        scheduleExternalCleanupAfterCommit(imageUrl, filesToDeleteAfterCommit);
+        scheduleExternalCleanup(imageUrl, filesToDelete);
     }
 
     private void detachSharedActorReferences(long userId) {
@@ -287,17 +285,13 @@ public class PermanentUserDeletionService {
         }
     }
 
-    private void scheduleExternalCleanupAfterCommit(@Nullable String imageUrl, List<Path> filesToDelete) {
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-
-            @Override
-            public void afterCommit() {
-                filesToDelete.forEach(path -> fileService.schedulePathForDeletion(path, 0));
-                if (imageUrl != null) {
-                    fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUrl), FilePathType.PROFILE_PICTURE), 0);
-                }
-            }
-        });
+    private void scheduleExternalCleanup(@Nullable String imageUrl, List<Path> filesToDelete) {
+        // All database modifications above are completed by repository-owned transactions before external cleanup is
+        // scheduled. This service deliberately has no transaction boundary.
+        filesToDelete.forEach(path -> fileService.schedulePathForDeletion(path, 0));
+        if (imageUrl != null) {
+            fileService.schedulePathForDeletion(FilePathConverter.fileSystemPathForExternalUri(URI.create(imageUrl), FilePathType.PROFILE_PICTURE), 0);
+        }
     }
 
     private boolean isAlwaysProtected(User user) {

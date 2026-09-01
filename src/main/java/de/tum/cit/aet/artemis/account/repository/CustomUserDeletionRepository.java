@@ -26,7 +26,7 @@ public interface CustomUserDeletionRepository {
 
     Optional<User> findByIdForDeletion(long userId);
 
-    void flushDeletionChanges();
+    void clearLearnerProfile(long userId);
 
     int deleteUserRow(long userId);
 

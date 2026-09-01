@@ -17,6 +17,7 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 
@@ -44,8 +45,8 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
-    public void flushDeletionChanges() {
-        userRepository.flush();
+    public void clearLearnerProfile(long userId) {
+        userRepository.clearLearnerProfileForDeletion(userId);
     }
 
     @Override
@@ -126,11 +127,13 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    @Transactional // ok because of modifying query
     public void detachUserReference(String tableName, String columnName, long userId) {
         update("UPDATE " + tableName + " SET " + columnName + " = NULL WHERE " + columnName + " = ?", userId);
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deleteUserReference(String tableName, String columnName, long userId) {
         update("DELETE FROM " + tableName + " WHERE " + columnName + " = ?", userId);
     }
@@ -161,16 +164,19 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    @Transactional // ok because of modifying query
     public void replaceTeamOwner(long teamId, @Nullable Long replacementOwnerId) {
         update("UPDATE team SET owner_id = ? WHERE id = ?", replacementOwnerId, teamId);
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deleteTeamMemberships(long userId) {
         update("DELETE FROM team_student WHERE student_id = ?", userId);
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deleteTeam(long teamId) {
         update("DELETE FROM team WHERE id = ?", teamId);
     }
@@ -181,6 +187,7 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deleteStudentExams(long userId) {
         update("DELETE FROM exam_session WHERE student_exam_id IN (SELECT id FROM student_exam WHERE user_id = ?)", userId);
         update("DELETE FROM student_exam_exercise WHERE student_exam_id IN (SELECT id FROM student_exam WHERE user_id = ?)", userId);
@@ -194,17 +201,20 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deleteExamUsers(long userId) {
         update("DELETE FROM exam_user WHERE student_id = ?", userId);
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deleteComplaints(long userId) {
         update("DELETE FROM complaint_response WHERE complaint_id IN (SELECT id FROM complaint WHERE student_id = ?)", userId);
         update("DELETE FROM complaint WHERE student_id = ?", userId);
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deletePostTreesForPlagiarismCases(long userId) {
         update("""
                 DELETE FROM reaction
@@ -234,12 +244,14 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deletePlagiarismCases(long userId) {
         update("UPDATE plagiarism_submission SET plagiarism_case_id = NULL WHERE plagiarism_case_id IN (SELECT id FROM plagiarism_case WHERE student_id = ?)", userId);
         update("DELETE FROM plagiarism_case WHERE student_id = ?", userId);
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deleteCommunicationContent(long userId) {
         update("""
                 DELETE FROM reaction
@@ -255,6 +267,7 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    @Transactional // ok because of delete
     public void deleteTutorParticipations(long userId) {
         update("""
                 DELETE FROM tutor_participation_trained_example_submissions

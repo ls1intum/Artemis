@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.account.repository.CustomUserDeletionRepository.Us
 @Service
 public class UserDeletionPlanService {
 
-    private static final String POLICY_VERSION = "2";
+    private static final String POLICY_VERSION = "3";
 
     private final CustomUserDeletionRepository userDeletionRepository;
 
@@ -67,7 +67,7 @@ public class UserDeletionPlanService {
         List<UserDeletionImpactCategoryDTO> categories = groupedCounts.entrySet().stream()
                 .map(entry -> new UserDeletionImpactCategoryDTO(entry.getKey().category(), entry.getKey().action(), entry.getValue()))
                 .sorted(Comparator.comparing((UserDeletionImpactCategoryDTO item) -> item.category().name()).thenComparing(item -> item.action().name())).toList();
-        String fingerprint = fingerprint(user.getId(), counts);
+        String fingerprint = fingerprint(user, mode, counts);
         boolean retentionOverrideRequired = mode == UserDeletionMode.ADMIN_FORCED && !automaticEligible;
         return new UserDeletionImpactDTO(user.getId(), user.getLogin(), automaticEligible, user.isDeleted(), retentionOverrideRequired, totalAffectedObjects, fingerprint,
                 categories);
@@ -118,10 +118,21 @@ public class UserDeletionPlanService {
         return result;
     }
 
-    private String fingerprint(long userId, Map<UserDeletionReferencePolicy, Long> counts) {
+    private String fingerprint(User user, UserDeletionMode mode, Map<UserDeletionReferencePolicy, Long> counts) {
         List<String> parts = new ArrayList<>();
         parts.add(POLICY_VERSION);
-        parts.add(Long.toString(userId));
+        parts.add(Long.toString(user.getId()));
+        // The confirmation protects the target identity and authorization boundary as well as reference counts. Without
+        // these values, an account renamed or promoted to administrator between preview and execution could still match
+        // an earlier confirmation even though the administrator is no longer confirming the same deletion plan.
+        parts.add("login=" + user.getLogin());
+        parts.add("activated=" + user.getActivated());
+        parts.add("deleted=" + user.isDeleted());
+        // Automatic preview queries intentionally do not fetch authorities. Only an administrator-confirmed plan needs
+        // role changes in its fingerprint; automatic execution checks protected roles after locking and fetching them.
+        if (mode == UserDeletionMode.ADMIN_FORCED) {
+            parts.add("authorities=" + user.getAuthorities().stream().map(authority -> authority.getName()).sorted().toList());
+        }
         for (UserDeletionReferencePolicy policy : UserDeletionReferencePolicy.values()) {
             parts.add(policy.name() + "=" + counts.getOrDefault(policy, 0L));
         }

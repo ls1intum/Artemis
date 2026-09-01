@@ -70,10 +70,15 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
-    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
-    @org.springframework.data.jpa.repository.Query("SELECT user FROM User user LEFT JOIN FETCH user.authorities WHERE user.id = :userId")
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT user FROM User user LEFT JOIN FETCH user.authorities LEFT JOIN FETCH user.learnerProfile WHERE user.id = :userId")
     Optional<User> findByIdForDeletion(@org.springframework.data.repository.query.Param("userId") long userId);
 
+    @Transactional // ok because of modifying query
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
+    @org.springframework.data.jpa.repository.Query("UPDATE User user SET user.learnerProfile = NULL WHERE user.id = :userId")
+    void clearLearnerProfileForDeletion(@org.springframework.data.repository.query.Param("userId") long userId);
+
+    @Transactional // ok because of delete
     @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
     @org.springframework.data.jpa.repository.Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
     int deleteUserRow(@org.springframework.data.repository.query.Param("userId") long userId);
