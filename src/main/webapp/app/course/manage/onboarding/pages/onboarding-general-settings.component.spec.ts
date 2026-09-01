@@ -89,6 +89,27 @@ describe('OnboardingGeneralSettingsComponent', () => {
         expect(comp.ARTEMIS_DEFAULT_COLOR).toBe(ARTEMIS_DEFAULT_COLOR);
     });
 
+    describe('semesterMissing', () => {
+        it('should be true when the course has no semester', () => {
+            expect(comp.course().semester).toBeUndefined();
+            expect(comp.semesterMissing()).toBe(true);
+        });
+
+        it('should be true when the semester is blank', () => {
+            fixture.componentRef.setInput('course', { ...course, semester: '   ' });
+            fixture.detectChanges();
+
+            expect(comp.semesterMissing()).toBe(true);
+        });
+
+        it('should be false once a semester is set', () => {
+            fixture.componentRef.setInput('course', { ...course, semester: 'SS24' });
+            fixture.detectChanges();
+
+            expect(comp.semesterMissing()).toBe(false);
+        });
+    });
+
     describe('updateField', () => {
         it('should emit courseUpdated when a field changes', () => {
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');

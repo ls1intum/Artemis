@@ -59,6 +59,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly semesters = computed(() => getSemesters(this.course().semester));
+    readonly semesterMissing = computed(() => !this.course().semester?.trim());
 
     private previousSemester?: string;
 

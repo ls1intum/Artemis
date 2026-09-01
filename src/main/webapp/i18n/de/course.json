@@ -432,6 +432,9 @@
                     "saving": "Speichern..."
                 },
                 "validation": {
+                    "startDateRequired": "Bitte lege ein Startdatum für den Kurs fest.",
+                    "endDateRequired": "Bitte lege ein Enddatum für den Kurs fest.",
+                    "semesterRequired": "Bitte wähle ein Semester für den Kurs aus.",
                     "startDateBeforeEndDate": "Das Startdatum muss vor dem Enddatum liegen.",
                     "enrollmentStartDateBeforeEndDate": "Das Einschreibungsstartdatum muss vor dem Einschreibungsenddatum liegen.",
                     "enrollmentRequiresCourseDates": "Einschreibungsdaten erfordern ein Start- und Enddatum des Kurses. Bitte im Schritt Allgemein festlegen.",

@@ -571,6 +571,16 @@ public class CourseTestService {
         request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
     }
 
+    // Test: the update endpoint runs @Valid on CourseUpdateDTO, so a blank semester (@NotBlank) must be rejected
+    // through the real REST endpoint, not just via the Course domain object's own validateSemester().
+    public void testUpdateCourseWithBlankSemester() throws Exception {
+        Course course = courseUtilService.createEnrolledCourse(userPrefix);
+        course.setStartDate(ZonedDateTime.now().minusDays(5));
+        course.setEndDate(ZonedDateTime.now().plusDays(5));
+        course.setSemester("   ");
+        request.performMvcRequest(buildUpdateCourse(course.getId(), course)).andExpect(status().isBadRequest());
+    }
+
     // Test
     public void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         Course course = CourseFactory.generateCourse(null, null, null, new HashSet<>());

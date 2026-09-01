@@ -147,6 +147,12 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateCourseWithBlankSemester() throws Exception {
+        courseTestService.testUpdateCourseWithBlankSemester();
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains() throws Exception {
         courseTestService.testCreateCourseWithModifiedMaxComplainTimeDaysAndMaxComplains();
