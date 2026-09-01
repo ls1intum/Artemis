@@ -675,8 +675,15 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 next: (response) => {
                     const results = response.body ?? [];
                     if (results.some((result) => result.status === 'PLAN_CHANGED')) {
+                        // Successful entries were already committed independently. Re-preview only accounts that still exist,
+                        // otherwise an already-deleted login makes the complete retry preview fail with 404.
+                        const remainingLogins = results.filter((result) => result.status !== 'DELETED').map((result) => result.login);
+                        this.selectedUsers.set(this.selectedUsers().filter((user) => user.login && remainingLogins.includes(user.login)));
+                        if (results.some((result) => result.status === 'DELETED')) {
+                            this.eventManager.broadcast({ name: 'userListModification', content: 'Deleted users' });
+                        }
                         this.alertService.warning('artemisApp.userManagement.permanentDeletion.planChanged');
-                        this.openPermanentDeletionDialog(impact.users.map((user) => user.login));
+                        this.openPermanentDeletionDialog(remainingLogins);
                         return;
                     }
                     if (results.some((result) => result.status !== 'DELETED')) {

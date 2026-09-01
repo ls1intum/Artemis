@@ -318,8 +318,10 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         }
 
         @Test
-        @WithMockUser(username = "admin", roles = "ADMIN")
+        @WithMockUser(username = TEST_PREFIX + "calleradmin", roles = "ADMIN")
         void deleteUser_deleteRegularUserByAdmin_success() throws Exception {
+            userUtilService.addAdmin(TEST_PREFIX + "caller");
+
             // Create a regular user
             User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser4");
 
@@ -333,8 +335,10 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     class SuperAdminDeletingUsers {
 
         @Test
-        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        @WithMockUser(username = TEST_PREFIX + "callersuperadmin", roles = "SUPER_ADMIN")
         void deleteUser_deleteSuperAdminBySuperAdmin_success() throws Exception {
+            userUtilService.addSuperAdmin(TEST_PREFIX + "caller");
+
             // Create a super admin user
             userUtilService.addSuperAdmin(TEST_PREFIX + "test5");
             User superUser = userUtilService.getUserByLogin(TEST_PREFIX + "test5superadmin");
@@ -345,8 +349,10 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         }
 
         @Test
-        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        @WithMockUser(username = TEST_PREFIX + "callersuperadmin", roles = "SUPER_ADMIN")
         void deleteUser_deleteRegularUserBySuperAdmin_success() throws Exception {
+            userUtilService.addSuperAdmin(TEST_PREFIX + "caller");
+
             // Create a regular user
             User regularUser = userUtilService.createAndSaveUser(TEST_PREFIX + "regularuser5");
 
@@ -654,8 +660,10 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         }
 
         @Test
-        @WithMockUser(username = "superadmin", roles = "SUPER_ADMIN")
+        @WithMockUser(username = TEST_PREFIX + "callersuperadmin", roles = "SUPER_ADMIN")
         void deleteUser_deleteAdminBySuperAdmin_success() throws Exception {
+            userUtilService.addSuperAdmin(TEST_PREFIX + "caller");
+
             // Create an admin user
             userUtilService.addAdmin(TEST_PREFIX + "adminuser10");
             User adminUser = userUtilService.getUserByLogin(TEST_PREFIX + "adminuser10admin");

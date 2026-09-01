@@ -70,6 +70,14 @@ import de.tum.cit.aet.artemis.exercise.dto.StudentDTO;
 @Repository
 public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT user FROM User user LEFT JOIN FETCH user.authorities WHERE user.id = :userId")
+    Optional<User> findByIdForDeletion(@org.springframework.data.repository.query.Param("userId") long userId);
+
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
+    @org.springframework.data.jpa.repository.Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
+    int deleteUserRow(@org.springframework.data.repository.query.Param("userId") long userId);
+
     String FILTER_INTERNAL = "INTERNAL";
 
     String FILTER_EXTERNAL = "EXTERNAL";

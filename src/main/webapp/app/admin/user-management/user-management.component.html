@@ -29,7 +29,15 @@
                 </div>
                 <div class="flex items-center justify-center gap-2 md:justify-end">
                     <jhi-delete-users-button (deletionRequested)="openPermanentDeletionDialog($event)" />
-                    <button tumUiButton severity="danger" size="small" (click)="deleteAllSelectedUsers()" [disabled]="!selectedUsers().length">
+                    <button
+                        tumUiButton
+                        type="button"
+                        severity="danger"
+                        size="small"
+                        (click)="deleteAllSelectedUsers()"
+                        [disabled]="!selectedUsers().length"
+                        data-testid="delete-selected-users"
+                    >
                         <fa-icon [icon]="faTrash" />
                     </button>
                     <tum-ui-button
@@ -201,12 +209,14 @@
                                     }
                                     <button
                                         tumUiButton
+                                        type="button"
                                         severity="danger"
                                         size="small"
                                         variant="outlined"
                                         (click)="deleteUser(user.login!)"
                                         [disabled]="!currentAccount() || currentAccount()?.login === user.login"
                                         [tumUiTooltip]="'entity.action.delete' | artemisTranslate"
+                                        data-testid="delete-user"
                                     >
                                         <fa-icon [icon]="faTrash" />
                                     </button>
@@ -435,10 +445,16 @@
         <tum-ui-button size="small" severity="secondary" (clicked)="closePermanentDeletionDialog()">
             {{ 'entity.action.cancel' | artemisTranslate }}
         </tum-ui-button>
-        <tum-ui-button size="small" severity="warn" [disabled]="deletionLoading()" (clicked)="deactivateInstead()">
+        <tum-ui-button size="small" severity="warn" [disabled]="deletionLoading()" (clicked)="deactivateInstead()" data-testid="deactivate-users">
             {{ 'artemisApp.userManagement.permanentDeletion.deactivateInstead' | artemisTranslate }}
         </tum-ui-button>
-        <tum-ui-button size="small" severity="danger" [disabled]="!permanentDeletionConfirmed() || deletionLoading()" (clicked)="confirmPermanentDeletion()">
+        <tum-ui-button
+            size="small"
+            severity="danger"
+            [disabled]="!permanentDeletionConfirmed() || deletionLoading()"
+            (clicked)="confirmPermanentDeletion()"
+            data-testid="confirm-delete-users"
+        >
             {{ 'artemisApp.userManagement.permanentDeletion.confirm' | artemisTranslate }}
         </tum-ui-button>
     </ng-template>
