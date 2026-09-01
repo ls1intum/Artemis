@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import { faChartLine, faChevronDown, faChevronRight, faEnvelope, faSearch, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -132,6 +133,15 @@ export class FeatureUsageComponent implements OnInit {
 
     readonly selectedTrendRow = signal<FeatureUsageRow | undefined>(undefined);
     readonly trendPoints = signal<FeatureUsageTrendPoint[] | undefined>(undefined);
+
+    /**
+     * The window and the role can be changed, and a chart opened, faster than the server answers. Each new request cancels
+     * the one it supersedes, because a slower earlier response arriving last would otherwise overwrite the page with data
+     * for a filter or a feature the controls no longer show.
+     */
+    private overviewSubscription?: Subscription;
+
+    private trendSubscription?: Subscription;
 
     /**
      * Collapses entries that share a `@FeatureUsage` label into one row. Everything else maps one to one.
@@ -302,10 +312,11 @@ export class FeatureUsageComponent implements OnInit {
         if (row.featureIds.length === 0) {
             return;
         }
+        this.trendSubscription?.unsubscribe();
         this.selectedTrendRow.set(row);
         this.trendPoints.set(undefined);
         const callerRole = this.selectedCallerRole();
-        this.featureUsageService.getTrend(row.featureIds, this.selectedWindow(), callerRole === ALL_ROLES ? undefined : callerRole).subscribe({
+        this.trendSubscription = this.featureUsageService.getTrend(row.featureIds, this.selectedWindow(), callerRole === ALL_ROLES ? undefined : callerRole).subscribe({
             next: (points) => this.trendPoints.set(points),
             error: (error) => this.alertService.error(error.message),
         });
@@ -330,14 +341,16 @@ export class FeatureUsageComponent implements OnInit {
     }
 
     closeTrend(): void {
+        this.trendSubscription?.unsubscribe();
         this.selectedTrendRow.set(undefined);
         this.trendPoints.set(undefined);
     }
 
     private load(): void {
+        this.overviewSubscription?.unsubscribe();
         this.loading.set(true);
         const callerRole = this.selectedCallerRole();
-        this.featureUsageService.getOverview(this.selectedWindow(), callerRole === ALL_ROLES ? undefined : callerRole).subscribe({
+        this.overviewSubscription = this.featureUsageService.getOverview(this.selectedWindow(), callerRole === ALL_ROLES ? undefined : callerRole).subscribe({
             next: (overview) => {
                 this.overview.set(overview);
                 this.loading.set(false);

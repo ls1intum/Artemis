@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 
 import { FeatureUsageComponent } from './feature-usage.component';
 import { FeatureUsageService } from './feature-usage.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { FeatureAdoption, FeatureKind, FeatureUsageEntry, FeatureUsageOverview } from './feature-usage.model';
+import { FeatureAdoption, FeatureKind, FeatureUsageEntry, FeatureUsageOverview, FeatureUsageTrendPoint } from './feature-usage.model';
 
 describe('FeatureUsageComponent', () => {
     let component: FeatureUsageComponent;
@@ -496,6 +496,53 @@ describe('FeatureUsageComponent', () => {
         // Highest first, matching the server's precedence order
         expect(roles.indexOf('SUPER_ADMIN')).toBeLessThan(roles.indexOf('ADMIN'));
         expect(roles).toEqual(expect.arrayContaining(['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS']));
+    });
+
+    it('should ignore an overview response that a newer window has superseded', () => {
+        component.ngOnInit();
+        const slowFirst = new Subject<FeatureUsageOverview>();
+        const fastSecond = new Subject<FeatureUsageOverview>();
+        const sevenDayOverview = { ...overview, days: 7 };
+        vi.spyOn(featureUsageService, 'getOverview').mockReturnValueOnce(slowFirst).mockReturnValueOnce(fastSecond);
+
+        component.onWindowChanged(90);
+        component.onWindowChanged(7);
+        fastSecond.next(sevenDayOverview);
+        // the 90 day query only now comes back, after the controls have already moved on to 7 days
+        slowFirst.next({ ...overview, days: 90 });
+
+        // the request was cancelled, so the stale answer cannot overwrite the report the controls describe
+        expect(component.overview()).toEqual(sevenDayOverview);
+        expect(component.selectedWindow()).toBe(7);
+    });
+
+    it('should ignore a trend response that a newer feature has superseded', () => {
+        component.ngOnInit();
+        const slowFirst = new Subject<FeatureUsageTrendPoint[]>();
+        const fastSecond = new Subject<FeatureUsageTrendPoint[]>();
+        vi.spyOn(featureUsageService, 'getTrend').mockReturnValueOnce(slowFirst).mockReturnValueOnce(fastSecond);
+        const rows = component.allRows();
+
+        component.showTrend(rows[0]);
+        component.showTrend(rows[1]);
+        fastSecond.next([{ usageDay: '2026-08-06', callCount: 2 }]);
+        slowFirst.next([{ usageDay: '2026-08-05', callCount: 99 }]);
+
+        // otherwise the chart shows the first feature's daily counts under the second feature's name
+        expect(component.trendPoints()).toEqual([{ usageDay: '2026-08-06', callCount: 2 }]);
+        expect(component.selectedTrendRow()).toBe(rows[1]);
+    });
+
+    it('should not fill the chart after it has been closed again', () => {
+        component.ngOnInit();
+        const pending = new Subject<FeatureUsageTrendPoint[]>();
+        vi.spyOn(featureUsageService, 'getTrend').mockReturnValue(pending);
+
+        component.showTrend(component.allRows()[0]);
+        component.closeTrend();
+        pending.next([{ usageDay: '2026-08-05', callCount: 10 }]);
+
+        expect(component.trendPoints()).toBeUndefined();
     });
 
     it('should report an error when the overview cannot be loaded', () => {

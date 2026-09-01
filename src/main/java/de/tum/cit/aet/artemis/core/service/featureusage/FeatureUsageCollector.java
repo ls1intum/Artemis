@@ -146,7 +146,7 @@ public class FeatureUsageCollector {
      * the same watermark would report part of the usage twice.
      *
      * @param today the current UTC day, used to decide which closed buckets can be dropped
-     * @return one delta per bucket that saw at least one call since the previous flush
+     * @return one delta per bucket whose counters moved since the previous flush
      */
     public synchronized List<FeatureUsageDelta> drain(LocalDate today) {
         List<FeatureUsageDelta> deltas = new ArrayList<>();
@@ -160,7 +160,13 @@ public class FeatureUsageCollector {
             long errorCount = accumulator.errorCount.sum();
             long durationSumMs = accumulator.durationSumMs.sum();
             long callDelta = callCount - accumulator.flushedCallCount;
-            if (callDelta <= 0) {
+            long errorDelta = errorCount - accumulator.flushedErrorCount;
+            long durationDelta = durationSumMs - accumulator.flushedDurationSumMs;
+            // Every counter is examined, not just the call counter. The four counters of one observation are incremented
+            // one after another, so a flush landing between them sees the call but not yet its error and duration. Gating
+            // on calls alone would then advance the watermarks past that call and skip the bucket on the next flush,
+            // because no new call arrived - the failure and the latency of that request would never be reported.
+            if (callDelta <= 0 && errorDelta <= 0 && durationDelta <= 0) {
                 // A bucket of a day that is over and saw nothing since the last flush is finished with. Dropping it here
                 // is what keeps the map bounded over a long uptime instead of holding every day the process has seen.
                 if (key.usageDay().isBefore(today)) {
@@ -169,8 +175,6 @@ public class FeatureUsageCollector {
                 continue;
             }
 
-            long errorDelta = errorCount - accumulator.flushedErrorCount;
-            long durationDelta = durationSumMs - accumulator.flushedDurationSumMs;
             accumulator.flushedCallCount = callCount;
             accumulator.flushedErrorCount = errorCount;
             accumulator.flushedDurationSumMs = durationSumMs;

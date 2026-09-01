@@ -10,7 +10,10 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -107,6 +110,92 @@ class FeatureUsageCollectorTest {
         // the bucket is gone, so a new call starts from zero rather than continuing an old watermark
         collector.recordUsage(FEATURE_ID, Role.STUDENT, false, 1);
         assertThat(collector.drain(today()).getFirst().callCount()).isEqualTo(1);
+    }
+
+    /**
+     * The counters of one observation are incremented one after another, so a flush can land between them and see the call
+     * without its error and its duration. Reporting only what has a new call would then advance the watermarks past that
+     * call and skip the bucket next time, losing the failure and the latency for good.
+     * <p>
+     * That interleaving cannot be produced from the outside, so the state it leaves behind is built here through
+     * {@link FeatureUsageCollector#reclaim}: counters that are ahead of their watermarks with no new call behind them.
+     */
+    @Test
+    void shouldReportLateErrorsAndDurationsEvenWhenNoNewCallArrived() {
+        collector.recordUsage(FEATURE_ID, Role.STUDENT, true, 50);
+        collector.drain(today());
+
+        // as if the previous drain had seen the call but not yet the failure and the duration of that same request
+        collector.reclaim(new FeatureUsageDelta(FEATURE_ID, today(), Role.STUDENT, 0, 1, 50, 0));
+
+        var deltas = collector.drain(today());
+        assertThat(deltas).hasSize(1);
+        assertThat(deltas.getFirst().callCount()).isZero();
+        assertThat(deltas.getFirst().errorCount()).isEqualTo(1);
+        assertThat(deltas.getFirst().durationSumMs()).isEqualTo(50);
+    }
+
+    @Test
+    void shouldKeepAClosedDayBucketThatStillHasUnreportedErrorsOrDurations() {
+        collector.recordUsage(FEATURE_ID, Role.STUDENT, true, 50);
+        collector.drain(today());
+        collector.reclaim(new FeatureUsageDelta(FEATURE_ID, today(), Role.STUDENT, 0, 1, 50, 0));
+
+        // the day is over, but dropping the bucket here would discard the failure and the duration that are still pending
+        var deltas = collector.drain(today().plusDays(1));
+        assertThat(deltas).hasSize(1);
+        assertThat(deltas.getFirst().errorCount()).isEqualTo(1);
+    }
+
+    /**
+     * Everything recorded has to come out of the drains exactly once, whatever the interleaving. Asserted as a conservation
+     * law over a concurrent run rather than on one interleaving, because the window between the counter increments of a
+     * single observation is a few nanoseconds wide and cannot be hit on purpose.
+     */
+    @Test
+    void shouldConserveEveryCounterWhileFlushingConcurrently() throws InterruptedException {
+        int threads = 4;
+        int callsPerThread = 20_000;
+        var recording = new AtomicBoolean(true);
+        var calls = new LongAdder();
+        var errors = new LongAdder();
+        var durations = new LongAdder();
+
+        var flusher = new Thread(() -> {
+            // one last drain after the recorders are done, so nothing is left in the collector
+            boolean lastRound = false;
+            while (!lastRound) {
+                lastRound = !recording.get();
+                for (var delta : collector.drain(today())) {
+                    calls.add(delta.callCount());
+                    errors.add(delta.errorCount());
+                    durations.add(delta.durationSumMs());
+                }
+            }
+        });
+        flusher.start();
+
+        var recorders = new ArrayList<Thread>();
+        for (int thread = 0; thread < threads; thread++) {
+            var recorder = new Thread(() -> {
+                for (int call = 0; call < callsPerThread; call++) {
+                    // every call fails and takes one millisecond, so all three expected totals are exact
+                    collector.recordUsage(FEATURE_ID, Role.STUDENT, true, 1);
+                }
+            });
+            recorder.start();
+            recorders.add(recorder);
+        }
+        for (var recorder : recorders) {
+            recorder.join();
+        }
+        recording.set(false);
+        flusher.join();
+
+        long expected = (long) threads * callsPerThread;
+        assertThat(calls.sum()).isEqualTo(expected);
+        assertThat(errors.sum()).isEqualTo(expected);
+        assertThat(durations.sum()).isEqualTo(expected);
     }
 
     @Test
