@@ -133,12 +133,13 @@ public class ExerciseVariantGroupService {
      * @param group    the target group, or {@code null} to remove the exercise from its current group
      */
     public void assignToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group) {
+        boolean groupTimelineChanged = false;
         if (group != null) {
             // Joining stamps the group's timeline onto the exercise, so a started/ended quiz can't be added at all — there
             // is no "no-op" case to allow through here, unlike a group update.
             rejectIfQuizMemberNotEditable(exercise);
             // Let a brand-new, empty group adopt its first exercise's dates instead of forcing everything to null.
-            adoptMissingDatesFromExercise(group, exercise);
+            groupTimelineChanged = adoptMissingDatesFromExercise(group, exercise);
         }
         // Joining changes the dates as much as a group edit, so snapshot here too; unassignment makes the side effects no-ops.
         TimelineSnapshot snapshot = TimelineSnapshot.of(exercise);
@@ -151,6 +152,9 @@ public class ExerciseVariantGroupService {
             applyGroupTimeline(group, programmingExercise);
             programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computeBuildAndTestDate(group.getDueDate(), originalBuildAndTestOffset));
             programmingExercise.validateDates();
+            if (groupTimelineChanged) {
+                exerciseVariantGroupRepository.save(group);
+            }
             exerciseRepository.save(programmingExercise);
             runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(programmingExercise, group, originalBuildAndTestOffset));
             return;
@@ -159,6 +163,9 @@ public class ExerciseVariantGroupService {
             applyGroupTimeline(group, exercise);
         }
         validateDates(exercise);
+        if (groupTimelineChanged && group != null) {
+            exerciseVariantGroupRepository.save(group);
+        }
         Exercise saved = exerciseRepository.save(exercise);
         runPostTimelineUpdateSideEffects(saved, snapshot);
     }
@@ -267,15 +274,16 @@ public class ExerciseVariantGroupService {
     }
 
     /**
-     * For a still-empty group, adopts the joining exercise's dates for any shared field the group doesn't define yet, and
-     * persists if anything changed. Groups that already have members keep their existing timeline.
+     * For a still-empty group, adopts the joining exercise's dates for any shared field the group doesn't define yet.
+     * Groups that already have members keep their existing timeline. The caller persists adopted dates only after validating
+     * the resulting member timeline.
      *
      * @param group    the group the exercise is joining (its current members must already be loaded)
      * @param exercise the exercise joining the group, whose dates are the source to adopt from
      */
-    private void adoptMissingDatesFromExercise(ExerciseVariantGroup group, Exercise exercise) {
+    private boolean adoptMissingDatesFromExercise(ExerciseVariantGroup group, Exercise exercise) {
         if (!group.getExercises().isEmpty()) {
-            return;
+            return false;
         }
         boolean changed = false;
         changed |= adoptMissingDate(group, exercise, Exercise::getReleaseDate, ExerciseVariantGroup::getReleaseDate, ExerciseVariantGroup::setReleaseDate);
@@ -284,9 +292,7 @@ public class ExerciseVariantGroupService {
         changed |= adoptMissingDate(group, exercise, Exercise::getAssessmentDueDate, ExerciseVariantGroup::getAssessmentDueDate, ExerciseVariantGroup::setAssessmentDueDate);
         changed |= adoptMissingDate(group, exercise, Exercise::getExampleSolutionPublicationDate, ExerciseVariantGroup::getExampleSolutionPublicationDate,
                 ExerciseVariantGroup::setExampleSolutionPublicationDate);
-        if (changed) {
-            exerciseVariantGroupRepository.save(group);
-        }
+        return changed;
     }
 
     /**

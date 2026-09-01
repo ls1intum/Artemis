@@ -516,6 +516,30 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAssignProgrammingExerciseWithInvalidBuildAndTestDate_badRequestLeavesEmptyGroupUnchanged() throws Exception {
+        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), sampleCreateDTO(), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        ZonedDateTime dueDate = programmingExercise.getDueDate().truncatedTo(ChronoUnit.MILLIS);
+        programmingExercise.setDueDate(dueDate);
+        programmingExercise.setAssessmentDueDate(dueDate.plusMinutes(30));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(dueDate.plusHours(1));
+        exerciseRepository.save(programmingExercise);
+
+        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/variant-group";
+        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
+
+        ExerciseVariantGroupDTO reloadedGroup = request.get(groupsUrl() + "/" + created.id(), HttpStatus.OK, ExerciseVariantGroupDTO.class);
+        assertThat(reloadedGroup.releaseDate()).isNull();
+        assertThat(reloadedGroup.startDate()).isNull();
+        assertThat(reloadedGroup.dueDate()).isNull();
+        assertThat(reloadedGroup.assessmentDueDate()).isNull();
+        assertThat(reloadedGroup.exampleSolutionPublicationDate()).isNull();
+        assertThat(exerciseRepository.findByIdElseThrow(programmingExercise.getId()).getExerciseVariantGroup()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateGroupToInvalidTimeline_badRequestLeavesGroupDatesUnchanged() throws Exception {
         ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
         ZonedDateTime due = ZonedDateTime.now().plusDays(7).truncatedTo(ChronoUnit.MILLIS);
