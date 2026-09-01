@@ -244,6 +244,35 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
         assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsBlankContainerImage() throws Exception {
+        var before = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        String originalBuildPlanConfiguration = before.getBuildPlanConfiguration();
+
+        // the plan-level rule holds per container: a blank image would be persisted verbatim and leave the container unbuildable
+        var blankImageContainer = new BuildContainerDTO("tests", "   ", List.of(phase("compile")));
+        request.put(buildConfigEndpoint(), configurationWith(List.of(blankImageContainer)), HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAcceptsContainerWithoutImageAsInheriting() throws Exception {
+        doNothing().when(programmingTriggerService).triggerTemplateAndSolutionBuild(anyLong());
+
+        // a container without an image follows the exercise's language default at build time, exactly like a legacy plan
+        // without an image; requiring one would pin the current default onto every migrated exercise on its next save
+        var inheritingContainer = new BuildContainerDTO("tests", null, List.of(phase("compile")));
+        request.put(buildConfigEndpoint(), configurationWith(List.of(inheritingContainer)), HttpStatus.OK);
+
+        var persisted = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        var containers = BuildPlanPhasesDTO.fromBuildPlanConfiguration(persisted.getBuildPlanConfiguration()).effectiveContainers();
+        assertThat(containers).singleElement().satisfies(container -> assertThat(container.dockerImage()).isNull());
+    }
+
     @ParameterizedTest(name = "[{index}] script=\"{0}\"")
     @NullSource
     @ValueSource(strings = { "", "   " })

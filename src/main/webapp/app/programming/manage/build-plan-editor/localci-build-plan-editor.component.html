@@ -50,6 +50,7 @@
             [canRemove]="containers().length > 1"
             [otherContainerNames]="otherContainerNames($index)"
             [isExamMode]="isExamMode()"
+            [dockerImagePlaceholder]="defaultDockerImage()"
         />
     }
     <tum-ui-button id="add_container_button" variant="outlined" [icon]="faPlus" (clicked)="addContainer()">

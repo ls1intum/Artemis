@@ -172,6 +172,12 @@ public class ProgrammingExerciseBuildPlanService {
         BuildPlanConfigurationValidator.validate(buildPlanConfiguration.buildPlan());
         // a blank top-level image would be persisted verbatim and leave a legacy configuration with an unusable image
         validateDockerImage(buildPlanConfiguration.buildPlan().dockerImage());
+        // the same rule holds per container: null inherits the language default at build time, but a blank image would be
+        // persisted verbatim and leave the container unbuildable. Checked on this endpoint only (the caller is the editor
+        // and can fix the field), like the plan-level check above.
+        if (buildPlanConfiguration.buildPlan().containers() != null) {
+            buildPlanConfiguration.buildPlan().containers().forEach(container -> validateDockerImage(container.dockerImage()));
+        }
 
         var buildConfig = programmingExercise.getBuildConfig();
         final String originalBuildPlanConfiguration = buildConfig.getBuildPlanConfiguration();

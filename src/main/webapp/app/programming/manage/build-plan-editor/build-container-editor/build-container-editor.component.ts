@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TumUiButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -32,6 +33,9 @@ export class BuildContainerEditorComponent {
     /** the names of the other containers of the build plan, used to detect duplicates */
     readonly otherContainerNames = input<string[]>([]);
     readonly canRemove = input(false);
+    // the language default image, shown as a placeholder while the field is empty instead of being written into it: an
+    // empty image means the container follows the exercise's language default at build time (see buildConfigForContainer)
+    readonly dockerImagePlaceholder = input<string>('');
 
     readonly remove = model<void>();
 
@@ -61,15 +65,15 @@ export class BuildContainerEditorComponent {
     readonly scopesRepositories = computed(() => this.container().repositories !== undefined);
 
     setName(name: string): void {
-        this.container.update((container) => ({ ...container, name }));
+        this.container.update((container) => cloneWith(container, { name }));
     }
 
     setDockerImage(dockerImage: string): void {
-        this.container.update((container) => ({ ...container, dockerImage }));
+        this.container.update((container) => cloneWith(container, { dockerImage }));
     }
 
     setPhases(phases: BuildPhase[]): void {
-        this.container.update((container) => ({ ...container, phases }));
+        this.container.update((container) => cloneWith(container, { phases }));
     }
 
     isRepositorySelected(type: BuildContainerRepositoryType): boolean {
@@ -83,10 +87,9 @@ export class BuildContainerEditorComponent {
     toggleRepository(type: BuildContainerRepositoryType, selected: boolean): void {
         this.container.update((container) => {
             const repositories = container.repositories ?? [];
-            return {
-                ...container,
+            return cloneWith(container, {
                 repositories: selected ? [...repositories, { type }] : repositories.filter((repository) => repository.type !== type),
-            };
+            });
         });
     }
 
@@ -94,6 +97,6 @@ export class BuildContainerEditorComponent {
      * Switches between checking out the repositories configured on the exercise and scoping the repositories explicitly.
      */
     toggleRepositoryScoping(scoped: boolean): void {
-        this.container.update((container) => ({ ...container, repositories: scoped ? [] : undefined }));
+        this.container.update((container) => cloneWith(container, { repositories: scoped ? [] : undefined }));
     }
 }

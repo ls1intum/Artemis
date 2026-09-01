@@ -248,7 +248,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         // the template's phases fill the editor so it shows the real default plan instead of an empty list
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
 
-        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'language-default-image', phases }]);
+        expect(comp.containers()).toEqual([{ name: 'default', phases }]);
         expect(comp.defaultDockerImage()).toBe('language-default-image');
     });
 
@@ -295,7 +295,7 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         getTemplateSubject.next({ phases, dockerImage: 'language-default-image' });
 
         // only the seeded containers may be folded into the baseline, so the timeout edit is still unsaved
-        expect(comp.containers()).toEqual([{ name: 'default', dockerImage: 'language-default-image', phases }]);
+        expect(comp.containers()).toEqual([{ name: 'default', phases }]);
         expect(comp.timeout()).toBe(200);
         expect(comp.canDeactivate()).toBe(false);
     });
@@ -620,7 +620,6 @@ describe('LocalCIBuildPlanEditorComponent', () => {
         ['an invalid phase name', [{ ...container('tests'), phases: [{ ...phases[0], name: 'compile phase' }] }]],
         ['a container without phases', [{ ...container('tests'), phases: [] }]],
         ['no containers', []],
-        ['an empty docker image', [{ ...container('tests'), dockerImage: '   ' }]],
         ['duplicate container names', [container('tests'), { ...container('Tests') }]],
         ['an invalid container name', [container('student tests')]],
     ];
@@ -669,6 +668,39 @@ describe('LocalCIBuildPlanEditorComponent', () => {
 
         expect(comp.canSubmit()).toBe(true);
         expect(updateStub).toHaveBeenCalledOnce();
+    });
+
+    it('should keep an inheriting container editable and save it without pinning an image', () => {
+        // a legacy exercise relying on the language default normalizes into one container with no image; it must stay
+        // savable and the save must not write an image, otherwise the exercise stops following default image bumps
+        const inheritingConfiguration = JSON.stringify({ phases });
+        activatedRoute.data = of({ exercise: { id: 7, buildConfig: { buildPlanConfiguration: inheritingConfiguration, timeoutSeconds: 120 } } as unknown as ProgrammingExercise });
+        vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+            of(new HttpResponse<ProgrammingExercise>({ body: { id: 7 } as ProgrammingExercise })),
+        );
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
+
+        comp.ngOnInit();
+
+        expect(comp.canSubmit()).toBe(true);
+        comp.submit();
+
+        expect(updateStub).toHaveBeenCalledWith(7, expect.objectContaining({ buildPlan: { containers: [{ name: 'default', dockerImage: undefined, phases }] } }));
+    });
+
+    it('should trim a container image and send undefined for a blank one', () => {
+        comp.programmingExercise.set({ id: 7, buildConfig: {} } as unknown as ProgrammingExercise);
+        comp.containers.set([
+            { ...container('pinned'), dockerImage: '  some-image  ' },
+            { ...container('inheriting'), dockerImage: '   ' },
+        ]);
+        comp.timeout.set(120);
+        const updateStub = vi.spyOn(buildPlanConfigurationService, 'updateBuildPlanConfiguration').mockReturnValue(of(new HttpResponse<object>({ body: {} })));
+
+        comp.submit();
+
+        const sent = updateStub.mock.calls[0][1].buildPlan.containers!;
+        expect(sent.map((sentContainer) => sentContainer.dockerImage)).toEqual(['some-image', undefined]);
     });
 
     it('should allow the same phase name in different containers', () => {

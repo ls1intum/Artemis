@@ -24,6 +24,7 @@
                 class="form-control"
                 [id]="'field_container_image_' + container().name"
                 [ngModel]="container().dockerImage ?? ''"
+                [placeholder]="dockerImagePlaceholder()"
                 (ngModelChange)="setDockerImage($event)"
                 [name]="'containerImage_' + container().name"
             />
