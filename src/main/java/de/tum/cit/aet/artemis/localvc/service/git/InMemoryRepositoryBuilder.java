@@ -89,7 +89,15 @@ public class InMemoryRepositoryBuilder {
      */
     public static void writeZip(Repository bareRepository, OutputStream outputStream) throws IOException {
         String branch = bareRepository.getBranch();
-        ObjectId commitId = resolveExportedCommit(bareRepository, branch);
+        // Read the refs once, before anything is written. The working tree, the index, the pack and the serialized refs
+        // all have to describe the same snapshot, and writing the working tree of a large repository takes long enough
+        // for a push to land in between: sampling the ref database again afterwards would produce an archive that names
+        // a tip it never exported, and after a force push one whose objects are not even in the pack the index needs.
+        // Every branch and tag is taken, not just the exported one, because an archive that keeps only the checked out
+        // branch would silently drop commits reachable from a secondary branch or a tag, which the clone this export
+        // replaced did carry.
+        List<Ref> refsToExport = collectBranchAndTagRefs(bareRepository, branch);
+        ObjectId commitId = exportedCommit(refsToExport, branch);
 
         // Close-shielded so that closing the ZIP stream releases its deflater without also closing the caller's stream.
         try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(CloseShieldOutputStream.wrap(outputStream)); RevWalk rw = new RevWalk(bareRepository)) {
@@ -157,10 +165,6 @@ public class InMemoryRepositoryBuilder {
                 }
             }
 
-            // Every branch and tag, not just the exported one: an archive that keeps only the checked out branch would
-            // silently drop commits that are reachable from a secondary branch or a tag, which the clone this export
-            // replaced did carry.
-            List<Ref> refsToExport = collectBranchAndTagRefs(bareRepository, branch, commitId);
             createGitIndex(bareRepository, refsToExport, zipOutputStream, createdDirs);
 
             // refs + HEAD + config
@@ -185,11 +189,11 @@ public class InMemoryRepositoryBuilder {
      *
      * @param bareRepository the bare repository to read the refs from
      * @param branch         the branch the working tree is taken from
-     * @param commitId       the commit the working tree is taken from
      * @return the refs to pack and to serialize into the archive's {@code .git}
-     * @throws IOException if the refs cannot be read
+     * @throws IOException if the refs cannot be read, or the repository has no commits at all because neither the
+     *                         branch nor {@code HEAD} resolves
      */
-    private static List<Ref> collectBranchAndTagRefs(Repository bareRepository, String branch, ObjectId commitId) throws IOException {
+    private static List<Ref> collectBranchAndTagRefs(Repository bareRepository, String branch) throws IOException {
         var refDatabase = bareRepository.getRefDatabase();
         List<Ref> refs = new ArrayList<>();
         for (Ref ref : refDatabase.getRefsByPrefix(Constants.R_HEADS, Constants.R_TAGS)) {
@@ -198,30 +202,30 @@ public class InMemoryRepositoryBuilder {
             }
         }
         if (refs.stream().noneMatch(ref -> ref.getName().equals(Constants.R_HEADS + branch))) {
-            refs.add(new ObjectIdRef.PeeledNonTag(Ref.Storage.LOOSE, Constants.R_HEADS + branch, commitId));
+            // A detached HEAD has no branch ref to take the commit from, so resolve HEAD and give the snapshot an entry
+            // of its own for it: the archive's working tree describes that commit, and it has to be both packed and
+            // reachable through the HEAD the archive writes.
+            ObjectId head = bareRepository.resolve(Constants.HEAD);
+            if (head == null) {
+                throw new IOException("Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because neither branch " + branch + " nor HEAD resolves");
+            }
+            refs.add(new ObjectIdRef.PeeledNonTag(Ref.Storage.LOOSE, Constants.R_HEADS + branch, head));
         }
         return refs;
     }
 
     /**
-     * Resolves the commit to export. {@code branch} comes from the repository's symbolic {@code HEAD}, so the fallback
-     * only matters for a repository whose {@code HEAD} is detached; both lookups failing means it has no commits at all.
+     * Returns the commit whose tree the archive materializes, taken from the same ref snapshot that gets packed and
+     * serialized, so the working tree, the index, the pack and {@code .git/refs} cannot end up describing different
+     * commits.
      *
-     * @param bareRepository the bare repository to read from
-     * @param branch         the branch reported by the repository
+     * @param refs   the ref snapshot, which {@link #collectBranchAndTagRefs} guarantees contains the exported branch
+     * @param branch the branch the working tree is taken from
      * @return the tip commit of that branch
-     * @throws IOException if the repository cannot be read, or has no commits at all because neither the branch nor
-     *                         {@code HEAD} resolves
      */
-    private static ObjectId resolveExportedCommit(Repository bareRepository, String branch) throws IOException {
-        ObjectId commitId = bareRepository.resolve(Constants.R_HEADS + branch);
-        if (commitId == null) {
-            commitId = bareRepository.resolve(Constants.HEAD);
-        }
-        if (commitId == null) {
-            throw new IOException("Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because neither branch " + branch + " nor HEAD resolves");
-        }
-        return commitId;
+    private static ObjectId exportedCommit(List<Ref> refs, String branch) {
+        return refs.stream().filter(ref -> ref.getName().equals(Constants.R_HEADS + branch)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("The exported branch " + branch + " is missing from the ref snapshot")).getObjectId();
     }
 
     /**
