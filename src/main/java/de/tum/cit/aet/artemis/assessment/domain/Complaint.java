@@ -54,6 +54,17 @@ public class Complaint extends DomainObject {
     @JoinColumn(unique = true, nullable = false)
     private Result result;
 
+    /**
+     * The exercise the complained-about result belongs to, denormalized from {@link Result#getExerciseId()}.
+     * <p>
+     * The complaint counts on the course and exam assessment dashboards filter a set of exercise ids. Reaching the
+     * exercise through {@code result} made them scan every complaint in the system: on production, one course
+     * dashboard examined all 25,646 complaints to find its 43. This column is kept in sync by
+     * {@link #setResult(Result)} and {@link #result(Result)}, the only ways a result is attached to a complaint.
+     */
+    @Column(name = "exercise_id", nullable = false)
+    private long exerciseId;
+
     @ManyToOne
     private User student;
 
@@ -112,12 +123,23 @@ public class Complaint extends DomainObject {
     }
 
     public Complaint result(Result result) {
-        this.result = result;
+        setResult(result);
         return this;
     }
 
     public void setResult(Result result) {
         this.result = result;
+        if (result != null) {
+            this.exerciseId = result.getExerciseId();
+        }
+    }
+
+    public long getExerciseId() {
+        return exerciseId;
+    }
+
+    public void setExerciseId(long exerciseId) {
+        this.exerciseId = exerciseId;
     }
 
     public User getStudent() {
