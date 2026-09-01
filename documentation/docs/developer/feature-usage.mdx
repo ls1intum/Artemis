@@ -109,7 +109,9 @@ error. Requests rejected earlier, in the security filter chain, never reach any 
 the error count measures failures of the feature, not failed attempts to reach it.
 
 The clock and the caller role are read in `preHandle` and stashed as request attributes, so an asynchronous dispatch that
-completes on another thread still reports the right role and the full duration.
+completes on another thread still reports the right role and the full duration. Spring calls `preHandle` again on the
+ASYNC dispatch, so the values of the first dispatch are kept rather than overwritten; taking the second call's would
+measure only that dispatch and read the role from a context it does not necessarily carry.
 
 ### 3. Accumulation, `FeatureUsageCollector`
 
@@ -123,8 +125,14 @@ would race with concurrent recording and silently drop calls; a monotonic counte
 duration is reported as a running maximum rather than a delta, because the stored value is updated to the greater of the
 two and that is idempotent.
 
-Buckets of a day that is over and saw nothing since the last flush are dropped, which is what keeps the map bounded over
-a long uptime. Recording never propagates a failure: a usage counter must not be able to break the request it measures.
+A drain reports a bucket when **any** of its counters moved, not only its call count. The counters of one observation are
+incremented one after another, so a flush landing between them sees the call but not yet its error and its duration;
+gating on calls alone would advance the watermarks past that call and skip the bucket next time, losing the failure and
+the latency for good.
+
+Buckets of a day that is over and whose counters have all been reported are dropped, which is what keeps the map bounded
+over a long uptime. Recording never propagates a failure: a usage counter must not be able to break the request it
+measures.
 
 ### 4. Flush, `FeatureUsageFlushService`
 

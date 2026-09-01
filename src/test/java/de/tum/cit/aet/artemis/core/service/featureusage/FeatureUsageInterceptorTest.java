@@ -37,6 +37,9 @@ class FeatureUsageInterceptorTest {
 
     private static final long FEATURE_ID = 3L;
 
+    /** Mirrors the attribute the interceptor stashes the start time under, which is private to it. */
+    private static final String START_NANOS_ATTRIBUTE = FeatureUsageInterceptor.class.getName() + ".startNanos";
+
     private FeatureUsageRegistry registry;
 
     private FeatureUsageCollector collector;
@@ -136,6 +139,29 @@ class FeatureUsageInterceptorTest {
         interceptor.afterCompletion(request, response, handlerMethod, null);
 
         assertThat(collector.drain(LocalDate.now(ZoneOffset.UTC)).getFirst().callerRole()).isEqualTo(Role.ANONYMOUS);
+    }
+
+    /**
+     * Spring calls {@code preHandle} once more on the ASYNC dispatch of an asynchronous request. Taking the second call's
+     * values would report only that dispatch as the duration and re-read the role from a security context the async
+     * dispatch does not necessarily carry, which is the opposite of what reading them in {@code preHandle} is for.
+     */
+    @Test
+    void shouldKeepTheRoleAndTheClockOfTheFirstDispatch() {
+        SecurityContextHolder.getContext()
+                .setAuthentication(new UsernamePasswordAuthenticationToken("instructor", "credentials", List.of(new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority()))));
+        var request = new MockHttpServletRequest();
+        var response = new MockHttpServletResponse();
+
+        interceptor.preHandle(request, response, handlerMethod);
+        Object startOfTheFirstDispatch = request.getAttribute(START_NANOS_ATTRIBUTE);
+        // the async dispatch runs on a pooled thread that carries no authentication
+        SecurityContextHolder.clearContext();
+        interceptor.preHandle(request, response, handlerMethod);
+        interceptor.afterCompletion(request, response, handlerMethod, null);
+
+        assertThat(request.getAttribute(START_NANOS_ATTRIBUTE)).isEqualTo(startOfTheFirstDispatch);
+        assertThat(collector.drain(LocalDate.now(ZoneOffset.UTC)).getFirst().callerRole()).isEqualTo(Role.INSTRUCTOR);
     }
 
     @Test

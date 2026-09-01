@@ -91,8 +91,13 @@ public class FeatureUsageInterceptor implements HandlerInterceptor {
         if (!properties.enabled()) {
             return true;
         }
-        request.setAttribute(START_NANOS_ATTRIBUTE, System.nanoTime());
-        request.setAttribute(CALLER_ROLE_ATTRIBUTE, SecurityUtils.getCurrentUserHighestRole());
+        // Spring runs preHandle again on the ASYNC dispatch of an asynchronous request, so the values of the first
+        // dispatch are kept. Overwriting them would report only the second dispatch as the duration and re-read the role
+        // from a security context that the async dispatch does not necessarily carry.
+        if (request.getAttribute(START_NANOS_ATTRIBUTE) == null) {
+            request.setAttribute(START_NANOS_ATTRIBUTE, System.nanoTime());
+            request.setAttribute(CALLER_ROLE_ATTRIBUTE, SecurityUtils.getCurrentUserHighestRole());
+        }
         return true;
     }
 
