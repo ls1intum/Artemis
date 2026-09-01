@@ -646,26 +646,15 @@ public class ProgrammingExercise extends Exercise {
      * of the exam and the build-and-test date, where it previously skipped programming participations. That endpoint
      * already requires the exam and its grace period to be over, and creating the submission is what lets the
      * participation be graded with 0 points at all, so this is intended.
-     * <p>
-     * {@code isFeedbackRequest} must reflect whether the concrete participation/submission being assessed is an actual feedback
-     * request (i.e. has an individual due date before the exercise due date), not merely whether the course allows Athena
-     * formative feedback in general. Otherwise, enabling course-wide Athena formative feedback would let tutors manually
-     * assess any regular submission before the due date has passed.
      *
-     * @param isFeedbackRequest whether the participation/submission being assessed is an actual feedback request
      * @return true if manual results are allowed, false otherwise
      */
-    public boolean areManualResultsAllowed(boolean isFeedbackRequest) {
+    public boolean areManualResultsAllowed() {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
         if (!isManualAssessmentConfigured()) {
             return false;
         }
         if (isExamExercise()) {
-            return true;
-        }
-        // The relevantDueDate check below keeps us from assessing feedback requests,
-        // as their relevantDueDate is before the due date
-        if (isFeedbackRequest) {
             return true;
         }
 

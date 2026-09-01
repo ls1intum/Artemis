@@ -326,8 +326,7 @@ public class ProgrammingSubmissionResource {
         }
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
-        boolean isFeedbackRequest = participation.isFeedbackRequest();
-        if (!programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
+        if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
 

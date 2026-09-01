@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.notification.domain.course_notifications.Duplicate
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ExerciseUpdatedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewExerciseNotification;
-import de.tum.cit.aet.artemis.notification.domain.course_notifications.NewManualFeedbackRequestNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.ProgrammingTestCasesChangedNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.QuizExerciseStartedNotification;
@@ -263,21 +262,5 @@ public class GroupNotificationService {
                 exerciseGroup != null ? exerciseGroup.getId() : null);
 
         courseNotificationService.sendCourseNotification(duplicateTestCaseNotification, recipients.stream().toList());
-    }
-
-    /**
-     * Notifies a tutor that their feedback was requested.
-     *
-     * @param exercise that has been affected
-     */
-    public void notifyTutorGroupAboutNewFeedbackRequest(Exercise exercise) {
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var recipients = userRepository.getTutors(course);
-
-        Long examId = exercise.isExamExercise() ? exercise.getExerciseGroup().getExam().getId() : null;
-        var manualFeedbackRequestNotification = new NewManualFeedbackRequestNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
-                exercise.getExerciseNotificationTitle(), examId);
-
-        courseNotificationService.sendCourseNotification(manualFeedbackRequestNotification, recipients.stream().toList());
     }
 }

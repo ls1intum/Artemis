@@ -62,7 +62,7 @@ public class FeedbackRequestService {
             }
             case ProgrammingExercise programmingExercise ->
                 programmingExerciseCodeReviewFeedbackService.orElseThrow(() -> new UnsupportedOperationException("ProgrammingExerciseCodeReviewFeedbackService is not available"))
-                        .handleNonGradedFeedbackRequest(exercise.getId(), (ProgrammingExerciseStudentParticipation) participation, programmingExercise);
+                        .handleNonGradedFeedbackRequest((ProgrammingExerciseStudentParticipation) participation, programmingExercise);
             default -> throw new UnsupportedOperationException("Non-graded feedback requests are not supported for exercise type: " + exercise.getClass().getSimpleName());
         };
     }

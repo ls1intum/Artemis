@@ -92,8 +92,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(submissionId);
         ProgrammingExercise programmingExercise = (ProgrammingExercise) programmingSubmission.getParticipation().getExercise();
         checkAuthorization(programmingExercise, user);
-        boolean isFeedbackRequest = programmingSubmission.getParticipation().isFeedbackRequest();
-        if (!programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
+        if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException();
         }
 
@@ -164,8 +163,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         submissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
-        boolean isFeedbackRequest = participation.isFeedbackRequest();
-        if (!programmingExercise.areManualResultsAllowed(isFeedbackRequest)) {
+        if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
         if (!newManualResult.isRated()) {
