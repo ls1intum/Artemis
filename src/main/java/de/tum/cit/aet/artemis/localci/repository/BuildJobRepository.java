@@ -112,6 +112,16 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     Set<ResultBuildJob> findBuildJobIdsWithResultForParticipationId(@Param("participationId") long participationId);
 
+    /**
+     * Counts the build jobs submitted since the given date per build status, across all courses.
+     * <p>
+     * Deliberately a separate method from {@link #getBuildJobsResultsStatisticsForCourse}: expressing both in one
+     * statement requires a {@code (:courseId IS NULL OR b.courseId = :courseId)} guard, which MySQL cannot fold away,
+     * so it can estimate neither predicate - the same defect described on {@link #findFinishedIdsByFilterCriteria}.
+     *
+     * @param fromDateTime earliest build submission date to count
+     * @return the number of build jobs per build status
+     */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO(
                 b.buildStatus,
@@ -119,10 +129,28 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             )
             FROM BuildJob b
             WHERE b.buildSubmissionDate >= :fromDateTime
-                AND (:courseId IS NULL OR b.courseId = :courseId)
             GROUP BY b.buildStatus
             """)
-    List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") Long courseId);
+    List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime);
+
+    /**
+     * Counts the build jobs of one course submitted since the given date per build status.
+     *
+     * @param fromDateTime earliest build submission date to count
+     * @param courseId     the course whose build jobs are counted
+     * @return the number of build jobs per build status
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO(
+                b.buildStatus,
+                COUNT(b.buildStatus)
+            )
+            FROM BuildJob b
+            WHERE b.buildSubmissionDate >= :fromDateTime
+                AND b.courseId = :courseId
+            GROUP BY b.buildStatus
+            """)
+    List<BuildJobResultCountDTO> getBuildJobsResultsStatisticsForCourse(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") long courseId);
 
     Optional<BuildJob> findByBuildJobId(String buildJobId);
 
