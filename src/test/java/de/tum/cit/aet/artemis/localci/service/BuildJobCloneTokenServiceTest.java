@@ -38,7 +38,7 @@ class BuildJobCloneTokenServiceTest {
         var jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), null, null, null, 60);
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, List.of(), 0, null, null, null, null);
         return new BuildJobQueueItem("job-1", "name", new BuildAgentDTO("agent-1", "address", "display"), 1L, 2L, 3L, 0, 1, null, repositoryInfo, jobTimingInfo, buildConfig, null,
-                cloneToken);
+                null, null, cloneToken);
     }
 
     private static String uri(String slug) {

@@ -128,7 +128,7 @@ class BuildJobCloneTokenAuthenticationTest {
         var jobTimingInfo = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now(), null, null, 60);
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, List.of(), 0, null, null, null, null);
         return new BuildJobQueueItem(BUILD_JOB_ID, "name", new BuildAgentDTO(AGENT_NAME, "address", "display"), 1L, 2L, 3L, 0, 1, null, repositoryInfo, jobTimingInfo, buildConfig,
-                null, cloneToken);
+                null, null, null, cloneToken);
     }
 
     private static HttpServletRequest request(String username, String password, String repositoryPath, String peerAddress) {

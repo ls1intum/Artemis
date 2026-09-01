@@ -72,7 +72,7 @@ class SharedQueueStaleJobCleanupTest {
         var jobTimingInfo = new JobTimingInfo(claimedAt.minusSeconds(1), claimedAt, null, null, 60);
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, List.of(), 0, null, null, null, null);
         return new BuildJobQueueItem(id, "name", new BuildAgentDTO(AGENT_NAME, "address", "display"), 1L, 2L, 3L, 0, 1, null, repositoryInfo, jobTimingInfo, buildConfig, null,
-                "bjct-token");
+                null, null, "bjct-token");
     }
 
     /**

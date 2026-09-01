@@ -33,7 +33,7 @@ class BuildJobQueueItemTest {
                 "https://example.com/solution.git", new String[] {}, new String[] {});
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, false, false,
                 List.of("results/*.xml"), 15, "assignmentPath", "testPath", "solutionPath", null);
-        return new BuildJobQueueItem("id", "name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, submissionId, containerName);
+        return new BuildJobQueueItem("id", "name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, submissionId, containerName, null);
     }
 
     @Test

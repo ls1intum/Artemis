@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNull BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount,
         int priority, @Nullable BuildStatus status, @NonNull RepositoryInfo repositoryInfo, @NonNull JobTimingInfo jobTimingInfo, @NonNull BuildConfig buildConfig,
-        @Nullable ResultDTO submissionResult, @Nullable Long submissionId, @Nullable String containerName,
-        @JsonIgnore @Nullable String cloneToken) implements BuildJobDTO, Serializable, Comparable<BuildJobQueueItem> {
+        @Nullable ResultDTO submissionResult, @Nullable Long submissionId, @Nullable String containerName, @JsonIgnore @Nullable String cloneToken)
+        implements BuildJobDTO, Serializable, Comparable<BuildJobQueueItem> {
 
     @Serial
     // bumped from 1L: adding submissionId and containerName changes the serialized form, so old Hazelcast/Redis items
@@ -41,7 +41,8 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
      */
     public BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount, int priority,
             @Nullable BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, @Nullable ResultDTO submissionResult) {
-        this(id, name, buildAgent, participationId, courseId, exerciseId, retryCount, priority, status, repositoryInfo, jobTimingInfo, buildConfig, submissionResult, null);
+        this(id, name, buildAgent, participationId, courseId, exerciseId, retryCount, priority, status, repositoryInfo, jobTimingInfo, buildConfig, submissionResult, null, null,
+                null);
     }
 
     /**

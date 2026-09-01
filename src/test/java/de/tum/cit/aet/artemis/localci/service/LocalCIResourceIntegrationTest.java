@@ -131,18 +131,20 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
         buildAgent = new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName);
 
-        job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null, null, null);
-        job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null, null, null);
+        job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null, null, null,
+                null);
+        job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null, null, null,
+                null);
         agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentStatus.IDLE, null, null,
                 buildAgentConfiguration.getPauseAfterConsecutiveFailedJobs());
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
-                buildConfig, null, null, null);
+                buildConfig, null, null, null, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", buildAgent, 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
-                buildConfig, null, null, null);
+                buildConfig, null, null, null, null);
         BuildJobQueueItem finishedJobQueueItem3 = new BuildJobQueueItem("5", "job5", buildAgent, 5, course.getId() + 2, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo3,
-                buildConfig, null, null, null);
+                buildConfig, null, null, null, null);
         BuildJobQueueItem finishedJobQueueItemForLogs = new BuildJobQueueItem("6", "job5", buildAgent, 5, course.getId(), programmingExercise.getId(), 1, 1, BuildStatus.FAILED,
-                repositoryInfo, jobTimingInfo3, buildConfig, null, null, null);
+                repositoryInfo, jobTimingInfo3, buildConfig, null, null, null, null);
 
         var submission1 = ParticipationFactory.generateProgrammingSubmission(true);
         var result1 = this.programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission1, TEST_PREFIX + "student1");
@@ -410,7 +412,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
         var failedJob1 = new BuildJobQueueItem("5", "job5", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo, buildConfig, null, null,
-                null);
+                null, null);
 
         var submission = ParticipationFactory.generateProgrammingSubmission(true);
         var jobResult = this.programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, TEST_PREFIX + "student1");
@@ -623,15 +625,15 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         BuildConfig buildConfig = new BuildConfig("echo 'test'", "test", "test", "test", "test", "test", null, null, false, false, null, 0, null, null, null, null);
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
-        var job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null, null,
+        var job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null, null, null,
                 null);
-        var job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null, null,
+        var job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null, null, null,
                 null);
-        var job3 = new BuildJobQueueItem("3", "job3", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo3, buildConfig, null, null,
+        var job3 = new BuildJobQueueItem("3", "job3", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo3, buildConfig, null, null, null,
                 null);
-        var job4 = new BuildJobQueueItem("4", "job4", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo4, buildConfig, null, null,
+        var job4 = new BuildJobQueueItem("4", "job4", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo4, buildConfig, null, null, null,
                 null);
-        var job5 = new BuildJobQueueItem("5", "job5", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo5, buildConfig, null, null,
+        var job5 = new BuildJobQueueItem("5", "job5", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo5, buildConfig, null, null, null,
                 null);
 
         processingJobs.clear();

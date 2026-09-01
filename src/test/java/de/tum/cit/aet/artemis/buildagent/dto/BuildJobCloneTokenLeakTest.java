@@ -46,7 +46,7 @@ class BuildJobCloneTokenLeakTest {
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", null, null, false, false, java.util.List.of(), 0, null, null, null,
                 null);
         return new BuildJobQueueItem("job-1", "name", new BuildAgentDTO("agent-1", "address", "display"), 1L, 2L, 3L, 0, 1, BuildStatus.BUILDING, repositoryInfo, jobTimingInfo,
-                buildConfig, null, CLONE_TOKEN);
+                buildConfig, null, null, null, CLONE_TOKEN);
     }
 
     @Test

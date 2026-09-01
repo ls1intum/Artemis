@@ -85,9 +85,9 @@ class LocalCIServiceIntegrationTest extends AbstractProgrammingIntegrationLocalC
         BuildAgentDTO buildAgent = new BuildAgentDTO("artemis-build-agent-test", memberAddress, "artemis-build-agent-test");
 
         BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", buildAgent, participation.getId(), course.getId(), 1, 1, 1,
-                de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null, null, null);
+                de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null, null, null, null);
         BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", buildAgent, participation.getId(), course.getId(), 1, 1, 1,
-                de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null, null, null);
+                de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null, null, null, null);
 
         // No build jobs for the participation are queued or building
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.INACTIVE);

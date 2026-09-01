@@ -166,7 +166,7 @@ public abstract class AbstractArtemisBuildAgentTest {
                 "dummy-solution-checkout-path", null);
 
         String randomString = UUID.randomUUID().toString();
-        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null);
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null, null);
     }
 
     protected static BuildJobQueueItem createBaseBuildJobQueueItemForTriggerWithImage(String image) {
@@ -180,7 +180,7 @@ public abstract class AbstractArtemisBuildAgentTest {
                 "dummy-solution-checkout-path", null);
 
         String randomString = UUID.randomUUID().toString();
-        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null);
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null, null);
     }
 
     protected static BuildJobQueueItem createBuildJobQueueItemWithNoCommitHash() {
@@ -194,7 +194,7 @@ public abstract class AbstractArtemisBuildAgentTest {
                 "dummy-solution-checkout-path", null);
 
         String randomString = UUID.randomUUID().toString();
-        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null);
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null, null);
     }
 
     protected static BuildJobQueueItem createBuildJobQueueItemForTimeout() {
@@ -208,7 +208,7 @@ public abstract class AbstractArtemisBuildAgentTest {
                 "dummy-solution-checkout-path", null);
 
         String randomString = UUID.randomUUID().toString();
-        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null);
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null, null);
     }
 
     protected static BuildJobQueueItem createBuildJobQueueItemWithNetworkDisabled() {
@@ -220,7 +220,7 @@ public abstract class AbstractArtemisBuildAgentTest {
         final var buildConfig = getBuildConfig();
 
         String randomString = UUID.randomUUID().toString();
-        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null);
+        return new BuildJobQueueItem("dummy-id-" + randomString, "dummy-name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, null, null, null);
     }
 
     private static @NonNull BuildConfig getBuildConfig() {

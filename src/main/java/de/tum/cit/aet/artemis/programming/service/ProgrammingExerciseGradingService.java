@@ -271,7 +271,15 @@ public class ProgrammingExerciseGradingService {
             Result containerResult = ciResultService.createResultFromBuildResult(buildResult, participation);
 
             // The submission is shared by all containers of the same commit; it may already have been created by the push flow.
-            var submission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+            // getSubmissionForBuildResult returns a detached skeleton (its result carries only the id and completion date,
+            // see BuildResultSubmissionDTO#toDetachedSubmission). The single-container path only reads from it, but this
+            // path mutates and saves the submission and appends to its result, so the real entity has to be loaded here;
+            // saving the skeleton would cascade a result whose exerciseId was never populated over the stored row.
+            var submission = getSubmissionForBuildResult(participation, buildResult)
+                    .flatMap(detached -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksById(detached.getId())).map(loaded -> {
+                        loaded.setParticipation((Participation) participation);
+                        return loaded;
+                    }).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
             if (submission.getExpectedContainerCount() == null) {
                 submission.setExpectedContainerCount(expectedContainerCount);
             }
@@ -294,7 +302,7 @@ public class ProgrammingExerciseGradingService {
                 var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, submission);
                 // fetch the logs of the earlier containers eagerly (the submission's collection is lazy) and append this
                 // container's logs, so the build jobs of all containers keep their logs
-                var allBuildLogs = new ArrayList<>(buildLogService.getLatestBuildLogs(submission));
+                var allBuildLogs = new LinkedHashSet<>(buildLogService.getLatestBuildLogs(submission));
                 allBuildLogs.addAll(savedBuildLogs);
                 submission.setBuildLogEntries(allBuildLogs);
             }
