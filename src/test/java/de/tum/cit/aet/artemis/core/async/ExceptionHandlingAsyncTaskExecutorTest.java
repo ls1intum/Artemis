@@ -4,6 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterAll;
@@ -17,6 +20,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 /**
  * Covers the security context hand-over the executor performs, which is what lets asynchronous work keep the identity
@@ -115,5 +120,58 @@ class ExceptionHandlingAsyncTaskExecutorTest {
 
         // The async method itself then decides, via SecurityUtils.setAuthorizationObject(), whether to stand in.
         assertThat(seen.get()).isNull();
+    }
+
+    @Test
+    void testWhatTheTaskInstallsCannotReachTheSubmitter() throws Exception {
+        // The push-triggered build path submits with nobody authenticated and then stands in as ROLE_ADMIN. If the two
+        // threads shared one context object, that stand-in would land on the submitter as well.
+        SecurityContextHolder.clearContext();
+        SecurityContext submitterContext = SecurityContextHolder.getContext();
+
+        asyncExecutor.submit(() -> SecurityUtils.setAuthorizationObject()).get();
+
+        assertThat(submitterContext.getAuthentication()).as("the task's stand-in must not be written into the submitter's context").isNull();
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).as("the submitting thread must not gain an authentication").isNull();
+    }
+
+    @Test
+    void testAnInlineTaskLeavesTheSubmittingRequestAuthenticated() throws Exception {
+        // Four executors use CallerRunsPolicy, so a saturated pool runs the task on the submitting thread. Clearing
+        // afterwards would strip the authentication of the request that submitted it.
+        ThreadPoolTaskExecutor saturated = new ThreadPoolTaskExecutor();
+        saturated.setCorePoolSize(1);
+        saturated.setMaxPoolSize(1);
+        saturated.setQueueCapacity(1);
+        saturated.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        saturated.afterPropertiesSet();
+        try {
+            ExceptionHandlingAsyncTaskExecutor executor = new ExceptionHandlingAsyncTaskExecutor(saturated);
+            authenticateAs("instructor1");
+            CountDownLatch occupyWorker = new CountDownLatch(1);
+            // One task holds the single worker, one fills the queue; the third is rejected and runs inline here.
+            executor.execute(() -> awaitQuietly(occupyWorker));
+            executor.execute(() -> awaitQuietly(occupyWorker));
+
+            AtomicReference<Authentication> seenInline = new AtomicReference<>();
+            executor.execute(() -> seenInline.set(SecurityContextHolder.getContext().getAuthentication()));
+
+            assertThat(loginSeenBy(seenInline)).as("the inline task still runs as the submitting user").isEqualTo("instructor1");
+            assertThat(SecurityContextHolder.getContext().getAuthentication()).as("the submitting request keeps its authentication").isNotNull();
+            assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("instructor1");
+            occupyWorker.countDown();
+        }
+        finally {
+            saturated.destroy();
+        }
+    }
+
+    private static void awaitQuietly(CountDownLatch latch) {
+        try {
+            latch.await(10, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
