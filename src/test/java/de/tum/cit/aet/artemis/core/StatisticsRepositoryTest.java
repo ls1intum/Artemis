@@ -4,9 +4,11 @@ import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoMonths;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.sortDataIntoWeeks;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.within;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.admin.domain.GraphType;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.StatisticsView;
+import de.tum.cit.aet.artemis.admin.dto.ActiveUserLastSubmissionDTO;
 import de.tum.cit.aet.artemis.admin.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.StatisticsRepository;
@@ -184,6 +187,56 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationIndependentTest 
         List<StatisticsEntry> createdResults = statisticsRepository.getCreatedResultsForCourse(now.minusDays(1), now.plusDays(1), List.of(exercise.getId()));
         long total = createdResults.stream().mapToLong(StatisticsEntry::getAmount).sum();
         assertThat(total).as("example results are excluded from the created-results statistics").isEqualTo(1);
+    }
+
+    /**
+     * The active-user gauge query must report the latest submission date per student, so that {@code MetricsBean} can
+     * bucket every student into the rolling 1/7/14/30 day windows without the database aggregating over
+     * {@code jhi_user}.
+     */
+    @Test
+    void testFindLastSubmissionPerActiveUserReportsTheLatestSubmissionDatePerStudent() {
+        SecurityUtils.setAuthorizationObject();
+        userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 0);
+        TextExercise exercise = getReleasedTextExercise();
+        var now = ZonedDateTime.now();
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        addTextSubmission(exercise, TEST_PREFIX + "student3", now.minusDays(20));
+        addTextSubmission(exercise, TEST_PREFIX + "student3", now.minusDays(2));
+
+        var activeUsers = statisticsRepository.findLastSubmissionPerActiveUser(now, now.minusDays(30));
+
+        assertThat(activeUsers).filteredOn(activeUser -> activeUser.userId() == student.getId()).singleElement()
+                .satisfies(activeUser -> assertThat(activeUser.lastSubmissionDate().toInstant()).isCloseTo(now.minusDays(2).toInstant(), within(1, ChronoUnit.SECONDS)));
+    }
+
+    /**
+     * Only the widest window (30 days) is fetched from the database; students whose last submission predates it must
+     * not be reported at all.
+     */
+    @Test
+    void testFindLastSubmissionPerActiveUserExcludesSubmissionsBeforeTheWindow() {
+        SecurityUtils.setAuthorizationObject();
+        userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 0);
+        TextExercise exercise = getReleasedTextExercise();
+        var now = ZonedDateTime.now();
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student4").orElseThrow();
+        addTextSubmission(exercise, TEST_PREFIX + "student4", now.minusDays(40));
+
+        var activeUsers = statisticsRepository.findLastSubmissionPerActiveUser(now, now.minusDays(30));
+
+        assertThat(activeUsers).extracting(ActiveUserLastSubmissionDTO::userId).doesNotContain(student.getId());
+    }
+
+    private TextExercise getReleasedTextExercise() {
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        return (TextExercise) course.getExercises().iterator().next();
+    }
+
+    private void addTextSubmission(TextExercise exercise, String login, ZonedDateTime submissionDate) {
+        var submission = new TextSubmission();
+        submission.setSubmissionDate(submissionDate);
+        participationUtilService.addSubmission(exercise, submission, login);
     }
 
     /**
