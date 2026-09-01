@@ -314,8 +314,8 @@ public class ParticipationResource {
                     "feedbackRequest.manualAssessmentRequired");
         }
 
-        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !moduleFeatureService.isAthenaEnabled()) {
-            throw new ServiceUnavailableAlertException("Feedback requests for text and modeling exercises require Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
+        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise || exercise instanceof ProgrammingExercise) && !moduleFeatureService.isAthenaEnabled()) {
+            throw new ServiceUnavailableAlertException("Feedback requests require Athena to be enabled (artemis.athena.enabled=true)", ENTITY_NAME,
                     "feedbackRequest.athenaNotEnabled");
         }
 
