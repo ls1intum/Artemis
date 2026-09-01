@@ -74,13 +74,14 @@ describe('TutorialGroupUtilizationIndicatorComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('artemisApp.entities.tutorialGroup.averageAttendance');
     });
 
-    it('should draw an empty rail labelled as unknown when no attendance was recorded', () => {
+    // A bar would carry aria-valuenow="0", announcing an unknown utilization as a measured zero.
+    it('should state that nothing was recorded instead of drawing a bar when no attendance was recorded', () => {
         tutorialGroup.averageAttendance = undefined;
         render(tutorialGroup);
 
         expect(component.utilization()).toBeUndefined();
-        expect(progressBar()?.value()).toBe(0);
-        expect(progressBar()?.ariaLabel()).toBe('artemisApp.entities.tutorialGroup.noAttendanceRecorded');
+        expect(progressBar()).toBeUndefined();
         expect(fixture.nativeElement.textContent).toContain('–');
+        expect(fixture.nativeElement.querySelector('.sr-only').textContent).toContain('artemisApp.entities.tutorialGroup.noAttendanceRecorded');
     });
 });

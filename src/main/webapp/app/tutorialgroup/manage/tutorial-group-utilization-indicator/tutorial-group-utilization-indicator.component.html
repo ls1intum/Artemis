@@ -17,15 +17,9 @@
     <!-- Without a capacity there is no ratio to draw, but the raw attendance is still worth showing. -->
     <span class="text-sm">{{ 'artemisApp.entities.tutorialGroup.averageAttendance' | artemisTranslate: { averageAttendance: averageAttendance } }}</span>
 } @else {
-    <!-- An empty rail rather than a blank cell, labelled unknown rather than announcing a utilization of zero -->
-    <div class="flex items-center gap-2" [tumUiTooltip]="'artemisApp.entities.tutorialGroup.noAttendanceRecorded' | artemisTranslate">
-        <tum-ui-progress-bar
-            class="w-16 shrink-0"
-            size="small"
-            [showValue]="false"
-            [value]="0"
-            [ariaLabel]="'artemisApp.entities.tutorialGroup.noAttendanceRecorded' | artemisTranslate"
-        />
-        <span class="text-sm">–</span>
-    </div>
+    <!-- No rail: an unknown utilization is not a measured zero, which is what a progress bar would announce. -->
+    <span class="text-sm" [tumUiTooltip]="'artemisApp.entities.tutorialGroup.noAttendanceRecorded' | artemisTranslate">
+        <span aria-hidden="true">–</span>
+        <span class="sr-only">{{ 'artemisApp.entities.tutorialGroup.noAttendanceRecorded' | artemisTranslate }}</span>
+    </span>
 }
