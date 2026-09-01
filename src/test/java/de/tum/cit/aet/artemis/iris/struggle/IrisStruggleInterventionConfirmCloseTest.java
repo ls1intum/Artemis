@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -109,6 +111,9 @@ class IrisStruggleInterventionConfirmCloseTest {
     private PlatformTransactionManager transactionManager;
 
     @Mock
+    private IrisSessionRepository irisSessionRepository;
+
+    @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
     private IrisStruggleInterventionService service;
@@ -128,7 +133,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
 
@@ -290,6 +295,10 @@ class IrisStruggleInterventionConfirmCloseTest {
         exercise.setCourse(course);
         var session = new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         session.setId(99L);
+        // The proactive append re-reads the session under a write lock and re-checks its exercise binding before
+        // writing, so hand the same instance back for that lookup. Lenient because the paths that never persist
+        // (ambient, silent, early drops) do not reach it.
+        lenient().when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
         return session;
     }
 

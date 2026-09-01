@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -111,6 +112,8 @@ public class IrisStruggleInterventionService {
 
     private final IrisAmbientDecisionRepository irisAmbientDecisionRepository;
 
+    private final IrisSessionRepository irisSessionRepository;
+
     private final UserAiPreferenceService userAiPreferenceService;
 
     private final TransactionTemplate transactionTemplate;
@@ -122,7 +125,8 @@ public class IrisStruggleInterventionService {
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
             IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, IrisMessageRepository irisMessageRepository,
-            IrisAmbientDecisionRepository irisAmbientDecisionRepository, PlatformTransactionManager transactionManager, UserAiPreferenceService userAiPreferenceService) {
+            IrisAmbientDecisionRepository irisAmbientDecisionRepository, PlatformTransactionManager transactionManager, UserAiPreferenceService userAiPreferenceService,
+            IrisSessionRepository irisSessionRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -136,6 +140,7 @@ public class IrisStruggleInterventionService {
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.irisMessageRepository = irisMessageRepository;
         this.irisAmbientDecisionRepository = irisAmbientDecisionRepository;
+        this.irisSessionRepository = irisSessionRepository;
         this.userAiPreferenceService = userAiPreferenceService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
@@ -481,11 +486,16 @@ public class IrisStruggleInterventionService {
         if (session == null) {
             throw new ConflictException("Cannot persist reveal: the exercise-chat session could not be resolved", "IrisMessage", "revealSessionConflict");
         }
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent(decision.getHintText()));
-        message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
-        message.setProactiveEpisodeId(episodeId);
-        var saved = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+        // Append through the guarded helper, which re-checks the session's exercise binding under the session write
+        // lock. The ambient-decision lock held here says nothing about the session: a run for a DIFFERENT exercise can
+        // switch this same session between resolveProactiveSession above and the write, and the reveal would then
+        // persist the hint into that other exercise's history.
+        var saved = saveProactiveMessage(session, exerciseId, decision.getHintText(), episodeId);
+        if (saved == null) {
+            // Fail the whole reveal rather than consuming the offer: rolling back leaves the decision unconsumed, so
+            // the student can reveal it again once the session is back on this exercise.
+            throw new ConflictException("Cannot persist reveal: the chat session moved to another exercise", "IrisMessage", "revealSessionConflict");
+        }
 
         // The locked entity is managed, so consuming it is part of this transaction's flush.
         decision.setConsumedAt(ZonedDateTime.now());
@@ -779,14 +789,33 @@ public class IrisStruggleInterventionService {
      *                      used by A10 to locate the canonical row)
      * @return the saved IrisMessage (id assigned)
      */
-    private IrisMessage saveProactiveMessage(IrisChatSession session, String result, @Nullable String episodeId) {
-        var message = new IrisMessage();
-        message.addContent(new IrisTextMessageContent(result));
-        message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
-        if (episodeId != null) {
-            message.setProactiveEpisodeId(episodeId);
-        }
-        return irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+    private @Nullable IrisMessage saveProactiveMessage(IrisChatSession session, long exerciseId, String result, @Nullable String episodeId) {
+        return transactionTemplate.execute(status -> {
+            // Re-check the exercise binding under the session write lock, immediately before writing. Single-flight is
+            // keyed by (user, exercise), so this student can have a second run in flight for a DIFFERENT exercise, and
+            // both resolve the SAME session: a session is born a COURSE_CHAT and only ever points at an exercise
+            // through a context switch. Run B can therefore switch the session to its own exercise between the moment
+            // resolveProactiveSession validated it for A and the moment A appends. Without this check A's hint would
+            // be persisted into B's exercise history and replayed to Pyris under the wrong exercise.
+            if (!(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId()) instanceof IrisChatSession locked)) {
+                return null;
+            }
+            irisSessionRepository.flush();
+            irisSessionRepository.refresh(locked);
+            if (locked.getMode() != IrisChatMode.PROGRAMMING_EXERCISE_CHAT || !Objects.equals(locked.getEntityId(), exerciseId)) {
+                log.info("Dropping proactive message: session {} moved to mode={} entity={} before the append for exercise {}", locked.getId(), locked.getMode(),
+                        locked.getEntityId(), exerciseId);
+                return null;
+            }
+
+            var message = new IrisMessage();
+            message.addContent(new IrisTextMessageContent(result));
+            message.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+            if (episodeId != null) {
+                message.setProactiveEpisodeId(episodeId);
+            }
+            return irisMessageService.saveMessage(message, locked, IrisMessageSender.LLM);
+        });
     }
 
     /**
@@ -836,7 +865,7 @@ public class IrisStruggleInterventionService {
     private IrisMessage saveProactiveMessageWithRetry(IrisChatSession session, User user, long exerciseId, String result, @Nullable String episodeId) {
         for (int attempt = 0; attempt < PERSIST_MAX_ATTEMPTS; attempt++) {
             try {
-                return saveProactiveMessage(session, result, episodeId);
+                return saveProactiveMessage(session, exerciseId, result, episodeId);
             }
             catch (TransientDataAccessException ex) {
                 log.warn("Transient proactive persist failure attempt {}/{} for exercise={} user={}", attempt + 1, PERSIST_MAX_ATTEMPTS, exerciseId, user.getId(), ex);

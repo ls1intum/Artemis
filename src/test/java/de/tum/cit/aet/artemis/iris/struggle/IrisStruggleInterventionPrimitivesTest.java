@@ -28,6 +28,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisAmbientDecision;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -101,6 +103,9 @@ class IrisStruggleInterventionPrimitivesTest {
     private PlatformTransactionManager transactionManager;
 
     @Mock
+    private IrisSessionRepository irisSessionRepository;
+
+    @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
     private IrisStruggleInterventionService service;
@@ -118,7 +123,7 @@ class IrisStruggleInterventionPrimitivesTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 
@@ -188,6 +193,24 @@ class IrisStruggleInterventionPrimitivesTest {
                 eq(IrisMessageSender.LLM));
         // CRITICAL: reveal must NOT broadcast over the chat websocket (client owns the optimistic bubble)
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
+    }
+
+    @Test
+    void revealAmbient_sessionMovedToAnotherExercise_failsAndLeavesTheOfferUnconsumed() {
+        // The ambient-decision lock says nothing about the session. A run for a DIFFERENT exercise can switch the
+        // same session between resolving it and the write, and the hint would land in that exercise's history.
+        // The reveal must fail instead, so the offer stays unconsumed and the student can reveal it again later.
+        var decision = offeredDecision("ep-1", "Re-check the loop.");
+        var session = exerciseSession(EXERCISE_ID);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
+        // Re-stubs the write-locked lookup for the same session id: under the lock it points at another exercise.
+        exerciseSession(EXERCISE_ID + 1000);
+
+        assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1")).isInstanceOf(ConflictException.class);
+
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        assertThat(decision.getConsumedAt()).as("a failed reveal must leave the offer revealable").isNull();
+        assertThat(decision.getConsumedMessageId()).isNull();
     }
 
     @Test
@@ -406,6 +429,10 @@ class IrisStruggleInterventionPrimitivesTest {
         exercise.setCourse(course);
         var session = new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         session.setId(99L);
+        // The proactive append re-reads the session under a write lock and re-checks its exercise binding before
+        // writing, so hand the same instance back for that lookup. Lenient because the paths that never persist
+        // (ambient, silent, early drops) do not reach it.
+        lenient().when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
         return session;
     }
 }

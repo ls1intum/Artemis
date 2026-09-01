@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -111,6 +113,9 @@ class IrisStruggleInterventionDecisionTest {
     private PlatformTransactionManager transactionManager;
 
     @Mock
+    private IrisSessionRepository irisSessionRepository;
+
+    @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
     private IrisStruggleInterventionService service;
@@ -136,7 +141,7 @@ class IrisStruggleInterventionDecisionTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
@@ -272,6 +277,27 @@ class IrisStruggleInterventionDecisionTest {
         verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "silent".equals(e.action())));
         verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
+    }
+
+    @Test
+    void active_sessionMovedToAnotherExerciseBeforeTheAppend_doesNotPersist() {
+        // Single-flight is keyed by (user, exercise), so the same student can have a second run in flight for a
+        // DIFFERENT exercise. Both resolve the SAME session - a session is born a COURSE_CHAT and only points at an
+        // exercise through a context switch - so that other run can switch it away between resolveProactiveSession
+        // validating it and this append. The hint must not be written into the other exercise's history.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        // Re-stubs the write-locked lookup for the same session id: under the lock it now points at another exercise.
+        exerciseSession(4242L);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("Check empty list.", "active", 0.9, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null,
+                null);
+
+        service.handleDecision(job, update);
+
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
+        // The client's in-flight decide still has to clear, so the active frame is emitted with messageId = null.
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "active".equals(e.action()) && e.messageId() == null));
     }
 
     @Test
@@ -462,6 +488,10 @@ class IrisStruggleInterventionDecisionTest {
         exercise.setCourse(course);
         var session = new IrisChatSession(exercise, user, IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
         session.setId(99L);
+        // The proactive append re-reads the session under a write lock and re-checks its exercise binding before
+        // writing, so hand the same instance back for that lookup. Lenient because the paths that never persist
+        // (ambient, silent, early drops) do not reach it.
+        lenient().when(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId())).thenReturn(session);
         return session;
     }
 }
