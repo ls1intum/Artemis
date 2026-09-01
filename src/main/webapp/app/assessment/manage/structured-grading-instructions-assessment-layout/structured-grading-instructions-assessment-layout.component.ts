@@ -1,6 +1,6 @@
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { Component, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, signal, viewChildren } from '@angular/core';
 import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExpandableSectionComponent } from 'app/assessment/manage/assessment-instructions/expandable-section/expandable-section.component';
@@ -57,7 +57,7 @@ export interface SortedGradingCriterion {
         ArtemisTranslatePipe,
     ],
 })
-export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit {
+export class StructuredGradingInstructionsAssessmentLayoutComponent implements OnInit, OnDestroy {
     private readonly selectionService = inject(GradingInstructionSelectionService);
     private readonly deleteDialogService = inject(DeleteDialogService);
 
@@ -118,6 +118,10 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
      */
     ngOnInit(): void {
         this.allowDrop.set(!this.readonly());
+    }
+
+    ngOnDestroy(): void {
+        this.selectionService.clearArmedInstruction();
     }
 
     collapseAll() {

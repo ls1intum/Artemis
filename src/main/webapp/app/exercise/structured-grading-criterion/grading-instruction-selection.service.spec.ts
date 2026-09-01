@@ -101,4 +101,16 @@ describe('GradingInstructionSelectionService', () => {
         service.unregister(host);
         expect(service.isSelectable()).toBe(false);
     });
+
+    it('should clear an armed instruction explicitly and when a host registers', () => {
+        service.armInstruction(instruction);
+        expect(service.hasArmedInstruction()).toBe(true);
+
+        service.clearArmedInstruction();
+        expect(service.hasArmedInstruction()).toBe(false);
+
+        service.armInstruction(instruction);
+        service.register(host);
+        expect(service.hasArmedInstruction()).toBe(false);
+    });
 });

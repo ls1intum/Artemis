@@ -105,6 +105,7 @@ export class TextBlockAssessmentCardComponent {
 
     /**
      * Keyboard stand-in for drop: Enter/Space applies a previously armed instruction to this block's feedback.
+     * Selects / initializes the block first so an unselected span without feedback can still receive the instruction.
      */
     onTextKeydown(event: KeyboardEvent): void {
         if (!this.isKeyboardDropTarget()) {
@@ -113,15 +114,15 @@ export class TextBlockAssessmentCardComponent {
         if (event.key !== 'Enter' && event.key !== ' ') {
             return;
         }
+        event.preventDefault();
         const textBlockRef = this.textBlockRef();
+        this.select();
         if (!textBlockRef.feedback) {
             return;
         }
         if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(textBlockRef.feedback)) {
             return;
         }
-        event.preventDefault();
-        this.select();
         this.feedbackDidChange();
     }
 }

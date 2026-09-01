@@ -418,4 +418,14 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement.getAttribute('aria-labelledby')).toBe('criterion-0-instruction-0-desc');
         expect(fixture.debugElement.query(By.css('#criterion-0-instruction-0-desc'))).not.toBeNull();
     });
+
+    it('should clear an armed instruction when the layout is destroyed', () => {
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        selectionService.armInstruction({ id: 1, credits: 1 } as GradingInstruction);
+        expect(selectionService.hasArmedInstruction()).toBe(true);
+
+        fixture.destroy();
+
+        expect(selectionService.hasArmedInstruction()).toBe(false);
+    });
 });

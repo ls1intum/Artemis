@@ -60,6 +60,7 @@ export class GradingInstructionSelectionService {
     readonly removableInstructionIds = computed(() => this.host()?.removableInstructionIds() ?? NO_APPLIED_INSTRUCTIONS);
 
     register(host: GradingInstructionSelectionHost): void {
+        this.clearArmedInstruction();
         this.host.set(host);
     }
     unregister(host: GradingInstructionSelectionHost): void {
@@ -117,6 +118,11 @@ export class GradingInstructionSelectionService {
         const instruction = this.armedInstruction();
         this.armedInstruction.set(undefined);
         return instruction;
+    }
+
+    /** Drops an unconsumed armed instruction (assessment teardown / new host registration). */
+    clearArmedInstruction(): void {
+        this.armedInstruction.set(undefined);
     }
 
     /** Adds one more application of the instruction in the registered feedback list. */
