@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -256,7 +257,7 @@ public class LocalCIResultProcessingService {
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
                 if (buildJob.containerName() != null) {
                     // One container of a multi-container build: aggregate its feedback into the submission's shared result.
-                    result = processContainerResult(participation, buildJob, buildResult, buildException, testsExpected);
+                    result = processContainerResult(participation, buildJob, buildResult, buildLogs, buildException, testsExpected);
                     buildJobPersisted = result != null;
                 }
                 else {
@@ -347,14 +348,20 @@ public class LocalCIResultProcessingService {
      * @param testsExpected  whether tests were expected for this container
      * @return the aggregated result (finalized once every container finished), or null if it could not be processed
      */
-    private Result processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult, Throwable buildException,
-            boolean testsExpected) {
+    private Result processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult, List<BuildLogDTO> agentBuildLogs,
+            Throwable buildException, boolean testsExpected) {
+        // A container whose build script failed still completes as a normal job, and on that path the agent reports the
+        // build logs only on the result queue item, not inside the build result itself. They are merged in here so a
+        // crashed container's logs can be preserved for the student alongside its siblings' results.
+        final BuildResult effectiveBuildResult = !buildResult.hasLogs() && agentBuildLogs != null && !agentBuildLogs.isEmpty() ? new BuildResult(
+                buildResult.assignmentRepoBranchName(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(), buildResult.isBuildSuccessful(),
+                buildResult.buildRunDate(), buildResult.jobs(), agentBuildLogs, buildResult.staticCodeAnalysisReports(), true, buildResult.buildScriptExitCode()) : buildResult;
         // The containers of one submission are grouped by participation and commit hash, so a lock on that key serializes
         // them. It is a distributed lock (backed by the same cluster as the queues), so it also holds across the several
         // core nodes that process results in parallel, not only across the threads of one node. Without it, two nodes
         // could each create a separate aggregated result for the same submission and neither would ever reach the
         // expected container count.
-        String lockKey = participation.getId() + "-" + buildResult.assignmentRepoCommitHash();
+        String lockKey = participation.getId() + "-" + effectiveBuildResult.assignmentRepoCommitHash();
         DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
         aggregationLocks.lock(lockKey);
         try {
@@ -362,7 +369,7 @@ public class LocalCIResultProcessingService {
             // the next container of the same submission sees the appended feedback and the linked build job atomically.
             return transactionTemplate.execute(status -> {
                 int expectedContainerCount = determineExpectedContainerCount(participation);
-                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, buildResult, testsExpected, expectedContainerCount,
+                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, expectedContainerCount,
                         buildJob.containerName());
                 if (aggregatedResult == null) {
                     return null;
@@ -374,8 +381,14 @@ public class LocalCIResultProcessingService {
 
                 long completedContainers = buildJobRepository.countByResultId(aggregatedResult.getId());
                 if (completedContainers >= expectedContainerCount) {
-                    boolean allContainersSucceeded = !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
-                    return programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allContainersSucceeded, buildResult.buildRunDate());
+                    // The job status only captures how the job executed: a container whose build script crashed still
+                    // completes as a SUCCESSFUL job. That failure is carried by the submission's buildFailed flag
+                    // (set in appendContainerResult), so both have to agree for the result to count as successful.
+                    boolean anyContainerFailedToBuild = aggregatedResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission
+                            && programmingSubmission.isBuildFailed();
+                    boolean allContainersSucceeded = !anyContainerFailedToBuild
+                            && !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
+                    return programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allContainersSucceeded, effectiveBuildResult.buildRunDate());
                 }
                 return aggregatedResult;
             });

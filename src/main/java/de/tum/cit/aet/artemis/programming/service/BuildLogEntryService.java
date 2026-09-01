@@ -93,6 +93,28 @@ public class BuildLogEntryService {
     }
 
     /**
+     * Saves the build logs of one container of a multi-container build, labeled with the container's name. Unlike
+     * {@link #saveBuildLogs}, only the logs the same container saved for an earlier build of this submission are
+     * replaced; the logs its sibling containers contributed are kept, so every failed container of a submission keeps
+     * its own labeled logs.
+     *
+     * @param buildLogs             the build logs of the container
+     * @param programmingSubmission the submission shared by all containers of the build
+     * @param containerName         the name of the container that produced the logs
+     * @return the saved build log entries
+     */
+    public List<BuildLogEntry> appendBuildLogs(List<BuildLogEntry> buildLogs, ProgrammingSubmission programmingSubmission, String containerName) {
+        buildLogEntryRepository.deleteByProgrammingSubmissionIdAndContainerName(programmingSubmission.getId(), containerName);
+        return buildLogs.stream().map(buildLogEntry -> {
+            buildLogEntry.truncateLogToMaxLength();
+            buildLogEntry.setContainerName(containerName);
+            // The entry owns the foreign key, so setting the submission before saving writes it with the insert.
+            buildLogEntry.setProgrammingSubmission(programmingSubmission);
+            return buildLogEntryRepository.save(buildLogEntry);
+        }).collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    /**
      * Retrieves the latest build logs for a given programming submission.
      *
      * @param programmingSubmission submission for which to retrieve the build logs

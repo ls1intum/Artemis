@@ -293,18 +293,14 @@ public class ProgrammingExerciseGradingService {
                 submission.setBuildFailed(true);
             }
 
-            // Preserve the build logs of a failed container, labeled by its name and appended to the logs of the other
+            // Preserve the build logs of a failed container, labeled by its name and saved next to the logs of the other
             // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
-            // logs are only kept when the build failed).
+            // logs are only kept when the build failed). The submission's own log collection is deliberately not touched:
+            // replacing the managed collection would trip its orphan removal inside the surrounding transaction, and
+            // saveBuildLogs would delete the logs the sibling containers already contributed.
             if (containerFailed && buildResult.hasLogs()) {
                 var buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildResult.extractBuildLogs(), exercise.getProgrammingLanguage());
-                buildLogs.forEach(buildLogEntry -> buildLogEntry.setContainerName(containerName));
-                var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, submission);
-                // fetch the logs of the earlier containers eagerly (the submission's collection is lazy) and append this
-                // container's logs, so the build jobs of all containers keep their logs
-                var allBuildLogs = new LinkedHashSet<>(buildLogService.getLatestBuildLogs(submission));
-                allBuildLogs.addAll(savedBuildLogs);
-                submission.setBuildLogEntries(allBuildLogs);
+                buildLogService.appendBuildLogs(buildLogs, submission, containerName);
             }
 
             Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise);
