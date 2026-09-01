@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { SubjectObservablePair } from 'app/foundation/util/rxjs.utils';
@@ -15,7 +15,13 @@ import { AccountService } from 'app/core/auth/account.service';
 export class CourseStorageService implements OnDestroy {
     private readonly accountService = inject(AccountService);
 
-    private storedCourses: Course[] = [];
+    private readonly storedCourses = signal<Course[]>([]);
+    private readonly currentCourseId = signal<number | undefined>(undefined);
+
+    readonly currentCourse = computed(() => {
+        const courseId = this.currentCourseId();
+        return courseId === undefined ? undefined : this.getCourse(courseId);
+    });
 
     private readonly courseUpdateSubscriptions: Map<number, SubjectObservablePair<Course>> = new Map();
 
@@ -42,17 +48,26 @@ export class CourseStorageService implements OnDestroy {
      * `complete` so they unwind cleanly instead of being silently dropped.
      */
     private resetState(): void {
-        this.storedCourses = [];
+        this.storedCourses.set([]);
+        this.currentCourseId.set(undefined);
         this.courseUpdateSubscriptions.forEach((pair) => pair.subject.complete());
         this.courseUpdateSubscriptions.clear();
     }
 
     setCourses(courses?: Course[]) {
-        this.storedCourses = courses ?? [];
+        this.storedCourses.set(courses ?? []);
     }
 
     getCourse(courseId: number) {
-        return this.storedCourses.find((course) => course.id === courseId);
+        return this.storedCourses().find((course) => course.id === courseId);
+    }
+
+    setCurrentCourse(courseId: number): void {
+        this.currentCourseId.set(courseId);
+    }
+
+    clearCurrentCourse(): void {
+        this.currentCourseId.set(undefined);
     }
 
     /**
@@ -63,8 +78,7 @@ export class CourseStorageService implements OnDestroy {
     updateCourse(course?: Course): void {
         if (course) {
             // filter out the old course object with the same id
-            this.storedCourses = this.storedCourses.filter((existingCourse) => existingCourse.id !== course.id);
-            this.storedCourses.push(course);
+            this.storedCourses.update((courses) => [...courses.filter((existingCourse) => existingCourse.id !== course.id), course]);
             return this.courseUpdateSubscriptions.get(course.id!)?.subject.next(course);
         }
     }
@@ -78,7 +92,7 @@ export class CourseStorageService implements OnDestroy {
      * @param courseId the course to drop
      */
     removeCourse(courseId: number): void {
-        this.storedCourses = this.storedCourses.filter((existingCourse) => existingCourse.id !== courseId);
+        this.storedCourses.update((courses) => courses.filter((existingCourse) => existingCourse.id !== courseId));
     }
 
     subscribeToCourseUpdates(courseId: number): Observable<Course> {

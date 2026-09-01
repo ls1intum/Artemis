@@ -60,7 +60,6 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { LoadingNotificationService } from 'app/core/loading-notification/loading-notification.service';
 import { BehaviorSubject } from 'rxjs';
-import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -69,6 +68,7 @@ import { ParticipationWebsocketService } from 'app/course/shared/services/partic
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LoginService } from 'app/core/login/login.service';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 
 class MockBreadcrumb {
     label!: string;
@@ -81,7 +81,12 @@ describe('NavbarComponent', () => {
     let component: NavbarComponent;
     let entityTitleServiceStub: ReturnType<typeof vi.spyOn>;
     let entityTitleService: EntityTitleService;
-    let currentCourseContextService: CurrentCourseContextService;
+    let courseStorageService: CourseStorageService;
+
+    const setCurrentCourse = (course: Course) => {
+        courseStorageService.updateCourse(course);
+        courseStorageService.setCurrentCourse(course.id!);
+    };
 
     const router = new MockRouter();
     router.setUrl('');
@@ -157,8 +162,9 @@ describe('NavbarComponent', () => {
         router.navigate.mockClear();
         router.navigateByUrl.mockClear();
         entityTitleService = TestBed.inject(EntityTitleService);
-        currentCourseContextService = TestBed.inject(CurrentCourseContextService);
-        currentCourseContextService.clearCourse();
+        courseStorageService = TestBed.inject(CourseStorageService);
+        courseStorageService.setCourses();
+        courseStorageService.clearCurrentCourse();
         entityTitleServiceStub = vi.spyOn(entityTitleService, 'getTitle').mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
         const profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(expectedProfileInfo);
@@ -175,7 +181,7 @@ describe('NavbarComponent', () => {
 
     it('should display the current course next to the logo', () => {
         const course = { id: 1, title: 'Course1', courseIconPath: 'path/to/icon.png' } as Course;
-        currentCourseContextService.setCourse(course);
+        setCurrentCourse(course);
 
         fixture.detectChanges();
 
@@ -186,7 +192,7 @@ describe('NavbarComponent', () => {
     });
 
     it('should display a course initial if the current course has no icon', () => {
-        currentCourseContextService.setCourse({ id: 1, title: 'Course1' } as Course);
+        setCurrentCourse({ id: 1, title: 'Course1' } as Course);
 
         fixture.detectChanges();
 
@@ -257,7 +263,7 @@ describe('NavbarComponent', () => {
             const tutorAccessSpy = vi.spyOn(accountService, 'isAtLeastTutorInCourseWithId');
             const editorAccessSpy = vi.spyOn(accountService, 'isAtLeastEditorInCourseWithId');
             const instructorAccessSpy = vi.spyOn(accountService, 'isAtLeastInstructorInCourseWithId');
-            currentCourseContextService.setCourse(instructorCourse);
+            setCurrentCourse(instructorCourse);
             router.setUrl('/courses/456/exercises');
 
             expect(component.perspectiveSwitchLinks()).toBeDefined();
@@ -333,6 +339,34 @@ describe('NavbarComponent', () => {
             expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(expected);
         });
 
+        it.each([
+            { type: ExerciseType.TEXT, url: '/courses/123/exercises/41' },
+            { type: ExerciseType.MODELING, url: '/courses/123/exercises/modeling-exercises/41/participate/52' },
+            { type: ExerciseType.FILE_UPLOAD, url: '/courses/123/exercises/file-upload-exercises/41/participate/52' },
+            { type: ExerciseType.PROGRAMMING, url: '/courses/123/exercises/programming-exercises/41/code-editor/52' },
+            { type: ExerciseType.QUIZ, url: '/courses/123/exercises/quiz-exercises/41/live' },
+        ])('should link from student $type exercise route to its management detail', ({ type, url }) => {
+            courseStorageService.setCourses([{ ...tutorCourse, exercises: [{ id: 41, type } as Exercise] } as Course]);
+            router.setUrl(url);
+
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123', `${type}-exercises`, '41']);
+        });
+
+        it('should keep the management exercise overview fallback when the current course does not contain the exercise', () => {
+            courseStorageService.setCourses([{ ...tutorCourse, exercises: [] } as Course]);
+            router.setUrl('/courses/123/exercises/41');
+
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123', 'exercises']);
+        });
+
+        it('should use the exercise-enriched course storage when the shared course context is lean', () => {
+            setCurrentCourse(tutorCourse);
+            courseStorageService.setCourses([{ ...tutorCourse, exercises: [{ id: 41, type: ExerciseType.TEXT } as Exercise] } as Course]);
+            router.setUrl('/courses/123/exercises/41');
+
+            expect(component.perspectiveSwitchLinks()?.managementViewLink).toEqual(['/course-management', '123', 'text-exercises', '41']);
+        });
+
         it('should default management view link to the course management overview when route has no management equivalent', () => {
             router.setUrl('/courses/123/settings');
 
@@ -353,7 +387,7 @@ describe('NavbarComponent', () => {
         });
 
         it('should provide perspective links without a current course', () => {
-            currentCourseContextService.clearCourse();
+            courseStorageService.clearCurrentCourse();
             router.setUrl('/courses/123');
 
             expect(component.perspectiveSwitchLinks()).toBeDefined();
@@ -824,7 +858,7 @@ describe('NavbarComponent', () => {
 
     describe('course controls in navbar', () => {
         it('should render the notification overview when a course is active', () => {
-            currentCourseContextService.setCourse({ id: 1 } as Course);
+            setCurrentCourse({ id: 1 } as Course);
             router.setUrl('/courses/1/exercises');
 
             fixture.detectChanges();
@@ -833,7 +867,7 @@ describe('NavbarComponent', () => {
         });
 
         it('should render the notification overview for instructors in course management view', () => {
-            currentCourseContextService.setCourse({ id: 1, isAtLeastTutor: true } as Course);
+            setCurrentCourse({ id: 1, isAtLeastTutor: true } as Course);
             router.setUrl('/course-management/1/exercises');
 
             fixture.detectChanges();
@@ -842,7 +876,7 @@ describe('NavbarComponent', () => {
         });
 
         it('should not render the notification overview when no course is active', () => {
-            currentCourseContextService.clearCourse();
+            courseStorageService.clearCurrentCourse();
             router.setUrl('/courses');
 
             fixture.detectChanges();
@@ -851,7 +885,7 @@ describe('NavbarComponent', () => {
         });
 
         it('should not render the notification overview during an active or started exam', () => {
-            currentCourseContextService.setCourse({ id: 1 } as Course);
+            setCurrentCourse({ id: 1 } as Course);
             router.setUrl('/courses/1/exercises');
             component.isExamActive.set(true);
 

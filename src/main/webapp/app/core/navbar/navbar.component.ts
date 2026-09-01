@@ -37,11 +37,11 @@ import { LoadingNotificationComponent } from 'app/core/loading-notification/load
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
-import { CurrentCourseContextService } from 'app/course/shared/services/current-course-context.service';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
 import { getCurrentRouteSignal } from 'app/foundation/route/getCurrentRouteSignal';
 import { CourseNotificationOverviewComponent } from 'app/notification/course-notification/course-notification-overview/course-notification-overview.component';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 
 @Component({
     selector: 'jhi-navbar',
@@ -89,7 +89,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private readonly entityTitleService = inject(EntityTitleService);
     private readonly titleService = inject(Title);
     private readonly featureToggleService = inject(FeatureToggleService);
-    private readonly currentCourseContextService = inject(CurrentCourseContextService);
+    private readonly courseStorageService = inject(CourseStorageService);
 
     protected readonly faBars = faBars;
     protected readonly faUser = faUser;
@@ -130,7 +130,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     standardizedCompetenciesEnabled = false;
     readonly globalSearchEnabled = signal(false);
     readonly isExamStarted = signal(false);
-    readonly currentCourse = this.currentCourseContextService.course;
+    readonly currentCourse = this.courseStorageService.currentCourse;
     readonly currentRoute = getCurrentRouteSignal(this.router);
     readonly routeIsAtStudentCourseView = getSignalBasedOnRoute(this.router, this.isStudentCourseViewRoute);
     readonly routeIsAtCourseManagementView = getSignalBasedOnRoute(this.router, this.isCourseManagementViewRoute);
@@ -823,6 +823,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         if (!matchedRoute) {
             return baseManagementPath;
+        }
+
+        const isExerciseRoute = matchedRoute.urlParts.includes('exercises');
+        const exerciseId = isExerciseRoute ? /\/exercises\/(?:[^/]+-exercises\/)?(\d+)(?:\/|$)/.exec(url)?.[1] : undefined;
+        const exercise = this.courseStorageService.getCourse(Number(courseId))?.exercises?.find((exercise) => exercise.id === Number(exerciseId));
+        if (exerciseId && exercise?.type) {
+            return [...baseManagementPath, `${exercise.type}-exercises`, exerciseId];
         }
 
         const targetIsLecturesButUserNotAllowed = matchedRoute.urlParts.includes('lectures') && !isAtLeastEditor;
