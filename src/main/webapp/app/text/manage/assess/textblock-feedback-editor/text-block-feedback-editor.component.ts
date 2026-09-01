@@ -1,9 +1,10 @@
-import { AfterViewInit, Component, ElementRef, HostBinding, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostBinding, computed, inject, input, output, viewChild } from '@angular/core';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
@@ -41,6 +42,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     private route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     readonly FeedbackType = FeedbackType;
@@ -48,6 +50,8 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
     textBlock = input<TextBlock>(new TextBlock());
     feedback = input<Feedback>(new Feedback());
     feedbackChange = output<Feedback>();
+    /** Editor is a keyboard drop target while an instruction is armed. */
+    protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && this.selectionService.hasArmedInstruction());
     onClose = output<void>();
     onFocus = output<void>();
     textareaRef = viewChild.required<ElementRef>('detailText');
@@ -171,6 +175,30 @@ export class TextBlockFeedbackEditorComponent implements AfterViewInit {
         // Reset the feedback correction status upon setting grading instruction in order to hide it.
         feedbackValue.correctionStatus = undefined;
 
+        this.didChange();
+    }
+
+    /**
+     * Keyboard stand-in for drop: Enter/Space applies a previously armed instruction.
+     * Ignores keys aimed at form controls inside the editor.
+     */
+    onEditorKeydown(event: KeyboardEvent): void {
+        if (!this.isKeyboardDropTarget()) {
+            return;
+        }
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('input, textarea, button, a, select, [contenteditable="true"]')) {
+            return;
+        }
+        const feedbackValue = this.feedback();
+        if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedbackValue)) {
+            return;
+        }
+        event.preventDefault();
+        feedbackValue.correctionStatus = undefined;
         this.didChange();
     }
 }

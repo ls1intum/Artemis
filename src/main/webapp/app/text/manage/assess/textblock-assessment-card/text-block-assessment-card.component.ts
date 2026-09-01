@@ -1,13 +1,15 @@
-import { Component, inject, input, output, viewChild } from '@angular/core';
+import { Component, computed, inject, input, output, viewChild } from '@angular/core';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 type OptionalTextBlockRef = TextBlockRef | undefined;
 
@@ -15,11 +17,12 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
     selector: 'jhi-text-block-assessment-card',
     templateUrl: './text-block-assessment-card.component.html',
     styleUrls: ['./text-block-assessment-card.component.scss'],
-    imports: [TextBlockFeedbackEditorComponent],
+    imports: [TextBlockFeedbackEditorComponent, ArtemisTranslatePipe],
 })
 export class TextBlockAssessmentCardComponent {
     private route = inject(ActivatedRoute);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
     private textAssessmentAnalytics = inject(TextAssessmentAnalytics);
 
     textBlockRef = input.required<TextBlockRef>();
@@ -32,6 +35,9 @@ export class TextBlockAssessmentCardComponent {
     didChange = output<TextBlockRef>();
     didDelete = output<TextBlockRef>();
     feedbackEditor = viewChild.required(TextBlockFeedbackEditorComponent);
+
+    /** Text span is a keyboard drop target while an instruction is armed. */
+    protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !!this.textBlockRef().selectable && this.selectionService.hasArmedInstruction());
 
     constructor() {
         this.textAssessmentAnalytics.setComponentRoute(this.route);
@@ -94,6 +100,28 @@ export class TextBlockAssessmentCardComponent {
         if (textBlockRef.feedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(textBlockRef.feedback, event);
         }
+        this.feedbackDidChange();
+    }
+
+    /**
+     * Keyboard stand-in for drop: Enter/Space applies a previously armed instruction to this block's feedback.
+     */
+    onTextKeydown(event: KeyboardEvent): void {
+        if (!this.isKeyboardDropTarget()) {
+            return;
+        }
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        const textBlockRef = this.textBlockRef();
+        if (!textBlockRef.feedback) {
+            return;
+        }
+        if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(textBlockRef.feedback)) {
+            return;
+        }
+        event.preventDefault();
+        this.select();
         this.feedbackDidChange();
     }
 }

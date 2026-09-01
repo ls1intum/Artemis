@@ -40,7 +40,15 @@
             </div>
         }
     </div>
-    <div class="row" (drop)="connectFeedbackWithInstruction($event)" (dragover)="$event.preventDefault()">
+    <div
+        class="row"
+        (drop)="connectFeedbackWithInstruction($event)"
+        (dragover)="$event.preventDefault()"
+        (keydown)="onEditorKeydown($event)"
+        [attr.tabindex]="isKeyboardDropTarget() ? 0 : null"
+        [attr.role]="isKeyboardDropTarget() ? 'button' : null"
+        [attr.aria-label]="isKeyboardDropTarget() ? ('artemisApp.exercise.applyArmedInstruction' | artemisTranslate) : null"
+    >
         <div class="input-group">
             <div class="input-group-prepend">
                 @if (criteria()) {

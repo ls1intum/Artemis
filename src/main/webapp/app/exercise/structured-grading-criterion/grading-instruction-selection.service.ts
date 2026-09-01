@@ -40,9 +40,12 @@ export class GradingInstructionSelectionService {
 
     /**
      * Instruction armed by keyboard (Enter/Space) when no feedback-list host is registered. Consumed by the next
-     * structured-grading drop onto a feedback element — the drag-and-drop stand-in without a checkbox host.
+     * feedback target that accepts it (drop or keyboard), the drag-and-drop stand-in without a checkbox host.
      */
     private readonly armedInstruction = signal<GradingInstruction | undefined>(undefined);
+
+    /** True while an instruction is armed for the next feedback target. */
+    readonly hasArmedInstruction = computed(() => this.armedInstruction() !== undefined);
 
     /** True while an editable feedback list is mounted. */
     readonly isSelectable = computed(() => this.host() !== undefined);
@@ -103,7 +106,7 @@ export class GradingInstructionSelectionService {
     }
 
     /**
-     * Arms an instruction for the next feedback drop when no host is registered (keyboard stand-in for drag).
+     * Arms an instruction for the next feedback drop or keyboard apply when no host is registered.
      */
     armInstruction(instruction: GradingInstruction): void {
         this.armedInstruction.set(instruction);

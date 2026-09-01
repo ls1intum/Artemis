@@ -2,6 +2,7 @@ import { Component, ElementRef, computed, inject, input, linkedSignal, output, s
 import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -67,6 +68,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
 
@@ -112,6 +114,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      * when unlinked) so instruction usage counts can include pending links.
      */
     readonly onPendingFeedbackChange = output<Feedback | undefined>();
+
+    /** Editor is a keyboard drop target while an instruction is armed and the card is open for editing. */
+    protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !this.viewOnly() && this.selectionService.hasArmedInstruction());
 
     /**
      * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
@@ -274,6 +279,32 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     updateFeedbackOnDrop(event: Event) {
         const feedback = this.currentFeedback();
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
+        feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
+        feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
+        this.contentRevision.update((revision) => revision + 1);
+        this.notifyInstructionLinkChange(feedback);
+    }
+
+    /**
+     * Keyboard stand-in for drop: Enter/Space applies a previously armed instruction.
+     * Ignores keys aimed at form controls inside the editor.
+     */
+    onEditorKeydown(event: KeyboardEvent): void {
+        if (!this.isKeyboardDropTarget()) {
+            return;
+        }
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('input, textarea, button, a, select, [contenteditable="true"]')) {
+            return;
+        }
+        const feedback = this.currentFeedback();
+        if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedback)) {
+            return;
+        }
+        event.preventDefault();
         feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
         feedback.text = `File ${this.selectedFile()} at line ${this.codeLine() + 1}`;
         this.contentRevision.update((revision) => revision + 1);

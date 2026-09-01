@@ -5,6 +5,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -72,6 +73,44 @@ describe('Unreferenced Feedback Detail Component', () => {
         expect(serviceSpy).toHaveBeenCalledOnce();
 
         // Verify the component emitted the feedback change
+        expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should apply an armed instruction via keyboard without a drop event', () => {
+        const instruction: GradingInstruction = {
+            id: 1,
+            credits: 2,
+            feedback: 'test',
+            gradingScale: 'good',
+            instructionDescription: 'description of instruction',
+            usageCount: 0,
+        };
+        const feedback = {
+            id: 1,
+            detailText: 'feedback1',
+            credits: 1.5,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.componentRef.setInput('useDefaultFeedbackSuggestionBadgeText', false);
+
+        TestBed.inject(GradingInstructionSelectionService).armInstruction(instruction);
+
+        const applySpy = vi.spyOn(sgiService, 'applyArmedInstructionToFeedback').mockImplementation((currentFeedback) => {
+            currentFeedback.gradingInstruction = instruction;
+            currentFeedback.credits = instruction.credits;
+            return true;
+        });
+        const dropSpy = vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent');
+        const emitSpy = vi.spyOn(comp.onFeedbackChange, 'emit');
+
+        comp.onCardKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+
+        expect(applySpy).toHaveBeenCalledWith(feedback);
+        expect(dropSpy).not.toHaveBeenCalled();
+        expect(feedback.gradingInstruction).toEqual(instruction);
+        expect(feedback.credits).toBe(2);
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 

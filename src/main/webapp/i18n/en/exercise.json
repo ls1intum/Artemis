@@ -119,6 +119,7 @@
             "descriptionPlaceholder": "When should a tutor apply this level?",
             "feedbackPlaceholder": "What should the student read?",
             "dragDropInstruction": "Drag & Drop the assessment instruction to feedback element",
+            "applyArmedInstruction": "Apply the selected assessment instruction to this feedback",
             "gradingScale": "Scale",
             "instructionDescription": "Description (tutors)",
             "credits": "Credits",

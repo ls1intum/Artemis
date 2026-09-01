@@ -34,17 +34,34 @@ export class StructuredGradingCriterionService {
         try {
             const data = (event as DragEvent).dataTransfer?.getData('text/plain');
             const instruction = data ? parseJson<GradingInstruction>(data) : this.selectionService.consumeArmedInstruction();
-            if (!instruction) {
-                return;
-            }
-            feedback.gradingInstruction = instruction;
-            feedback.credits = instruction.credits;
+            this.applyInstructionToFeedback(feedback, instruction);
         } catch (err) {
             // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
             if (!(err instanceof SyntaxError)) {
                 throw err;
             }
         }
+    }
+
+    /**
+     * Keyboard stand-in for drop: applies and clears a previously armed instruction onto {@code feedback}.
+     * @returns whether an instruction was applied
+     */
+    applyArmedInstructionToFeedback(feedback: Feedback): boolean {
+        const instruction = this.selectionService.consumeArmedInstruction();
+        if (!instruction) {
+            return false;
+        }
+        this.applyInstructionToFeedback(feedback, instruction);
+        return true;
+    }
+
+    private applyInstructionToFeedback(feedback: Feedback, instruction: GradingInstruction | undefined): void {
+        if (!instruction) {
+            return;
+        }
+        feedback.gradingInstruction = instruction;
+        feedback.credits = instruction.credits;
     }
 
     computeTotalScore(assessments: Feedback[]) {

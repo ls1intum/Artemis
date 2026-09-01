@@ -95,7 +95,15 @@
                 <p class="inline-feedback__text" [innerHTML]="buildFeedbackTextForCodeEditor(feedback)"></p>
             </div>
         } @else {
-            <div class="inline-feedback__editor" (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()">
+            <div
+                class="inline-feedback__editor"
+                (drop)="updateFeedbackOnDrop($event)"
+                (dragover)="$event.preventDefault()"
+                (keydown)="onEditorKeydown($event)"
+                [attr.tabindex]="isKeyboardDropTarget() ? 0 : null"
+                [attr.role]="isKeyboardDropTarget() ? 'button' : null"
+                [attr.aria-label]="isKeyboardDropTarget() ? ('artemisApp.exercise.applyArmedInstruction' | artemisTranslate) : null"
+            >
                 <!-- Tutor-facing guidance of the linked instruction: says when this score applies. -->
                 @if (currentFeedback().gradingInstruction?.instructionDescription; as instructionDescription) {
                     <div class="inline-feedback__section">

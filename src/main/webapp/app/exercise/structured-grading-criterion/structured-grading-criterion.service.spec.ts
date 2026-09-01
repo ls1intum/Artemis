@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -88,6 +89,23 @@ describe('Structured Grading Criteria Service', () => {
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
             expect(totalScore).toBe(2.5);
+        });
+
+        it('should apply an armed instruction to feedback without a drop event', () => {
+            const selectionService = TestBed.inject(GradingInstructionSelectionService);
+            const instruction = new GradingInstruction();
+            instruction.id = 9;
+            instruction.credits = 2.5;
+            selectionService.armInstruction(instruction);
+
+            const feedback = new Feedback();
+            feedback.credits = 0;
+
+            expect(service.applyArmedInstructionToFeedback(feedback)).toBe(true);
+            expect(feedback.gradingInstruction).toBe(instruction);
+            expect(feedback.credits).toBe(2.5);
+            expect(selectionService.hasArmedInstruction()).toBe(false);
+            expect(service.applyArmedInstructionToFeedback(feedback)).toBe(false);
         });
     });
 

@@ -106,6 +106,7 @@
             "addAssessmentInstruction": "Bewertungsanweisung hinzufügen",
             "limit": "Begrenzung",
             "dragDropInstruction": "Drag-and-Drop Bewertungsanweisung zum Feedback-Element",
+            "applyArmedInstruction": "Ausgewählte Bewertungsanweisung auf dieses Feedback anwenden",
             "gradingScale": "Skala",
             "instructionDescription": "Beschreibung (Tutor:innen)",
             "credits": "Credits",

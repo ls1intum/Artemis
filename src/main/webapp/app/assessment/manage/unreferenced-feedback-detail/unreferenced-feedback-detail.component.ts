@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, input, model, output, signal } fro
 import { faCheck, faExclamation, faExclamationTriangle, faMinus, faPlus, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Subject } from 'rxjs';
 import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
@@ -55,6 +56,7 @@ export type FeedbackTone = 'positive' | 'negative' | 'neutral';
 })
 export class UnreferencedFeedbackDetailComponent implements OnInit {
     structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private readonly selectionService = inject(GradingInstructionSelectionService);
 
     // Parent matches feedback by reference (`indexOf`); mutate in place on edit.
     public readonly feedback = model.required<Feedback>();
@@ -69,6 +71,9 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     readonly onAcceptSuggestion = output<Feedback>();
     readonly onDiscardSuggestion = output<Feedback>();
     private feedbackService = inject(FeedbackService);
+
+    /** Card is a keyboard drop target while an instruction is armed (Enter/Space on an SGI card). */
+    protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !this.isSuggestion() && this.selectionService.hasArmedInstruction());
 
     // Icons
     faTrashAlt = faTrashAlt;
@@ -211,6 +216,30 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
         event.stopPropagation();
         const feedback = this.feedback();
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
+        this.feedback.set(feedback);
+        this.onFeedbackChange.emit(feedback);
+    }
+
+    /**
+     * Keyboard stand-in for drop: Enter/Space on the card applies a previously armed instruction.
+     * Ignores keys aimed at form controls inside the card.
+     */
+    onCardKeydown(event: KeyboardEvent): void {
+        if (!this.isKeyboardDropTarget()) {
+            return;
+        }
+        if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('input, textarea, button, a, select, [contenteditable="true"]')) {
+            return;
+        }
+        if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(this.feedback())) {
+            return;
+        }
+        event.preventDefault();
+        const feedback = this.feedback();
         this.feedback.set(feedback);
         this.onFeedbackChange.emit(feedback);
     }
