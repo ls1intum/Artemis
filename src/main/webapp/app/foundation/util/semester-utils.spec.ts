@@ -5,6 +5,7 @@ import {
     getCurrentSemester,
     getDefaultSemester,
     getNextSemester,
+    getSemesterDateRange,
     getSemesterProgress,
     getSemesters,
 } from 'app/foundation/util/semester-utils';
@@ -13,12 +14,12 @@ describe('SemesterUtils', () => {
     describe('getSemesters', () => {
         it('should get semesters around current year', () => {
             vi.useFakeTimers().setSystemTime(new Date('2019-01-10'));
-            const expectedSemesters = ['WS20/21', 'SS20', 'WS19/20', 'SS19', 'WS18/19', 'SS18', ''];
+            const expectedSemesters = ['WS20/21', 'SS20', 'WS19/20', 'SS19', 'WS18/19', 'SS18'];
 
             const semesters = getSemesters();
 
-            //expect length to be 7 (years 2018-2020) + one empty value
-            expect(semesters).toHaveLength(7);
+            //expect length to be 6 (years 2018-2020)
+            expect(semesters).toHaveLength(6);
             expect(semesters).toEqual(expectedSemesters);
         });
     });
@@ -244,5 +245,44 @@ describe('SemesterUtils', () => {
             // Umlauts don't match /[A-Z0-9]/i so they should be skipped
             expect(generateCourseShortName('Übung', 'SS25')).toBe('25C');
         });
+    });
+});
+
+describe('getSemesterDateRange', () => {
+    it('maps a winter semester to October 1 through March 31 of the following year', () => {
+        const range = getSemesterDateRange('WS25/26')!;
+        expect(range.startDate.format('YYYY-MM-DD')).toBe('2025-10-01');
+        expect(range.endDate.format('YYYY-MM-DD')).toBe('2026-03-31');
+    });
+
+    it('maps a summer semester to April 1 through September 30', () => {
+        const range = getSemesterDateRange('SS25')!;
+        expect(range.startDate.format('YYYY-MM-DD')).toBe('2025-04-01');
+        expect(range.endDate.format('YYYY-MM-DD')).toBe('2025-09-30');
+    });
+
+    it('starts at the beginning and ends at the end of the day', () => {
+        const range = getSemesterDateRange('SS25')!;
+        expect(range.startDate.format('HH:mm')).toBe('00:00');
+        expect(range.endDate.format('HH:mm')).toBe('23:59');
+    });
+
+    it.each(['', undefined, 'WS2025', '2025W', 'nonsense'])('returns undefined for %s', (semester) => {
+        expect(getSemesterDateRange(semester as string | undefined)).toBeUndefined();
+    });
+});
+
+describe('getSemesters with an extra value', () => {
+    it('does not offer an empty semester any more', () => {
+        expect(getSemesters()).not.toContain('');
+    });
+
+    it('appends a legacy semester that the generated range does not cover', () => {
+        expect(getSemesters('WS16/17')).toContain('WS16/17');
+    });
+
+    it('does not duplicate a semester that is already generated', () => {
+        const semesters = getSemesters('SS20');
+        expect(semesters.filter((semester) => semester === 'SS20')).toHaveLength(1);
     });
 });
