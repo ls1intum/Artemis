@@ -13,17 +13,27 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 
+import de.tum.cit.aet.artemis.admin.domain.ApplicationAuditEvent;
 import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
+import de.tum.cit.aet.artemis.admin.domain.SecurityAuditEvent;
+import de.tum.cit.aet.artemis.admin.repository.ApplicationAuditEventRepository;
 import de.tum.cit.aet.artemis.admin.repository.PersistenceAuditEventRepository;
+import de.tum.cit.aet.artemis.admin.repository.SecurityAuditEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
 /**
- * Verifies against a real database which rows the retention queries select. The unit test covers the scheduling; this
- * covers the SQL, where the failure modes are silent: a row that is never selected is kept forever, and a row selected by
- * the wrong schedule is deleted years early. It also confirms that deleting a parent row removes its
- * {@code jhi_persistent_audit_evt_data} children, whose foreign key is {@code ON DELETE RESTRICT}.
+ * Verifies against a real database which rows each log's retention query selects. The unit test covers the scheduling
+ * against mocks; this covers the SQL, where the failure modes are silent: a row that is never selected is kept forever,
+ * and a row selected too eagerly is deleted years early.
+ * <p>
+ * Which log an event lands in is a separate question, covered by {@code AuditEventRoutingIntegrationTest} and
+ * {@code AuditEventTypeClassifierTest}. After the split the retention query needs no type filter, because each table
+ * holds exactly one retention class, which is the point of splitting them.
+ * <p>
+ * Deletion is asserted too: each log has an {@code @ElementCollection} child table, and the general log's foreign key is
+ * {@code ON DELETE RESTRICT}, so deleting has to go through the entity rather than a bulk {@code DELETE} on the parent.
  */
 class AuditEventRetentionIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
@@ -34,90 +44,113 @@ class AuditEventRetentionIntegrationTest extends AbstractSpringIntegrationIndepe
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
 
+    @Autowired
+    private SecurityAuditEventRepository securityAuditEventRepository;
+
+    @Autowired
+    private ApplicationAuditEventRepository applicationAuditEventRepository;
+
     @BeforeEach
     void removeExistingEvents() {
-        // Other tests share this table, and these assertions are about exactly which rows a query returns.
+        // Other tests share these tables, and these assertions are about exactly which rows a query returns.
         persistenceAuditEventRepository.deleteAll();
+        securityAuditEventRepository.deleteAll();
+        applicationAuditEventRepository.deleteAll();
     }
 
-    private PersistentAuditEvent addEvent(String type, Instant date) {
-        PersistentAuditEvent event = new PersistentAuditEvent();
-        event.setPrincipal(TEST_PREFIX + "-" + (type == null ? "null" : type));
-        event.setAuditEventDate(date);
-        event.setAuditEventType(type);
+    private static Map<String, String> someData() {
         Map<String, String> data = new HashMap<>();
         data.put("detail", "value");
-        event.setData(data);
+        return data;
+    }
+
+    private PersistentAuditEvent addGeneralEvent(String type, Instant date) {
+        PersistentAuditEvent event = new PersistentAuditEvent();
+        event.setPrincipal(TEST_PREFIX + "-general-" + date.toEpochMilli());
+        event.setAuditEventDate(date);
+        event.setAuditEventType(type);
+        event.setData(someData());
         return persistenceAuditEventRepository.save(event);
     }
 
+    private SecurityAuditEvent addSecurityEvent(String type, Instant date) {
+        SecurityAuditEvent event = new SecurityAuditEvent();
+        event.setPrincipal(TEST_PREFIX + "-security-" + date.toEpochMilli());
+        event.setAuditEventDate(date);
+        event.setAuditEventType(type);
+        event.setData(someData());
+        return securityAuditEventRepository.save(event);
+    }
+
+    private ApplicationAuditEvent addApplicationEvent(String type, Instant date) {
+        ApplicationAuditEvent event = new ApplicationAuditEvent();
+        event.setPrincipal(TEST_PREFIX + "-application-" + date.toEpochMilli());
+        event.setAuditEventDate(date);
+        event.setAuditEventType(type);
+        event.setData(someData());
+        return applicationAuditEventRepository.save(event);
+    }
+
     @Test
-    void theShortScheduleSelectsOnlyExpiredLoginRecords() {
+    void theGeneralLogSelectsOnlyItsExpiredRows() {
         Instant cutoff = Instant.now().minus(365, ChronoUnit.DAYS);
-        PersistentAuditEvent expiredLogin = addEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.minus(1, ChronoUnit.DAYS));
-        PersistentAuditEvent expiredFailure = addEvent(AuditEventConstants.AUTHENTICATION_FAILURE, cutoff.minus(1, ChronoUnit.DAYS));
-        addEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.plus(1, ChronoUnit.DAYS));
-        addEvent(Constants.DELETE_EXERCISE, cutoff.minus(1, ChronoUnit.DAYS));
+        PersistentAuditEvent expiredLogin = addGeneralEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.minus(1, ChronoUnit.DAYS));
+        PersistentAuditEvent expiredFailure = addGeneralEvent(AuditEventConstants.AUTHENTICATION_FAILURE, cutoff.minus(2, ChronoUnit.DAYS));
+        addGeneralEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.plus(1, ChronoUnit.DAYS));
+        // An equally old row in another log must not be picked up: it has its own, longer retention.
+        addApplicationEvent(Constants.DELETE_EXERCISE, cutoff.minus(1, ChronoUnit.DAYS));
 
-        List<Long> expired = persistenceAuditEventRepository.findExpiredIdsOfTypes(cutoff, AuditEventConstants.GENERAL_EVENT_TYPES, BATCH);
+        List<Long> expired = persistenceAuditEventRepository.findExpiredIds(cutoff, BATCH);
 
-        // Not the recent login, and not the action event: that one is on the long schedule and is not expired yet.
         assertThat(expired).containsExactlyInAnyOrder(expiredLogin.getId(), expiredFailure.getId());
     }
 
     @Test
-    void theLongScheduleSelectsEverythingThatIsNotALoginRecord() {
+    void theSecurityLogSelectsOnlyItsExpiredRows() {
         Instant cutoff = Instant.now().minus(1825, ChronoUnit.DAYS);
-        PersistentAuditEvent expiredAction = addEvent(Constants.DELETE_EXERCISE, cutoff.minus(1, ChronoUnit.DAYS));
-        addEvent(Constants.DELETE_EXERCISE, cutoff.plus(1, ChronoUnit.DAYS));
-        addEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.minus(1, ChronoUnit.DAYS));
+        SecurityAuditEvent expired = addSecurityEvent(AuditEventConstants.PASSWORD_RESET_COMPLETED, cutoff.minus(1, ChronoUnit.DAYS));
+        addSecurityEvent(AuditEventConstants.PASSWORD_RESET_COMPLETED, cutoff.plus(1, ChronoUnit.DAYS));
+        addGeneralEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.minus(1, ChronoUnit.DAYS));
 
-        List<Long> expired = persistenceAuditEventRepository.findExpiredIdsExcludingTypes(cutoff, AuditEventConstants.GENERAL_EVENT_TYPES, BATCH);
-
-        assertThat(expired).containsExactly(expiredAction.getId());
+        assertThat(securityAuditEventRepository.findExpiredIds(cutoff, BATCH)).containsExactly(expired.getId());
     }
 
     @Test
-    void anEventWithoutATypeIsStillPruned() {
-        // event_type is nullable, and "NOT IN (...)" is unknown rather than true for NULL, so a naive query would keep
-        // these rows forever.
+    void theApplicationLogSelectsOnlyItsExpiredRows() {
         Instant cutoff = Instant.now().minus(1825, ChronoUnit.DAYS);
-        PersistentAuditEvent typeless = addEvent(null, cutoff.minus(1, ChronoUnit.DAYS));
+        ApplicationAuditEvent expiredAction = addApplicationEvent(Constants.DELETE_EXERCISE, cutoff.minus(1, ChronoUnit.DAYS));
+        addApplicationEvent(Constants.DELETE_EXERCISE, cutoff.plus(1, ChronoUnit.DAYS));
+        addGeneralEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.minus(1, ChronoUnit.DAYS));
 
-        List<Long> expired = persistenceAuditEventRepository.findExpiredIdsExcludingTypes(cutoff, AuditEventConstants.GENERAL_EVENT_TYPES, BATCH);
-
-        assertThat(expired).containsExactly(typeless.getId());
-    }
-
-    @Test
-    void anEventTypeNobodyClassifiedGetsTheLongRetention() {
-        // The safe direction for a type added later: over-retained rather than dropped on the short schedule.
-        Instant shortCutoff = Instant.now().minus(365, ChronoUnit.DAYS);
-        PersistentAuditEvent unknown = addEvent("SOME_FUTURE_EVENT_NOBODY_CLASSIFIED", shortCutoff.minus(1, ChronoUnit.DAYS));
-
-        assertThat(persistenceAuditEventRepository.findExpiredIdsOfTypes(shortCutoff, AuditEventConstants.GENERAL_EVENT_TYPES, BATCH)).isEmpty();
-        assertThat(persistenceAuditEventRepository.findExpiredIdsExcludingTypes(shortCutoff, AuditEventConstants.GENERAL_EVENT_TYPES, BATCH)).containsExactly(unknown.getId());
+        assertThat(applicationAuditEventRepository.findExpiredIds(cutoff, BATCH)).containsExactly(expiredAction.getId());
     }
 
     @Test
     void expiredEventsAreReturnedOldestFirstSoRepeatedRunsMakeProgress() {
+        // The prune loop always asks for the first page, so without this ordering a large backlog could revisit the same
+        // rows instead of advancing through it.
         Instant cutoff = Instant.now().minus(365, ChronoUnit.DAYS);
-        PersistentAuditEvent newer = addEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.minus(1, ChronoUnit.DAYS));
-        PersistentAuditEvent oldest = addEvent(AuditEventConstants.AUTHENTICATION_FAILURE, cutoff.minus(400, ChronoUnit.DAYS));
+        PersistentAuditEvent newer = addGeneralEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, cutoff.minus(1, ChronoUnit.DAYS));
+        PersistentAuditEvent oldest = addGeneralEvent(AuditEventConstants.AUTHENTICATION_FAILURE, cutoff.minus(400, ChronoUnit.DAYS));
 
-        List<Long> expired = persistenceAuditEventRepository.findExpiredIdsOfTypes(cutoff, AuditEventConstants.GENERAL_EVENT_TYPES, BATCH);
-
-        assertThat(expired).containsExactly(oldest.getId(), newer.getId());
+        assertThat(persistenceAuditEventRepository.findExpiredIds(cutoff, BATCH)).containsExactly(oldest.getId(), newer.getId());
     }
 
     @Test
-    void deletingAnEventAlsoRemovesItsDataRows() {
-        // The child table's foreign key is ON DELETE RESTRICT, so deleting through the entity is what makes this work; a
-        // bulk DELETE on the parent table would be rejected by the database.
-        PersistentAuditEvent event = addEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, Instant.now().minus(400, ChronoUnit.DAYS));
+    void deletingAnEventFromEachLogAlsoRemovesItsDataRows() {
+        // The child tables' foreign keys make this the only working shape: deleting through the entity cascades to the
+        // data rows, whereas a bulk DELETE on the parent table would be rejected by the database.
+        Instant longExpired = Instant.now().minus(2000, ChronoUnit.DAYS);
+        PersistentAuditEvent general = addGeneralEvent(AuditEventConstants.AUTHENTICATION_SUCCESS, longExpired);
+        SecurityAuditEvent security = addSecurityEvent(AuditEventConstants.PASSWORD_RESET_COMPLETED, longExpired);
+        ApplicationAuditEvent application = addApplicationEvent(Constants.DELETE_EXERCISE, longExpired);
 
-        persistenceAuditEventRepository.deleteAllById(List.of(event.getId()));
+        persistenceAuditEventRepository.deleteAllById(List.of(general.getId()));
+        securityAuditEventRepository.deleteAllById(List.of(security.getId()));
+        applicationAuditEventRepository.deleteAllById(List.of(application.getId()));
 
-        assertThat(persistenceAuditEventRepository.findById(event.getId())).isEmpty();
+        assertThat(persistenceAuditEventRepository.findById(general.getId())).isEmpty();
+        assertThat(securityAuditEventRepository.findById(security.getId())).isEmpty();
+        assertThat(applicationAuditEventRepository.findById(application.getId())).isEmpty();
     }
 }

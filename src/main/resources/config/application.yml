@@ -163,6 +163,21 @@ artemis:
             default-limit: -1
             default-timeframe-hours: -1
 
+    # Deimos uses its own LLM config (not spring.ai.openai.*) to isolate student code from the shared Atlas/Hyperion endpoint
+    deimos:
+        enabled: false
+        executor:
+            core-pool-size: 2
+            max-pool-size: 4
+            queue-capacity: 25
+        llm:
+            base-url: https://gpu.aet.cit.tum.de
+            api-key: dummy
+            model: openai/gpt-oss-120b
+            # The SDK appends /chat/completions itself; this path is stripped down to the prefix (e.g. /api)
+            completions-path: /api/chat/completions
+            temperature: 0
+
     weaviate:
         enabled: false
 
@@ -282,6 +297,11 @@ spring: #disabled by default, you must enable it
             hibernate.order_updates: true
             hibernate.query.fail_on_pagination_over_collection_fetch: true  # prevents issues, see https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch
             hibernate.query.in_clause_parameter_padding: true
+            # Compiled HQL plans are expensive to build and Artemis has more distinct queries than the 2048 default
+            # holds, so plans were being evicted and recompiled under load. A heap histogram taken during a 2000
+            # student exam found 762k ANTLR parser objects live, which is the recompilation showing up as garbage.
+            hibernate.query.plan_cache_max_size: 4096
+            hibernate.query.plan_parameter_metadata_max_size: 256
             # Hibernate L2 cache is intentionally disabled cluster-wide. See documentation/docs/developer/guidelines/caching.mdx.
             # Spring @Cacheable continues to use HazelcastCacheManager directly, independent of L2.
             hibernate.cache.use_second_level_cache: false
@@ -307,9 +327,14 @@ spring: #disabled by default, you must enable it
         execution:
             thread-name-prefix: artemis-task-
             pool:
-                core-size: 2
+                # A ThreadPoolExecutor only creates a thread beyond the core size once the queue is full, so a large
+                # queue in front of a small core pool means the pool never grows: core-size 2 with a 10000 queue ran
+                # every @Async task in Artemis on two threads and let a 10000-deep backlog build before the third was
+                # created. Sizing the core pool for the work and keeping the queue short is the way round that
+                # actually uses the pool.
+                core-size: 16
                 max-size: 50
-                queue-capacity: 10000
+                queue-capacity: 500
         scheduling:
             thread-name-prefix: artemis-scheduling-
             pool:
@@ -419,10 +444,17 @@ jhipster:
     registry:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
     http:
-        cache: # Used by the CachingHttpHeadersFilter
-            # 7 days balances caching benefits with allowing bug fixes to propagate within a reasonable timeframe.
-            # Longer durations (e.g., years) make it difficult to push fixes to users who have cached broken responses.
+        cache:
+            # Used by StaticResourcesConfiguration for files under /public. Those keep their path when they change — a
+            # replaced logo or an edited about-us page is the same URL — so this bounds how long a correction takes to
+            # reach a browser that already has the old one. 7 days balances caching against that.
             timeToLiveInDays: 7
+            # Used by the CachingHttpHeadersFilter for the client bundle (*.js, *.css, /i18n/*). Those are versioned in
+            # their URL — a content hash for JavaScript and CSS, a build hash query parameter for translations — so a
+            # new build is a new URL and a cached response cannot go stale. Caching them longer costs nothing and
+            # spares the server a great deal of work at the start of a lecture or an exam, when a cohort opens the
+            # page at once.
+            versionedAssetsTimeToLiveInDays: 30
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600

@@ -318,7 +318,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@v1.2.0
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@ee1b52f07891ed489887681c09c52b4a83fa9fb2  # v1.2.0
     with:
       # Check out the exact commit the sha-<commit> tag names (not the mutable branch tip), so image
       # content and the tag stay pinned to the same commit. The `type=ref` tags come from the event

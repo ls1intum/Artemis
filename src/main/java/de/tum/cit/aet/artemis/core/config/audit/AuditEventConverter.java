@@ -15,7 +15,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
+import de.tum.cit.aet.artemis.admin.domain.PersistedAuditEvent;
 
 @Profile(PROFILE_CORE)
 @Component
@@ -23,29 +23,30 @@ import de.tum.cit.aet.artemis.admin.domain.PersistentAuditEvent;
 public class AuditEventConverter {
 
     /**
-     * Convert a list of {@link PersistentAuditEvent}s to a list of {@link AuditEvent}s.
+     * Convert a list of persisted audit events to a list of {@link AuditEvent}s. Accepts events from any of the three
+     * audit logs, since they all implement {@link PersistedAuditEvent}.
      *
      * @param persistentAuditEvents the list to convert.
      * @return the converted list.
      */
-    public List<AuditEvent> convertToAuditEvent(Iterable<PersistentAuditEvent> persistentAuditEvents) {
+    public List<AuditEvent> convertToAuditEvent(Iterable<? extends PersistedAuditEvent> persistentAuditEvents) {
         if (persistentAuditEvents == null) {
             return List.of();
         }
         List<AuditEvent> auditEvents = new ArrayList<>();
-        for (PersistentAuditEvent persistentAuditEvent : persistentAuditEvents) {
+        for (PersistedAuditEvent persistentAuditEvent : persistentAuditEvents) {
             auditEvents.add(convertToAuditEvent(persistentAuditEvent));
         }
         return auditEvents;
     }
 
     /**
-     * Convert a {@link PersistentAuditEvent} to an {@link AuditEvent}.
+     * Convert a persisted audit event from any of the three audit logs to an {@link AuditEvent}.
      *
      * @param persistentAuditEvent the event to convert.
      * @return the converted list.
      */
-    public AuditEvent convertToAuditEvent(PersistentAuditEvent persistentAuditEvent) {
+    public AuditEvent convertToAuditEvent(PersistedAuditEvent persistentAuditEvent) {
         if (persistentAuditEvent == null) {
             return null;
         }
