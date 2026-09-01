@@ -152,17 +152,17 @@
                     "runAgain": "Run again",
                     "openEditor": "Open code editor",
                     "openRun": "Open the generation view"
-                },
-                "jobs": {
-                    "label": "AI generation",
-                    "ariaLabel": "AI generation runs",
-                    "title": "AI generation runs",
-                    "empty": "No generation runs yet.",
-                    "dismiss": "Dismiss this run",
-                    "unseen": "{{count}} finished runs you have not opened",
-                    "loadFailed": "The generation runs could not be loaded.",
-                    "retry": "Try again"
                 }
+            },
+            "jobs": {
+                "label": "AI generation",
+                "ariaLabel": "AI generation runs",
+                "title": "AI generation runs",
+                "empty": "No generation runs yet.",
+                "dismiss": "Dismiss this run",
+                "unseen": "{{count}} finished runs you have not opened",
+                "loadFailed": "The generation runs could not be loaded.",
+                "retry": "Try again"
             },
             "generationActivity": {
                 "panelTitle": "AI activity",
@@ -220,16 +220,6 @@
                     "cancelled": "Not saved — cancelled",
                     "failed": "Not saved — failed",
                     "partial": "Not fully saved — manual review required"
-                },
-                "verdict": {
-                    "solutionPassedExpected": "Reference solution passes",
-                    "solutionFailed": "Reference solution fails",
-                    "templateFailedExpected": "Template fails tests as expected",
-                    "templatePassedUnexpected": "Template unexpectedly passes tests",
-                    "oneTest": "test",
-                    "tests": "tests",
-                    "consistencyChecksPassed": "Build and grading consistency checks passed",
-                    "consistencyChecksFailed": "Build or grading consistency checks failed"
                 },
                 "terminalStatus": {
                     "DONE": "Generation finished",

@@ -266,7 +266,8 @@ export class HyperionGenerationActivityComponent {
     readonly terminalMessage = computed(() => this.terminalEvent()?.message);
     readonly persistenceState = computed(() => {
         if (this.running()) {
-            return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.workingCopy', severity: 'warn' as const };
+            // A run that has not written anything yet is the healthy state, so it is stated, not warned about.
+            return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.workingCopy', severity: 'info' as const };
         }
         const terminal = this.terminalEvent();
         if (terminal?.type === 'DONE') {

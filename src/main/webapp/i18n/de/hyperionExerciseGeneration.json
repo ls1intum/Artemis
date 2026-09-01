@@ -152,17 +152,17 @@
                     "runAgain": "Erneut ausführen",
                     "openEditor": "Code-Editor öffnen",
                     "openRun": "Generierungsansicht öffnen"
-                },
-                "jobs": {
-                    "label": "KI-Generierung",
-                    "ariaLabel": "KI-Generierungsläufe",
-                    "title": "KI-Generierungsläufe",
-                    "empty": "Bisher keine Generierungsläufe.",
-                    "dismiss": "Diesen Lauf ausblenden",
-                    "unseen": "{{count}} abgeschlossene Läufe, die du noch nicht geöffnet hast",
-                    "loadFailed": "Die Generierungsläufe konnten nicht geladen werden.",
-                    "retry": "Erneut versuchen"
                 }
+            },
+            "jobs": {
+                "label": "KI-Generierung",
+                "ariaLabel": "KI-Generierungsläufe",
+                "title": "KI-Generierungsläufe",
+                "empty": "Bisher keine Generierungsläufe.",
+                "dismiss": "Diesen Lauf ausblenden",
+                "unseen": "{{count}} abgeschlossene Läufe, die du noch nicht geöffnet hast",
+                "loadFailed": "Die Generierungsläufe konnten nicht geladen werden.",
+                "retry": "Erneut versuchen"
             },
             "generationActivity": {
                 "panelTitle": "KI-Aktivität",
@@ -220,16 +220,6 @@
                     "cancelled": "Nicht gespeichert — abgebrochen",
                     "failed": "Nicht gespeichert — fehlgeschlagen",
                     "partial": "Nicht vollständig gespeichert — manuelle Prüfung erforderlich"
-                },
-                "verdict": {
-                    "solutionPassedExpected": "Musterlösung besteht",
-                    "solutionFailed": "Musterlösung besteht nicht",
-                    "templateFailedExpected": "Template scheitert an den Tests, wie erwartet",
-                    "templatePassedUnexpected": "Template besteht die Tests unerwartet",
-                    "oneTest": "Test",
-                    "tests": "Tests",
-                    "consistencyChecksPassed": "Prüfungen zu Build und Bewertung bestanden",
-                    "consistencyChecksFailed": "Prüfungen zu Build oder Bewertung fehlgeschlagen"
                 },
                 "terminalStatus": {
                     "DONE": "Generierung abgeschlossen",
