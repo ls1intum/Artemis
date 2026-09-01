@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationTimeouts;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.Phase;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
@@ -235,6 +236,7 @@ public class GenerationTaskService {
             deadlineFuture = scheduleDeadline(deadlineExceeded, event.deadlineAt());
             heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
+            emitter.phase(Phase.PREPARING, "Preparing an isolated workspace and build environment");
             // The run's own token bound, not the deployment default: a request that asked for less had exactly that much reserved at admission, so spending the deployment
             // default here would overshoot a reservation that other jobs are already being admitted against.
             long runTokenBudget = event.settings() == null ? maxTokensPerJob : event.settings().maxTokensPerJob();
@@ -321,7 +323,7 @@ public class GenerationTaskService {
                         // operations carry their own bounded timeouts, and ownership and draft-state checks still fence every mutation.
                         cancelScheduled(deadlineFuture);
                         deadlineFuture = null;
-                        emitter.progress("Checks passed. Saving the exercise.");
+                        emitter.phase(Phase.SAVING, "Checks passed. Saving the draft exercise.");
                         ProgrammingExercise exerciseToPersist;
                         GenerationPersistenceService.PersistResult persistResult;
                         try {

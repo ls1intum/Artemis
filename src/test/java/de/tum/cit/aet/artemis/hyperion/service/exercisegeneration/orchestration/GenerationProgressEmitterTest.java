@@ -38,6 +38,19 @@ class GenerationProgressEmitterTest {
     }
 
     @Test
+    void phaseProgress_isStructuredAndReplayable() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.phase(ExerciseGenerationEventDTO.Phase.VERIFYING, "Building both exercise variants");
+
+        assertThat(sent).singleElement().satisfies(event -> {
+            assertThat(event.phase()).isEqualTo(ExerciseGenerationEventDTO.Phase.VERIFYING);
+            assertThat(event.message()).isEqualTo("Building both exercise variants");
+        });
+        assertThat(recorded).singleElement().satisfies(entry -> assertThat(entry.event().phase()).isEqualTo(ExerciseGenerationEventDTO.Phase.VERIFYING));
+    }
+
+    @Test
     void progressThenMilestone_areSentInOrder() {
         GenerationProgressEmitter emitter = newEmitter();
 

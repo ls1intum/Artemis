@@ -31,6 +31,7 @@
                     tumUiTextarea
                     class="min-h-56 w-full resize-y"
                     rows="9"
+                    [attr.maxlength]="maximumBriefLength"
                     [ngModel]="brief()"
                     (ngModelChange)="brief.set($event)"
                     (blur)="briefTouched.set(true)"
@@ -49,7 +50,10 @@
                             </p>
                         }
                     </div>
-                    <span class="shrink-0 text-muted-color" aria-live="polite">{{ brief().trim().length }} / {{ minimumBriefLength }}</span>
+                    <span class="shrink-0 text-muted-color" aria-live="polite">
+                        {{ brief().trim().length | number }} / {{ maximumBriefLength | number }}
+                        {{ 'artemisApp.hyperion.wholeExerciseWizard.fields.characters' | artemisTranslate }}
+                    </span>
                 </div>
 
                 <details class="mt-4 rounded-lg border border-surface bg-surface-card p-4">
@@ -106,20 +110,79 @@
             </section>
         </div>
     } @else {
-        <div class="mx-auto max-w-4xl">
+        <div class="mx-auto max-w-4xl space-y-6">
             @if (startFailed()) {
                 <tum-ui-message severity="error" class="mb-5 block">
                     {{ 'artemisApp.hyperion.wholeExerciseWizard.startFailed' | artemisTranslate }}
                 </tum-ui-message>
             }
-            <div class="mb-5 flex items-center gap-3 rounded-lg border border-surface bg-surface-card p-4">
+            <div class="flex items-center gap-3 rounded-lg border border-surface bg-surface-card p-4">
                 <fa-icon [icon]="faKeyboard" class="text-xl text-primary" />
-                <div>
-                    <div class="font-semibold">{{ 'artemisApp.hyperion.wholeExerciseWizard.draftTitle' | artemisTranslate }}</div>
-                    <div class="text-sm text-muted-color">Java · {{ projectType() === ProjectType.PLAIN_MAVEN ? 'Maven' : 'Gradle' }}</div>
+                <div class="min-w-0 flex-1">
+                    <div class="truncate font-semibold">{{ createdExercise()?.title ?? suggestedTitle() }}</div>
+                    <div class="text-sm text-muted-color">Java · {{ projectType() === ProjectType.PLAIN_MAVEN ? 'Maven' : 'Gradle' }} · {{ difficulty() }}</div>
+                </div>
+                <div class="text-right text-sm">
+                    <div class="font-medium">{{ elapsedTime() }}</div>
+                    <div class="text-muted-color">{{ 'artemisApp.hyperion.wholeExerciseWizard.progress.elapsed' | artemisTranslate }}</div>
                 </div>
             </div>
-            <jhi-hyperion-generation-activity [exerciseId]="createdExercise()?.id" [startAllowed]="false" />
+
+            <section aria-labelledby="whole-generation-progress-title">
+                <div class="mb-4 flex items-end justify-between gap-4">
+                    <div>
+                        <h3 id="whole-generation-progress-title" class="m-0 text-lg font-semibold">
+                            {{ 'artemisApp.hyperion.wholeExerciseWizard.progress.title' | artemisTranslate }}
+                        </h3>
+                        <p class="mt-1 mb-0 text-sm text-muted-color">
+                            {{ 'artemisApp.hyperion.wholeExerciseWizard.progress.hint' | artemisTranslate }}
+                        </p>
+                    </div>
+                </div>
+                <ol class="m-0 list-none p-0" aria-labelledby="whole-generation-progress-title">
+                    @for (phase of phaseSteps(); track phase.key) {
+                        <li
+                            class="relative flex min-h-12 gap-3 border-l-2 px-4 pb-3"
+                            [class.border-primary]="phase.state === 'complete' || phase.state === 'current'"
+                            [class.border-surface]="phase.state === 'pending'"
+                            [attr.aria-current]="phase.state === 'current' ? 'step' : null"
+                        >
+                            <span class="-ml-[1.6rem] flex size-6 shrink-0 items-center justify-center rounded-full bg-surface-card">
+                                @if (phase.state === 'current') {
+                                    <fa-icon [icon]="faSpinner" animation="spin" class="text-primary" />
+                                } @else {
+                                    <fa-icon
+                                        [icon]="phase.state === 'complete' ? faCircleCheck : faCircle"
+                                        [class.text-primary]="phase.state === 'complete'"
+                                        [class.text-muted-color]="phase.state === 'pending'"
+                                    />
+                                }
+                            </span>
+                            <div>
+                                <div class="font-medium" [class.text-muted-color]="phase.state === 'pending'">
+                                    {{ 'artemisApp.hyperion.wholeExerciseWizard.progress.phases.' + phase.key | artemisTranslate }}
+                                </div>
+                                @if (phase.state === 'current' && currentDetail()) {
+                                    <p class="mt-1 mb-0 text-sm text-muted-color">{{ currentDetail() }}</p>
+                                }
+                            </div>
+                        </li>
+                    }
+                </ol>
+            </section>
+
+            <tum-ui-message severity="info">
+                {{ 'artemisApp.hyperion.wholeExerciseWizard.progress.persistenceHint' | artemisTranslate }}
+            </tum-ui-message>
+
+            <details class="rounded-lg border border-surface bg-surface-card">
+                <summary class="cursor-pointer px-4 py-3 font-medium">
+                    {{ 'artemisApp.hyperion.wholeExerciseWizard.progress.technicalDetails' | artemisTranslate }}
+                </summary>
+                <div class="border-t border-surface">
+                    <jhi-hyperion-generation-activity [exerciseId]="createdExercise()?.id" [startAllowed]="false" (generationCompleted)="onGenerationCompleted($event)" />
+                </div>
+            </details>
         </div>
     }
 
@@ -135,8 +198,13 @@
                 {{ 'artemisApp.hyperion.wholeExerciseWizard.actions.generate' | artemisTranslate }}
             </tum-ui-button>
         } @else {
+            @if (generationActivity()?.running() && generationActivity()?.cancellable()) {
+                <tum-ui-button severity="danger" variant="text" size="small" (clicked)="cancelGeneration()">
+                    {{ 'artemisApp.hyperion.generationActivity.cancel' | artemisTranslate }}
+                </tum-ui-button>
+            }
             <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">
-                {{ 'entity.action.close' | artemisTranslate }}
+                {{ 'artemisApp.hyperion.wholeExerciseWizard.actions.runInBackground' | artemisTranslate }}
             </tum-ui-button>
             <tum-ui-button severity="primary" size="small" [disabled]="!createdExercise()?.templateParticipation?.id" (clicked)="openEditor()">
                 {{ 'artemisApp.hyperion.wholeExerciseWizard.actions.openEditor' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ml-1" />

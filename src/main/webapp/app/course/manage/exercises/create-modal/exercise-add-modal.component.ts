@@ -17,6 +17,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { WholeExerciseGenerationWizardComponent } from 'app/hyperion/exercise-generation/create/whole-exercise-generation-wizard.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 export type AddModalMode = 'create' | 'import' | 'export' | 'unified';
 
@@ -81,6 +82,7 @@ export class ExerciseAddModalComponent {
     readonly visibleChange = output<boolean>();
     readonly groupCreate = output<void>();
     readonly exportRequested = output<void>();
+    readonly exerciseCreated = output<ProgrammingExercise>();
 
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);

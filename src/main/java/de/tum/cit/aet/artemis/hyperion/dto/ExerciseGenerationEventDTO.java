@@ -24,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "A progress event streamed to the instructor while an agentic whole-exercise generation or adaptation runs")
 public record ExerciseGenerationEventDTO(@Schema(description = "The event kind", requiredMode = Schema.RequiredMode.REQUIRED) Type type,
         @Schema(description = "Human-readable progress or result message") @Nullable String message,
+        @Schema(description = "Stable instructor-facing phase of the generation journey") @Nullable Phase phase,
         @Schema(description = "On a terminal DONE event, whether the run succeeded, needs review, or partially completed") @Nullable CompletionStatus completionStatus,
         @Schema(description = "On a terminal event, the structured verification verdict") @Nullable ExerciseGenerationVerdictDTO verdict,
         @Schema(description = "On a terminal event, whether the live exercise changed and open editors should refresh") @Nullable Boolean liveExerciseChanged,
@@ -39,6 +40,11 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     public enum Type {
         STARTED, PROGRESS, DONE, CANCELLED, ERROR
+    }
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    public enum Phase {
+        PREPARING, DESIGNING, SPECIFYING, AUTHORING, VERIFYING, REVIEWING, REPAIRING, SAVING
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
@@ -99,11 +105,15 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
     }
 
     public static ExerciseGenerationEventDTO of(Type type, @Nullable String message) {
-        return new ExerciseGenerationEventDTO(type, message, null, null, null, null, null, null, null, Instant.now());
+        return new ExerciseGenerationEventDTO(type, message, null, null, null, null, null, null, null, null, Instant.now());
+    }
+
+    public static ExerciseGenerationEventDTO phase(Phase phase, String message) {
+        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, phase, null, null, null, null, null, null, null, Instant.now());
     }
 
     public static ExerciseGenerationEventDTO repairRound(@Nullable String message, ExerciseGenerationRepairRoundDTO repairRound) {
-        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, null, null, null, null, null, null, repairRound, Instant.now());
+        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, Phase.REPAIRING, null, null, null, null, null, null, repairRound, Instant.now());
     }
 
     /**
@@ -116,8 +126,8 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
         if (terminationReason == null || terminationReason == this.terminationReason) {
             return this;
         }
-        return new ExerciseGenerationEventDTO(type, message, completionStatus, verdict, liveExerciseChanged, savedRepositoryCommits, savedExerciseVersionId, terminationReason,
-                repairRound, timestamp);
+        return new ExerciseGenerationEventDTO(type, message, phase, completionStatus, verdict, liveExerciseChanged, savedRepositoryCommits, savedExerciseVersionId,
+                terminationReason, repairRound, timestamp);
     }
 
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict) {
@@ -136,7 +146,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
 
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict,
             boolean liveExerciseChanged, @Nullable Map<String, String> savedRepositoryCommits, @Nullable Long savedExerciseVersionId) {
-        return new ExerciseGenerationEventDTO(Type.DONE, message, completionStatus, verdict, liveExerciseChanged,
+        return new ExerciseGenerationEventDTO(Type.DONE, message, Phase.SAVING, completionStatus, verdict, liveExerciseChanged,
                 savedRepositoryCommits == null ? null : Map.copyOf(savedRepositoryCommits), savedExerciseVersionId, null, null, Instant.now());
     }
 }

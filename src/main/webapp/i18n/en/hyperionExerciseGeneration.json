@@ -10,7 +10,8 @@
                     "difficulty": "Difficulty",
                     "brief": "What should students learn and build?",
                     "briefHint": "Describe the learning goal, expected behavior, and important constraints. You can leave API names, edge cases, and test design to Artemis unless they matter for your course.",
-                    "briefError": "Add a little more detail so Artemis has enough context to design a coherent exercise."
+                    "briefError": "Add a little more detail so Artemis has enough context to design a coherent exercise.",
+                    "characters": "characters"
                 },
                 "example": {
                     "title": "Show an example",
@@ -26,10 +27,26 @@
                 },
                 "actions": {
                     "generate": "Generate draft exercise",
-                    "openEditor": "Open code editor"
+                    "openEditor": "Open code editor",
+                    "runInBackground": "Run in background"
                 },
                 "startFailed": "The exercise was provisioned, but generation could not be started. Open the created exercise to retry or remove it.",
-                "setupFailed": "Artemis could not prepare the draft exercise. Your description is still here, so you can try again."
+                "setupFailed": "Artemis could not prepare the draft exercise. Your description is still here, so you can try again.",
+                "progress": {
+                    "title": "Generation progress",
+                    "hint": "You can leave this window open or continue working in the background. Progress is restored when you return.",
+                    "elapsed": "elapsed",
+                    "persistenceHint": "Artemis is working in an isolated copy. The exercise files are saved only after the solution passes and the starter code fails the intended tests.",
+                    "technicalDetails": "Technical activity",
+                    "phases": {
+                        "prepare": "Prepare workspace",
+                        "design": "Design the exercise",
+                        "author": "Create exercise files",
+                        "verify": "Build and grade",
+                        "review": "Review and improve quality",
+                        "save": "Save draft"
+                    }
+                }
             },
             "generationActivity": {
                 "panelTitle": "AI activity",

@@ -26,6 +26,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
 
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.Phase;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -330,6 +331,7 @@ class GenerationAttemptLoop {
             }
             // Snapshot the approved SPEC.md because each verification restore resets and must re-seed the tmpfs workspace.
             String specDocumentSnapshot = GenerationOrchestrationService.readSpecDocument(sandbox, sessionId);
+            progress.phase(Phase.VERIFYING, "Building the solution and starter code against the generated tests");
             verification = verifyCandidate(artifacts, specDocumentSnapshot);
             emit(verification.report());
             if (!verification.mechanicallyVerified() && artifacts.extractionFailed().isEmpty()) {
@@ -344,6 +346,7 @@ class GenerationAttemptLoop {
 
             // Reviewing a candidate that cannot build or grade would spend provider quota on findings against artifacts the next attempt must replace anyway.
             if (verification.mechanicallyVerified()) {
+                progress.phase(Phase.REVIEWING, "Reviewing learning-goal coverage and testing deliberately broken solutions");
                 GenerationOutcome cancelledDuringReview = reviewCandidate(attempt, artifacts, specDocumentSnapshot);
                 if (cancelledDuringReview != null) {
                     return cancelledDuringReview;

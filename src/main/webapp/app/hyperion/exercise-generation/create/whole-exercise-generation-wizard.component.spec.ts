@@ -65,7 +65,7 @@ describe('WholeExerciseGenerationWizardComponent', () => {
 
         expect(setup).toHaveBeenCalledWith(
             expect.objectContaining({
-                title: 'Generating exercise',
+                title: 'New Java programming exercise',
                 shortName: expect.stringMatching(/^gen[a-z0-9]+$/),
                 problemStatement: '',
                 projectType,
@@ -79,6 +79,23 @@ describe('WholeExerciseGenerationWizardComponent', () => {
         expect(dayjs(provisioned.releaseDate).isAfter(dayjs().add(11, 'month'))).toBe(true);
         expect(generate).toHaveBeenCalledWith(7, { mode: 'GENERATE', prompt: component.brief() });
         expect(component.step()).toBe('generating');
+    });
+
+    it('accepts realistic long briefs up to the server limit and labels the actual maximum', () => {
+        component.brief.set('x'.repeat(8000));
+        fixture.detectChanges();
+
+        expect(component.canGenerate()).toBe(true);
+        expect(document.querySelector<HTMLTextAreaElement>('#generation-brief')?.maxLength).toBe(8000);
+
+        component.brief.set('x'.repeat(8001));
+        expect(component.canGenerate()).toBe(false);
+    });
+
+    it('derives a useful working title from a labelled course topic', () => {
+        component.brief.set('Create an exercise for week three.\nTopic of the week: conditional control flow.\nStudents should practise inclusive boundaries.');
+
+        expect(component.suggestedTitle()).toBe('Conditional control flow exercise');
     });
 
     it('does not submit twice while provisioning', () => {

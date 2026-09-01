@@ -10,7 +10,8 @@
                     "difficulty": "Schwierigkeit",
                     "brief": "Was sollen Studierende lernen und entwickeln?",
                     "briefHint": "Beschreibe Lernziel, erwartetes Verhalten und wichtige Vorgaben. API-Namen, Randfälle und Testentwurf kannst du Artemis überlassen, sofern sie für deinen Kurs nicht wesentlich sind.",
-                    "briefError": "Ergänze etwas mehr Detail, damit Artemis eine zusammenhängende Aufgabe entwerfen kann."
+                    "briefError": "Ergänze etwas mehr Detail, damit Artemis eine zusammenhängende Aufgabe entwerfen kann.",
+                    "characters": "Zeichen"
                 },
                 "example": {
                     "title": "Beispiel anzeigen",
@@ -26,10 +27,26 @@
                 },
                 "actions": {
                     "generate": "Aufgabenentwurf generieren",
-                    "openEditor": "Code-Editor öffnen"
+                    "openEditor": "Code-Editor öffnen",
+                    "runInBackground": "Im Hintergrund fortfahren"
                 },
                 "startFailed": "Die Aufgabe wurde angelegt, aber die Generierung konnte nicht gestartet werden. Öffne die erstellte Aufgabe, um es erneut zu versuchen oder sie zu entfernen.",
-                "setupFailed": "Artemis konnte den Aufgabenentwurf nicht vorbereiten. Deine Beschreibung bleibt erhalten, sodass du es erneut versuchen kannst."
+                "setupFailed": "Artemis konnte den Aufgabenentwurf nicht vorbereiten. Deine Beschreibung bleibt erhalten, sodass du es erneut versuchen kannst.",
+                "progress": {
+                    "title": "Generierungsfortschritt",
+                    "hint": "Sie können dieses Fenster geöffnet lassen oder im Hintergrund weiterarbeiten. Der Fortschritt wird beim Zurückkehren wiederhergestellt.",
+                    "elapsed": "vergangen",
+                    "persistenceHint": "Artemis arbeitet in einer isolierten Kopie. Die Übungsdateien werden erst gespeichert, wenn die Musterlösung besteht und der Startcode die vorgesehenen Tests nicht besteht.",
+                    "technicalDetails": "Technische Aktivität",
+                    "phases": {
+                        "prepare": "Arbeitsbereich vorbereiten",
+                        "design": "Übung entwerfen",
+                        "author": "Übungsdateien erstellen",
+                        "verify": "Bauen und bewerten",
+                        "review": "Qualität prüfen und verbessern",
+                        "save": "Entwurf speichern"
+                    }
+                }
             },
             "generationActivity": {
                 "panelTitle": "KI-Aktivität",

@@ -147,6 +147,8 @@ export class HyperionGenerationActivityComponent {
             .reverse(),
     );
     readonly currentProgress = computed(() => this.recentEvents()[0]);
+    readonly currentPhase = computed(() => this.events().findLast((event) => event.phase)?.phase);
+    readonly startedAt = computed(() => this.events().find((event) => event.type === 'STARTED')?.timestamp);
     readonly previousProgress = computed(() => this.recentEvents().slice(1));
     readonly hasDetails = computed(() => this.fileChanges().length > 0 || this.previousProgress().length > 0);
     readonly detailsLabelKey = computed(() => {

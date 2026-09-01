@@ -99,4 +99,5 @@
     [courseId]="courseId()"
     (visibleChange)="closeProgrammingGeneration()"
     (backRequested)="backToGenerationTypes()"
+    (exerciseCreated)="exerciseCreated.emit($event)"
 />

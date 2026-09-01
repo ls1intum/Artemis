@@ -19,6 +19,8 @@ export interface ExerciseGenerationEvent {
     type: ExerciseGenerationEventTypeEnum;
     /** Human-readable progress or result message */
     message?: string;
+    /** Stable instructor-facing phase of the generation journey */
+    phase?: ExerciseGenerationEventPhaseEnum;
     /** On a terminal DONE event, whether the run succeeded, needs review, or partially completed */
     completionStatus?: ExerciseGenerationEventCompletionStatusEnum;
     /** On a terminal event, the structured verification verdict */
@@ -48,6 +50,21 @@ export const ExerciseGenerationEventTypeEnum = {
 } as const;
 
 export const ExerciseGenerationEventTypeEnumValues = ['STARTED', 'PROGRESS', 'DONE', 'CANCELLED', 'ERROR'] as const;
+
+export type ExerciseGenerationEventPhaseEnum = 'PREPARING' | 'DESIGNING' | 'SPECIFYING' | 'AUTHORING' | 'VERIFYING' | 'REVIEWING' | 'REPAIRING' | 'SAVING';
+
+export const ExerciseGenerationEventPhaseEnum = {
+    Preparing: 'PREPARING' as const,
+    Designing: 'DESIGNING' as const,
+    Specifying: 'SPECIFYING' as const,
+    Authoring: 'AUTHORING' as const,
+    Verifying: 'VERIFYING' as const,
+    Reviewing: 'REVIEWING' as const,
+    Repairing: 'REPAIRING' as const,
+    Saving: 'SAVING' as const,
+} as const;
+
+export const ExerciseGenerationEventPhaseEnumValues = ['PREPARING', 'DESIGNING', 'SPECIFYING', 'AUTHORING', 'VERIFYING', 'REVIEWING', 'REPAIRING', 'SAVING'] as const;
 
 export type ExerciseGenerationEventCompletionStatusEnum = 'SUCCESS' | 'NEEDS_REVIEW' | 'PARTIAL';
 

@@ -4,6 +4,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.Phase;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 
 /**
@@ -33,6 +34,11 @@ class GenerationProgressEmitter implements GenerationProgressSink {
     @Override
     public void progress(String message, ExerciseGenerationRepairRoundDTO repairRound) {
         emit(ExerciseGenerationEventDTO.repairRound(message, repairRound));
+    }
+
+    @Override
+    public void phase(Phase phase, String message) {
+        emit(ExerciseGenerationEventDTO.phase(phase, message));
     }
 
     private void emit(ExerciseGenerationEventDTO event) {
