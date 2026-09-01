@@ -103,6 +103,8 @@ public class SecurityConfiguration {
      */
     private final long maxSessionLifetimeInSeconds;
 
+    private final boolean isPasskeyRequiredForAdministratorFeatures;
+
     private final PasswordService passwordService;
 
     private final TokenProvider tokenProvider;
@@ -131,7 +133,8 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
             PasswordService passwordService, TokenProvider tokenProvider, JWTCookieService jwtCookieService, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds) {
+            ModuleFeatureService moduleFeatureService, @Value("${artemis.user-management.max-session-lifetime-in-seconds:2592000}") long maxSessionLifetimeInSeconds,
+            @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
@@ -141,6 +144,7 @@ public class SecurityConfiguration {
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.moduleFeatureService = moduleFeatureService;
         this.maxSessionLifetimeInSeconds = requireUsableSessionLifetime(maxSessionLifetimeInSeconds);
+        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
     }
 
     /**
@@ -420,7 +424,8 @@ public class SecurityConfiguration {
      * @return JWTConfigurer configured with a token provider that generates and validates JWT tokens.
      */
     private JWTConfigurer securityConfigurerAdapter() {
-        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds);
+        return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds,
+                isPasskeyRequiredForAdministratorFeatures);
     }
 
 }

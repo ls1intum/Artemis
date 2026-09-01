@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -37,14 +36,11 @@ class ElevatedAccessServiceTest {
     @Mock
     private PasskeyAuthenticationService passkeyAuthenticationService;
 
-    @Mock
-    private ObjectProvider<PasskeyAuthenticationService> passkeyAuthenticationServiceProvider;
-
     private ElevatedAccessService elevatedAccessService;
 
     @BeforeEach
     void setUp() {
-        elevatedAccessService = new ElevatedAccessService(userRepository, passkeyAuthenticationServiceProvider);
+        elevatedAccessService = new ElevatedAccessService(userRepository, passkeyAuthenticationService);
     }
 
     @AfterEach
@@ -57,7 +53,6 @@ class ElevatedAccessServiceTest {
     void shouldEnableElevationForActiveAdminWithApprovedPasskey() {
         authenticate("admin", Role.ADMIN);
         when(userRepository.isAdmin("admin")).thenReturn(true);
-        when(passkeyAuthenticationServiceProvider.getObject()).thenReturn(passkeyAuthenticationService);
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
         assertThat(elevatedAccessService.isAdminElevationActive()).isTrue();
@@ -67,7 +62,6 @@ class ElevatedAccessServiceTest {
     void shouldNotEnableElevationForPasswordAuthenticatedAdmin() {
         authenticate("admin", Role.ADMIN);
         when(userRepository.isAdmin("admin")).thenReturn(true);
-        when(passkeyAuthenticationServiceProvider.getObject()).thenReturn(passkeyAuthenticationService);
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey())
                 .thenThrow(new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY));
 
@@ -75,11 +69,22 @@ class ElevatedAccessServiceTest {
     }
 
     @Test
+    void shouldKeepPersistedAdministratorClassificationSeparateFromRequestElevation() {
+        authenticate("admin");
+        when(userRepository.isAdmin("admin")).thenReturn(true);
+
+        assertThat(elevatedAccessService.isCurrentUserAdministrator()).isTrue();
+        assertThat(elevatedAccessService.isAdminElevationActive()).isFalse();
+        verify(userRepository, times(1)).isAdmin("admin");
+        verifyNoInteractions(passkeyAuthenticationService);
+    }
+
+    @Test
     void shouldNotCheckPasskeyForNonAdmin() {
         authenticate("instructor", Role.INSTRUCTOR);
 
         assertThat(elevatedAccessService.isAdminElevationActive()).isFalse();
-        verifyNoInteractions(userRepository, passkeyAuthenticationServiceProvider, passkeyAuthenticationService);
+        verifyNoInteractions(userRepository, passkeyAuthenticationService);
     }
 
     @Test
@@ -88,7 +93,7 @@ class ElevatedAccessServiceTest {
         when(userRepository.isAdmin("admin")).thenReturn(false);
 
         assertThat(elevatedAccessService.isAdminElevationActive()).isFalse();
-        verifyNoInteractions(passkeyAuthenticationServiceProvider, passkeyAuthenticationService);
+        verifyNoInteractions(passkeyAuthenticationService);
     }
 
     @Test
@@ -96,14 +101,13 @@ class ElevatedAccessServiceTest {
         authenticate("admin", Role.ADMIN, Role.INSTRUCTOR);
 
         assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.INSTRUCTOR)).isTrue();
-        verifyNoInteractions(userRepository, passkeyAuthenticationServiceProvider, passkeyAuthenticationService);
+        verifyNoInteractions(userRepository, passkeyAuthenticationService);
     }
 
     @Test
     void shouldNotTreatAdminAuthorityAsInstructorWithoutElevation() {
         authenticate("admin", Role.ADMIN);
         when(userRepository.isAdmin("admin")).thenReturn(true);
-        when(passkeyAuthenticationServiceProvider.getObject()).thenReturn(passkeyAuthenticationService);
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey())
                 .thenThrow(new PasskeyAuthenticationException(PasskeyAuthenticationException.PasskeyAuthenticationFailureReason.NOT_AUTHENTICATED_WITH_PASSKEY));
 
@@ -116,7 +120,7 @@ class ElevatedAccessServiceTest {
 
         assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.STUDENT)).isTrue();
         verify(userRepository, never()).isAdmin("admin");
-        verifyNoInteractions(passkeyAuthenticationServiceProvider, passkeyAuthenticationService);
+        verifyNoInteractions(passkeyAuthenticationService);
     }
 
     @Test
@@ -126,7 +130,7 @@ class ElevatedAccessServiceTest {
         assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.TEACHING_ASSISTANT)).isTrue();
         assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.EDITOR)).isTrue();
         assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.INSTRUCTOR)).isFalse();
-        verifyNoInteractions(userRepository, passkeyAuthenticationServiceProvider, passkeyAuthenticationService);
+        verifyNoInteractions(userRepository, passkeyAuthenticationService);
     }
 
     @Test
@@ -134,23 +138,23 @@ class ElevatedAccessServiceTest {
         authenticate("admin", Role.ADMIN);
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(new MockHttpServletRequest()));
         when(userRepository.isAdmin("admin")).thenReturn(true);
-        when(passkeyAuthenticationServiceProvider.getObject()).thenReturn(passkeyAuthenticationService);
         when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
         assertThat(elevatedAccessService.isAdminElevationActive()).isTrue();
         assertThat(elevatedAccessService.isAdminElevationActive()).isTrue();
         verify(userRepository, times(1)).isAdmin("admin");
-        verify(passkeyAuthenticationServiceProvider, times(1)).getObject();
         verify(passkeyAuthenticationService, times(1)).isAuthenticatedWithSuperAdminApprovedPasskey();
     }
 
     @Test
     void shouldRequirePersistedSuperAdminStatusForSuperAdminRole() {
         authenticate("superadmin", Role.SUPER_ADMIN);
-        when(userRepository.isSuperAdmin("superadmin")).thenReturn(false);
+        when(userRepository.isAdmin("superadmin")).thenReturn(true);
+        when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
         assertThat(elevatedAccessService.hasAtLeastRoleOrAdminAccess(Role.SUPER_ADMIN)).isFalse();
-        verifyNoInteractions(passkeyAuthenticationServiceProvider, passkeyAuthenticationService);
+        verify(userRepository).isSuperAdmin("superadmin");
+        verify(passkeyAuthenticationService).isAuthenticatedWithSuperAdminApprovedPasskey();
     }
 
     private void authenticate(String login, Role... roles) {

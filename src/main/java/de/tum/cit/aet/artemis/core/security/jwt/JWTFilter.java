@@ -32,12 +32,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.PasskeyTokenRenewalService;
 import io.jsonwebtoken.Claims;
 
@@ -80,13 +82,47 @@ public class JWTFilter extends GenericFilterBean {
 
     private final long tokenValidityInSecondsForPasskey;
 
+    private final boolean isPasskeyRequiredForAdministratorFeatures;
+
     public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            long maxSessionLifetimeInSeconds) {
+            long maxSessionLifetimeInSeconds, boolean isPasskeyRequiredForAdministratorFeatures) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
+        this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
+    }
+
+    /**
+     * Removes only the global administrator override when the current JWT does not prove the configured passkey
+     * requirement. Explicitly assigned ordinary authorities remain available, so an administrator can continue using the
+     * application with their normal role. The persisted administrator status is deliberately not checked here: ordinary
+     * users must not incur a database query in the authentication filter, while authorization services already verify it
+     * through their existing {@code UserRepository} dependency when the override is requested.
+     */
+    private Authentication restrictAdministratorAuthorities(Authentication authentication) {
+        if (!isPasskeyRequiredForAdministratorFeatures) {
+            return authentication;
+        }
+
+        boolean hasAdministratorAuthority = authentication.getAuthorities().stream()
+                .anyMatch(authority -> Role.ADMIN.getAuthority().equals(authority.getAuthority()) || Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority()));
+        if (!hasAdministratorAuthority) {
+            return authentication;
+        }
+
+        boolean hasApprovedPasskey = authentication.getDetails() instanceof Map<?, ?> details && Boolean.TRUE.equals(details.get(TokenProvider.IS_AUTHENTICATED_WITH_PASSKEY))
+                && Boolean.TRUE.equals(details.get(TokenProvider.IS_PASSKEY_SUPER_ADMIN_APPROVED));
+        if (hasApprovedPasskey) {
+            return authentication;
+        }
+
+        var ordinaryAuthorities = authentication.getAuthorities().stream()
+                .filter(authority -> !Role.ADMIN.getAuthority().equals(authority.getAuthority()) && !Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority())).toList();
+        var restrictedAuthentication = new UsernamePasswordAuthenticationToken(authentication.getPrincipal(), authentication.getCredentials(), ordinaryAuthorities);
+        restrictedAuthentication.setDetails(authentication.getDetails());
+        return restrictedAuthentication;
     }
 
     /**
@@ -297,7 +333,7 @@ public class JWTFilter extends GenericFilterBean {
 
             // Set the security context if authentication succeeded
             if (authentication != null) {
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(restrictAdministratorAuthorities(authentication));
             }
         }
 

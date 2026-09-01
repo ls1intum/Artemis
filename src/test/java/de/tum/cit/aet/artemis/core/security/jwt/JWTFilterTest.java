@@ -25,6 +25,8 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -78,7 +80,7 @@ class JWTFilterTest {
         when(passkeyTokenRenewalService.mayExtendPasskeySession(any())).thenReturn(true);
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
 
-        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS);
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, false);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
@@ -129,6 +131,72 @@ class JWTFilterTest {
         jwtFilter.doFilter(request, response, filterChain);
         assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("test-user");
+    }
+
+    @Test
+    void passwordAuthenticationKeepsOrdinaryRolesButNotAdministratorAccessWhenPasskeyIsRequired() throws Exception {
+        var authentication = new UsernamePasswordAuthenticationToken("admin", "password",
+                List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority()), new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority())));
+        String jwt = tokenProvider.createToken(authentication, false);
+
+        Authentication filteredAuthentication = filterWithAdministratorPasskeyRequirement(jwt, true);
+
+        assertThat(filteredAuthentication).isNotNull();
+        assertThat(filteredAuthentication.isAuthenticated()).isTrue();
+        assertThat(filteredAuthentication.getName()).isEqualTo("admin");
+        assertThat(filteredAuthentication.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly(Role.INSTRUCTOR.getAuthority());
+    }
+
+    @Test
+    void unapprovedPasskeyAuthenticationDoesNotGrantAdministratorAccess() throws Exception {
+        var authentication = new UsernamePasswordAuthenticationToken("admin", "password", List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority())));
+        String jwt = tokenProvider.createToken(authentication, new Date(), new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS), null, true, null, false, false);
+
+        Authentication filteredAuthentication = filterWithAdministratorPasskeyRequirement(jwt, true);
+
+        assertThat(filteredAuthentication).isNotNull();
+        assertThat(filteredAuthentication.isAuthenticated()).isTrue();
+        assertThat(filteredAuthentication.getAuthorities()).isEmpty();
+    }
+
+    @Test
+    void approvedPasskeyAuthenticationKeepsAdministratorAndSuperAdministratorAccess() throws Exception {
+        var authentication = new UsernamePasswordAuthenticationToken("super-admin", "password",
+                List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority()), new SimpleGrantedAuthority(Role.SUPER_ADMIN.getAuthority())));
+        String jwt = tokenProvider.createToken(authentication, new Date(), new Date(System.currentTimeMillis() + TOKEN_VALIDITY_IN_MILLISECONDS), null, true, null, true, false);
+
+        Authentication filteredAuthentication = filterWithAdministratorPasskeyRequirement(jwt, true);
+
+        assertThat(filteredAuthentication).isNotNull();
+        assertThat(filteredAuthentication.isAuthenticated()).isTrue();
+        assertThat(filteredAuthentication.getName()).isEqualTo("super-admin");
+        assertThat(filteredAuthentication.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactlyInAnyOrder(Role.ADMIN.getAuthority(),
+                Role.SUPER_ADMIN.getAuthority());
+    }
+
+    @Test
+    void passwordAuthenticationKeepsAdministratorAccessWhenPasskeyRequirementIsDisabled() throws Exception {
+        var authentication = new UsernamePasswordAuthenticationToken("admin", "password", List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority())));
+        String jwt = tokenProvider.createToken(authentication, false);
+
+        Authentication filteredAuthentication = filterWithAdministratorPasskeyRequirement(jwt, false);
+
+        assertThat(filteredAuthentication).isNotNull();
+        assertThat(filteredAuthentication.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly(Role.ADMIN.getAuthority());
+    }
+
+    private Authentication filterWithAdministratorPasskeyRequirement(String jwt, boolean passkeyRequired) throws Exception {
+        SecurityContextHolder.clearContext();
+        JWTFilter filter = new JWTFilter(tokenProvider, jwtCookieServiceMock, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, passkeyRequired);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + jwt);
+        request.setRequestURI("/api/core/test");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        return SecurityContextHolder.getContext().getAuthentication();
     }
 
     @Test

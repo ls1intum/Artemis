@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -52,14 +51,10 @@ public class AuthorizationCheckService {
 
     private final TeamRepository teamRepository;
 
-    private final ObjectProvider<ElevatedAccessService> elevatedAccessServiceProvider;
-
-    public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository,
-            ObjectProvider<ElevatedAccessService> elevatedAccessServiceProvider) {
+    public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository) {
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.teamRepository = teamRepository;
-        this.elevatedAccessServiceProvider = elevatedAccessServiceProvider;
     }
 
     // Adaptive: if the caller pre-loaded course roles (e.g. dashboard endpoints that call
@@ -699,9 +694,13 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isCurrentUserAdminAccessEnabled() {
-        // AuthorizationCheckService is also needed during application startup, e.g. by the WebSocket configuration.
-        // Resolve elevation support only when a request actually needs the administrator override.
-        return elevatedAccessServiceProvider.getObject().isAdminElevationActive();
+        // JWTFilter exposes administrator authorities only when the request satisfies the configured passkey requirement.
+        // Checking the authority first preserves the zero-query fast path for ordinary users. The repository predicate then
+        // rejects stale JWTs after an administrator was deactivated, deleted, or had the role revoked.
+        if (!SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority())) {
+            return false;
+        }
+        return SecurityUtils.getCurrentUserLogin().filter(userRepository::isAdmin).isPresent();
     }
 
     /**

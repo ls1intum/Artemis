@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.CheckReturnValue;
@@ -34,11 +33,11 @@ public class ElevatedAccessService {
 
     private final UserRepository userRepository;
 
-    private final ObjectProvider<PasskeyAuthenticationService> passkeyAuthenticationServiceProvider;
+    private final PasskeyAuthenticationService passkeyAuthenticationService;
 
-    public ElevatedAccessService(UserRepository userRepository, ObjectProvider<PasskeyAuthenticationService> passkeyAuthenticationServiceProvider) {
+    public ElevatedAccessService(UserRepository userRepository, PasskeyAuthenticationService passkeyAuthenticationService) {
         this.userRepository = userRepository;
-        this.passkeyAuthenticationServiceProvider = passkeyAuthenticationServiceProvider;
+        this.passkeyAuthenticationService = passkeyAuthenticationService;
     }
 
     /**
@@ -46,9 +45,6 @@ public class ElevatedAccessService {
      */
     @CheckReturnValue
     public boolean isCurrentUserAdministrator() {
-        if (!SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority())) {
-            return false;
-        }
         return SecurityUtils.getCurrentUserLogin().filter(userRepository::isAdmin).isPresent();
     }
 
@@ -57,9 +53,6 @@ public class ElevatedAccessService {
      */
     @CheckReturnValue
     public boolean isCurrentUserSuperAdministrator() {
-        if (!SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.SUPER_ADMIN.getAuthority())) {
-            return false;
-        }
         return SecurityUtils.getCurrentUserLogin().filter(userRepository::isSuperAdmin).isPresent();
     }
 
@@ -84,14 +77,18 @@ public class ElevatedAccessService {
     }
 
     private boolean computeAdminElevation() {
+        // JWTFilter removes these authorities when the request does not satisfy the configured passkey requirement. This
+        // check also preserves the zero-query fast path for every ordinary request.
+        if (!SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.ADMIN.getAuthority(), Role.SUPER_ADMIN.getAuthority())) {
+            return false;
+        }
         if (!isCurrentUserAdministrator()) {
             return false;
         }
         try {
-            // Resolve the passkey service only for an administrator who actually requests elevated access. Besides
-            // avoiding work for ordinary users, this keeps the passkey configuration out of the application startup
-            // dependency chain.
-            return passkeyAuthenticationServiceProvider.getObject().isAuthenticatedWithSuperAdminApprovedPasskey();
+            // Ordinary users return above without invoking passkey verification. Administrators reach this check only when
+            // code explicitly requests the global override.
+            return passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey();
         }
         catch (PasskeyAuthenticationException ignored) {
             return false;
@@ -115,7 +112,7 @@ public class ElevatedAccessService {
     @CheckReturnValue
     public boolean hasAtLeastRoleOrAdminAccess(Role requiredRole) {
         return switch (requiredRole) {
-            case SUPER_ADMIN -> isCurrentUserSuperAdministrator() && isAdminElevationActive();
+            case SUPER_ADMIN -> isAdminElevationActive() && isCurrentUserSuperAdministrator();
             case ADMIN -> isAdminElevationActive();
             case INSTRUCTOR -> SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.INSTRUCTOR.getAuthority()) || isAdminElevationActive();
             case EDITOR -> SecurityUtils.hasCurrentUserAnyOfAuthorities(Role.INSTRUCTOR.getAuthority(), Role.EDITOR.getAuthority()) || isAdminElevationActive();

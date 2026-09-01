@@ -54,7 +54,7 @@ class SecurityConfigurationTest {
      */
     private SecurityConfiguration createSecurityConfiguration(long maxSessionLifetimeInSeconds) {
         return new SecurityConfiguration(mock(CorsFilter.class), Optional.empty(), Optional.empty(), mock(PasswordService.class), mock(TokenProvider.class),
-                mock(JWTCookieService.class), mock(PasskeyTokenRenewalService.class), moduleFeatureService, maxSessionLifetimeInSeconds);
+                mock(JWTCookieService.class), mock(PasskeyTokenRenewalService.class), moduleFeatureService, maxSessionLifetimeInSeconds, false);
     }
 
     @Test

@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -12,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -39,12 +40,6 @@ class AuthorizationCheckServiceAdminElevationTest {
     @Mock
     private TeamRepository teamRepository;
 
-    @Mock
-    private ElevatedAccessService elevatedAccessService;
-
-    @Mock
-    private ObjectProvider<ElevatedAccessService> elevatedAccessServiceProvider;
-
     private AuthorizationCheckService authorizationCheckService;
 
     private User admin;
@@ -53,15 +48,14 @@ class AuthorizationCheckServiceAdminElevationTest {
 
     @BeforeEach
     void setUp() {
-        authorizationCheckService = new AuthorizationCheckService(userRepository, userCourseRoleRepository, teamRepository, elevatedAccessServiceProvider);
+        authorizationCheckService = new AuthorizationCheckService(userRepository, userCourseRoleRepository, teamRepository);
         admin = new User();
         admin.setId(1L);
         admin.setLogin("admin");
         admin.setAuthorities(Set.of(Authority.ADMIN_AUTHORITY));
         course = new Course();
         course.setId(2L);
-        SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken("admin", "password", Set.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority()))));
+        authenticate("admin");
     }
 
     @AfterEach
@@ -71,10 +65,8 @@ class AuthorizationCheckServiceAdminElevationTest {
 
     @Test
     void shouldDenyCurrentAdminWithoutCourseRoleOrElevation() {
-        when(elevatedAccessServiceProvider.getObject()).thenReturn(elevatedAccessService);
-        when(elevatedAccessService.isAdminElevationActive()).thenReturn(false);
-
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isFalse();
+        verify(userRepository, never()).isAdmin("admin");
     }
 
     @Test
@@ -82,32 +74,49 @@ class AuthorizationCheckServiceAdminElevationTest {
         admin.setCourseRoles(Set.of(new UserCourseRole(admin, course, CourseRole.INSTRUCTOR)));
 
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isTrue();
-        verifyNoInteractions(userCourseRoleRepository, elevatedAccessServiceProvider, elevatedAccessService);
+        verifyNoInteractions(userCourseRoleRepository);
+        verify(userRepository, never()).isAdmin("admin");
     }
 
     @Test
     void shouldAllowCurrentAdminWithoutCourseRoleWithElevation() {
-        when(elevatedAccessServiceProvider.getObject()).thenReturn(elevatedAccessService);
-        when(elevatedAccessService.isAdminElevationActive()).thenReturn(true);
+        authenticate("admin", Role.ADMIN);
+        when(userRepository.isAdmin("admin")).thenReturn(true);
 
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isTrue();
+        verify(userRepository).isAdmin("admin");
     }
 
     @Test
     void shouldPreserveArbitraryAdminAccountClassification() {
-        SecurityContextHolder.getContext()
-                .setAuthentication(new UsernamePasswordAuthenticationToken("different-user", "password", Set.of(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()))));
+        authenticate("different-user", Role.STUDENT);
 
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isTrue();
-        verifyNoInteractions(userCourseRoleRepository, elevatedAccessServiceProvider, elevatedAccessService);
+        verifyNoInteractions(userCourseRoleRepository);
+        verify(userRepository, never()).isAdmin("different-user");
     }
 
     @Test
     void shouldApplyElevationToResourceIdChecks() {
+        authenticate("admin", Role.ADMIN);
         when(userRepository.isAtLeastInstructorInCourse("admin", course.getId())).thenReturn(false);
-        when(elevatedAccessServiceProvider.getObject()).thenReturn(elevatedAccessService);
-        when(elevatedAccessService.isAdminElevationActive()).thenReturn(true);
+        when(userRepository.isAdmin("admin")).thenReturn(true);
 
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course.getId())).isTrue();
+        verify(userRepository).isAdmin("admin");
+    }
+
+    @Test
+    void shouldRejectStaleAdministratorAuthorityAfterRoleWasRevoked() {
+        authenticate("admin", Role.ADMIN);
+        when(userRepository.isAdmin("admin")).thenReturn(false);
+
+        assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isFalse();
+        verify(userRepository).isAdmin("admin");
+    }
+
+    private void authenticate(String login, Role... roles) {
+        var authorities = Set.of(roles).stream().map(role -> new SimpleGrantedAuthority(role.getAuthority())).toList();
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(login, "password", authorities));
     }
 }
