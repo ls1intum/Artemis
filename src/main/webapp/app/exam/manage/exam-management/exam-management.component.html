@@ -12,13 +12,20 @@
                     <!-- Current exam title -->
                     @if (currentExam()) {
                         <h5 class="flex items-center gap-2 mb-0 min-w-0">
-                            <a
-                                class="exam-title-link tab-link inline-flex items-center gap-2 rounded-md min-w-0"
-                                [routerLink]="['/course-management', course().id, 'exams', currentExam()!.id]"
-                            >
-                                <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" class="shrink-0" />
-                                <span class="exam-title-text">{{ currentExam()!.title }}</span>
-                            </a>
+                            @if (course().isAtLeastInstructor) {
+                                <a
+                                    class="exam-title-link tab-link inline-flex items-center gap-2 rounded-md min-w-0"
+                                    [routerLink]="['/course-management', course().id, 'exams', currentExam()!.id]"
+                                >
+                                    <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" class="shrink-0" />
+                                    <span class="exam-title-text">{{ currentExam()!.title }}</span>
+                                </a>
+                            } @else {
+                                <span class="inline-flex items-center gap-2 min-w-0">
+                                    <jhi-exam-mode-badge [testExam]="currentExam()!.testExam!" class="shrink-0" />
+                                    <span class="exam-title-text">{{ currentExam()!.title }}</span>
+                                </span>
+                            }
                         </h5>
                     }
                     <!-- Inject page specific title -->

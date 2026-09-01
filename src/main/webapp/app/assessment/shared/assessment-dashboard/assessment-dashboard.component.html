@@ -16,6 +16,10 @@
                 <fa-icon [icon]="faTable" />
                 <span class="title-bar-collapsible-label" jhiTranslate="entity.action.scores"></span>
             </a>
+            <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'grading']">
+                <fa-icon [icon]="faClipboard" />
+                <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.course.gradingSystem"></span>
+            </a>
             <jhi-feature-overlay [enabled]="plagiarismEnabled()">
                 <a tumUiButton severity="secondary" size="small" [routerLink]="['/course-management', course()!.id, 'plagiarism-cases']">
                     <fa-icon [icon]="faHeartBroken" />
