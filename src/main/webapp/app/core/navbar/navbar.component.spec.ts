@@ -86,10 +86,10 @@ describe('NavbarComponent', () => {
     const router = new MockRouter();
     router.setUrl('');
 
-    const courseManagementCrumb = {
-        label: 'global.menu.course',
+    const courseOverviewCrumb = {
+        label: 'overview.title',
         translate: true,
-        uri: '/course-management/',
+        uri: '/courses',
     } as MockBreadcrumb;
 
     const testCourseCrumb = {
@@ -379,25 +379,6 @@ describe('NavbarComponent', () => {
         expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
     });
 
-    it('should not build breadcrumbs for the course management overview', () => {
-        const testUrl = '/course-management';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-
-        expect(component.breadcrumbs()).toHaveLength(0);
-        expect(fixture.nativeElement.querySelector('.breadcrumb-container')).toBeNull();
-    });
-
-    it('should not build breadcrumbs for the course management overview with query parameters', () => {
-        const testUrl = '/course-management?query=param';
-        router.setUrl(testUrl);
-
-        fixture.detectChanges();
-
-        expect(component.breadcrumbs()).toHaveLength(0);
-    });
-
     it('should not build breadcrumbs when creating a course', () => {
         router.setUrl('/course-management/new');
 
@@ -447,7 +428,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
             expect(component.breadcrumbs()[3]).toEqual(importCrumb);
@@ -471,7 +452,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(5);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
             expect(component.breadcrumbs()[3]).toEqual({
@@ -500,7 +481,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(5);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual(programmingExercisesCrumb);
             expect(component.breadcrumbs()[3]).toEqual({
@@ -525,7 +506,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.assessmentDashboard.home.title',
@@ -581,7 +562,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.course.exercises',
@@ -621,7 +602,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.course.exercises',
@@ -661,7 +642,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.lecture.home.title',
@@ -689,7 +670,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(4);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.apollonDiagram.home.title',
@@ -726,7 +707,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(6);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.examManagement.title',
@@ -771,7 +752,7 @@ describe('NavbarComponent', () => {
 
             expect(component.breadcrumbs()).toHaveLength(7);
 
-            expect(component.breadcrumbs()[0]).toEqual(courseManagementCrumb);
+            expect(component.breadcrumbs()[0]).toEqual(courseOverviewCrumb);
             expect(component.breadcrumbs()[1]).toEqual(testCourseCrumb);
             expect(component.breadcrumbs()[2]).toEqual({
                 label: 'artemisApp.examManagement.title',

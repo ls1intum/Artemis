@@ -275,7 +275,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         reset: 'global.menu.account.password',
         register: 'register.title',
         settings: 'global.menu.account.settings',
-        course_management: 'global.menu.course',
+        course_management: 'overview.title',
         exercises: 'artemisApp.course.exercises',
         text_exercises: 'artemisApp.course.exercises',
         programming_exercises: 'artemisApp.course.exercises',
@@ -404,10 +404,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         // try catch for extra safety measures
         try {
-            let currentPath = '/';
+            let currentPath = '/course-management/';
+            this.addTranslationAsCrumb('/courses', 'course-management');
+            this.lastRouteUrlSegment = 'course-management';
 
-            // Remove the leading slash
-            let uri = fullURI.substring(1);
+            // The course management segment is represented by the course overview breadcrumb above.
+            let uri = fullURI.substring(currentPath.length);
 
             // Remove any query parameters
             const questionMark = uri.indexOf('?');
