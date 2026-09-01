@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -141,6 +142,12 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(FileService.isCausedByMissingFile(reported)).as("a vanished entry inside the tree must be recognised as benign").isTrue();
         assertThat(FileService.isCausedByMissingFile(new IOException("disk is full"))).as("an unrelated failure must still be reported").isFalse();
+
+        // A walk can collect several failures at once. One vanished file next to a real problem must not hide it.
+        var mixed = new IOExceptionList(List.of(new IOIndexedException(0, cannotDelete), new IOIndexedException(1, new AccessDeniedException("/opt/artemis/data/locked"))));
+        assertThat(FileService.isCausedByMissingFile(mixed)).as("a permission failure alongside a vanished file must still be reported").isFalse();
+
+        assertThat(FileService.isCausedByMissingFile(new IOExceptionList(List.of()))).as("an aggregate without any cause says nothing, so it is not benign").isFalse();
     }
 
     @Test

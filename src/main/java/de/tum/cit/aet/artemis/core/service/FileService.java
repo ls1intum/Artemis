@@ -205,16 +205,24 @@ public class FileService implements DisposableBean {
      * shape of the failure in issue #13575, and it is reported as
      * {@code IOExceptionList -> IOIndexedException -> FileNotFoundException -> NoSuchFileException}, so the whole cause
      * chain has to be inspected.
+     *
+     * <p>
+     * A walk that collected several failures counts as benign only if every one of them is a missing file. Otherwise a
+     * single permission or I/O error would be demoted to debug just because it happened to be reported alongside a file
+     * another cleanup had already removed.
      */
-    // Package-private so the test can pin the exact exception shape from the issue report without provoking the race.
-    static boolean isCausedByMissingFile(IOException exception) {
-        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+    // Package-private so the test can pin the exact exception shapes without having to provoke the race.
+    static boolean isCausedByMissingFile(Throwable failure) {
+        if (failure instanceof IOExceptionList exceptionList) {
+            var collectedFailures = exceptionList.getCauseList();
+            return !collectedFailures.isEmpty() && collectedFailures.stream().allMatch(FileService::isCausedByMissingFile);
+        }
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
             if (cause instanceof NoSuchFileException || cause instanceof FileNotFoundException) {
                 return true;
             }
-            if (cause instanceof IOExceptionList exceptionList
-                    && exceptionList.getCauseList().stream().anyMatch(listed -> listed instanceof IOException ioException && isCausedByMissingFile(ioException))) {
-                return true;
+            if (cause instanceof IOExceptionList) {
+                return isCausedByMissingFile(cause);
             }
             if (cause.getCause() == cause) {
                 break;

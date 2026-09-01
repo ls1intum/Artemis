@@ -125,6 +125,8 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(exportedRepositories).hasSize(1);
         byte[] zipContent = Files.readAllBytes(exportedRepositories.getFirst());
         ZipTestUtil.verifyZipDoesNotContainGitDirectory(zipContent);
+        // The snapshot has to be the submitted working tree, not merely a zip without git metadata.
+        assertThat(ZipTestUtil.readEntryAsString(zipContent, "src/Main.java")).as("the submitted file and its content must be in the snapshot").isEqualTo("public class Main {}");
     }
 
     /**
@@ -149,7 +151,10 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         assertThat(exportedRepositories).hasSize(1);
         Path exportedRepository = exportedRepositories.getFirst();
         assertThat(exportedRepository).as("the manual export keeps producing a directory, not a zip").isDirectory();
-        assertThat(exportedRepository.resolve(".git")).as("the student's commit history must survive the export").isDirectory();
+        // A .git directory on its own proves nothing; the commits are what unticking "combine student commits" is about.
+        try (Git git = Git.open(exportedRepository.toFile())) {
+            assertThat(git.log().call()).as("the student's commits must survive the export").isNotEmpty();
+        }
     }
 
     /**
