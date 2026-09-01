@@ -8,7 +8,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
@@ -23,7 +26,9 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.NullProgressMonitor;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectIdRef;
 import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.ObjectWalk;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -152,16 +157,50 @@ public class InMemoryRepositoryBuilder {
                 }
             }
 
-            createGitIndex(bareRepository, commitId, zipOutputStream, createdDirs);
+            // Every branch and tag, not just the exported one: an archive that keeps only the checked out branch would
+            // silently drop commits that are reachable from a secondary branch or a tag, which the clone this export
+            // replaced did carry.
+            List<Ref> refsToExport = collectBranchAndTagRefs(bareRepository, branch, commitId);
+            createGitIndex(bareRepository, refsToExport, zipOutputStream, createdDirs);
 
             // refs + HEAD + config
             putGitBytes(zipOutputStream, createdDirs, "HEAD", ("ref: refs/heads/" + branch + "\n").getBytes(StandardCharsets.UTF_8));
-            putGitBytes(zipOutputStream, createdDirs, "refs/heads/" + branch, (commitId.name() + "\n").getBytes(StandardCharsets.UTF_8));
+            for (Ref ref : refsToExport) {
+                putGitBytes(zipOutputStream, createdDirs, ref.getName(), (ref.getObjectId().name() + "\n").getBytes(StandardCharsets.UTF_8));
+            }
 
             writeGitConfig(zipOutputStream, createdDirs);
 
             zipOutputStream.finish(); // finalize central directory
         }
+    }
+
+    /**
+     * Collects the branches and tags the archive has to carry.
+     *
+     * <p>
+     * {@code HEAD}'s branch is guaranteed to be in the result even for a detached head, because the archive's working
+     * tree and index describe that commit and the extracted repository would otherwise have a {@code HEAD} pointing at
+     * a ref that does not exist.
+     *
+     * @param bareRepository the bare repository to read the refs from
+     * @param branch         the branch the working tree is taken from
+     * @param commitId       the commit the working tree is taken from
+     * @return the refs to pack and to serialize into the archive's {@code .git}
+     * @throws IOException if the refs cannot be read
+     */
+    private static List<Ref> collectBranchAndTagRefs(Repository bareRepository, String branch, ObjectId commitId) throws IOException {
+        var refDatabase = bareRepository.getRefDatabase();
+        List<Ref> refs = new ArrayList<>();
+        for (Ref ref : refDatabase.getRefsByPrefix(Constants.R_HEADS, Constants.R_TAGS)) {
+            if (ref.getObjectId() != null) {
+                refs.add(ref);
+            }
+        }
+        if (refs.stream().noneMatch(ref -> ref.getName().equals(Constants.R_HEADS + branch))) {
+            refs.add(new ObjectIdRef.PeeledNonTag(Ref.Storage.LOOSE, Constants.R_HEADS + branch, commitId));
+        }
+        return refs;
     }
 
     /**
@@ -208,9 +247,13 @@ public class InMemoryRepositoryBuilder {
     }
 
     /**
-     * Packs all reachable objects from {@code commitId} into a single {@code pack-*.pack}
-     * with matching {@code .idx} and writes both under {@code .git/objects/pack/}.
-     * The pack file name is computed as the SHA-1 of its content, as in standard Git.
+     * Packs everything reachable from the given refs into a single {@code pack-*.pack} with matching {@code .idx} and
+     * writes both under {@code .git/objects/pack/}. The pack file name is computed as the SHA-1 of its content, as in
+     * standard Git.
+     *
+     * <p>
+     * Every branch and tag is a starting point, so an archive keeps the commits that are only reachable from a
+     * secondary branch, and the tag objects themselves.
      *
      * <p>
      * Both files are written straight into the ZIP entry. Buffering them first would put two copies of the entire pack
@@ -219,22 +262,26 @@ public class InMemoryRepositoryBuilder {
      * {@code preparePack} produced rather than from the serialized bytes.
      *
      * @param bareRepository  the bare repository the objects are read from
-     * @param commitId        tip commit that defines reachability for the pack
+     * @param refs            the branches and tags that define reachability for the pack
      * @param zipOutputStream open ZIP stream to receive pack and index entries
      * @param createdDirs     set used to deduplicate directory entries
      * @throws IOException if pack/index creation or ZIP writes fail
      */
-    private static void createGitIndex(Repository bareRepository, ObjectId commitId, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
+    private static void createGitIndex(Repository bareRepository, List<Ref> refs, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
         try (ObjectReader reader = bareRepository.newObjectReader();
                 ObjectWalk objectWalk = new ObjectWalk(reader);
                 PackWriter packWriter = new PackWriter(new PackConfig(bareRepository), reader)) {
 
-            // Mark the tip as the starting point for traversal
-            RevCommit tip = objectWalk.parseCommit(commitId);
-            objectWalk.markStart(tip);
+            // Mark every ref tip as a starting point. An annotated tag is marked as the tag object itself, so the tag
+            // lands in the pack rather than only the commit it points at.
+            Set<ObjectId> tips = new LinkedHashSet<>();
+            for (Ref ref : refs) {
+                objectWalk.markStart(objectWalk.parseAny(ref.getObjectId()));
+                tips.add(ref.getObjectId());
+            }
 
             // This drives the traversal from `objectWalk` and prevents null ids inside preparePack
-            packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, Set.of(commitId), PackWriter.NONE, PackWriter.NONE);
+            packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, tips, PackWriter.NONE, PackWriter.NONE);
 
             String packHashHex = packWriter.computeName().name();
             writeGitEntry(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".pack",

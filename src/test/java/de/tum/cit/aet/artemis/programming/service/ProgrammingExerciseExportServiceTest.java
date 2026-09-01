@@ -285,11 +285,50 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
     }
 
     /** Creates the template, solution and tests repositories for the exercise and pushes one commit into each. */
-    private void createAndSeedBaseRepositories() throws Exception {
+    private RepositoryExportTestUtil.BaseRepositories createAndSeedBaseRepositories() throws Exception {
         var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, programmingExercise);
         RepositoryExportTestUtil.writeFilesAndPush(baseRepositories.templateRepository(), Map.of("src/Main.java", "public class Main {}"), "template");
         RepositoryExportTestUtil.writeFilesAndPush(baseRepositories.solutionRepository(), Map.of("src/Main.java", "public class Main { int solved; }"), "solution");
         RepositoryExportTestUtil.writeFilesAndPush(baseRepositories.testsRepository(), Map.of("test/MainTest.java", "public class MainTest {}"), "tests");
+        return baseRepositories;
+    }
+
+    /**
+     * A repository is not only its default branch. Anyone with push access can add a branch or a tag, and the clone this
+     * export replaced carried both into the archive. Packing only the exported branch would silently drop commits that
+     * are reachable from nowhere else, which is the one thing an archive must not do.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseRepositories_shouldKeepSecondaryBranchesAndTags() throws Exception {
+        var baseRepositories = createAndSeedBaseRepositories();
+        var templateRepository = baseRepositories.templateRepository();
+        var workingCopy = templateRepository.workingCopyGitRepo;
+        String defaultBranch = workingCopy.getRepository().getBranch();
+
+        workingCopy.tag().setName("v1.0").setMessage("annotated release tag").setAnnotated(true).call();
+        workingCopy.checkout().setCreateBranch(true).setName("feature").call();
+        RepositoryExportTestUtil.writeFilesAndPush(templateRepository, Map.of("src/OnlyOnFeature.java", "public class OnlyOnFeature {}"), "only on feature");
+        var featureCommit = workingCopy.getRepository().resolve("HEAD");
+        workingCopy.checkout().setName(defaultBranch).call();
+        workingCopy.push().setRemote("origin").setPushAll().setPushTags().call();
+
+        Path outputDir = tempFileUtilService.createTempDirectory("instructor-export-refs");
+        List<Path> exportedRepositories = programmingExerciseExportService.exportProgrammingExerciseRepositories(programmingExercise, false, false, outputDir, new ArrayList<>(),
+                new ArrayList<>());
+
+        Path templateArchive = exportedRepositories.stream().filter(path -> path.getFileName().toString().contains("-exercise")).findFirst().orElseThrow();
+        Path extractedDir = tempFileUtilService.createTempDirectory("instructor-export-refs-extracted");
+        ZipTestUtil.extractZip(Files.readAllBytes(templateArchive), extractedDir);
+
+        try (Git git = Git.open(extractedDir.toFile())) {
+            var repository = git.getRepository();
+            assertThat(repository.resolve("refs/heads/feature")).as("the secondary branch must survive the export").isEqualTo(featureCommit);
+            assertThat(repository.resolve("refs/tags/v1.0")).as("the annotated tag must survive the export").isNotNull();
+            // The ref alone is worthless if the commit it names is not in the pack.
+            assertThat(repository.getObjectDatabase().has(featureCommit)).as("the commit reachable only from the secondary branch must be in the pack").isTrue();
+            assertThat(git.log().add(featureCommit).call()).as("the secondary branch history must be walkable").isNotEmpty();
+        }
     }
 
     /**
