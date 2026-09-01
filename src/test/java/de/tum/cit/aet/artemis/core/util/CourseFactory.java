@@ -23,6 +23,21 @@ public class CourseFactory {
     public static final String DEFAULT_SEMESTER = "SS24";
 
     /**
+     * Generates a course that carries nothing but the three values the database insists on. Use it where a test needs
+     * a persisted course it does not otherwise care about; {@link #generateCourse} is the richer alternative that also
+     * fills a title, a short name and the complaint settings.
+     *
+     * @return A course with a start date, an end date and a semester, and no other value set.
+     */
+    public static Course generateMinimalCourse() {
+        Course course = new Course();
+        course.setStartDate(ZonedDateTime.now().minusMonths(3));
+        course.setEndDate(ZonedDateTime.now().plusMonths(3));
+        course.setSemester(DEFAULT_SEMESTER);
+        return course;
+    }
+
+    /**
      * Generates a course with the passed id, start and end date, and exercises.
      * Group name columns are populated with course-derived defaults (columns remain for
      * legacy compatibility; will be dropped in a later migration phase).

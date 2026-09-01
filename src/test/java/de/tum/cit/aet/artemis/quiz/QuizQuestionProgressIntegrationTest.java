@@ -31,6 +31,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -101,7 +102,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
         Clock fixedClock = Clock.fixed(Instant.parse("2025-09-10T10:25:00Z"), ZoneOffset.UTC);
         TimeUtil.setClock(fixedClock);
 
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         courseTestRepository.save(course);
         User user = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         userId = user.getId();
@@ -144,7 +145,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSession() {
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         courseTestRepository.save(course);
 
         QuizExercise quizExercise = new QuizExercise();
@@ -185,7 +186,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetQuestionsForSessionNoDueDate() {
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         courseTestRepository.save(course);
 
         QuizExercise quizExercise = new QuizExercise();
@@ -540,7 +541,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testQuestionsAvailableForPracticeFalse() {
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         courseTestRepository.save(course);
 
         boolean questionsAvailable = quizQuestionProgressService.questionsAvailableForTraining(course.getId());
@@ -549,7 +550,7 @@ class QuizQuestionProgressIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Test
     void testQuestionsAvailableForPracticeTrue() {
-        Course course = new Course();
+        Course course = CourseFactory.generateMinimalCourse();
         courseTestRepository.save(course);
 
         QuizExercise quizExercise = new QuizExercise();

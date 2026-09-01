@@ -246,22 +246,6 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    void findInstructorRecipients_shouldIncludeInstructorsOfCourseWithNullDates() {
-        var now = ZonedDateTime.now();
-        // Course with null start and end dates should be considered ongoing
-        Course openCourse = CourseFactory.generateCourse(null, null, null, new HashSet<>());
-        // the factory now defaults missing dates, but this test's subject is a course that genuinely has none
-        openCourse.setStartDate(null);
-        openCourse.setEndDate(null);
-        courseRepository.save(openCourse);
-        var instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
-        userUtilService.enrollUserInCourse(instructor1, openCourse, CourseRole.INSTRUCTOR);
-
-        var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(now);
-        assertThat(recipients).isNotEmpty();
-    }
-
-    @Test
     void findInstructorRecipients_shouldExcludeUsersWithNoEmail() {
         var now = ZonedDateTime.now();
         Course ongoingCourse = CourseFactory.generateCourse(null, now.minusDays(30), now.plusDays(30), new HashSet<>());
