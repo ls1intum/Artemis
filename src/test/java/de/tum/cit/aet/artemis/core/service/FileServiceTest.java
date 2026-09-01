@@ -129,15 +129,13 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
      * it means inspecting the cause chain Commons IO reports, not just checking whether the target still exists.
      */
     @Test
-    void testScheduleDirectoryPathForRecursiveDeletion_shouldNotReportAConcurrentlyRemovedEntryAsAnError() throws Exception {
-        Path parent = createTempTargetDirectory("testConcurrentlyRemovedEntry");
-        Path directory = Files.createDirectory(parent.resolve("tree"));
-        Files.createDirectory(directory.resolve("nested"));
-        Files.writeString(directory.resolve("nested").resolve("file.txt"), "content");
-
-        // Reproduces the reported shape: IOExceptionList -> IOIndexedException -> FileNotFoundException -> NoSuchFileException.
-        var missingFile = new NoSuchFileException(directory.resolve("nested").resolve("file.txt").toString());
-        var cannotDelete = new FileNotFoundException("Cannot delete file: " + directory.resolve("nested"));
+    void testScheduleDirectoryPathForRecursiveDeletion_shouldNotReportAConcurrentlyRemovedEntryAsAnError() {
+        // Rebuilds the exact chain from the issue: IOExceptionList -> IOIndexedException -> FileNotFoundException ->
+        // NoSuchFileException. Provoking the race for real would be timing dependent, and the point of the check is
+        // precisely that it reads this chain rather than looking at the file system.
+        var vanishedEntry = "/opt/artemis/data/repos-download/1787748504957/TESTBENCHMARKING1GROUP1EXERCISE1/.git/refs/tags";
+        var missingFile = new NoSuchFileException(vanishedEntry);
+        var cannotDelete = new FileNotFoundException("Cannot delete file: " + vanishedEntry);
         cannotDelete.initCause(missingFile);
         var reported = new IOExceptionList(List.of(new IOIndexedException(0, cannotDelete)));
 
