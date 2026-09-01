@@ -3,7 +3,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
@@ -15,6 +15,7 @@ import { IMPORT_DIALOG_BACK, ImportDialogFooterComponent } from 'app/course/mana
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 
 export type AddModalMode = 'create' | 'import' | 'export' | 'unified';
 
@@ -107,7 +108,9 @@ export class ExerciseAddModalComponent {
         }),
     );
 
-    readonly activeTab = signal<'create' | 'import' | 'export'>('create');
+    readonly activeTab = signal<'create' | 'generate' | 'import' | 'export'>('create');
+    protected readonly generationEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faArrowLeft = faArrowLeft;
@@ -139,8 +142,16 @@ export class ExerciseAddModalComponent {
         this.close();
     }
 
-    setActiveTab(tab: 'create' | 'import' | 'export'): void {
+    setActiveTab(tab: 'create' | 'generate' | 'import' | 'export'): void {
         this.activeTab.set(tab);
+    }
+
+    protected navigateToProgrammingGeneration(): void {
+        const id = this.courseId();
+        if (id !== undefined) {
+            void this.router.navigate(['/course-management', id, 'programming-exercises', 'new'], { state: { wholeExerciseGeneration: true } });
+        }
+        this.close();
     }
 
     /**

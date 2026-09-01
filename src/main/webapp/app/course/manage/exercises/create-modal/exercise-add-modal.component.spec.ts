@@ -141,6 +141,16 @@ describe('ExerciseAddModalComponent', () => {
             expect(navigateSpy).not.toHaveBeenCalled();
             expect(emitted).toEqual([false]);
         });
+
+        it('opens programming creation in whole-exercise generation mode', () => {
+            fixture.componentRef.setInput('courseId', 42);
+
+            (component as unknown as { navigateToProgrammingGeneration: () => void }).navigateToProgrammingGeneration();
+
+            expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 42, 'programming-exercises', 'new'], {
+                state: { wholeExerciseGeneration: true },
+            });
+        });
     });
 
     describe('startImport', () => {

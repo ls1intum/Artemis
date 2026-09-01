@@ -5,6 +5,13 @@
             (click)="setActiveTab('create')"
             jhiTranslate="artemisApp.exerciseManagement.addModal.tab.create"
         ></button>
+        @if (generationEnabled) {
+            <button
+                class="tab-btn {{ activeTab() === 'generate' ? 'tab-btn--active' : '' }}"
+                (click)="setActiveTab('generate')"
+                jhiTranslate="artemisApp.exerciseManagement.addModal.tab.generate"
+            ></button>
+        }
         <button
             class="tab-btn {{ activeTab() === 'import' ? 'tab-btn--active' : '' }}"
             (click)="setActiveTab('import')"
@@ -42,6 +49,23 @@
                 <p jhiTranslate="artemisApp.exerciseManagement.addModal.group.createDescription"></p>
                 <span class="card-cta">
                     <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
+                    <fa-icon [icon]="faArrowRight" class="ms-1" />
+                </span>
+            </button>
+        </div>
+    }
+
+    @if (activeTab() === 'generate') {
+        <p class="text-muted-color text-sm mb-3" jhiTranslate="artemisApp.exerciseManagement.addModal.generateHint"></p>
+        <div class="exercise-grid">
+            <button class="exercise-card" data-testid="generate-programming-exercise" (click)="navigateToProgrammingGeneration()" type="button">
+                <div class="card-icon-wrapper">
+                    <fa-icon [icon]="facArtemisIntelligence" />
+                </div>
+                <h6 jhiTranslate="artemisApp.exerciseManagement.addModal.generateProgramming.title"></h6>
+                <p jhiTranslate="artemisApp.exerciseManagement.addModal.generateProgramming.description"></p>
+                <span class="card-cta">
+                    <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.configure"></span>
                     <fa-icon [icon]="faArrowRight" class="ms-1" />
                 </span>
             </button>

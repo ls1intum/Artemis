@@ -55,14 +55,21 @@
                 "header": "Manage Exercises",
                 "tab": {
                     "create": "Create",
+                    "generate": "Generate",
                     "import": "Import",
                     "export": "Export"
                 },
                 "createHint": "Select an exercise type. You can customise all details in the next step.",
                 "importHint": "Select what you want to import.",
+                "generateHint": "Start from an instructor brief. Artemis creates the exercise shell, then generates and verifies all teaching artifacts before saving them.",
+                "generateProgramming": {
+                    "title": "Programming exercise",
+                    "description": "Configure a Java Maven or Gradle exercise and describe what students should learn and implement."
+                },
                 "cta": {
                     "create": "Create",
-                    "select": "Select"
+                    "select": "Select",
+                    "configure": "Configure generation"
                 },
                 "group": {
                     "title": "Exercise Group",
