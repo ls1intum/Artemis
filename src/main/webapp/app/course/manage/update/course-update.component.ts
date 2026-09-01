@@ -31,7 +31,7 @@ import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/com
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { onError } from 'app/foundation/util/global.utils';
-import { getSemesters } from 'app/foundation/util/semester-utils';
+import { getSemesterDateRange, getSemesters } from 'app/foundation/util/semester-utils';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
@@ -160,7 +160,11 @@ export class CourseUpdateComponent implements OnInit {
 
     private courseStorageService = inject(CourseStorageService);
 
-    readonly semesters = getSemesters();
+    // Bound directly in the template, so it must be a signal for zoneless change detection to pick up the
+    // ngOnInit assignment (the course, and therefore the semester list, is only known once ngOnInit runs).
+    readonly semesters = signal<string[]>([]);
+
+    private previousSemester?: string;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -248,9 +252,9 @@ export class CourseUpdateComponent implements OnInit {
                 ),
                 description: new FormControl(this.course.description),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct),
-                startDate: new FormControl(this.course.startDate),
-                endDate: new FormControl(this.course.endDate),
-                semester: new FormControl(this.course.semester),
+                startDate: new FormControl(this.course.startDate, { validators: [Validators.required] }),
+                endDate: new FormControl(this.course.endDate, { validators: [Validators.required] }),
+                semester: new FormControl(this.course.semester, { validators: [Validators.required] }),
                 testCourse: new FormControl(this.course.testCourse),
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
@@ -306,6 +310,12 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
+
+        this.semesters.set(getSemesters(this.course.semester));
+        this.previousSemester = this.course.semester;
+        this.courseForm.controls['semester'].valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((semester) => {
+            this.applySemesterDateRange(semester ?? undefined);
+        });
 
         // Sync form date control values back to this.course so that validation getters
         // (isValidDate, isValidEnrollmentPeriod, isValidUnenrollmentEndDate) reflect
@@ -694,13 +704,12 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns whether the dates are valid or not
-     * @return true if the dats are valid
+     * Returns whether the dates are valid or not. Both dates are mandatory, so a missing one is invalid.
+     * @return true if the dates are valid
      */
     get isValidDate(): boolean {
-        // allow instructors to set startDate and endDate later
         if (this.atLeastOneDateNotExisting()) {
-            return true;
+            return false;
         }
         return dayjs(this.course.startDate).isBefore(this.course.endDate);
     }
@@ -715,8 +724,8 @@ export class CourseUpdateComponent implements OnInit {
             return true;
         }
 
-        // enrollment period requires configured start and end date of the course
-        if (this.atLeastOneDateNotExisting() || !this.isValidDate) {
+        // enrollment period requires a valid start and end date of the course
+        if (!this.isValidDate) {
             return false;
         }
 
@@ -747,6 +756,41 @@ export class CourseUpdateComponent implements OnInit {
     private atLeastOneDateNotExisting(): boolean {
         // we need to take into account that the date is only deleted by the user, which leads to a invalid state of the date
         return !this.course.startDate || !this.course.endDate || !this.course.startDate.isValid() || !this.course.endDate.isValid();
+    }
+
+    /**
+     * Applies the date range of the newly selected semester to the start and end date controls.
+     * A date is only replaced while it still follows the semester, that is when it is empty or still exactly equal
+     * to the range of the previously selected semester. Once the user has picked a date by hand, later semester
+     * changes leave it alone, so editing an existing course never discards its real dates.
+     *
+     * @param semester the newly selected semester
+     */
+    private applySemesterDateRange(semester: string | undefined): void {
+        const previousRange = getSemesterDateRange(this.previousSemester);
+        this.previousSemester = semester;
+        const range = getSemesterDateRange(semester);
+        if (!range) {
+            return;
+        }
+        if (this.stillFollowsSemester(this.courseForm.controls['startDate'].value, previousRange?.startDate)) {
+            this.courseForm.controls['startDate'].setValue(range.startDate);
+        }
+        if (this.stillFollowsSemester(this.courseForm.controls['endDate'].value, previousRange?.endDate)) {
+            this.courseForm.controls['endDate'].setValue(range.endDate);
+        }
+    }
+
+    /**
+     * @param value the current value of a date control
+     * @param previouslyDerived the value the previously selected semester would have produced
+     * @return true when the value was not set by hand and may be overwritten
+     */
+    private stillFollowsSemester(value: dayjs.Dayjs | undefined, previouslyDerived: dayjs.Dayjs | undefined): boolean {
+        if (!value) {
+            return true;
+        }
+        return previouslyDerived !== undefined && dayjs(value).isSame(previouslyDerived);
     }
 
     get isValidConfiguration(): boolean {

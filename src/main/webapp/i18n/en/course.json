@@ -348,6 +348,9 @@
                 "endDate": {
                     "invalid": "Must be after the start date of the course"
                 },
+                "semester": {
+                    "required": "Please select a semester."
+                },
                 "enrollmentStartDate": {
                     "invalid": "Can't be after the start date of the course and must be before the enrollment end date"
                 },
