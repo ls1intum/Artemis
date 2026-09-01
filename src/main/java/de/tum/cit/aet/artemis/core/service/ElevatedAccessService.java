@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.CheckReturnValue;
@@ -26,18 +27,18 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@Service("adminAccessService")
-public class AdminAccessService {
+@Service("elevatedAccessService")
+public class ElevatedAccessService {
 
-    private static final String ADMIN_ELEVATION_REQUEST_ATTRIBUTE = AdminAccessService.class.getName() + ".adminElevationActive";
+    private static final String ADMIN_ELEVATION_REQUEST_ATTRIBUTE = ElevatedAccessService.class.getName() + ".adminElevationActive";
 
     private final UserRepository userRepository;
 
-    private final PasskeyAuthenticationService passkeyAuthenticationService;
+    private final ObjectProvider<PasskeyAuthenticationService> passkeyAuthenticationServiceProvider;
 
-    public AdminAccessService(UserRepository userRepository, PasskeyAuthenticationService passkeyAuthenticationService) {
+    public ElevatedAccessService(UserRepository userRepository, ObjectProvider<PasskeyAuthenticationService> passkeyAuthenticationServiceProvider) {
         this.userRepository = userRepository;
-        this.passkeyAuthenticationService = passkeyAuthenticationService;
+        this.passkeyAuthenticationServiceProvider = passkeyAuthenticationServiceProvider;
     }
 
     /**
@@ -87,7 +88,10 @@ public class AdminAccessService {
             return false;
         }
         try {
-            return passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey();
+            // Resolve the passkey service only for an administrator who actually requests elevated access. Besides
+            // avoiding work for ordinary users, this keeps the passkey configuration out of the application startup
+            // dependency chain.
+            return passkeyAuthenticationServiceProvider.getObject().isAuthenticatedWithSuperAdminApprovedPasskey();
         }
         catch (PasskeyAuthenticationException ignored) {
             return false;

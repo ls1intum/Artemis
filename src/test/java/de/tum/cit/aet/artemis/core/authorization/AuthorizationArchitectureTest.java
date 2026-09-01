@@ -38,8 +38,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceRoleInLecture;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceRoleInLectureUnit;
-import de.tum.cit.aet.artemis.core.service.AdminAccessService;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
@@ -81,9 +81,9 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testPasskeyAuthenticationForAdministratorElevationIsCentralized() {
-        noClasses().that().doNotHaveFullyQualifiedName(AdminAccessService.class.getName()).and().doNotHaveFullyQualifiedName(PasskeyAuthenticationService.class.getName()).should()
-                .dependOnClassesThat().haveFullyQualifiedName(PasskeyAuthenticationService.class.getName())
-                .because("normal endpoints must obtain administrator elevation through AdminAccessService instead of validating passkeys directly").check(productionClasses);
+        noClasses().that().doNotHaveFullyQualifiedName(ElevatedAccessService.class.getName()).and().doNotHaveFullyQualifiedName(PasskeyAuthenticationService.class.getName())
+                .should().dependOnClassesThat().haveFullyQualifiedName(PasskeyAuthenticationService.class.getName())
+                .because("normal endpoints must obtain administrator elevation through ElevatedAccessService instead of validating passkeys directly").check(productionClasses);
     }
 
     @Test

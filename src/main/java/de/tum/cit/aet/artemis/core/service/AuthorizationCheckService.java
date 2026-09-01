@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -51,14 +52,14 @@ public class AuthorizationCheckService {
 
     private final TeamRepository teamRepository;
 
-    private final AdminAccessService adminAccessService;
+    private final ObjectProvider<ElevatedAccessService> elevatedAccessServiceProvider;
 
     public AuthorizationCheckService(UserRepository userRepository, UserCourseRoleRepository userCourseRoleRepository, TeamRepository teamRepository,
-            AdminAccessService adminAccessService) {
+            ObjectProvider<ElevatedAccessService> elevatedAccessServiceProvider) {
         this.userRepository = userRepository;
         this.userCourseRoleRepository = userCourseRoleRepository;
         this.teamRepository = teamRepository;
-        this.adminAccessService = adminAccessService;
+        this.elevatedAccessServiceProvider = elevatedAccessServiceProvider;
     }
 
     // Adaptive: if the caller pre-loaded course roles (e.g. dashboard endpoints that call
@@ -698,7 +699,9 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isCurrentUserAdminAccessEnabled() {
-        return adminAccessService.isAdminElevationActive();
+        // AuthorizationCheckService is also needed during application startup, e.g. by the WebSocket configuration.
+        // Resolve elevation support only when a request actually needs the administrator override.
+        return elevatedAccessServiceProvider.getObject().isAdminElevationActive();
     }
 
     /**

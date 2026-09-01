@@ -16,7 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@PreAuthorize("@adminAccessService.hasAtLeastRoleOrAdminAccess(T(de.tum.cit.aet.artemis.core.security.Role).INSTRUCTOR)")
+@PreAuthorize("@elevatedAccessService.hasAtLeastRoleOrAdminAccess(T(de.tum.cit.aet.artemis.core.security.Role).INSTRUCTOR)")
 public @interface EnforceAtLeastInstructor {
 
 }
