@@ -491,6 +491,41 @@ describe('CourseRequestsComponent', () => {
 
             expect(component.editForm.get('startDate')!.value!.format('YYYY-MM-DD')).toBe('2025-11-05');
         });
+
+        it("does not clobber a request whose own stored dates coincide with a previously open request's semester range", () => {
+            // Open the WS25/26 request first, so previousSemester and the form both settle on its range.
+            component.openEditModal(mockRequest);
+
+            // Now open a different request, for SS26, whose own stored dates happen to equal WS25/26's range.
+            // Those dates must survive unchanged: they belong to this request, not to the one that was open before it.
+            const coincidentallyMatchingRequest: CourseRequest = {
+                ...mockRequest,
+                id: 2,
+                semester: 'SS26',
+                startDate: mockDateRange.startDate,
+                endDate: mockDateRange.endDate,
+            };
+
+            component.openEditModal(coincidentallyMatchingRequest);
+
+            expect(component.editForm.get('startDate')!.value!.isSame(mockDateRange.startDate)).toBe(true);
+            expect(component.editForm.get('endDate')!.value!.isSame(mockDateRange.endDate)).toBe(true);
+        });
+
+        it('fills in dates from the semester when opening a request that has none yet', () => {
+            const requestWithoutDates: CourseRequest = {
+                ...mockRequest,
+                id: 4,
+                semester: 'WS25/26',
+                startDate: undefined,
+                endDate: undefined,
+            };
+
+            component.openEditModal(requestWithoutDates);
+
+            expect(component.editForm.get('startDate')!.value!.isSame(mockDateRange.startDate)).toBe(true);
+            expect(component.editForm.get('endDate')!.value!.isSame(mockDateRange.endDate)).toBe(true);
+        });
     });
 
     describe('accept error handling', () => {

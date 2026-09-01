@@ -243,16 +243,23 @@ export class CourseRequestsComponent implements OnInit {
         this.selectedRequest.set(request);
         this.editDateRangeInvalid.set(false);
         this.isSubmittingEdit.set(false);
+        // Must be set before reset(): reset() emits the semester valueChanges synchronously, and
+        // applySemesterDateRange needs previousSemester to already reflect this request, not the one
+        // that was open before it, or it judges this request's own stored dates against the wrong range.
+        this.previousSemester = request.semester;
+        // Computed explicitly, rather than left to the reset-triggered valueChanges above, because reset()
+        // applies startDate/endDate after semester and would otherwise overwrite whatever that callback just
+        // derived: a request without dates yet needs them filled from its own semester right here.
+        const { startDate, endDate } = applySemesterToDates(request.semester, request.semester, request.startDate, request.endDate);
         this.editForm.reset({
             title: request.title,
             shortName: request.shortName,
             semester: request.semester ?? '',
-            startDate: request.startDate,
-            endDate: request.endDate,
+            startDate,
+            endDate,
             testCourse: request.testCourse ?? false,
             reason: request.reason,
         });
-        this.previousSemester = request.semester;
         this.editModalVisible.set(true);
     }
 
