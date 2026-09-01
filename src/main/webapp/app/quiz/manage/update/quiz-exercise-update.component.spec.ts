@@ -1589,6 +1589,18 @@ describe('QuizExerciseUpdateComponent', () => {
                     expect(comp.saveBlockedReasons()).toEqual(['artemisApp.quizExercise.edit.editNotPossibleDuringQuiz']);
                     expect(comp.isSaveTooltipDisabled()).toBeFalsy();
                 });
+
+                // setTimeout truncates its delay to a signed 32-bit int, so a far-future batch must not fire early.
+                it('should not declare a batch more than 24.8 days out as started', () => {
+                    comp.savedEntity.quizBatches![0].startTime = dayjs().add(60, 'days');
+                    comp['watchSavedQuizStart']();
+
+                    vi.advanceTimersByTime(30 * 24 * 60 * 60 * 1000);
+                    expect(comp.saveBlockedReasons()).toEqual([]);
+
+                    vi.advanceTimersByTime(31 * 24 * 60 * 60 * 1000);
+                    expect(comp.saveBlockedReasons()).toEqual(['artemisApp.quizExercise.edit.editNotPossibleDuringQuiz']);
+                });
             });
 
             describe('resetQuizQuestionForImport (via init)', () => {

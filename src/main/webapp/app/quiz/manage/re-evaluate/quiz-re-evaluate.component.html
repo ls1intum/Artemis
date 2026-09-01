@@ -197,7 +197,11 @@
                         <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
                              events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
                         <button
-                            class="btn btn-success aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                            tumUiButton
+                            type="button"
+                            severity="success"
+                            size="small"
+                            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                             (click)="onSaveClick()"
                             [tumUiTooltip]="invalidReasonTexts()"
                             [attr.aria-disabled]="isSaveDisabled()"

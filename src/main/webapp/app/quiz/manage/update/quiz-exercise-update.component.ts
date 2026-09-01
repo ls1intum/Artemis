@@ -78,6 +78,9 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
+/** Largest delay setTimeout accepts before its signed 32-bit truncation makes it fire immediately. */
+const MAX_TIMEOUT_DELAY = 2_147_483_647;
+
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-update.component.html',
@@ -920,7 +923,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return;
         }
         const nextStart = upcomingStarts.reduce((earliest, start) => (start.isBefore(earliest) ? start : earliest));
-        this.savedQuizStartTimer = setTimeout(() => this.savedQuizStarted.set(true), nextStart.diff(now) + 1);
+        // setTimeout truncates its delay to a signed 32-bit int, so anything past ~24.8 days would fire at once and
+        // declare the quiz started weeks early. Sleep in chunks and re-arm until the start time is actually reached.
+        const delay = Math.min(nextStart.diff(now) + 1, MAX_TIMEOUT_DELAY);
+        this.savedQuizStartTimer = setTimeout(() => this.watchSavedQuizStart(), delay);
     }
 
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
