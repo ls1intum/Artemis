@@ -5,101 +5,126 @@
     [closable]="true"
     [closeOnEscape]="true"
     [dismissableMask]="false"
+    [ariaDescribedBy]="step() === 'configure' ? 'whole-generation-intro' : undefined"
     size="large"
 >
-    <div class="flex items-center justify-center gap-4 mb-8" data-testid="whole-generation-steps">
-        <div class="flex items-center gap-2 font-semibold" [class.text-primary]="step() === 'configure'">
-            <fa-icon [icon]="faGears" />
-            <span>{{ 'artemisApp.hyperion.wholeExerciseWizard.steps.configure' | artemisTranslate }}</span>
-        </div>
-        <fa-icon [icon]="faArrowRight" class="text-muted-color" />
-        <div class="flex items-center gap-2 font-semibold" [class.text-primary]="step() === 'generating'">
-            <fa-icon [icon]="faRobot" />
-            <span>{{ 'artemisApp.hyperion.wholeExerciseWizard.steps.generate' | artemisTranslate }}</span>
-        </div>
-    </div>
-
     @if (step() === 'configure') {
-        <tum-ui-message severity="info" class="block mb-6">
-            {{ 'artemisApp.hyperion.wholeExerciseWizard.intro' | artemisTranslate }}
-        </tum-ui-message>
+        <div class="mx-auto max-w-3xl">
+            <p id="whole-generation-intro" class="mb-6 text-muted-color">
+                {{ 'artemisApp.hyperion.wholeExerciseWizard.intro' | artemisTranslate }}
+            </p>
+            @if (setupFailed()) {
+                <tum-ui-message severity="error" class="mb-6 block">
+                    {{ 'artemisApp.hyperion.wholeExerciseWizard.setupFailed' | artemisTranslate }}
+                </tum-ui-message>
+            }
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <label class="flex flex-col gap-2 md:col-span-2">
-                <span class="font-semibold">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.title' | artemisTranslate }}</span>
-                <input tumUiInput [ngModel]="title()" (ngModelChange)="updateTitle($event)" data-testid="generation-title" />
-            </label>
-            <label class="flex flex-col gap-2">
-                <span class="font-semibold">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.shortName' | artemisTranslate }}</span>
-                <input tumUiInput [ngModel]="shortName()" (ngModelChange)="shortName.set($event)" maxlength="19" data-testid="generation-short-name" />
-                <span class="text-xs text-muted-color">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.shortNameHint' | artemisTranslate }}</span>
-            </label>
-            <label class="flex flex-col gap-2">
-                <span class="font-semibold">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.points' | artemisTranslate }}</span>
-                <input tumUiInput type="number" min="1" [ngModel]="maxPoints()" (ngModelChange)="maxPoints.set($event)" data-testid="generation-points" />
-            </label>
-            <label class="flex flex-col gap-2">
-                <span class="font-semibold">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.releaseDate' | artemisTranslate }}</span>
-                <input tumUiInput type="datetime-local" [ngModel]="releaseDate()" (ngModelChange)="releaseDate.set($event)" />
-            </label>
-            <label class="flex flex-col gap-2">
-                <span class="font-semibold">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.dueDate' | artemisTranslate }}</span>
-                <input tumUiInput type="datetime-local" [ngModel]="dueDate()" (ngModelChange)="dueDate.set($event)" />
-            </label>
-            <fieldset class="flex flex-col gap-2">
-                <legend class="font-semibold mb-2">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.buildTool' | artemisTranslate }}</legend>
-                <div class="flex gap-3">
-                    <button
-                        type="button"
-                        class="flex-1 rounded border p-3 text-left"
-                        [class.border-primary]="projectType() === ProjectType.PLAIN_MAVEN"
-                        [attr.aria-pressed]="projectType() === ProjectType.PLAIN_MAVEN"
-                        (click)="projectType.set(ProjectType.PLAIN_MAVEN)"
-                    >
-                        <strong>Maven</strong>
-                    </button>
-                    <button
-                        type="button"
-                        class="flex-1 rounded border p-3 text-left"
-                        [class.border-primary]="projectType() === ProjectType.PLAIN_GRADLE"
-                        [attr.aria-pressed]="projectType() === ProjectType.PLAIN_GRADLE"
-                        (click)="projectType.set(ProjectType.PLAIN_GRADLE)"
-                    >
-                        <strong>Gradle</strong>
-                    </button>
-                </div>
-            </fieldset>
-            <fieldset class="flex flex-col gap-2">
-                <legend class="font-semibold mb-2">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.difficulty' | artemisTranslate }}</legend>
-                <div class="flex gap-2">
-                    @for (value of [DifficultyLevel.EASY, DifficultyLevel.MEDIUM, DifficultyLevel.HARD]; track value) {
-                        <button
-                            type="button"
-                            class="flex-1 rounded border p-3"
-                            [class.border-primary]="difficulty() === value"
-                            [attr.aria-pressed]="difficulty() === value"
-                            (click)="difficulty.set(value)"
-                        >
-                            {{ 'artemisApp.DifficultyLevel.' + value | artemisTranslate }}
-                        </button>
-                    }
-                </div>
-            </fieldset>
-            <label class="flex flex-col gap-2 md:col-span-2">
-                <span class="font-semibold">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.brief' | artemisTranslate }}</span>
+            <section aria-labelledby="generation-brief-label">
+                <label id="generation-brief-label" for="generation-brief" class="mb-2 block text-lg font-semibold">
+                    {{ 'artemisApp.hyperion.wholeExerciseWizard.fields.brief' | artemisTranslate }}
+                </label>
+                <p id="generation-brief-hint" class="mb-3 text-sm text-muted-color">
+                    {{ 'artemisApp.hyperion.wholeExerciseWizard.fields.briefHint' | artemisTranslate }}
+                </p>
                 <textarea
+                    id="generation-brief"
                     tumUiTextarea
-                    rows="8"
+                    class="min-h-56 w-full resize-y"
+                    rows="9"
                     [ngModel]="brief()"
                     (ngModelChange)="brief.set($event)"
-                    [placeholder]="'artemisApp.hyperion.wholeExerciseWizard.fields.briefPlaceholder' | artemisTranslate"
+                    (blur)="briefTouched.set(true)"
+                    [tumUiInputInvalid]="briefTouched() && brief().trim().length < minimumBriefLength"
+                    [attr.aria-describedby]="
+                        briefTouched() && brief().trim().length < minimumBriefLength ? 'generation-brief-hint generation-brief-error' : 'generation-brief-hint'
+                    "
+                    [attr.aria-invalid]="briefTouched() && brief().trim().length < minimumBriefLength ? true : null"
                     data-testid="generation-brief"
                 ></textarea>
-                <span class="text-xs text-muted-color">{{ 'artemisApp.hyperion.wholeExerciseWizard.fields.briefHint' | artemisTranslate }}</span>
-            </label>
-        </div>
+                <div class="mt-2 flex items-start justify-between gap-4 text-sm">
+                    <div>
+                        @if (briefTouched() && brief().trim().length < minimumBriefLength) {
+                            <p id="generation-brief-error" class="text-state-danger" role="alert">
+                                {{ 'artemisApp.hyperion.wholeExerciseWizard.fields.briefError' | artemisTranslate }}
+                            </p>
+                        }
+                    </div>
+                    <span class="shrink-0 text-muted-color" aria-live="polite">{{ brief().trim().length }} / {{ minimumBriefLength }}</span>
+                </div>
 
-        <div class="flex justify-between mt-8">
+                <details class="mt-4 rounded-lg border border-surface bg-surface-card p-4">
+                    <summary class="cursor-pointer font-medium">{{ 'artemisApp.hyperion.wholeExerciseWizard.example.title' | artemisTranslate }}</summary>
+                    <p class="mt-3 text-sm text-muted-color">{{ 'artemisApp.hyperion.wholeExerciseWizard.example.text' | artemisTranslate }}</p>
+                </details>
+            </section>
+
+            <section class="mt-8 border-t border-surface pt-6" aria-labelledby="generation-settings-title">
+                <div class="mb-5">
+                    <h3 id="generation-settings-title" class="text-base font-semibold">
+                        {{ 'artemisApp.hyperion.wholeExerciseWizard.settings.title' | artemisTranslate }}
+                    </h3>
+                    <p class="mt-1 text-sm text-muted-color">{{ 'artemisApp.hyperion.wholeExerciseWizard.settings.hint' | artemisTranslate }}</p>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <div>
+                        <div id="generation-build-tool-label" class="mb-2 font-medium">
+                            {{ 'artemisApp.hyperion.wholeExerciseWizard.fields.buildTool' | artemisTranslate }}
+                        </div>
+                        <tum-ui-select-button
+                            [options]="buildToolOptions"
+                            optionValue="value"
+                            [itemTemplate]="buildToolOption"
+                            [allowEmpty]="false"
+                            [ngModel]="projectType()"
+                            (ngModelChange)="projectType.set($event)"
+                            aria-labelledby="generation-build-tool-label"
+                        />
+                        <ng-template #buildToolOption let-option>
+                            {{ option.labelKey | artemisTranslate }}
+                        </ng-template>
+                    </div>
+
+                    <div>
+                        <div id="generation-difficulty-label" class="mb-2 font-medium">
+                            {{ 'artemisApp.hyperion.wholeExerciseWizard.fields.difficulty' | artemisTranslate }}
+                        </div>
+                        <tum-ui-select-button
+                            [options]="difficultyOptions"
+                            optionValue="value"
+                            [itemTemplate]="difficultyOption"
+                            [allowEmpty]="false"
+                            [ngModel]="difficulty()"
+                            (ngModelChange)="difficulty.set($event)"
+                            aria-labelledby="generation-difficulty-label"
+                        />
+                        <ng-template #difficultyOption let-option>
+                            {{ option.labelKey | artemisTranslate }}
+                        </ng-template>
+                    </div>
+                </div>
+            </section>
+        </div>
+    } @else {
+        <div class="mx-auto max-w-4xl">
+            @if (startFailed()) {
+                <tum-ui-message severity="error" class="mb-5 block">
+                    {{ 'artemisApp.hyperion.wholeExerciseWizard.startFailed' | artemisTranslate }}
+                </tum-ui-message>
+            }
+            <div class="mb-5 flex items-center gap-3 rounded-lg border border-surface bg-surface-card p-4">
+                <fa-icon [icon]="faKeyboard" class="text-xl text-primary" />
+                <div>
+                    <div class="font-semibold">{{ 'artemisApp.hyperion.wholeExerciseWizard.draftTitle' | artemisTranslate }}</div>
+                    <div class="text-sm text-muted-color">Java · {{ projectType() === ProjectType.PLAIN_MAVEN ? 'Maven' : 'Gradle' }}</div>
+                </div>
+            </div>
+            <jhi-hyperion-generation-activity [exerciseId]="createdExercise()?.id" [startAllowed]="false" />
+        </div>
+    }
+
+    <ng-template #footer>
+        @if (step() === 'configure') {
             <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="back()">
                 <fa-icon [icon]="faArrowLeft" class="mr-1" /> {{ 'entity.action.back' | artemisTranslate }}
             </tum-ui-button>
@@ -109,20 +134,13 @@
                 }
                 {{ 'artemisApp.hyperion.wholeExerciseWizard.actions.generate' | artemisTranslate }}
             </tum-ui-button>
-        </div>
-    } @else {
-        <div class="flex items-center gap-3 mb-5 rounded border p-4">
-            <fa-icon [icon]="faKeyboard" class="text-xl" />
-            <div>
-                <div class="font-semibold">{{ createdExercise()?.title }}</div>
-                <div class="text-sm text-muted-color">Java · {{ projectType() === ProjectType.PLAIN_MAVEN ? 'Maven' : 'Gradle' }}</div>
-            </div>
-        </div>
-        <jhi-hyperion-generation-activity [exerciseId]="createdExercise()?.id" [startAllowed]="false" />
-        <div class="flex justify-end mt-6">
+        } @else {
+            <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">
+                {{ 'entity.action.close' | artemisTranslate }}
+            </tum-ui-button>
             <tum-ui-button severity="primary" size="small" [disabled]="!createdExercise()?.templateParticipation?.id" (clicked)="openEditor()">
                 {{ 'artemisApp.hyperion.wholeExerciseWizard.actions.openEditor' | artemisTranslate }} <fa-icon [icon]="faArrowRight" class="ml-1" />
             </tum-ui-button>
-        </div>
-    }
+        }
+    </ng-template>
 </tum-ui-dialog>

@@ -3,29 +3,33 @@
         "hyperion": {
             "wholeExerciseWizard": {
                 "title": "Programmieraufgabe generieren",
-                "intro": "Beschreibe das Lehrziel und die wesentlichen Vorgaben. Artemis legt eine unveröffentlichte Java-Aufgabe an, generiert Aufgabenstellung, Vorlage, Lösung und Tests gemeinsam und prüft die KI-Änderungen vor dem Speichern.",
-                "steps": {
-                    "configure": "Konfigurieren",
-                    "generate": "Generieren"
-                },
+                "intro": "Beschreibe die Aufgabe, die du unterrichten möchtest. Artemis entwirft Aufgabenstellung, Startcode, Lösung und Tests und baut und prüft das Ergebnis, bevor der Entwurf gespeichert wird.",
+                "draftTitle": "Entwurf einer Java-Programmieraufgabe",
                 "fields": {
-                    "title": "Aufgabentitel",
-                    "shortName": "Kurzname",
-                    "shortNameHint": "3–19 Buchstaben und Ziffern, beginnend mit einem Buchstaben.",
-                    "points": "Punkte",
-                    "releaseDate": "Veröffentlichungsdatum",
-                    "dueDate": "Abgabefrist",
                     "buildTool": "Build-Werkzeug",
                     "difficulty": "Schwierigkeit",
-                    "brief": "Beschreibung der Lehrperson",
-                    "briefPlaceholder": "Beispiel: Studierende implementieren einen generischen, größenbeschränkten Stack in Java. Er unterstützt push, pop, peek und size; leere Zugriffe werfen eine eigene Exception. Teste generische Typen, Kapazitätsgrenzen und Randfälle.",
-                    "briefHint": "Beschreibe Lernziel, geforderte Implementierung, öffentliche API, wichtige Randfälle und vorgeschriebene oder verbotene Techniken. Schreibe nicht die vollständige Lösung."
+                    "brief": "Was sollen Studierende lernen und entwickeln?",
+                    "briefHint": "Beschreibe Lernziel, erwartetes Verhalten und wichtige Vorgaben. API-Namen, Randfälle und Testentwurf kannst du Artemis überlassen, sofern sie für deinen Kurs nicht wesentlich sind.",
+                    "briefError": "Ergänze etwas mehr Detail, damit Artemis eine zusammenhängende Aufgabe entwerfen kann."
+                },
+                "example": {
+                    "title": "Beispiel anzeigen",
+                    "text": "Studierende üben Generics und Ausnahmebehandlung, indem sie einen größenbeschränkten Stack implementieren. Er hält die Last-in-first-out-Reihenfolge ein und weist Zugriffe auf einen leeren Stack mit einer eigenen Exception zurück."
+                },
+                "settings": {
+                    "title": "Aufgabeneinstellungen",
+                    "hint": "Die generierte Java-Aufgabe bleibt unveröffentlicht, bis du sie geprüft hast. Titel, Punkte und Zeitplan kannst du anschließend ändern."
+                },
+                "buildTools": {
+                    "maven": "Maven",
+                    "gradle": "Gradle"
                 },
                 "actions": {
-                    "generate": "Aufgabe generieren",
+                    "generate": "Aufgabenentwurf generieren",
                     "openEditor": "Code-Editor öffnen"
                 },
-                "startFailed": "Die Aufgabe wurde angelegt, aber die Generierung konnte nicht gestartet werden. Öffne die erstellte Aufgabe, um es erneut zu versuchen oder sie zu entfernen."
+                "startFailed": "Die Aufgabe wurde angelegt, aber die Generierung konnte nicht gestartet werden. Öffne die erstellte Aufgabe, um es erneut zu versuchen oder sie zu entfernen.",
+                "setupFailed": "Artemis konnte den Aufgabenentwurf nicht vorbereiten. Deine Beschreibung bleibt erhalten, sodass du es erneut versuchen kannst."
             },
             "generationActivity": {
                 "panelTitle": "KI-Aktivität",

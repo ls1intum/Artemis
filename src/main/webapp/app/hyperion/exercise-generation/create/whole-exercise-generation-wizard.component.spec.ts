@@ -5,7 +5,6 @@ import { of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 
-import { AlertService } from 'app/foundation/service/alert.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
@@ -16,12 +15,10 @@ describe('WholeExerciseGenerationWizardComponent', () => {
     let component: WholeExerciseGenerationWizardComponent;
     let setup: ReturnType<typeof vi.fn>;
     let generate: ReturnType<typeof vi.fn>;
-    let alertError: ReturnType<typeof vi.fn>;
 
     beforeEach(async () => {
         setup = vi.fn();
         generate = vi.fn();
-        alertError = vi.fn();
         await TestBed.configureTestingModule({
             imports: [WholeExerciseGenerationWizardComponent],
             providers: [
@@ -30,7 +27,6 @@ describe('WholeExerciseGenerationWizardComponent', () => {
                     provide: HyperionExerciseGenerationService,
                     useValue: { generate, getStatus: vi.fn(() => of(null)), subscribeToStream: vi.fn(), cancel: vi.fn(), revertExerciseGeneration: vi.fn() },
                 },
-                { provide: AlertService, useValue: { error: alertError } },
                 { provide: Router, useValue: { navigate: vi.fn().mockResolvedValue(true) } },
                 provideTranslateService(),
             ],
@@ -44,17 +40,17 @@ describe('WholeExerciseGenerationWizardComponent', () => {
     });
 
     function enterValidConfiguration(projectType = ProjectType.PLAIN_MAVEN): void {
-        component.updateTitle('Bounded Stack');
         component.brief.set('Students implement a generic bounded stack with explicit empty and capacity edge cases.');
         component.projectType.set(projectType);
-        component.releaseDate.set(dayjs().add(1, 'day').format('YYYY-MM-DDTHH:mm'));
-        component.dueDate.set(dayjs().add(8, 'day').format('YYYY-MM-DDTHH:mm'));
     }
 
-    it('derives an editable valid short name and rejects an underspecified brief', () => {
-        component.updateTitle('Bounded Stack!');
+    it('makes the teaching request the primary labelled full-width control', () => {
+        const textarea = document.querySelector<HTMLTextAreaElement>('#generation-brief');
+        const label = document.querySelector<HTMLLabelElement>('label[for="generation-brief"]');
 
-        expect(component.shortName()).toBe('BoundedStack');
+        expect(textarea).not.toBeNull();
+        expect(textarea?.classList.contains('w-full')).toBe(true);
+        expect(label?.textContent?.trim()).toContain('wholeExerciseWizard.fields.brief');
         expect(component.canGenerate()).toBe(false);
     });
 
@@ -69,14 +65,18 @@ describe('WholeExerciseGenerationWizardComponent', () => {
 
         expect(setup).toHaveBeenCalledWith(
             expect.objectContaining({
-                title: 'Bounded Stack',
-                shortName: 'BoundedStack',
-                problemStatement: component.brief(),
+                title: 'Generating exercise',
+                shortName: expect.stringMatching(/^gen[a-z0-9]+$/),
+                problemStatement: '',
                 projectType,
-                packageName: 'de.artemis.boundedstack',
+                packageName: expect.stringMatching(/^de\.artemis\.gen[a-z0-9]+$/),
+                dueDate: undefined,
+                assessmentDueDate: undefined,
             }),
             true,
         );
+        const provisioned = setup.mock.calls[0][0] as ProgrammingExercise;
+        expect(dayjs(provisioned.releaseDate).isAfter(dayjs().add(11, 'month'))).toBe(true);
         expect(generate).toHaveBeenCalledWith(7, { mode: 'GENERATE', prompt: component.brief() });
         expect(component.step()).toBe('generating');
     });
@@ -101,6 +101,6 @@ describe('WholeExerciseGenerationWizardComponent', () => {
 
         expect(component.createdExercise()?.id).toBe(9);
         expect(component.step()).toBe('generating');
-        expect(alertError).toHaveBeenCalledWith('artemisApp.hyperion.wholeExerciseWizard.startFailed');
+        expect(component.startFailed()).toBe(true);
     });
 });

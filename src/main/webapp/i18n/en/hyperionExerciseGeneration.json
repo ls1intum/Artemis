@@ -3,29 +3,33 @@
         "hyperion": {
             "wholeExerciseWizard": {
                 "title": "Generate programming exercise",
-                "intro": "Describe the teaching goal and essential constraints. Artemis will provision an unreleased Java exercise, generate its statement, template, solution, and tests together, and verify them before saving AI changes.",
-                "steps": {
-                    "configure": "Configure",
-                    "generate": "Generate"
-                },
+                "intro": "Describe the exercise you want to teach. Artemis drafts the problem statement, starter code, solution, and tests, then builds and checks the result before saving the draft.",
+                "draftTitle": "Java programming exercise draft",
                 "fields": {
-                    "title": "Exercise title",
-                    "shortName": "Short name",
-                    "shortNameHint": "3–19 letters and numbers, starting with a letter.",
-                    "points": "Points",
-                    "releaseDate": "Release date",
-                    "dueDate": "Due date",
                     "buildTool": "Build tool",
                     "difficulty": "Difficulty",
-                    "brief": "Instructor brief",
-                    "briefPlaceholder": "For example: Students implement a generic bounded stack in Java. It supports push, pop, peek and size; empty access throws a dedicated exception. Test generic types, capacity limits and edge cases.",
-                    "briefHint": "State what students should learn and implement, the required public API, important edge cases, and any technique that must or must not be used. Do not write the full solution."
+                    "brief": "What should students learn and build?",
+                    "briefHint": "Describe the learning goal, expected behavior, and important constraints. You can leave API names, edge cases, and test design to Artemis unless they matter for your course.",
+                    "briefError": "Add a little more detail so Artemis has enough context to design a coherent exercise."
+                },
+                "example": {
+                    "title": "Show an example",
+                    "text": "Students practice generics and exception handling by implementing a bounded stack. It should preserve last-in-first-out order and reject access to an empty stack with a dedicated exception."
+                },
+                "settings": {
+                    "title": "Exercise settings",
+                    "hint": "The generated Java exercise stays unreleased until you review it. You can change its title, points, and schedule afterwards."
+                },
+                "buildTools": {
+                    "maven": "Maven",
+                    "gradle": "Gradle"
                 },
                 "actions": {
-                    "generate": "Generate exercise",
+                    "generate": "Generate draft exercise",
                     "openEditor": "Open code editor"
                 },
-                "startFailed": "The exercise was provisioned, but generation could not be started. Open the created exercise to retry or remove it."
+                "startFailed": "The exercise was provisioned, but generation could not be started. Open the created exercise to retry or remove it.",
+                "setupFailed": "Artemis could not prepare the draft exercise. Your description is still here, so you can try again."
             },
             "generationActivity": {
                 "panelTitle": "AI activity",
