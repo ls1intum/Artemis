@@ -145,11 +145,21 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(ex.getStatusCode()).body(detail);
     }
 
+    /**
+     * Handles bad requests, omitting alert headers when the caller handles the response body.
+     *
+     * @param ex      the bad request
+     * @param request the current request
+     * @return the problem detail response
+     */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
-        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), ex.getBody().getTitle());
         ProblemDetail detail = ex.getBody();
         postProcess(detail, request);
+        if (detail.getProperties() != null && Boolean.TRUE.equals(detail.getProperties().get("skipAlert"))) {
+            return ResponseEntity.status(ex.getStatusCode()).body(detail);
+        }
+        HttpHeaders headers = HeaderUtil.createFailureAlert(applicationName, true, ex.getEntityName(), ex.getErrorKey(), detail.getTitle());
         return ResponseEntity.status(ex.getStatusCode()).headers(headers).body(detail);
     }
 
@@ -169,8 +179,16 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(detail);
     }
 
+    /**
+     * Reports concurrent writes as conflicts and retains the cause in the server log.
+     *
+     * @param ex      the concurrency failure
+     * @param request the current request
+     * @return the conflict response
+     */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {
+        log.warn("Concurrent modification rejected: {}", ex.getMessage(), ex);
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
         detail.setProperty(MESSAGE_KEY, ErrorConstants.ERR_CONCURRENCY_FAILURE);
         postProcess(detail, request);

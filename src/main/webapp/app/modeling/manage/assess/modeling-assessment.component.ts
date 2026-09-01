@@ -293,14 +293,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.synchronizeAssessmentSelectionSubscription(this.apollonEditor, this.readOnly());
     }
 
-    /**
-     * Selection is only reported while the canvas is read-only; a flip has to add or drop that subscription with it.
-     *
-     * Deliberately `subscribeToSelectionChange` and not `subscribeToAssessmentSelection`: the two report different
-     * identifiers. The latter reports the ids of the *assessments*, while consumers of `selectedElementIdsChanged`
-     * match the emitted ids against `Feedback.referenceId`, which is the id of the *element* the feedback references
-     * (the `<type>:<elementId>` reference).
-     */
+    /** Assessment consumers need selected element ids, not assessment ids. */
     private synchronizeAssessmentSelectionSubscription(editor: ApollonEditor, readOnly: boolean): void {
         if (readOnly && this.assessmentSelectionSubscription === undefined) {
             this.assessmentSelectionSubscription = editor.subscribeToSelectionChange((selections) => this.selectedElementIdsChanged.emit(selections));
@@ -322,8 +315,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             isOccupied(this.projectedTopRight()),
             this.topRightRegionMounted,
         );
-        // Hosting the panel in the rail keeps it inside Apollon's chrome, so it travels into
-        // fullscreen with the canvas and is reachable without scrolling the page.
         const panel = this.panelRegion()?.nativeElement;
         const panelWasMounted = this.panelRegionMounted;
         this.panelRegionMounted = this.synchronizeHostRegion('right-rail', panel, isOccupied(this.projectedPanel()), this.panelRegionMounted);
@@ -376,11 +367,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.reserveRoomForPanel(panel);
     }
 
-    /**
-     * The panel floats over the canvas, so the rail's own inset only covers the trigger and the
-     * camera would frame the diagram behind the open panel. Reserving the measured panel width as
-     * an explicit inset keeps the float while laying the diagram out clear of it.
-     */
+    /** Reserve the floating panel width because the rail inset covers only its trigger. */
     private reserveRoomForPanel(panel: HTMLElement): void {
         if (!this.apollonEditor) {
             return;
@@ -404,14 +391,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         }
     }
 
-    /**
-     * Document-root fullscreen, not subtree fullscreen on this component.
-     *
-     * The assessed canvas enables Apollon popups, and those render through a Base UI portal under `<body>`. A browser
-     * paints nothing outside the fullscreen subtree, so making this component the fullscreen element would hide every
-     * popup the reader opens. Promoting the frame to `<body>` and taking `<html>` fullscreen keeps the portals inside.
-     * This mirrors {@link ModelingEditorComponent#toggleFullscreen}.
-     */
+    /** Use document-root fullscreen so body-portaled overlays remain visible. */
     async toggleFullscreen(): Promise<void> {
         const assessmentFrame = this.assessmentFrame()?.nativeElement;
         if (!assessmentFrame || !this.fullscreenSupported) {
@@ -643,16 +623,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return assessments.map((a) => this.elementFeedback.get(a.modelElementId)!).filter(Boolean);
     }
 
-    /**
-     * The UML type of the assessed element, which is what a feedback reference is built from.
-     *
-     * Apollon's `elementType` answers what kind of thing was assessed — `node`, `edge`, `attribute` — not which UML
-     * type it is. Storing that would spell the same element `node:<id>` here while Athena, the example assessments and
-     * every reference already in the database spell it `Class:<id>`. References are compared as whole strings, so the
-     * two never match: the tutor-training comparison then reports correct feedback as unnecessary, and the element it
-     * names cannot be found on the canvas. The model is asked instead, and Apollon's kind is only the fallback for an
-     * element the model no longer holds.
-     */
+    /** Apollon's assessment type is a generic node/edge/member kind, not the UML model type stored in a feedback reference. */
     private referenceTypeFor(assessment: Assessment): string {
         return getModelElementType(this.umlModel(), assessment.modelElementId) ?? assessment.elementType;
     }
@@ -675,11 +646,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.apollonEditor?.setElementHighlights(newElements ?? null);
     }
 
-    /**
-     * Sends the canvas to one element and opens its feedback, so a feedback list
-     * beside the diagram can answer "where does this apply?". `undefined` clears
-     * the selection again.
-     */
     revealAssessment(elementId: string | undefined): void {
         this.apollonEditor?.revealAssessment(elementId ?? null);
     }

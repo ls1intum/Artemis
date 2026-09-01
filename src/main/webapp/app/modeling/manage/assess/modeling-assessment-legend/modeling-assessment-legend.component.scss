@@ -49,13 +49,11 @@
         width: 1.2rem;
         height: 1.2rem;
         flex: 0 0 auto;
-        // The background comes from the entry, so the swatch matches the element on the canvas exactly.
         border: 1px solid color-mix(in srgb, currentcolor 35%, transparent);
         border-radius: var(--tumaet-ui-radius-sm);
     }
 }
 
-// On a narrow canvas the chrome islands wrap onto one another, so drop the legend below the one above it.
 @container (max-width: 32rem) {
     :host {
         margin-top: calc(var(--apollon-chrome-island-h) + var(--apollon-chrome-gap));

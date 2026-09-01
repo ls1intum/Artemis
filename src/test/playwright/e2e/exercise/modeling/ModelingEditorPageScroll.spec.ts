@@ -117,7 +117,7 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
     /** Apollon lays the canvas out around its chrome, so a control being on screen is what makes a measurement final. */
     const canvasIsLaidOut = (page: Page) => expect(page.locator('jhi-modeling-assessment [data-apollon-control="apollon:zoom"]')).toBeVisible();
 
-    test('floats the notice over the canvas instead of taking height from it', async ({ login, page, exerciseAssessment }) => {
+    test('shows loaded automatic feedback in the legend without changing the canvas size', async ({ login, page, exerciseAssessment }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
         // The tutor, not the instructor: this is the tutor assessment page, and the notice is gated on the logged-in
         // user owning the (not yet submitted) assessment.
@@ -125,36 +125,20 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
         await dismissPasskeyReminderIfPresent(page);
         await exerciseAssessment.clickHaveReadInstructionsButton();
         await exerciseAssessment.clickStartNewAssessment();
-        const island = page.locator('jhi-modeling-assessment .feedback-suggestions-chrome');
-        // Baseline: no notice on the seeded submission, so the comparison below is
-        // a real before/after rather than two identical states.
-        await expect(island).toHaveCount(0);
-        // ...and an unoccupied slot must leave the region unmounted: an empty region
-        // still reserves an inset through `getRegionElement`.
-        await expect(page.locator('jhi-modeling-assessment [data-apollon-region="top-left"]')).toHaveCount(0);
+        const automaticFeedbackLegendItem = page.locator('jhi-modeling-assessment-legend .assessment-legend__item').filter({ hasText: /AI feedback suggestion/i });
+        await expect(automaticFeedbackLegendItem).toHaveCount(0);
         await canvasIsLaidOut(page);
         const without = await canvasSize(page);
         await expectNoScrollPastApollonCanvas(page);
 
         await showAutomaticAssessmentNotice(page);
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await expect(island).toBeVisible();
-
-        // Chrome, not a band: inside the editor, in the canvas' top-left corner.
-        await expect(page.locator('jhi-modeling-assessment [data-apollon-region="top-left"] .feedback-suggestions-chrome')).toBeVisible();
+        await expect(automaticFeedbackLegendItem).toBeVisible();
+        await expect(page.locator('jhi-modeling-assessment [data-apollon-region="top-right"] jhi-modeling-assessment-legend')).toBeVisible();
+        await expect(page.locator('jhi-modeling-assessment .feedback-suggestions-chrome')).toHaveCount(0);
 
         await canvasIsLaidOut(page);
         await expect.poll(() => canvasSize(page)).toEqual(without);
-
-        // It keeps the same edge gap as Apollon's own islands and clears them all.
-        const withNotice = (await page.locator('jhi-modeling-assessment .apollon-editor').boundingBox())!;
-        const islandBox = (await island.boundingBox())!;
-        expect(Math.round(islandBox.x - withNotice.x)).toBe(Math.round(islandBox.y - withNotice.y));
-        for (const control of ['apollon:zoom', 'apollon:minimap']) {
-            const box = (await page.locator(`jhi-modeling-assessment [data-apollon-control="${control}"]`).boundingBox())!;
-            expect(islandBox.y + islandBox.height, `the notice must not overlap ${control}`).toBeLessThanOrEqual(box.y);
-        }
-
         await expectNoScrollPastApollonCanvas(page);
     });
 });

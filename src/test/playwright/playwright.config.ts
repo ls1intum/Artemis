@@ -102,7 +102,7 @@ export default defineConfig({
         {
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
-            grepInvert: /@multi-node|@tool/,
+            grepInvert: /@multi-node/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 60) * 1000,
             use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
@@ -111,7 +111,7 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
-            grepInvert: /@multi-node|@tool/,
+            grepInvert: /@multi-node/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',

@@ -46,10 +46,6 @@
                         [highlightDifferences]="highlightDifferences"
                         [elementCounts]="submission()?.similarElements"
                     >
-                        <!-- Athena's status belongs to the diagram, so it rides in the canvas' top-left corner.
-                             Projected unconditionally and gated by occupancy, never `@if` — see `ModelingAssessmentRegion`.
-                             Only the transient loading state remains here; what a suggestion looks like on the canvas is
-                             the legend's job, on the opposite corner. -->
                         <jhi-feedback-suggestions-banner
                             [modelingAssessmentTopLeft]="feedbackSuggestionsNotice() === 'loading'"
                             appearance="chrome"
@@ -60,8 +56,6 @@
                             [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled"
                         />
 
-                        <!-- What the markers and the highlight colours on an element mean, beside the diagram they
-                             describe rather than in a pane the tutor has to scroll to. -->
                         <jhi-modeling-assessment-legend [modelingAssessmentTopRight]="true" [highlights]="legendHighlights()" />
                     </jhi-modeling-assessment>
 
@@ -92,8 +86,6 @@
                 </div>
 
                 <div assessmentWorkspaceDetails class="modeling-assessment-page__details">
-                    <!-- Feedback and notes only. The complaint alert and its form sit beside the diagram instead, so
-                         answering a complaint never means scrolling past the whole feedback list to find it. -->
                     @if (result()?.id) {
                         <jhi-unreferenced-feedback
                             [feedbacks]="unreferencedFeedback()"

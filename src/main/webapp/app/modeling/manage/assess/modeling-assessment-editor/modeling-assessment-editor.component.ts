@@ -111,10 +111,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly highlightedElements = signal<Map<string, string>>(undefined!);
     readonly highlightMissingFeedback = signal(false);
 
-    /**
-     * The highlight colours currently painted on the canvas, named for the legend beside it. Only colours that are
-     * actually in use are listed, so the legend never explains something the tutor cannot see.
-     */
     readonly legendHighlights = computed<ModelingAssessmentLegendHighlight[]>(() => {
         const highlights: ModelingAssessmentLegendHighlight[] = [];
         if (this.hasAutomaticFeedback() && !this.result()?.completionDate) {
@@ -146,12 +142,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly hasAutomaticFeedback = signal(false);
     readonly hasAssessmentDueDatePassed = signal<boolean>(false);
     readonly correctionRound = signal(0);
-    /**
-     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
-     * without a submission being loaded for it. That value must not become the round of the page on its own: the round
-     * is sent to the server as the round to request and then indexes the results that come back, and those two may not
-     * disagree. It therefore only reaches {@link correctionRound} when a load starts.
-     */
+    /** Committed to {@link correctionRound} only when the corresponding submission load starts. */
     private correctionRoundFromUrl = 0;
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
@@ -192,11 +183,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         return Boolean(this.modelingExercise()?.feedbackSuggestionModule);
     }
 
-    /**
-     * Whether Athena has anything to report. Gates the chrome island so the
-     * canvas' top-left corner is only reserved while it is occupied — mounting
-     * an empty region would reserve an inset for nothing.
-     */
     readonly feedbackSuggestionsNotice = computed(() =>
         resolveFeedbackSuggestionsNotice({
             isLoading: this.loadingFeedbackSuggestions(),

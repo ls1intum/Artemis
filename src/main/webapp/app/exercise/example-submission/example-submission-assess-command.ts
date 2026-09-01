@@ -2,7 +2,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FeedbackCorrectionError } from 'app/assessment/shared/entities/feedback.model';
 import { onError } from 'app/foundation/util/global.utils';
-import { parseJson } from 'app/foundation/util/json.util';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
@@ -31,17 +30,16 @@ export class ExampleSubmissionAssessCommand {
     }
 
     private onFailure(error: HttpErrorResponse) {
-        const errorType = error.headers.get('x-artemisapp-error');
+        const errorKey = error.error?.errorKey;
+        const errorType = errorKey ? `error.${errorKey}` : error.headers.get('x-artemisapp-error');
 
         if (errorType !== 'error.invalid_assessment') {
             onError(this.alertService, error);
             return;
         }
 
-        const correctionErrors = ExampleSubmissionAssessCommand.parseCorrectionErrors(error);
-        if (!correctionErrors) {
-            // The verdict arrived but its payload did not, so there is nothing to mark. Report a generic failure
-            // rather than letting the parse throw out of the subscriber, which would abort the handler silently.
+        const correctionErrors = error.error?.errors;
+        if (!Array.isArray(correctionErrors)) {
             onError(this.alertService, error);
             return;
         }
@@ -51,21 +49,5 @@ export class ExampleSubmissionAssessCommand {
 
         const msg = correctionErrors.length === 0 ? 'artemisApp.exampleSubmission.submissionValidation.missing' : 'artemisApp.exampleSubmission.submissionValidation.wrong';
         this.alertService.error(msg, { mistakeCount: correctionErrors.length });
-    }
-
-    /**
-     * Reads the per-feedback correction errors the server packs into the problem detail's `title`.
-     * Returns `undefined` when that payload is missing or malformed.
-     */
-    private static parseCorrectionErrors(error: HttpErrorResponse): FeedbackCorrectionError[] | undefined {
-        const title: unknown = error.error?.title;
-        if (typeof title !== 'string') {
-            return undefined;
-        }
-        try {
-            return parseJson<{ errors?: FeedbackCorrectionError[] }>(title).errors;
-        } catch {
-            return undefined;
-        }
     }
 }

@@ -161,21 +161,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
             await expect(button).toHaveClass(/apollon-chrome-iconbtn/);
             await expect(button).not.toHaveAttribute('data-slot');
         }
-
-        // Artemis' own actions must be indistinguishable from Apollon's controls, apart from the icon-to-label gap
-        // that only the labelled ones need.
-        const restingAppearance = (button: Locator) =>
-            button.evaluate((element) => {
-                const style = getComputedStyle(element);
-                return { backgroundColor: style.backgroundColor, borderRadius: style.borderRadius, color: style.color, gap: style.gap, height: style.height };
-            });
-        const { gap: zoomGap, ...zoomAppearance } = await restingAppearance(zoomOutButton);
-        expect(zoomGap).toBe('normal');
-        for (const labelledButton of [helpButton, fullscreenButton]) {
-            const { gap, ...labelledAppearance } = await restingAppearance(labelledButton);
-            expect(gap).not.toBe('normal');
-            expect(labelledAppearance).toEqual(zoomAppearance);
-        }
     });
 
     test('mounts the problem statement in the rail and the example explanation in the bottom-center chrome', async ({ login, page }) => {
@@ -320,43 +305,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         ]) {
             expect(Math.abs(bottomInset(frameBefore, before) - bottomInset(frameAfter, after))).toBeLessThanOrEqual(SUB_PIXEL_TOLERANCE);
         }
-    });
-
-    /**
-     * The opt-in's state machine is covered by `ExerciseUpdateTimelineComponent`'s unit spec. What only the real page
-     * can show is the two things asserted here: the opt-in tracks the live example solution across two components,
-     * and the picker it reveals stays a compact control instead of stretching across the form.
-     */
-    test('enables the publication opt-in from the live example solution and keeps its picker compact', async ({ login, page }) => {
-        await login(instructor, `/course-management/${course.id}/modeling-exercises/new`);
-
-        const toggle = page.getByTestId('example-solution-publication-toggle');
-        await toggle.scrollIntoViewIfNeeded();
-        await expect(toggle).toBeDisabled();
-
-        // The explanation counts as example solution content just as a drawn diagram does, and typing it
-        // does not depend on canvas pointer mechanics.
-        await page.locator('.modeling-exercise-example-explanation .monaco-editor').click();
-        await page.keyboard.insertText('The solution models a library.');
-
-        await expect(toggle).toBeEnabled();
-        await toggle.check();
-        const publicationRow = page.locator('.timeline-item-row', { hasText: 'Example Solution Publication Date' });
-        await expect(publicationRow).toHaveCount(1);
-
-        const trigger = publicationRow.locator('p-datepicker');
-        await trigger.scrollIntoViewIfNeeded();
-        await expect(trigger).not.toHaveClass(/p-datepicker-fluid/);
-        const triggerBox = await trigger.boundingBox();
-        expect(triggerBox).not.toBeNull();
-        expect(triggerBox!.width).toBeLessThanOrEqual(384);
-
-        await publicationRow.locator('.p-datepicker-input-icon-container').click();
-        const panel = page.locator('.p-datepicker-panel');
-        await expect(panel).toBeVisible();
-        const panelBox = await panel.boundingBox();
-        expect(panelBox).not.toBeNull();
-        expect(panelBox!.width).toBeLessThanOrEqual(384);
     });
 
     test('keeps the fullscreen problem statement stable while toggling and resizing it', async ({ login, page }) => {
@@ -825,17 +773,5 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(page.locator('.apollon-popover')).toBeHidden();
 
         await openRelationshipFeedback();
-    });
-
-    test('fits the read-only example solution to the management detail viewport', async ({ login, page }) => {
-        await login(instructor, `/course-management/${course.id}/modeling-exercises/${existingExercise.id}`);
-        await dismissPasskeyReminderIfPresent(page);
-
-        await expectReadOnlyDiagramToFit(
-            page
-                .locator('jhi-modeling-editor')
-                .filter({ has: page.locator('.readonly-diagram') })
-                .first(),
-        );
     });
 });

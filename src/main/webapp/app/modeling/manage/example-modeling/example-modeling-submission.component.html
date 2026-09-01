@@ -89,7 +89,12 @@
                                 role="group"
                                 [attr.aria-label]="'artemisApp.exampleSubmission.viewMode' | artemisTranslate"
                             >
-                                <button type="button" class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle" aria-pressed="true">
+                                <button
+                                    type="button"
+                                    class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
+                                    aria-pressed="true"
+                                    (click)="showSubmission()"
+                                >
                                     <fa-icon [icon]="faShapes" />
                                     <span jhiTranslate="artemisApp.exampleSubmission.submissionMode"></span>
                                 </button>
@@ -156,7 +161,12 @@
                                         <span jhiTranslate="artemisApp.exampleSubmission.submissionMode"></span>
                                     </button>
                                 }
-                                <button type="button" class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle" aria-pressed="true">
+                                <button
+                                    type="button"
+                                    class="artemis-apollon-chrome-action apollon-chrome-iconbtn apollon-chrome-iconbtn--toggle"
+                                    aria-pressed="true"
+                                    (click)="showAssessment()"
+                                >
                                     <fa-icon [icon]="faClipboardCheck" />
                                     <span
                                         [jhiTranslate]="

@@ -41,7 +41,12 @@ export class ExerciseUpdateTimelineComponent {
      */
     readonly isExampleSolutionPublicationDateVisible = linkedSignal<boolean, boolean>({
         source: this.canConfigureExampleSolutionPublication,
-        computation: (canConfigure, previous) => canConfigure && (previous?.value ?? untracked(this.exampleSolutionPublicationDate) !== undefined),
+        computation: (canConfigure, previous) => {
+            if (!canConfigure) {
+                return false;
+            }
+            return previous?.source ? previous.value : untracked(this.exampleSolutionPublicationDate) !== undefined;
+        },
     });
 
     /** Explains a disabled opt-in; `undefined` while the opt-in is usable. */

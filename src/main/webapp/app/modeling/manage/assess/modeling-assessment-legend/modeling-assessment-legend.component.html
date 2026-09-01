@@ -8,7 +8,6 @@
 }
 @for (highlight of highlights(); track highlight.text) {
     <span class="assessment-legend__item">
-        <!-- The swatch takes the colour the canvas paints, so the two cannot drift apart. -->
         <span class="assessment-legend__highlight" [style.background]="highlight.color" aria-hidden="true"></span>
         <span [jhiTranslate]="highlight.text"></span>
     </span>

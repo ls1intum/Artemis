@@ -116,6 +116,32 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndepen
         assertThat(tutorParticipationDTO.status()).as("Tutor participation has correct status").isEqualTo(TutorParticipationStatus.TRAINED);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testModelingAssessmentMatchesSameElementAcrossReferenceTypeVersions() throws Exception {
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+        var result = exampleSubmission.getSubmission().getLatestResult();
+        var feedback = ParticipationFactory.createManualTextFeedback(1D, "Class:element-id");
+        resultService.addFeedbackToResult(result, List.of(feedback), true);
+
+        feedback.setReference("class:element-id");
+
+        request.postWithResponseBody(path, exampleSubmission, TutorParticipationDTO.class, HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testModelingAssessmentRejectsFeedbackOnDifferentElement() throws Exception {
+        ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
+        var result = exampleSubmission.getSubmission().getLatestResult();
+        var feedback = ParticipationFactory.createManualTextFeedback(1D, "Class:expected-id");
+        resultService.addFeedbackToResult(result, List.of(feedback), true);
+
+        feedback.setReference("class:different-id");
+
+        request.post(path, exampleSubmission, HttpStatus.BAD_REQUEST);
+    }
+
     /**
      * Tests the tutor training with example submission in Text exercises.
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.

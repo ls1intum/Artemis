@@ -106,6 +106,21 @@ describe('ExerciseUpdateTimelineComponent', () => {
         expect(labelKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDate');
     });
 
+    it('should show a preserved publication date when it becomes configurable', async () => {
+        const stored = dayjs();
+        await createComponent({ hasExampleSolution: false, exampleSolutionPublicationDate: stored });
+
+        fixture.componentRef.setInput('hasExampleSolution', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(component.isExampleSolutionPublicationDateVisible()).toBe(true);
+        expect(component.exampleSolutionPublicationDate()).toBe(stored);
+        expect(toggle().checked).toBe(true);
+        expect(labelKeys()).toContain('artemisApp.exercise.exampleSolutionPublicationDate');
+    });
+
     it('should disable the opt-in on import and say why', async () => {
         await createComponent({ hasExampleSolution: true, isImport: true });
 

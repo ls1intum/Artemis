@@ -19,7 +19,7 @@ describe('ExampleSubmissionAssessCommand', () => {
         new HttpErrorResponse({
             status: 400,
             error: body,
-            headers: new HttpHeaders({ 'x-artemisapp-error': 'error.invalid_assessment' }),
+            headers: new HttpHeaders(),
         });
 
     beforeEach(() => {
@@ -42,7 +42,7 @@ describe('ExampleSubmissionAssessCommand', () => {
     it('should forward the per-feedback correction errors of an invalid assessment', () => {
         const correctionError: FeedbackCorrectionError = { reference: 'ref-1', type: FeedbackCorrectionErrorType.INCORRECT_SCORE };
         vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(
-            throwError(() => invalidAssessmentError({ title: JSON.stringify({ errors: [correctionError] }) })),
+            throwError(() => invalidAssessmentError({ errorKey: 'invalid_assessment', errors: [correctionError] })),
         );
 
         run();
@@ -53,7 +53,7 @@ describe('ExampleSubmissionAssessCommand', () => {
     });
 
     it('should report a missing assessment when the server found no wrong feedback', () => {
-        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => invalidAssessmentError({ title: '{"errors": []}' })));
+        vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => invalidAssessmentError({ errorKey: 'invalid_assessment', errors: [] })));
 
         run();
 
@@ -61,9 +61,7 @@ describe('ExampleSubmissionAssessCommand', () => {
         expect(alertService.error).toHaveBeenCalledWith('artemisApp.exampleSubmission.submissionValidation.missing', { mistakeCount: 0 });
     });
 
-    // A 400 can arrive without its problem detail — an intermediary may replace the body — and the tutor still needs
-    // to be told something happened.
-    it.each([{ title: 'not json at all' }, { timestamp: 'x', status: 400, error: 'Bad Request' }, undefined])('should not throw when the error payload is %j', (body) => {
+    it.each([{ errorKey: 'invalid_assessment' }, { timestamp: 'x', status: 400, error: 'Bad Request' }, undefined])('should not throw when the error payload is %j', (body) => {
         vi.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(throwError(() => invalidAssessmentError(body)));
 
         expect(() => run()).not.toThrow();

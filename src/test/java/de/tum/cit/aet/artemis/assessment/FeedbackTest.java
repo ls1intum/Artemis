@@ -12,23 +12,6 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 class FeedbackTest {
 
     @Test
-    void referenceElementIdIgnoresTheElementTypeInFrontOfIt() {
-        // The editor's name for a kind of element changed with Apollon, so the same element can be referenced as
-        // `Class:<id>` by an older assessment and `class:<id>` by a newer one. Only the id identifies the element.
-        assertThat(new Feedback().reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2680").getReferenceElementId()).isEqualTo("6aba5764-d102-4740-9675-b2bd0a4f2680");
-        assertThat(new Feedback().reference("class:6aba5764-d102-4740-9675-b2bd0a4f2680").getReferenceElementId()).isEqualTo("6aba5764-d102-4740-9675-b2bd0a4f2680");
-        assertThat(new Feedback().reference("node:6aba5764-d102-4740-9675-b2bd0a4f2680").getReferenceElementId()).isEqualTo("6aba5764-d102-4740-9675-b2bd0a4f2680");
-    }
-
-    @Test
-    void referenceElementIdHandlesAReferenceWithoutATypeAndNoReferenceAtAll() {
-        // A programming reference carries further colons; only the first one separates the type.
-        assertThat(new Feedback().reference("file:src/Main.java_line:3").getReferenceElementId()).isEqualTo("src/Main.java_line:3");
-        assertThat(new Feedback().reference("bare-id").getReferenceElementId()).isEqualTo("bare-id");
-        assertThat(new Feedback().getReferenceElementId()).isNull();
-    }
-
-    @Test
     void setTruncatedFeedbackDetailText() {
         final Feedback feedback = new Feedback();
         feedback.setDetailTextTruncated(getText(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 100));

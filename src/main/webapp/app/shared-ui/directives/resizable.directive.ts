@@ -102,6 +102,7 @@ export class ResizableDirective {
     private moveCleanup?: () => void;
     private externalHandleCleanup?: () => void;
     private handleMutationObserver?: MutationObserver;
+    private handleResizeObserver?: ResizeObserver;
     private handleStylesFrame?: number;
     private readonly managedHandles = new Map<HTMLElement, HandleState>();
 
@@ -124,6 +125,7 @@ export class ResizableDirective {
             this.renderer.removeStyle(this.document.body, 'user-select');
             this.externalHandleCleanup?.();
             this.handleMutationObserver?.disconnect();
+            this.handleResizeObserver?.disconnect();
             if (this.handleStylesFrame !== undefined) {
                 window.cancelAnimationFrame(this.handleStylesFrame);
                 this.handleStylesFrame = undefined;
@@ -153,6 +155,7 @@ export class ResizableDirective {
 
     private observeHandleChanges(): void {
         this.handleMutationObserver?.disconnect();
+        this.handleResizeObserver?.disconnect();
         const root = this.handleSearchRoot();
         if (!root || !Object.values(this.resizableEdges()).some(Boolean)) {
             this.handleMutationObserver = undefined;
@@ -160,6 +163,8 @@ export class ResizableDirective {
         }
         this.handleMutationObserver = new MutationObserver(() => this.scheduleHandleStyles());
         this.handleMutationObserver.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['aria-label', 'aria-labelledby'] });
+        this.handleResizeObserver = new ResizeObserver(() => this.scheduleHandleStyles());
+        this.handleResizeObserver.observe(this.host.nativeElement);
     }
 
     /**
@@ -177,7 +182,6 @@ export class ResizableDirective {
         });
     }
 
-    /** Writing an unchanged value still dirties style/layout, which is the whole cost this path is trying to avoid. */
     private setStyleIfChanged(element: HTMLElement, property: string, value: string): void {
         if (element.style.getPropertyValue(property) !== value) {
             this.renderer.setStyle(element, property, value);
