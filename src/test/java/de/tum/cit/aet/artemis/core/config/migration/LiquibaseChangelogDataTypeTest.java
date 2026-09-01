@@ -5,12 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Pattern;
-
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.Resource;
@@ -28,7 +23,9 @@ import org.w3c.dom.NodeList;
  * every incremental changelog must comply.
  * <p>
  * The check inspects the {@code type} / {@code newDataType} attributes of all changelog elements and the text of inline
- * {@code <sql>} blocks. XML comments are ignored by the parser, so mentioning the word in a comment does not trigger it.
+ * {@code <sql>} blocks. {@code LONGTEXT} is matched as a whole word, so decorated declarations such as
+ * {@code LONGTEXT CHARACTER SET utf8mb4} are still detected. XML comments are ignored by the parser, so mentioning the
+ * word in a comment does not trigger it.
  */
 class LiquibaseChangelogDataTypeTest {
 
@@ -39,7 +36,7 @@ class LiquibaseChangelogDataTypeTest {
      */
     private static final String GRANDFATHERED_BASELINE = "00000000000000_initial_schema.xml";
 
-    private static final Pattern LONGTEXT_IN_SQL = Pattern.compile("\\blongtext\\b", Pattern.CASE_INSENSITIVE);
+    private static final Pattern LONGTEXT_TOKEN = Pattern.compile("\\bLONGTEXT\\b", Pattern.CASE_INSENSITIVE);
 
     @Test
     void testNoNewLongtextDataTypeInIncrementalChangelogs() throws Exception {
@@ -59,10 +56,22 @@ class LiquibaseChangelogDataTypeTest {
                 + GRANDFATHERED_BASELINE + " is grandfathered. Offending occurrences: " + violations).isEmpty();
     }
 
+    @Test
+    void isLongtextDataTypeDetectsPlainAndDecoratedDeclarations() {
+        assertThat(isLongtextDataType("longtext")).isTrue();
+        assertThat(isLongtextDataType("LONGTEXT")).isTrue();
+        assertThat(isLongtextDataType("LONGTEXT CHARACTER SET utf8mb4")).isTrue();
+        assertThat(isLongtextDataType("mediumtext")).isFalse();
+        assertThat(isLongtextDataType("text")).isFalse();
+        assertThat(isLongtextDataType("varchar(255)")).isFalse();
+        assertThat(isLongtextDataType(null)).isFalse();
+        assertThat(isLongtextDataType("verylongtextfield")).isFalse();
+    }
+
     private void collectLongtextViolations(Resource changelog, String fileName, List<String> violations) throws Exception {
         Document document;
         try (InputStream inputStream = changelog.getInputStream()) {
-            document = createSecureDocumentBuilder().parse(inputStream);
+            document = MigrationChangelogTestSupport.secureDocumentBuilder().parse(inputStream);
         }
 
         // Check the datatype attributes of all elements (e.g. <column type="..."/>, <modifyDataType newDataType="..."/>).
@@ -80,28 +89,27 @@ class LiquibaseChangelogDataTypeTest {
         NodeList sqlBlocks = document.getElementsByTagName("sql");
         for (int i = 0; i < sqlBlocks.getLength(); i++) {
             String sqlText = sqlBlocks.item(i).getTextContent();
-            if (sqlText != null && LONGTEXT_IN_SQL.matcher(sqlText).find()) {
+            if (sqlText != null && LONGTEXT_TOKEN.matcher(sqlText).find()) {
                 violations.add(fileName + " (inline <sql> block references LONGTEXT)");
             }
         }
     }
 
     private void checkDataTypeAttribute(Node attribute, String fileName, List<String> violations) {
-        if (attribute != null && "longtext".equals(attribute.getNodeValue().trim().toLowerCase(Locale.ROOT))) {
+        if (attribute != null && isLongtextDataType(attribute.getNodeValue())) {
             violations.add(fileName + " (" + attribute.getNodeName() + "=\"" + attribute.getNodeValue() + "\")");
         }
     }
 
-    private DocumentBuilder createSecureDocumentBuilder() throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        // Harden against XXE: no DOCTYPE, no external entities, no external DTD loading.
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-        factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-        factory.setXIncludeAware(false);
-        factory.setExpandEntityReferences(false);
-        return factory.newDocumentBuilder();
+    /**
+     * Reports whether a Liquibase datatype value declares a {@code LONGTEXT} column. {@code LONGTEXT} is matched as a
+     * whole word, so a decorated value such as {@code LONGTEXT CHARACTER SET utf8mb4} still counts while an unrelated
+     * token such as {@code verylongtextfield} does not.
+     *
+     * @param dataType the raw {@code type} / {@code newDataType} attribute value, may be {@code null}
+     * @return {@code true} if the value declares a {@code LONGTEXT} column
+     */
+    private static boolean isLongtextDataType(String dataType) {
+        return dataType != null && LONGTEXT_TOKEN.matcher(dataType).find();
     }
 }
