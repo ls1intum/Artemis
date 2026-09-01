@@ -444,40 +444,63 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param user        the requesting user
      */
     public void applyContextChange(IrisChatSession session, IrisChatMode newMode, long newEntityId, User user) {
-        if (session.getMode() == newMode && session.getEntityId() == newEntityId) {
-            return;
-        }
-
-        long courseId = session.getCourseId();
-
+        // Deliberately NO pre-check on the caller's copy here. It looks like a cheap way to skip a no-op, but the
+        // caller's copy can be stale in both directions: if it still says A while another request has moved the
+        // session to B, a request to switch to A would return early and leave the session on B - silently doing
+        // nothing where a real transition was asked for. The only check that decides is the one under the lock.
+        //
+        // Depends only on the target and the user, never on the session's current state, so it stays outside the lock.
         var resolved = resolveAndAuthorize(newMode, newEntityId, user);
 
-        if (resolved.course().getId() != courseId) {
-            throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
-        }
-
-        String newEntityName = resolved.entityName();
-
-        IrisChatMode previousMode = session.getMode();
-        var marker = IrisContextSwitchMarker.forSwitch(previousMode, newMode, newEntityId, newEntityName);
-
-        IrisMessage markerMessage = new IrisMessage();
-        markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
-
         // Append the marker and update the context fields under ONE session write lock. saveMessage takes that lock
-        // itself, but if it were the only holder it would release it on its own commit, and the save(session) below
-        // would then cascade-merge this session - whose messages list is the one saveMessage handed back - after a
-        // concurrent append may already have committed. orphanRemoval would delete that new row. Taking the lock here
-        // keeps it held until this transaction commits, so nothing can interleave between the two writes.
+        // itself, but if it were the only holder it would release it on its own commit, and the save below would then
+        // cascade-merge the session - whose messages list is the one saveMessage handed back - after a concurrent
+        // append may already have committed. orphanRemoval would delete that new row. Taking the lock here keeps it
+        // held until this transaction commits, so nothing can interleave between the two writes.
         IrisMessage savedMarker = transactionTemplate.execute(status -> {
-            irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId());
-            IrisMessage saved = irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
-            session.setMode(newMode);
-            session.setEntityId(newEntityId);
-            irisChatSessionRepository.save(session);
+            if (!(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId()) instanceof IrisChatSession locked)) {
+                throw new IllegalStateException("Context can only be switched on a chat session, but session " + session.getId() + " is not one");
+            }
+            // Taking the lock does not refresh an entity the persistence context already manages, and this method does
+            // run inside an outer transaction: revealAmbient resolves the session, which is what calls us. Without the
+            // refresh the state we decide on could be the one that transaction read before the lock existed. Flush
+            // first so the refresh cannot discard changes a caller made but has not written yet.
+            irisSessionRepository.flush();
+            irisSessionRepository.refresh(locked);
+            // Everything describing the transition comes from the LOCKED session, not from the caller's copy. A
+            // concurrent switch that took the lock first has already moved the session on, so a decision made before
+            // the lock would either record a previous mode that never was, or append a second marker for a switch
+            // that already happened.
+            if (locked.getMode() == newMode && locked.getEntityId() == newEntityId) {
+                return null;   // the other switch picked the same target; there is no transition left to record
+            }
+            if (resolved.course().getId() != locked.getCourseId()) {
+                throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
+            }
+
+            var marker = IrisContextSwitchMarker.forSwitch(locked.getMode(), newMode, newEntityId, resolved.entityName());
+            IrisMessage markerMessage = new IrisMessage();
+            markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
+            IrisMessage saved = irisMessageService.saveMessage(markerMessage, locked, IrisMessageSender.CTXSWAP);
+
+            locked.setMode(newMode);
+            locked.setEntityId(newEntityId);
+            irisChatSessionRepository.save(locked);
             return saved;
         });
 
+        if (savedMarker == null) {
+            // Lost the race to an identical switch. The session already carries the target context, so mirror it and
+            // stay quiet rather than announcing a transition this call did not make.
+            session.setMode(newMode);
+            session.setEntityId(newEntityId);
+            return;
+        }
+
+        // Mirror onto the caller's instance: callers read the mode straight after this call - resolveProactiveSession
+        // gates the entire proactive flow on it - and the locked instance they never see is the one that was updated.
+        session.setMode(newMode);
+        session.setEntityId(newEntityId);
         sendOverWebsocket(session, savedMarker);
     }
 

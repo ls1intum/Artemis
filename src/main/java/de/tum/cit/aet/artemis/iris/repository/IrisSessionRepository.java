@@ -67,12 +67,14 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
      * merge free to cascade a stale collection and orphan-remove a concurrent append.
      *
      * <p>
-     * It does NOT make the whole aggregate safe. These still touch the same rows without taking it:
-     * {@code setSessionTitle} and {@code updateLatestSuggestions} merge the session aggregate (they do not intend to
-     * change the collection, but a cascade merge carries whatever collection state they hold), and
-     * {@code deleteSupersededProactiveMessage} plus the proactive-outcome update write message rows directly. Closing
-     * those means either routing every one of them through this lock as well, or dropping the {@code @OrderColumn}
-     * that forces the collection to be written from the owner side.
+     * Writers that only change a scalar field of the session do NOT need this lock and must not merge the aggregate
+     * instead: {@code setSessionTitle} and {@code updateLatestSuggestions} go through {@link #updateTitle} and
+     * {@link #updateLatestSuggestions}, which never mention the collection and so cannot cascade a stale one.
+     *
+     * <p>
+     * Still outside the mutex: {@code deleteSupersededProactiveMessage} and the proactive-outcome update write message
+     * rows directly. They target one specific row rather than replacing the list, so they cannot orphan-remove a
+     * concurrent append, but they can still interleave with one.
      *
      * @param sessionId the session to lock
      * @return the locked session, if it exists
@@ -96,6 +98,46 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
     default IrisSession findByIdWithWriteLockElseThrow(long sessionId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdWithWriteLock(sessionId), sessionId);
     }
+
+    /**
+     * Write the session title without touching the rest of the aggregate.
+     *
+     * <p>
+     * Deliberately a scalar update rather than {@code save(session)}. The callers hold a session whose messages were
+     * loaded earlier, and merging that aggregate drags the whole collection through the merge for a change to a single
+     * column. That merge does not lose a concurrently appended message on its own: the stale list is still a Hibernate
+     * {@code PersistentList} and carries its snapshot, so nothing is seen as an orphan. It only becomes dangerous once
+     * the collection is no longer a Hibernate collection - replacing it with a plain list at any point drops that
+     * snapshot, and then {@code orphanRemoval} can delete a row the caller never knew about. Writing one column cannot
+     * reach the collection at all, so the question does not arise, and it needs no session lock.
+     *
+     * @param sessionId the session to rename
+     * @param title     the new title
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE IrisSession s
+            SET s.title = :title
+            WHERE s.id = :sessionId
+            """)
+    void updateTitle(@Param("sessionId") long sessionId, @Param("title") String title);
+
+    /**
+     * Write the serialized latest suggestions without touching the rest of the aggregate, for the same reason as
+     * {@link #updateTitle}.
+     *
+     * @param sessionId         the session to update
+     * @param latestSuggestions the serialized suggestions
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE IrisSession s
+            SET s.latestSuggestions = :latestSuggestions
+            WHERE s.id = :sessionId
+            """)
+    void updateLatestSuggestions(@Param("sessionId") long sessionId, @Param("latestSuggestions") String latestSuggestions);
 
     /**
      * Counts all Iris sessions for a given user, regardless of concrete session type.
