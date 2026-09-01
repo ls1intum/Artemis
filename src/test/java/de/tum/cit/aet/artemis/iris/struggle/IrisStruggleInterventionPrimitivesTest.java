@@ -280,9 +280,9 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void writeEpisodeOutcome_noRowYet_returnsFalse_deferred() {
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-x", USER_ID)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-x", USER_ID, EXERCISE_ID)).thenReturn(List.of());
 
-        boolean applied = service.writeEpisodeOutcome("ep-x", IrisProactiveOutcome.DISMISSED, USER_ID);
+        boolean applied = service.writeEpisodeOutcome("ep-x", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isFalse();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
@@ -292,11 +292,11 @@ class IrisStruggleInterventionPrimitivesTest {
     void writeEpisodeOutcome_rowExists_noOutcomeYet_setsOutcomeAndReturnsTrue() {
         var target = new IrisMessage();
         target.setId(500L);
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-1", USER_ID)).thenReturn(List.of(target));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID)).thenReturn(List.of());   // no outcome episode-wide yet
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(target));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // no outcome episode-wide yet
         when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED)).thenReturn(1);
 
-        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.DISMISSED, USER_ID);
+        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
         verify(irisMessageRepository).setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED);
@@ -307,10 +307,10 @@ class IrisStruggleInterventionPrimitivesTest {
         // The episode already holds a terminal outcome (episode-wide pre-check non-empty): re-writing is a no-op.
         var target = new IrisMessage();
         target.setId(500L);
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-1", USER_ID)).thenReturn(List.of(target));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID)).thenReturn(List.of(IrisProactiveOutcome.RECOVERED));
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(target));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.RECOVERED));
 
-        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.RECOVERED, USER_ID);
+        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.RECOVERED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
@@ -321,10 +321,10 @@ class IrisStruggleInterventionPrimitivesTest {
         // Episode already terminal (DISMISSED); a DIFFERENT value (ABANDONED) is silently ignored (first wins).
         var target = new IrisMessage();
         target.setId(500L);
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-1", USER_ID)).thenReturn(List.of(target));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(target));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-1", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
 
-        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.ABANDONED, USER_ID);
+        boolean applied = service.writeEpisodeOutcome("ep-1", IrisProactiveOutcome.ABANDONED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
@@ -336,18 +336,18 @@ class IrisStruggleInterventionPrimitivesTest {
         // earlier sentAt) never becomes the target. Once 600 carries the outcome, a second call is a no-op.
         var firstPersisted = new IrisMessage();
         firstPersisted.setId(600L);
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-2", USER_ID)).thenReturn(List.of(firstPersisted));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-2", USER_ID)).thenReturn(List.of());   // first call: not terminal yet
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-2", USER_ID, EXERCISE_ID)).thenReturn(List.of(firstPersisted));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-2", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // first call: not terminal yet
         when(irisMessageRepository.setProactiveOutcomeIfNull(600L, IrisProactiveOutcome.DISMISSED)).thenReturn(1);
 
-        boolean firstApplied = service.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID);
+        boolean firstApplied = service.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
         assertThat(firstApplied).isTrue();
         verify(irisMessageRepository).setProactiveOutcomeIfNull(600L, IrisProactiveOutcome.DISMISSED);
 
         // Second call: the episode already holds an outcome, so it is a no-op regardless of newer rows.
-        when(irisMessageRepository.findEpisodeOutcomes("ep-2", USER_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-2", USER_ID, EXERCISE_ID)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
 
-        boolean secondApplied = service.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID);
+        boolean secondApplied = service.writeEpisodeOutcome("ep-2", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
         assertThat(secondApplied).isTrue();
 
         // setProactiveOutcomeIfNull is invoked exactly once across both calls (only the first call writes).
@@ -360,12 +360,12 @@ class IrisStruggleInterventionPrimitivesTest {
         // an episode-wide outcome, so applied = true.
         var target = new IrisMessage();
         target.setId(500L);
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-3", USER_ID)).thenReturn(List.of(target));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-3", USER_ID)).thenReturn(List.of())                      // pre-check: empty
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of(target));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-3", USER_ID, EXERCISE_ID)).thenReturn(List.of())                      // pre-check: empty
                 .thenReturn(List.of(IrisProactiveOutcome.RECOVERED));                                      // re-check: now set
         when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED)).thenReturn(0);
 
-        boolean applied = service.writeEpisodeOutcome("ep-3", IrisProactiveOutcome.DISMISSED, USER_ID);
+        boolean applied = service.writeEpisodeOutcome("ep-3", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
     }
@@ -376,11 +376,11 @@ class IrisStruggleInterventionPrimitivesTest {
         // anywhere: nothing is established, so applied = false (deferred - the client back-fills once a row exists).
         var target = new IrisMessage();
         target.setId(500L);
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-4", USER_ID)).thenReturn(List.of(target));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-4", USER_ID)).thenReturn(List.of());   // empty on both the pre-check and the re-check
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of(target));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-4", USER_ID, EXERCISE_ID)).thenReturn(List.of());   // empty on both the pre-check and the re-check
         when(irisMessageRepository.setProactiveOutcomeIfNull(500L, IrisProactiveOutcome.DISMISSED)).thenReturn(0);
 
-        boolean applied = service.writeEpisodeOutcome("ep-4", IrisProactiveOutcome.DISMISSED, USER_ID);
+        boolean applied = service.writeEpisodeOutcome("ep-4", IrisProactiveOutcome.DISMISSED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isFalse();
     }
@@ -390,11 +390,11 @@ class IrisStruggleInterventionPrimitivesTest {
         // A delivered episode interrupted by an exercise switch persists INTERRUPTED on the smallest-id row.
         var target = new IrisMessage();
         target.setId(700L);
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-int", USER_ID)).thenReturn(List.of(target));
-        when(irisMessageRepository.findEpisodeOutcomes("ep-int", USER_ID)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-int", USER_ID, EXERCISE_ID)).thenReturn(List.of(target));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-int", USER_ID, EXERCISE_ID)).thenReturn(List.of());
         when(irisMessageRepository.setProactiveOutcomeIfNull(700L, IrisProactiveOutcome.INTERRUPTED)).thenReturn(1);
 
-        boolean applied = service.writeEpisodeOutcome("ep-int", IrisProactiveOutcome.INTERRUPTED, USER_ID);
+        boolean applied = service.writeEpisodeOutcome("ep-int", IrisProactiveOutcome.INTERRUPTED, USER_ID, EXERCISE_ID);
 
         assertThat(applied).isTrue();
         verify(irisMessageRepository).setProactiveOutcomeIfNull(700L, IrisProactiveOutcome.INTERRUPTED);

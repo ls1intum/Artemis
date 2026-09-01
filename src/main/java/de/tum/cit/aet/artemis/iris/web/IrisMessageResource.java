@@ -268,13 +268,26 @@ public class IrisMessageResource {
         // sent to Pyris would misreport what the student did. The episode-wide guard runs first where the row carries
         // an episode, so a second row cannot establish a competing outcome for the same episode.
         var episodeId = message.getProactiveEpisodeId();
-        if (episodeId != null && !episodeId.isBlank()) {
+        // The episode's exercise comes from the row, not from its session: a session's mode and entityId move with
+        // every context switch, so the session cannot say which exercise a historical proactive row belongs to.
+        var proactiveExerciseId = message.getProactiveExerciseId();
+        boolean carriesEpisode = episodeId != null && !episodeId.isBlank();
+        if (carriesEpisode && proactiveExerciseId == null) {
+            // An episode row without its exercise binding cannot be resolved to an episode: the episode-wide queries
+            // filter on the binding, so they see neither this row nor its siblings. Falling through to the row-scoped
+            // write would let two rows of the SAME episode end up with different outcomes, and the history replayed to
+            // Pyris would then contradict itself. Such rows exist only on databases that ran this feature branch
+            // before the binding was added, so refusing outright is honest; guessing the exercise from the session
+            // would bind the row to wherever the chat happens to point now.
+            throw new BadRequestException("This proactive message predates the episode's exercise binding and cannot record an outcome");
+        }
+        if (carriesEpisode) {
             long userId = message.getSession().getUserId();
-            irisStruggleInterventionService.writeEpisodeOutcome(episodeId, outcome, userId);
+            irisStruggleInterventionService.writeEpisodeOutcome(episodeId, outcome, userId, proactiveExerciseId);
             // The episode writes to its stable smallest-id row, which is not necessarily the row addressed here.
             // Reloading messageId would then answer with a null proactiveOutcome even though one was recorded, so
             // return the row that actually carries the episode's outcome.
-            var canonical = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId).stream().findFirst();
+            var canonical = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId, proactiveExerciseId).stream().findFirst();
             return ResponseEntity.ok(IrisMessageResponseDTO.of(canonical.map(row -> irisMessageRepository.findByIdElseThrow(row.getId())).orElse(message)));
         }
         irisMessageRepository.setProactiveOutcomeIfNull(message.getId(), outcome);

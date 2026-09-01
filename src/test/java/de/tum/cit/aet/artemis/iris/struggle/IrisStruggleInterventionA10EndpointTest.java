@@ -140,7 +140,8 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
         request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-never-offered/reveal", body, IrisMessageResponseDTO.class, HttpStatus.CONFLICT);
 
-        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-never-offered", userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId())).isEmpty();
+        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-never-offered", userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), exerciseId()))
+                .isEmpty();
     }
 
     @Test
@@ -155,7 +156,8 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-foreign/reveal", body, IrisMessageResponseDTO.class, HttpStatus.CONFLICT);
 
         // Nothing was written for the foreign caller either: the refusal is not merely a status code.
-        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-foreign", userUtilService.getUserByLogin(TEST_PREFIX + "student3").getId())).isEmpty();
+        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-foreign", userUtilService.getUserByLogin(TEST_PREFIX + "student3").getId(), exerciseId()))
+                .isEmpty();
         // And the owner's offer survives the attempt: a foreign call must not consume what it cannot read.
         // findById rather than findForReveal: the latter takes a pessimistic lock and would need an active transaction.
         assertThat(irisAmbientDecisionRepository.findById(offerId).orElseThrow().getConsumedAt()).isNull();
@@ -174,7 +176,8 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
                 new RevealAmbientRequestDTO("Only once.", "ambient", "client-single-2"), IrisMessageResponseDTO.class, HttpStatus.OK);
 
         assertThat(second.id()).isEqualTo(first.id());
-        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-single", userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId())).hasSize(1);
+        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-single", userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), exerciseId()))
+                .hasSize(1);
     }
 
     @Test
@@ -192,7 +195,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
         assertThat(dto1.id()).isNotNull();
         assertThat(dto2.id()).isEqualTo(dto1.id());
-        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-retry", userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId())).hasSize(1);
+        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-retry", userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), exerciseId())).hasSize(1);
     }
 
     @Test
@@ -258,6 +261,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         msg.addContent(new IrisTextMessageContent("hint"));
         msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         msg.setProactiveEpisodeId("ep-exists");
+        msg.setProactiveExerciseId(exerciseId());
         irisMessageService.saveMessage(msg, session, IrisMessageSender.LLM);
 
         var result = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-exists/proactive-outcome", IrisProactiveOutcome.DISMISSED,
@@ -265,7 +269,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         assertThat(result.applied()).isTrue();
 
         // Verify the outcome was actually written
-        var outcomes = irisMessageRepository.findEpisodeOutcomes("ep-exists", student1.getId());
+        var outcomes = irisMessageRepository.findEpisodeOutcomes("ep-exists", student1.getId(), exerciseId());
         assertThat(outcomes).containsExactly(IrisProactiveOutcome.DISMISSED);
     }
 
@@ -299,6 +303,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         msg.addContent(new IrisTextMessageContent("hint"));
         msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         msg.setProactiveEpisodeId("ep-firstwins");
+        msg.setProactiveExerciseId(exerciseId());
         irisMessageService.saveMessage(msg, session, IrisMessageSender.LLM);
 
         var first = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-firstwins/proactive-outcome", IrisProactiveOutcome.DISMISSED,
@@ -310,7 +315,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         assertThat(second.applied()).isTrue();   // applied=true (a row exists) but the value is NOT overwritten
 
         // First-terminal-wins: exactly one outcome, still DISMISSED.
-        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-firstwins", student1.getId())).containsExactly(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-firstwins", student1.getId(), exerciseId())).containsExactly(IrisProactiveOutcome.DISMISSED);
     }
 
     @Test
@@ -323,13 +328,14 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         msg.addContent(new IrisTextMessageContent("hint"));
         msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         msg.setProactiveEpisodeId("ep-interrupted");
+        msg.setProactiveExerciseId(exerciseId());
         irisMessageService.saveMessage(msg, session, IrisMessageSender.LLM);
 
         var result = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-interrupted/proactive-outcome", IrisProactiveOutcome.INTERRUPTED,
                 EpisodeOutcomeAppliedDTO.class, HttpStatus.OK);
 
         assertThat(result.applied()).isTrue();
-        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-interrupted", student1.getId())).containsExactly(IrisProactiveOutcome.INTERRUPTED);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-interrupted", student1.getId(), exerciseId())).containsExactly(IrisProactiveOutcome.INTERRUPTED);
     }
 
     @Test
@@ -347,10 +353,11 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         msg1.addContent(new IrisTextMessageContent("hint-row1"));
         msg1.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         msg1.setProactiveEpisodeId("ep-multirow");
+        msg1.setProactiveExerciseId(exerciseId());
         var row1 = irisMessageService.saveMessage(msg1, session, IrisMessageSender.LLM);
 
         // (d) before second row: no outcome yet
-        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId())).isEmpty();
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId(), exerciseId())).isEmpty();
 
         // (a) first writeEpisodeOutcome: applied=true, outcome lands on row1 (the smallest-id row)
         String raw1 = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-multirow/proactive-outcome", IrisProactiveOutcome.DISMISSED,
@@ -358,7 +365,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         assertThat(raw1).contains("\"applied\":true");
         var reloadedRow1 = irisMessageRepository.findById(row1.getId()).orElseThrow();
         assertThat(reloadedRow1.getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
-        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId())).containsExactly(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId(), exerciseId())).containsExactly(IrisProactiveOutcome.DISMISSED);
 
         // (b) Insert row2 (larger id, null outcome) - must NOT shift the target or duplicate the outcome.
         // Deliberately reuse the ORIGINAL `session`, whose messages collection is stale after the PUT above: it still
@@ -369,6 +376,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         msg2.addContent(new IrisTextMessageContent("hint-row2"));
         msg2.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         msg2.setProactiveEpisodeId("ep-multirow");
+        msg2.setProactiveExerciseId(exerciseId());
         var row2 = irisMessageService.saveMessage(msg2, session, IrisMessageSender.LLM);
 
         // The committed outcome on row1 must not have been clobbered by the stale cascade.
@@ -376,12 +384,12 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         assertThat(row2.getId()).isGreaterThan(row1.getId());                                          // row2 has a larger id
         assertThat(irisMessageRepository.findById(row2.getId()).orElseThrow().getProactiveOutcome()).isNull(); // row2 carries no outcome
         // Stable target is still row1
-        var episodeRows = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-multirow", student1.getId());
+        var episodeRows = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-multirow", student1.getId(), exerciseId());
         assertThat(episodeRows).isNotEmpty();
         assertThat(episodeRows.get(0).getId()).isEqualTo(row1.getId());
 
         // (d) after second row: findEpisodeOutcomes still returns the same single outcome - not changed by new row
-        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId())).containsExactly(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId(), exerciseId())).containsExactly(IrisProactiveOutcome.DISMISSED);
 
         // (c) second writeEpisodeOutcome is a NO-OP: episode is already terminal -> applied=true but nothing written
         String raw2 = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-multirow/proactive-outcome", IrisProactiveOutcome.DISMISSED,
@@ -389,9 +397,54 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         assertThat(raw2).contains("\"applied\":true");
 
         // Exactly ONE row carries the outcome: row1 has DISMISSED, row2 still has null
-        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId())).containsExactly(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-multirow", student1.getId(), exerciseId())).containsExactly(IrisProactiveOutcome.DISMISSED);
         assertThat(irisMessageRepository.findById(row1.getId()).orElseThrow().getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
         assertThat(irisMessageRepository.findById(row2.getId()).orElseThrow().getProactiveOutcome()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void episodeOutcome_sameEpisodeIdInAnotherExercise_staysIndependent() throws Exception {
+        // The episode id is allocated by the student's own client, so the same id can arrive for two exercises. The
+        // user scope keeps other students out but says nothing about one student's second exercise: scoped by user
+        // alone, DISMISSED here made the OTHER exercise's episode terminal too, and its hint was suppressed.
+        // Both rows deliberately live in ONE session - that is the real shape, since a session is switched between
+        // exercises rather than duplicated, which is also why the session cannot carry the binding.
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var otherExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(exercise.getCourseViaExerciseGroupOrCourseMember());
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exerciseId(), student1);
+
+        var here = new IrisMessage();
+        here.addContent(new IrisTextMessageContent("hint for this exercise"));
+        here.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        here.setProactiveEpisodeId("ep-shared");
+        here.setProactiveExerciseId(exerciseId());
+        var hereRow = irisMessageService.saveMessage(here, session, IrisMessageSender.LLM);
+
+        var elsewhere = new IrisMessage();
+        elsewhere.addContent(new IrisTextMessageContent("hint for the other exercise"));
+        elsewhere.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        elsewhere.setProactiveEpisodeId("ep-shared");
+        elsewhere.setProactiveExerciseId(otherExercise.getId());
+        var elsewhereRow = irisMessageService.saveMessage(elsewhere, session, IrisMessageSender.LLM);
+
+        var dismissed = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-shared/proactive-outcome", IrisProactiveOutcome.DISMISSED,
+                EpisodeOutcomeAppliedDTO.class, HttpStatus.OK);
+        assertThat(dismissed.applied()).isTrue();
+
+        // This exercise's episode is terminal; the other exercise's episode of the same id is untouched.
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-shared", student1.getId(), exerciseId())).containsExactly(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findEpisodeOutcomes("ep-shared", student1.getId(), otherExercise.getId())).isEmpty();
+        assertThat(irisMessageRepository.findById(hereRow.getId()).orElseThrow().getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+        assertThat(irisMessageRepository.findById(elsewhereRow.getId()).orElseThrow().getProactiveOutcome()).isNull();
+
+        // And the other exercise can still record its own, different outcome: first-terminal-wins is per episode, and
+        // these are two episodes. Scoped by user alone this returned applied=true without writing anything.
+        var recovered = request.putWithResponseBody("/api/iris/chat/exercises/" + otherExercise.getId() + "/episodes/ep-shared/proactive-outcome", IrisProactiveOutcome.RECOVERED,
+                EpisodeOutcomeAppliedDTO.class, HttpStatus.OK);
+        assertThat(recovered.applied()).isTrue();
+        assertThat(irisMessageRepository.findById(elsewhereRow.getId()).orElseThrow().getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.RECOVERED);
+        assertThat(irisMessageRepository.findById(hereRow.getId()).orElseThrow().getProactiveOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
     }
 
     @Test
@@ -406,6 +459,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         msg.addContent(new IrisTextMessageContent("hint"));
         msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         msg.setProactiveEpisodeId("ep-idor");
+        msg.setProactiveExerciseId(exerciseId());
         var saved = irisMessageService.saveMessage(msg, session, IrisMessageSender.LLM);
 
         var result = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-idor/proactive-outcome", IrisProactiveOutcome.DISMISSED,
@@ -428,6 +482,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         msg.addContent(new IrisTextMessageContent("hint"));
         msg.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
         msg.setProactiveEpisodeId("ep-idor-owner");
+        msg.setProactiveExerciseId(exerciseId());
         var saved = irisMessageService.saveMessage(msg, session, IrisMessageSender.LLM);
 
         var result = request.putWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-idor-owner/proactive-outcome", IrisProactiveOutcome.DISMISSED,

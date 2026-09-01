@@ -59,22 +59,30 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
      * ({@link #findEpisodeOutcomes}).
      * <p>
      * The user scope is a security guard: {@code episodeId} is a client-generated UUID, so an unscoped lookup would
-     * let any student write an outcome onto another student's (or another exercise's) episode by guessing/replaying
-     * the id (IDOR). Scoping by the owning session's {@code userId} closes that hole - a foreign episode id returns
-     * an empty list, never a foreign row.
+     * let any student write an outcome onto another student's episode by guessing/replaying the id (IDOR). Scoping by
+     * the owning session's {@code userId} closes that hole - a foreign episode id returns an empty list, never a
+     * foreign row.
+     * <p>
+     * The exercise scope closes the remaining hole INSIDE one user: the same client-generated id can be sent for two
+     * exercises, and without this predicate an outcome written for one of them would make the episode terminal for
+     * the other. It matches on {@code proactiveExerciseId} rather than the session's {@code entityId} because a
+     * session's mode/entityId change on every context switch, so only the row's own stamp is a durable binding.
+     * The match is strict: a row that carries no exercise (written before this column existed) is never returned.
      *
-     * @param episodeId the client-allocated episode UUID
-     * @param userId    the requesting user; only rows in this user's sessions are returned
-     * @return the episode's rows owned by this user, ordered by id ascending, or empty if none persisted by this user yet
+     * @param episodeId  the client-allocated episode UUID
+     * @param userId     the requesting user; only rows in this user's sessions are returned
+     * @param exerciseId the exercise the episode belongs to; only rows stamped with it are returned
+     * @return the episode's rows owned by this user in this exercise, ordered by id ascending, or empty if none persisted yet
      */
     @Query("""
             SELECT m
             FROM IrisMessage m
             WHERE m.proactiveEpisodeId = :episodeId
+              AND m.proactiveExerciseId = :exerciseId
               AND m.session.id IN (SELECT s.id FROM IrisSession s WHERE s.userId = :userId)
             ORDER BY m.id ASC
             """)
-    List<IrisMessage> findEpisodeRowsForUserOrderByIdAsc(@Param("episodeId") String episodeId, @Param("userId") long userId);
+    List<IrisMessage> findEpisodeRowsForUserOrderByIdAsc(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
     /**
      * Episode-wide outcome read, SCOPED to the requesting user's own sessions: returns ALL non-null
@@ -88,19 +96,23 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
      * The user scope is a security guard: an unscoped
      * read would let any student probe or read the outcome of another student's episode by guessing/replaying the
      * client-generated episode id (IDOR). Scoping by the owning session's {@code userId} closes that hole.
+     * The exercise scope keeps one user's two exercises apart when the client reuses an episode id across them; see
+     * {@link #findEpisodeRowsForUserOrderByIdAsc} for why the binding is read from the row and not from the session.
      *
-     * @param episodeId the client-allocated episode UUID
-     * @param userId    the requesting user; only outcomes on rows in this user's sessions are returned
-     * @return list of non-null outcomes for the episode owned by this user (at most one element by design)
+     * @param episodeId  the client-allocated episode UUID
+     * @param userId     the requesting user; only outcomes on rows in this user's sessions are returned
+     * @param exerciseId the exercise the episode belongs to; only rows stamped with it are considered
+     * @return list of non-null outcomes for the episode owned by this user in this exercise (at most one element by design)
      */
     @Query("""
             SELECT m.proactiveOutcome
             FROM IrisMessage m
             WHERE m.proactiveEpisodeId = :episodeId
+              AND m.proactiveExerciseId = :exerciseId
               AND m.proactiveOutcome IS NOT NULL
               AND m.session.id IN (SELECT s.id FROM IrisSession s WHERE s.userId = :userId)
             """)
-    List<IrisProactiveOutcome> findEpisodeOutcomes(@Param("episodeId") String episodeId, @Param("userId") long userId);
+    List<IrisProactiveOutcome> findEpisodeOutcomes(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
     /**
      * Row-scoped first-write-wins update: sets {@code proactiveOutcome} on the target row ONLY IF that row currently

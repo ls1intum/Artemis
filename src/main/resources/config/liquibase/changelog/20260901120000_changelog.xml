@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    Binds a proactive struggle message to the exercise it was decided for (#350).
+
+    proactive_episode_id alone does not identify an episode: the id is client-generated, so the same id can be sent
+    for two different exercises. Until now the episode lookups scoped only by the owning user, which closed the IDOR
+    but let one exercise's terminal outcome mark the other exercise's episode as finished.
+
+    The exercise cannot be derived from the session. iris_session.entity_id and chat_mode change on every context
+    switch (a session is born a COURSE_CHAT and is switched to an exercise later), so the session records where the
+    chat points NOW, not which exercise a historical row belongs to. The binding therefore lives on the message row,
+    written once at insert time and never updated.
+
+    Additive and non-destructive: one nullable column plus an index. Existing rows get NULL, which the episode
+    queries never match - proactive rows only exist on this unreleased feature branch.
+    -->
+
+    <changeSet id="20260901120000-1-add-proactive-exercise-id" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_exercise_id"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_exercise_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <!--
+    Every episode lookup filters on (proactive_episode_id, proactive_exercise_id) and one of them additionally on
+    proactive_outcome, so the composite index covers the whole predicate. Separate changeSet so a database that
+    already has the column still picks the index up.
+    -->
+    <changeSet id="20260901120000-2-index-proactive-episode-exercise" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="iris_message" indexName="idx_iris_message_proactive_episode_exercise"/></not>
+        </preConditions>
+        <createIndex tableName="iris_message" indexName="idx_iris_message_proactive_episode_exercise">
+            <column name="proactive_episode_id"/>
+            <column name="proactive_exercise_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

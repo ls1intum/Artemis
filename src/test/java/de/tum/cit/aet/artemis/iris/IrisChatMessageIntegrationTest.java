@@ -466,6 +466,24 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setProactiveOutcome_returns400WhenTheEpisodeRowCarriesNoExerciseBinding() throws Exception {
+        // A row with an episode but no exercise binding exists only on databases that ran this feature branch before
+        // the binding was added. The episode-wide queries filter on the binding, so they see neither this row nor its
+        // siblings: writing row-scoped anyway would let two rows of one episode carry different outcomes, and the
+        // history replayed to Pyris would contradict itself. The write is refused instead of guessed.
+        IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
+        IrisMessage unbound = IrisMessageFactory.createIrisMessageForSessionWithContent(session);
+        unbound.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        unbound.setProactiveEpisodeId("ep-unbound");
+        IrisMessage saved = irisMessageService.saveMessage(unbound, session, IrisMessageSender.LLM);
+
+        request.putWithResponseBody(proactiveOutcomeUrl(session, saved), IrisProactiveOutcome.DISMISSED, IrisMessageResponseDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(irisMessageRepository.findById(saved.getId()).orElseThrow().getProactiveOutcome()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setProactiveOutcome_returns400WhenMessageNotProactive() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, "student1");
         IrisMessage plainLlm = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);

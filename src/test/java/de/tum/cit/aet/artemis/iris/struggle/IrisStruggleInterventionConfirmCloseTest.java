@@ -143,8 +143,8 @@ class IrisStruggleInterventionConfirmCloseTest {
     void confirmClose_progress_resolved_true_persistsClosingAndWritesRecovered() {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L)).thenReturn(List.of());
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-cc", 3L)).thenReturn(List.of(savedMsg(201L)));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(savedMsg(201L)));
         when(irisMessageRepository.setProactiveOutcomeIfNull(201L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
@@ -173,8 +173,8 @@ class IrisStruggleInterventionConfirmCloseTest {
     void confirmClose_progress_resolved_true_missingFields_usesDefaults() {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L)).thenReturn(List.of());
-        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-cc", 3L)).thenReturn(List.of(savedMsg(202L)));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-cc", 3L, 42L)).thenReturn(List.of(savedMsg(202L)));
         when(irisMessageRepository.setProactiveOutcomeIfNull(202L, IrisProactiveOutcome.RECOVERED)).thenReturn(1);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
             IrisMessage m = inv.getArgument(0);
@@ -192,7 +192,7 @@ class IrisStruggleInterventionConfirmCloseTest {
 
     @Test
     void confirmClose_progress_resolved_false_isQuiet() {
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
         var update = closeUpdate(false, null, null, null);
 
         service.handleConfirmClose(progressJob, update);
@@ -217,7 +217,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         // Terminal gate NOT consulted (no findEpisodeOutcomes call for parked_progress)
-        verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong());
+        verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong(), anyLong());
         // Bare completion event only (no messageId, no closingSentence, no episodeLabel)
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && e.messageId() == null
                 && e.closingSentence() == null && Objects.equals(e.episodeId(), "ep-cc")));
@@ -231,7 +231,7 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
-        verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong());
+        verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong(), anyLong());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
     }
 
@@ -246,7 +246,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         // Nothing persisted, no outcome (fail-closed: identical to parked_progress)
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
-        verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong());
+        verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong(), anyLong());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && e.messageId() == null));
     }
 
@@ -255,7 +255,7 @@ class IrisStruggleInterventionConfirmCloseTest {
     @Test
     void confirmClose_alreadyTerminal_skipsPersistandEmitsNoop() {
         // Episode already has DISMISSED: persist must be skipped and a noop event emitted.
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
         var update = closeUpdate(true, "Closing", "Done", null);
 
         service.handleConfirmClose(progressJob, update);
@@ -274,7 +274,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         // completion event must still be emitted (messageId=null) and RECOVERED must NOT be written (no row to anchor).
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L)).thenReturn(List.of());
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenThrow(new DataIntegrityViolationException("persist failed"));
         var update = closeUpdate(true, "Closing", "Done", null);
 

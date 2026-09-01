@@ -169,7 +169,7 @@ public class IrisStruggleInterventionResource {
         // (notably DISMISSED) must never be rejected, even if the student's opt-in lapsed after the hint was shown.
         // The brief mandates that an explicit terminal outcome is always eventually written - a 403 here would make the
         // client's back-fill retry loop forever. This matches the ungated existing proactive-outcome endpoint.
-        boolean applied = struggleInterventionService.writeEpisodeOutcome(episodeId, outcome, user.getId());
+        boolean applied = struggleInterventionService.writeEpisodeOutcome(episodeId, outcome, user.getId(), exerciseId);
         return ResponseEntity.ok(new EpisodeOutcomeAppliedDTO(applied));
     }
 }
