@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.RepositoryExportContent;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -329,6 +330,52 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
             assertThat(repository.getObjectDatabase().has(featureCommit)).as("the commit reachable only from the secondary branch must be in the pack").isTrue();
             assertThat(git.log().add(featureCommit).call()).as("the secondary branch history must be walkable").isNotEmpty();
         }
+    }
+
+    /**
+     * An exercise can carry auxiliary repositories next to template, solution and tests, and they take the same
+     * clone-free path. They are exported through a branch of their own, so the other instructor repositories passing
+     * says nothing about them.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportProgrammingExerciseRepositories_shouldExportAuxiliaryRepositories() throws Exception {
+        createAndSeedBaseRepositories();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        seedAuxiliaryRepository("solutionhints", Map.of("hints/Hint.java", "public class Hint {}"));
+
+        Path outputDir = tempFileUtilService.createTempDirectory("instructor-export-auxiliary");
+        List<String> exportErrors = new ArrayList<>();
+
+        List<Path> exportedRepositories = programmingExerciseExportService.exportProgrammingExerciseRepositories(programmingExercise, false, false, outputDir, exportErrors,
+                new ArrayList<>());
+
+        assertThat(exportErrors).isEmpty();
+        Path auxiliaryArchive = exportedRepositories.stream().filter(path -> path.getFileName().toString().contains("solutionhints")).findFirst()
+                .orElseThrow(() -> new AssertionError("the auxiliary repository is missing from the export: " + exportedRepositories));
+        // The archive has to carry the auxiliary repository's own content, not merely exist under the right name.
+        byte[] zipContent = Files.readAllBytes(auxiliaryArchive);
+        assertThat(ZipTestUtil.readEntryAsString(zipContent, "hints/Hint.java")).isEqualTo("public class Hint {}");
+        ZipTestUtil.verifyZipContainsGitDirectory(zipContent);
+    }
+
+    /** Creates a LocalVC repository for an auxiliary repository of the exercise, pushes one commit and persists it. */
+    private void seedAuxiliaryRepository(String name, Map<String, String> files) throws Exception {
+        String projectKey = programmingExercise.getProjectKey();
+        String repositorySlug = programmingExercise.generateRepositoryName(name);
+        var repository = RepositoryExportTestUtil.seedBareRepository(localVCLocalCITestService, projectKey, repositorySlug, null);
+        RepositoryExportTestUtil.writeFilesAndPush(repository, files, "auxiliary content");
+
+        AuxiliaryRepository auxiliaryRepository = new AuxiliaryRepository();
+        auxiliaryRepository.setName(name);
+        auxiliaryRepository.setDescription("an auxiliary repository");
+        auxiliaryRepository.setCheckoutDirectory(name);
+        auxiliaryRepository.setRepositoryUri(localVCLocalCITestService.buildLocalVCUri(null, null, projectKey, repositorySlug));
+        auxiliaryRepository.setExercise(programmingExercise);
+        // The association is an ordered list, so the child has to be saved through the exercise: persisting it on its
+        // own leaves the order column null and every later read of the exercise fails.
+        programmingExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
     /**

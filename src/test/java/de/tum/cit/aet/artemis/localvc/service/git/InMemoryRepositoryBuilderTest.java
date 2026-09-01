@@ -5,16 +5,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.AnyObjectId;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -78,6 +82,41 @@ class InMemoryRepositoryBuilderTest {
                     .as("the archive records the tip it exported, not the one a concurrent push moved the branch to").isEqualTo(exportedTip);
             assertThat(exported.status().call().isClean()).as("the working tree, the index and HEAD describe the same commit").isTrue();
         }
+    }
+
+    /**
+     * A zip has no symlink type, so the export materializes a symlink as a plain file holding the link target. The
+     * alternative - dropping the entry - would give the extracted repository a working tree that no longer matches the
+     * index it ships with, and every git command in it would report the file as deleted.
+     */
+    @Test
+    void shouldMaterializeASymlinkAsAFileHoldingItsTarget() throws Exception {
+        Path source = tempDir.resolve("symlink-source");
+        try (Git git = Git.init().setDirectory(source.toFile()).setInitialBranch(BRANCH).call()) {
+            // JGit only records a symlink as one when core.symlinks is on; it is off by default on some platforms.
+            StoredConfig config = git.getRepository().getConfig();
+            config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, true);
+            config.save();
+
+            FileUtils.writeStringToFile(source.resolve("target.txt").toFile(), "the target", StandardCharsets.UTF_8);
+            Files.createSymbolicLink(source.resolve("link.txt"), Path.of("target.txt"));
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("a symlink").setSign(false).call();
+
+            assertThat(git.getRepository().readDirCache().getEntry("link.txt").getFileMode()).as("the fixture only tests anything if git recorded a symlink")
+                    .isEqualTo(FileMode.SYMLINK);
+        }
+
+        byte[] archive;
+        String gitDir = source.resolve(Constants.DOT_GIT).toString();
+        try (Repository repository = new Repository(gitDir, REPOSITORY_URI)) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            InMemoryRepositoryBuilder.writeZip(repository, out);
+            archive = out.toByteArray();
+        }
+
+        assertThat(ZipTestUtil.readEntryAsString(archive, "link.txt")).as("the symlink entry must carry its target as text").isEqualTo("target.txt");
+        assertThat(ZipTestUtil.readEntryAsString(archive, "target.txt")).isEqualTo("the target");
     }
 
     /**
