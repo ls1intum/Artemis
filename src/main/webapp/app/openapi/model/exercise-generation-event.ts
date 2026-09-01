@@ -51,20 +51,18 @@ export const ExerciseGenerationEventTypeEnum = {
 
 export const ExerciseGenerationEventTypeEnumValues = ['STARTED', 'PROGRESS', 'DONE', 'CANCELLED', 'ERROR'] as const;
 
-export type ExerciseGenerationEventPhaseEnum = 'PREPARING' | 'DESIGNING' | 'SPECIFYING' | 'AUTHORING' | 'VERIFYING' | 'REVIEWING' | 'REPAIRING' | 'SAVING';
+export type ExerciseGenerationEventPhaseEnum = 'PREPARING' | 'DESIGNING' | 'VERIFYING' | 'REVIEWING' | 'REPAIRING' | 'SAVING';
 
 export const ExerciseGenerationEventPhaseEnum = {
     Preparing: 'PREPARING' as const,
     Designing: 'DESIGNING' as const,
-    Specifying: 'SPECIFYING' as const,
-    Authoring: 'AUTHORING' as const,
     Verifying: 'VERIFYING' as const,
     Reviewing: 'REVIEWING' as const,
     Repairing: 'REPAIRING' as const,
     Saving: 'SAVING' as const,
 } as const;
 
-export const ExerciseGenerationEventPhaseEnumValues = ['PREPARING', 'DESIGNING', 'SPECIFYING', 'AUTHORING', 'VERIFYING', 'REVIEWING', 'REPAIRING', 'SAVING'] as const;
+export const ExerciseGenerationEventPhaseEnumValues = ['PREPARING', 'DESIGNING', 'VERIFYING', 'REVIEWING', 'REPAIRING', 'SAVING'] as const;
 
 export type ExerciseGenerationEventCompletionStatusEnum = 'SUCCESS' | 'NEEDS_REVIEW' | 'PARTIAL';
 

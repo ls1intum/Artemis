@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.Phase;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
@@ -357,7 +356,6 @@ public class StagedGenerationRunner {
         baseTools.configureStructuralOracleRefresh(structuralSeedHook);
 
         if (conceptSelectionApplies && conceptSelector != null) {
-            emitPhase(progress, Phase.DESIGNING, "Exploring exercise concepts that fit the learning goals");
             ExerciseConceptSelector.ConceptSelection selection = conceptSelector.select(sourceBrief, cancelled, usageSink, progress);
             totalTurns += selection.turns();
             remainingPool = Math.max(0, remainingPool - selection.turns());
@@ -418,11 +416,7 @@ public class StagedGenerationRunner {
             }
 
             int allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], rollover, allocatablePool(stage, remainingPool));
-            emitPhase(progress, switch (stage) {
-                case SPEC -> Phase.SPECIFYING;
-                case TESTS -> Phase.AUTHORING;
-                case STATEMENT -> Phase.AUTHORING;
-            }, STAGE_PROGRESS_LABELS.get(index));
+            emit(progress, STAGE_PROGRESS_LABELS.get(index));
             baseTools.enterStage(stage);
             String systemPrompt = systemPromptService.buildStage(exercise, stage);
 
@@ -993,15 +987,6 @@ public class StagedGenerationRunner {
     private static void emit(@Nullable Consumer<String> progress, String message) {
         if (progress != null) {
             progress.accept(message);
-        }
-    }
-
-    private static void emitPhase(@Nullable Consumer<String> progress, Phase phase, String message) {
-        if (progress instanceof GenerationProgressSink sink) {
-            sink.phase(phase, message);
-        }
-        else {
-            emit(progress, message);
         }
     }
 

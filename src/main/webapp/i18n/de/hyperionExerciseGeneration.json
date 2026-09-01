@@ -40,8 +40,7 @@
                     "technicalDetails": "Technische Aktivität",
                     "phases": {
                         "prepare": "Arbeitsbereich vorbereiten",
-                        "design": "Übung entwerfen",
-                        "author": "Übungsdateien erstellen",
+                        "design": "Übung entwerfen und erstellen",
                         "verify": "Bauen und bewerten",
                         "review": "Qualität prüfen und verbessern",
                         "save": "Entwurf speichern"

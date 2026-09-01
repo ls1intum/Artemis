@@ -44,7 +44,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     public enum Phase {
-        PREPARING, DESIGNING, SPECIFYING, AUTHORING, VERIFYING, REVIEWING, REPAIRING, SAVING
+        PREPARING, DESIGNING, VERIFYING, REVIEWING, REPAIRING, SAVING
     }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)

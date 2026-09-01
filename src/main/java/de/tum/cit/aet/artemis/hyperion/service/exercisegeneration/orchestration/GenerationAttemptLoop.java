@@ -413,6 +413,7 @@ class GenerationAttemptLoop {
         recordAttempt();
         boolean stagedAttempt = useStagedGeneration && attempt == 1;
         if (stagedAttempt) {
+            progress.phase(Phase.DESIGNING, "Designing the learning task and creating the specification, code, and tests");
             StagedGenerationRunner.StagedRunOutcome stagedOutcome = stagedGenerationRunner.run(exercise, baseTools, tools, currentPrompt, reviewBrief, testsSeedSnapshot, sandbox,
                     sessionId, cancelled, usageSink, progress, () -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, sessionId, exercise), specStageApplies,
                     conceptSelectionApplies, spec -> {

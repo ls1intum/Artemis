@@ -24,8 +24,7 @@ const MAX_BRIEF_LENGTH = 8000;
 
 const PHASE_GROUPS = [
     { key: 'prepare', phases: ['PREPARING'] },
-    { key: 'design', phases: ['DESIGNING', 'SPECIFYING'] },
-    { key: 'author', phases: ['AUTHORING'] },
+    { key: 'design', phases: ['DESIGNING'] },
     { key: 'verify', phases: ['VERIFYING'] },
     { key: 'review', phases: ['REVIEWING', 'REPAIRING'] },
     { key: 'save', phases: ['SAVING'] },

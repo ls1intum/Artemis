@@ -40,8 +40,7 @@
                     "technicalDetails": "Technical activity",
                     "phases": {
                         "prepare": "Prepare workspace",
-                        "design": "Design the exercise",
-                        "author": "Create exercise files",
+                        "design": "Design and create the exercise",
                         "verify": "Build and grade",
                         "review": "Review and improve quality",
                         "save": "Save draft"
