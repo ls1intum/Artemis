@@ -41,6 +41,9 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
     private static final String TEST_PREFIX = "a10endpoint";
 
+    /** Fixed so the persisted fixture does not depend on the clock; nothing in these tests reads the value back. */
+    private static final ZonedDateTime AMBIENT_DECISION_CREATED_AT = ZonedDateTime.parse("2026-01-01T00:00:00Z");
+
     @Autowired
     private UserUtilService userUtilService;
 
@@ -99,7 +102,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         decision.setExerciseId(exerciseId());
         decision.setEpisodeId(episodeId);
         decision.setHintText(serverText);
-        decision.setCreatedAt(ZonedDateTime.now());
+        decision.setCreatedAt(AMBIENT_DECISION_CREATED_AT);
         return irisAmbientDecisionRepository.save(decision).getId();
     }
 

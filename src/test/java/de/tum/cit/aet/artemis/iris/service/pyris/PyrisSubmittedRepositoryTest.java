@@ -22,36 +22,46 @@ class PyrisSubmittedRepositoryTest {
     void changedExistingCodeFile_carriesCommittedContent() {
         var committed = Map.of("src/Main.java", "OLD");
         var uncommitted = Map.of("src/Main.java", "NEW");
-        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA)).containsExactly(entry("src/Main.java", "OLD"));
+        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA, true)).containsExactly(entry("src/Main.java", "OLD"));
     }
 
     @Test
     void newLocalCodeFile_carriesEmptySubmittedSide_whenCommittedSetWasRead() {
-        var committed = Map.of("src/Existing.java", "x"); // non-empty => committed set is readable
+        var committed = Map.of("src/Existing.java", "x");
         var uncommitted = Map.of("src/New.java", "brand new");
-        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA)).containsExactly(entry("src/New.java", ""));
+        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA, true)).containsExactly(entry("src/New.java", ""));
+    }
+
+    @Test
+    void readableButEmptyCommittedSet_stillMarksLocalFilesAsNew() {
+        // A repository that checks out fine but holds no file of the exercise language filters down to an empty map.
+        // That is a fact about its contents, not about the fetch, so the student's local files are genuinely new and
+        // must keep their all-added baseline. Deriving readability from the map being empty lost exactly this case.
+        var committed = Map.<String, String>of();
+        var uncommitted = Map.of("src/Main.java", "code");
+        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA, true)).containsExactly(entry("src/Main.java", ""));
     }
 
     @Test
     void unchangedCodeFile_isSkipped() {
         var committed = Map.of("src/Main.java", "same");
         var uncommitted = Map.of("src/Main.java", "same");
-        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA)).isEmpty();
+        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA, true)).isEmpty();
     }
 
     @Test
     void nonLanguageFile_isExcluded() {
         var committed = Map.of("src/Main.java", "x");
         var uncommitted = Map.of("README.md", "# changed");
-        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA)).isEmpty();
+        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA, true)).isEmpty();
     }
 
     @Test
-    void emptyCommittedSet_doesNotFabricateAllAddedDiff() {
-        // Repo fetch failed / no commits yet -> committedFiles empty. Do NOT claim every changed file is "new".
+    void unreadableCommittedSet_doesNotFabricateAllAddedDiff() {
+        // Repo fetch failed / no commits yet. Do NOT claim every changed file is "new".
         var committed = Map.<String, String>of();
         var uncommitted = Map.of("src/Main.java", "code");
-        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA)).isEmpty();
+        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, JAVA, false)).isEmpty();
     }
 
     @Test
@@ -59,6 +69,6 @@ class PyrisSubmittedRepositoryTest {
         // language == null => no extension filtering, mirroring getFilteredRepositoryContents.
         var committed = Map.of("README.md", "OLD");
         var uncommitted = Map.of("README.md", "NEW");
-        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, null)).containsExactly(entry("README.md", "OLD"));
+        assertThat(PyrisDTOService.buildSubmittedRepository(committed, uncommitted, null, true)).containsExactly(entry("README.md", "OLD"));
     }
 }

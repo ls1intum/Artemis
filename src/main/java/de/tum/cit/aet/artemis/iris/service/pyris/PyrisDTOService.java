@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -67,10 +68,10 @@ public class PyrisDTOService {
      * @return the converted PyrisProgrammingExerciseDTO
      */
     public PyrisProgrammingExerciseDTO toPyrisProgrammingExerciseDTO(ProgrammingExercise exercise) {
-        var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation());
-        var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation());
+        var templateRepositoryContents = getFilteredRepositoryContents(exercise.getTemplateParticipation()).files();
+        var solutionRepositoryContents = getFilteredRepositoryContents(exercise.getSolutionParticipation()).files();
 
-        Map<String, String> testsRepositoryContents = getRepositoryContents(exercise.getVcsTestRepositoryUri());
+        Map<String, String> testsRepositoryContents = Objects.requireNonNullElse(getRepositoryContents(exercise.getVcsTestRepositoryUri()), Map.of());
 
         return new PyrisProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getProgrammingLanguage(), templateRepositoryContents, solutionRepositoryContents,
                 testsRepositoryContents, exercise.getProblemStatement(), toInstant(exercise.getReleaseDate()), toInstant(exercise.getDueDate()));
@@ -98,18 +99,20 @@ public class PyrisDTOService {
         var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
                 .toList();
         var participation = (ProgrammingExerciseParticipation) submission.getParticipation();
-        Map<String, String> committedFiles = getFilteredRepositoryContents(participation);
+        var committed = getFilteredRepositoryContents(participation);
+        Map<String, String> committedFiles = committed.files();
         Map<String, String> mergedRepository = new HashMap<>(committedFiles);
         mergedRepository.putAll(uncommittedFiles); // This overwrites any files with same path
-        // getFilteredRepositoryContents tolerates a null participation and returns an empty map, so every other
+        // getFilteredRepositoryContents tolerates a null participation and reports it as unreadable, so every other
         // dereference below has to tolerate it too, otherwise a submission without one NPEs and aborts the whole
         // Pyris conversion instead of degrading to "no committed code readable" like any unreadable repository.
         var programmingLanguage = participation != null ? participation.getProgrammingExercise().getProgrammingLanguage() : null;
-        var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, programmingLanguage);
-        // submittedRepositoryAvailable = we actually read the submitted repo (non-empty committed set). Lets Pyris
-        // tell "no code changed since the submission" apart from "the submitted code could not be read" (both would
-        // otherwise be an empty submittedRepository, e.g. on a repository-fetch failure).
-        boolean submittedRepositoryAvailable = !committedFiles.isEmpty();
+        var submittedRepository = buildSubmittedRepository(committedFiles, uncommittedFiles, programmingLanguage, committed.readable());
+        // submittedRepositoryAvailable = we actually read the submitted repo. Lets Pyris tell "no code changed since
+        // the submission" apart from "the submitted code could not be read" (both would otherwise be an empty
+        // submittedRepository, e.g. on a repository-fetch failure). Taken from the fetch, not from the file count: a
+        // repository holding no file of the exercise language is readable and empty, not unavailable.
+        boolean submittedRepositoryAvailable = committed.readable();
         return new PyrisSubmissionDTO(submission.getId(), toInstant(submission.getSubmissionDate()), mergedRepository, submittedRepository, submittedRepositoryAvailable,
                 submission.getParticipation() != null && submission.getParticipation().isPracticeMode(), submission.isBuildFailed(), buildLogEntries, getLatestResult(submission));
     }
@@ -120,17 +123,20 @@ public class PyrisDTOService {
      * such as README are skipped). A changed existing code file contributes its committed content; a genuinely new
      * local code file contributes {@code ""} (all-added); unchanged code files are skipped.
      * <p>
-     * If {@code committedFiles} is empty (the submitted repository could not be fetched, or there are no commits yet),
-     * an empty map is returned rather than fabricating an all-added diff for every changed file: a "new file" is only
-     * claimed when the committed set was actually read.
+     * If the committed set could not be read, an empty map is returned rather than fabricating an all-added diff for
+     * every changed file: a "new file" is only claimed when the committed set was actually read. Readability is passed
+     * in rather than inferred from {@code committedFiles} being empty, because a repository that holds no file of the
+     * exercise language is readable and empty, and inferring would cost the student's genuinely new files their
+     * all-added baseline.
      *
-     * @param committedFiles   the (language-filtered) committed repository contents; empty if unavailable
-     * @param uncommittedFiles the student's live working-copy files from the client
-     * @param language         the exercise programming language (may be null)
+     * @param committedFiles    the (language-filtered) committed repository contents
+     * @param uncommittedFiles  the student's live working-copy files from the client
+     * @param language          the exercise programming language (may be null)
+     * @param committedReadable whether the committed repository was fetched successfully
      * @return the committed side of the changed code files, keyed by path; empty if nothing diffable
      */
-    static Map<String, String> buildSubmittedRepository(Map<String, String> committedFiles, Map<String, String> uncommittedFiles, ProgrammingLanguage language) {
-        boolean committedReadable = !committedFiles.isEmpty();
+    static Map<String, String> buildSubmittedRepository(Map<String, String> committedFiles, Map<String, String> uncommittedFiles, ProgrammingLanguage language,
+            boolean committedReadable) {
         Map<String, String> submittedRepository = new HashMap<>();
         for (var entry : uncommittedFiles.entrySet()) {
             var path = entry.getKey();
@@ -271,36 +277,56 @@ public class PyrisDTOService {
         return new PyrisResultDTO(toInstant(latestResult.getCompletionDate()), latestResult.isSuccessful(), feedbacks);
     }
 
-    private Map<String, String> getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
+    /**
+     * A participation's language-filtered repository contents together with whether the repository could be read at
+     * all. The two are not the same thing: a repository that checks out fine but holds no file of the exercise
+     * language filters down to an empty map while still being perfectly readable. Deriving readability from the map
+     * being empty would report that as "the submitted code could not be read" and suppress the all-added baseline for
+     * the student's new local files, so Pyris would see no diff for a valid repository state.
+     *
+     * @param readable whether the repository was fetched successfully (an empty {@code files} map is then a fact
+     *                     about its contents, not about the fetch)
+     * @param files    the contents that match the exercise language, empty if none do
+     */
+    private record RepositoryContents(boolean readable, Map<String, String> files) {
+
+        private static final RepositoryContents UNREADABLE = new RepositoryContents(false, Map.of());
+    }
+
+    private RepositoryContents getFilteredRepositoryContents(ProgrammingExerciseParticipation participation) {
         if (participation == null) {
-            return Map.of();
+            return RepositoryContents.UNREADABLE;
         }
         var language = participation.getProgrammingExercise().getProgrammingLanguage();
 
         var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
-        return repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        if (repositoryContents == null) {
+            return RepositoryContents.UNREADABLE;
+        }
+        return new RepositoryContents(true, repositoryContents.entrySet().stream().filter(entry -> language == null || language.matchesFileExtension(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 
     /**
      * Helper method to get & checkout the repository contents for a given repository URI.
-     * This is an exception-safe way to fetch the repository contents: it returns an empty map
+     * This is an exception-safe way to fetch the repository contents: it returns {@code null}
      * if {@code repositoryUri} is null or if the repository could not be fetched.
      * This is useful, as the Pyris call should not fail if the repository is not available.
+     * {@code null} rather than an empty map so callers can tell an unreadable repository apart from an empty one.
      *
      * @param repositoryUri the repositoryUri of the repository
-     * @return the repository contents, or an empty map if the URI is null or the fetch fails
+     * @return the repository contents, or {@code null} if the URI is null or the fetch fails
      */
-    private Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
+    private @Nullable Map<String, String> getRepositoryContents(LocalVCRepositoryUri repositoryUri) {
         if (repositoryUri == null) {
-            return Map.of();
+            return null;
         }
         try {
             return repositoryService.getFilesContentFromBareRepositoryForLastCommit(repositoryUri);
         }
         catch (IOException e) {
             log.error("Could not get repository content", e);
-            return Map.of();
+            return null;
         }
     }
 }

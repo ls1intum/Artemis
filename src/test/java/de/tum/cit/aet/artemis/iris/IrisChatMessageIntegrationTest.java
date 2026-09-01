@@ -339,18 +339,18 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         int appends = 6;
         var appender = Executors.newSingleThreadExecutor();
-        var appendsDone = new CountDownLatch(1);
         try {
-            appender.submit(() -> {
+            // Keep the Future and await it rather than a latch: a throwing append would otherwise leave its exception
+            // inside the discarded Future, and the failure would surface as a 60-second timeout with no cause.
+            var appendsDone = appender.submit(() -> {
                 for (int i = 0; i < appends; i++) {
                     var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
                     irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.USER);
                 }
-                appendsDone.countDown();
                 return null;
             });
             irisChatSessionService.applyContextChange(session, IrisChatMode.TEXT_EXERCISE_CHAT, textExercise.getId(), user);
-            assertThat(appendsDone.await(60, TimeUnit.SECONDS)).isTrue();
+            appendsDone.get(60, TimeUnit.SECONDS);
         }
         finally {
             appender.shutdownNow();

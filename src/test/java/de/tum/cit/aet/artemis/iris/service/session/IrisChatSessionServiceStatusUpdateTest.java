@@ -92,7 +92,7 @@ class IrisChatSessionServiceStatusUpdateTest {
                 mock(ProgrammingExerciseStudentParticipationRepository.class), mock(ProgrammingSubmissionRepository.class), mock(IrisRateLimitService.class),
                 JsonObjectMapper.get(), mock(ExerciseRepository.class), mock(SubmissionRepository.class), mock(CourseRepository.class), Optional.<LectureRepositoryApi>empty(),
                 mock(IrisCitationService.class), mock(MessageSource.class), mock(IrisChatPipelineExecutionService.class), pyrisJobService, mock(UserAiPreferenceService.class),
-                mock(PlatformTransactionManager.class));
+                mock(PlatformTransactionManager.class), true);
     }
 
     @Test
