@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import { DebugElement } from '@angular/core';
+import { ApplicationRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
@@ -8,7 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { Tooltip } from 'primeng/tooltip';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 
 describe('FormFooterComponent', () => {
     let fixture: ComponentFixture<FormFooterComponent>;
@@ -27,15 +27,25 @@ describe('FormFooterComponent', () => {
     });
 
     afterEach(() => {
+        if (vi.isFakeTimers()) {
+            vi.runOnlyPendingTimers();
+            vi.useRealTimers();
+        }
         vi.restoreAllMocks();
     });
 
     const findSubmitTooltipHost = (): DebugElement => {
-        const host = fixture.debugElement.queryAll(By.directive(Tooltip)).find((candidate) => (candidate.nativeElement as HTMLElement).classList.contains('submit-tooltip-host'));
+        const host = fixture.debugElement.queryAll(By.directive(TumUiTooltipDirective)).find((candidate) => (candidate.nativeElement as HTMLElement).id === 'save-entity');
         if (!host) {
-            throw new Error('expected a tooltip host wrapping the submit button');
+            throw new Error('expected the submit button to carry the tooltip');
         }
         return host;
+    };
+
+    const showTooltip = (host: DebugElement): void => {
+        (host.nativeElement as HTMLElement).dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(200);
+        TestBed.inject(ApplicationRef).tick();
     };
 
     it('update title depending on input signals', () => {
@@ -84,36 +94,35 @@ describe('FormFooterComponent', () => {
     });
 
     it('should render every invalid reason as its own list item', () => {
+        vi.useFakeTimers();
         fixture.componentRef.setInput('invalidReasons', [
             { translateKey: 'first.reason', translateValues: {} },
             { translateKey: 'second.reason', translateValues: {} },
         ]);
         fixture.detectChanges();
 
-        const host = findSubmitTooltipHost();
-        host.injector.get(Tooltip).activate();
-        fixture.detectChanges();
+        showTooltip(findSubmitTooltipHost());
 
-        const items = Array.from(document.querySelectorAll('.invalid-reasons-tooltip .invalid-reasons-list li'));
-        expect(items.map((item) => item.textContent)).toEqual(['first.reason', 'second.reason']);
+        const items = Array.from(document.querySelectorAll('.tum-ui-tooltip-bubble li'));
+        expect(items.map((item) => item.textContent?.trim())).toEqual(['first.reason', 'second.reason']);
     });
 
-    // A disabled button emits no mouse events, so attaching the tooltip to the button makes it unreachable.
-    it('should attach the tooltip to the wrapper rather than the disabled button', () => {
+    // aria-disabled keeps pointer events, so the blocked button itself can host the tooltip.
+    it('should attach the tooltip to the submit button itself', () => {
         fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
         fixture.detectChanges();
 
-        const submitTooltipHost = findSubmitTooltipHost();
-
-        expect((submitTooltipHost.nativeElement as HTMLElement).tagName).not.toBe('BUTTON');
-        expect((submitTooltipHost.nativeElement as HTMLElement).querySelector('#save-entity')).toBeTruthy();
+        expect((findSubmitTooltipHost().nativeElement as HTMLElement).tagName).toBe('BUTTON');
     });
 
-    it('should disable the submit tooltip when the form is valid', () => {
+    it('should not open the submit tooltip when the form is valid', () => {
+        vi.useFakeTimers();
         fixture.componentRef.setInput('invalidReasons', []);
         fixture.detectChanges();
 
-        expect(findSubmitTooltipHost().injector.get(Tooltip).disabled).toBeTruthy();
+        showTooltip(findSubmitTooltipHost());
+
+        expect(document.querySelector('.tum-ui-tooltip-bubble')).toBeNull();
     });
 
     it('should mark the save button aria-disabled but keep it focusable when there are invalid reasons', () => {

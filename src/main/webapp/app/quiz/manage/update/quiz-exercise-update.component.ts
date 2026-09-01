@@ -1,7 +1,6 @@
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -13,10 +12,9 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { TranslateService } from '@ngx-translate/core';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -98,7 +96,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
         CompetencySelectionPrimengComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
-        TooltipModule,
+        TumUiTooltipDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
@@ -119,8 +117,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private courseService = inject(CourseManagementService);
     private quizExerciseService = inject(QuizExerciseService);
     private router = inject(Router);
-    private translateService = inject(TranslateService);
-    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
     private exerciseService = inject(ExerciseService);
     private alertService = inject(AlertService);
     private exerciseGroupService = inject(ExerciseGroupService);
@@ -259,6 +255,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     /**
      * Initialize variables and load course and quiz from server.
      */
+    constructor() {
+        super();
+        this.destroyRef.onDestroy(() => clearTimeout(this.savedQuizStartTimer));
+    }
+
     ngOnInit(): void {
         /** Initialize local constants **/
         this.showExistingQuestions = false;
@@ -397,6 +398,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
         // Assign savedEntity to identify local changes
         this.savedEntity = this.quizExercise().id && !this.isImport() ? deepClone(this.quizExercise()) : new QuizExercise(undefined, undefined);
+        this.watchSavedQuizStart();
 
         this.cacheValidation();
     }
@@ -759,6 +761,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.quizExercise().isEditable = this.quizExercise().isEditable ?? isQuizEditable(this.quizExercise());
         this.exerciseService.validateDate(this.quizExercise());
         this.savedEntity = deepClone(this.quizExercise());
+        this.watchSavedQuizStart();
 
         if (isCreate) {
             // Update the browser URL from /new to /<id>/edit without Angular navigation.
@@ -897,6 +900,29 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         return !!(this.savedEntity && this.savedEntity.quizBatches && this.savedEntity.quizBatches.some((batch) => dayjs(batch.startTime).isBefore(dayjs())));
     }
 
+    /** Signal mirror of {@link hasSavedQuizStarted}, so the reason for a blocked save can depend on the clock. */
+    private readonly savedQuizStarted = signal(false);
+    private savedQuizStartTimer?: ReturnType<typeof setTimeout>;
+
+    /**
+     * Re-arms the tick that flips {@link savedQuizStarted} at the earliest saved batch start still ahead of us.
+     * Called wherever savedEntity is replaced, since a plain field cannot notify on its own.
+     */
+    private watchSavedQuizStart(): void {
+        clearTimeout(this.savedQuizStartTimer);
+        this.savedQuizStarted.set(this.hasSavedQuizStarted);
+        if (this.savedQuizStarted()) {
+            return;
+        }
+        const now = dayjs();
+        const upcomingStarts = (this.savedEntity?.quizBatches ?? []).map((batch) => dayjs(batch.startTime)).filter((start) => start.isValid() && start.isAfter(now));
+        if (!upcomingStarts.length) {
+            return;
+        }
+        const nextStart = upcomingStarts.reduce((earliest, start) => (start.isBefore(earliest) ? start : earliest));
+        this.savedQuizStartTimer = setTimeout(() => this.savedQuizStarted.set(true), nextStart.diff(now) + 1);
+    }
+
     includedInOverallScoreChange(includedInOverallScore: IncludedInOverallScore) {
         this.quizExercise().includedInOverallScore = includedInOverallScore;
         this.cacheValidation();
@@ -936,20 +962,32 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     }
 
     get saveButtonTooltip(): string {
-        if (!this.quizExercise().isEditable) {
-            if (this.quizExercise().quizEnded) {
-                return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleAfterEnd');
-            }
-            return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
-        }
-        return '';
+        return this.uneditableReason();
     }
 
-    /** Set only while the quiz cannot be edited at all; takes precedence over the validation reasons. */
-    readonly uneditableReason = computed<string>(() => (this.quizExercise()?.isEditable ? '' : this.saveButtonTooltip));
+    /**
+     * Set while the quiz cannot be edited at all; takes precedence over the validation reasons.
+     * Depends on {@link savedQuizStarted} rather than {@link hasSavedQuizStarted}, so the explanation appears the
+     * moment a saved batch starts under an open editor instead of only after the next edit.
+     */
+    readonly uneditableReason = computed<string>(() => {
+        this.currentLocale();
+        const quizExercise = this.quizExercise();
+        if (!quizExercise || (quizExercise.isEditable && !this.savedQuizStarted())) {
+            return '';
+        }
+        return quizExercise.quizEnded
+            ? this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleAfterEnd')
+            : this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
+    });
 
-    // Also gated on the reason list, because isSaveDisabled() honours date errors that quizIsValid() does not.
-    readonly isSaveTooltipDisabled = computed<boolean>(() => !this.uneditableReason() && this.quizIsValid() && !this.invalidReasons().length);
+    /** Everything blocking the save button that can be put into words; empty when nothing is wrong. */
+    readonly saveBlockedReasons = computed<string[]>(() => {
+        const uneditableReason = this.uneditableReason();
+        return uneditableReason ? [uneditableReason] : this.invalidReasonTexts();
+    });
+
+    readonly isSaveTooltipDisabled = computed<boolean>(() => !this.saveBlockedReasons().length);
 
     hasErrorInQuizBatches(): boolean {
         return !!this.quizExercise()?.quizBatches?.some((batch) => batch.startTimeError);

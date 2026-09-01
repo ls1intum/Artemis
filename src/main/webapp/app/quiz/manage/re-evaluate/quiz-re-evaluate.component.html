@@ -186,14 +186,7 @@
                             jhiTranslate="artemisApp.quizExercise.re-evaluate.resetQuiz"
                         ></button>
                         <button class="btn btn-secondary" (click)="back()" jhiTranslate="{{ pendingChanges() ? 'entity.action.cancel' : 'entity.action.back' }}"></button>
-                        <ng-template #invalidReasonsContent>
-                            <ul class="invalid-reasons-list">
-                                @for (reason of invalidReasons(); track $index) {
-                                    <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
-                                }
-                            </ul>
-                        </ng-template>
-                        <!-- PrimeNG's tooltip carries no ARIA, so the reasons are also exposed here for aria-describedby. -->
+                        <!-- The tooltip only describes its host while it is open, so the reasons also live here permanently for aria-describedby. -->
                         @if (!quizIsValid()) {
                             <ul [id]="saveReasonsId" class="sr-only">
                                 @for (reason of invalidReasons(); track $index) {
@@ -201,27 +194,16 @@
                                 }
                             </ul>
                         }
-                        <!-- The button is aria-disabled rather than disabled so it stays focusable and can explain
-                             itself; the wrapper carries the tooltip so hovering the button still reaches it. -->
-                        <span
-                            class="submit-tooltip-host"
-                            [pTooltip]="invalidReasonsContent"
-                            [tooltipDisabled]="quizIsValid()"
-                            tooltipEvent="both"
-                            tooltipPosition="top"
-                            tooltipStyleClass="invalid-reasons-tooltip"
-                        >
-                            <!-- p-component marks the tooltip's focus target: PrimeNG binds its focus listener to the
-                                 first .p-component inside the host, and the class itself carries no styling. -->
-                            <button
-                                class="btn btn-success p-component"
-                                (click)="onSaveClick()"
-                                [class.disabled]="isSaveDisabled()"
-                                [attr.aria-disabled]="isSaveDisabled()"
-                                [attr.aria-describedby]="quizIsValid() ? null : saveReasonsId"
-                                jhiTranslate="entity.action.save"
-                            ></button>
-                        </span>
+                        <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
+                             events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
+                        <button
+                            class="btn btn-success aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                            (click)="onSaveClick()"
+                            [tumUiTooltip]="invalidReasonTexts()"
+                            [attr.aria-disabled]="isSaveDisabled()"
+                            [attr.aria-describedby]="quizIsValid() ? null : saveReasonsId"
+                            jhiTranslate="entity.action.save"
+                        ></button>
                     </div>
                 </div>
             </div>

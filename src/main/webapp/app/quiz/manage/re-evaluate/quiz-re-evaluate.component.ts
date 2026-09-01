@@ -3,7 +3,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TooltipModule } from 'primeng/tooltip';
+import { TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
@@ -40,7 +40,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         FormsModule,
         NgbTooltip,
-        TooltipModule,
+        TumUiTooltipDirective,
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         ReEvaluateDragAndDropQuestionComponent,

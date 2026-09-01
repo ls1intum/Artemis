@@ -1,6 +1,12 @@
 import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import type { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { TranslateService } from '@ngx-translate/core';
+
+/** Tooltips and aria-describedby targets both need resolved strings rather than keys. */
+export function translateValidationReasons(reasons: readonly ValidationReason[], translateService: TranslateService): string[] {
+    return reasons.map(({ translateKey, translateValues }) => translateService.instant(translateKey, translateValues));
+}
 
 const MIN_POINTS = 1;
 const MAX_POINTS = 9999;

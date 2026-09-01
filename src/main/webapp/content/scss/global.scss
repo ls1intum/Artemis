@@ -1870,59 +1870,6 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     white-space: pre-line;
 }
 
-// Wrapper that carries the tooltip for a submit button, because a disabled button emits no mouse events.
-.submit-tooltip-host {
-    display: inline-flex;
-}
-
-// Tooltip listing why a submit button is disabled, on exercise and quiz forms (portaled to <body>).
-// The root carries PrimeNG's 12.5rem clamp, so it has to be widened alongside the text.
-// .p-tooltip guards against the Bootstrap tooltips that reuse this class in quiz.scss and
-// programming-exam-submission.component.scss.
-.invalid-reasons-tooltip.p-tooltip,
-.invalid-reasons-tooltip .p-tooltip-text {
-    max-width: 26rem !important;
-}
-
-// PrimeNG sets `width: fit-content` inline and positions with `left` alone, so near the right
-// edge the box is squeezed into whatever space remains and the reasons wrap. max-content keeps
-// its natural width; the max-width above still caps it.
-.invalid-reasons-tooltip.p-tooltip {
-    width: max-content !important;
-}
-
-.invalid-reasons-tooltip .p-tooltip-text {
-    // pre-line would render the template's newlines between the <li>s as blank lines
-    white-space: normal;
-    text-align: left;
-}
-
-// The footer button sits in the bottom-right corner, so PrimeNG rejects `top` (a centred
-// tooltip overflows the right edge) and falls through to `left`, which centres vertically and
-// runs past the viewport bottom. Align the tooltip's bottom with the button's instead.
-.invalid-reasons-tooltip.p-tooltip-left {
-    // half the footer button's height, so the arrow still lands on its centre
-    --invalid-reasons-arrow-inset: 1.1rem;
-
-    transform: translateY(calc(-50% + var(--invalid-reasons-arrow-inset)));
-
-    // PrimeNG sets top inline
-    .p-tooltip-arrow {
-        top: calc(100% - var(--invalid-reasons-arrow-inset)) !important;
-    }
-}
-
-.invalid-reasons-tooltip .invalid-reasons-list {
-    margin: 0;
-    // room for the marker, so a wrapped reason aligns under its own text rather than under the bullet
-    padding-inline-start: 1.1em;
-    list-style: disc;
-
-    li + li {
-        margin-top: 0.35em;
-    }
-}
-
 // Tooltip for the generative AI disclaimer icon in the feedback suggestions banner.
 .feedback-suggestions-ai-tooltip,
 .feedback-suggestions-ai-tooltip .p-tooltip-text {

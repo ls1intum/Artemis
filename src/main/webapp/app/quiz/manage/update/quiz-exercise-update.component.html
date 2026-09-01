@@ -395,54 +395,29 @@
                                     <span jhiTranslate="entity.action.re-evaluate"></span>
                                 </button>
                             }
-                            <ng-template #saveTooltipContent>
-                                @if (uneditableReason()) {
-                                    <span>{{ uneditableReason() }}</span>
-                                } @else {
-                                    <ul class="invalid-reasons-list">
-                                        @for (reason of invalidReasons(); track $index) {
-                                            <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
-                                        }
-                                    </ul>
-                                }
-                            </ng-template>
-                            <!-- PrimeNG's tooltip carries no ARIA, so the same text is exposed here for aria-describedby. -->
+                            <!-- The tooltip only describes its host while it is open, so the same text also lives here permanently for aria-describedby. -->
                             @if (!isSaveTooltipDisabled()) {
                                 <div [id]="saveReasonsId" class="sr-only">
-                                    @if (uneditableReason()) {
-                                        <span>{{ uneditableReason() }}</span>
-                                    } @else {
-                                        <ul>
-                                            @for (reason of invalidReasons(); track $index) {
-                                                <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
-                                            }
-                                        </ul>
-                                    }
+                                    <ul>
+                                        @for (reason of saveBlockedReasons(); track $index) {
+                                            <li>{{ reason }}</li>
+                                        }
+                                    </ul>
                                 </div>
                             }
-                            <!-- The button is aria-disabled rather than disabled so it stays focusable and can explain
-                                 itself; the wrapper carries the tooltip so hovering the button still reaches it. -->
-                            <span
-                                class="submit-tooltip-host"
-                                [pTooltip]="saveTooltipContent"
-                                [tooltipDisabled]="isSaveTooltipDisabled()"
-                                tooltipEvent="both"
-                                tooltipPosition="top"
-                                tooltipStyleClass="invalid-reasons-tooltip"
+                            <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
+                                 events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
+                            <button
+                                id="quiz-save"
+                                class="footer-save-btn aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                                (click)="onSaveClick()"
+                                [tumUiTooltip]="saveBlockedReasons()"
+                                [attr.aria-disabled]="isSaveDisabled()"
+                                [attr.aria-describedby]="isSaveTooltipDisabled() ? null : saveReasonsId"
                             >
-                                <!-- p-component marks the tooltip's focus target: PrimeNG binds its focus listener to the
-                                     first .p-component inside the host, and the class itself carries no styling. -->
-                                <button
-                                    id="quiz-save"
-                                    class="footer-save-btn p-component"
-                                    (click)="onSaveClick()"
-                                    [attr.aria-disabled]="isSaveDisabled()"
-                                    [attr.aria-describedby]="isSaveTooltipDisabled() ? null : saveReasonsId"
-                                >
-                                    <fa-icon [icon]="faFloppyDisk" class="me-1" />
-                                    <span jhiTranslate="entity.action.save"></span>
-                                </button>
-                            </span>
+                                <fa-icon [icon]="faFloppyDisk" class="me-1" />
+                                <span jhiTranslate="entity.action.save"></span>
+                            </button>
                         </div>
                     </div>
                 </div>

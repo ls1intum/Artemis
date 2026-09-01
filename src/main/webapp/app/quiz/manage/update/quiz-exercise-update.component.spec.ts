@@ -1549,6 +1549,48 @@ describe('QuizExerciseUpdateComponent', () => {
                 });
             });
 
+            // isSaveDisabled() reads the clock, so an editor left open past a saved batch's start time would
+            // otherwise block saving with nothing to explain why.
+            describe('explanation when a saved batch starts under an open editor', () => {
+                beforeEach(() => {
+                    vi.useFakeTimers();
+                    comp.isSaving.set(false);
+                    comp.pendingChangesCache.set(true);
+                    comp.quizIsValid.set(true);
+                    comp.invalidReasons.set([]);
+                    comp.quizExercise.set(quizExercise);
+                    comp.quizExercise().dueDateError = false;
+                    comp.quizExercise().isEditable = true;
+                    comp.quizExercise().quizEnded = false;
+                    vi.spyOn(comp, 'hasErrorInQuizBatches').mockReturnValue(false);
+
+                    const batch = new QuizBatch();
+                    batch.startTime = dayjs().add(1, 'minute');
+                    comp.savedEntity = new QuizExercise(undefined, undefined);
+                    comp.savedEntity.quizBatches = [batch];
+                    comp['watchSavedQuizStart']();
+                });
+
+                afterEach(() => {
+                    vi.runOnlyPendingTimers();
+                    vi.useRealTimers();
+                });
+
+                it('should stay silent while the batch is still ahead', () => {
+                    expect(comp.isSaveDisabled()).toBeFalsy();
+                    expect(comp.saveBlockedReasons()).toEqual([]);
+                    expect(comp.isSaveTooltipDisabled()).toBeTruthy();
+                });
+
+                it('should explain the block as soon as the start time passes', () => {
+                    vi.advanceTimersByTime(60_001);
+
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                    expect(comp.saveBlockedReasons()).toEqual(['artemisApp.quizExercise.edit.editNotPossibleDuringQuiz']);
+                    expect(comp.isSaveTooltipDisabled()).toBeFalsy();
+                });
+            });
+
             describe('resetQuizQuestionForImport (via init)', () => {
                 beforeEach(() => {
                     comp.isImport.set(true);

@@ -21,14 +21,7 @@
     @if (!isCreation() && !isImport()) {
         <jhi-exercise-update-notification class="flex-grow-1 w-100" [notificationText]="notificationText()" (notificationTextChange)="notificationTextChange.emit($event)" />
     }
-    <ng-template #invalidReasonsContent>
-        <ul class="invalid-reasons-list">
-            @for (reason of invalidReasons(); track $index) {
-                <li [jhiTranslate]="reason.translateKey" [translateValues]="reason.translateValues"></li>
-            }
-        </ul>
-    </ng-template>
-    <!-- PrimeNG's tooltip carries no ARIA, so the reasons are also exposed here for aria-describedby. -->
+    <!-- The tooltip only describes its host while it is open, so the reasons also live here permanently for aria-describedby. -->
     @if (invalidReasons().length) {
         <ul [id]="invalidReasonsId" class="sr-only">
             @for (reason of invalidReasons(); track $index) {
@@ -40,65 +33,49 @@
         @if (isSaving()) {
             <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
         }
-        <button pButton type="button" id="cancel-save" severity="secondary" size="small" (click)="onCancel.emit()">
+        <button tumUiButton type="button" id="cancel-save" severity="secondary" size="small" (click)="onCancel.emit()">
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
-            <span class="d-none d-sm-inline" jhiTranslate="entity.action.cancel"></span>
+            <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
         </button>
         @if (showGenerateWithAi()) {
-            <!-- The button is aria-disabled rather than disabled so it stays focusable and can explain itself;
-                 the wrapper carries the tooltip because a p-disabled child emits no mouse events. -->
-            <span
-                class="submit-tooltip-host"
-                [pTooltip]="invalidReasonsContent"
-                [tooltipDisabled]="!invalidReasons().length"
-                tooltipEvent="both"
-                tooltipPosition="top"
-                tooltipStyleClass="invalid-reasons-tooltip"
-            >
-                <button
-                    pButton
-                    type="button"
-                    id="generate-with-ai"
-                    class="footer-action-button d-flex align-items-center"
-                    [class.p-disabled]="isSubmitDisabled()"
-                    [attr.aria-disabled]="isSubmitDisabled()"
-                    [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
-                    [loading]="isGeneratingWithAi()"
-                    size="small"
-                    (click)="onGenerateWithAi()"
-                >
-                    @if (!isGeneratingWithAi()) {
-                        <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
-                    }
-                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateWithAi"></span>
-                </button>
-            </span>
-        }
-        <span
-            class="submit-tooltip-host"
-            [pTooltip]="invalidReasonsContent"
-            [tooltipDisabled]="!invalidReasons().length"
-            tooltipEvent="both"
-            tooltipPosition="top"
-            tooltipStyleClass="invalid-reasons-tooltip"
-        >
+            <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
+                 events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
             <button
-                pButton
+                tumUiButton
                 type="button"
-                id="save-entity"
-                class="footer-action-button d-flex align-items-center"
-                [class.p-disabled]="isSubmitDisabled()"
+                id="generate-with-ai"
+                class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+                size="small"
+                [tumUiTooltip]="invalidReasonTexts()"
                 [attr.aria-disabled]="isSubmitDisabled()"
                 [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
-                [loading]="isSaving()"
-                size="small"
-                (click)="onSave()"
+                (click)="onGenerateWithAi()"
             >
-                @if (!isSaving()) {
-                    <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />
+                @if (isGeneratingWithAi()) {
+                    <fa-icon [fixedWidth]="true" [icon]="faSpinner" animation="spin" class="sm" />
+                } @else {
+                    <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
                 }
-                <span class="d-none d-sm-inline" [jhiTranslate]="saveTitle()"></span>
+                <span class="hidden sm:inline" jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateWithAi"></span>
             </button>
-        </span>
+        }
+        <button
+            tumUiButton
+            type="button"
+            id="save-entity"
+            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+            size="small"
+            [tumUiTooltip]="invalidReasonTexts()"
+            [attr.aria-disabled]="isSubmitDisabled()"
+            [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
+            (click)="onSave()"
+        >
+            @if (isSaving()) {
+                <fa-icon [fixedWidth]="true" [icon]="faSpinner" animation="spin" class="sm" />
+            } @else {
+                <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />
+            }
+            <span class="hidden sm:inline" [jhiTranslate]="saveTitle()"></span>
+        </button>
     </div>
 </div>
