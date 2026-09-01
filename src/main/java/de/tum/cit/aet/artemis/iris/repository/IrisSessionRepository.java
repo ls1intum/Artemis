@@ -60,16 +60,19 @@ public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession,
      * of an outer join, which is exactly what {@code LEFT JOIN FETCH s.messages} produces.
      *
      * <p>
-     * Scope, deliberately narrow: the lock is on the parent row and is a COOPERATIVE mutex, so it only serializes
-     * writers that take it. What it guarantees is that two concurrent appends through
-     * {@code IrisMessageService#saveMessage} cannot lose each other's message. It does NOT make the whole aggregate
-     * safe. These still touch the same rows without taking it, and remain out of scope here:
-     * {@code setSessionTitle}, {@code updateLatestSuggestions} and {@code applyContextChange} merge the session
-     * aggregate (they do not intend to change the collection, but a cascade merge carries whatever collection state
-     * they hold), and {@code deleteSupersededProactiveMessage} plus the proactive-outcome update write message rows
-     * directly. Closing those means either routing every one of them through this lock or dropping the
-     * {@code @OrderColumn} that forces the collection to be written from the owner side; both are larger changes than
-     * the append race this method exists to fix.
+     * Scope: the lock is on the parent row and is a COOPERATIVE mutex, so it only serializes writers that take it.
+     * Two users of it today: {@code IrisMessageService#saveMessage}, so concurrent appends cannot lose each other's
+     * message, and {@code IrisChatSessionService#applyContextChange}, which holds it across BOTH its writes because
+     * it appends a marker and then merges the session aggregate - letting the lock drop in between would leave that
+     * merge free to cascade a stale collection and orphan-remove a concurrent append.
+     *
+     * <p>
+     * It does NOT make the whole aggregate safe. These still touch the same rows without taking it:
+     * {@code setSessionTitle} and {@code updateLatestSuggestions} merge the session aggregate (they do not intend to
+     * change the collection, but a cascade merge carries whatever collection state they hold), and
+     * {@code deleteSupersededProactiveMessage} plus the proactive-outcome update write message rows directly. Closing
+     * those means either routing every one of them through this lock as well, or dropping the {@code @OrderColumn}
+     * that forces the collection to be written from the owner side.
      *
      * @param sessionId the session to lock
      * @return the locked session, if it exists

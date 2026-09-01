@@ -20,6 +20,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -114,6 +116,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
+    private final TransactionTemplate transactionTemplate;
+
     /**
      * Instance-wide kill switch for Artemis' own build-triggered proactive events. Deliberately kept alongside the
      * per-course setting: this one is checked before any result, course or DB access, so it can stop the whole
@@ -128,7 +132,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
-            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService) {
+            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService,
+            PlatformTransactionManager transactionManager) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
@@ -143,6 +148,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.messageSource = messageSource;
         this.chatPipelineExecutionService = chatPipelineExecutionService;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
     // -------------------------------------------------------------------------
     // IrisChatBasedFeatureInterface implementation
@@ -457,11 +463,20 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
         IrisMessage markerMessage = new IrisMessage();
         markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
-        IrisMessage savedMarker = irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
 
-        session.setMode(newMode);
-        session.setEntityId(newEntityId);
-        irisChatSessionRepository.save(session);
+        // Append the marker and update the context fields under ONE session write lock. saveMessage takes that lock
+        // itself, but if it were the only holder it would release it on its own commit, and the save(session) below
+        // would then cascade-merge this session - whose messages list is the one saveMessage handed back - after a
+        // concurrent append may already have committed. orphanRemoval would delete that new row. Taking the lock here
+        // keeps it held until this transaction commits, so nothing can interleave between the two writes.
+        IrisMessage savedMarker = transactionTemplate.execute(status -> {
+            irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId());
+            IrisMessage saved = irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
+            session.setMode(newMode);
+            session.setEntityId(newEntityId);
+            irisChatSessionRepository.save(session);
+            return saved;
+        });
 
         sendOverWebsocket(session, savedMarker);
     }

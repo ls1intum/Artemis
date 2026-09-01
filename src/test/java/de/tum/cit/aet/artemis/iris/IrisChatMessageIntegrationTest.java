@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionFactory;
 import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -138,6 +139,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private IrisChatSessionService irisChatSessionService;
 
     private AtomicBoolean pipelineDone;
 
@@ -321,6 +325,40 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
         assertThat(reloaded.getMessages()).as("no concurrently committed message may be dropped by another writer's stale collection").hasSize(writers);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void contextSwitchHoldsTheSessionLockAcrossItsAggregateSave() throws Exception {
+        // applyContextChange appends the CTXSWAP marker and then merges the session aggregate. If the lock were
+        // released between the two (saveMessage committing on its own), a chat append committing in that gap would be
+        // orphan-removed by the aggregate merge. Run a stream of appends against the session while the switch runs
+        // and assert none of them is lost.
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        int appends = 6;
+        var appender = Executors.newSingleThreadExecutor();
+        var appendsDone = new CountDownLatch(1);
+        try {
+            appender.submit(() -> {
+                for (int i = 0; i < appends; i++) {
+                    var ownSession = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+                    irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(ownSession), ownSession, IrisMessageSender.USER);
+                }
+                appendsDone.countDown();
+                return null;
+            });
+            irisChatSessionService.applyContextChange(session, IrisChatMode.TEXT_EXERCISE_CHAT, textExercise.getId(), user);
+            assertThat(appendsDone.await(60, TimeUnit.SECONDS)).isTrue();
+        }
+        finally {
+            appender.shutdownNow();
+        }
+
+        var reloaded = irisSessionRepository.findByIdWithMessagesElseThrow(session.getId());
+        // every plain append plus the single CTXSWAP marker
+        assertThat(reloaded.getMessages()).as("the context switch must not orphan-remove a concurrently appended message").hasSize(appends + 1);
     }
 
     @Test
