@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -104,6 +105,30 @@ class AuthorizationCheckServiceAdminElevationTest {
 
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course.getId())).isTrue();
         verify(userRepository).isAdmin("admin");
+    }
+
+    @Test
+    void shouldApplyElevationToAllCurrentLoginChecks() {
+        authenticate("admin", Role.ADMIN);
+        when(userRepository.isAdmin("admin")).thenReturn(true);
+
+        assertThat(authorizationCheckService.isAtLeastEditorInCourse("admin", course.getId())).isTrue();
+        assertThat(authorizationCheckService.isAtLeastInstructorInCourse("admin", course.getId())).isTrue();
+        assertThat(authorizationCheckService.isAtLeastTeachingAssistantInExercise("admin", 3L)).isTrue();
+        assertThat(authorizationCheckService.isAtLeastInstructorInExercise("admin", 3L)).isTrue();
+        verify(userRepository, times(4)).isAdmin("admin");
+    }
+
+    @Test
+    void shouldNotApplyCurrentUsersElevationToArbitraryLoginChecks() {
+        authenticate("admin", Role.ADMIN);
+
+        assertThat(authorizationCheckService.isAtLeastEditorInCourse("other-user", course.getId())).isFalse();
+        assertThat(authorizationCheckService.isAtLeastInstructorInCourse("other-user", course.getId())).isFalse();
+        assertThat(authorizationCheckService.isAtLeastTeachingAssistantInExercise("other-user", 3L)).isFalse();
+        assertThat(authorizationCheckService.isAtLeastInstructorInExercise("other-user", 3L)).isFalse();
+        verify(userRepository, never()).isAdmin("admin");
+        verify(userRepository, never()).isAdmin("other-user");
     }
 
     @Test

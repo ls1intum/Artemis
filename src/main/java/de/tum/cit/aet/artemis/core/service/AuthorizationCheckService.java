@@ -146,7 +146,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorInCourse(String login, long courseId) {
-        return userRepository.isAtLeastEditorInCourse(login, courseId);
+        return userRepository.isAtLeastEditorInCourse(login, courseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -428,7 +428,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorInCourse(String login, long courseId) {
-        return userRepository.isAtLeastInstructorInCourse(login, courseId);
+        return userRepository.isAtLeastInstructorInCourse(login, courseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -703,6 +703,10 @@ public class AuthorizationCheckService {
         return SecurityUtils.getCurrentUserLogin().filter(userRepository::isAdmin).isPresent();
     }
 
+    private boolean hasCurrentUserAdminAccess(String login) {
+        return SecurityUtils.getCurrentUserLogin().filter(login::equals).isPresent() && isCurrentUserAdminAccessEnabled();
+    }
+
     /**
      * Preserves account classification for genuinely arbitrary users and internal processing, while requiring request elevation when the supplied user is the current caller.
      */
@@ -893,7 +897,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId);
+        return userRepository.isAtLeastTeachingAssistantInExercise(login, exerciseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -941,7 +945,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastInstructorInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastInstructorInExercise(login, exerciseId);
+        return userRepository.isAtLeastInstructorInExercise(login, exerciseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
