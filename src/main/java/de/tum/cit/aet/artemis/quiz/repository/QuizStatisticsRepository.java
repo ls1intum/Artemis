@@ -22,6 +22,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.RatedSele
  * <p>
  * A {@code null} rated flag has the same meaning as {@code false}, matching {@code Result#isRated()}. The result id is
  * the deterministic tie-breaker when two results have the same completion date.
+ * Instructor test runs for exam exercises are excluded. Course practice participations remain eligible even though
+ * they also use the test-run flag.
  * <p>
  * The correlated anti-joins are required because results reference submissions while the latest-result rule is scoped to a participation and rating bucket. The normalized lookup
  * is
@@ -44,9 +46,12 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                 COUNT(result.id) AS participantCount
             FROM Result result
                 JOIN result.submission submission
+                JOIN submission.participation participation
+                JOIN participation.exercise exercise
             WHERE result.exerciseId = :exerciseId
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
+                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT newer.id
                     FROM Result newer
@@ -76,9 +81,12 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                 COUNT(result.id) AS participantCount
             FROM Result result
                 JOIN result.submission submission
+                JOIN submission.participation participation
+                JOIN participation.exercise exercise
             WHERE result.exerciseId = :exerciseId
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
+                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT newer.id
                     FROM Result newer
@@ -110,6 +118,8 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                 SUM(CASE WHEN answer.scoreInPoints >= :questionPoints THEN 1 ELSE 0 END) AS correctCount
             FROM SubmittedAnswer answer
                 JOIN answer.submission submission
+                JOIN submission.participation participation
+                JOIN participation.exercise exercise
                 JOIN Result result ON result.submission = submission
             WHERE answer.quizQuestion.id = :questionId
                 AND NOT EXISTS (
@@ -121,6 +131,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                 )
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
+                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT newer.id
                     FROM Result newer
@@ -152,10 +163,13 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
             FROM SubmittedAnswer answer
                 JOIN answer.quizQuestion question
                 JOIN answer.submission submission
+                JOIN submission.participation participation
+                JOIN participation.exercise exercise
                 JOIN Result result ON result.submission = submission
             WHERE question.exercise.id = :exerciseId
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
+                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT duplicateAnswer.id
                     FROM SubmittedAnswer duplicateAnswer
@@ -194,10 +208,13 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                 COALESCE(result.rated, false) AS rated
             FROM SubmittedAnswer answer
                 JOIN answer.submission submission
+                JOIN submission.participation participation
+                JOIN participation.exercise exercise
                 JOIN Result result ON result.submission = submission
             WHERE answer.quizQuestion.id = :questionId
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
+                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT duplicateAnswer.id
                     FROM SubmittedAnswer duplicateAnswer

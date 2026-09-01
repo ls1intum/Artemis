@@ -11,49 +11,79 @@
         cleanup convention in 20260728223939_changelog.xml.
     -->
 
+    <!--
+        Older completed quiz results can lack a completion date. Preserve them for on-demand statistics by using the
+        submission date as the best available historical approximation before removing the persisted statistics.
+    -->
+    <changeSet id="20260827174007-00-backfill-result-completion-date-mysql" author="Nihad74" dbms="mysql">
+        <sql>
+            UPDATE result r
+                JOIN submission s ON s.id = r.submission_id
+                JOIN exercise e ON e.id = r.exercise_id
+            SET r.completion_date = s.submission_date
+            WHERE r.completion_date IS NULL
+                AND r.score IS NOT NULL
+                AND s.submission_date IS NOT NULL
+                AND e.discriminator = 'Q'
+        </sql>
+    </changeSet>
+    <changeSet id="20260827174007-00-backfill-result-completion-date-postgresql" author="Nihad74" dbms="postgresql">
+        <sql>
+            UPDATE result r
+            SET completion_date = s.submission_date
+            FROM submission s, exercise e
+            WHERE s.id = r.submission_id
+                AND e.id = r.exercise_id
+                AND r.completion_date IS NULL
+                AND r.score IS NOT NULL
+                AND s.submission_date IS NOT NULL
+                AND e.discriminator = 'Q'
+        </sql>
+    </changeSet>
+
     <!-- PostgreSQL normalizes the historical Hibernate-generated foreign-key names to lower case; MySQL retains them. -->
-    <changeSet id="20260827174007-01-drop-exercise-statistic-fk-mysql" author="krusche" dbms="mysql">
+    <changeSet id="20260827174007-01-drop-exercise-statistic-fk-mysql" author="Nihad74" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <foreignKeyConstraintExists foreignKeyTableName="exercise" foreignKeyName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
         </preConditions>
         <dropForeignKeyConstraint baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
     </changeSet>
-    <changeSet id="20260827174007-02-drop-exercise-statistic-fk-postgresql" author="krusche" dbms="postgresql">
+    <changeSet id="20260827174007-02-drop-exercise-statistic-fk-postgresql" author="Nihad74" dbms="postgresql">
         <sql>ALTER TABLE exercise DROP CONSTRAINT IF EXISTS fk1kyxexi1uqeu8pw3vcbulfi42</sql>
     </changeSet>
-    <changeSet id="20260827174007-03-drop-question-statistic-fk-mysql" author="krusche" dbms="mysql">
+    <changeSet id="20260827174007-03-drop-question-statistic-fk-mysql" author="Nihad74" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <foreignKeyConstraintExists foreignKeyTableName="quiz_question" foreignKeyName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
         </preConditions>
         <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
     </changeSet>
-    <changeSet id="20260827174007-04-drop-question-statistic-fk-postgresql" author="krusche" dbms="postgresql">
+    <changeSet id="20260827174007-04-drop-question-statistic-fk-postgresql" author="Nihad74" dbms="postgresql">
         <sql>ALTER TABLE quiz_question DROP CONSTRAINT IF EXISTS fkoi0sqphft8m7f92qa7ui8i3ac</sql>
     </changeSet>
 
-    <changeSet id="20260827174007-05-drop-exercise-statistic-unique-constraint" author="krusche">
+    <changeSet id="20260827174007-05-drop-exercise-statistic-unique-constraint" author="Nihad74">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="exercise" indexName="uk_exercise_quiz_point_statistic"/>
         </preConditions>
         <dropUniqueConstraint tableName="exercise" constraintName="uk_exercise_quiz_point_statistic"/>
     </changeSet>
-    <changeSet id="20260827174007-06-drop-question-statistic-unique-constraint-mysql" author="krusche" dbms="mysql">
+    <changeSet id="20260827174007-06-drop-question-statistic-unique-constraint-mysql" author="Nihad74" dbms="mysql">
         <preConditions onFail="MARK_RAN">
             <indexExists tableName="quiz_question" indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
         </preConditions>
         <dropUniqueConstraint tableName="quiz_question" constraintName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
     </changeSet>
-    <changeSet id="20260827174007-07-drop-question-statistic-unique-index-postgresql" author="krusche" dbms="postgresql">
+    <changeSet id="20260827174007-07-drop-question-statistic-unique-index-postgresql" author="Nihad74" dbms="postgresql">
         <sql>DROP INDEX IF EXISTS uc_questionquestion_statistic_id_col</sql>
     </changeSet>
 
-    <changeSet id="20260827174007-08-drop-exercise-statistic-column" author="krusche">
+    <changeSet id="20260827174007-08-drop-exercise-statistic-column" author="Nihad74">
         <preConditions onFail="MARK_RAN">
             <columnExists tableName="exercise" columnName="quiz_point_statistic_id"/>
         </preConditions>
         <dropColumn tableName="exercise" columnName="quiz_point_statistic_id"/>
     </changeSet>
-    <changeSet id="20260827174007-09-drop-question-statistic-column" author="krusche">
+    <changeSet id="20260827174007-09-drop-question-statistic-column" author="Nihad74">
         <preConditions onFail="MARK_RAN">
             <columnExists tableName="quiz_question" columnName="quiz_question_statistic_id"/>
         </preConditions>
@@ -61,13 +91,13 @@
     </changeSet>
 
     <!-- Dropping the counter table first removes its remaining foreign key into quiz_statistic. -->
-    <changeSet id="20260827174007-10-drop-statistic-counter-table" author="krusche">
+    <changeSet id="20260827174007-10-drop-statistic-counter-table" author="Nihad74">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="quiz_statistic_counter"/>
         </preConditions>
         <dropTable tableName="quiz_statistic_counter"/>
     </changeSet>
-    <changeSet id="20260827174007-11-drop-statistic-table" author="krusche">
+    <changeSet id="20260827174007-11-drop-statistic-table" author="Nihad74">
         <preConditions onFail="MARK_RAN">
             <tableExists tableName="quiz_statistic"/>
         </preConditions>

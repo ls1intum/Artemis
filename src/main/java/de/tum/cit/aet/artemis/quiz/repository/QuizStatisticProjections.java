@@ -19,6 +19,9 @@ public final class QuizStatisticProjections {
         long getParticipantCount();
     }
 
+    /**
+     * Participant totals grouped by the normalized rated bucket.
+     */
     public interface ParticipantCount {
 
         Boolean getRated();
