@@ -52,6 +52,24 @@ class CourseLocalVCJenkinsIntegrationTest extends AbstractProgrammingIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithoutStartDate() throws Exception {
+        courseTestService.testCreateCourseWithoutStartDate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithoutEndDate() throws Exception {
+        courseTestService.testCreateCourseWithoutEndDate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateCourseWithoutSemester() throws Exception {
+        courseTestService.testCreateCourseWithoutSemester();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateCourseWithNegativeMaxComplainTimeDays() throws Exception {
         courseTestService.testCreateCourseWithNegativeMaxComplainTimeDays();
     }

@@ -71,7 +71,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void createCourseRequest_asAnonymous_shouldReturnUnauthorized() throws Exception {
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "TSTCRS2", "WS2025", null, null, false, "Reason for the request.");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "TSTCRS2", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Reason for the request.");
 
         request.post("/api/course/course-requests", createDTO, HttpStatus.UNAUTHORIZED);
     }
@@ -79,7 +80,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createCourseRequest_withBlankTitle_shouldReturnBadRequest() throws Exception {
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("", "TSTCRS3", "WS2025", null, null, false, "Reason for the request.");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("", "TSTCRS3", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Reason for the request.");
 
         request.post("/api/course/course-requests", createDTO, HttpStatus.BAD_REQUEST);
     }
@@ -87,7 +89,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createCourseRequest_withBlankReason_shouldReturnBadRequest() throws Exception {
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "TSTCRS4", "WS2025", null, null, false, "");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "TSTCRS4", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, "");
 
         request.post("/api/course/course-requests", createDTO, HttpStatus.BAD_REQUEST);
     }
@@ -95,7 +97,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createCourseRequest_withBlankSemester_shouldReturnBadRequest() throws Exception {
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "TSTCRS5", "", null, null, false, "Reason for request.");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "TSTCRS5", "", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Reason for request.");
 
         request.post("/api/course/course-requests", createDTO, HttpStatus.BAD_REQUEST);
     }
@@ -222,7 +225,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         existingCourse.setTitle("Existing Course");
         courseRepository.save(existingCourse);
 
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("New Course", "EXISTCRS", "WS2025", null, null, false, "Reason for request.");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("New Course", "EXISTCRS", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Reason for request.");
 
         Map<String, Object> errorResponse = performPostAndGetErrorResponse(createDTO);
 
@@ -243,7 +247,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         // Create an existing course request with the same short name
         createTestCourseRequest("Existing Request", "EXISTREQ");
 
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("My New Course", "EXISTREQ", "SS2024", null, null, false, "Reason for request.");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("My New Course", "EXISTREQ", "SS2024", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Reason for request.");
 
         Map<String, Object> errorResponse = performPostAndGetErrorResponse(createDTO);
 
@@ -273,7 +278,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         conflictingCourse.setTitle("Conflict Course");
         courseRepository.save(conflictingCourse);
 
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "CONFLICT", "WS2025", null, null, false, "Reason for request.");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "CONFLICT", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Reason for request.");
 
         Map<String, Object> errorResponse = performPostAndGetErrorResponse(createDTO);
 
@@ -296,7 +302,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createCourseRequest_withInvalidShortName_shouldReturnBadRequest() throws Exception {
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "invalid-name!", "WS2025", null, null, false, "Reason for request.");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO("Test Course", "invalid-name!", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Reason for request.");
 
         request.post("/api/course/course-requests", createDTO, HttpStatus.BAD_REQUEST);
     }
@@ -305,7 +312,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void createCourseRequest_withTitleTooLong_shouldReturnBadRequest() throws Exception {
         String longTitle = "A".repeat(256);
-        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO(longTitle, "LNGTITLE", "WS2025", null, null, false, "Reason for request.");
+        CourseRequestCreateDTO createDTO = new CourseRequestCreateDTO(longTitle, "LNGTITLE", "WS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Reason for request.");
 
         request.post("/api/course/course-requests", createDTO, HttpStatus.BAD_REQUEST);
     }
@@ -472,7 +480,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         courseRequest.setProcessedDate(ZonedDateTime.now());
         courseRequestRepository.save(courseRequest);
 
-        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDTTIT2", "SS2025", null, null, false, "Updated reason.");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDTTIT2", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Updated reason.");
 
         request.put("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
     }
@@ -488,7 +497,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         existingCourse.setTitle("Existing Course for Update Test");
         courseRepository.save(existingCourse);
 
-        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDEXST", "SS2025", null, null, false, "Updated reason.");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDEXST", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Updated reason.");
 
         request.put("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
     }
@@ -499,7 +509,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         CourseRequest courseRequest = createTestCourseRequest("Original Title", "KEEPSN");
 
         // Update only title, keeping the same short name
-        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "KEEPSN", "SS2025", null, null, false, "Updated reason.");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "KEEPSN", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Updated reason.");
 
         CourseRequestDTO result = request.putWithResponseBody("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, CourseRequestDTO.class, HttpStatus.OK);
 
@@ -513,7 +524,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     void updateCourseRequest_asInstructor_shouldReturnForbidden() throws Exception {
         CourseRequest courseRequest = createTestCourseRequest("Request For Instructor", "REQINST");
 
-        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDTINST", "SS2025", null, null, false, "Updated reason.");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "UPDTINST", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Updated reason.");
 
         request.put("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.FORBIDDEN);
     }
@@ -524,7 +536,7 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         CourseRequest courseRequest = createTestCourseRequest("Request to Update Invalid", "REQINV");
 
         // Empty title should fail validation
-        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("", "UPDTINV", "SS2025", null, null, false, "Updated reason.");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("", "UPDTINV", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false, "Updated reason.");
 
         request.put("/api/core/admin/course-requests/" + courseRequest.getId(), updateDTO, HttpStatus.BAD_REQUEST);
     }
@@ -532,7 +544,8 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void updateCourseRequest_notFound_shouldReturnNotFound() throws Exception {
-        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "NOTFND", "SS2025", null, null, false, "Updated reason.");
+        CourseRequestCreateDTO updateDTO = new CourseRequestCreateDTO("Updated Title", "NOTFND", "SS2025", ZonedDateTime.now(), ZonedDateTime.now().plusMonths(3), false,
+                "Updated reason.");
 
         request.put("/api/core/admin/course-requests/999999", updateDTO, HttpStatus.NOT_FOUND);
     }
@@ -545,6 +558,9 @@ class CourseRequestIntegrationTest extends AbstractSpringIntegrationIndependentT
         CourseRequest courseRequest = new CourseRequest();
         courseRequest.setTitle(title);
         courseRequest.setShortName(shortName);
+        courseRequest.setSemester("WS2025");
+        courseRequest.setStartDate(ZonedDateTime.now());
+        courseRequest.setEndDate(ZonedDateTime.now().plusMonths(3));
         courseRequest.setReason("Test reason for the course request");
         courseRequest.setStatus(CourseRequestStatus.PENDING);
         courseRequest.setCreatedDate(createdDate);

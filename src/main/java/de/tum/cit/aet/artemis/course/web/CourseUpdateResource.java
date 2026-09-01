@@ -185,6 +185,7 @@ public class CourseUpdateResource {
         existingCourse.validateAccuracyOfScores();
         existingCourse.validatePointBounds();
         existingCourse.validateStartAndEndDate();
+        existingCourse.validateSemester();
         existingCourse.validateEnrollmentStartAndEndDate();
         existingCourse.validateUnenrollmentEndDate();
         if (file != null) {
