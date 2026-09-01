@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationConfigurationVal
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
@@ -251,7 +252,7 @@ public class GenerationOrchestrationService {
             baseTools.configureStructuralOracleRefresh(() -> structuralOracleSeeder.seedIfStructuralDiff(sandbox, activeSessionId, exercise));
             // The decorator emits path/action metadata for the instructor's live activity view, never file content. It re-exposes the same @Tool surface, so the model sees an
             // identical tool set either way.
-            Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink) : baseTools;
+            Object tools = fileChangeSink != null ? new FileChangeEmittingAgentTools(baseTools, fileChangeSink, AgentActivitySink.trackerOf(progress)) : baseTools;
             runDependencies.agentLoopRunner().beginCheckpointRun(jobId, exercise, baseTools, approvedSpecs);
             checkpointRunStarted = true;
 
@@ -646,8 +647,6 @@ public class GenerationOrchestrationService {
     }
 
     static void emit(@Nullable Consumer<String> progress, String message) {
-        if (progress != null) {
-            progress.accept(message);
-        }
+        AgentActivitySink.emit(progress, message);
     }
 }

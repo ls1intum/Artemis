@@ -1,0 +1,35 @@
+@if (!view().empty) {
+    <div class="mt-1 flex min-w-0 flex-col gap-1" data-testid="hyperion-run-activity">
+        @if (liveness(); as line) {
+            <!-- Ticks once a second, so it must never be announced: a per-second live region is unusable with a screen reader. -->
+            <p class="m-0 flex items-center gap-1 text-sm text-muted-color" aria-live="off" data-testid="hyperion-run-activity-liveness">
+                @if (line.waiting) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span class="tabular-nums">{{ line.labelKey | artemisTranslate: { duration: line.duration } }}</span>
+            </p>
+        }
+
+        @if (counters().length) {
+            <ul class="m-0 flex list-none flex-wrap gap-x-3 gap-y-1 p-0 text-xs text-muted-color" data-testid="hyperion-run-activity-meter">
+                @for (counter of counters(); track counter.key) {
+                    <li class="tabular-nums" [attr.data-counter]="counter.key">{{ counter.labelKey | artemisTranslate: { count: counter.count } }}</li>
+                }
+            </ul>
+        }
+
+        @if (recent().length) {
+            <section class="min-w-0" aria-labelledby="hyperion-run-activity-recent-title" data-testid="hyperion-run-activity-recent">
+                <h4 id="hyperion-run-activity-recent-title" class="mt-1 mb-1 text-xs font-semibold" jhiTranslate="artemisApp.hyperion.generation.activity.recent"></h4>
+                <ol class="m-0 flex list-none flex-col gap-0.5 p-0 text-xs text-muted-color">
+                    @for (entry of recent(); track entry.key) {
+                        <li class="flex min-w-0 gap-2">
+                            <span class="w-16 shrink-0 tabular-nums">{{ entry.time }}</span>
+                            <span class="min-w-0 wrap-anywhere">{{ entry.message }}</span>
+                        </li>
+                    }
+                </ol>
+            </section>
+        }
+    </div>
+}

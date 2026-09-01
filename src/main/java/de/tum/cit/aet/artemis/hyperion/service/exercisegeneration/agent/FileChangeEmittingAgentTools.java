@@ -25,11 +25,20 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
 
     private final Consumer<ExerciseGenerationFileChangeDTO> changeSink;
 
+    /** The run's activity tracker, so a successful file mutation is counted exactly once, in the one place that already knows a write succeeded. */
+    @Nullable
+    private final GenerationActivityTracker activityTracker;
+
     private int currentTurn;
 
     public FileChangeEmittingAgentTools(SandboxAgentTools delegate, Consumer<ExerciseGenerationFileChangeDTO> changeSink) {
+        this(delegate, changeSink, null);
+    }
+
+    public FileChangeEmittingAgentTools(SandboxAgentTools delegate, Consumer<ExerciseGenerationFileChangeDTO> changeSink, @Nullable GenerationActivityTracker activityTracker) {
         this.delegate = delegate;
         this.changeSink = changeSink;
+        this.activityTracker = activityTracker;
     }
 
     @Override
@@ -93,6 +102,9 @@ public class FileChangeEmittingAgentTools implements TurnAware, SubmitVetoAware 
 
     private String emitOnSuccess(@Nullable String result, String successPrefix, String path, String action) {
         if (result != null && result.startsWith(successPrefix)) {
+            if (activityTracker != null) {
+                activityTracker.recordFileWritten();
+            }
             String safePath = SandboxAgentTools.workspaceRelativePath(path);
             if (safePath != null) {
                 emit(safePath, action);

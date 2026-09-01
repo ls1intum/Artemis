@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EMPTY, Observable, Subject, map, of, throwError } from 'rxjs';
@@ -110,6 +111,9 @@ describe('HyperionGenerationActivityComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 // The panel links to the run page, so `routerLink` needs a router to resolve the URL against.
                 provideRouter([]),
+                // The liveness clock in the ladder reads the server-adjusted time, which is an HTTP-backed service.
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         });
         // The status is announced through the CDK announcer, whose region lives outside the fixture.
@@ -501,70 +505,45 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(component.jobId()).toBe('j1');
         expect(component.fileChanges()).toHaveLength(2);
         expect(component.filesByRepo().map((group) => group.repo)).toEqual(['solution', 'tests']);
-        component.detailsExpanded.set(true);
-        fixture.detectChanges();
+        // No disclosure to open: the files are simply there, under the ladder.
         expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file-static"]')).toHaveLength(2);
     });
 
-    it('starts with the detail region collapsed and lets the instructor open it', () => {
-        const fixture = createWith({ jobId: 'j1', running: false, events: [], fileChanges: [fileChange('solution/A.java', 'write')] });
-        const toggle = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]') as HTMLButtonElement;
-
-        // The progress ladder is the panel's headline; the file/activity detail below it is opened on request.
-        expect(fixture.componentInstance.detailsExpanded()).toBe(false);
-        expect(toggle.getAttribute('aria-expanded')).toBe('false');
-        expect(toggle.textContent).toContain('generationActivity.showDetails');
-        // The panel stays mounted for aria-controls, so [hidden] is what has to hide it: it must therefore carry no
-        // display utility of its own, or the layout on it would win over the attribute.
-        const details = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]');
-        expect(details.hidden).toBe(true);
-        expect(getComputedStyle(details).display).toBe('none');
-
-        toggle.click();
-        fixture.detectChanges();
-
-        expect(toggle.getAttribute('aria-expanded')).toBe('true');
-        expect(toggle.textContent).toContain('generationActivity.hideDetails');
-        expect(details.hidden).toBe(false);
-    });
-
-    it('keeps open details mounted when a live run completes', () => {
-        const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [fileChange('solution/A.java', 'write')] });
-        fixture.componentInstance.detailsExpanded.set(true);
-        fixture.detectChanges();
-        const disclosure = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]') as HTMLButtonElement;
-        disclosure.focus();
-
-        service.stream$.next({
-            type: 'DONE',
-            completionStatus: 'SUCCESS',
-            verdict: { mechanicallyVerified: true, solutionPassed: true, templateFailed: true, testCount: 2, reasons: [] },
-            liveExerciseChanged: true,
-        });
-        fixture.detectChanges();
-
-        expect(fixture.componentInstance.detailsExpanded()).toBe(true);
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).not.toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-details-toggle"]')).toHaveLength(1);
-        expect(document.activeElement).toBe(disclosure);
-    });
-
-    it('shows recent progress visually while announcing only the coarse running state', () => {
+    it('has no separate details disclosure to open, because the activity now lives in the ladder', () => {
         const fixture = createWith({
             jobId: 'j1',
             running: true,
-            events: Array.from({ length: 10 }, (_, index) => ({ type: 'PROGRESS' as const, message: `event ${index}`, timestamp: `2026-07-13T09:00:${index}Z` })),
+            events: [{ type: 'PROGRESS', phase: 'DESIGNING', message: 'Writing tests', timestamp: '2026-07-13T09:00:00Z' }],
+            fileChanges: [fileChange('solution/A.java', 'write')],
+        });
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details"]')).toBeNull();
+        expect(fixture.nativeElement.textContent).not.toContain('showDetails');
+        expect(fixture.nativeElement.textContent).not.toContain('hideDetails');
+        // The message is reported inside the ladder instead, which is the only place it is now shown.
+        const progress = fixture.nativeElement.querySelector('[data-testid="hyperion-run-progress"]');
+        expect(progress.textContent).toContain('Writing tests');
+    });
+
+    it('shows the newest message inside the ladder while announcing only the coarse running state', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: true,
+            events: Array.from({ length: 10 }, (_, index) => ({ type: 'PROGRESS' as const, message: `event ${index}`, timestamp: `2026-07-13T09:00:0${index}Z` })),
             fileChanges: [],
         });
         const current = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"]');
 
         expect(current.textContent).toContain('generationActivity.running');
         expect(current.textContent).not.toContain('event 9');
-        const visibleProgress = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-current-progress"]');
-        expect(visibleProgress.textContent).toContain('event 9');
-        expect(visibleProgress.getAttribute('role')).toBeNull();
-        expect(visibleProgress.getAttribute('aria-live')).toBeNull();
-        expect(fixture.nativeElement.textContent).toContain('event 8');
+        const ladder = fixture.nativeElement.querySelector('[data-testid="hyperion-run-progress"]');
+        expect(ladder.querySelector('[role="status"]').textContent).toContain('event 9');
+        // The compact panel keeps the clock and the meter but not the message log, which does not fit its 200px.
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-activity-recent"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-activity-liveness"]')).not.toBeNull();
+        // The ladder owns exactly one live region for the stage line; the run's status dot is the only other one.
+        expect(ladder.querySelectorAll('[role="status"]')).toHaveLength(1);
         expect(fixture.nativeElement.querySelector('[role="log"]')).toBeNull();
         expect(announcements).toEqual(['artemisApp.hyperion.generationActivity.running']);
     });
@@ -665,7 +644,6 @@ describe('HyperionGenerationActivityComponent', () => {
             events: [{ type: 'DONE', liveExerciseChanged: true, savedRepositoryCommits: { template: 'template-commit' } }],
             fileChanges: [fileChange('src/Main.java', 'edit', { repo: 'solution' }), fileChange('src/Main.java', 'edit', { repo: 'template' })],
         });
-        fixture.componentInstance.detailsExpanded.set(true);
         fixture.detectChanges();
 
         const buttons = [...fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file"] button')] as HTMLButtonElement[];
@@ -709,13 +687,6 @@ describe('HyperionGenerationActivityComponent', () => {
 
         fixture.componentInstance.retryStatus();
         expect(completed).toHaveBeenCalledOnce();
-    });
-
-    it('does not show a disclosure when there is no hidden content', () => {
-        const fixture = createWith({ jobId: 'j1', running: true, events: [{ type: 'PROGRESS', message: 'Only current state' }], fileChanges: [] });
-
-        expect(fixture.componentInstance.hasDetails()).toBe(false);
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-details-toggle"]')).toBeNull();
     });
 
     it('does not manufacture a file preview before the first file arrives', () => {
@@ -782,8 +753,6 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentInstance.fileChangeSelected.subscribe(selected);
 
         fixture.detectChanges();
-        fixture.componentInstance.detailsExpanded.set(true);
-        fixture.detectChanges();
         const changedFile = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"] button') as HTMLButtonElement;
         changedFile.click();
 
@@ -801,7 +770,6 @@ describe('HyperionGenerationActivityComponent', () => {
         const selected = vi.fn();
         fixture.componentInstance.fileChangeSelected.subscribe(selected);
 
-        fixture.componentInstance.detailsExpanded.set(true);
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"]')).toBeNull();
@@ -892,9 +860,9 @@ describe('HyperionGenerationActivityComponent', () => {
             events: [{ type: 'DONE', message: 'Draft only', completionStatus: 'PARTIAL', liveExerciseChanged: false }],
             fileChanges: [fileChange('solution/src/Main.java', 'edit')],
         });
-        fixture.componentInstance.detailsExpanded.set(true);
         fixture.detectChanges();
 
+        // Nothing was saved, so the files are reported but nothing can be opened from here.
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"]')).toBeNull();
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file-static"]')).not.toBeNull();
     });
@@ -1714,10 +1682,9 @@ describe('HyperionGenerationActivityComponent', () => {
     it.each([
         ['CANCELLED' as const, 'terminalStatus.CANCELLED'],
         ['ERROR' as const, 'terminalStatus.ERROR'],
-    ])('keeps the %s outcome visible when details are collapsed', (type, labelKey) => {
+    ])('keeps the %s outcome visible in the header', (type, labelKey) => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
         service.stream$.next({ type, message: 'terminal' });
-        fixture.componentInstance.detailsExpanded.set(false);
         fixture.detectChanges();
 
         expect(fixture.nativeElement.textContent).toContain(labelKey);

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
@@ -144,5 +145,33 @@ class ExerciseGenerationDtoTest {
         assertThat(json.get("usage").get("providerRequestIds")).hasSize(2);
         assertThat(json.get("usage").get("providerRequestIdsComplete").asBoolean()).isTrue();
         assertThat(json.get("usage").get("models")).hasSize(2);
+    }
+
+    /**
+     * The activity is the client's only source for "waiting on the model since …", so {@code waitingOnModel: false} and the zero counters have to reach the wire. The DTO's
+     * {@code NON_EMPTY} inclusion would silently drop them if it treated {@code false}/{@code 0} as empty.
+     */
+    @Test
+    void activitySerializesFalseAndZeroValuesInsteadOfOmittingThem() throws Exception {
+        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.activity("Working on the exercise.", new ExerciseGenerationActivityDTO(null, 1, 1, false, 0, 0, 0));
+
+        JsonNode json = mapper.readTree(mapper.writeValueAsString(event));
+
+        JsonNode activity = json.get("activity");
+        assertThat(activity).isNotNull();
+        assertThat(activity.get("waitingOnModel").asBoolean()).isFalse();
+        assertThat(activity.get("modelCalls").asInt()).isZero();
+        assertThat(activity.get("toolCalls").asInt()).isZero();
+        assertThat(activity.get("filesWritten").asInt()).isZero();
+        assertThat(activity.get("turn").asInt()).isEqualTo(1);
+        assertThat(activity.has("step")).as("an absent substep is omitted rather than sent as null").isFalse();
+        assertThat(json.has("phase")).isFalse();
+    }
+
+    @Test
+    void eventsWithoutAnActivityContextOmitIt() throws Exception {
+        JsonNode json = mapper.readTree(mapper.writeValueAsString(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, "Setting up the build environment")));
+
+        assertThat(json.has("activity")).isFalse();
     }
 }

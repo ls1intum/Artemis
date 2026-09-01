@@ -15,17 +15,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { elapsedSecondsSince, serverTimeSignal } from 'app/localci/hyperion-generation-job.utils';
+import { formatElapsed } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 
 const CANCEL_CONFIRMATION_KEY = 'hyperionRunCancelConfirmation';
-
-/** `m:ss`, or `h:mm:ss` once a run has been going for an hour. */
-function formatElapsed(totalSeconds: number): string {
-    const seconds = totalSeconds % 60;
-    const minutes = Math.floor(totalSeconds / 60) % 60;
-    const hours = Math.floor(totalSeconds / 3600);
-    const paddedSeconds = String(seconds).padStart(2, '0');
-    return hours > 0 ? `${hours}:${String(minutes).padStart(2, '0')}:${paddedSeconds}` : `${minutes}:${paddedSeconds}`;
-}
 
 /**
  * What this run is, how it is doing, and what can be done about it.

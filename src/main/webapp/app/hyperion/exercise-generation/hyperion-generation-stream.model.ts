@@ -1,3 +1,4 @@
+import { ExerciseGenerationActivity as GeneratedActivity } from 'app/openapi/model/exercise-generation-activity';
 import { ExerciseGenerationRevertResult as GeneratedRevertResult } from 'app/openapi/model/exercise-generation-revert-result';
 import { ExerciseGenerationEvent as GeneratedEvent } from 'app/openapi/model/exercise-generation-event';
 import { ExerciseGenerationFileChange as GeneratedFileChange } from 'app/openapi/model/exercise-generation-file-change';
@@ -13,6 +14,8 @@ export type HyperionFileChangeAction = GeneratedFileChange['action'];
 export type HyperionGenerationMode = NonNullable<GeneratedRequest['mode']>;
 
 export type HyperionGenerationVerdict = GeneratedVerdict;
+/** The agent's own bookkeeping for the run so far, carried on the events it emits while it works. */
+export type HyperionGenerationActivity = GeneratedActivity;
 export type HyperionGenerationEvent = GeneratedEvent;
 export type ExerciseGenerationFileChange = GeneratedFileChange;
 export type HyperionGenerationMessage = HyperionGenerationEvent | ExerciseGenerationFileChange;

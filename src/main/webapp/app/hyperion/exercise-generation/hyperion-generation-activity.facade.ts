@@ -111,7 +111,6 @@ export class HyperionGenerationActivityFacade {
     readonly cancellable = signal<boolean>(false);
     readonly revertedMode = signal<HyperionGenerationMode | undefined>(undefined);
 
-    readonly detailsExpanded = signal<boolean>(true);
     readonly cancelRequested = signal<boolean>(false);
     readonly confirmRevertVisible = signal<boolean>(false);
 
@@ -194,10 +193,6 @@ export class HyperionGenerationActivityFacade {
     acceptRevert(): void {
         this.confirmRevertVisible.set(false);
         this.revert();
-    }
-
-    toggleDetails(): void {
-        this.detailsExpanded.update((expanded) => !expanded);
     }
 
     private revert(): void {
@@ -353,9 +348,6 @@ export class HyperionGenerationActivityFacade {
                         this.closeStream();
                         this.restoreTerminalState(terminalEvent);
                         this.running.set(false);
-                        if (!sameJob) {
-                            this.detailsExpanded.set(false);
-                        }
                         // A retained terminal event for a job this component never actively watched (e.g. the page was opened while
                         // generation was finalizing) must still trigger a refresh when it reports that the live exercise actually
                         // changed - otherwise a newly-opened editor that already fetched the pre-save exercise would never reload.
@@ -730,7 +722,6 @@ export class HyperionGenerationActivityFacade {
         this.reverted.set(false);
         this.revertedMode.set(undefined);
         this.revertPartialRepositories.set(undefined);
-        this.detailsExpanded.set(true);
         this.emittedTerminalJobs.clear();
         this.events.set([]);
         this.verdict.set(undefined);

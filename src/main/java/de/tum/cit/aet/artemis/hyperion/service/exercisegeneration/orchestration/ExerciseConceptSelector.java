@@ -18,8 +18,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 
 /**
@@ -125,6 +127,14 @@ public class ExerciseConceptSelector {
      */
     public ConceptSelection select(String brief, String initialFeedback, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink,
             @Nullable Consumer<String> progress) {
+        // Concept discovery is its own substep: it runs before, and context-isolated from, the staged authoring phases, so it has no GenerationStage of its own to derive from.
+        GenerationActivityTracker activity = AgentActivitySink.trackerOf(progress);
+        if (activity != null) {
+            activity.step(GenerationActivityTracker.CONCEPT_STEP);
+        }
+        // Candidate generation is the run's first provider work and each batch is a full model call, so this is the longest stretch an instructor would otherwise watch in
+        // silence. The loop gets the activity channel but not the text channel — see ModelWaitProgressSink for why its prose must not reach this stage's transcript.
+        Consumer<String> loopProgress = ModelWaitProgressSink.wrap(progress);
         List<Message> transcript = new ArrayList<>();
         int turns = 0;
         String feedback = initialFeedback == null ? "" : initialFeedback.strip();
@@ -141,7 +151,7 @@ public class ExerciseConceptSelector {
             if (!feedback.isBlank()) {
                 prompt += "\n\nPROPERTY-LEVEL REVIEW OF THE PREVIOUS BATCH:\n" + feedback + "\nGenerate a new independent batch. Do not recover or rename any previous candidate.";
             }
-            AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runTextSession(SYSTEM_PROMPT, null, prompt, 1, cancelled, usageSink, null);
+            AgentLoopRunner.AgentLoopSession session = agentLoopRunner.runTextSession(SYSTEM_PROMPT, null, prompt, 1, cancelled, usageSink, loopProgress);
             transcript.addAll(session.conversation());
             AgentLoopResult result = session.result();
             turns += result.turns();
@@ -218,9 +228,7 @@ public class ExerciseConceptSelector {
     }
 
     private static void emit(@Nullable Consumer<String> progress, String message) {
-        if (progress != null) {
-            progress.accept(message);
-        }
+        AgentActivitySink.emit(progress, message);
     }
 
     private static String progressSummary(String value) {

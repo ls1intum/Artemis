@@ -42,6 +42,24 @@
                     "review": "Review and repair",
                     "save": "Save the draft"
                 },
+                "substep": {
+                    "concept": "Choose a design",
+                    "spec": "Write the specification",
+                    "artifacts": "Write code and tests",
+                    "statement": "Write the problem statement"
+                },
+                "stageSummary": "{{turns}} steps · {{files}} files",
+                "stageSummaryTurns": "{{turns}} steps",
+                "activity": {
+                    "thinking": "Thinking — {{duration}} so far",
+                    "lastUpdate": "Last update {{duration}} ago",
+                    "attempt": "Attempt {{count}}",
+                    "turn": "Step {{count}}",
+                    "modelCalls": "{{count}} AI calls",
+                    "toolCalls": "{{count}} actions",
+                    "files": "{{count}} files",
+                    "recent": "Recent activity"
+                },
                 "status": {
                     "queued": "Waiting to start",
                     "running": "Generating",
@@ -182,9 +200,7 @@
                 "cancelling": "Cancelling…",
                 "cancelFailed": "The generation could not be cancelled. Its status was refreshed.",
                 "reverting": "Undoing…",
-                "hideDetails": "Hide details",
-                "showDetails": "Show details",
-                "changedFiles": "File activity",
+                "changedFiles": "Saved files",
                 "reviewSavedChanges": "Review saved changes",
                 "reviewSavedChangesHint": "Open the exercise version history or the exact saved repository commit.",
                 "reviewBlockedByLocalEdits": "Save or discard your local edits before opening the saved-change review.",
@@ -195,7 +211,6 @@
                     "template": "Template diff",
                     "tests": "Tests diff"
                 },
-                "recentActivity": "Recent activity",
                 "emptyTitle": "No AI activity for this exercise yet",
                 "emptyHint": "Start generation here or from the Artemis Intelligence menu.",
                 "unavailableHint": "Generation is unavailable after release or student participation.",

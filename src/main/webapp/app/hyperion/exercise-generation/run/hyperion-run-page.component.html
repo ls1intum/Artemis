@@ -40,7 +40,7 @@
     } @else {
         <section aria-labelledby="hyperion-run-progress-title">
             <h2 id="hyperion-run-progress-title" class="mb-2 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.progressTitle"></h2>
-            <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" />
+            <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" />
         </section>
 
         @if (outcomeView(); as view) {

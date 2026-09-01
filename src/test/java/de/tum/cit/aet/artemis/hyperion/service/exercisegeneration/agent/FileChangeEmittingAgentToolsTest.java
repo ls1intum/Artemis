@@ -119,4 +119,30 @@ class FileChangeEmittingAgentToolsTest {
         assertThat(tools.consumeSubmitVeto()).isTrue();
         assertThat(tools.consumeSubmitVeto()).isFalse();
     }
+
+    @Test
+    void onlySuccessfulFileMutationsAreCountedIntoTheRunActivity() {
+        // Counted here and nowhere else: this decorator is already the one place that knows a write, edit, or delete actually landed.
+        GenerationActivityTracker tracker = new GenerationActivityTracker();
+        FileChangeEmittingAgentTools countingTools = new FileChangeEmittingAgentTools(delegate, emitted::add, tracker);
+        when(delegate.writeFile(anyString(), anyString())).thenReturn(WRITE_OK, "ERROR: outside the workspace");
+        when(delegate.editFile(anyString(), anyString(), anyString())).thenReturn(EDIT_OK);
+        when(delegate.deleteFile(anyString())).thenReturn("ERROR: no such file");
+
+        countingTools.writeFile("solution/src/A.java", "first");
+        countingTools.writeFile("../escape.java", "second");
+        countingTools.editFile("tests/T.java", "old", "new");
+        countingTools.deleteFile("tests/Missing.java");
+
+        assertThat(tracker.snapshot().filesWritten()).isEqualTo(2);
+    }
+
+    @Test
+    void withoutATracker_theDecoratorStillStreamsFileChanges() {
+        when(delegate.writeFile(anyString(), anyString())).thenReturn(WRITE_OK);
+
+        tools.writeFile("solution/src/A.java", "first");
+
+        assertThat(emitted).hasSize(1);
+    }
 }

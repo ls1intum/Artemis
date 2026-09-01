@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,11 +55,12 @@ public class AgentLoopRunner {
 
     private static final Logger log = LoggerFactory.getLogger(AgentLoopRunner.class);
 
-    private static final HyperionSecretMaterialPolicy SECRET_MATERIAL_POLICY = new HyperionSecretMaterialPolicy();
-
     private static final int MAX_CONSECUTIVE_TOOL_FAILURES = 5;
 
     private static final String SUBMIT_TOOL_NAME = "submit";
+
+    /** Emitted immediately before every provider call; see {@link #emitWaitingOnModel}. */
+    static final String WAITING_ON_MODEL_MESSAGE = "Thinking about the next step.";
 
     /** Headroom reserved below the context window for the default response allowance plus estimation slack. */
     private static final int RESERVE_TOKENS = 20_480;
@@ -297,8 +297,8 @@ public class AgentLoopRunner {
         if (chatModel == null && !checkpointManager.replaysAllAuthoringCalls()) {
             throw new IllegalStateException("No ChatModel is configured. Agentic generation is unavailable.");
         }
-        requireTextSafe("provider/system-prompt", systemPrompt);
-        requireTextSafe("provider/user-prompt", userPrompt);
+        AgentPromptSafety.requireTextSafe("provider/system-prompt", systemPrompt);
+        AgentPromptSafety.requireTextSafe("provider/user-prompt", userPrompt);
 
         List<Message> conversation = new ArrayList<>();
         conversation.add(new SystemMessage(systemPrompt));
@@ -315,6 +315,8 @@ public class AgentLoopRunner {
         int messagesAtLastCall = 0;
         boolean checkpointsEnabled = checkpointManager.enabled();
         String toolContract = checkpointsEnabled ? checkpointManager.toolContract(toolCallbacks) : "";
+        // Resolved from the sink rather than passed in: the runner is a shared bean, so it must hold no per-run state of its own.
+        GenerationActivityTracker activity = AgentActivitySink.trackerOf(stepListener);
 
         for (int turn = 1; turn <= maxTurns; turn++) {
             if (cancelled.getAsBoolean()) {
@@ -323,13 +325,16 @@ public class AgentLoopRunner {
             }
             // Recorded unconditionally and before anything can fail, so a run abandoned at a gate still reports the turns it spent.
             recordTurn(usageSink);
+            if (activity != null) {
+                activity.turn(turn);
+            }
             if (tools instanceof TurnAware turnAware) {
                 turnAware.onTurn(turn);
             }
 
             // Check the complete carried prompt before checkpointing it. Tool observations can introduce secret material after the initial system/user checks; persisting first
             // would leak content that the provider boundary correctly rejects below.
-            requirePromptSafe(prompt);
+            AgentPromptSafety.requirePromptSafe(prompt);
             AgentCheckpointManager.TurnHandle checkpoint = checkpointsEnabled ? checkpointManager.beforeTurn(turn, maxTurns, checkpointProviderContract, toolContract, conversation,
                     new AgentCheckpointManager.LoopCursor(lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall)) : null;
             if (checkpoint != null && checkpoint.replayed()) {
@@ -354,11 +359,12 @@ public class AgentLoopRunner {
                 lastPromptTokens = prepared.cursor().lastPromptTokens();
                 messagesAtLastCall = prepared.cursor().messagesAtLastCall();
                 prompt = new Prompt(conversation, agentOptions(toolCallbacks, conversation));
-                requirePromptSafe(prompt);
+                AgentPromptSafety.requirePromptSafe(prompt);
             }
 
             messagesAtLastCall = conversation.size();
-            ChatResponse response = callModel(prompt, turn, cancelled, usageSink, stepListener);
+            emitWaitingOnModel(stepListener, activity);
+            ChatResponse response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
             if (response == null) {
                 if (cancelled.getAsBoolean()) {
                     finishCheckpoint(checkpoint, conversation, lastAssistantText, consecutiveToolFailures, lastPromptTokens, messagesAtLastCall, AgentLoopResult.Status.CANCELLED);
@@ -372,7 +378,7 @@ public class AgentLoopRunner {
             List<AssistantMessage.ToolCall> toolCalls = response.getResult() != null && response.getResult().getOutput() != null ? response.getResult().getOutput().getToolCalls()
                     : List.of();
             if (response.getResult() != null && response.getResult().getOutput() != null) {
-                requireAssistantSafe(response.getResult().getOutput(), "provider/response");
+                AgentPromptSafety.requireAssistantSafe(response.getResult().getOutput(), "provider/response");
             }
             recordToolCalls(usageSink, toolCalls.size());
             if (cancelled.getAsBoolean()) {
@@ -414,6 +420,9 @@ public class AgentLoopRunner {
             }
 
             for (AssistantMessage.ToolCall toolCall : toolCalls) {
+                if (activity != null) {
+                    activity.recordToolCall();
+                }
                 if (!SUBMIT_TOOL_NAME.equals(toolCall.name())) {
                     emit(stepListener, AgentToolProgress.describe(toolCall));
                 }
@@ -636,15 +645,16 @@ public class AgentLoopRunner {
      * one logical turn into a request storm. Returns {@code null} when the SDK call fails or both samples are empty.
      */
     @Nullable
-    private ChatResponse callModel(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener) {
+    private ChatResponse callModel(Prompt prompt, int turn, BooleanSupplier cancelled, @Nullable Consumer<ChatResponse> usageSink, @Nullable Consumer<String> stepListener,
+            @Nullable GenerationActivityTracker activity) {
         String providerFailureKey = ProviderFailureCooldown.keyForModel(configuredModel());
         for (int sample = 1; sample <= EMPTY_RESPONSE_SAMPLES; sample++) {
             if (cancelled.getAsBoolean()) {
                 return null;
             }
             try {
-                requirePromptSafe(prompt);
-                ChatResponse response = callProvider(prompt, providerFailureKey, usageSink);
+                AgentPromptSafety.requirePromptSafe(prompt);
+                ChatResponse response = callProvider(prompt, providerFailureKey, usageSink, activity);
                 if (!isEmptyResponse(response)) {
                     return response;
                 }
@@ -672,7 +682,7 @@ public class AgentLoopRunner {
      * exception cannot prove zero billable usage because the SDK/provider may already have accepted or retried the request.
      */
     @Nullable
-    private ChatResponse callProvider(Prompt prompt, String providerFailureKey, @Nullable Consumer<ChatResponse> usageSink) {
+    private ChatResponse callProvider(Prompt prompt, String providerFailureKey, @Nullable Consumer<ChatResponse> usageSink, @Nullable GenerationActivityTracker activity) {
         AtomicBoolean attempted = new AtomicBoolean();
         ChatResponse response;
         try {
@@ -692,6 +702,10 @@ public class AgentLoopRunner {
         }
         else {
             emitUsage(usageSink, response);
+            // Counted here rather than per turn: a turn can re-sample an empty response, and a local cooldown rejection never reaches the provider at all.
+            if (attempted.get() && activity != null) {
+                activity.recordModelCall();
+            }
         }
         return response;
     }
@@ -739,7 +753,7 @@ public class AgentLoopRunner {
             return conversation;
         }
         emit(stepListener, "Preparing the next generation step.");
-        return compact(conversation, usageSink, cancelled);
+        return compact(conversation, usageSink, cancelled, AgentActivitySink.trackerOf(stepListener));
     }
 
     private static long promptTokensOf(@Nullable ChatResponse response) {
@@ -756,10 +770,14 @@ public class AgentLoopRunner {
      * tool-pairing contract. If summarization fails, the old region is dropped behind a marker rather than aborting the run — the workspace files remain the source of truth.
      */
     List<Message> compact(List<Message> conversation, @Nullable Consumer<ChatResponse> usageSink) {
-        return compact(conversation, usageSink, () -> false);
+        return compact(conversation, usageSink, () -> false, null);
     }
 
     List<Message> compact(List<Message> conversation, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+        return compact(conversation, usageSink, cancelled, null);
+    }
+
+    List<Message> compact(List<Message> conversation, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable GenerationActivityTracker activity) {
         int protectedPrefix = Math.min(2, conversation.size());
         if (conversation.size() <= protectedPrefix + 1) {
             // Only the system prompt, the initial instruction, and at most one turn — nothing older to summarize.
@@ -776,7 +794,7 @@ public class AgentLoopRunner {
         }
         String summaryBody;
         try {
-            summaryBody = summarize(toSummarize, usageSink, cancelled);
+            summaryBody = summarize(toSummarize, usageSink, cancelled, activity);
         }
         catch (CancellationException ignored) {
             return conversation;
@@ -836,7 +854,7 @@ public class AgentLoopRunner {
     }
 
     /** Summarizes the given older messages via a tool-free model call, producing the structured summary that replaces them. */
-    private String summarize(List<Message> messages, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
+    private String summarize(List<Message> messages, @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled, @Nullable GenerationActivityTracker activity) {
         StringBuilder transcript = new StringBuilder();
         for (Message message : messages) {
             transcript.append(renderForSummary(message)).append('\n');
@@ -859,11 +877,11 @@ public class AgentLoopRunner {
             summaryOptions.model(configuredModel);
         }
         Prompt prompt = new Prompt(summaryPrompt, summaryOptions.build());
-        requirePromptSafe(prompt);
+        AgentPromptSafety.requirePromptSafe(prompt);
         if (cancelled.getAsBoolean()) {
             throw new CancellationException("Generation was cancelled before conversation compaction");
         }
-        ChatResponse response = callProvider(prompt, ProviderFailureCooldown.keyForModel(configuredModel), usageSink);
+        ChatResponse response = callProvider(prompt, ProviderFailureCooldown.keyForModel(configuredModel), usageSink, activity);
         String text = extractText(response);
         if (text == null || text.isBlank()) {
             throw new IllegalStateException("summarizer returned an empty summary");
@@ -894,39 +912,6 @@ public class AgentLoopRunner {
         return role + ": " + (message.getText() == null ? "" : message.getText());
     }
 
-    private static void requirePromptSafe(Prompt prompt) {
-        int messageIndex = 0;
-        for (Message message : prompt.getInstructions()) {
-            if (message instanceof ToolResponseMessage toolResponse) {
-                int responseIndex = 0;
-                for (ToolResponseMessage.ToolResponse response : toolResponse.getResponses()) {
-                    requireTextSafe("provider/tool-observation-" + messageIndex + "-" + responseIndex, response.responseData());
-                    responseIndex++;
-                }
-            }
-            else if (message instanceof AssistantMessage assistant) {
-                requireAssistantSafe(assistant, "provider/message-" + messageIndex);
-            }
-            else {
-                requireTextSafe("provider/message-" + messageIndex, message.getText());
-            }
-            messageIndex++;
-        }
-    }
-
-    private static void requireAssistantSafe(AssistantMessage assistant, String logicalPath) {
-        requireTextSafe(logicalPath, assistant.getText());
-        int toolCallIndex = 0;
-        for (AssistantMessage.ToolCall toolCall : assistant.getToolCalls()) {
-            requireTextSafe(logicalPath + "-tool-call-" + toolCallIndex, toolCall.arguments());
-            toolCallIndex++;
-        }
-    }
-
-    private static void requireTextSafe(String logicalPath, @Nullable String text) {
-        SECRET_MATERIAL_POLICY.requireSafe(logicalPath, text == null ? new byte[0] : text.getBytes(StandardCharsets.UTF_8), HyperionSecretMaterialPolicy.Origin.PROVIDER_PROMPT);
-    }
-
     private static String truncateForSummary(@Nullable String value) {
         if (value == null) {
             return "";
@@ -945,9 +930,24 @@ public class AgentLoopRunner {
     }
 
     private static void emit(@Nullable Consumer<String> stepListener, String message) {
-        if (stepListener != null) {
-            stepListener.accept(message);
+        AgentActivitySink.emit(stepListener, message);
+    }
+
+    /**
+     * Announces that this turn's provider call is about to be issued. {@code chatModel.call(prompt)} is synchronous and routinely runs for minutes, so without this the whole
+     * wall clock a run spends inside a model call is invisible and a working run is indistinguishable from a hung one.
+     * <p>
+     * The message is deliberately generic. Prompts, tool arguments, and workspace paths never reach it (see {@link HyperionSecretMaterialPolicy} and {@link AgentToolProgress}).
+     */
+    private static void emitWaitingOnModel(@Nullable Consumer<String> stepListener, @Nullable GenerationActivityTracker activity) {
+        if (stepListener == null) {
+            return;
         }
+        if (activity != null && stepListener instanceof AgentActivitySink activitySink) {
+            activitySink.activity(WAITING_ON_MODEL_MESSAGE, activity.waitingOnModel());
+            return;
+        }
+        stepListener.accept(WAITING_ON_MODEL_MESSAGE);
     }
 
     private static void emitUsage(@Nullable Consumer<ChatResponse> usageSink, @Nullable ChatResponse response) {

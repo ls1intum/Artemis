@@ -8,17 +8,18 @@ import {
     TumUiTagComponent,
     TumUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output } from '@angular/core';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown, faChevronUp, faRotateLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faRotateLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HyperionGenerationActivityFacade, HyperionGenerationCompletedEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { displayFileChangePath, latestTerminalEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
+import { activityView } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
 import { ExerciseGenerationFileChange, HyperionFileChangeRepo, HyperionGenerationMode } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
@@ -117,11 +118,6 @@ export class HyperionGenerationActivityComponent {
     readonly ownedByCaller = this.facade.ownedByCaller;
     readonly cancellable = this.facade.cancellable;
     readonly revertedMode = this.facade.revertedMode;
-    /**
-     * Owned here rather than taken from the facade: in this panel the file/activity detail is secondary to the
-     * progress ladder, so it starts collapsed. The facade's own flag defaults to expanded for the run page.
-     */
-    readonly detailsExpanded = signal(false);
     readonly cancelRequested = this.facade.cancelRequested;
     readonly confirmRevertVisible = this.facade.confirmRevertVisible;
     readonly reverting = this.facade.reverting;
@@ -168,20 +164,13 @@ export class HyperionGenerationActivityComponent {
             ? 'artemisApp.hyperion.generationActivity.undoGenerationConfirmMessage'
             : 'artemisApp.hyperion.generationActivity.undoAdaptationConfirmMessage',
     );
-    readonly recentEvents = computed(() =>
-        this.events()
-            .filter((event) => event.message)
-            .slice(-8)
-            .reverse(),
-    );
-    readonly currentProgress = computed(() => this.recentEvents()[0]);
-    readonly previousProgress = computed(() => this.recentEvents().slice(1));
-
     /** How the run ended, or `undefined` while it is still going. Shared with the run page through the same helper. */
     private readonly outcome = computed(() => runOutcome(this.events()));
     /** The one progress ladder, rendered by `jhi-hyperion-run-progress`. */
     readonly stages = computed(() => stageStates(this.events(), this.outcome()));
-    readonly liveMessage = computed(() => this.currentProgress()?.message);
+    /** The agent's activity, reported inside that ladder rather than in a detail region of its own. */
+    readonly activityView = computed(() => activityView(this.events(), this.outcome()));
+    readonly liveMessage = computed(() => this.events().findLast((event) => event.message)?.message);
     readonly repairRound = computed(() => this.events().findLast((event) => event.repairRound)?.repairRound);
     /**
      * The run's state as one dot plus one word. The dot never carries the meaning on its own: the word next to it is
@@ -217,10 +206,6 @@ export class HyperionGenerationActivityComponent {
         const exerciseId = this.exerciseId();
         return courseId !== undefined && exerciseId !== undefined ? ['/course-management', courseId, 'programming-exercises', exerciseId, 'generation'] : undefined;
     });
-    readonly hasDetails = computed(() => this.fileChanges().length > 0 || this.previousProgress().length > 0);
-    readonly detailsLabelKey = computed(() =>
-        this.detailsExpanded() ? 'artemisApp.hyperion.generationActivity.hideDetails' : 'artemisApp.hyperion.generationActivity.showDetails',
-    );
     readonly filesByRepo = computed<RepoFileGroup[]>(() => {
         const entries = this.fileChanges().map<RepoFileEntry>((file) => ({
             key: `${file.repo}:${file.path}`,
@@ -321,8 +306,6 @@ export class HyperionGenerationActivityComponent {
     });
 
     protected readonly faSpinner = faSpinner;
-    protected readonly faChevronDown = faChevronDown;
-    protected readonly faChevronUp = faChevronUp;
     protected readonly faRotateLeft = faRotateLeft;
 
     constructor() {
@@ -354,10 +337,6 @@ export class HyperionGenerationActivityComponent {
 
     acceptRevert(): void {
         this.facade.acceptRevert();
-    }
-
-    toggleDetails(): void {
-        this.detailsExpanded.update((expanded) => !expanded);
     }
 
     canNavigateFileChange(fileChange: ExerciseGenerationFileChange): boolean {

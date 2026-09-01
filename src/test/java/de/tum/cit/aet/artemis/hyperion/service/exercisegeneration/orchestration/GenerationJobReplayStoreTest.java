@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -236,6 +237,54 @@ class GenerationJobReplayStoreTest {
         assertThat(events.stream().filter(event -> event.message() != null && event.message().endsWith("no longer retained.")).toList()).hasSize(1);
         assertThat(events.get(2).message()).isEqualTo("p" + (overflow + 1));
         assertThat(events.getLast().message()).isEqualTo("p" + (GenerationJobReplayStore.MAX_RETAINED_EVENTS - 2 + overflow));
+    }
+
+    @Test
+    void recordEvent_beyondTheRetentionBound_evictsPlainProgressLinesBeforeThePhaseLadder() {
+        // A run now emits one line before every model call on top of one per turn, so the bound is reached by prose. Losing the phase ladder and the repair-round bookkeeping to
+        // that prose would leave a replay that cannot say where the run has been, which is exactly what the ladder exists for.
+        long exerciseId = 613L;
+        String key = String.valueOf(exerciseId);
+        String jobId = "structure-preserving";
+        jobMap().set(key, jobInfo(jobId, exerciseId));
+        replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
+        replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "HEAD"), false);
+        replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.phase(ExerciseGenerationEventDTO.Phase.DESIGNING, "designing"), false);
+        for (int index = 0; index < GenerationJobReplayStore.MAX_RETAINED_EVENTS; index++) {
+            replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, "p" + index), false);
+        }
+        replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.repairRound("round 1", new ExerciseGenerationRepairRoundDTO(1, 1, 2, 0, 0, 0, 2)), false);
+
+        List<ExerciseGenerationEventDTO> events = transcriptMap().get(key).events();
+
+        assertThat(events).hasSize(GenerationJobReplayStore.MAX_RETAINED_EVENTS);
+        assertThat(events.getFirst().message()).isEqualTo("HEAD");
+        assertThat(events.get(1).message()).endsWith(" earlier progress events are no longer retained.");
+        assertThat(events.get(2).phase()).as("the phase event predates every dropped progress line and must survive them").isEqualTo(ExerciseGenerationEventDTO.Phase.DESIGNING);
+        assertThat(events.getLast().repairRound()).isNotNull();
+        assertThat(events).extracting(ExerciseGenerationEventDTO::message).doesNotContain("p0", "p1");
+        assertThat(events).extracting(ExerciseGenerationEventDTO::message).contains("p" + (GenerationJobReplayStore.MAX_RETAINED_EVENTS - 1));
+    }
+
+    @Test
+    void recordEvent_whenEveryRetainedEventIsStructural_stillHonoursTheBound() {
+        // Preservation is a preference, never an escape hatch: the retained transcript is a bounded distributed value first.
+        long exerciseId = 614L;
+        String key = String.valueOf(exerciseId);
+        String jobId = "structural-only";
+        jobMap().set(key, jobInfo(jobId, exerciseId));
+        replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
+        replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "HEAD"), false);
+        for (int index = 0; index < GenerationJobReplayStore.MAX_RETAINED_EVENTS + 10; index++) {
+            replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.phase(ExerciseGenerationEventDTO.Phase.REPAIRING, "phase " + index), false);
+        }
+
+        List<ExerciseGenerationEventDTO> events = transcriptMap().get(key).events();
+
+        assertThat(events).hasSize(GenerationJobReplayStore.MAX_RETAINED_EVENTS);
+        assertThat(events.getFirst().message()).isEqualTo("HEAD");
+        assertThat(events.get(1).message()).endsWith(" earlier progress events are no longer retained.");
+        assertThat(events.getLast().message()).isEqualTo("phase " + (GenerationJobReplayStore.MAX_RETAINED_EVENTS + 9));
     }
 
     @Test

@@ -28,11 +28,13 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 
@@ -288,5 +290,80 @@ class ExerciseConceptSelectorTest {
         @Override
         public void startCooldown(String key, Instant until) {
         }
+    }
+
+    /** Records every line the instructor would see, and which of them carried structured activity. */
+    private static final class RecordingProgressSink implements GenerationProgressSink {
+
+        private final GenerationActivityTracker tracker = new GenerationActivityTracker();
+
+        private final List<String> lines = new java.util.ArrayList<>();
+
+        private final List<ExerciseGenerationActivityDTO> activities = new java.util.ArrayList<>();
+
+        @Override
+        public void accept(String message) {
+            lines.add(message);
+            activities.add(null);
+        }
+
+        @Override
+        public void activity(String message, ExerciseGenerationActivityDTO activity) {
+            lines.add(message);
+            activities.add(activity);
+        }
+
+        @Override
+        public GenerationActivityTracker activityTracker() {
+            return tracker;
+        }
+    }
+
+    @Test
+    void conceptDiscovery_saysItIsWaitingOnTheModelWithoutLeakingAgentLoopProse() {
+        // Concept discovery is the run's first provider work and its longest silent stretch: on the measured run the first three provider calls all landed here, minutes apart,
+        // with nothing emitted in between. The loop's own prose must still not reach this stage, because a one-turn text session always ends without tool calls and would
+        // announce "Preparing the exercise for verification." while the run is still inventing an exercise idea.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(THREE_CANDIDATES)))));
+        AgentLoopRunner realLoop = new AgentLoopRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5), new NoOpProviderFailureCooldown());
+        SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
+        when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.ConceptSelectionReview(true, 2, List.of(), "Candidate 2 is selected.", "Selected candidate: 2"));
+        RecordingProgressSink progress = new RecordingProgressSink();
+
+        ExerciseConceptSelector.ConceptSelection selection = new ExerciseConceptSelector(realLoop, critic).select("RAW BRIEF", () -> false, null, progress);
+
+        assertThat(selection.accepted()).isTrue();
+        List<ExerciseGenerationActivityDTO> waiting = progress.activities.stream().filter(java.util.Objects::nonNull).filter(ExerciseGenerationActivityDTO::waitingOnModel)
+                .toList();
+        assertThat(waiting).as("the instructor must be told the run is waiting on the model during concept discovery").isNotEmpty();
+        assertThat(waiting).allSatisfy(activity -> {
+            assertThat(activity.step()).isEqualTo("concept");
+            assertThat(activity.turn()).isEqualTo(1);
+        });
+        // The meter must not look frozen for the first minutes of a run.
+        assertThat(progress.tracker.snapshot().modelCalls()).isPositive();
+        // The stage's own narration is untouched and is the only prose the instructor sees here.
+        assertThat(progress.lines).contains("Exploring exercise concepts", "Reviewing exercise concepts");
+        assertThat(progress.lines).noneSatisfy(line -> assertThat(line).containsAnyOf("Preparing the exercise for verification.", "Preparing the next generation step.",
+                "The generation step limit was reached.", "The AI service", "empty response", "Cancelling generation"));
+    }
+
+    @Test
+    void conceptDiscoveryWithATextOnlySink_staysSilentRatherThanForwardingLoopProse() {
+        // A caller that supplies only a lambda has no structured channel for the waiting marker, and the text channel is exactly what must not be forwarded.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(THREE_CANDIDATES)))));
+        AgentLoopRunner realLoop = new AgentLoopRunner(List.of(chatModel), 128_000, Duration.ofMinutes(5), new NoOpProviderFailureCooldown());
+        SpecFidelityCriticService critic = mock(SpecFidelityCriticService.class);
+        when(critic.reviewConceptCandidates(eq("RAW BRIEF"), anyMap(), any(), any()))
+                .thenReturn(new SpecFidelityCriticService.ConceptSelectionReview(true, 2, List.of(), "Candidate 2 is selected.", "Selected candidate: 2"));
+        List<String> lines = new java.util.ArrayList<>();
+
+        new ExerciseConceptSelector(realLoop, critic).select("RAW BRIEF", () -> false, null, lines::add);
+
+        assertThat(lines).contains("Exploring exercise concepts", "Reviewing exercise concepts");
+        assertThat(lines).noneSatisfy(line -> assertThat(line).containsAnyOf("Preparing the exercise for verification.", "Thinking about the next step."));
     }
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { TumUiStepState } from '@tumaet/ui-angular';
 
-import { HYPERION_STAGES, HyperionStageKey, runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
-import { HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { HYPERION_STAGES, HyperionStageKey, HyperionSubstepKey, runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
+import { HyperionGenerationActivity, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 let clock = 0;
 
@@ -19,6 +19,17 @@ function ladder(events: readonly HyperionGenerationEvent[]): Record<HyperionStag
 
 function count(events: readonly HyperionGenerationEvent[], state: TumUiStepState): number {
     return stageStates(events, runOutcome(events)).filter((stage) => stage.state === state).length;
+}
+
+/** Agent bookkeeping with only the fields a test is about; the rest is the quiet, plausible baseline. */
+function activity(partial: Partial<HyperionGenerationActivity> = {}): HyperionGenerationActivity {
+    return { attempt: 1, turn: 1, waitingOnModel: false, modelCalls: 0, toolCalls: 0, filesWritten: 0, ...partial };
+}
+
+/** The design stage's substeps for a trace, keyed by substep. */
+function substeps(events: readonly HyperionGenerationEvent[]): Record<HyperionSubstepKey, TumUiStepState> | undefined {
+    const design = stageStates(events, runOutcome(events)).find((stage) => stage.key === 'design');
+    return design?.substeps ? (Object.fromEntries(design.substeps.map((substep) => [substep.key, substep.state])) as Record<HyperionSubstepKey, TumUiStepState>) : undefined;
 }
 
 describe('hyperion generation stages', () => {
@@ -113,5 +124,120 @@ describe('hyperion generation stages', () => {
     it('shows nothing as running before any event arrived', () => {
         expect(count([], 'current')).toBe(0);
         expect(count([], 'pending')).toBe(HYPERION_STAGES.length);
+    });
+});
+
+describe('hyperion design substeps', () => {
+    const designing = (step: HyperionSubstepKey, overrides: Partial<HyperionGenerationActivity> = {}) =>
+        event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ step, ...overrides }) });
+
+    it('reports no substeps before the agent has said which one it is on', () => {
+        const events = [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'PROGRESS', phase: 'DESIGNING' })];
+
+        expect(substeps(events)).toBeUndefined();
+    });
+
+    it('completes what is behind the newest substep and leaves exactly one running', () => {
+        const events = [event({ type: 'STARTED', phase: 'PREPARING' }), designing('concept'), designing('spec'), designing('artifacts')];
+
+        expect(substeps(events)).toEqual({ concept: 'complete', spec: 'complete', artifacts: 'current', statement: 'pending' });
+    });
+
+    it('keeps a substep the agent already did complete when it steps back to it', () => {
+        const events = [event({ type: 'STARTED' }), designing('concept'), designing('artifacts'), designing('spec')];
+
+        // The spinner follows the work back, but nothing that really happened is un-done.
+        expect(substeps(events)).toEqual({ concept: 'complete', spec: 'current', artifacts: 'complete', statement: 'pending' });
+    });
+
+    it('only ever attaches substeps to the design stage', () => {
+        const events = [event({ type: 'STARTED', phase: 'PREPARING' }), designing('concept'), event({ type: 'PROGRESS', phase: 'VERIFYING' })];
+
+        expect(stageStates(events, undefined).filter((stage) => stage.substeps !== undefined)).toHaveLength(1);
+    });
+
+    it.each([[event({ type: 'DONE', phase: 'SAVING', completionStatus: 'SUCCESS' })], [event({ type: 'ERROR', message: 'agent crashed' })], [event({ type: 'CANCELLED' })]])(
+        'leaves no substep running after %o',
+        (terminal) => {
+            // The bug class this guards: a terminal event that clears the stage ladder but leaves a spinner nested inside it.
+            const events = [event({ type: 'STARTED', phase: 'PREPARING' }), designing('concept'), designing('spec'), terminal];
+
+            const states = substeps(events)!;
+            expect(Object.values(states)).not.toContain('current');
+            expect(states.concept).toBe('complete');
+            expect(states.statement).toBe('skipped');
+        },
+    );
+
+    it('marks the substep the run failed in and never claims the ones after it', () => {
+        const events = [event({ type: 'STARTED', phase: 'PREPARING' }), designing('concept'), designing('spec'), event({ type: 'ERROR', message: 'model unavailable' })];
+
+        expect(substeps(events)).toEqual({ concept: 'complete', spec: 'failed', artifacts: 'skipped', statement: 'skipped' });
+    });
+
+    it('completes every substep the design stage got through when a later stage fails', () => {
+        const events = [
+            event({ type: 'STARTED', phase: 'PREPARING' }),
+            designing('concept'),
+            designing('statement'),
+            event({ type: 'PROGRESS', phase: 'VERIFYING' }),
+            event({ type: 'ERROR', message: 'build environment unavailable' }),
+        ];
+
+        expect(substeps(events)).toEqual({ concept: 'complete', spec: 'complete', artifacts: 'complete', statement: 'complete' });
+    });
+});
+
+describe('hyperion stage summaries', () => {
+    function summary(events: readonly HyperionGenerationEvent[], key: HyperionStageKey) {
+        return stageStates(events, runOutcome(events)).find((stage) => stage.key === key)?.summary;
+    }
+
+    it('says what a finished stage got done, and nothing about one that is still running', () => {
+        const events = [
+            event({ type: 'STARTED', phase: 'PREPARING', activity: activity({ turn: 1 }) }),
+            event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ turn: 2, filesWritten: 3 }) }),
+            event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ turn: 3, filesWritten: 7 }) }),
+            event({ type: 'PROGRESS', phase: 'VERIFYING', activity: activity({ turn: 4, filesWritten: 7 }) }),
+        ];
+
+        expect(summary(events, 'prepare')).toEqual({ turns: 1, files: 0 });
+        expect(summary(events, 'design')).toEqual({ turns: 2, files: 7 });
+        // The stage that is running has not finished anything yet, so it claims nothing.
+        expect(summary(events, 'build')).toBeUndefined();
+    });
+
+    it("does not let a repair loop make one stage claim another stage's files", () => {
+        const events = [
+            event({ type: 'STARTED', phase: 'PREPARING' }),
+            event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ turn: 1, filesWritten: 4 }) }),
+            event({ type: 'PROGRESS', phase: 'VERIFYING', activity: activity({ turn: 2, filesWritten: 4 }) }),
+            event({ type: 'PROGRESS', phase: 'REVIEWING', activity: activity({ turn: 3, filesWritten: 6 }) }),
+            event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ turn: 4, filesWritten: 6 }) }),
+            event({ type: 'DONE', phase: 'SAVING', completionStatus: 'SUCCESS' }),
+        ];
+
+        expect(summary(events, 'design')).toEqual({ turns: 2, files: 4 });
+        expect(summary(events, 'build')).toEqual({ turns: 1, files: 0 });
+        expect(summary(events, 'review')).toEqual({ turns: 1, files: 2 });
+    });
+
+    it('counts a turn once, in the stage it first appeared in', () => {
+        const events = [
+            event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ turn: 5 }) }),
+            event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ turn: 5 }) }),
+            event({ type: 'PROGRESS', phase: 'VERIFYING', activity: activity({ turn: 5 }) }),
+            event({ type: 'PROGRESS', phase: 'VERIFYING', activity: activity({ attempt: 2, turn: 1 }) }),
+            event({ type: 'CANCELLED' }),
+        ];
+
+        expect(summary(events, 'design')).toEqual({ turns: 1, files: 0 });
+        expect(summary(events, 'build')).toEqual({ turns: 1, files: 0 });
+    });
+
+    it('reports nothing for a stage the agent never sent bookkeeping for', () => {
+        const events = [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'DONE', phase: 'SAVING', completionStatus: 'SUCCESS' })];
+
+        expect(stageStates(events, runOutcome(events)).every((stage) => stage.summary === undefined)).toBe(true);
     });
 });

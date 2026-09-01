@@ -12,6 +12,7 @@ import { HyperionRunHeaderComponent } from 'app/hyperion/exercise-generation/run
 import { HyperionRunOutcomeCheck, HyperionRunOutcomeComponent, HyperionRunOutcomeView } from 'app/hyperion/exercise-generation/run/hyperion-run-outcome.component';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
 import { HyperionRunOutcome, runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
+import { activityView } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { latestTerminalEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -121,6 +122,8 @@ export class HyperionRunPageComponent {
     protected readonly outcome = computed(() => runOutcome(this.events()));
     protected readonly terminal = computed(() => this.outcome() !== undefined);
     protected readonly stages = computed(() => stageStates(this.events(), this.outcome()));
+    /** What the agent is doing, rendered inside the ladder under the stage that is running. */
+    protected readonly activityView = computed(() => activityView(this.events(), this.outcome()));
     /** The newest thing the server said, shown under the stage it belongs to. */
     protected readonly liveMessage = computed(() => this.events().findLast((event) => event.message)?.message);
 

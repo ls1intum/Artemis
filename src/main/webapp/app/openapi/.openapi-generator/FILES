@@ -36,6 +36,7 @@ model/drag-item.ts
 model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-seat.ts
+model/exercise-generation-activity.ts
 model/exercise-generation-effort-profile.ts
 model/exercise-generation-event.ts
 model/exercise-generation-file-change.ts

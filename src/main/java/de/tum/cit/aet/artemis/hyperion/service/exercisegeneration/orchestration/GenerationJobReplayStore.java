@@ -362,7 +362,14 @@ final class GenerationJobReplayStore {
         }
     }
 
-    /** Appends within the retention bound and keeps one updated marker for dropped events. */
+    /**
+     * Appends within the retention bound and keeps one updated marker for dropped events.
+     * <p>
+     * Eviction is not plain FIFO. The agent loop emits roughly one line per turn plus one before every provider call, so a long run overflows this bound with ordinary progress
+     * prose; dropping oldest-first would take the run's phase ladder and repair-round bookkeeping with it and leave a replay that cannot say where the run has been. Structural
+     * events — anything carrying a {@link ExerciseGenerationEventDTO#phase()} or a {@link ExerciseGenerationEventDTO#repairRound()}, and every non-{@code PROGRESS} event — are
+     * therefore kept while any plain progress line older than them remains. The bound itself is unconditional: when only structural events are left, the oldest of those goes.
+     */
     private static List<ExerciseGenerationEventDTO> appendBounded(List<ExerciseGenerationEventDTO> existing, ExerciseGenerationEventDTO event) {
         List<ExerciseGenerationEventDTO> events = new ArrayList<>(existing);
         events.add(event);
@@ -372,17 +379,37 @@ final class GenerationJobReplayStore {
         // Index 0 is the run's opening event, kept so the replay always starts somewhere meaningful; index 1 is the marker's reserved slot from the first drop onwards.
         long dropped = retainedDropCount(events);
         if (dropped == 0) {
-            // First overflow: the marker takes over the slot held by the event at index 1, so that event is itself the first one dropped. Its count is corrected below once the
-            // rest of the overflow has been removed.
-            dropped = 1;
-            events.set(1, truncationMarker(dropped));
+            // First overflow: the marker claims index 1. A plain progress line there is simply dropped into it; a structural event is shifted out of the way instead, and the
+            // eviction below then takes an evictable event. The count is corrected once the rest of the overflow has been removed.
+            if (isEvictable(events.get(1))) {
+                dropped = 1;
+                events.set(1, truncationMarker(dropped));
+            }
+            else {
+                events.add(1, truncationMarker(0));
+            }
         }
         while (events.size() > MAX_RETAINED_EVENTS) {
-            events.remove(2);
+            events.remove(firstEvictableIndex(events));
             dropped++;
         }
         events.set(1, truncationMarker(dropped));
         return events;
+    }
+
+    /** Whether an event is an ordinary progress line, which the replay can lose without losing the shape of the run. */
+    private static boolean isEvictable(ExerciseGenerationEventDTO event) {
+        return event.type() == ExerciseGenerationEventDTO.Type.PROGRESS && event.phase() == null && event.repairRound() == null;
+    }
+
+    /** The oldest evictable event after the reserved marker slot, or the oldest event at all when every retained event is structural. */
+    private static int firstEvictableIndex(List<ExerciseGenerationEventDTO> events) {
+        for (int index = 2; index < events.size(); index++) {
+            if (isEvictable(events.get(index))) {
+                return index;
+            }
+        }
+        return 2;
     }
 
     private static long retainedDropCount(List<ExerciseGenerationEventDTO> events) {

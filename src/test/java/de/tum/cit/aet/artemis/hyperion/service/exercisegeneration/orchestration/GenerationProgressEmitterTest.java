@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 
@@ -141,6 +142,63 @@ class GenerationProgressEmitterTest {
         sink.progress("Quality review round 1: 2 issues found.", new ExerciseGenerationRepairRoundDTO(1, 1, 2, 0, 0, 0, 2));
 
         assertThat(lines).containsExactly("Quality review round 1: 2 issues found.");
+    }
+
+    @Test
+    void activityLine_carriesItsActivityOnTheSameEventItStreams() {
+        // Like the repair-round counts, the activity rides the event the transcript already carries; a parallel channel would be invisible to reconnect replay.
+        GenerationProgressEmitter emitter = newEmitter();
+        ExerciseGenerationActivityDTO activity = new ExerciseGenerationActivityDTO("artifacts", 1, 7, true, 6, 11, 4);
+
+        emitter.activity("Thinking about the next step.", activity);
+
+        assertThat(sent).singleElement().satisfies(event -> {
+            assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+            assertThat(event.message()).isEqualTo("Thinking about the next step.");
+            assertThat(event.activity()).isEqualTo(activity);
+        });
+        assertThat(recorded).singleElement().satisfies(entry -> {
+            assertThat(entry.terminal()).isFalse();
+            assertThat(entry.event().activity().waitingOnModel()).isTrue();
+        });
+    }
+
+    @Test
+    void eventsWithoutAnActivityContext_carryNoActivity() {
+        GenerationProgressEmitter emitter = newEmitter();
+
+        emitter.progress("Setting up the build environment");
+        emitter.phase(ExerciseGenerationEventDTO.Phase.VERIFYING, "Building both exercise variants");
+        emitter.progress("Quality review round 1", new ExerciseGenerationRepairRoundDTO(1, 1, 2, 0, 0, 0, 2));
+        emitter.milestone(ExerciseGenerationEventDTO.done("saved", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true));
+
+        assertThat(sent).hasSize(4).allSatisfy(event -> assertThat(event.activity()).isNull());
+    }
+
+    /** The tracker is per emitter, and one emitter is created per job, so nothing a run counted can be read by the next run. */
+    @Test
+    void eachEmitter_ownsItsOwnActivityTracker() {
+        GenerationProgressEmitter first = newEmitter();
+        GenerationProgressEmitter second = newEmitter();
+
+        first.activityTracker().recordModelCall();
+        first.activityTracker().recordToolCall();
+
+        assertThat(first.activityTracker()).isNotSameAs(second.activityTracker());
+        assertThat(second.activityTracker().snapshot()).isNull();
+        assertThat(first.activityTracker().snapshot().modelCalls()).isEqualTo(1);
+    }
+
+    /** Every stage below the attempt loop takes a plain {@code Consumer<String>}, so a caller that supplies only a lambda must still receive the human-readable line. */
+    @Test
+    void aPlainConsumerSink_stillReceivesTheActivityLineWithoutTheActivity() {
+        List<String> lines = new ArrayList<>();
+        GenerationProgressSink sink = lines::add;
+
+        sink.activity("Thinking about the next step.", new ExerciseGenerationActivityDTO("spec", 1, 3, true, 2, 5, 1));
+
+        assertThat(lines).containsExactly("Thinking about the next step.");
+        assertThat(sink.activityTracker()).isNull();
     }
 
     @Test

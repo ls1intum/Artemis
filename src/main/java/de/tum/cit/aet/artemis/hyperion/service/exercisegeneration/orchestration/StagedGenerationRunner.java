@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -12,7 +11,6 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -29,17 +27,18 @@ import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.AgentVerifyReport;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.ApprovedSpecRegistry;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.SeededStructuralTests;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.verification.StageCheckService;
@@ -416,6 +415,7 @@ public class StagedGenerationRunner {
             }
 
             int allocation = allocateStageBudget(STAGE_BASE_BUDGETS[index], rollover, allocatablePool(stage, remainingPool));
+            enterStep(progress, stage);
             emit(progress, STAGE_PROGRESS_LABELS.get(index));
             baseTools.enterStage(stage);
             String systemPrompt = systemPromptService.buildStage(exercise, stage);
@@ -656,6 +656,8 @@ public class StagedGenerationRunner {
                                         freshSemanticSpecAttempt = true;
                                     }
                                 }
+                                // Concept replacement may have moved the substep to concept discovery; the refinement that follows belongs to this stage again.
+                                enterStep(progress, stage);
                                 emit(progress, "Stage " + (index + 1) + "/" + STAGE_ORDER.size() + ": refining the specification after brief-fidelity review");
                                 allocation = allocateStageBudget(SEMANTIC_SPEC_REFINEMENT_BUDGET, 0, allocatablePool(stage, remainingPool));
                                 continue;
@@ -875,7 +877,8 @@ public class StagedGenerationRunner {
             }
         }
         if (stage == GenerationStage.STATEMENT) {
-            String handoff = statementHandoff(sandbox, sessionId, seededStructuralTestNames);
+            String handoff = StatementHandoffProjection.project(execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json"),
+                    seededStructuralTestNames);
             if (!handoff.isBlank()) {
                 prompt.append("\n\n").append(handoff);
             }
@@ -884,60 +887,6 @@ public class StagedGenerationRunner {
             prompt.append("\n\n=== GATE FEEDBACK FROM THE PREVIOUS ATTEMPT AT THIS STAGE ===\n").append(retryFeedback).append("\n=== END GATE FEEDBACK ===");
         }
         return prompt.toString();
-    }
-
-    /**
-     * Projects the accepted grading plan and server-authored structural oracle into the only facts statement authoring needs. Raw build output and TESTS-stage instructions are
-     * excluded: they are debugging context, not student-facing contract evidence.
-     */
-    private String statementHandoff(InteractiveSandbox sandbox, String sessionId, Set<String> seededStructuralTestNames) {
-        String planJson = execRead(sandbox, sessionId, "cat", GenerationWorkspaceService.WORKSPACE + "/test-plan.json");
-        if (planJson.isBlank()) {
-            return "";
-        }
-        try {
-            GeneratedTestPlan plan = GeneratedTestPlan.parse(planJson);
-            StringBuilder handoff = new StringBuilder("=== ACCEPTED STATEMENT HANDOFF ===\n");
-            handoff.append("Use the exact lowercase singular Artemis task syntax `[task][Student-facing title](exactTestName)`. Bind every visible test below exactly once on "
-                    + "the one task for its specification seam; a task may list multiple names separated by commas. Any testsColor links must use only these same exact test "
-                    + "method names. Never use `[tasks]`, `[Task]`, display names, or hidden test names. Write each task marker as plain Markdown on its own line, without inline "
-                    + "backticks or a fenced code block.\nVisible tests grouped by specification seam:\n");
-            plan.visibleEntries().stream()
-                    .collect(Collectors.groupingBy(GeneratedTestPlan.Entry::seam, LinkedHashMap::new,
-                            Collectors.mapping(GeneratedTestPlan.Entry::name, Collectors.toCollection(ArrayList::new))))
-                    .forEach((seam, names) -> handoff.append("- ").append(seam).append(": ").append(String.join(", ", names)).append("\n"));
-            if (!seededStructuralTestNames.isEmpty()) {
-                handoff.append("Server-seeded structural checks grouped by owner type (all are visible and must also be bound exactly once):\n");
-                structuralTestsByOwner(seededStructuralTestNames)
-                        .forEach((owner, names) -> handoff.append("- ").append(owner).append(": ").append(String.join(", ", names)).append("\n"));
-                handoff.append("Add each structural name to the existing task whose work creates or declares that owner type/API; do not create one task per structural check. "
-                        + "If several behavioral seams share the owner, attach the checks to the task that introduces the type/API and never duplicate them. These checks may "
-                        + "carry zero score when behavioral evidence exists, but they are still visible Artemis progress checks for required student-created structure.\n");
-            }
-            if (!plan.hiddenEntries().isEmpty()) {
-                handoff.append(plan.hiddenEntries().size()).append(
-                        " hidden behavioral test(s) are intentionally omitted from this handoff. Bind only the visible names above; do not inspect or reveal hidden names.\n");
-            }
-            handoff.append("Write the complete student-facing artifact with write_file(\"problem-statement.md\", ...). A prose chat response does not create the artifact.\n")
-                    .append("=== END ACCEPTED STATEMENT HANDOFF ===");
-            return handoff.toString();
-        }
-        catch (IllegalArgumentException e) {
-            log.warn("Could not project the accepted test plan into the statement handoff for session {}: {}", sessionId, e.getMessage());
-            return "";
-        }
-    }
-
-    /** Groups authoritative Ares names by the type inside their brackets while retaining every name even if a future provider uses another shape. */
-    private static Map<String, List<String>> structuralTestsByOwner(Set<String> seededStructuralTestNames) {
-        Map<String, List<String>> grouped = new LinkedHashMap<>();
-        seededStructuralTestNames.stream().sorted().forEach(name -> {
-            int openBracket = name.indexOf('[');
-            int closeBracket = name.lastIndexOf(']');
-            String owner = openBracket >= 0 && closeBracket > openBracket + 1 ? name.substring(openBracket + 1, closeBracket) : "Other structural checks";
-            grouped.computeIfAbsent(owner, ignored -> new ArrayList<>()).add(name);
-        });
-        return grouped;
     }
 
     private String execRead(InteractiveSandbox sandbox, String sessionId, String... command) {
@@ -985,8 +934,17 @@ public class StagedGenerationRunner {
     }
 
     private static void emit(@Nullable Consumer<String> progress, String message) {
-        if (progress != null) {
-            progress.accept(message);
+        AgentActivitySink.emit(progress, message);
+    }
+
+    /**
+     * Publishes the machine-readable substep key of the stage the run is entering, so the client reads {@code spec}/{@code artifacts}/{@code statement} from the event instead of
+     * parsing the "Phase 1/3: …" prose in {@link #STAGE_PROGRESS_LABELS}. Derived from {@link GenerationStage} itself, so there is one stage vocabulary rather than two.
+     */
+    private static void enterStep(@Nullable Consumer<String> progress, @Nullable GenerationStage stage) {
+        GenerationActivityTracker activity = AgentActivitySink.trackerOf(progress);
+        if (activity != null) {
+            activity.step(stage == null ? null : stage.activityStep());
         }
     }
 

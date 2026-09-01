@@ -38,12 +38,14 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.TerminationReason;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SpecFidelityCriticService;
@@ -820,4 +822,43 @@ class StagedGenerationRunnerTest {
         assertThat(approvedSpecs.approved("s")).as("the frozen contract is the best draft this concept reached, not the last one written").contains(draftB);
     }
 
+    /** Records the substep every emitted progress line carried, which is what the client reads instead of parsing the "Phase 1/3: …" prose. */
+    private static final class RecordingProgressSink implements GenerationProgressSink {
+
+        private final GenerationActivityTracker tracker = new GenerationActivityTracker();
+
+        private final List<String> steps = new java.util.ArrayList<>();
+
+        @Override
+        public void accept(String message) {
+            steps.add(null);
+        }
+
+        @Override
+        public void activity(String message, ExerciseGenerationActivityDTO activity) {
+            steps.add(activity.step());
+        }
+
+        @Override
+        public GenerationActivityTracker activityTracker() {
+            return tracker;
+        }
+    }
+
+    @Test
+    void eachStage_publishesItsMachineReadableSubstepKey() {
+        when(agentLoopRunner.run(anyString(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(completed(2, "spec"), completed(10, "build"),
+                completed(3, "statement"));
+        when(verifier.selfCheckTestsStage(any(), anyString(), eq(exercise), any(), any(SeededStructuralTests.class))).thenReturn(passingReport("testFoo"));
+        RecordingProgressSink progress = new RecordingProgressSink();
+
+        runner.run(exercise, baseTools, baseTools, "brief", Map.of(), sandbox, "s", NEVER_CANCELLED, null, progress, () -> SeededStructuralTests.EMPTY);
+
+        // The keys are stable client contract, and they appear in stage order with no other vocabulary in between.
+        assertThat(progress.steps).contains("spec", "artifacts", "statement");
+        assertThat(progress.steps.stream().filter(java.util.Objects::nonNull).distinct().toList()).containsExactly("spec", "artifacts", "statement");
+        assertThat(GenerationStage.SPEC.activityStep()).isEqualTo("spec");
+        assertThat(GenerationStage.TESTS.activityStep()).isEqualTo("artifacts");
+        assertThat(GenerationStage.STATEMENT.activityStep()).isEqualTo("statement");
+    }
 }

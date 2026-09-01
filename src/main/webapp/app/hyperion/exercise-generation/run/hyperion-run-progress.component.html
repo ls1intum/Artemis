@@ -1,12 +1,20 @@
 <tum-ui-stepper [ariaLabel]="'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate" data-testid="hyperion-run-progress">
-    @for (stage of stages(); track stage.key) {
-        <tum-ui-step
-            [state]="stage.state"
-            [label]="'artemisApp.hyperion.generation.stage.' + stage.key | artemisTranslate"
-            [attr.data-stage]="stage.key"
-            [attr.data-state]="stage.state"
-        >
-            @if (density() === 'full' && stage.key === detailStageKey()) {
+    @for (step of steps(); track step.key) {
+        <tum-ui-step [state]="step.state" [label]="step.labelKey | artemisTranslate" [attr.data-stage]="step.key" [attr.data-state]="step.state">
+            @if (step.substeps; as substeps) {
+                <!-- The same visual language one level down, so the pieces of the design stage read as part of it. -->
+                <tum-ui-stepper class="mt-1 block" [ariaLabel]="step.labelKey | artemisTranslate" data-testid="hyperion-run-substeps">
+                    @for (substep of substeps; track substep.key) {
+                        <tum-ui-step [state]="substep.state" [label]="substep.labelKey | artemisTranslate" [attr.data-substep]="substep.key" [attr.data-state]="substep.state" />
+                    }
+                </tum-ui-stepper>
+            }
+
+            @if (step.summaryKey; as summaryKey) {
+                <p class="m-0 text-xs tabular-nums text-muted-color" data-testid="hyperion-run-stage-summary">{{ summaryKey | artemisTranslate: step.summaryParams }}</p>
+            }
+
+            @if (step.detail) {
                 <!-- One live region for the whole ladder: it sits on the current step, and only one step is ever current. -->
                 <div role="status" class="text-sm text-muted-color">
                     @if (liveMessage(); as message) {
@@ -29,6 +37,11 @@
                         </p>
                     }
                 </div>
+
+                @if (activity(); as view) {
+                    <!-- Outside the live region above: its clock ticks every second and must not be announced. -->
+                    <jhi-hyperion-run-activity [view]="view" [density]="density()" />
+                }
             }
         </tum-ui-step>
     }

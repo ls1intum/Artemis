@@ -31,9 +31,11 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.Terminatio
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentActivitySink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopResult;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentTranscriptWriter;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.critic.SemanticMutant;
@@ -411,6 +413,12 @@ class GenerationAttemptLoop {
         // Pushed before any work: an attempt abandoned at a gate must still be counted, and a count derived from the returned outcome is missing exactly for the runs an
         // administrator wants to see.
         recordAttempt();
+        GenerationActivityTracker activity = AgentActivitySink.trackerOf(progress);
+        if (activity != null) {
+            // Cleared here rather than at each exit: only the staged runner and the concept selector own a substep, so everything outside them is substep-less by construction.
+            activity.attempt(attempt);
+            activity.step(null);
+        }
         boolean stagedAttempt = useStagedGeneration && attempt == 1;
         if (stagedAttempt) {
             emitPhase(Phase.DESIGNING, "Designing the learning task and creating the specification, code, and tests");
@@ -446,6 +454,10 @@ class GenerationAttemptLoop {
             }
         }
         totalAgentTurns += loopResult.turns();
+        if (activity != null) {
+            // Authoring is over; verification, review, and repair scheduling belong to no substep.
+            activity.step(null);
+        }
         if (stagedAttempt) {
             // A later single-loop repair must not inherit the staged run's final dispatch scope.
             baseTools.exitStagedGeneration();

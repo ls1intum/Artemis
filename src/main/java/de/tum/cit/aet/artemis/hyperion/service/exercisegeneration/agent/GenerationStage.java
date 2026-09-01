@@ -12,21 +12,34 @@ public enum GenerationStage {
      * with template status and state ownership), and the testing strategy (weights, hidden variants, diagram decision). Skipped when the instructor provided a real statement —
      * that statement is the spec.
      */
-    SPEC("Specification"),
+    SPEC("Specification", "spec"),
 
     /** Build the solution, derived template, behavioral tests, and grading plan together in risk-chosen vertical increments. */
-    TESTS("Executable build"),
+    TESTS("Executable build", "artifacts"),
 
     /** Write the student-facing problem statement last, by rewriting the specification with the verified test names. */
-    STATEMENT("Statement");
+    STATEMENT("Statement", "statement");
 
     private final String displayName;
 
-    GenerationStage(String displayName) {
+    private final String activityStep;
+
+    GenerationStage(String displayName, String activityStep) {
         this.displayName = displayName;
+        this.activityStep = activityStep;
     }
 
     public String displayName() {
         return displayName;
+    }
+
+    /**
+     * The stable machine-readable substep key streamed to the client, so it need not parse the prose stage label. Kept separate from {@link #name()} because the enum constant is
+     * an internal name the client must not depend on ({@code TESTS} authors solution, template, tests, and grading plan together, which is what {@code artifacts} says).
+     *
+     * @return the substep key of this stage
+     */
+    public String activityStep() {
+        return activityStep;
     }
 }

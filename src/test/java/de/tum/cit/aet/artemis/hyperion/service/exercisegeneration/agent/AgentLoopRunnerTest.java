@@ -35,6 +35,7 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import com.openai.errors.OpenAIIoException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.SandboxExecResultDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.ProviderUsageSink;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.HyperionGenerationSettings;
@@ -890,5 +891,131 @@ class AgentLoopRunnerTest {
 
         assertThat(runner.forSettings(deploymentDefault)).isNotSameAs(runner);
         assertThat(runner.forSettings(null)).isSameAs(runner);
+    }
+
+    /** Records what each emission carried, and hands the loop the tracker it must record the run's activity into. */
+    private static final class RecordingActivitySink implements AgentActivitySink {
+
+        private final GenerationActivityTracker tracker = new GenerationActivityTracker();
+
+        private final List<String> messages = new ArrayList<>();
+
+        private final List<ExerciseGenerationActivityDTO> activities = new ArrayList<>();
+
+        @Override
+        public void accept(String message) {
+            messages.add(message);
+            activities.add(null);
+        }
+
+        @Override
+        public void activity(String message, ExerciseGenerationActivityDTO activity) {
+            messages.add(message);
+            activities.add(activity);
+        }
+
+        @Override
+        public GenerationActivityTracker activityTracker() {
+            return tracker;
+        }
+
+        private ExerciseGenerationActivityDTO lastActivity() {
+            return activities.isEmpty() ? null : activities.getLast();
+        }
+
+        private String lastMessage() {
+            return messages.isEmpty() ? null : messages.getLast();
+        }
+    }
+
+    @Test
+    void agentLoop_emitsAWaitingOnModelEventBeforeTheProviderCallAndClearsItAfterwards() {
+        // The whole point: chatModel.call is synchronous and can run for minutes, so the event announcing it must already have been emitted when the call starts.
+        RecordingActivitySink sink = new RecordingActivitySink();
+        List<ExerciseGenerationActivityDTO> observedWhenTheProviderWasCalled = new ArrayList<>();
+        List<ChatResponse> scripted = new ArrayList<>(List.of(toolCallResponse("bash", "{\"command\":\"ls\"}"), textResponse("DONE")));
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
+            observedWhenTheProviderWasCalled.add(sink.lastActivity());
+            assertThat(sink.lastMessage()).isEqualTo(AgentLoopRunner.WAITING_ON_MODEL_MESSAGE);
+            return scripted.removeFirst();
+        });
+
+        AgentLoopResult result = newTestRunner(List.of(chatModel), 128_000).run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10,
+                () -> false, mock(ProviderUsageSink.class), sink);
+
+        assertThat(result.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        // Turn 1 waits with nothing spent yet; turn 2 waits with the first call and its tool call already counted.
+        assertThat(observedWhenTheProviderWasCalled).hasSize(2);
+        assertThat(observedWhenTheProviderWasCalled.get(0)).satisfies(activity -> {
+            assertThat(activity.waitingOnModel()).isTrue();
+            assertThat(activity.turn()).isEqualTo(1);
+            assertThat(activity.modelCalls()).isZero();
+        });
+        assertThat(observedWhenTheProviderWasCalled.get(1)).satisfies(activity -> {
+            assertThat(activity.waitingOnModel()).isTrue();
+            assertThat(activity.turn()).isEqualTo(2);
+            assertThat(activity.modelCalls()).isEqualTo(1);
+        });
+        // The next event for the same turn must no longer claim the run is waiting, or the client keeps counting up against a model that already answered.
+        int firstWaiting = sink.messages.indexOf(AgentLoopRunner.WAITING_ON_MODEL_MESSAGE);
+        ExerciseGenerationActivityDTO afterTheCall = sink.activities.get(firstWaiting + 1);
+        assertThat(afterTheCall.waitingOnModel()).isFalse();
+        assertThat(afterTheCall.turn()).isEqualTo(1);
+        assertThat(afterTheCall.modelCalls()).isEqualTo(1);
+        assertThat(afterTheCall.toolCalls()).isEqualTo(1);
+    }
+
+    @Test
+    void agentLoop_activityCountersAreMonotonicAndDoNotLeakIntoASecondRun() {
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(toolCallResponse("bash", "{\"command\":\"ls\"}"), toolCallResponse("bash", "{\"command\":\"ls\"}"),
+                textResponse("DONE"));
+        RecordingActivitySink firstRun = new RecordingActivitySink();
+
+        AgentLoopRunner runner = newTestRunner(List.of(chatModel), 128_000);
+        runner.run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, mock(ProviderUsageSink.class), firstRun);
+
+        List<ExerciseGenerationActivityDTO> activities = firstRun.activities.stream().filter(java.util.Objects::nonNull).toList();
+        assertThat(activities).isNotEmpty();
+        assertThat(activities).isSortedAccordingTo(java.util.Comparator.comparingInt(ExerciseGenerationActivityDTO::modelCalls));
+        assertThat(activities).isSortedAccordingTo(java.util.Comparator.comparingInt(ExerciseGenerationActivityDTO::toolCalls));
+        assertThat(activities).isSortedAccordingTo(java.util.Comparator.comparingInt(ExerciseGenerationActivityDTO::turn));
+        assertThat(firstRun.tracker.snapshot()).satisfies(activity -> {
+            assertThat(activity.modelCalls()).isEqualTo(3);
+            assertThat(activity.toolCalls()).isEqualTo(2);
+            assertThat(activity.turn()).isEqualTo(3);
+        });
+
+        // A second run in the same JVM, against the same shared runner bean, starts from zero because the counters live on the run's own sink.
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+        RecordingActivitySink secondRun = new RecordingActivitySink();
+        runner.run("system", "do it again", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false, mock(ProviderUsageSink.class), secondRun);
+
+        assertThat(secondRun.activities.getFirst()).satisfies(activity -> {
+            assertThat(activity.turn()).isEqualTo(1);
+            assertThat(activity.modelCalls()).isZero();
+            assertThat(activity.toolCalls()).isZero();
+            assertThat(activity.filesWritten()).isZero();
+        });
+        assertThat(secondRun.tracker.snapshot().modelCalls()).isEqualTo(1);
+    }
+
+    @Test
+    void agentLoop_withATextOnlyStepListener_stillReceivesTheWaitingLine() {
+        // Everything below the attempt loop takes a plain Consumer<String>; such a caller must still be told the run is waiting, just without the structured activity.
+        ChatModel chatModel = mock(ChatModel.class);
+        when(chatModel.call(any(Prompt.class))).thenReturn(textResponse("DONE"));
+        List<String> lines = new ArrayList<>();
+
+        newTestRunner(List.of(chatModel), 128_000).run("system", "do it", new SandboxAgentTools(new FakeInteractiveSandbox(), "fake-session"), 10, () -> false,
+                mock(ProviderUsageSink.class), lines::add);
+
+        assertThat(lines).first().isEqualTo(AgentLoopRunner.WAITING_ON_MODEL_MESSAGE);
+    }
+
+    @Test
+    void waitingOnModelMessage_namesNoPromptToolArgumentOrPath() {
+        assertThat(AgentLoopRunner.WAITING_ON_MODEL_MESSAGE).isEqualTo("Thinking about the next step.").doesNotContain("/").doesNotContain("workspace");
     }
 }

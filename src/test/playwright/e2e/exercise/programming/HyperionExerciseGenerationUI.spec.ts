@@ -850,14 +850,9 @@ async function openHyperionTab(page: Page) {
 }
 
 async function expectFileChangeNavigationDisabled(page: Page, fileName: string) {
+    // The file activity is no longer behind a disclosure: it sits under the progress ladder in the panel itself.
     const activity = page.getByTestId('hyperion-generation-activity');
     const fileRow = activity.getByTestId('hyperion-generation-file-static').filter({ hasText: fileName });
-    const detailsToggle = activity.getByTestId('hyperion-generation-details-toggle');
-    await expect(detailsToggle).toHaveAttribute('aria-expanded', /true|false/);
-    if ((await detailsToggle.getAttribute('aria-expanded')) === 'false') {
-        await detailsToggle.click();
-    }
-    await expect(detailsToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(fileRow).toBeVisible();
     await expect(activity.getByRole('button', { name: fileName })).toHaveCount(0);
 }
@@ -866,12 +861,6 @@ async function openPersistedChangedFileInNativeEditor(page: Page, fileName: stri
     await openHyperionTab(page);
     const activity = page.getByTestId('hyperion-generation-activity');
     const fileButton = activity.getByRole('button', { name: fileName });
-    const detailsToggle = activity.getByTestId('hyperion-generation-details-toggle');
-    await expect(detailsToggle).toHaveAttribute('aria-expanded', /true|false/);
-    if ((await detailsToggle.getAttribute('aria-expanded')) === 'false') {
-        await detailsToggle.click();
-    }
-    await expect(detailsToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(fileButton).toBeEnabled();
     const fileResponsePromise = page.waitForResponse(
         (response) =>

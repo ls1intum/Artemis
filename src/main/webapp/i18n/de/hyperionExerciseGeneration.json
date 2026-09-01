@@ -42,6 +42,24 @@
                     "review": "Prüfen und nachbessern",
                     "save": "Entwurf speichern"
                 },
+                "substep": {
+                    "concept": "Entwurf auswählen",
+                    "spec": "Spezifikation schreiben",
+                    "artifacts": "Code und Tests schreiben",
+                    "statement": "Aufgabenstellung schreiben"
+                },
+                "stageSummary": "{{turns}} Schritte · {{files}} Dateien",
+                "stageSummaryTurns": "{{turns}} Schritte",
+                "activity": {
+                    "thinking": "Denkt nach — seit {{duration}}",
+                    "lastUpdate": "Letzte Aktualisierung vor {{duration}}",
+                    "attempt": "Versuch {{count}}",
+                    "turn": "Schritt {{count}}",
+                    "modelCalls": "{{count}} KI-Aufrufe",
+                    "toolCalls": "{{count}} Aktionen",
+                    "files": "{{count}} Dateien",
+                    "recent": "Letzte Aktivität"
+                },
                 "status": {
                     "queued": "Wartet auf den Start",
                     "running": "Generierung läuft",
@@ -182,9 +200,7 @@
                 "cancelling": "Wird abgebrochen…",
                 "cancelFailed": "Die Generierung konnte nicht abgebrochen werden. Ihr Status wurde aktualisiert.",
                 "reverting": "Wird rückgängig gemacht…",
-                "hideDetails": "Details ausblenden",
-                "showDetails": "Details anzeigen",
-                "changedFiles": "Dateiaktivität",
+                "changedFiles": "Gespeicherte Dateien",
                 "reviewSavedChanges": "Gespeicherte Änderungen prüfen",
                 "reviewSavedChangesHint": "Öffne den Versionsverlauf der Aufgabe oder den genauen gespeicherten Repository-Commit.",
                 "reviewBlockedByLocalEdits": "Speichere oder verwirf deine lokalen Änderungen, bevor du die Prüfung der gespeicherten Änderungen öffnest.",
@@ -195,7 +211,6 @@
                     "template": "Diff des Templates",
                     "tests": "Diff der Tests"
                 },
-                "recentActivity": "Letzte Aktivität",
                 "emptyTitle": "Für diese Aufgabe gibt es noch keine KI-Aktivität",
                 "emptyHint": "Starte die Generierung hier oder über das Menü „Artemis Intelligence“.",
                 "unavailableHint": "Nach Freigabe oder Teilnahme von Studierenden ist die Generierung nicht verfügbar.",
