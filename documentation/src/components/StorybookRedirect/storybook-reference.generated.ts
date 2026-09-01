@@ -74,8 +74,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'overlays-popover--docs';
         case 'overlays-tooltip':
             return 'overlays-tooltip--docs';
-        case 'patterns-agent-run':
-            return 'patterns-agent-run--docs';
+        case 'patterns-run-status':
+            return 'patterns-run-status--docs';
         default:
             return DEFAULT_STORY;
     }
