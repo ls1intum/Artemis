@@ -37,6 +37,17 @@ public class HyperionAgentProperties {
     /** Post-response per-job provider spend guard, and the number of tokens admission reserves for a job it admits. */
     private long maxTokensPerJob = 3_000_000L;
 
+    /**
+     * The share of a provider-cached input token that counts against {@link #maxTokensPerJob}, in [0, 1].
+     * <p>
+     * Defaults to the discount OpenAI-compatible providers apply to cached input. An agentic run re-sends the same prefix every turn, so most of its input is cache reads;
+     * counting those at full weight exhausts the budget long before the run has spent what the budget bounds. Never set this to 0: the budget would then stop bounding a run
+     * whose prefix stays warm.
+     */
+    public static final double DEFAULT_CACHED_INPUT_TOKEN_WEIGHT = 0.5d;
+
+    private double cachedInputTokenWeight = DEFAULT_CACHED_INPUT_TOKEN_WEIGHT;
+
     /** Whether Java {@code GENERATE} runs go through the specification -> tests -> statement stage order. */
     private boolean stagedGeneration = true;
 
@@ -82,6 +93,14 @@ public class HyperionAgentProperties {
 
     public void setMaxTokensPerJob(long maxTokensPerJob) {
         this.maxTokensPerJob = maxTokensPerJob;
+    }
+
+    public double getCachedInputTokenWeight() {
+        return cachedInputTokenWeight;
+    }
+
+    public void setCachedInputTokenWeight(double cachedInputTokenWeight) {
+        this.cachedInputTokenWeight = cachedInputTokenWeight;
     }
 
     public boolean isStagedGeneration() {

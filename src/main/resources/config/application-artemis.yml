@@ -144,6 +144,10 @@ artemis:
       # Restates the binding default in HyperionAgentProperties so it can be read next to its documentation; the two are pinned equal by HyperionAgentPropertiesTest.
       max-job-duration: PT45M # Allows contract closure plus one complete review/repair cycle after staged authoring; keep provider/sandbox/repository timeouts bounded too.
       max-tokens-per-job: 3000000 # Post-response per-job spend guard; keep provider max-output/context limits aligned so one call cannot overshoot materially.
+      # The share of a provider-cached input token that counts against max-tokens-per-job. An agent re-sends the same prefix every turn, so most of a long run's input is
+      # cache reads that the provider prices lower; charging them in full exhausts the guard well before the run has spent what it bounds. 0 is not a valid setting in
+      # practice: the guard would stop bounding a run whose prefix stays warm.
+      cached-input-token-weight: 0.5
       # Named effort profiles an instructor may pick per run. The values above are the deployment default AND what every profile inherits for the keys it leaves unset, so a
       # deployment that configures no profiles (the shipped state) behaves exactly as it did before profiles existed. Admins define, users select: model and decoding parameters
       # live here because they pin cost and because the prompts and gates are co-tuned with the model. A request may only send a NAME from this set, plus max-tokens /

@@ -269,6 +269,32 @@ public class LLMTokenUsageService {
     }
 
     /**
+     * The tokens a response actually costs, with input the provider served from its prompt cache discounted.
+     * <p>
+     * A spend guard has to measure spend. An agent re-sends the same system prompt and workspace context on every turn, so a long run is overwhelmingly cache reads - one
+     * observed generation billed 2,472,800 of its 2,960,916 input tokens as cache hits. Counting those at full weight exhausts a budget roughly five times too early on
+     * exactly the workload the budget exists to bound. Providers that report a cache split also price it lower, so the weight is the price ratio; it is never zero, because a
+     * run must not be able to hide unbounded work behind a warm cache. Reported usage is unaffected and stays exact.
+     *
+     * @param chatResponse           the provider response, may be null
+     * @param cachedInputTokenWeight the share of a cached input token that counts against a budget, in [0, 1]
+     * @return the weighted token count, never negative
+     */
+    public static long billableTokens(@Nullable ChatResponse chatResponse, double cachedInputTokenWeight) {
+        if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
+            return 0;
+        }
+        Usage usage = chatResponse.getMetadata().getUsage();
+        long promptTokens = usage.getPromptTokens() == null ? 0 : usage.getPromptTokens().longValue();
+        long completionTokens = usage.getCompletionTokens() == null ? 0 : usage.getCompletionTokens().longValue();
+        Long reportedCached = usage.getCacheReadInputTokens();
+        // A provider that reports no split is treated as having served nothing from cache, so an unknown split can never understate the spend.
+        long cached = reportedCached == null ? 0 : Math.max(0, Math.min(promptTokens, reportedCached));
+        double weight = Math.clamp(cachedInputTokenWeight, 0d, 1d);
+        return Math.max(0, Math.round((promptTokens - cached) + cached * weight) + completionTokens);
+    }
+
+    /**
      * Finds an LLMTokenUsageTrace by its ID.
      *
      * @param id The ID of the LLMTokenUsageTrace to find.

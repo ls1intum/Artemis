@@ -195,6 +195,52 @@ class LLMTokenUsageServiceTest {
         assertThat(observed.get().costEstimateComplete()).isTrue();
     }
 
+    @Test
+    void billableTokens_discountsWhatTheProviderServedFromItsCache() {
+        // The observed generation: 2,472,800 of 2,960,916 input tokens were cache hits. At full weight that run exhausted a 3,000,000-token budget while having spent a
+        // fraction of it, which is what a spend guard must not do.
+        ChatResponse response = responseWithUsage(2_960_916, 40_813, 2_472_800L);
+
+        assertThat(LLMTokenUsageService.totalTokens(response)).isEqualTo(3_001_729L);
+        assertThat(LLMTokenUsageService.billableTokens(response, 0.5d)).isEqualTo(1_765_329L);
+        assertThat(LLMTokenUsageService.billableTokens(response, 1.0d)).isEqualTo(LLMTokenUsageService.totalTokens(response));
+    }
+
+    @Test
+    void billableTokens_withoutAReportedCacheSplit_chargesEveryInputTokenInFull() {
+        // An unknown split must never understate spend, so it is treated as nothing having been cached.
+        ChatResponse response = responseWithUsage(1_000, 100, null);
+
+        assertThat(LLMTokenUsageService.billableTokens(response, 0.5d)).isEqualTo(1_100L);
+    }
+
+    @Test
+    void billableTokens_clampsAnOutOfRangeWeightAndAnImpossibleCacheSplit() {
+        // A provider reporting more cached tokens than prompt tokens, and a misconfigured weight, must not produce a negative or inflated charge.
+        ChatResponse response = responseWithUsage(100, 10, 500L);
+
+        assertThat(LLMTokenUsageService.billableTokens(response, 0d)).isEqualTo(10L);
+        assertThat(LLMTokenUsageService.billableTokens(response, 5d)).isEqualTo(110L);
+        assertThat(LLMTokenUsageService.billableTokens(response, -1d)).isEqualTo(10L);
+    }
+
+    @Test
+    void billableTokens_withoutUsageMetadata_isZero() {
+        assertThat(LLMTokenUsageService.billableTokens(null, 0.5d)).isZero();
+    }
+
+    private static ChatResponse responseWithUsage(int promptTokens, int completionTokens, Long cachedInputTokens) {
+        ChatResponse response = mock(ChatResponse.class);
+        ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
+        Usage usage = mock(Usage.class);
+        when(response.getMetadata()).thenReturn(metadata);
+        when(metadata.getUsage()).thenReturn(usage);
+        when(usage.getPromptTokens()).thenReturn(promptTokens);
+        when(usage.getCompletionTokens()).thenReturn(completionTokens);
+        when(usage.getCacheReadInputTokens()).thenReturn(cachedInputTokens);
+        return response;
+    }
+
     private static LLMModelCostConfiguration createCostConfiguration() {
         LLMModelCostConfiguration costConfiguration = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties modelCostProperties = new LLMModelCostConfiguration.ModelCostProperties();

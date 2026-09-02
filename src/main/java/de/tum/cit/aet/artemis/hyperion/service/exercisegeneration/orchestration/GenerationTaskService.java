@@ -97,6 +97,9 @@ public class GenerationTaskService {
 
     private final long maxTokensPerJob;
 
+    /** The share of a provider-cached input token that counts against the per-job budget; see HyperionAgentProperties. */
+    private final double cachedInputTokenWeight;
+
     private final Duration ownerHeartbeatInterval;
 
     private final GenerationShutdownGuard shutdownGuard;
@@ -111,7 +114,7 @@ public class GenerationTaskService {
             GenerationShutdownGuard shutdownGuard) {
         this(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository, generationBudgetService,
                 generationRevertService, taskScheduler, observationRegistry, agentProperties.getMaxJobDuration(), agentProperties.getMaxTokensPerJob(), ownerHeartbeatInterval,
-                shutdownGuard);
+                shutdownGuard, agentProperties.getCachedInputTokenWeight());
     }
 
     GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
@@ -128,6 +131,17 @@ public class GenerationTaskService {
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, HyperionGenerationBudgetService generationBudgetService,
             ExerciseGenerationRevertService generationRevertService, TaskScheduler taskScheduler, ObservationRegistry observationRegistry, Duration maxJobDuration,
             long maxTokensPerJob, Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard) {
+        this(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository, auxiliaryRepositoryRepository, generationBudgetService,
+                generationRevertService, taskScheduler, observationRegistry, maxJobDuration, maxTokensPerJob, ownerHeartbeatInterval, shutdownGuard,
+                HyperionAgentProperties.DEFAULT_CACHED_INPUT_TOKEN_WEIGHT);
+    }
+
+    GenerationTaskService(GenerationOrchestrationService orchestrator, GenerationPersistenceService persistenceService, GenerationReviewService reviewService,
+            HyperionWebsocketService websocket, GenerationJobService jobService, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, HyperionGenerationBudgetService generationBudgetService,
+            ExerciseGenerationRevertService generationRevertService, TaskScheduler taskScheduler, ObservationRegistry observationRegistry, Duration maxJobDuration,
+            long maxTokensPerJob, Duration ownerHeartbeatInterval, GenerationShutdownGuard shutdownGuard, double cachedInputTokenWeight) {
+        this.cachedInputTokenWeight = cachedInputTokenWeight;
         HyperionGenerationTimeouts.validateMaxJobDuration(maxJobDuration);
         if (maxTokensPerJob <= 0) {
             throw new IllegalArgumentException("artemis.hyperion.agent.max-tokens-per-job must be positive");
@@ -635,7 +649,7 @@ public class GenerationTaskService {
                 if (runTokenBudget <= 0) {
                     return;
                 }
-                long total = tokensUsed.addAndGet(LLMTokenUsageService.totalTokens(response));
+                long total = tokensUsed.addAndGet(LLMTokenUsageService.billableTokens(response, cachedInputTokenWeight));
                 if (total >= runTokenBudget && tokenBudgetExceeded.compareAndSet(false, true)) {
                     // Only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls. Not requestSystemCancellation, which would mark the
                     // job cancelled and make enterNonCancellablePhase refuse the save of an already-paid-for verified candidate.
