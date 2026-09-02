@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.CannotAcquireLockException;
 
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.iris.service.AutonomousTutorService;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
@@ -76,14 +77,15 @@ class PyrisStatusUpdateStruggleTest {
     }
 
     @Test
-    void everyClaimedCallbackRecordsItsTokenUsageExactlyOnce() {
+    void everyFrameOfAClaimedCallbackIsAccountedFor() {
         // The pipeline's LLM spend used to be invisible: the callback carried tokens and nothing read them. Recording
-        // runs before the frame is routed, so an intermediate or failing frame is accounted for too, and each of
-        // these four frames is counted once regardless of which branch claims it.
-        var decision = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
-        var keepAlive = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.RUNNING, null, List.of(), null, null, null, null, null, null);
-        var failed = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FAILED, null, List.of(), null, null, null, null, null, null);
-        var close = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, true, null, null);
+        // runs before the frame is routed, so a decision, a keep-alive, a failure and a close are all accounted for,
+        // whichever branch below goes on to claim them.
+        var tokens = List.of(new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention"));
+        var decision = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, tokens, null, null, null, null, null, null);
+        var keepAlive = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.RUNNING, null, tokens, null, null, null, null, null, null);
+        var failed = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FAILED, null, tokens, null, null, null, null, null, null);
+        var close = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FINISHED, null, tokens, null, null, null, true, null, null);
 
         service.handleStatusUpdate(job, decision);
         service.handleStatusUpdate(job, keepAlive);
@@ -97,11 +99,26 @@ class PyrisStatusUpdateStruggleTest {
     }
 
     @Test
-    void aCallbackForAnAlreadyClaimedJobRecordsNothing() {
-        // The job is gone, so another callback owns this run's side effects. Recording here would double-count the
-        // spend the winner already recorded.
+    void accountingHappensBeforeTheFrameIsRouted() {
+        // Ordering is the whole reason the call sits in the dispatcher: routing removes the job and hands the frame
+        // to a handler that may throw, and spend already reported by Pyris must be recorded either way.
+        var tokens = List.of(new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention"));
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, tokens, null, null, null, null, null, null);
+
+        service.handleStatusUpdate(job, update);
+
+        var inOrder = inOrder(pyrisJobService, irisStruggleInterventionService);
+        inOrder.verify(irisStruggleInterventionService).recordTokenUsage(job, update);
+        inOrder.verify(pyrisJobService).removeJob(job);
+        inOrder.verify(irisStruggleInterventionService).handleDecision(job, update);
+    }
+
+    @Test
+    void aCallbackWhoseJobAnotherThreadAlreadyClaimedRecordsNothing() {
+        // The job is gone, so another callback owns this run's side effects, including the spend it already recorded.
         when(pyrisJobService.getJob("t")).thenReturn(null);
-        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
+        var tokens = List.of(new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention"));
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, tokens, null, null, null, null, null, null);
 
         service.handleStatusUpdate(job, update);
 

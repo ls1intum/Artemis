@@ -624,11 +624,27 @@ public class IrisStruggleInterventionService {
      *
      * <p>
      * Called once per claimed callback, before the frame is routed, so a run that reports spend on an intermediate
-     * frame or on a failure is counted too, and no frame is counted twice. That placement is also why this attributes
-     * to the job rather than to a message: the message a decision persists does not exist yet here, and several
-     * outcomes ({@code silent}, {@code ambient}, a quiet close) never persist one at all, so keying the trace on a
-     * message would drop their cost. Course, exercise and user come off the job, which is the same scope the admin
-     * view groups by.
+     * frame or on a failure is counted too. Claimed is the exact guarantee, not "once per frame": a callback whose
+     * job another thread already took never reaches here, and the trailing duplicate after a terminal frame is
+     * rejected, but a retransmitted non-terminal frame arrives while the job is still alive and would be counted
+     * again, as would a retry after this node died between the save below and the job removal that follows it. There
+     * is no callback id or sequence number to key on, so those are accepted as an over-count rather than prevented.
+     *
+     * <p>
+     * The placement is also why this attributes to the job rather than to a message: the message a decision persists
+     * does not exist yet here, and several outcomes ({@code silent}, {@code ambient}, a quiet close) never persist
+     * one at all, so keying the trace on a message would drop their cost. Course, exercise and user come off the
+     * job, which is the same scope the admin view groups by; a null message id is a documented case there, counted
+     * under "other" rather than dropped.
+     *
+     * <p>
+     * Each token-bearing callback gets its own trace, rather than one trace per run appended to as the chat path
+     * does. The chat path needs that because it has a genuine second artifact, the interaction suggestion that
+     * belongs to an already-created message trace; a one-shot struggle run has no counterpart, and threading a trace
+     * id through the job would mean writing the job back to the distributed map immediately before the terminal
+     * frame removes it. The consequence, should Pyris ever split a run's payload across callbacks: cost totals stay
+     * correct because they sum requests regardless of trace boundaries, while trace counts and trace-level exports
+     * become callback-granular rather than run-granular. Worth revisiting only if that split turns out to happen.
      *
      * @param job          the struggle-intervention job the callback belongs to
      * @param statusUpdate the callback, whose {@code tokens} may be empty
@@ -642,8 +658,9 @@ public class IrisStruggleInterventionService {
                     builder -> builder.withCourse(job.courseId()).withExercise(job.exerciseId()).withUser(job.userId()));
         }
         catch (Exception e) {
-            // Accounting must never cost the student their intervention: a failure here would otherwise escape into
-            // the callback handler, which has already claimed and removed the job, and hang the client's request.
+            // Accounting must never cost the student their intervention: this runs inside the callback handler, which
+            // has already claimed the job, so an escaping failure would leave the client's in-flight request hanging.
+            // Deliberately an under-count with no retry, which is the lesser cost.
             log.warn("Could not record token usage for struggle job {} exercise {} user {}", job.jobId(), job.exerciseId(), job.userId(), e);
         }
     }
