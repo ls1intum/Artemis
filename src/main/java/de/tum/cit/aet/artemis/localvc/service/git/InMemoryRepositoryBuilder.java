@@ -6,9 +6,11 @@ import static de.tum.cit.aet.artemis.localvc.service.git.InMemoryDirCache.READ_W
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URI;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.zip.Deflater;
@@ -16,36 +18,33 @@ import java.util.zip.ZipEntry;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.eclipse.jgit.dircache.DirCacheBuilder;
 import org.eclipse.jgit.dircache.DirCacheEntry;
-import org.eclipse.jgit.internal.storage.dfs.DfsRepositoryDescription;
-import org.eclipse.jgit.internal.storage.dfs.InMemoryRepository;
 import org.eclipse.jgit.internal.storage.pack.PackWriter;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.NullProgressMonitor;
 import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectIdRef;
 import org.eclipse.jgit.lib.ObjectReader;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.revwalk.ObjectWalk;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.pack.PackConfig;
-import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.util.FS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 
 /**
- * Builds an in-memory, checkout-ready Git repository as a single ZIP archive.
+ * Builds a checkout-ready Git repository as a single ZIP archive, straight from a bare repository on disk.
  * <p>
  * The ZIP contains the working tree at the root and a synthetic {@code .git/}
- * directory with minimal refs, config, and a packed object store. No disk IO is used.
+ * directory with minimal refs, config, and a packed object store. Nothing is checked out.
  * <p>
  * Thread-safety: all methods are stateless and thread-safe.
  */
@@ -57,57 +56,51 @@ public class InMemoryRepositoryBuilder {
      * Creates an in-memory ZIP that, once extracted, is a usable non-bare Git repo.
      * The archive contains:
      * <ul>
-     * <li>All working tree files of {@code repository.branch} at {@code origin}</li>
+     * <li>All working tree files of the repository's branch</li>
      * <li>{@code .git/HEAD}, {@code .git/refs/...}, {@code .git/config}</li>
      * <li>{@code .git/objects/pack/pack-*.pack} and matching {@code .idx}</li>
      * <li>A serialized Git index matching the working tree</li>
      * </ul>
      *
-     * @param repository logical repository descriptor providing remote URI and branch
+     * @param bareRepository the bare repository on disk to export
      * @return ZIP file bytes
-     * @throws IllegalArgumentException if the requested branch does not exist on the remote
-     * @throws IOException              if fetching or ZIP serialization fails
+     * @throws IOException if reading the repository or ZIP serialization fails
      */
-    public static byte[] buildZip(Repository repository) throws IOException {
-
-        URI remoteUri = repository.getLocalPath().toUri();
-
-        // 1) Create an in-memory bare repository and fetch from the remote
-        InMemoryRepository repo;
-
-        try {
-            repo = new InMemoryRepository.Builder().setRepositoryDescription(new DfsRepositoryDescription("inmem")).setFS(FS.DETECTED).build();
-        }
-        catch (IOException e) {
-            throw new IOException("Failed to build in-memory repository", e);
-        }
-
-        // Configure "origin" (so we can also write it into .git/config later)
-        StoredConfig storedConfig = repo.getConfig();
-        storedConfig.setString("remote", "origin", "url", remoteUri.toString());
-        storedConfig.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
-        storedConfig.save();
-
-        log.debug("Fetching from {}", remoteUri);
-        // Fetch: all branches
-        try (Transport transport = Transport.open(repo, remoteUri.toString())) {
-            transport.fetch(NullProgressMonitor.INSTANCE, List.of(new RefSpec("+refs/heads/*:refs/remotes/origin/*")));
-        }
-        catch (Exception e) {
-            throw new IOException("Failed to fetch from remote URI: " + remoteUri, e);
-        }
-
-        // Resolve the commit for the requested branch (default "main")
-        String branch = repository.getBranch();
-        String fullHead = "refs/remotes/origin/" + branch;
-        ObjectId commitId = repo.resolve(fullHead);
-        if (commitId == null) {
-            throw new IllegalArgumentException("Branch not found on remote: " + branch + " (looked for " + fullHead + ")");
-        }
-
-        // 2) Create ZIP in memory: working files + synthetic .git
+    public static byte[] buildZip(Repository bareRepository) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(outputStream); RevWalk rw = new RevWalk(repo)) {
+        writeZip(bareRepository, outputStream);
+        return outputStream.toByteArray();
+    }
+
+    /**
+     * Writes the same archive as {@link #buildZip(Repository)} to the given stream, so callers with a destination in hand
+     * (a file in an export directory, an HTTP response) do not have to hold the whole archive in memory first.
+     *
+     * <p>
+     * Objects are read straight from the bare repository: it is a local repository on the same file system, so there is
+     * nothing to be gained from copying it into an in-memory clone before packing it.
+     *
+     * <p>
+     * The given stream stays open, so the caller keeps ownership of it.
+     *
+     * @param bareRepository the bare repository on disk to export
+     * @param outputStream   the stream the ZIP is written to
+     * @throws IOException if reading the repository or ZIP serialization fails
+     */
+    public static void writeZip(Repository bareRepository, OutputStream outputStream) throws IOException {
+        String branch = bareRepository.getBranch();
+        // Read the refs once, before anything is written. The working tree, the index, the pack and the serialized refs
+        // all have to describe the same snapshot, and writing the working tree of a large repository takes long enough
+        // for a push to land in between: sampling the ref database again afterwards would produce an archive that names
+        // a tip it never exported, and after a force push one whose objects are not even in the pack the index needs.
+        // Every branch and tag is taken, not just the exported one, because an archive that keeps only the checked out
+        // branch would silently drop commits reachable from a secondary branch or a tag, which the clone this export
+        // replaced did carry.
+        List<Ref> refsToExport = collectBranchAndTagRefs(bareRepository, branch);
+        ObjectId commitId = exportedCommit(refsToExport, branch);
+
+        // Close-shielded so that closing the ZIP stream releases its deflater without also closing the caller's stream.
+        try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(CloseShieldOutputStream.wrap(outputStream)); RevWalk rw = new RevWalk(bareRepository)) {
 
             zipOutputStream.setMethod(ZipEntry.DEFLATED);
             zipOutputStream.setLevel(Deflater.BEST_COMPRESSION);
@@ -125,7 +118,7 @@ public class InMemoryRepositoryBuilder {
             DirCacheBuilder dirCacheBuilder = dirCache.builder();
 
             // 2a) Materialize working tree files directly from objects (no checkout to disk)
-            try (TreeWalk treeWalk = new TreeWalk(repo)) {
+            try (TreeWalk treeWalk = new TreeWalk(bareRepository)) {
                 treeWalk.addTree(tree);
                 treeWalk.setRecursive(true);
                 while (treeWalk.next()) {
@@ -150,7 +143,7 @@ public class InMemoryRepositoryBuilder {
                         ZipArchiveEntry zipEntry = new ZipArchiveEntry(path.replace('\\', '/'));
                         zipEntry.setUnixMode(executable ? EXECUTE_MODE : READ_WRITE_MODE); // -rwxr-xr-x or -rw-r--r--
                         zipOutputStream.putArchiveEntry(zipEntry);
-                        repo.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB).copyTo(zipOutputStream);
+                        bareRepository.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB).copyTo(zipOutputStream);
                         zipOutputStream.closeArchiveEntry();
                     }
                     else if (mode == FileMode.SYMLINK) {
@@ -160,7 +153,7 @@ public class InMemoryRepositoryBuilder {
                         // Zip has no native symlink type; write target as text (or skip)
                         zipEntry.setUnixMode(READ_WRITE_MODE);
                         zipOutputStream.putArchiveEntry(zipEntry);
-                        repo.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB).copyTo(zipOutputStream);
+                        bareRepository.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB).copyTo(zipOutputStream);
                         zipOutputStream.closeArchiveEntry();
                     }
                 }
@@ -172,88 +165,156 @@ public class InMemoryRepositoryBuilder {
                 }
             }
 
-            createGitIndex(repo, commitId, zipOutputStream, createdDirs);
+            createGitIndex(bareRepository, refsToExport, zipOutputStream, createdDirs);
 
             // refs + HEAD + config
             putGitBytes(zipOutputStream, createdDirs, "HEAD", ("ref: refs/heads/" + branch + "\n").getBytes(StandardCharsets.UTF_8));
-            putGitBytes(zipOutputStream, createdDirs, "refs/heads/" + branch, (commitId.name() + "\n").getBytes(StandardCharsets.UTF_8));
-            putGitBytes(zipOutputStream, createdDirs, "refs/remotes/origin/" + branch, (commitId.name() + "\n").getBytes(StandardCharsets.UTF_8));
+            for (Ref ref : refsToExport) {
+                putGitBytes(zipOutputStream, createdDirs, ref.getName(), (ref.getObjectId().name() + "\n").getBytes(StandardCharsets.UTF_8));
+            }
 
-            writeGitConfig(remoteUri, branch, zipOutputStream, createdDirs);
+            writeGitConfig(zipOutputStream, createdDirs);
 
             zipOutputStream.finish(); // finalize central directory
         }
-        return outputStream.toByteArray();
     }
 
     /**
-     * Writes a minimal {@code .git/config} that defines {@code origin} and
-     * associates the current branch with {@code refs/heads/&lt;branch&gt;}.
+     * Collects the branches and tags the archive has to carry.
      *
-     * @param remoteUri       remote URL to store under {@code remote.origin.url}
-     * @param branch          branch name to bind under {@code [branch "&lt;name&gt;"]}
+     * <p>
+     * {@code HEAD}'s branch is guaranteed to be in the result even for a detached head, because the archive's working
+     * tree and index describe that commit and the extracted repository would otherwise have a {@code HEAD} pointing at
+     * a ref that does not exist.
+     *
+     * @param bareRepository the bare repository to read the refs from
+     * @param branch         the branch the working tree is taken from
+     * @return the refs to pack and to serialize into the archive's {@code .git}
+     * @throws IOException if the refs cannot be read, or the repository has no commits at all because neither the
+     *                         branch nor {@code HEAD} resolves
+     */
+    private static List<Ref> collectBranchAndTagRefs(Repository bareRepository, String branch) throws IOException {
+        var refDatabase = bareRepository.getRefDatabase();
+        List<Ref> refs = new ArrayList<>();
+        for (Ref ref : refDatabase.getRefsByPrefix(Constants.R_HEADS, Constants.R_TAGS)) {
+            if (ref.getObjectId() != null) {
+                refs.add(ref);
+            }
+        }
+        if (refs.stream().noneMatch(ref -> ref.getName().equals(Constants.R_HEADS + branch))) {
+            // A detached HEAD has no branch ref to take the commit from, so resolve HEAD and give the snapshot an entry
+            // of its own for it: the archive's working tree describes that commit, and it has to be both packed and
+            // reachable through the HEAD the archive writes.
+            ObjectId head = bareRepository.resolve(Constants.HEAD);
+            if (head == null) {
+                throw new IOException("Cannot export the repository " + bareRepository.getRemoteRepositoryUri() + " because neither branch " + branch + " nor HEAD resolves");
+            }
+            refs.add(new ObjectIdRef.PeeledNonTag(Ref.Storage.LOOSE, Constants.R_HEADS + branch, head));
+        }
+        return refs;
+    }
+
+    /**
+     * Returns the commit whose tree the archive materializes, taken from the same ref snapshot that gets packed and
+     * serialized, so the working tree, the index, the pack and {@code .git/refs} cannot end up describing different
+     * commits.
+     *
+     * @param refs   the ref snapshot, which {@link #collectBranchAndTagRefs} guarantees contains the exported branch
+     * @param branch the branch the working tree is taken from
+     * @return the tip commit of that branch
+     */
+    private static ObjectId exportedCommit(List<Ref> refs, String branch) {
+        return refs.stream().filter(ref -> ref.getName().equals(Constants.R_HEADS + branch)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("The exported branch " + branch + " is missing from the ref snapshot")).getObjectId();
+    }
+
+    /**
+     * Writes a minimal {@code .git/config}.
+     *
+     * <p>
+     * Deliberately without a remote: the only URL available here is the server's internal path to the bare repository,
+     * which is both unusable on the machine that extracts the archive and something the archive should not disclose.
+     *
      * @param zipOutputStream open ZIP stream to receive the entry
      * @param createdDirs     set used to deduplicate directory entries
      * @throws IOException if the ZIP entry cannot be written
      */
-    private static void writeGitConfig(URI remoteUri, String branch, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
-        // Minimal config with origin
+    private static void writeGitConfig(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
+        // symlinks = false because a zip has no symlink type: the working tree stores a symlink as a plain file holding
+        // the link target, while the index still records mode 120000. Without this, git on a symlink-capable system
+        // compares the two and reports a type change, so a freshly extracted archive would be dirty before it is
+        // touched.
         String config = """
                 [core]
                     repositoryformatversion = 0
                     filemode = true
                     bare = false
                     logallrefupdates = true
-                [remote "origin"]
-                    url = %s
-                    fetch = +refs/heads/*:refs/remotes/origin/*
-                [branch "%s"]
-                    remote = origin
-                    merge = refs/heads/%s
-                """.formatted(remoteUri.toString(), branch, branch);
+                    symlinks = false
+                """;
         putGitBytes(zipOutputStream, createdDirs, "config", config.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
-     * Packs all reachable objects from {@code commitId} into a single {@code pack-*.pack}
-     * with matching {@code .idx} and writes both under {@code .git/objects/pack/}.
-     * The pack file name is computed as the SHA-1 of its content, as in standard Git.
+     * Packs everything reachable from the given refs into a single {@code pack-*.pack} with matching {@code .idx} and
+     * writes both under {@code .git/objects/pack/}. The pack file name is computed as the SHA-1 of its content, as in
+     * standard Git.
      *
-     * @param repo            in-memory repository containing fetched objects
-     * @param commitId        tip commit that defines reachability for the pack
+     * <p>
+     * Every branch and tag is a starting point, so an archive keeps the commits that are only reachable from a
+     * secondary branch, and the tag objects themselves.
+     *
+     * <p>
+     * Both files are written straight into the ZIP entry. Buffering them first would put two copies of the entire pack
+     * on the heap, which matters because this runs for every instructor repository of every exercise while a course is
+     * being archived. JGit can name the pack before writing it, since the name is derived from the object list that
+     * {@code preparePack} produced rather than from the serialized bytes.
+     *
+     * @param bareRepository  the bare repository the objects are read from
+     * @param refs            the branches and tags that define reachability for the pack
      * @param zipOutputStream open ZIP stream to receive pack and index entries
      * @param createdDirs     set used to deduplicate directory entries
      * @throws IOException if pack/index creation or ZIP writes fail
      */
-    private static void createGitIndex(InMemoryRepository repo, ObjectId commitId, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
-        // Create pack + index
-        byte[] packBytes;
-        byte[] idxBytes;
-        String packHashHex;
-        try (ObjectReader reader = repo.newObjectReader(); ObjectWalk objectWalk = new ObjectWalk(reader); PackWriter packWriter = new PackWriter(new PackConfig(repo), reader)) {
+    private static void createGitIndex(Repository bareRepository, List<Ref> refs, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
+        try (ObjectReader reader = bareRepository.newObjectReader();
+                ObjectWalk objectWalk = new ObjectWalk(reader);
+                PackWriter packWriter = new PackWriter(new PackConfig(bareRepository), reader)) {
 
-            // Mark the tip as the starting point for traversal
-            RevCommit tip = objectWalk.parseCommit(commitId);
-            objectWalk.markStart(tip);
+            // Mark every ref tip as a starting point. An annotated tag is marked as the tag object itself, so the tag
+            // lands in the pack rather than only the commit it points at.
+            Set<ObjectId> tips = new LinkedHashSet<>();
+            for (Ref ref : refs) {
+                objectWalk.markStart(objectWalk.parseAny(ref.getObjectId()));
+                tips.add(ref.getObjectId());
+            }
 
             // This drives the traversal from `objectWalk` and prevents null ids inside preparePack
-            packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, Set.of(commitId), PackWriter.NONE, PackWriter.NONE);
+            packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, tips, PackWriter.NONE, PackWriter.NONE);
 
-            // Write .pack and derive its canonical name from JGit
-            ByteArrayOutputStream packOut = new ByteArrayOutputStream();
-            packWriter.writePack(NullProgressMonitor.INSTANCE, NullProgressMonitor.INSTANCE, packOut);
-            packBytes = packOut.toByteArray();
-            packHashHex = packWriter.computeName().name();
-
-            // Write .idx
-            ByteArrayOutputStream idxOut = new ByteArrayOutputStream();
-            packWriter.writeIndex(idxOut);
-            idxBytes = idxOut.toByteArray();
+            String packHashHex = packWriter.computeName().name();
+            writeGitEntry(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".pack",
+                    out -> packWriter.writePack(NullProgressMonitor.INSTANCE, NullProgressMonitor.INSTANCE, out));
+            writeGitEntry(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".idx", packWriter::writeIndex);
         }
+    }
 
-        // Place pack + idx into .git/objects/pack/
-        putGitBytes(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".pack", packBytes);
-        putGitBytes(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".idx", idxBytes);
+    /**
+     * Opens a {@code .git/} entry and lets the writer stream its content straight into the ZIP, so nothing has to be
+     * buffered on the heap first. The ZIP stream is close-shielded because the writers close what they are given.
+     */
+    private static void writeGitEntry(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String relPath, GitEntryWriter writer) throws IOException {
+        String full = ".git/" + relPath;
+        ensureParentDirs(zipOutputStream, createdDirs, full);
+        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(full));
+        writer.writeTo(CloseShieldOutputStream.wrap(zipOutputStream));
+        zipOutputStream.closeArchiveEntry();
+    }
+
+    @FunctionalInterface
+    private interface GitEntryWriter {
+
+        void writeTo(OutputStream outputStream) throws IOException;
     }
 
     // ---- Helpers ----------------------------------------------------------------
@@ -343,20 +404,6 @@ public class InMemoryRepositoryBuilder {
         zipOutputStream.putArchiveEntry(zipEntry);
         zipOutputStream.write(bytes);
         zipOutputStream.closeArchiveEntry();
-    }
-
-    /**
-     * Converts a byte array to lowercase hexadecimal without separators.
-     *
-     * @param bytes input bytes
-     * @return hex string, two characters per byte
-     */
-    private static String toHex(byte[] bytes) {
-        StringBuilder stringBuilder = new StringBuilder(bytes.length * 2);
-        for (byte b : bytes) {
-            stringBuilder.append("%02x".formatted(b));
-        }
-        return stringBuilder.toString();
     }
 
 }
