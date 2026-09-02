@@ -1,7 +1,7 @@
 <section aria-labelledby="hyperion-run-outcome-title" data-testid="hyperion-run-outcome" [attr.data-severity]="view().severity">
     <tum-ui-message [severity]="view().severity" class="block">
         <div class="flex min-w-0 flex-col gap-2">
-            <h2 id="hyperion-run-outcome-title" class="m-0 text-base font-semibold" [jhiTranslate]="view().titleKey"></h2>
+            <h2 id="hyperion-run-outcome-title" class="m-0 text-base! font-semibold!" [jhiTranslate]="view().titleKey"></h2>
             <p class="m-0 text-sm wrap-anywhere">{{ view().bodyKey | artemisTranslate: view().bodyParams }}</p>
             @if (view().terminationReasonKey; as reasonKey) {
                 <p class="m-0 text-sm wrap-anywhere" data-testid="hyperion-run-outcome-reason" [jhiTranslate]="reasonKey"></p>
@@ -17,7 +17,7 @@
 
     @if (hasChecks()) {
         <div class="mt-3" data-testid="hyperion-run-outcome-checks">
-            <h3 class="mb-2 text-sm font-semibold" jhiTranslate="artemisApp.hyperion.generation.verdict.title"></h3>
+            <h3 class="mb-2 text-sm! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.verdict.title"></h3>
             <ul class="m-0 flex list-none flex-col gap-1 p-0">
                 @for (check of view().checks; track check.labelKey) {
                     <li class="flex items-baseline gap-2 text-sm">

@@ -153,7 +153,7 @@
                     data-testid="hyperion-generation-review"
                 >
                     <div class="min-w-0 text-xs">
-                        <h4 id="hyperion-review-saved-title" class="mt-0 mb-1 text-sm" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChanges"></h4>
+                        <h4 id="hyperion-review-saved-title" class="mt-0 mb-1 text-sm!" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChanges"></h4>
                         <span class="wrap-anywhere text-muted-color" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChangesHint"></span>
                     </div>
                     <div class="flex min-w-0 flex-wrap gap-1">
@@ -179,7 +179,7 @@
             -->
             @if (fileChanges().length) {
                 <section class="min-w-0 border-t px-3 py-2" aria-labelledby="hyperion-changed-files-title" data-testid="hyperion-changed-files">
-                    <h4 id="hyperion-changed-files-title" class="mt-0 mb-1 text-xs font-semibold" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
+                    <h4 id="hyperion-changed-files-title" class="mt-0 mb-1 text-xs! font-semibold!" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
                     @for (group of filesByRepo(); track group.repo) {
                         <div class="min-w-0" data-testid="hyperion-generation-repo">
                             <div

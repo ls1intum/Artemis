@@ -21,7 +21,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 /** The status word shown next to the dot, and the dot state that goes with it. */
-type RunStatus = 'queued' | 'running' | 'cancelling' | 'saved' | 'needsReview' | 'partial' | 'failed' | 'cancelled' | 'unknown';
+type RunStatus = 'queued' | 'running' | 'cancelling' | 'saved' | 'needsReview' | 'partial' | 'failed' | 'cancelled' | 'notStarted' | 'unknown';
 
 const STATUS_DOT_STATE: Record<RunStatus, TumUiStatusDotState> = {
     queued: 'queued',
@@ -32,7 +32,8 @@ const STATUS_DOT_STATE: Record<RunStatus, TumUiStatusDotState> = {
     partial: 'warning',
     failed: 'error',
     cancelled: 'neutral',
-    unknown: 'neutral',
+    notStarted: 'neutral',
+    unknown: 'unknown',
 };
 
 const OUTCOME_STATUS: Record<HyperionRunOutcome, RunStatus> = {
@@ -150,7 +151,12 @@ export class HyperionRunPageComponent {
         if (this.running()) {
             return this.events().length > 0 ? 'running' : 'queued';
         }
-        return this.facade.jobId() === undefined ? 'unknown' : 'queued';
+        if (this.facade.jobId() !== undefined) {
+            return 'queued';
+        }
+        // "Nothing has run" and "we could not find out" are different facts, and only the second is a problem the
+        // instructor might act on. Reporting the first as `unknown` made an untouched exercise read as a broken one.
+        return this.statusLoadFailed() ? 'unknown' : 'notStarted';
     });
 
     protected readonly statusDotState = computed(() => STATUS_DOT_STATE[this.status()]);

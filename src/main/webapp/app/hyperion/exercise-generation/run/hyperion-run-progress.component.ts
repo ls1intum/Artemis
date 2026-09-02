@@ -24,6 +24,8 @@ interface ProgressStep {
     summaryParams?: { turns: number; files: number };
     /** The one step that carries the live region and the activity panel. */
     detail: boolean;
+    /** Whether that detail needs a rule to separate it from a substep ladder printed directly above it. */
+    detailRuled: boolean;
 }
 
 /** How long a stage has been going, or how long it took. Kept apart from {@link ProgressStep} so the ladder is not rebuilt every second. */
@@ -81,20 +83,28 @@ export class HyperionRunProgressComponent {
 
     protected readonly steps = computed<ProgressStep[]>(() => {
         const detailKey = this.detailStageKey();
-        return this.stages().map((stage) => ({
-            key: stage.key,
-            state: stage.state,
-            labelKey: `artemisApp.hyperion.generation.stage.${stage.key}`,
-            // A stage nobody has reached yet must not preview the work it might do.
-            substeps:
+        return this.stages().map((stage) => {
+            const substeps =
                 stage.substeps && stage.state !== 'pending'
                     ? stage.substeps.map((substep) => ({ key: substep.key, state: substep.state, labelKey: `artemisApp.hyperion.generation.substep.${substep.key}` }))
+                    : undefined;
+            return {
+                key: stage.key,
+                state: stage.state,
+                labelKey: `artemisApp.hyperion.generation.stage.${stage.key}`,
+                // A stage nobody has reached yet must not preview the work it might do.
+                substeps,
+                // Files are omitted when the stage wrote none, for the same reason the meter omits a counter at zero.
+                summaryKey: stage.summary
+                    ? stage.summary.files > 0
+                        ? 'artemisApp.hyperion.generation.stageSummary'
+                        : 'artemisApp.hyperion.generation.stageSummaryTurns'
                     : undefined,
-            // Files are omitted when the stage wrote none, for the same reason the meter omits a counter at zero.
-            summaryKey: stage.summary ? (stage.summary.files > 0 ? 'artemisApp.hyperion.generation.stageSummary' : 'artemisApp.hyperion.generation.stageSummaryTurns') : undefined,
-            summaryParams: stage.summary,
-            detail: stage.key === detailKey,
-        }));
+                summaryParams: stage.summary,
+                detail: stage.key === detailKey,
+                detailRuled: stage.key === detailKey && substeps !== undefined,
+            };
+        });
     });
 
     /**

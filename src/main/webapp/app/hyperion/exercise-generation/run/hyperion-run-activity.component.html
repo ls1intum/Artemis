@@ -27,7 +27,7 @@
 
         @if (recent().length) {
             <section class="min-w-0" aria-labelledby="hyperion-run-activity-recent-title" data-testid="hyperion-run-activity-recent">
-                <h4 id="hyperion-run-activity-recent-title" class="mt-1 mb-1 text-xs font-semibold" jhiTranslate="artemisApp.hyperion.generation.activity.recent"></h4>
+                <h4 id="hyperion-run-activity-recent-title" class="mt-1 mb-1 text-xs! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.activity.recent"></h4>
                 <ol class="m-0 flex list-none flex-col gap-0.5 p-0 text-xs text-muted-color">
                     @for (entry of recent(); track entry.key) {
                         <li class="flex min-w-0 gap-2">

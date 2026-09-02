@@ -245,6 +245,23 @@ describe('HyperionRunPageComponent', () => {
         expect(service.getStatus.mock.calls.length).toBeGreaterThan(callsBefore);
     });
 
+    it('calls an exercise that never generated anything "no run yet" rather than "status unavailable"', () => {
+        render(null);
+
+        // The two states share a condition - there is no job - but only one of them is a problem the instructor can act on.
+        expect(testId('hyperion-run-status')!.textContent).toContain('artemisApp.hyperion.generation.status.notStarted');
+        expect(testId('hyperion-run-status')!.textContent).not.toContain('status.unknown');
+    });
+
+    it('reports the status as unavailable only when the server could not be asked', () => {
+        // A 4xx is not retried, so the facade gives up on the first response and the page has its answer synchronously.
+        service.response = throwError(() => new HttpErrorResponse({ status: 400 }));
+        fixture = TestBed.createComponent(HyperionRunPageComponent);
+        fixture.detectChanges();
+
+        expect(testId('hyperion-run-status')!.textContent).toContain('artemisApp.hyperion.generation.status.unknown');
+    });
+
     it('invites a first run when the exercise has never generated anything', () => {
         render(null);
 

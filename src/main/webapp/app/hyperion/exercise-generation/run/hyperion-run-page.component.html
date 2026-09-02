@@ -1,3 +1,10 @@
+<!--
+    Every heading here sizes and weights itself with `!` utilities, and has to. Bootstrap's unlayered `h1`-`h6` rules and
+    `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` both beat Tailwind's `@layer utilities`, so a plain
+    `text-lg font-semibold` on a heading is silently ignored - measured on this page, `text-xs` rendered at 21.6px and
+    nothing was semibold at all. The `!` is scoped to this feature deliberately: layering the legacy CSS would fix it
+    properly, and would restyle every heading in Artemis, which is not this pull request's to do.
+-->
 <div class="mx-auto flex max-w-4xl flex-col gap-4 p-4" data-testid="hyperion-run-page">
     <jhi-hyperion-run-header
         [exerciseTitle]="exercise()?.title"
@@ -34,14 +41,14 @@
         </tum-ui-message>
     } @else if (notStarted()) {
         <tum-ui-card data-testid="hyperion-run-not-started">
-            <h2 class="mt-0 mb-1 text-base font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.notStartedTitle"></h2>
+            <h2 class="mt-0 mb-1 text-base! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.run.notStartedTitle"></h2>
             <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.notStartedHint"></p>
         </tum-ui-card>
     } @else {
         <!-- One card per question the page answers: where is it, what did it cost, how did it end, what is there. -->
         <tum-ui-card>
             <section aria-labelledby="hyperion-run-progress-title">
-                <h2 id="hyperion-run-progress-title" class="mt-0 mb-3 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.progressTitle"></h2>
+                <h2 id="hyperion-run-progress-title" class="mt-0 mb-3 text-lg! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.run.progressTitle"></h2>
                 <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" />
             </section>
         </tum-ui-card>

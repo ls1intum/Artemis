@@ -2,9 +2,9 @@
     <div class="flex flex-wrap items-center justify-between gap-2">
         <!-- Two headings rather than one styled two ways: the code editor's panel nests its sections under h4. -->
         @if (compact()) {
-            <h4 id="hyperion-run-usage-title" class="m-0 text-xs font-semibold" jhiTranslate="artemisApp.hyperion.generation.usage.title"></h4>
+            <h4 id="hyperion-run-usage-title" class="m-0 text-xs! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.usage.title"></h4>
         } @else {
-            <h2 id="hyperion-run-usage-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.generation.usage.title"></h2>
+            <h2 id="hyperion-run-usage-title" class="m-0 text-lg! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.usage.title"></h2>
         }
         <!--
             The accounting state is never left to the reader to infer from the numbers: a running total, a sealed

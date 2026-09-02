@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, model, output, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +14,6 @@ import {
     TumUiMessageComponent,
     TumUiPanelComponent,
     TumUiSelectButtonComponent,
-    TumUiTagComponent,
 } from '@tumaet/ui-angular';
 
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -83,6 +82,7 @@ type IdentifierField = (typeof IDENTIFIER_CONFLICT_FIELDS)[string];
         TranslateDirective,
         DecimalPipe,
         FormsModule,
+        NgTemplateOutlet,
         TumUiButtonComponent,
         TumUiDialogComponent,
         TumUiInputDirective,
@@ -90,7 +90,6 @@ type IdentifierField = (typeof IDENTIFIER_CONFLICT_FIELDS)[string];
         TumUiMessageComponent,
         TumUiPanelComponent,
         TumUiSelectButtonComponent,
-        TumUiTagComponent,
     ],
 })
 export class HyperionBriefDialogComponent {

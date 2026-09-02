@@ -31,7 +31,7 @@
                     "titleError": "Use {{min}} to {{max}} characters, and only letters, digits, spaces, hyphens, and underscores.",
                     "titleTaken": "Another exercise in this course already has this title. Change it and generate again.",
                     "shortNameLabel": "Short name",
-                    "shortNameHint": "Names the Git repositories and the build plans of this exercise, so it stays with it for good. Start with a letter and use only letters and digits.",
+                    "shortNameHint": "Names this exercise’s Git repositories for good. Letters and digits, starting with a letter.",
                     "shortNamePlaceholder": "boundedstack",
                     "shortNameError": "Start with a letter and use {{min}} to {{max}} letters and digits, with nothing else in between.",
                     "shortNameTaken": "Another exercise already uses this short name. Change it and generate again.",
@@ -129,6 +129,7 @@
                     "partial": "Partly saved",
                     "failed": "Generation failed",
                     "cancelled": "Cancelled",
+                    "notStarted": "No run yet",
                     "unknown": "Status unavailable"
                 },
                 "run": {

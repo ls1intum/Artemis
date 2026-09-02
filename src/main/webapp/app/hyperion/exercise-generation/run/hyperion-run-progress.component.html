@@ -1,15 +1,10 @@
 <tum-ui-stepper [ariaLabel]="'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate" data-testid="hyperion-run-progress">
     @for (step of steps(); track step.key) {
         <tum-ui-step [state]="step.state" [label]="step.labelKey | artemisTranslate" [attr.data-stage]="step.key" [attr.data-state]="step.state">
-            @if (step.substeps; as substeps) {
-                <!-- The same visual language one level down, so the pieces of the design stage read as part of it. -->
-                <tum-ui-stepper class="mt-1 block" [ariaLabel]="step.labelKey | artemisTranslate" data-testid="hyperion-run-substeps">
-                    @for (substep of substeps; track substep.key) {
-                        <tum-ui-step [state]="substep.state" [label]="substep.labelKey | artemisTranslate" [attr.data-substep]="substep.key" [attr.data-state]="substep.state" />
-                    }
-                </tum-ui-stepper>
-            }
-
+            <!--
+                Before the substeps rather than after them: this is the stage's own clock, and a duration printed under the
+                last substep reads as that substep's, which is wrong whenever the substep it lands under has not started.
+            -->
             @if (timings()[step.key] || step.summaryKey) {
                 <!--
                     Not announced: the running stage's duration counts up once a second, and a live region here would
@@ -25,34 +20,49 @@
                 </p>
             }
 
-            @if (step.detail) {
-                <!-- One live region for the whole ladder: it sits on the current step, and only one step is ever current. -->
-                <div role="status" class="text-sm text-muted-color">
-                    @if (liveMessage(); as message) {
-                        <p class="m-0 wrap-anywhere">{{ message }}</p>
+            @if (step.substeps; as substeps) {
+                <!-- The same visual language one level down, so the pieces of the design stage read as part of it. -->
+                <tum-ui-stepper class="mt-1 block" [ariaLabel]="step.labelKey | artemisTranslate" data-testid="hyperion-run-substeps">
+                    @for (substep of substeps; track substep.key) {
+                        <tum-ui-step [state]="substep.state" [label]="substep.labelKey | artemisTranslate" [attr.data-substep]="substep.key" [attr.data-state]="substep.state" />
                     }
-                    @if (visibleRepairRound(); as round) {
-                        <p class="mt-1 mb-0 wrap-anywhere" data-testid="hyperion-run-repair-round">
-                            {{
-                                'artemisApp.hyperion.generation.live.repairRound'
-                                    | artemisTranslate
-                                        : {
-                                              round: round.round,
-                                              blocking: round.blocking,
-                                              advisory: round.advisory,
-                                              carriedOver: round.carriedOver,
-                                              drained: round.drained,
-                                              fresh: round.fresh,
-                                          }
-                            }}
-                        </p>
+                </tum-ui-stepper>
+            }
+
+            @if (step.detail) {
+                <!--
+                    Ruled off when the stage has substeps: what the agent is doing belongs to the stage, and without the rule
+                    it butts up against the last substep in the list and reads as that one's.
+                -->
+                <div [class.mt-3]="step.detailRuled" [class.border-t]="step.detailRuled" [class.pt-3]="step.detailRuled">
+                    <!-- One live region for the whole ladder: it sits on the current step, and only one step is ever current. -->
+                    <div role="status" class="text-sm text-muted-color">
+                        @if (liveMessage(); as message) {
+                            <p class="m-0 wrap-anywhere">{{ message }}</p>
+                        }
+                        @if (visibleRepairRound(); as round) {
+                            <p class="mt-1 mb-0 wrap-anywhere" data-testid="hyperion-run-repair-round">
+                                {{
+                                    'artemisApp.hyperion.generation.live.repairRound'
+                                        | artemisTranslate
+                                            : {
+                                                  round: round.round,
+                                                  blocking: round.blocking,
+                                                  advisory: round.advisory,
+                                                  carriedOver: round.carriedOver,
+                                                  drained: round.drained,
+                                                  fresh: round.fresh,
+                                              }
+                                }}
+                            </p>
+                        }
+                    </div>
+
+                    @if (activity(); as view) {
+                        <!-- Outside the live region above: its clock ticks every second and must not be announced. -->
+                        <jhi-hyperion-run-activity [view]="view" [density]="density()" />
                     }
                 </div>
-
-                @if (activity(); as view) {
-                    <!-- Outside the live region above: its clock ticks every second and must not be announced. -->
-                    <jhi-hyperion-run-activity [view]="view" [density]="density()" />
-                }
             }
         </tum-ui-step>
     }

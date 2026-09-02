@@ -31,7 +31,7 @@
                     "titleError": "Verwende {{min}} bis {{max}} Zeichen und nur Buchstaben, Ziffern, Leerzeichen, Bindestriche und Unterstriche.",
                     "titleTaken": "Eine andere Aufgabe in diesem Kurs hat bereits diesen Titel. Ändere ihn und generiere erneut.",
                     "shortNameLabel": "Kurzname",
-                    "shortNameHint": "Benennt die Git-Repositories und die Build-Pläne dieser Aufgabe und bleibt ihr dauerhaft erhalten. Beginne mit einem Buchstaben und verwende nur Buchstaben und Ziffern.",
+                    "shortNameHint": "Benennt die Git-Repositories dieser Aufgabe dauerhaft. Buchstaben und Ziffern, beginnend mit einem Buchstaben.",
                     "shortNamePlaceholder": "boundedstack",
                     "shortNameError": "Beginne mit einem Buchstaben und verwende {{min}} bis {{max}} Buchstaben und Ziffern, sonst nichts.",
                     "shortNameTaken": "Eine andere Aufgabe verwendet diesen Kurznamen bereits. Ändere ihn und generiere erneut.",
@@ -129,6 +129,7 @@
                     "partial": "Teilweise gespeichert",
                     "failed": "Generierung fehlgeschlagen",
                     "cancelled": "Abgebrochen",
+                    "notStarted": "Noch kein Durchlauf",
                     "unknown": "Status nicht verfügbar"
                 },
                 "run": {
