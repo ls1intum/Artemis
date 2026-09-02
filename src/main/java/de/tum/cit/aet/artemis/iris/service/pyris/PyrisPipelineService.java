@@ -261,7 +261,8 @@ public class PyrisPipelineService {
                         try {
                             if (pyrisJobService.getJob(jobToken) instanceof StruggleInterventionJob failedJob) {
                                 if ("confirm_close".equals(failedJob.intent())) {
-                                    irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(failedJob.exerciseId(), failedJob.episodeId()));
+                                    irisChatWebsocketService.sendStruggleEvent(user,
+                                            StruggleInterventionEventDTO.unresolvedClose(failedJob.exerciseId(), failedJob.episodeId(), null));
                                 }
                                 else {
                                     irisChatWebsocketService.sendStruggleEvent(user,

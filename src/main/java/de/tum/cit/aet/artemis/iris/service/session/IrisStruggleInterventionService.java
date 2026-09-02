@@ -448,6 +448,14 @@ public class IrisStruggleInterventionService {
      * holds inside that transaction: the row is inserted before its outcome, so the close is never gated away by its
      * own outcome write.
      *
+     * <p>
+     * {@code resolved=true} on the emitted event means a closing row and its {@code RECOVERED} outcome committed,
+     * not that Pyris said the episode was resolved. Every other path emits
+     * {@link StruggleInterventionEventDTO#unresolvedClose}, including the ones Pyris answered {@code resolved=true}
+     * for: a terminal episode, a locked write that found the episode terminal, a dropped append, and both quiet
+     * reasons. Forwarding the gate's verdict there let the client mark an episode recovered that carried no closing
+     * row and no outcome, and nothing later would have corrected it.
+     *
      * @param job          the struggle-intervention job (ids + episodeId + confirmReason)
      * @param statusUpdate the Pyris response payload
      */
@@ -464,8 +472,7 @@ public class IrisStruggleInterventionService {
                 log.warn("Unexpected confirmReason '{}' on confirm_close for episodeId={} exercise={} user={}, failing closed to parked_progress semantics", confirmReason,
                         episodeId, job.exerciseId(), job.userId());
             }
-            irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null,
-                    episodeId, resolved, null, null, statusUpdate.rationale()));
+            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
             return;
         }
 
@@ -473,8 +480,7 @@ public class IrisStruggleInterventionService {
         // student DISMISSED mid-flight), skip persist and emit a noop event. This read is the cheap fast path; the
         // authoritative one runs under the episode's registry lock in the same transaction as the write.
         if (episodeId != null && isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
-            irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null,
-                    episodeId, resolved, null, null, statusUpdate.rationale()));
+            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
             return;
         }
 
@@ -494,27 +500,22 @@ public class IrisStruggleInterventionService {
             // was not written yet. Outcome-last still holds INSIDE the transaction: the row is inserted before the
             // outcome is recorded, so the close can never be gated away by its own outcome.
             var persisted = persistProactiveMessage(user, job.exerciseId(), closingSentence, episodeId, IrisProactiveOutcome.RECOVERED);
-            if (persisted != null && persisted.terminal()) {
-                // The episode went terminal between the gate above and the locked write, so nothing was persisted and
-                // nothing was recovered. Reporting resolved=true here would tell the client a close succeeded that
-                // never happened; emit the same noop the gate emits instead.
-                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null,
-                        episodeId, resolved, null, null, statusUpdate.rationale()));
+            if (persisted == null || persisted.terminal()) {
+                // Nothing committed: either the episode went terminal between the gate above and the locked write, or
+                // the session was no longer bound to this exercise and the append was dropped. Neither case wrote a
+                // closing row or a RECOVERED outcome, so neither may report resolved=true - the client would mark an
+                // episode recovered that the server never closed, and no later run would correct it.
+                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
                 return;
             }
-            Long messageId = null;
-            if (persisted != null) {
-                // Broadcast the committed row so the webview receives it through the single chat-ws transport.
-                irisChatWebsocketService.sendMessage(persisted.session(), persisted.saved(), terminalRunStateOf(statusUpdate), statusUpdate.error());
-                messageId = persisted.saved().getId();
-            }
-            irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, messageId, null, null, null,
-                    null, episodeId, true, closingSentence, episodeLabel, statusUpdate.rationale()));
+            // Broadcast the committed row so the webview receives it through the single chat-ws transport.
+            irisChatWebsocketService.sendMessage(persisted.session(), persisted.saved(), terminalRunStateOf(statusUpdate), statusUpdate.error());
+            irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, persisted.saved().getId(), null,
+                    null, null, null, episodeId, true, closingSentence, episodeLabel, statusUpdate.rationale()));
         }
         else {
             // progress resolved=false: quiet (slot stays TAKEN, no offer posted, no outcome).
-            irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null,
-                    episodeId, false, null, null, statusUpdate.rationale()));
+            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, statusUpdate.rationale()));
         }
     }
 
@@ -651,7 +652,7 @@ public class IrisStruggleInterventionService {
             var user = userRepository.findByIdElseThrow(job.userId());
             String episodeId = usableEpisodeId(job.episodeId());
             if ("confirm_close".equals(job.intent())) {
-                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId));
+                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, null));
             }
             else {
                 irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), null, episodeId, null));

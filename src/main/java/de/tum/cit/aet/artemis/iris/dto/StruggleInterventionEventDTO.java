@@ -54,13 +54,17 @@ public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullab
     /**
      * The bare completion frame for a {@code confirm_close} run that resolved nothing, the close-mode counterpart to
      * {@link #silentDecide}. {@code resolved=false} rather than null: a run that ended without resolving must not
-     * read as a resolved episode.
+     * read as a resolved episode. Every confirm_close path that commits neither a closing row nor a {@code RECOVERED}
+     * outcome goes through here, including the ones where Pyris itself answered {@code resolved=true}: the gate's
+     * verdict is not the same fact as a committed close, and forwarding it told the client an episode had recovered
+     * that carried no closing row and no outcome.
      *
      * @param exerciseId the exercise the run belongs to
      * @param episodeId  the client-allocated episode id, or null when the run carried none
+     * @param rationale  the gate's reason, forwarded for the client eval log; null when the run produced none
      * @return the unresolved completion event
      */
-    public static StruggleInterventionEventDTO unresolvedClose(long exerciseId, @Nullable String episodeId) {
-        return new StruggleInterventionEventDTO(exerciseId, "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null, null);
+    public static StruggleInterventionEventDTO unresolvedClose(long exerciseId, @Nullable String episodeId, @Nullable String rationale) {
+        return new StruggleInterventionEventDTO(exerciseId, "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null, rationale);
     }
 }

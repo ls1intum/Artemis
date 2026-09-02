@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
@@ -64,7 +66,13 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
  * <li>confirm_close parked_progress (either result): persist nothing, no outcome, bare completion event (no messageId).</li>
  * <li>confirm_close null confirmReason: fail-closed to parked_progress semantics.</li>
  * <li>confirm_close already-terminal episode: persist skipped, noop event (delivered reasons only).</li>
+ * <li>confirm_close terminal only under the registry lock: persist skipped, unresolved event.</li>
  * </ul>
+ *
+ * <p>
+ * Every case that commits neither a closing row nor a {@code RECOVERED} outcome asserts {@code resolved=false},
+ * including the ones where Pyris answered {@code resolved=true}: the event reports what the server committed, not
+ * what the gate concluded.
  */
 @ExtendWith(MockitoExtension.class)
 class IrisStruggleInterventionConfirmCloseTest {
@@ -225,8 +233,10 @@ class IrisStruggleInterventionConfirmCloseTest {
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         // Terminal gate NOT consulted (no findEpisodeOutcomes call for parked_progress)
         verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong(), anyLong());
-        // Bare completion event only (no messageId, no closingSentence, no episodeLabel)
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && e.messageId() == null
+        // Bare completion event only (no messageId, no closingSentence, no episodeLabel). resolved=false even though
+        // Pyris answered true: parked_progress writes neither a closing row nor a RECOVERED outcome, so forwarding the
+        // gate's verdict would tell the client an episode had recovered that the server never closed.
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null
                 && e.closingSentence() == null && Objects.equals(e.episodeId(), "ep-cc")));
     }
 
@@ -254,7 +264,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
         verify(irisMessageRepository, never()).findEpisodeOutcomes(any(), anyLong(), anyLong());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && e.messageId() == null));
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
     }
 
     // --- confirm_close terminal gate ---
@@ -269,7 +279,29 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && e.messageId() == null));
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
+    }
+
+    @Test
+    void confirmClose_terminalOnlyUnderTheLock_reportsUnresolved() {
+        // The fast gate passes (no outcome on the message rows) but the registry row already carries one, so the
+        // locked check inside the write transaction finds the episode terminal and nothing is persisted. This is the
+        // window the fast gate cannot cover, and it must report resolved=false like the gate does.
+        var session = exerciseSession(42L);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
+        when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
+        var episode = new IrisProactiveEpisode();
+        episode.setUserId(3L);
+        episode.setExerciseId(42L);
+        episode.setEpisodeId("ep-cc");
+        episode.setOutcome(IrisProactiveOutcome.DISMISSED);
+        when(irisProactiveEpisodeRepository.findForUpdate(3L, 42L, "ep-cc")).thenReturn(Optional.of(episode));
+
+        service.handleConfirmClose(progressJob, closeUpdate(true, "Closing", "Done", null));
+
+        verify(irisMessageService, never()).saveMessage(any(), any(), any());
+        verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
     }
 
     // --- confirm_close persist-failure resilience (Fix 2) ---
@@ -279,6 +311,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         // Fix 2: a permanent persist failure on confirm_close must NOT propagate out of the handler - that would skip
         // sendStruggleEvent and leave the client's in-flight confirm_close (and the single-flight slot) stuck. The
         // completion event must still be emitted (messageId=null) and RECOVERED must NOT be written (no row to anchor).
+        // It carries resolved=false: no closing row committed, so the client must not mark the episode recovered.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisMessageRepository.findEpisodeOutcomes("ep-cc", 3L, 42L)).thenReturn(List.of());
@@ -289,7 +322,7 @@ class IrisStruggleInterventionConfirmCloseTest {
 
         verify(irisChatWebsocketService, never()).sendMessage(any(), any(), any(), any());
         verify(irisMessageRepository, never()).setProactiveOutcomeIfNull(anyLong(), any());
-        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && e.messageId() == null));
+        verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), false) && e.messageId() == null));
     }
 
     // --- helpers ---
