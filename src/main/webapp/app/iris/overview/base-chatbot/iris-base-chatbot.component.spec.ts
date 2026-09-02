@@ -2547,6 +2547,11 @@ describe('IrisBaseChatbotComponent', () => {
                 fixture.detectChanges();
             });
 
+            // Restore real timers even if an assertion throws before a test's own vi.useRealTimers() runs
+            afterEach(() => {
+                vi.useRealTimers();
+            });
+
             it('should detect exercise mode', () => {
                 expect(component.isExerciseOrLectureMode()).toBeTruthy();
             });
@@ -2625,6 +2630,44 @@ describe('IrisBaseChatbotComponent', () => {
                 vi.advanceTimersByTime(PLACEHOLDER_FADE_DURATION_MS);
                 expect(component.placeholderIndex()).toBe((indexAfterBlur + 1) % component.interpolatedLabels().length);
                 expect(component.placeholderVisible()).toBe(true);
+
+                vi.useRealTimers();
+            });
+
+            it('should keep cycling placeholder labels while the textarea is focused and empty', () => {
+                vi.useFakeTimers();
+                fixture.componentRef.setInput('layout', 'widget');
+                fixture.detectChanges();
+
+                component.onTextareaFocus();
+                fixture.detectChanges();
+                const indexAtFocus = component.placeholderIndex();
+
+                // While focused and empty the label still advances on the next interval
+                vi.advanceTimersByTime(PLACEHOLDER_CYCLE_INTERVAL_MS + PLACEHOLDER_FADE_DURATION_MS);
+                expect(component.placeholderIndex()).toBe((indexAtFocus + 1) % component.interpolatedLabels().length);
+
+                vi.useRealTimers();
+            });
+
+            it('should resume cycling when text is cleared while the textarea stays focused', () => {
+                vi.useFakeTimers();
+                fixture.componentRef.setInput('layout', 'widget');
+                fixture.detectChanges();
+
+                // Focus and type: cycling halts and the placeholder is not shown
+                component.onTextareaFocus();
+                component.newMessageTextContent.set('some typed text');
+                fixture.detectChanges();
+                const indexWhileTyping = component.placeholderIndex();
+                vi.advanceTimersByTime(PLACEHOLDER_CYCLE_INTERVAL_MS + PLACEHOLDER_FADE_DURATION_MS);
+                expect(component.placeholderIndex()).toBe(indexWhileTyping);
+
+                // Clear the text (still focused): cycling resumes and the label advances again
+                component.newMessageTextContent.set('');
+                fixture.detectChanges();
+                vi.advanceTimersByTime(PLACEHOLDER_CYCLE_INTERVAL_MS + PLACEHOLDER_FADE_DURATION_MS);
+                expect(component.placeholderIndex()).toBe((indexWhileTyping + 1) % component.interpolatedLabels().length);
 
                 vi.useRealTimers();
             });
@@ -2773,10 +2816,64 @@ describe('IrisBaseChatbotComponent', () => {
                 expect(component.ghostText()).toBe(label.substring(10));
             });
 
-            it('should clear ghost text when input is empty', () => {
+            it('should clear ghost text when input is empty and textarea is not focused', () => {
                 component.newMessageTextContent.set('');
+                component.isFocused.set(false);
                 fixture.detectChanges();
                 expect(component.ghostText()).toBe('');
+            });
+
+            it('should offer the current placeholder as ghost text when input is empty and textarea is focused', () => {
+                // The rotating placeholder is only active outside the full-page 'client' layout
+                fixture.componentRef.setInput('layout', 'widget');
+                component.newMessageTextContent.set('');
+                component.isFocused.set(true);
+                fixture.detectChanges();
+                expect(component.shouldUseRotatingPlaceholder()).toBe(true);
+                expect(component.ghostText()).toBe(component.currentPlaceholder());
+                // The native placeholder is suppressed so the phrase is not rendered twice
+                expect(component.textareaPlaceholder()).toBe('');
+            });
+
+            it('should accept the placeholder ghost text on Tab when input is empty and focused', () => {
+                fixture.componentRef.setInput('layout', 'widget');
+                component.newMessageTextContent.set('');
+                component.isFocused.set(true);
+                fixture.detectChanges();
+                const placeholder = component.currentPlaceholder();
+                expect(placeholder).not.toBe('');
+
+                const event = new KeyboardEvent('keydown', { key: 'Tab' });
+                vi.spyOn(event, 'preventDefault');
+                component.handleKey(event);
+
+                expect(event.preventDefault).toHaveBeenCalled();
+                expect(component.newMessageTextContent()).toBe(placeholder);
+            });
+
+            it('should keep completing the displayed placeholder after typing its first character', () => {
+                // Regression: with the field empty and focused, the displayed rotating placeholder is
+                // offered as the suggestion. Typing its first character(s) must keep completing that
+                // exact phrase, not jump to a different label sharing the same prefix (labels is
+                // shuffled and several phrases can start with the same word).
+                fixture.componentRef.setInput('layout', 'widget');
+                component.newMessageTextContent.set('');
+                component.isFocused.set(true);
+                fixture.detectChanges();
+                const displayedPhrase = component.currentPlaceholder();
+                expect(displayedPhrase).not.toBe('');
+
+                // Type a prefix that several labels share (the first word of the displayed phrase).
+                const firstWord = displayedPhrase.split(' ')[0];
+                // Guard the regression is meaningful: more than one label starts with this word.
+                const sharedPrefixLabels = component.interpolatedLabels().filter((label) => label.toLowerCase().startsWith(firstWord.toLowerCase()));
+                if (sharedPrefixLabels.length > 1) {
+                    const prefix = displayedPhrase.substring(0, firstWord.length);
+                    component.newMessageTextContent.set(prefix);
+                    fixture.detectChanges();
+                    // Completion still resolves to the displayed phrase, not another matching label.
+                    expect(prefix + component.ghostText()).toBe(displayedPhrase);
+                }
             });
 
             it('should accept ghost text on Tab key', () => {
