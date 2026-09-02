@@ -170,8 +170,10 @@ public class VariantAgentLoopService {
     /**
      * Reads the total token count from the response metadata; 0 when the provider reported no usage.
      * NOTE: with the internal Spring AI tool-execution loop, the returned metadata reflects the final call of the
-     * round — a lower bound, not the exact sum over all internal tool-call iterations. Good enough for budget
-     * enforcement and telemetry; exact per-iteration accounting would require disabling internal tool execution.
+     * round — a lower bound, not the exact sum over all internal tool-call iterations, since exact per-iteration
+     * accounting would require disabling internal tool execution. That is why the token budget is a
+     * between-rounds signal only: what bounds a round's model exchanges is each toolset's hard tool-call stop
+     * (see {@code VariantToolset.withTiming}), and what bounds a job is that stop times the verify attempts.
      */
     private static long extractTotalTokens(@Nullable ChatResponse chatResponse) {
         if (chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {

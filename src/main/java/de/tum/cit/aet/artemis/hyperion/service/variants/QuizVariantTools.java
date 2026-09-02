@@ -42,8 +42,9 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  * as the tool result. DnD background/item images are carried over unchanged — image paths must not be added
  * or altered.
  *
- * Cancellation: once the cancel flag is set, every tool short-circuits with an instruction to stop; the
- * pipeline performs the actual abort at the next round boundary.
+ * Cancellation: once the cancel flag is set, every tool short-circuits with an instruction to stop and the
+ * round's internal tool loop ends after that result; the pipeline performs the actual abort at the next round
+ * boundary.
  */
 class QuizVariantTools implements VariantToolset {
 
@@ -56,6 +57,15 @@ class QuizVariantTools implements VariantToolset {
      * {@code finish} returns the same short directive to call finish, so runaway rounds converge.
      */
     private static final int TOOL_CALL_BUDGET = 25;
+
+    /**
+     * Grace calls granted past {@link #TOOL_CALL_BUDGET} before the round is stopped outright: the budget
+     * notice is advisory — only {@code finish} (or any {@code returnDirect} result) ends Spring AI's internal
+     * loop, so a model that keeps calling tools instead would never stop. Past the hard stop every tool result
+     * is returned directly (see {@link VariantToolset#withTiming}), which ends the round deterministically. The
+     * grace leaves the model room to call finish itself first, so a normal round never reaches this.
+     */
+    private static final int TOOL_CALL_GRACE_CALLS = 10;
 
     private final long quizExerciseId;
 
@@ -76,6 +86,9 @@ class QuizVariantTools implements VariantToolset {
 
     private final ConcurrentHashMap<String, VariantJob.CallStat> toolCallStats = new ConcurrentHashMap<>();
 
+    /** Set by {@link #stopNotice()} once the round must end now — cancelled, or past the hard tool-call stop. */
+    private volatile boolean roundOver;
+
     QuizVariantTools(long quizExerciseId, String jobId, ExerciseVariantJobService jobService, QuizExerciseRepository quizExerciseRepository,
             QuizExerciseService quizExerciseService, ObjectMapper objectMapper) {
         this.quizExerciseId = quizExerciseId;
@@ -88,7 +101,7 @@ class QuizVariantTools implements VariantToolset {
 
     @Override
     public List<ToolCallback> toolCallbacks() {
-        return VariantToolset.withTiming(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks(), toolCallStats);
+        return VariantToolset.withTiming(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks(), toolCallStats, () -> roundOver);
     }
 
     @Override
@@ -440,15 +453,22 @@ class QuizVariantTools implements VariantToolset {
 
     /**
      * Combined stop check for cancellation and the per-round tool budget — every tool except finish
-     * short-circuits with the returned directive.
+     * short-circuits with the returned directive. A model that ignores the directive is stopped by
+     * {@link #TOOL_CALL_GRACE_CALLS} calls later; cancellation ends the round the same way, since nothing it
+     * produces from here on is kept.
      */
     private String stopNotice() {
         // Every tool call is a liveness signal for the long internal agent round (see the job's staleness handling).
         jobService.heartbeat(jobId);
         if (jobService.isCancelRequested(jobId)) {
+            roundOver = true;
             return "The variant generation job was CANCELLED. Do not call any more tools; the round is over and all further work will be discarded.";
         }
-        if (toolCallsUsed.incrementAndGet() > TOOL_CALL_BUDGET) {
+        int used = toolCallsUsed.incrementAndGet();
+        if (used > TOOL_CALL_BUDGET) {
+            if (used > TOOL_CALL_BUDGET + TOOL_CALL_GRACE_CALLS) {
+                roundOver = true;
+            }
             return "TOOL BUDGET EXHAUSTED for this round (" + TOOL_CALL_BUDGET + " calls). Do not call any other tool. Call finish NOW with a short summary of what you changed.";
         }
         return null;

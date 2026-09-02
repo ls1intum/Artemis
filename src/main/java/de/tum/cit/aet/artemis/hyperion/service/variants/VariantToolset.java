@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.model.ToolContext;
@@ -39,12 +40,19 @@ public interface VariantToolset {
      * call already passes through (the callback Spring AI actually invokes), independent of what the tool itself
      * does internally.
      *
+     * The same wrapper carries the round's hard stop: Spring AI's internal tool loop only ends when no tool is
+     * called or a called tool is {@code returnDirect}, so a toolset's own "budget exhausted, call finish"
+     * notice is advisory — a model that keeps calling tools instead of {@code finish} would loop on. Reporting
+     * {@code returnDirect} for every tool once {@code roundOver} holds ends that loop deterministically, and
+     * the metadata is read per call, so the toolset can flip the condition mid-round.
+     *
      * @param callbacks the raw callbacks from {@code MethodToolCallbackProvider}
      * @param stats     mutable accumulator, mutated in place as calls happen; a {@link ConcurrentHashMap} because
      *                      Spring AI may invoke callbacks concurrently for a multi-call model turn
-     * @return the same callbacks, each wrapped with timing
+     * @param roundOver the toolset's "this round must end now" condition (hard tool-call stop, cancellation)
+     * @return the same callbacks, each wrapped with timing and the hard stop
      */
-    static List<ToolCallback> withTiming(ToolCallback[] callbacks, ConcurrentHashMap<String, VariantJob.CallStat> stats) {
+    static List<ToolCallback> withTiming(ToolCallback[] callbacks, ConcurrentHashMap<String, VariantJob.CallStat> stats, BooleanSupplier roundOver) {
         List<ToolCallback> wrapped = new ArrayList<>();
         for (ToolCallback callback : callbacks) {
             wrapped.add(new ToolCallback() {
@@ -56,7 +64,7 @@ public interface VariantToolset {
 
                 @Override
                 public ToolMetadata getToolMetadata() {
-                    return callback.getToolMetadata();
+                    return roundOver.getAsBoolean() ? ToolMetadata.builder().returnDirect(true).build() : callback.getToolMetadata();
                 }
 
                 @Override

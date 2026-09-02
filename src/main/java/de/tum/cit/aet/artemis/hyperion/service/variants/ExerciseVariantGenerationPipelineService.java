@@ -70,8 +70,8 @@ public class ExerciseVariantGenerationPipelineService {
      * Token budget for the TRANSFORMING/REPAIRING sequence, tracked via LLMTokenUsageService and checked BETWEEN
      * rounds. Not a hard cap: the figure a round reports is a lower bound (see
      * {@code VariantAgentLoopService.extractTotalTokens} — Spring AI's internal tool loop reports usage for its
-     * final exchange only). What actually bounds a job is the per-round {@code TOOL_CALL_BUDGET} of each toolset,
-     * which short-circuits every tool but {@code finish} once it is used up, times {@link #MAX_VERIFY_ATTEMPTS}.
+     * final exchange only). What actually bounds a job is the per-round tool-call budget of each toolset, whose
+     * hard stop ends the round's internal loop outright once it is exceeded, times {@link #MAX_VERIFY_ATTEMPTS}.
      */
     private static final long TOKEN_BUDGET = 500_000;
 

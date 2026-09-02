@@ -81,6 +81,15 @@ class ProgrammingVariantTools implements VariantToolset {
     /** Per-round tool-call budget (see {@link #stopNotice()}); higher than the quiz budget — repo work needs more calls. */
     private static final int TOOL_CALL_BUDGET = 60;
 
+    /**
+     * Grace calls granted past {@link #TOOL_CALL_BUDGET} before the round is stopped outright: the budget
+     * notice is advisory — only {@code finish} (or any {@code returnDirect} result) ends Spring AI's internal
+     * loop, so a model that keeps calling tools instead would never stop. Past the hard stop every tool result
+     * is returned directly (see {@link VariantToolset#withTiming}), which ends the round deterministically. The
+     * grace leaves the model room to call finish itself first, so a normal round never reaches this.
+     */
+    private static final int TOOL_CALL_GRACE_CALLS = 10;
+
     /** Character budget for {@link #prefetchContext}'s file-content section — bounds the prompt tokens it adds. */
     private static final int MAX_PREFETCH_CONTENT_CHARS = 30_000;
 
@@ -142,6 +151,9 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private final ConcurrentHashMap<String, VariantJob.CallStat> toolCallStats = new ConcurrentHashMap<>();
 
+    /** Set by {@link #stopNotice()} once the round must end now — cancelled, or past the hard tool-call stop. */
+    private volatile boolean roundOver;
+
     ProgrammingVariantTools(ProgrammingExercise exercise, User user, String jobId, ExerciseVariantJobService jobService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch,
             ProgrammingExercise sourceExercise, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
@@ -162,7 +174,7 @@ class ProgrammingVariantTools implements VariantToolset {
 
     @Override
     public List<ToolCallback> toolCallbacks() {
-        return VariantToolset.withTiming(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks(), toolCallStats);
+        return VariantToolset.withTiming(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks(), toolCallStats, () -> roundOver);
     }
 
     @Override
@@ -860,15 +872,22 @@ class ProgrammingVariantTools implements VariantToolset {
      * with the returned directive. Short-circuit instead of throwing: Spring AI returns tool exceptions to the
      * model as ordinary tool results, so an exception cannot abort the round; the pipeline performs the actual
      * abort at the next round boundary. The budget exists because Spring AI's internal tool loop has no iteration
-     * cap, and a model that keeps re-reading and re-reasoning would loop indefinitely.
+     * cap, and a model that keeps re-reading and re-reasoning would loop indefinitely. A model that ignores the
+     * directive is stopped by {@link #TOOL_CALL_GRACE_CALLS} calls later; cancellation ends the round the same
+     * way, since nothing it produces from here on is kept.
      */
     private String stopNotice() {
         // Every tool call is a liveness signal for the long internal agent round (see the job's staleness handling).
         jobService.heartbeat(jobId);
         if (jobService.isCancelRequested(jobId)) {
+            roundOver = true;
             return "The variant generation job was CANCELLED. Do not call any more tools; the round is over and all further work will be discarded.";
         }
-        if (toolCallsUsed.incrementAndGet() > TOOL_CALL_BUDGET) {
+        int used = toolCallsUsed.incrementAndGet();
+        if (used > TOOL_CALL_BUDGET) {
+            if (used > TOOL_CALL_BUDGET + TOOL_CALL_GRACE_CALLS) {
+                roundOver = true;
+            }
             return "TOOL BUDGET EXHAUSTED for this round (" + TOOL_CALL_BUDGET + " calls). Do not call any other tool. Call finish NOW with a short summary of what you changed.";
         }
         return null;
