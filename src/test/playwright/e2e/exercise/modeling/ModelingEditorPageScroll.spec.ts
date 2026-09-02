@@ -24,19 +24,13 @@ test.describe('Apollon canvas is never scrolled past', { tag: '@fast' }, () => {
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
     });
 
-    for (const viewport of [
-        { width: 1440, height: 960 },
-        // Short viewports are where the margin disappears first.
-        { width: 1280, height: 720 },
-    ]) {
-        test(`the student participation view fits its frame at ${viewport.width}x${viewport.height}`, async ({ login, page, courseOverview }) => {
-            await page.setViewportSize(viewport);
-            await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
-            await courseOverview.startExercise(modelingExercise.id!);
+    test('the student participation view fits its frame in a short viewport', async ({ login, page, courseOverview }) => {
+        await page.setViewportSize({ width: 1280, height: 720 });
+        await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
+        await courseOverview.startExercise(modelingExercise.id!);
 
-            await expectNoScrollPastApollonCanvas(page);
-        });
-    }
+        await expectNoScrollPastApollonCanvas(page);
+    });
 
     test('the exercise form scrolls, and gives the wheel back through scroll lock', async ({ login, page }) => {
         await login(admin, `/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);

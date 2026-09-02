@@ -15,7 +15,7 @@ class Config:
     are_files: bool
     german_translations: Path
     english_translations: Path
-    ignored_german_only_prefixes: list[str]
+    ignored_german_only_prefixes: dict[str, str]
 
 
 @dataclass
@@ -110,7 +110,7 @@ def _config_from_args(argv: list[str]) -> Config:
         are_files=are_files,
         german_translations=german_translations,
         english_translations=english_translations,
-        ignored_german_only_prefixes=args.ignore_german_only_prefix,
+        ignored_german_only_prefixes=dict(entry.split(":", 1) for entry in args.ignore_german_only_prefix),
     )
 
 
@@ -141,7 +141,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 
 def _compare_directories(
-    german_dir: Path, english_dir: Path, ignored_german_only_prefixes: list[str]
+    german_dir: Path, english_dir: Path, ignored_german_only_prefixes: dict[str, str]
 ) -> Diff:
     def json_files(directory: Path) -> set[Path]:
         return {
@@ -191,7 +191,7 @@ def _find_file_pairs(
 
 
 def _compare_files(
-    german: Path, english: Path, ignored_german_only_prefixes: list[str]
+    german: Path, english: Path, ignored_german_only_prefixes: dict[str, str]
 ) -> Diff:
     german_keys = _without_ignored_german_only_prefixes(
         _flat_json_keys(german), german.name, ignored_german_only_prefixes
@@ -207,21 +207,15 @@ def _compare_files(
 
 
 def _without_ignored_german_only_prefixes(
-    keys: set[str], filename: str, ignored_prefixes: list[str]
+    keys: set[str], filename: str, ignored_prefixes: dict[str, str]
 ) -> set[str]:
-    prefixes_for_file = [
-        prefix
-        for entry in ignored_prefixes
-        for scoped_filename, separator, prefix in [entry.partition(":")]
-        if separator and scoped_filename == filename
-    ]
+    prefix = ignored_prefixes.get(filename)
+    if prefix is None:
+        return keys
     return {
         key
         for key in keys
-        if not any(
-            key == prefix or key.startswith(f"{prefix}.")
-            for prefix in prefixes_for_file
-        )
+        if key != prefix and not key.startswith(f"{prefix}.")
     }
 
 

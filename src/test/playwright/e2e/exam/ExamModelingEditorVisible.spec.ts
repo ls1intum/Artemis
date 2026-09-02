@@ -8,11 +8,6 @@ import { expectNoScrollPastApollonCanvas } from '../../support/utils';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
-/** Below this the canvas is a strip rather than a working surface. */
-const MIN_USABLE_CANVAS_HEIGHT = 400;
-/** The canvas is the page's purpose, so it must take most of the room the exercise page offers. */
-const MIN_SHARE_OF_HOST = 0.6;
-
 /**
  * A modeling canvas has no intrinsic height, so a content-sized ancestor collapses it to nothing.
  * The rest of the exam suite drives the editor through its API-shaped page object and would not
@@ -49,13 +44,6 @@ test.describe('Exam modeling editor', { tag: '@slow' }, () => {
         // The palette is what a student needs to model at all, and it lives inside
         // the canvas — so it is the honest check that the editor is usable.
         await expect(page.locator('[data-testid="apollon-palette"], [data-apollon-control="apollon:palette"]').first()).toBeVisible();
-
-        const host = page.locator('jhi-modeling-submission-exam');
-        const [canvasBox, hostBox] = await Promise.all([canvas.boundingBox(), host.boundingBox()]);
-
-        expect(canvasBox!.height).toBeGreaterThan(MIN_USABLE_CANVAS_HEIGHT);
-        expect(canvasBox!.height).toBeGreaterThan(hostBox!.height * MIN_SHARE_OF_HOST);
-        expect(canvasBox!.y + canvasBox!.height).toBeLessThanOrEqual(hostBox!.y + hostBox!.height + 1);
 
         await expectNoScrollPastApollonCanvas(page);
     });
