@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -116,24 +117,25 @@ public class ContinuousPlagiarismControlService {
 
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, exerciseRepository);
 
-            var result = executeChecksForExerciseSilencingExceptions(exercise);
-            updatePlagiarismCases(result, exercise, author.get());
+            var outcome = executeChecksForExerciseSilencingExceptions(exercise);
+            updatePlagiarismCases(outcome.result(), exercise, author.get());
 
             log.info("Finished continuous plagiarism control for exercise: exerciseId={}, elapsed={}.", exercise.getId(), TimeLogUtil.formatDurationFrom(startTime));
 
             // Nothing else makes this job visible: it is purely scheduled, so without this the admin page cannot tell a
-            // deployment that relies on continuous plagiarism control from one where nobody ever switched it on. Recorded
-            // as a success unconditionally, because the method above silences per exercise failures on purpose so the run
-            // continues for the other exercises; those failures are in the log, not here.
-            recordUsage(exercise, (System.nanoTime() - startTime) / 1_000_000);
+            // deployment that relies on continuous plagiarism control from one where nobody ever switched it on. A check
+            // that threw is reported as a failure even though the exception was silenced to keep the run going, because
+            // otherwise the error rate of this feature would be zero by construction and a broken JPlag setup would show
+            // up as healthy usage.
+            recordUsage(exercise, (System.nanoTime() - startTime) / 1_000_000, outcome.failed());
         });
 
         log.debug("Continuous plagiarism control done.");
     }
 
-    private void recordUsage(Exercise exercise, long durationMs) {
+    private void recordUsage(Exercise exercise, long durationMs, boolean failed) {
         featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, PLAGIARISM_MODULE,
-                "continuous-plagiarism-control/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT), Role.ANONYMOUS, false, durationMs));
+                "continuous-plagiarism-control/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT), Role.ANONYMOUS, failed, durationMs));
     }
 
     /**
@@ -141,11 +143,13 @@ public class ContinuousPlagiarismControlService {
      * In case any exception is thrown, the method catches it, logs it and removes any plagiarism results associated with the exercise.
      *
      * @param exercise the exercise to perform plagiarism checks on
-     * @return result of plagiarism checks or null if any exception was thrown
+     * @return the result of the checks and whether they failed. The absence of a result is deliberately not the same thing
+     *         as a failure: modeling, file upload and quiz exercises have no plagiarism check at all and legitimately
+     *         produce none, so deriving the failure from a null result would report every one of them as broken.
      */
-    private PlagiarismResult executeChecksForExerciseSilencingExceptions(Exercise exercise) {
+    private CheckOutcome executeChecksForExerciseSilencingExceptions(Exercise exercise) {
         try {
-            return executeChecksForExercise(exercise);
+            return new CheckOutcome(executeChecksForExercise(exercise), false);
         }
         catch (Exception e) {
             // Catch all exception to keep cpc going for other exercises
@@ -160,8 +164,17 @@ public class ContinuousPlagiarismControlService {
             // Clean up partial or stale plagiarism results
             plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 
-            return null;
+            return new CheckOutcome(null, true);
         }
+    }
+
+    /**
+     * What the plagiarism check of one exercise produced.
+     *
+     * @param result the plagiarism result, null when the check produced none or the exercise type has no check at all
+     * @param failed whether the check threw and the exception was silenced to keep the run going for the other exercises
+     */
+    private record CheckOutcome(@Nullable PlagiarismResult result, boolean failed) {
     }
 
     private PlagiarismResult executeChecksForExercise(Exercise exercise) throws Exception {
@@ -172,7 +185,7 @@ public class ContinuousPlagiarismControlService {
         };
     }
 
-    private void updatePlagiarismCases(PlagiarismResult result, Exercise exercise, User author) {
+    private void updatePlagiarismCases(@Nullable PlagiarismResult result, Exercise exercise, User author) {
         if (result != null) {
             addCurrentComparisonsToPlagiarismCases(result, author);
         }
