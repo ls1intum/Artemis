@@ -245,17 +245,20 @@ public class CourseService {
     }
 
     /**
-     * Get all courses with exercises (filtered for given user)
+     * Gets the courses displayed on the consolidated dashboard, including their exercises. Active courses are visible
+     * to every enrolled user; courses that have not started yet are additionally visible to their management users.
      *
-     * @param user the user entity
-     * @return an unmodifiable list of all courses including exercises for the user
+     * @param user the user for whom dashboard visibility is evaluated
+     * @return the dashboard courses including their exercises
      */
-    public Set<Course> findAllActiveWithExercisesForUser(User user) {
+    public Set<Course> findAllForDashboardWithExercisesForUser(User user) {
         long start = System.nanoTime();
+        var now = ZonedDateTime.now();
 
-        // Admins see every active course — no per-course visibility check needed since isAdmin always returns true.
-        var userVisibleCourses = (authCheckService.isAdmin(user) ? courseRepository.findAllActive().stream()
-                : courseRepository.findAllActiveWhereUserHasAnyRole(user.getId(), ZonedDateTime.now()).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
+        // Management users must be able to prepare courses before their start date. Students continue to see only active courses.
+        // Admins can manage every course, while non-admins only receive future courses in which they hold a management role.
+        var userVisibleCourses = (authCheckService.isAdmin(user) ? courseRepository.findAllNotEnded(now).stream()
+                : courseRepository.findAllForDashboardWhereUserHasAnyRole(user.getId(), now).stream()).filter(Objects::nonNull).collect(Collectors.toSet());
 
         if (log.isDebugEnabled()) {
             log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));

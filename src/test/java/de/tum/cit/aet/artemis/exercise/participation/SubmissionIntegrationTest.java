@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.participation;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -68,12 +69,12 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result1);
         submission.addResult(result2);
@@ -96,15 +97,15 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result2);
         submission = submissionRepository.save(submission);
@@ -126,15 +127,15 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         submission = submissionRepository.save(submission);
 
         Result result1 = new Result().assessmentType(assessmentType).score(100D).rated(true).exerciseId(textExercise.getId());
-        result1 = resultRepository.save(result1);
         result1.setSubmission(submission);
+        result1 = resultRepository.save(result1);
 
         submission.addResult(result1);
         submission = submissionRepository.save(submission);
 
         Result result2 = new Result().assessmentType(assessmentType).score(200D).rated(true).exerciseId(textExercise.getId());
-        result2 = resultRepository.save(result2);
         result2.setSubmission(submission);
+        result2 = resultRepository.save(result2);
 
         submission.addResult(result2);
         submission = submissionRepository.save(submission);
@@ -152,6 +153,16 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         assertThat(submission.getFirstResult()).isEqualTo(result1);
         assertThat(submission.getLatestResult()).isEqualTo(result2);
 
+    }
+
+    /**
+     * An exam without exercises resolves to an empty id set, so the locked submissions of an exam are looked up with an
+     * empty collection. The query has to return nothing instead of failing on the empty IN list.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetLockedSubmissionsAndResultsWithoutExercises() {
+        assertThat(submissionRepository.getLockedSubmissionsAndResultsByExerciseIds(Set.of())).isEmpty();
     }
 
     @Test

@@ -109,6 +109,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
 
     @Autowired
+    private ResultTestRepository resultTestRepository;
+
+    @Autowired
     private ParticipationTestRepository participationRepository;
 
     @Autowired
@@ -498,6 +501,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         // all submission are saved to the database
         assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
         assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
+        // exactly one result per submission: the submission is saved with the result already attached, so the cascade
+        // and the explicit save of the result must not each write a row of their own
+        assertThat(resultTestRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
 
     }
 

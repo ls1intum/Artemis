@@ -96,8 +96,6 @@ public class ExamQuizService {
                     result.evaluateQuizSubmission(quizExercise);
                     result.setExerciseId(quizExercise.getId());
                     result.setCompletionDate(ZonedDateTime.now());
-                    // remove submission to follow save order for ordered collections
-                    result.setSubmission(null);
                     if (studentExam.isTestExam()) {
                         result.rated(true);
                     }
@@ -112,7 +110,6 @@ public class ExamQuizService {
                     if (participation.getId() == null) {
                         studentParticipationRepository.save(participation);
                     }
-                    result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                 }
                 else {

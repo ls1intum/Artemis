@@ -85,7 +85,7 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
             const saTitle = 'SA Lifecycle';
             const answerOptions = ['Correct A', 'Correct B', 'Wrong C', 'Wrong D'];
 
-            await login(admin, '/course-management/');
+            await login(admin, '/courses');
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createQuizExercise();
             await quizExerciseCreation.setTitle(quizTitle);
