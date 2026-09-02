@@ -441,10 +441,12 @@ public class IrisStruggleInterventionService {
      * </ul>
      *
      * <p>
-     * Terminal gate (delivered reasons only): reads {@link #isEpisodeTerminal(String, long, long)} BEFORE persisting.
-     * If already terminal, skips persist and emits a noop event. Otherwise persists FIRST (1), broadcasts
-     * live via {@code sendMessage} (1b), THEN writes the outcome (2). Outcome-last ensures a {@code resolved=true}
-     * close row is never gated away by its own outcome write.
+     * Terminal gate (delivered reasons only): reads {@link #isEpisodeTerminal(String, long, long)} as a cheap fast
+     * path, and the authoritative check runs again under the episode's registry lock in the same transaction as the
+     * write. If terminal at either point, nothing is persisted and a noop event goes out. Otherwise the closing row
+     * and its {@code RECOVERED} outcome commit together, and only then is anything broadcast. Outcome-last still
+     * holds inside that transaction: the row is inserted before its outcome, so the close is never gated away by its
+     * own outcome write.
      *
      * @param job          the struggle-intervention job (ids + episodeId + confirmReason)
      * @param statusUpdate the Pyris response payload
@@ -492,6 +494,14 @@ public class IrisStruggleInterventionService {
             // was not written yet. Outcome-last still holds INSIDE the transaction: the row is inserted before the
             // outcome is recorded, so the close can never be gated away by its own outcome.
             var persisted = persistProactiveMessage(user, job.exerciseId(), closingSentence, episodeId, IrisProactiveOutcome.RECOVERED);
+            if (persisted != null && persisted.terminal()) {
+                // The episode went terminal between the gate above and the locked write, so nothing was persisted and
+                // nothing was recovered. Reporting resolved=true here would tell the client a close succeeded that
+                // never happened; emit the same noop the gate emits instead.
+                irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null,
+                        episodeId, resolved, null, null, statusUpdate.rationale()));
+                return;
+            }
             Long messageId = null;
             if (persisted != null) {
                 // Broadcast the committed row so the webview receives it through the single chat-ws transport.
@@ -675,7 +685,15 @@ public class IrisStruggleInterventionService {
         return episodeId;
     }
 
-    private record PersistedProactive(IrisChatSession session, IrisMessage saved) {
+    private record PersistedProactive(@Nullable IrisChatSession session, @Nullable IrisMessage saved, boolean terminal) {
+
+        PersistedProactive(IrisChatSession session, IrisMessage saved) {
+            this(session, saved, false);
+        }
+
+        static PersistedProactive alreadyTerminal() {
+            return new PersistedProactive(null, null, true);
+        }
     }
 
     /**
@@ -968,6 +986,9 @@ public class IrisStruggleInterventionService {
         // (with messageId=null) so the client's in-flight slot always clears (finding 2 fix) instead of the exception
         // bubbling up and leaving the single-flight slot stuck.
         var appended = saveProactiveMessageWithRetry(session, user, exerciseId, result, episodeId, outcomeOnSuccess);
+        if (appended.terminal()) {
+            return PersistedProactive.alreadyTerminal();
+        }
         return appended.message() == null ? null : new PersistedProactive(session, appended.message());
     }
 
@@ -1147,6 +1168,10 @@ public class IrisStruggleInterventionService {
                 episode.setExerciseId(exerciseId);
                 episode.setEpisodeId(episodeId);
                 episode.setCreatedAt(ZonedDateTime.now());
+                // Carry over a terminal outcome this episode already reached before it had a registry row. A trigger
+                // that reuses such an id across the deployment would otherwise get a fresh open row, and every later
+                // check would trust it and let a late message through for an episode the student had closed.
+                irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).stream().findFirst().ifPresent(episode::setOutcome);
                 return irisProactiveEpisodeRepository.saveAndFlush(episode);
             }));
         }

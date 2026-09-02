@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,10 +19,18 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -44,6 +54,15 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisStruggleInterventionService struggleInterventionService;
+
+    @Autowired
+    private IrisMessageRepository irisMessageRepository;
+
+    @Autowired
+    private IrisMessageService irisMessageService;
+
+    @Autowired
+    private IrisChatSessionService irisChatSessionService;
 
     @Autowired
     private PlatformTransactionManager transactionManager;
@@ -134,39 +153,61 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         long exerciseId = exercise.getId();
 
         var holderHasLock = new CountDownLatch(1);
-        var outcomeAttempted = new CountDownLatch(1);
+        var releaseHolder = new CountDownLatch(1);
         var holder = Executors.newSingleThreadExecutor();
         var writer = Executors.newSingleThreadExecutor();
         try {
-            // One transaction takes the episode's write lock and keeps it.
+            // One transaction takes the episode's write lock and keeps it until this test lets go.
             var holding = holder.submit(() -> new TransactionTemplate(transactionManager).execute(status -> {
                 irisProactiveEpisodeRepository.findForUpdate(userId, exerciseId, "ep-lock").orElseThrow();
                 holderHasLock.countDown();
                 try {
-                    // Give the outcome write a generous head start. If the lock did not hold it, it would finish here.
-                    outcomeAttempted.await(2, TimeUnit.SECONDS);
+                    releaseHolder.await(30, TimeUnit.SECONDS);
                 }
                 catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
                 return null;
             }));
-
             assertThat(holderHasLock.await(10, TimeUnit.SECONDS)).isTrue();
-            var outcome = writer.submit(() -> {
-                outcomeAttempted.countDown();
-                return struggleInterventionService.writeEpisodeOutcome("ep-lock", IrisProactiveOutcome.DISMISSED, userId, exerciseId);
-            });
 
-            // The outcome write only gets through once the holder's transaction commits and releases the row.
+            var outcome = writer.submit(() -> struggleInterventionService.writeEpisodeOutcome("ep-lock", IrisProactiveOutcome.DISMISSED, userId, exerciseId));
+
+            // This is the assertion that makes the test about the lock: while the holder still has the row, the
+            // outcome write must NOT be able to finish. Without the lock it would complete here and the test fails.
+            assertThatThrownBy(() -> outcome.get(2, TimeUnit.SECONDS)).as("the outcome write must block while the episode row is locked").isInstanceOf(TimeoutException.class);
+
+            releaseHolder.countDown();
             assertThat(outcome.get(30, TimeUnit.SECONDS)).isTrue();
             holding.get(30, TimeUnit.SECONDS);
         }
         finally {
+            releaseHolder.countDown();
             holder.shutdownNow();
             writer.shutdownNow();
         }
 
         assertThat(irisProactiveEpisodeRepository.find(userId, exerciseId, "ep-lock").orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
     }
+
+    @Test
+    void aLegacyTerminalOutcomeSurvivesRegistration() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        // An episode that reached a terminal outcome before the registry existed: its state lives on the message row
+        // alone. Registering the same id afterwards must not hand it a fresh open row, or every later check would
+        // trust that row and let a late message through for an episode the student had already closed.
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(IrisChatMode.PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
+        var legacy = new IrisMessage();
+        legacy.addContent(new IrisTextMessageContent("hint"));
+        legacy.setOrigin(IrisMessageOrigin.PROACTIVE_STRUGGLE);
+        legacy.setProactiveEpisodeId("ep-legacy");
+        legacy.setProactiveExerciseId(exercise.getId());
+        var saved = irisMessageService.saveMessage(legacy, session, IrisMessageSender.LLM);
+        irisMessageRepository.setProactiveOutcomeIfNull(saved.getId(), IrisProactiveOutcome.DISMISSED);
+
+        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-legacy", true, null), null, null, null);
+
+        assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-legacy").orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.DISMISSED);
+    }
+
 }

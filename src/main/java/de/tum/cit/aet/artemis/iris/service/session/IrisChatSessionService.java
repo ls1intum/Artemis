@@ -462,10 +462,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             if (!(irisSessionRepository.findByIdWithWriteLockElseThrow(session.getId()) instanceof IrisChatSession locked)) {
                 throw new IllegalStateException("Context can only be switched on a chat session, but session " + session.getId() + " is not one");
             }
-            // Taking the lock does not refresh an entity the persistence context already manages, and this method does
-            // run inside an outer transaction: revealAmbient resolves the session, which is what calls us. Without the
-            // refresh the state we decide on could be the one that transaction read before the lock existed. Flush
-            // first so the refresh cannot discard changes a caller made but has not written yet.
+            // Taking the lock does not refresh an entity the persistence context already manages, and a caller can
+            // hand us one it loaded earlier. Without the refresh the state we decide on could be the one that was
+            // read before the lock existed. Flush first so the refresh cannot discard changes a caller made but has
+            // not written yet. (The proactive paths now all resolve the session OUTSIDE their transaction, so this
+            // no longer runs inside one; the refresh stays because the entity can still be pre-loaded.)
             irisSessionRepository.flush();
             irisSessionRepository.refresh(locked);
             // Everything describing the transition comes from the LOCKED session, not from the caller's copy. A
