@@ -18,6 +18,12 @@ function hasString(tree: Record<string, unknown>, key: string): boolean {
     return typeof tree[key] === 'string';
 }
 
+function setTranslatedCallback(labels: Partial<ApollonLabels>, tree: Record<string, unknown>, key: keyof ApollonLabels, callback: unknown): void {
+    if (hasString(tree, key)) {
+        (labels as Record<string, unknown>)[key] = callback;
+    }
+}
+
 /**
  * Builds Apollon overrides while retaining callbacks for labels with runtime values.
  *
@@ -40,15 +46,9 @@ export function createApollonLabels(translator: ApollonLabelTranslator): Partial
         }
     }
 
-    if (hasString(translationTree, 'zoomReadout')) {
-        labels.zoomReadout = (percent) => translate(translator, 'zoomReadout', { percent });
-    }
-    if (hasString(translationTree, 'deleteAssessmentFor')) {
-        labels.deleteAssessmentFor = (name) => translate(translator, 'deleteAssessmentFor', { name });
-    }
-    if (hasString(translationTree, 'assessmentFor')) {
-        labels.assessmentFor = (type) => translate(translator, 'assessmentFor', { type });
-    }
+    setTranslatedCallback(labels, translationTree, 'zoomReadout', (percent: number) => translate(translator, 'zoomReadout', { percent }));
+    setTranslatedCallback(labels, translationTree, 'deleteAssessmentFor', (name: string) => translate(translator, 'deleteAssessmentFor', { name }));
+    setTranslatedCallback(labels, translationTree, 'assessmentFor', (type: string) => translate(translator, 'assessmentFor', { type }));
     if (hasString(translationTree, 'scrollLockHint')) {
         // Apollon hands us the platform's zoom key already rendered as a cap
         // ('⌘' or 'Ctrl'), so the sentence can put it wherever German wants it.
@@ -64,45 +64,19 @@ export function createApollonLabels(translator: ApollonLabelTranslator): Partial
             return translated === translationKey ? DEFAULT_LABELS.nodeTypeLabel(nodeType) : translated;
         };
     }
-    if (hasString(translationTree, 'editTagsFor')) {
-        labels.editTagsFor = (subject) => translate(translator, 'editTagsFor', { subject });
-    }
-    if (hasString(translationTree, 'removeTag')) {
-        labels.removeTag = (tag) => translate(translator, 'removeTag', { tag });
-    }
-    if (hasString(translationTree, 'deleteMessage')) {
-        labels.deleteMessage = (label) => translate(translator, 'deleteMessage', { label });
-    }
-    if (hasString(translationTree, 'switchDirection')) {
-        labels.switchDirection = (direction) => translate(translator, 'switchDirection', { direction });
-    }
-    if (hasString(translationTree, 'switchDirectionFor')) {
-        labels.switchDirectionFor = (label, direction) => translate(translator, 'switchDirectionFor', { label, direction });
-    }
-    if (hasString(translationTree, 'messagePlaceholder')) {
-        labels.messagePlaceholder = (index) => translate(translator, 'messagePlaceholder', { index });
-    }
-    if (hasString(translationTree, 'messageFallbackLabel')) {
-        labels.messageFallbackLabel = (index) => translate(translator, 'messageFallbackLabel', { index });
-    }
-    if (hasString(translationTree, 'defaultLaneName')) {
-        labels.defaultLaneName = (index) => translate(translator, 'defaultLaneName', { index });
-    }
-    if (hasString(translationTree, 'multiplicityLabel')) {
-        labels.multiplicityLabel = (name) => translate(translator, 'multiplicityLabel', { name });
-    }
-    if (hasString(translationTree, 'roleLabel')) {
-        labels.roleLabel = (name) => translate(translator, 'roleLabel', { name });
-    }
-    if (hasString(translationTree, 'editColorsFor')) {
-        labels.editColorsFor = (label) => translate(translator, 'editColorsFor', { label });
-    }
-    if (hasString(translationTree, 'colorPicker')) {
-        labels.colorPicker = (label) => translate(translator, 'colorPicker', { label });
-    }
-    if (hasString(translationTree, 'stereotypeToggleLabel')) {
-        labels.stereotypeToggleLabel = (name) => translate(translator, 'stereotypeToggleLabel', { name });
-    }
+    setTranslatedCallback(labels, translationTree, 'editTagsFor', (subject: string) => translate(translator, 'editTagsFor', { subject }));
+    setTranslatedCallback(labels, translationTree, 'removeTag', (tag: string) => translate(translator, 'removeTag', { tag }));
+    setTranslatedCallback(labels, translationTree, 'deleteMessage', (label: string) => translate(translator, 'deleteMessage', { label }));
+    setTranslatedCallback(labels, translationTree, 'switchDirection', (direction: string) => translate(translator, 'switchDirection', { direction }));
+    setTranslatedCallback(labels, translationTree, 'switchDirectionFor', (label: string, direction: string) => translate(translator, 'switchDirectionFor', { label, direction }));
+    setTranslatedCallback(labels, translationTree, 'messagePlaceholder', (index: number) => translate(translator, 'messagePlaceholder', { index }));
+    setTranslatedCallback(labels, translationTree, 'messageFallbackLabel', (index: number) => translate(translator, 'messageFallbackLabel', { index }));
+    setTranslatedCallback(labels, translationTree, 'defaultLaneName', (index: number) => translate(translator, 'defaultLaneName', { index }));
+    setTranslatedCallback(labels, translationTree, 'multiplicityLabel', (name: string) => translate(translator, 'multiplicityLabel', { name }));
+    setTranslatedCallback(labels, translationTree, 'roleLabel', (name: string) => translate(translator, 'roleLabel', { name }));
+    setTranslatedCallback(labels, translationTree, 'editColorsFor', (label: string) => translate(translator, 'editColorsFor', { label }));
+    setTranslatedCallback(labels, translationTree, 'colorPicker', (label: string) => translate(translator, 'colorPicker', { label }));
+    setTranslatedCallback(labels, translationTree, 'stereotypeToggleLabel', (name: string) => translate(translator, 'stereotypeToggleLabel', { name }));
     if (hasString(translationTree, 'stereotypeToggleTooltip') && hasString(translationTree, 'show') && hasString(translationTree, 'hide')) {
         labels.stereotypeToggleTooltip = (shown, name) =>
             translate(translator, 'stereotypeToggleTooltip', {
