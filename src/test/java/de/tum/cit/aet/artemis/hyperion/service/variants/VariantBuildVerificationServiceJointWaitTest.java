@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -44,14 +47,18 @@ class VariantBuildVerificationServiceJointWaitTest {
 
     private ResultTestRepository resultRepository;
 
+    private TemplateProgrammingExerciseParticipationRepository templateRepository;
+
+    private SolutionProgrammingExerciseParticipationRepository solutionRepository;
+
     private VariantBuildVerificationService service;
 
     private ProgrammingExercise exercise;
 
     @BeforeEach
     void setUp() {
-        TemplateProgrammingExerciseParticipationRepository templateRepository = mock(TemplateProgrammingExerciseParticipationRepository.class);
-        SolutionProgrammingExerciseParticipationRepository solutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
+        templateRepository = mock(TemplateProgrammingExerciseParticipationRepository.class);
+        solutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         ProgrammingSubmissionRepository submissionRepository = mock(ProgrammingSubmissionRepository.class);
         resultRepository = mock(ResultTestRepository.class);
 
@@ -118,10 +125,6 @@ class VariantBuildVerificationServiceJointWaitTest {
         // template still returns its fresh result.
         SolutionProgrammingExerciseParticipationRepository emptySolutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         when(emptySolutionRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.empty());
-        TemplateProgrammingExerciseParticipationRepository templateRepository = mock(TemplateProgrammingExerciseParticipationRepository.class);
-        TemplateProgrammingExerciseParticipation templateParticipation = mock(TemplateProgrammingExerciseParticipation.class);
-        when(templateParticipation.getId()).thenReturn(TEMPLATE_PARTICIPATION_ID);
-        when(templateRepository.findByProgrammingExerciseId(42L)).thenReturn(Optional.of(templateParticipation));
         stubResult(TEMPLATE_PARTICIPATION_ID, freshResult(0.0, 5));
 
         service = new VariantBuildVerificationService(templateRepository, emptySolutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository,
@@ -132,6 +135,28 @@ class VariantBuildVerificationServiceJointWaitTest {
 
         assertThat(outcomes.get(RepositoryType.SOLUTION).state()).isEqualTo(BuildResultState.PARTICIPATION_NOT_FOUND);
         assertThat(outcomes.get(RepositoryType.TEMPLATE).state()).isEqualTo(BuildResultState.SUCCESS);
+    }
+
+    /**
+     * Feedback synthesis only renders the per-test summary fed back to the agent. When it throws, the result is
+     * still there — letting the exception reach the polling catch would keep polling a result that has already
+     * arrived until the shared timeout turns a green build into TIMED_OUT.
+     */
+    @Test
+    void shouldStillReturnTheFreshResultWhenFeedbackSynthesisThrows() throws Exception {
+        ProgrammingFeedbackSynthesizerService throwingSynthesizer = mock(ProgrammingFeedbackSynthesizerService.class);
+        doThrow(new IllegalStateException("synthesis blew up")).when(throwingSynthesizer).attachSynthesizedFeedback(any(), any(), anyBoolean());
+        service = new VariantBuildVerificationService(templateRepository, solutionRepository, mock(ProgrammingSubmissionRepository.class), resultRepository, mock(GitService.class),
+                mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), throwingSynthesizer);
+        stubResult(SOLUTION_PARTICIPATION_ID, freshResult(100.0, 5));
+        stubResult(TEMPLATE_PARTICIPATION_ID, freshResult(0.0, 5));
+
+        Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, pending());
+
+        assertThat(outcomes.get(RepositoryType.SOLUTION).state()).isEqualTo(BuildResultState.SUCCESS);
+        assertThat(outcomes.get(RepositoryType.TEMPLATE).state()).isEqualTo(BuildResultState.SUCCESS);
+        // The single-build poll shares the helper and must behave the same.
+        assertThat(service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, Instant.now().minusSeconds(60)).state()).isEqualTo(BuildResultState.SUCCESS);
     }
 
     /**

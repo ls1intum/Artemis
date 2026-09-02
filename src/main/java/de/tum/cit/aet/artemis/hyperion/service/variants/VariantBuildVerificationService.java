@@ -263,7 +263,14 @@ public class VariantBuildVerificationService {
      * @param repositoryType the repository the result belongs to
      */
     private void attachTestCaseFeedback(Result result, ProgrammingExercise exercise, RepositoryType repositoryType) {
-        programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, exercise, repositoryType == RepositoryType.SOLUTION || repositoryType == RepositoryType.TESTS);
+        try {
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, exercise, repositoryType == RepositoryType.SOLUTION || repositoryType == RepositoryType.TESTS);
+        }
+        catch (Exception e) {
+            // Rendering detail only. Letting this reach the polling loop's catch would discard a result that IS
+            // there and keep polling until the gate reports TIMED_OUT — a failed build gate over a missing summary.
+            log.warn("Could not attach synthesized feedback to the {} build result of exercise {}: {}", repositoryType, exercise.getId(), e.getMessage());
+        }
     }
 
     private ProgrammingExerciseParticipation resolveParticipation(ProgrammingExercise exercise, RepositoryType repositoryType) {
