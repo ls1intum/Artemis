@@ -169,12 +169,15 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
         newCourse = courseRepository.save(newCourse);
         exerciseRepository.save(finishedTextExercise2);
         userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 1);
+        // The admin endpoints resolve the authenticated login against the database, so the account the tests
+        // authenticate as has to exist there with the admin authority rather than only in the mock security context.
+        userUtilService.addAdmin(TEST_PREFIX);
         student = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
 
@@ -275,7 +278,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeletePlagiarismComparisons() throws Exception {
         // old course, should delete undecided plagiarism comparisons
         var textExercise1 = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
@@ -363,7 +366,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteNonRatedResults() throws Exception {
         // create non rated results for an old course
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
@@ -458,7 +461,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOldRatedResults() throws Exception {
         // create rated results for an old course
         var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
@@ -552,7 +555,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOldSubmissionVersions() throws Exception {
 
         TextSubmission submission = ParticipationFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
@@ -584,7 +587,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOldFeedbackKeepsLatestRatedAndNonRatedResultFeedback() throws Exception {
         // One participation on the (old) course with a mixed rated/non-rated result history in creation (id) order:
         // r1 non-rated, r2 rated, r3 non-rated (latest non-rated), r4 rated (latest rated AND overall newest id).
@@ -644,7 +647,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOldCourseSubmissionVersionsByCourseEndDate() throws Exception {
         // The automated cleanup deletes submission versions by the OWNING COURSE's end date (submission -> participation
         // -> exercise -> course), which is a different query than the createdDate-range endpoint covered by
@@ -679,7 +682,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testDeleteOldFeedbackKeepsRecentCourseFeedback() throws Exception {
         // Cutoff-boundary guard: the age-based feedback cleanup must only touch courses that ended before the cutoff.
         // Feedback of a non-latest result of a course that has NOT yet ended (newCourse) must neither be counted nor
@@ -711,7 +714,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
         var now = ZonedDateTime.now();
@@ -768,7 +771,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest
     }
 
     @Test
-    @WithMockUser(roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCountNewDataPrivacyOperationsAsAdmin() throws Exception {
         // the count (preview) endpoints are read-only and must be wired, authorized for admins, and serialize correctly
         assertThat(request.get("/api/core/admin/cleanup/old-courses/warn/count", HttpStatus.OK, OldCoursesCleanupCountDTO.class)).isNotNull();
