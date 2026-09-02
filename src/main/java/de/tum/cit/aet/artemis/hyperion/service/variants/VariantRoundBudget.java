@@ -38,9 +38,17 @@ class VariantRoundBudget {
     }
 
     /**
-     * @return true once the round must end now — cancelled, or past the budget's grace calls
+     * Whether the round must end with the result of the call being made. Evaluated against the calls already
+     * used and the live cancel flag rather than only what {@link #stopNotice()} last saw, because Spring AI's
+     * tool-calling manager reads a callback's metadata BEFORE invoking it: a flag set inside the call it is
+     * deciding about would arrive one model turn too late. Sticky once true.
+     *
+     * @return true once the round must end — cancelled, or the budget's grace calls are used up
      */
     boolean roundOver() {
+        if (!roundOver) {
+            roundOver = used.get() >= budget + GRACE_CALLS || jobService.isCancelRequested(jobId);
+        }
         return roundOver;
     }
 
@@ -61,7 +69,6 @@ class VariantRoundBudget {
         }
         int callsUsed = used.incrementAndGet();
         if (callsUsed > budget) {
-            roundOver = roundOver || callsUsed > budget + GRACE_CALLS;
             return "TOOL BUDGET EXHAUSTED for this round (" + budget + " calls). Do not call any other tool. Call finish NOW with a short summary of what you changed.";
         }
         return null;

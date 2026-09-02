@@ -27,14 +27,16 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
  * The tool-call budget's "call finish now" directive is advisory: Spring AI's internal tool loop only ends when
  * the model stops calling tools or a called tool returns directly, so a model that keeps calling ordinary tools
  * would keep the round — and its model exchanges — going indefinitely. These tests pin the hard stop that ends
- * such a round: past the budget's grace calls (and immediately on cancellation) every tool reports
- * {@code returnDirect}, which terminates the loop whatever the model does next.
+ * such a round: past the budget's grace calls (and on the first call after a cancellation) every tool reports
+ * {@code returnDirect}, which terminates the loop whatever the model does next. They read the metadata BEFORE
+ * each call, the way Spring AI's tool-calling manager does — it decides {@code returnDirect} for a call before
+ * invoking it, so a condition that only became true inside that call would end the round one turn too late.
  */
 class QuizVariantToolsRoundStopTest {
 
     private static final long QUIZ_ID = 7L;
 
-    /** {@code QuizVariantTools.TOOL_CALL_BUDGET} plus its grace calls — the last call still allowed to continue. */
+    /** {@code QuizVariantTools.TOOL_CALL_BUDGET} plus {@code VariantRoundBudget.GRACE_CALLS}. */
     private static final int LAST_CONTINUING_CALL = 25 + 10;
 
     private ExerciseVariantJobService jobService;
@@ -68,12 +70,12 @@ class QuizVariantToolsRoundStopTest {
         ToolCallback validateQuiz = toolCallback("validateQuiz");
 
         for (int call = 1; call <= LAST_CONTINUING_CALL; call++) {
-            validateQuiz.call("{}");
             assertThat(validateQuiz.getToolMetadata().returnDirect()).as("the round must keep running through call %d", call).isFalse();
+            validateQuiz.call("{}");
         }
 
-        validateQuiz.call("{}");
         assertThat(validateQuiz.getToolMetadata().returnDirect()).isTrue();
+        assertThat(validateQuiz.call("{}")).contains("TOOL BUDGET EXHAUSTED");
     }
 
     @Test
@@ -81,8 +83,8 @@ class QuizVariantToolsRoundStopTest {
         ToolCallback validateQuiz = toolCallback("validateQuiz");
         jobService.requestCancel(job.getJobId(), "instructor1");
 
-        assertThat(validateQuiz.call("{}")).contains("CANCELLED");
         assertThat(validateQuiz.getToolMetadata().returnDirect()).isTrue();
+        assertThat(validateQuiz.call("{}")).contains("CANCELLED");
     }
 
     @Test
