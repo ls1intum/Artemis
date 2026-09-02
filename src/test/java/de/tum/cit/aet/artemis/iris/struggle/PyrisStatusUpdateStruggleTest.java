@@ -76,6 +76,39 @@ class PyrisStatusUpdateStruggleTest {
     }
 
     @Test
+    void everyClaimedCallbackRecordsItsTokenUsageExactlyOnce() {
+        // The pipeline's LLM spend used to be invisible: the callback carried tokens and nothing read them. Recording
+        // runs before the frame is routed, so an intermediate or failing frame is accounted for too, and each of
+        // these four frames is counted once regardless of which branch claims it.
+        var decision = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
+        var keepAlive = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.RUNNING, null, List.of(), null, null, null, null, null, null);
+        var failed = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FAILED, null, List.of(), null, null, null, null, null, null);
+        var close = new PyrisStruggleInterventionStatusUpdateDTO(null, null, null, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, true, null, null);
+
+        service.handleStatusUpdate(job, decision);
+        service.handleStatusUpdate(job, keepAlive);
+        service.handleStatusUpdate(job, failed);
+        service.handleStatusUpdate(confirmCloseJob, close);
+
+        verify(irisStruggleInterventionService).recordTokenUsage(job, decision);
+        verify(irisStruggleInterventionService).recordTokenUsage(job, keepAlive);
+        verify(irisStruggleInterventionService).recordTokenUsage(job, failed);
+        verify(irisStruggleInterventionService).recordTokenUsage(confirmCloseJob, close);
+    }
+
+    @Test
+    void aCallbackForAnAlreadyClaimedJobRecordsNothing() {
+        // The job is gone, so another callback owns this run's side effects. Recording here would double-count the
+        // spend the winner already recorded.
+        when(pyrisJobService.getJob("t")).thenReturn(null);
+        var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
+
+        service.handleStatusUpdate(job, update);
+
+        verify(irisStruggleInterventionService, never()).recordTokenUsage(any(), any());
+    }
+
+    @Test
     void decisionCallback_removesJobThenDispatchesThenReleasesMarker() {
         var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, "FM", PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
 

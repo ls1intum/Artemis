@@ -26,6 +26,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -124,6 +125,9 @@ class IrisStruggleInterventionConfirmCloseTest {
     @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
     private IrisStruggleInterventionService service;
 
     private User user;
@@ -141,7 +145,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
+                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository, llmTokenUsageService);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
 

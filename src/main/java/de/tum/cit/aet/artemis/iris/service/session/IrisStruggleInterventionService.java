@@ -27,6 +27,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -111,6 +113,8 @@ public class IrisStruggleInterventionService {
 
     private final UserAiPreferenceService userAiPreferenceService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
     private final TransactionTemplate transactionTemplate;
 
     /**
@@ -129,7 +133,7 @@ public class IrisStruggleInterventionService {
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
             IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, IrisMessageRepository irisMessageRepository,
             PlatformTransactionManager transactionManager, UserAiPreferenceService userAiPreferenceService, IrisSessionRepository irisSessionRepository,
-            IrisProactiveEpisodeRepository irisProactiveEpisodeRepository) {
+            IrisProactiveEpisodeRepository irisProactiveEpisodeRepository, LLMTokenUsageService llmTokenUsageService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -145,6 +149,7 @@ public class IrisStruggleInterventionService {
         this.irisSessionRepository = irisSessionRepository;
         this.irisProactiveEpisodeRepository = irisProactiveEpisodeRepository;
         this.userAiPreferenceService = userAiPreferenceService;
+        this.llmTokenUsageService = llmTokenUsageService;
         this.transactionTemplate = new TransactionTemplate(transactionManager);
         this.requiresNewTransactionTemplate = new TransactionTemplate(transactionManager);
         this.requiresNewTransactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
@@ -610,6 +615,37 @@ public class IrisStruggleInterventionService {
         episode.setHintText(hintText);
         irisProactiveEpisodeRepository.save(episode);
         return true;
+    }
+
+    /**
+     * Record what the struggle pipeline spent on this callback, so the run shows up in admin token accounting like
+     * every other Iris pipeline. Without it the proactive path was the one pipeline whose LLM cost was invisible:
+     * the callback carried {@code tokens} and nothing read them.
+     *
+     * <p>
+     * Called once per claimed callback, before the frame is routed, so a run that reports spend on an intermediate
+     * frame or on a failure is counted too, and no frame is counted twice. That placement is also why this attributes
+     * to the job rather than to a message: the message a decision persists does not exist yet here, and several
+     * outcomes ({@code silent}, {@code ambient}, a quiet close) never persist one at all, so keying the trace on a
+     * message would drop their cost. Course, exercise and user come off the job, which is the same scope the admin
+     * view groups by.
+     *
+     * @param job          the struggle-intervention job the callback belongs to
+     * @param statusUpdate the callback, whose {@code tokens} may be empty
+     */
+    public void recordTokenUsage(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        if (statusUpdate.tokens().isEmpty()) {
+            return;
+        }
+        try {
+            llmTokenUsageService.saveLLMTokenUsage(statusUpdate.tokens(), LLMServiceType.IRIS,
+                    builder -> builder.withCourse(job.courseId()).withExercise(job.exerciseId()).withUser(job.userId()));
+        }
+        catch (Exception e) {
+            // Accounting must never cost the student their intervention: a failure here would otherwise escape into
+            // the callback handler, which has already claimed and removed the job, and hang the client's request.
+            log.warn("Could not record token usage for struggle job {} exercise {} user {}", job.jobId(), job.exerciseId(), job.userId(), e);
+        }
     }
 
     /**

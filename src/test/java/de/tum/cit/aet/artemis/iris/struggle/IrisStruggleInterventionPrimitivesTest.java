@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -14,20 +15,26 @@ import static org.mockito.Mockito.when;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import jakarta.ws.rs.BadRequestException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -46,6 +53,9 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.struggle.PyrisStruggleInterventionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
@@ -108,6 +118,9 @@ class IrisStruggleInterventionPrimitivesTest {
     @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
     private IrisStruggleInterventionService service;
 
     private User user;
@@ -123,7 +136,7 @@ class IrisStruggleInterventionPrimitivesTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
+                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository, llmTokenUsageService);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 
@@ -272,6 +285,50 @@ class IrisStruggleInterventionPrimitivesTest {
         assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "  ")).isInstanceOf(BadRequestException.class);
         assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, null)).isInstanceOf(BadRequestException.class);
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
+    }
+
+    // ---- recordTokenUsage ----
+
+    @Test
+    void recordTokenUsage_attributesTheSpendToCourseExerciseAndUser() {
+        var job = new StruggleInterventionJob("t", 7L, EXERCISE_ID, USER_ID, "decide", "ep-1", null, null, null);
+        var request = new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention");
+        var update = statusUpdateWithTokens(List.of(request));
+
+        service.recordTokenUsage(job, update);
+
+        ArgumentCaptor<Function<LLMTokenUsageService.LLMTokenUsageBuilder, LLMTokenUsageService.LLMTokenUsageBuilder>> builder = ArgumentCaptor.forClass(Function.class);
+        verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(request)), eq(LLMServiceType.IRIS), builder.capture());
+        // The scope the admin view groups by. Taken from the job rather than from a message, because silent, ambient
+        // and quiet-close runs never persist one and their cost must still be counted.
+        var applied = builder.getValue().apply(new LLMTokenUsageService.LLMTokenUsageBuilder());
+        assertThat(applied.getCourseID()).contains(7L);
+        assertThat(applied.getExerciseID()).contains(EXERCISE_ID);
+        assertThat(applied.getUserID()).contains(USER_ID);
+    }
+
+    @Test
+    void recordTokenUsage_withoutTokens_writesNothing() {
+        var job = new StruggleInterventionJob("t", 7L, EXERCISE_ID, USER_ID, "decide", "ep-1", null, null, null);
+
+        service.recordTokenUsage(job, statusUpdateWithTokens(List.of()));
+
+        verify(llmTokenUsageService, never()).saveLLMTokenUsage(any(), any(), any());
+    }
+
+    @Test
+    void recordTokenUsage_whenAccountingFails_doesNotBreakTheCallback() {
+        // The caller has already claimed and removed the job, so an exception escaping here would hang the client's
+        // in-flight request. Losing one accounting row is the lesser cost.
+        var job = new StruggleInterventionJob("t", 7L, EXERCISE_ID, USER_ID, "decide", "ep-1", null, null, null);
+        var update = statusUpdateWithTokens(List.of(new LLMRequest("gpt-4", 100, 0.5f, 40, 1.5f, "struggle-intervention")));
+        when(llmTokenUsageService.saveLLMTokenUsage(any(), any(), any())).thenThrow(new DataIntegrityViolationException("accounting is down"));
+
+        assertThatCode(() -> service.recordTokenUsage(job, update)).doesNotThrowAnyException();
+    }
+
+    private PyrisStruggleInterventionStatusUpdateDTO statusUpdateWithTokens(List<LLMRequest> tokens) {
+        return new PyrisStruggleInterventionStatusUpdateDTO("hint", "active", 0.8, null, PyrisRunState.FINISHED, null, tokens, null, null, null, null, null, null);
     }
 
     // ---- writeEpisodeOutcome ----

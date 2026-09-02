@@ -115,10 +115,16 @@ public class PyrisStatusUpdateService {
     /**
      * The body of {@link #handleStatusUpdate}, running under the job lock on a job re-read from the map.
      *
+     * Records the callback's token usage first, so the pipeline's LLM spend is accounted for on every frame,
+     * including the intermediate and error frames that never reach a decision handler.
+     *
      * @param job          the struggle-intervention job, freshly read under the lock
      * @param statusUpdate the status update received
      */
     private void handleClaimedStatusUpdate(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
+        // Before routing, so a run that reports spend on an intermediate or failing frame is accounted for too, and
+        // every frame is counted exactly once regardless of which branch below claims it.
+        irisStruggleInterventionService.recordTokenUsage(job, statusUpdate);
         String intent = job.intent();
         if ("confirm_close".equals(intent)) {
             // confirm_close: the terminal frame carries resolved != null (action stays null on this mode). Gate on it
