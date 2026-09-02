@@ -21,7 +21,7 @@ import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/admin/organization-selector/organization-selector.component';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumUiCheckboxComponent, TumUiDialogComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/foundation/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -47,6 +47,7 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 import { FeatureOverlayComponent } from 'app/shared-ui/components/feature-overlay/feature-overlay.component';
 import { FileService } from 'app/foundation/service/file.service';
 import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-update',
@@ -71,6 +72,8 @@ import { IS_AT_LEAST_ADMIN } from 'app/foundation/constants/authority.constants'
         ArtemisTranslatePipe,
         RemoveKeysPipe,
         FeatureOverlayComponent,
+        TumUiCheckboxComponent,
+        TumUiTooltipDirective,
         RouterLink,
         TumUiDialogComponent,
         OrganizationSelectorComponent,
@@ -147,8 +150,20 @@ export class CourseUpdateComponent implements OnInit {
     private initialOrganizationIds = new Set<number>();
     readonly isAdmin = signal(false);
 
-    communicationEnabled = true;
-    messagingEnabled = true;
+    private readonly communicationEnabledSignal = signal(true);
+    private readonly messagingEnabledSignal = signal(true);
+    get communicationEnabled(): boolean {
+        return this.communicationEnabledSignal();
+    }
+    set communicationEnabled(value: boolean) {
+        this.communicationEnabledSignal.set(value);
+    }
+    get messagingEnabled(): boolean {
+        return this.messagingEnabledSignal();
+    }
+    set messagingEnabled(value: boolean) {
+        this.messagingEnabledSignal.set(value);
+    }
     readonly atlasEnabled = signal(false);
     readonly ltiEnabled = signal(false);
     readonly isAthenaEnabled = signal(false);
@@ -255,6 +270,7 @@ export class CourseUpdateComponent implements OnInit {
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
+                presentationAssessmentsEnabled: new FormControl(this.course.presentationAssessmentsEnabled ?? false),
                 autoOrchestratorEnabled: new FormControl(this.course.courseConfiguration?.autoOrchestratorEnabled ?? false),
                 // Seconds / daily run counts: reject fractional values in addition to the lower bound.
                 debounceWindowSecondsOverride: new FormControl(this.course.courseConfiguration?.debounceWindowSecondsOverride, {
@@ -370,7 +386,7 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         const rawValue = this.courseForm.getRawValue();
-        const course = rawValue as Course;
+        const course = hydrate(new Course(), rawValue);
         // NOTE: prevent overriding this value accidentally
         // TODO: move presentationScore to gradingScale to avoid this
         course.presentationScore = this.course.presentationScore;

@@ -66,11 +66,13 @@ export class CourseGroupComponent {
     readonly tutorialGroup = input<TutorialGroup | undefined>(undefined);
     readonly courseRoleSlug = input.required<CourseRoleSlug>();
     readonly exportFileName = input.required<string>();
+    readonly isDisabled = input(false);
 
     readonly userSearch = input<(loginOrName: string) => Observable<HttpResponse<User[]>>>(() => of(new HttpResponse<User[]>({ body: [] })));
     readonly addUserToGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly removeUserFromGroup = input<(login: string) => Observable<HttpResponse<void>>>(() => of(new HttpResponse<void>()));
     readonly handleUsersSizeChange = input<(filteredUsersSize: number) => void>(() => {});
+    readonly removeUserQuestionKey = input('artemisApp.course.courseGroup.removeFromGroup.modalQuestion');
 
     readonly importFinish = output<void>();
 

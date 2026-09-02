@@ -237,6 +237,10 @@
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
             },
+            "presentationAssessments": {
+                "label": "Presentations Enabled",
+                "tooltip": "Shows the Presentations entry in the course sidebar and allows instructors to manage course presentations."
+            },
             "autoOrchestration": {
                 "label": "Atlas Auto-Orchestration Enabled",
                 "tooltip": "Lets Atlas automatically review and update this course's competencies whenever an exercise's content changes. Disabled by default; turn it on only for courses where you want the AI to maintain competency links on its own.",
