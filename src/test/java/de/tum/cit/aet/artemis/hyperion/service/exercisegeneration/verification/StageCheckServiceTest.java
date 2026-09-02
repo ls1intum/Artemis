@@ -1082,7 +1082,37 @@ class StageCheckServiceTest {
             StageCheckResult result = check(GenerationStage.SPEC);
 
             assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("given Java types", "Calculator->Policy", "must ship complete and compile", "coherent ownership graph");
+            assertThat(result.observation()).contains("given or stubbed Java types", "Calculator->Policy", "compiling template", "coherent ownership graph");
+        }
+
+        @Test
+        void rejectsAStubbedJavaTypeWhosePublicApiDependsOnATypeAbsentFromTheTemplate() {
+            exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+            exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+            sandbox.spec = VALID_SPEC.replace("| Calculator | computes the result | stubbed |", """
+                    | Calculator | stubbed context | stubbed |
+                    | Policy | interchangeable policy | student-creates |\
+                    """).replace(publicApiFor("Calculator").strip(), """
+                    ### `Calculator`
+                    ```java
+                    public class Calculator {
+                        public Calculator(Policy policy);
+                        public int calculate(int input);
+                    }
+                    ```
+
+                    ### `Policy`
+                    ```java
+                    public interface Policy {
+                        int calculate(int input);
+                    }
+                    ```\
+                    """).replace("| S1 | Calculator | typical and zero | 3 | yes |", "| S1 | Policy | typical and zero | 3 | yes |");
+
+            StageCheckResult result = check(GenerationStage.SPEC);
+
+            assertThat(result.passed()).isFalse();
+            assertThat(result.observation()).contains("given or stubbed Java types", "Calculator->Policy", "compiling template", "coherent ownership graph");
         }
 
         @Test

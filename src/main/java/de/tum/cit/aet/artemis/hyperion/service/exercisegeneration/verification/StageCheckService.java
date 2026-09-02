@@ -247,13 +247,13 @@ public class StageCheckService {
                     + "typically the collaborator, context, or data type the student's own work plugs into — and keep the genuinely design-bearing types 'student-creates'.");
         }
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
-            List<String> impossibleGivenDependencies = givenTypesDependingOnStudentCreatedTypes(spec, designRows);
-            if (!impossibleGivenDependencies.isEmpty()) {
-                return StageCheckResult.failed("These given Java types have Public API signatures that reference a student-created type absent from the template: "
-                        + impossibleGivenDependencies
-                        + ". A given type must ship complete and compile. Choose a coherent ownership graph before approval: make the dependent collaborator stubbed or "
-                        + "student-created with its own work seam, or ship the referenced abstraction as stubbed/given. Do not erase the typed API or replace it with Object/reflection "
-                        + "just to bypass this contradiction.");
+            List<String> impossibleTemplateDependencies = templateTypesDependingOnStudentCreatedTypes(spec, designRows);
+            if (!impossibleTemplateDependencies.isEmpty()) {
+                return StageCheckResult.failed("These given or stubbed Java types have Public API signatures that reference a student-created type absent from the template: "
+                        + impossibleTemplateDependencies
+                        + ". Every given or stubbed type must be present in the compiling template. Choose a coherent ownership graph before approval: make the dependent "
+                        + "collaborator student-created too, or ship the referenced abstraction as stubbed/given. Do not erase the typed API or replace it with Object/reflection just "
+                        + "to bypass this contradiction.");
             }
         }
         List<TestingStrategyRow> testingRows = testingStrategyRows(spec);
@@ -455,8 +455,9 @@ public class StageCheckService {
         return designTableRows(spec).stream().filter(row -> "stubbed".equals(row.status())).map(DesignRow::type).filter(StageCheckService::isEnforceableTypeName).toList();
     }
 
-    private static List<String> givenTypesDependingOnStudentCreatedTypes(String spec, List<DesignRow> designRows) {
-        Set<String> givenTypes = designRows.stream().filter(row -> "given".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());
+    private static List<String> templateTypesDependingOnStudentCreatedTypes(String spec, List<DesignRow> designRows) {
+        Set<String> templateTypes = designRows.stream().filter(row -> "given".equals(row.status()) || "stubbed".equals(row.status())).map(DesignRow::type)
+                .collect(Collectors.toSet());
         Set<String> studentCreatedTypes = designRows.stream().filter(row -> "student-creates".equals(row.status())).map(DesignRow::type).collect(Collectors.toSet());
         List<String> conflicts = new ArrayList<>();
         boolean inPublicApi = false;
@@ -475,7 +476,7 @@ public class StageCheckService {
             }
             if (line.startsWith("### ")) {
                 String heading = line.substring(4).replace("`", "").strip();
-                currentOwner = givenTypes.stream().filter(type -> containsTypeName(heading, type)).findFirst().orElse(null);
+                currentOwner = templateTypes.stream().filter(type -> containsTypeName(heading, type)).findFirst().orElse(null);
                 continue;
             }
             if (currentOwner == null) {
