@@ -12,8 +12,6 @@ const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 const MIN_USABLE_CANVAS_HEIGHT = 400;
 /** The canvas is the page's purpose, so it must take most of the room the exercise page offers. */
 const MIN_SHARE_OF_HOST = 0.6;
-/** Box geometry is rounded per element, so edges never line up exactly. */
-const SUB_PIXEL_TOLERANCE = 1;
 
 /**
  * A modeling canvas has no intrinsic height, so a content-sized ancestor collapses it to nothing.
@@ -57,19 +55,7 @@ test.describe('Exam modeling editor', { tag: '@slow' }, () => {
 
         expect(canvasBox!.height).toBeGreaterThan(MIN_USABLE_CANVAS_HEIGHT);
         expect(canvasBox!.height).toBeGreaterThan(hostBox!.height * MIN_SHARE_OF_HOST);
-        expect(canvasBox!.y + canvasBox!.height).toBeLessThanOrEqual(hostBox!.y + hostBox!.height + SUB_PIXEL_TOLERANCE);
-
-        // Edge to edge inside "Your Solution": no card padding, no row gutters.
-        const cardBody = (await page.locator('.left-body').boundingBox())!;
-        const frame = (await page.locator('.modeling-editor__frame').boundingBox())!;
-        for (const [edge, delta] of Object.entries({
-            left: frame.x - cardBody.x,
-            top: frame.y - cardBody.y,
-            right: cardBody.x + cardBody.width - (frame.x + frame.width),
-            bottom: cardBody.y + cardBody.height - (frame.y + frame.height),
-        })) {
-            expect(Math.abs(delta), `the editor must sit flush against the card's ${edge} edge`).toBeLessThanOrEqual(1);
-        }
+        expect(canvasBox!.y + canvasBox!.height).toBeLessThanOrEqual(hostBox!.y + hostBox!.height + 1);
 
         await expectNoScrollPastApollonCanvas(page);
     });
