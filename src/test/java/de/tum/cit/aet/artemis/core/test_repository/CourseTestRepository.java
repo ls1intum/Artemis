@@ -30,6 +30,16 @@ public interface CourseTestRepository extends CourseRepository {
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<Course> findWithEagerLearningPathsById(@Param("courseId") long courseId);
 
+    // Only tests read a course together with its variant groups: production attaches a group by writing its own
+    // course_id (see ExerciseVariantGroupRepository.attachToCourse) instead of merging this orphanRemoval collection.
+    @EntityGraph(type = LOAD, attributePaths = "exerciseVariantGroups")
+    Optional<Course> findWithEagerExerciseVariantGroupsById(long courseId);
+
+    @NonNull
+    default Course findWithEagerExerciseVariantGroupsByIdElseThrow(long courseId) {
+        return getValueElseThrow(findWithEagerExerciseVariantGroupsById(courseId), courseId);
+    }
+
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "lectures.attachments", "competencies", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(long courseId);
 
