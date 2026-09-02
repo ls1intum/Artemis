@@ -51,6 +51,7 @@ import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
@@ -109,10 +110,15 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
     private LocalRepository testsRepository;
 
-    /** Only created by the solution-build test; reset after it when present. */
+    /** Only created by the solution-build tests; reset after them when present. */
     private LocalRepository solutionRepository;
 
+    /** Only created by the template-build test; reset after it when present. */
+    private LocalRepository templateRepository;
+
     private String commitHash;
+
+    private String testsCommitHash;
 
     @Override
     protected String getTestPrefix() {
@@ -132,7 +138,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         studentAssignmentRepository.workingCopyGitRepo.push().call();
 
         testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
-        localVCLocalCITestService.commitFile(testsRepository.workingCopyGitRepoFile.toPath(), testsRepository.workingCopyGitRepo);
+        testsCommitHash = localVCLocalCITestService.commitFile(testsRepository.workingCopyGitRepoFile.toPath(), testsRepository.workingCopyGitRepo);
         testsRepository.workingCopyGitRepo.push().call();
 
         dockerClientTestService.mockInspectImage(dockerClient);
@@ -146,6 +152,102 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
             solutionRepository.resetLocalRepo();
             solutionRepository = null;
         }
+        if (templateRepository != null) {
+            templateRepository.resetLocalRepo();
+            templateRepository = null;
+        }
+    }
+
+    /**
+     * A failed build attempt marks the submission as failed. A later attempt of the SAME commit that succeeds must
+     * come out successful: the flag belongs to the attempt, not to the submission forever. The rebuild also meets a
+     * tutor's draft manual assessment on the submission, which has no completion date either: the containers must
+     * open a fresh automatic result instead of appending their feedback to the draft.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRebuildOfSameCommitAfterFailedAttemptIsSuccessfulAndSparesManualDraft() throws Exception {
+        String instructorImage = "mc-instructor:rebuild";
+        String studentImage = "mc-student:rebuild";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-rebuild");
+        mockContainerLifecycle(studentImage, "mc-student-rebuild");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-rebuild", RESULTS_DIRECTORY_REGEX, structuralResults());
+        // First attempt: the student container crashes.
+        mockScriptExitCode("mc-student-rebuild", "mc-student-rebuild-exec", 1L);
+        mockMissingResults("mc-student-rebuild");
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush();
+        ProgrammingSubmission failedSubmission = awaitFinalizedResult(participation.getId(), 120);
+        Result failedResult = failedSubmission.getLatestResult();
+        assertThat(failedSubmission.isBuildFailed()).isTrue();
+        assertThat(failedResult.isSuccessful()).isFalse();
+
+        // A tutor starts a manual assessment on the submission before the rebuild (no completion date yet).
+        Result manualDraft = new Result();
+        manualDraft.setAssessmentType(AssessmentType.MANUAL);
+        manualDraft.setCompletionDate(null);
+        manualDraft.setSubmission(failedSubmission);
+        manualDraft.setExerciseId(programmingExercise.getId());
+        manualDraft = resultRepository.save(manualDraft);
+
+        // Second attempt of the same commit: the student container now succeeds. Both containers get fresh result
+        // streams, since a mocked archive stream can only be read once and the first attempt consumed the instructor's.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-rebuild", RESULTS_DIRECTORY_REGEX, structuralResults());
+        mockScriptExitCode("mc-student-rebuild", "mc-student-rebuild-exec", 0L);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-rebuild", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        localCITriggerService.triggerBuild(participation, false);
+
+        ProgrammingSubmission rebuiltSubmission = awaitFinalizedResultAfter(participation.getId(), manualDraft.getId(), 120);
+        Result rebuiltResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(rebuiltSubmission.getLatestResult().getId());
+        assertThat(rebuiltResult.getId()).isNotEqualTo(manualDraft.getId());
+        assertThat(rebuiltResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+        String jobStatuses = buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == participation.getId())
+                .map(job -> job.getBuildJobId() + ":" + job.getBuildStatus()).toList().toString();
+        assertThat(rebuiltResult.isSuccessful()).as("jobs %s, submission buildFailed=%s", jobStatuses, rebuiltSubmission.isBuildFailed()).isTrue();
+        assertThat(rebuiltSubmission.isBuildFailed()).isFalse();
+        assertThat(feedbackTestNames(rebuiltResult)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+
+        // The draft was left alone: still open, and it received none of the containers' feedback.
+        Result untouchedDraft = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualDraft.getId());
+        assertThat(untouchedDraft.getCompletionDate()).isNull();
+        assertThat(untouchedDraft.getFeedbacks()).isEmpty();
+    }
+
+    /**
+     * A push to the test repository builds the solution and, once that result is complete, the template. With several
+     * containers the solution reports one queue item per container; the template must still be rebuilt exactly once.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestsPushRebuildsTemplateOnceAfterMultiContainerSolutionBuild() throws Exception {
+        String instructorImage = "mc-instructor:template";
+        String studentImage = "mc-student:template";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-template");
+        mockContainerLifecycle(studentImage, "mc-student-template");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-template", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-template", RESULTS_DIRECTORY_REGEX, behaviorResults());
+
+        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyGitRepoFile.toPath(), solutionRepository.workingCopyGitRepo);
+        solutionRepository.workingCopyGitRepo.push().call();
+        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
+        localVCLocalCITestService.commitFile(templateRepository.workingCopyGitRepoFile.toPath(), templateRepository.workingCopyGitRepo);
+        templateRepository.workingCopyGitRepo.push().call();
+
+        localVCServletService.processNewPush(testsCommitHash, testsRepository.remoteBareGitRepo.getRepository(), userTestRepository.getUserWithAuthorities(), Optional.empty(),
+                Optional.empty(), Optional.empty());
+
+        // The solution build (two containers) finishes and triggers the template build, whose two containers finish too.
+        awaitFinalizedResult(solutionParticipation.getId(), 120);
+        awaitFinishedBuildJobs(templateParticipation.getId(), 2, 120);
+        awaitFinalizedResult(templateParticipation.getId(), 120);
+
+        // Exactly one template build: two container jobs, not two per solution container.
+        var templateJobs = buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == templateParticipation.getId()).toList();
+        assertThat(templateJobs).hasSize(2);
     }
 
     /**
@@ -488,6 +590,24 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
      * "Test was not executed." placeholder for every registered test case without feedback, so those placeholders are
      * excluded here — they mark the absence of a container's results, not their delivery.
      */
+    /** Waits until the participation's latest result is finalized and newer than the given result, e.g. after a rebuild. */
+    private ProgrammingSubmission awaitFinalizedResultAfter(long participationId, long previousResultId, int timeoutInSeconds) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        await().dontCatchUncaughtExceptions().atMost(Duration.ofSeconds(timeoutInSeconds)).until(() -> {
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).map(ProgrammingSubmission::getLatestResult)
+                    .map(latest -> latest.getId() > previousResultId && latest.getCompletionDate() != null).orElse(false);
+        });
+        return programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
+    }
+
+    /** Waits until the participation has at least the given number of build jobs that are no longer queued or building. */
+    private void awaitFinishedBuildJobs(long participationId, int count, int timeoutInSeconds) {
+        await().dontCatchUncaughtExceptions().atMost(Duration.ofSeconds(timeoutInSeconds))
+                .until(() -> buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == participationId)
+                        .filter(job -> job.getBuildStatus() != BuildStatus.QUEUED && job.getBuildStatus() != BuildStatus.BUILDING).count() >= count);
+    }
+
     private Set<String> feedbackTestNames(Result result) {
         return result.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
                 .filter(feedback -> !"Test was not executed.".equals(feedback.getDetailText())).map(this::feedbackTestName).collect(Collectors.toSet());
