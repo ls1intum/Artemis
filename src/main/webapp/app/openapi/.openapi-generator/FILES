@@ -47,6 +47,8 @@ model/exercise-generation-retained-artifacts.ts
 model/exercise-generation-retained-file.ts
 model/exercise-generation-revert-result.ts
 model/exercise-generation-status.ts
+model/exercise-generation-title-suggestion-request.ts
+model/exercise-generation-title-suggestion-response.ts
 model/exercise-generation-usage.ts
 model/exercise-generation-verdict.ts
 model/global-search-result.ts

@@ -86,6 +86,53 @@
             </div>
         </section>
 
+        @if (showTitleField()) {
+            <section aria-labelledby="hyperion-title-label" data-testid="hyperion-title-section">
+                <label id="hyperion-title-label" for="hyperion-title" class="mb-2 block font-semibold" jhiTranslate="artemisApp.hyperion.generation.brief.titleLabel"></label>
+                <p id="hyperion-title-hint" class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.titleHint"></p>
+                <div class="flex items-start gap-2">
+                    <input
+                        id="hyperion-title"
+                        type="text"
+                        tumUiInput
+                        class="min-w-0 flex-1"
+                        [attr.maxlength]="maximumTitleLength"
+                        [placeholder]="'artemisApp.hyperion.generation.brief.titlePlaceholder' | artemisTranslate"
+                        [ngModel]="title()"
+                        (ngModelChange)="editTitle($event)"
+                        (blur)="titleTouched.set(true)"
+                        [tumUiInputInvalid]="showTitleError()"
+                        [attr.aria-describedby]="showTitleError() ? 'hyperion-title-hint hyperion-title-error' : 'hyperion-title-hint'"
+                        [attr.aria-invalid]="showTitleError() ? true : null"
+                        data-testid="hyperion-title-input"
+                    />
+                    <tum-ui-button
+                        severity="secondary"
+                        variant="outlined"
+                        size="small"
+                        [icon]="faRotate"
+                        [loading]="suggestingTitle()"
+                        [ariaLabel]="'artemisApp.hyperion.generation.brief.titleRegenerate' | artemisTranslate"
+                        (clicked)="regenerateTitle()"
+                        data-testid="hyperion-title-regenerate"
+                    />
+                </div>
+                @if (showTitleError()) {
+                    <p id="hyperion-title-error" class="mt-2 mb-0 text-sm text-state-danger" role="alert" data-testid="hyperion-title-error">
+                        {{ 'artemisApp.hyperion.generation.brief.titleError' | artemisTranslate: { min: minimumTitleLength } }}
+                    </p>
+                }
+                @if (suggestingTitle()) {
+                    <p
+                        class="mt-2 mb-0 text-sm text-muted-color"
+                        aria-live="polite"
+                        jhiTranslate="artemisApp.hyperion.generation.brief.titleSuggesting"
+                        data-testid="hyperion-title-suggesting"
+                    ></p>
+                }
+            </section>
+        }
+
         <tum-ui-panel [header]="'artemisApp.hyperion.generation.brief.exampleTitle' | artemisTranslate" toggleable [(collapsed)]="exampleCollapsed">
             <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.exampleText"></p>
         </tum-ui-panel>

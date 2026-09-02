@@ -14,6 +14,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 const COURSE_ID = 7;
+const TITLE_SUGGESTION_DEBOUNCE_MS = 800;
 const CREATED_EXERCISE = { id: 42, title: 'AI draft exercise' } as ProgrammingExercise;
 
 describe('HyperionBriefDialogComponent', () => {
@@ -23,6 +24,7 @@ describe('HyperionBriefDialogComponent', () => {
     let generationService: HyperionExerciseGenerationService;
     let registry: { track: ReturnType<typeof vi.fn>; markSeen: ReturnType<typeof vi.fn> };
     let navigateSpy: ReturnType<typeof vi.spyOn>;
+    let suggestTitleSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         registry = { track: vi.fn(), markSeen: vi.fn() };
@@ -43,6 +45,7 @@ describe('HyperionBriefDialogComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         generationService = TestBed.inject(HyperionExerciseGenerationService);
         navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+        suggestTitleSpy = vi.spyOn(generationService, 'suggestTitle').mockReturnValue(of({ title: 'Bounded Stack' }));
         component.visible.set(true);
         fixture.detectChanges();
     });
@@ -84,6 +87,83 @@ describe('HyperionBriefDialogComponent', () => {
         });
     });
 
+    /** Real time rather than fake timers: Angular's effect scheduler does not advance with them, so the signal never reaches the debounce. */
+    function afterTheDebounce(): Promise<void> {
+        return new Promise((resolve) => setTimeout(resolve, TITLE_SUGGESTION_DEBOUNCE_MS + 200));
+    }
+
+    describe('the suggested title', () => {
+        it('asks once the instructor pauses rather than on every keystroke', async () => {
+            component.brief.set('a'.repeat(60));
+            TestBed.tick();
+            component.brief.set('a'.repeat(61));
+            TestBed.tick();
+
+            // Two changes have been made and nothing has been asked for yet, which is the whole point of the debounce.
+            expect(suggestTitleSpy).not.toHaveBeenCalled();
+
+            await afterTheDebounce();
+
+            expect(suggestTitleSpy).toHaveBeenCalledOnce();
+            expect(suggestTitleSpy).toHaveBeenCalledWith(COURSE_ID, 'a'.repeat(61));
+            expect(component.title()).toBe('Bounded Stack');
+        });
+
+        it('never asks again once the instructor has titled the exercise themselves', async () => {
+            component.editTitle('Ring Buffer');
+
+            component.brief.set('a'.repeat(60));
+            TestBed.tick();
+            await afterTheDebounce();
+
+            expect(suggestTitleSpy).not.toHaveBeenCalled();
+            expect(component.title()).toBe('Ring Buffer');
+        });
+
+        it('overwrites the instructor edit only when they ask for another suggestion', () => {
+            component.brief.set('a'.repeat(60));
+            component.editTitle('Ring Buffer');
+
+            component.regenerateTitle();
+
+            expect(suggestTitleSpy).toHaveBeenCalledWith(COURSE_ID, 'a'.repeat(60));
+            expect(component.title()).toBe('Bounded Stack');
+        });
+
+        it('leaves the fallback in the field and Generate usable when the request fails', () => {
+            suggestTitleSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            // The real translation rather than the mock's key, because the fallback has to be a title Artemis itself accepts.
+            vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('AI draft exercise');
+            component.brief.set('a'.repeat(60));
+
+            component.regenerateTitle();
+
+            expect(component.title()).toBe('AI draft exercise');
+            expect(component.suggestingTitle()).toBe(false);
+            expect(component.canGenerate()).toBe(true);
+        });
+
+        it('refuses a title Artemis would reject and says so inline', () => {
+            component.brief.set('a'.repeat(60));
+            component.editTitle('Stack: bounded');
+            component.titleTouched.set(true);
+            fixture.detectChanges();
+
+            expect(component.canGenerate()).toBe(false);
+            expect(document.body.querySelector('[data-testid="hyperion-title-error"]')).not.toBeNull();
+        });
+
+        it('hides the field until the brief is worth naming', () => {
+            component.brief.set('too short');
+            fixture.detectChanges();
+            expect(document.body.querySelector('[data-testid="hyperion-title-section"]')).toBeNull();
+
+            component.brief.set('a'.repeat(60));
+            fixture.detectChanges();
+            expect(document.body.querySelector('[data-testid="hyperion-title-section"]')).not.toBeNull();
+        });
+    });
+
     describe('starting a run', () => {
         beforeEach(() => {
             component.brief.set('a'.repeat(60));
@@ -101,7 +181,17 @@ describe('HyperionBriefDialogComponent', () => {
             expect(component.visible()).toBe(false);
         });
 
-        it('titles the draft from the translated key rather than guessing at the brief', () => {
+        it('titles the draft with whatever the title field holds', () => {
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: CREATED_EXERCISE })));
+            vi.spyOn(generationService, 'generate').mockReturnValue(of({ jobId: 'job-1' }));
+            component.editTitle('Bounded Stack');
+
+            component.generate();
+
+            expect(setupSpy.mock.calls[0][0].title).toBe('Bounded Stack');
+        });
+
+        it('falls back to the translated draft title while no suggestion has arrived yet', () => {
             const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: CREATED_EXERCISE })));
             vi.spyOn(generationService, 'generate').mockReturnValue(of({ jobId: 'job-1' }));
 

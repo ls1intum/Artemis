@@ -21,6 +21,8 @@ import { ExerciseGenerationStatus } from '../model/exercise-generation-status';
 import { ExerciseGenerationEffortProfile } from '../model/exercise-generation-effort-profile';
 import { ExerciseGenerationRetainedArtifacts } from '../model/exercise-generation-retained-artifacts';
 import { ExerciseGenerationRevertResult } from '../model/exercise-generation-revert-result';
+import { ExerciseGenerationTitleSuggestionRequest } from '../model/exercise-generation-title-suggestion-request';
+import { ExerciseGenerationTitleSuggestionResponse } from '../model/exercise-generation-title-suggestion-response';
 
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationApi {
@@ -96,6 +98,20 @@ export class HyperionExerciseGenerationApi {
     revertExerciseGeneration(exerciseId: number): Observable<ExerciseGenerationRevertResult> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/revert`;
         return this.http.post<ExerciseGenerationRevertResult>(url, null);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param exerciseGenerationTitleSuggestionRequest
+     */
+    suggestGenerationTitle(
+        courseId: number,
+        exerciseGenerationTitleSuggestionRequest: ExerciseGenerationTitleSuggestionRequest,
+    ): Observable<ExerciseGenerationTitleSuggestionResponse> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/programming-exercises/generation/title-suggestion`;
+        return this.http.post<ExerciseGenerationTitleSuggestionResponse>(url, exerciseGenerationTitleSuggestionRequest);
     }
 
 }

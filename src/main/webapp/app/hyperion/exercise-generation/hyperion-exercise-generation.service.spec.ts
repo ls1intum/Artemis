@@ -38,6 +38,14 @@ describe('HyperionExerciseGenerationService', () => {
         request.flush({ jobId: 'j1' });
     });
 
+    it('asks the course for a draft title, because titles are unique per course rather than per exercise', () => {
+        service.suggestTitle(7, 'a bounded stack exercise').subscribe((suggestion) => expect(suggestion.title).toBe('Bounded Stack'));
+        const request = httpMock.expectOne('/api/hyperion/courses/7/programming-exercises/generation/title-suggestion');
+        expect(request.request.method).toBe('POST');
+        expect(request.request.body).toEqual({ prompt: 'a bounded stack exercise' });
+        request.flush({ title: 'Bounded Stack' });
+    });
+
     it('requests the run status', () => {
         service.getStatus(42).subscribe();
         const request = httpMock.expectOne('/api/hyperion/programming-exercises/42/generate-exercise/status');

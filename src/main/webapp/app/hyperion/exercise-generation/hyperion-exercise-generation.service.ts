@@ -9,6 +9,7 @@ import {
     HyperionGenerationMessage,
     HyperionGenerationRequest,
     HyperionGenerationStatus,
+    HyperionTitleSuggestion,
 } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 /** Client boundary for whole-exercise generation and adaptation. */
@@ -19,6 +20,11 @@ export class HyperionExerciseGenerationService {
 
     generate(exerciseId: number, request: HyperionGenerationRequest): Observable<HyperionGenerationJobStart> {
         return this.api.generateExercise(exerciseId, request);
+    }
+
+    /** Asks for a draft title for the exercise a brief describes. The server answers with a usable title even when the model does not, so this only errors on transport failures. */
+    suggestTitle(courseId: number, prompt: string): Observable<HyperionTitleSuggestion> {
+        return this.api.suggestGenerationTitle(courseId, { prompt });
     }
 
     getStatus(exerciseId: number): Observable<HyperionGenerationStatus | null> {

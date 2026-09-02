@@ -525,6 +525,26 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ExerciseGenerationEffortProfile'}
+  /api/hyperion/courses/{courseId}/programming-exercises/generation/title-suggestion:
+    post:
+      tags: [hyperion-exercise-generation]
+      operationId: suggestGenerationTitle
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExerciseGenerationTitleSuggestionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGenerationTitleSuggestionResponse'}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
     delete:
       tags: [hyperion-exercise-generation]
@@ -1829,6 +1849,20 @@ components:
         maxTokens: {type: integer, format: int64}
         maxJobDuration: {type: string}
       required: [mode]
+    ExerciseGenerationTitleSuggestionRequest:
+      type: object
+      description: Request for a draft exercise title derived from an instructor's
+        generation brief
+      properties:
+        prompt: {type: string, description: The instructor's brief for the exercise
+            to be generated, maxLength: 8000, minLength: 1}
+      required: [prompt]
+    ExerciseGenerationTitleSuggestionResponse:
+      type: object
+      description: A draft exercise title that is valid and unique in the course
+      properties:
+        title: {type: string}
+      required: [title]
     ExerciseGenerationRevertResult:
       type: object
       description: Result of reverting the last Hyperion generation or adaptation

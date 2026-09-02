@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
@@ -40,7 +41,10 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationTitleSuggestionRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationTitleSuggestionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSuggestionService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
@@ -93,11 +97,14 @@ public class HyperionExerciseGenerationResource {
 
     private final HyperionEffortProfileService effortProfileService;
 
+    private final HyperionExerciseTitleSuggestionService titleSuggestionService;
+
     public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GenerationJobService jobService, AgentSystemPromptService agentSystemPromptService,
             HyperionReviewCommentContextRendererService reviewCommentContextRenderer, ExerciseGenerationRevertService generationRevertService,
             RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService,
-            HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator, HyperionEffortProfileService effortProfileService) {
+            HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator, HyperionEffortProfileService effortProfileService,
+            HyperionExerciseTitleSuggestionService titleSuggestionService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -109,6 +116,26 @@ public class HyperionExerciseGenerationResource {
         this.generationBudgetService = generationBudgetService;
         this.generationCapacityHealthIndicator = generationCapacityHealthIndicator;
         this.effortProfileService = effortProfileService;
+        this.titleSuggestionService = titleSuggestionService;
+    }
+
+    /**
+     * POST courses/{courseId}/programming-exercises/generation/title-suggestion : suggests a draft title for the exercise the instructor's brief describes.
+     * <p>
+     * Course-scoped rather than exercise-scoped because it is asked before the exercise exists, and titles have to be unique per course. It answers with a title Artemis will
+     * accept — valid characters, long enough, and not already taken in the course — even when the model is unavailable, so a failed suggestion never stands between the instructor
+     * and generation.
+     *
+     * @param courseId the course the exercise will be created in
+     * @param request  the instructor's brief
+     * @return 200 with the suggested title
+     */
+    @PostMapping("courses/{courseId}/programming-exercises/generation/title-suggestion")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<ExerciseGenerationTitleSuggestionResponseDTO> suggestGenerationTitle(@PathVariable long courseId,
+            @Valid @RequestBody ExerciseGenerationTitleSuggestionRequestDTO request) {
+        log.debug("REST request to suggest a generation draft title for course [{}]", courseId);
+        return ResponseEntity.ok(titleSuggestionService.suggestTitle(courseId, request.prompt()));
     }
 
     /**
