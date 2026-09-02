@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
@@ -18,6 +18,7 @@ import { TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
     selector: 'jhi-exam-management-navigation-sidebar',
     templateUrl: './exam-management-navigation-sidebar.component.html',
     styleUrls: ['./exam-management-navigation-sidebar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CourseTitleBarTitleComponent,
         CourseSidebarToggleButtonComponent,

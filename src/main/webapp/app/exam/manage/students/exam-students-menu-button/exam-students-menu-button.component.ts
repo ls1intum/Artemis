@@ -1,4 +1,4 @@
-import { Component, ElementRef, TemplateRef, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, TemplateRef, input, viewChild } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import { TumUiButtonDirective, TumUiButtonSeverity } from '@tumaet/ui-angular';
 import { Menu } from 'primeng/menu';
@@ -11,6 +11,7 @@ import { NgTemplateOutlet } from '@angular/common';
     standalone: true,
     templateUrl: './exam-students-menu-button.component.html',
     imports: [Menu, TumUiButtonDirective, ArtemisTranslatePipe, TranslateDirective, NgTemplateOutlet],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExamStudentsMenuButtonComponent {
     readonly model = input.required<MenuItem[]>();
