@@ -800,7 +800,13 @@ public class StagedGenerationRunner {
         return reused ? prefix + "passed (reused in-stage check)" : prefix + "passed";
     }
 
-    private static String firstLineBounded(@Nullable String text, int maxChars) {
+    /** A line that states something worked cannot be the reason a gate failed, however early it appears in the report. */
+    private static boolean readsAsPassing(String line) {
+        String lower = line.toLowerCase(Locale.ROOT);
+        return lower.contains("tests pass.") || lower.contains("all required gradable tests fail") || lower.startsWith("the differential passed");
+    }
+
+    static String firstLineBounded(@Nullable String text, int maxChars) {
         if (text == null) {
             return "";
         }
@@ -808,12 +814,24 @@ public class StagedGenerationRunner {
         String[] lines = text.strip().split("\n");
         String firstLine = lines[0].strip();
         if (firstLine.endsWith(":")) {
+            // The report leads with whichever lane it describes first, and that lane may be the one that succeeded: a template that wrongly passes produces a report opening
+            // "Solution: 9/9 tests pass." Folding that in makes a failure read as a success and tells the instructor nothing, so skip past the lines that state something worked.
+            String candidate = "";
             for (int i = 1; i < lines.length; i++) {
-                String candidate = lines[i].strip();
-                if (!candidate.isEmpty()) {
-                    firstLine = firstLine + " " + candidate;
+                String line = lines[i].strip();
+                if (line.isEmpty()) {
+                    continue;
+                }
+                if (candidate.isEmpty()) {
+                    candidate = line;
+                }
+                if (!readsAsPassing(line)) {
+                    candidate = line;
                     break;
                 }
+            }
+            if (!candidate.isEmpty()) {
+                firstLine = firstLine + " " + candidate;
             }
         }
         if (firstLine.codePointCount(0, firstLine.length()) <= maxChars) {

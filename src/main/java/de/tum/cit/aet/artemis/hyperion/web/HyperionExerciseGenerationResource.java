@@ -37,14 +37,14 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationCapacityHealthIn
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationTitleSuggestionRequestDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationTitleSuggestionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSuggestionService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseMetadataSuggestionService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
@@ -97,14 +97,14 @@ public class HyperionExerciseGenerationResource {
 
     private final HyperionEffortProfileService effortProfileService;
 
-    private final HyperionExerciseTitleSuggestionService titleSuggestionService;
+    private final HyperionExerciseMetadataSuggestionService metadataSuggestionService;
 
     public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GenerationJobService jobService, AgentSystemPromptService agentSystemPromptService,
             HyperionReviewCommentContextRendererService reviewCommentContextRenderer, ExerciseGenerationRevertService generationRevertService,
             RemoteInteractiveSandboxClient sandboxClient, HyperionGenerationBudgetService generationBudgetService,
             HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator, HyperionEffortProfileService effortProfileService,
-            HyperionExerciseTitleSuggestionService titleSuggestionService) {
+            HyperionExerciseMetadataSuggestionService metadataSuggestionService) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
@@ -116,26 +116,26 @@ public class HyperionExerciseGenerationResource {
         this.generationBudgetService = generationBudgetService;
         this.generationCapacityHealthIndicator = generationCapacityHealthIndicator;
         this.effortProfileService = effortProfileService;
-        this.titleSuggestionService = titleSuggestionService;
+        this.metadataSuggestionService = metadataSuggestionService;
     }
 
     /**
-     * POST courses/{courseId}/programming-exercises/generation/title-suggestion : suggests a draft title for the exercise the instructor's brief describes.
+     * POST courses/{courseId}/programming-exercises/generation/metadata-suggestion : derives the metadata of the exercise the instructor's brief describes — its title,
+     * difficulty, short name, package name, and points.
      * <p>
-     * Course-scoped rather than exercise-scoped because it is asked before the exercise exists, and titles have to be unique per course. It answers with a title Artemis will
-     * accept — valid characters, long enough, and not already taken in the course — even when the model is unavailable, so a failed suggestion never stands between the instructor
-     * and generation.
+     * Course-scoped rather than exercise-scoped because it is asked before the exercise exists, and titles and short names have to be free in the course it will be created in. It
+     * answers with values Artemis will accept even when the model is unavailable, so a failed suggestion never stands between the instructor and generation.
      *
      * @param courseId the course the exercise will be created in
-     * @param request  the instructor's brief
-     * @return 200 with the suggested title
+     * @param request  the instructor's brief and the project type the exercise will use
+     * @return 200 with the derived metadata
      */
-    @PostMapping("courses/{courseId}/programming-exercises/generation/title-suggestion")
+    @PostMapping("courses/{courseId}/programming-exercises/generation/metadata-suggestion")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<ExerciseGenerationTitleSuggestionResponseDTO> suggestGenerationTitle(@PathVariable long courseId,
-            @Valid @RequestBody ExerciseGenerationTitleSuggestionRequestDTO request) {
-        log.debug("REST request to suggest a generation draft title for course [{}]", courseId);
-        return ResponseEntity.ok(titleSuggestionService.suggestTitle(courseId, request.prompt()));
+    public ResponseEntity<ExerciseGenerationMetadataSuggestionResponseDTO> suggestGenerationMetadata(@PathVariable long courseId,
+            @Valid @RequestBody ExerciseGenerationMetadataSuggestionRequestDTO request) {
+        log.debug("REST request to suggest the generation metadata for course [{}]", courseId);
+        return ResponseEntity.ok(metadataSuggestionService.suggestMetadata(courseId, request.prompt(), request.projectType()));
     }
 
     /**

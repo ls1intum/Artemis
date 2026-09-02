@@ -68,6 +68,20 @@ class HyperionExerciseTitleSanitizerTest {
     }
 
     @Test
+    void namesAnExerciseFromTheOpeningOfItsBriefWhenNoAnswerSurvives() {
+        String title = HyperionExerciseTitleSanitizer.fromBriefOpening("Students practise generics and exception handling by implementing a bounded stack.");
+
+        assertThat(title).isEqualTo("Students practise generics and exception handling");
+        assertThat(TITLE_NAME_PATTERN.matcher(title).matches()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "   ", "!!! ???", "ab" })
+    void yieldsTheEmptyStringForABriefWithNoWordsToName(String brief) {
+        assertThat(HyperionExerciseTitleSanitizer.fromBriefOpening(brief)).isEmpty();
+    }
+
+    @Test
     void appendsADisambiguatingSuffix() {
         assertThat(HyperionExerciseTitleSanitizer.withSuffix("Bounded Stack", 2)).isEqualTo("Bounded Stack 2");
     }

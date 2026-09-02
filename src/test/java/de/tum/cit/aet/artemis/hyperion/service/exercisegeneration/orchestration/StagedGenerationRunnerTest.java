@@ -891,4 +891,43 @@ class StagedGenerationRunnerTest {
         assertThat(GenerationStage.TESTS.activityStep()).isEqualTo("artifacts");
         assertThat(GenerationStage.STATEMENT.activityStep()).isEqualTo("statement");
     }
+
+    @Test
+    void gateProgressLine_namesWhatFailedRatherThanTheLaneThatPassed() {
+        // Observed live: the TESTS gate reported "Solution: 9/9 tests pass." as the reason it failed, because that is the report's
+        // first content line even when the template is the lane at fault. The instructor was told a success and nothing else.
+        String observation = """
+                The executable test artifacts do not yet satisfy the TESTS-stage checks:
+                Solution: 9/9 tests pass.
+                Template WRONGLY PASSES (these must FAIL): shouldReturnRejectedForNegativeAmount
+                Exact test names discovered so far: a, b
+                """;
+
+        String line = StagedGenerationRunner.firstLineBounded(observation, 400);
+
+        assertThat(line).contains("Template WRONGLY PASSES");
+        assertThat(line).doesNotContain("9/9 tests pass");
+    }
+
+    @Test
+    void gateProgressLine_keepsTheFirstContentLineWhenNothingReadsAsPassing() {
+        String observation = """
+                The executable test artifacts do not yet satisfy the TESTS-stage checks:
+                Solution FAILS: it ran no tests (it did not compile).
+                Template: did NOT compile (ran no tests).
+                """;
+
+        assertThat(StagedGenerationRunner.firstLineBounded(observation, 400)).contains("Solution FAILS: it ran no tests");
+    }
+
+    @Test
+    void gateProgressLine_fallsBackToAPassingLineWhenThatIsAllThereIs() {
+        // Never return only the bare header: a truncated-to-nothing message is worse than an imprecise one.
+        String observation = """
+                The executable test artifacts do not yet satisfy the TESTS-stage checks:
+                Solution: 9/9 tests pass.
+                """;
+
+        assertThat(StagedGenerationRunner.firstLineBounded(observation, 400)).contains("9/9 tests pass");
+    }
 }

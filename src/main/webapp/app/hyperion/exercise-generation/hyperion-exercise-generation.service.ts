@@ -9,8 +9,9 @@ import {
     HyperionGenerationMessage,
     HyperionGenerationRequest,
     HyperionGenerationStatus,
-    HyperionTitleSuggestion,
+    HyperionMetadataSuggestion,
 } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 /** Client boundary for whole-exercise generation and adaptation. */
 @Injectable({ providedIn: 'root' })
@@ -22,9 +23,11 @@ export class HyperionExerciseGenerationService {
         return this.api.generateExercise(exerciseId, request);
     }
 
-    /** Asks for a draft title for the exercise a brief describes. The server answers with a usable title even when the model does not, so this only errors on transport failures. */
-    suggestTitle(courseId: number, prompt: string): Observable<HyperionTitleSuggestion> {
-        return this.api.suggestGenerationTitle(courseId, { prompt });
+    /**
+     * Asks for the metadata of the exercise a brief describes. The server answers with usable values even when the model does not, so this only errors on transport failures.
+     */
+    suggestMetadata(courseId: number, prompt: string, projectType: ProjectType): Observable<HyperionMetadataSuggestion> {
+        return this.api.suggestGenerationMetadata(courseId, { prompt, projectType });
     }
 
     getStatus(exerciseId: number): Observable<HyperionGenerationStatus | null> {

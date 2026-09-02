@@ -3,6 +3,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
 import { of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,11 +12,20 @@ import { HyperionBriefDialogComponent } from 'app/hyperion/exercise-generation/c
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { HyperionMetadataSuggestion } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 const COURSE_ID = 7;
-const TITLE_SUGGESTION_DEBOUNCE_MS = 800;
+const SUGGESTION_DEBOUNCE_MS = 800;
 const CREATED_EXERCISE = { id: 42, title: 'AI draft exercise' } as ProgrammingExercise;
+const SUGGESTION: HyperionMetadataSuggestion = {
+    title: 'Bounded Stack',
+    shortName: 'boundstack',
+    packageName: 'de.tum.cit.aet.boundstack',
+    difficulty: 'EASY',
+    maxPoints: 10,
+};
 
 describe('HyperionBriefDialogComponent', () => {
     let fixture: ComponentFixture<HyperionBriefDialogComponent>;
@@ -24,7 +34,7 @@ describe('HyperionBriefDialogComponent', () => {
     let generationService: HyperionExerciseGenerationService;
     let registry: { track: ReturnType<typeof vi.fn>; markSeen: ReturnType<typeof vi.fn> };
     let navigateSpy: ReturnType<typeof vi.spyOn>;
-    let suggestTitleSpy: ReturnType<typeof vi.spyOn>;
+    let suggestMetadataSpy: ReturnType<typeof vi.spyOn>;
 
     beforeEach(async () => {
         registry = { track: vi.fn(), markSeen: vi.fn() };
@@ -45,7 +55,7 @@ describe('HyperionBriefDialogComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         generationService = TestBed.inject(HyperionExerciseGenerationService);
         navigateSpy = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-        suggestTitleSpy = vi.spyOn(generationService, 'suggestTitle').mockReturnValue(of({ title: 'Bounded Stack' }));
+        suggestMetadataSpy = vi.spyOn(generationService, 'suggestMetadata').mockReturnValue(of(SUGGESTION));
         component.visible.set(true);
         fixture.detectChanges();
     });
@@ -89,10 +99,10 @@ describe('HyperionBriefDialogComponent', () => {
 
     /** Real time rather than fake timers: Angular's effect scheduler does not advance with them, so the signal never reaches the debounce. */
     function afterTheDebounce(): Promise<void> {
-        return new Promise((resolve) => setTimeout(resolve, TITLE_SUGGESTION_DEBOUNCE_MS + 200));
+        return new Promise((resolve) => setTimeout(resolve, SUGGESTION_DEBOUNCE_MS + 200));
     }
 
-    describe('the suggested title', () => {
+    describe('the suggested metadata', () => {
         it('asks once the instructor pauses rather than on every keystroke', async () => {
             component.brief.set('a'.repeat(60));
             TestBed.tick();
@@ -100,13 +110,64 @@ describe('HyperionBriefDialogComponent', () => {
             TestBed.tick();
 
             // Two changes have been made and nothing has been asked for yet, which is the whole point of the debounce.
-            expect(suggestTitleSpy).not.toHaveBeenCalled();
+            expect(suggestMetadataSpy).not.toHaveBeenCalled();
 
             await afterTheDebounce();
 
-            expect(suggestTitleSpy).toHaveBeenCalledOnce();
-            expect(suggestTitleSpy).toHaveBeenCalledWith(COURSE_ID, 'a'.repeat(61));
+            expect(suggestMetadataSpy).toHaveBeenCalledOnce();
+            expect(suggestMetadataSpy).toHaveBeenCalledWith(COURSE_ID, 'a'.repeat(61), ProjectType.PLAIN_MAVEN);
+            // One request fills both the fields the instructor may weigh in on.
             expect(component.title()).toBe('Bounded Stack');
+            expect(component.difficulty()).toBe(DifficultyLevel.EASY);
+        });
+
+        it('says where a pre-selected difficulty came from, and stops saying it once the instructor chooses one', async () => {
+            component.brief.set('a'.repeat(60));
+            TestBed.tick();
+            await afterTheDebounce();
+            fixture.detectChanges();
+
+            expect(document.body.querySelector('[data-testid="hyperion-difficulty-source"]')).not.toBeNull();
+
+            component.editDifficulty(DifficultyLevel.HARD);
+            fixture.detectChanges();
+
+            expect(document.body.querySelector('[data-testid="hyperion-difficulty-source"]')).toBeNull();
+        });
+
+        it('never moves a difficulty the instructor chose themselves', async () => {
+            component.editDifficulty(DifficultyLevel.HARD);
+
+            component.brief.set('a'.repeat(60));
+            TestBed.tick();
+            await afterTheDebounce();
+
+            // The title is still Hyperion's to suggest; the difficulty is not.
+            expect(component.title()).toBe('Bounded Stack');
+            expect(component.difficulty()).toBe(DifficultyLevel.HARD);
+        });
+
+        it('leaves a difficulty the instructor chose alone even when they ask for another title', () => {
+            component.brief.set('a'.repeat(60));
+            component.editDifficulty(DifficultyLevel.HARD);
+            component.editTitle('Ring Buffer');
+
+            component.regenerateTitle();
+
+            expect(component.title()).toBe('Bounded Stack');
+            expect(component.difficulty()).toBe(DifficultyLevel.HARD);
+        });
+
+        it('shows what will be created, folded away until it is looked for', async () => {
+            component.brief.set('a'.repeat(60));
+            TestBed.tick();
+            await afterTheDebounce();
+            fixture.detectChanges();
+
+            expect(document.body.querySelector('[data-testid="hyperion-brief-summary"]')?.getAttribute('data-collapsed')).toBe('true');
+            expect(document.body.querySelector('[data-testid="hyperion-brief-summary-short-name"]')?.textContent).toContain('boundstack');
+            expect(document.body.querySelector('[data-testid="hyperion-brief-summary-package-name"]')?.textContent).toContain('de.tum.cit.aet.boundstack');
+            expect(document.body.querySelector('[data-testid="hyperion-brief-summary-max-points"]')?.textContent).toContain('10');
         });
 
         it('never asks again once the instructor has titled the exercise themselves', async () => {
@@ -116,7 +177,7 @@ describe('HyperionBriefDialogComponent', () => {
             TestBed.tick();
             await afterTheDebounce();
 
-            expect(suggestTitleSpy).not.toHaveBeenCalled();
+            expect(suggestMetadataSpy).not.toHaveBeenCalled();
             expect(component.title()).toBe('Ring Buffer');
         });
 
@@ -126,12 +187,12 @@ describe('HyperionBriefDialogComponent', () => {
 
             component.regenerateTitle();
 
-            expect(suggestTitleSpy).toHaveBeenCalledWith(COURSE_ID, 'a'.repeat(60));
+            expect(suggestMetadataSpy).toHaveBeenCalledWith(COURSE_ID, 'a'.repeat(60), ProjectType.PLAIN_MAVEN);
             expect(component.title()).toBe('Bounded Stack');
         });
 
         it('leaves the fallback in the field and Generate usable when the request fails', () => {
-            suggestTitleSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            suggestMetadataSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
             // The real translation rather than the mock's key, because the fallback has to be a title Artemis itself accepts.
             vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('AI draft exercise');
             component.brief.set('a'.repeat(60));
@@ -139,7 +200,7 @@ describe('HyperionBriefDialogComponent', () => {
             component.regenerateTitle();
 
             expect(component.title()).toBe('AI draft exercise');
-            expect(component.suggestingTitle()).toBe(false);
+            expect(component.suggesting()).toBe(false);
             expect(component.canGenerate()).toBe(true);
         });
 
@@ -208,6 +269,71 @@ describe('HyperionBriefDialogComponent', () => {
             expect(component.setupFailed()).toBe(true);
             expect(component.brief()).toBe('a'.repeat(60));
             expect(navigateSpy).not.toHaveBeenCalled();
+        });
+
+        it('creates the draft with the derived identifiers and leaves it unreleased', async () => {
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: CREATED_EXERCISE })));
+            vi.spyOn(generationService, 'generate').mockReturnValue(of({ jobId: 'job-1' }));
+            TestBed.tick();
+            await afterTheDebounce();
+
+            component.generate();
+
+            const draft = setupSpy.mock.calls[0][0];
+            expect(draft.shortName).toBe('boundstack');
+            expect(draft.packageName).toBe('de.tum.cit.aet.boundstack');
+            expect(draft.maxPoints).toBe(10);
+            expect(draft.difficulty).toBe(DifficultyLevel.EASY);
+            expect(draft.releaseDate?.isAfter(dayjs().add(6, 'month'))).toBe(true);
+        });
+    });
+
+    describe('an identifier another exercise took first', () => {
+        const conflict = new HttpErrorResponse({ status: 400, error: { errorKey: 'shortnameAlreadyExists' } });
+
+        beforeEach(async () => {
+            component.brief.set('a'.repeat(60));
+            TestBed.tick();
+            await afterTheDebounce();
+        });
+
+        it('asks for a fresh suggestion once and retries with it', () => {
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup');
+            setupSpy.mockReturnValueOnce(throwError(() => conflict)).mockReturnValueOnce(of(new HttpResponse({ body: CREATED_EXERCISE })));
+            suggestMetadataSpy.mockReturnValue(of({ ...SUGGESTION, shortName: 'boundstack2', packageName: 'de.tum.cit.aet.boundstack2' }));
+            suggestMetadataSpy.mockClear();
+            vi.spyOn(generationService, 'generate').mockReturnValue(of({ jobId: 'job-1' }));
+
+            component.generate();
+
+            expect(suggestMetadataSpy).toHaveBeenCalledOnce();
+            expect(setupSpy).toHaveBeenCalledTimes(2);
+            expect(setupSpy.mock.calls[1][0].shortName).toBe('boundstack2');
+            expect(component.setupFailed()).toBe(false);
+            expect(navigateSpy).toHaveBeenCalled();
+        });
+
+        it('gives up after that one retry rather than looping', () => {
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(throwError(() => conflict));
+            suggestMetadataSpy.mockClear();
+
+            component.generate();
+
+            expect(suggestMetadataSpy).toHaveBeenCalledOnce();
+            expect(setupSpy).toHaveBeenCalledTimes(2);
+            expect(component.setupFailed()).toBe(true);
+            expect(component.provisioning()).toBe(false);
+        });
+
+        it('does not retry a failure that is not about a name', () => {
+            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            suggestMetadataSpy.mockClear();
+
+            component.generate();
+
+            expect(suggestMetadataSpy).not.toHaveBeenCalled();
+            expect(setupSpy).toHaveBeenCalledOnce();
+            expect(component.setupFailed()).toBe(true);
         });
     });
 

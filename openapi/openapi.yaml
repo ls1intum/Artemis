@@ -525,10 +525,10 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ExerciseGenerationEffortProfile'}
-  /api/hyperion/courses/{courseId}/programming-exercises/generation/title-suggestion:
+  /api/hyperion/courses/{courseId}/programming-exercises/generation/metadata-suggestion:
     post:
       tags: [hyperion-exercise-generation]
-      operationId: suggestGenerationTitle
+      operationId: suggestGenerationMetadata
       parameters:
       - name: courseId
         in: path
@@ -537,14 +537,14 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/ExerciseGenerationTitleSuggestionRequest'}
+            schema: {$ref: '#/components/schemas/ExerciseGenerationMetadataSuggestionRequest'}
         required: true
       responses:
         '200':
           description: OK
           content:
             application/json:
-              schema: {$ref: '#/components/schemas/ExerciseGenerationTitleSuggestionResponse'}
+              schema: {$ref: '#/components/schemas/ExerciseGenerationMetadataSuggestionResponse'}
   /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/jobs/{jobId}:
     delete:
       tags: [hyperion-exercise-generation]
@@ -1849,20 +1849,31 @@ components:
         maxTokens: {type: integer, format: int64}
         maxJobDuration: {type: string}
       required: [mode]
-    ExerciseGenerationTitleSuggestionRequest:
+    ExerciseGenerationMetadataSuggestionRequest:
       type: object
-      description: Request for a draft exercise title derived from an instructor's
-        generation brief
+      description: Request for the derived metadata of an exercise an instructor is
+        about to generate
       properties:
         prompt: {type: string, description: The instructor's brief for the exercise
             to be generated, maxLength: 8000, minLength: 1}
+        projectType:
+          type: string
+          description: The project type the exercise will use
+          enum: [MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE, GRADLE_GRADLE,
+            MAVEN_BLACKBOX]
       required: [prompt]
-    ExerciseGenerationTitleSuggestionResponse:
+    ExerciseGenerationMetadataSuggestionResponse:
       type: object
-      description: A draft exercise title that is valid and unique in the course
+      description: The metadata Artemis derives for an exercise it is about to generate
       properties:
         title: {type: string}
-      required: [title]
+        shortName: {type: string}
+        packageName: {type: string}
+        difficulty:
+          type: string
+          enum: [EASY, MEDIUM, HARD]
+        maxPoints: {type: number, format: double}
+      required: [difficulty, maxPoints, packageName, shortName, title]
     ExerciseGenerationRevertResult:
       type: object
       description: Result of reverting the last Hyperion generation or adaptation

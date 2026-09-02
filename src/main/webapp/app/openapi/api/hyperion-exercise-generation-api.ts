@@ -21,8 +21,8 @@ import { ExerciseGenerationStatus } from '../model/exercise-generation-status';
 import { ExerciseGenerationEffortProfile } from '../model/exercise-generation-effort-profile';
 import { ExerciseGenerationRetainedArtifacts } from '../model/exercise-generation-retained-artifacts';
 import { ExerciseGenerationRevertResult } from '../model/exercise-generation-revert-result';
-import { ExerciseGenerationTitleSuggestionRequest } from '../model/exercise-generation-title-suggestion-request';
-import { ExerciseGenerationTitleSuggestionResponse } from '../model/exercise-generation-title-suggestion-response';
+import { ExerciseGenerationMetadataSuggestionRequest } from '../model/exercise-generation-metadata-suggestion-request';
+import { ExerciseGenerationMetadataSuggestionResponse } from '../model/exercise-generation-metadata-suggestion-response';
 
 @Injectable({ providedIn: 'root' })
 export class HyperionExerciseGenerationApi {
@@ -104,14 +104,14 @@ export class HyperionExerciseGenerationApi {
      *
      *
      * @param courseId
-     * @param exerciseGenerationTitleSuggestionRequest
+     * @param exerciseGenerationMetadataSuggestionRequest
      */
-    suggestGenerationTitle(
+    suggestGenerationMetadata(
         courseId: number,
-        exerciseGenerationTitleSuggestionRequest: ExerciseGenerationTitleSuggestionRequest,
-    ): Observable<ExerciseGenerationTitleSuggestionResponse> {
-        const url = `${this.basePath}/api/hyperion/courses/${courseId}/programming-exercises/generation/title-suggestion`;
-        return this.http.post<ExerciseGenerationTitleSuggestionResponse>(url, exerciseGenerationTitleSuggestionRequest);
+        exerciseGenerationMetadataSuggestionRequest: ExerciseGenerationMetadataSuggestionRequest,
+    ): Observable<ExerciseGenerationMetadataSuggestionResponse> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/programming-exercises/generation/metadata-suggestion`;
+        return this.http.post<ExerciseGenerationMetadataSuggestionResponse>(url, exerciseGenerationMetadataSuggestionRequest);
     }
 
 }

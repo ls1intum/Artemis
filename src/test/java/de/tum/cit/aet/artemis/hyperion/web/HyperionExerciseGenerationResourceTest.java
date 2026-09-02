@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
@@ -49,16 +50,16 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompletenes
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationTitleSuggestionRequestDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationTitleSuggestionResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSuggestionService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseMetadataSuggestionService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.AgentSystemPromptService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
@@ -110,7 +111,7 @@ class HyperionExerciseGenerationResourceTest {
     private HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator;
 
     @Mock
-    private HyperionExerciseTitleSuggestionService titleSuggestionService;
+    private HyperionExerciseMetadataSuggestionService metadataSuggestionService;
 
     private HyperionExerciseGenerationResource resource;
 
@@ -126,7 +127,7 @@ class HyperionExerciseGenerationResourceTest {
         MockitoAnnotations.openMocks(this);
         resource = new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, auxiliaryRepositoryRepository, jobService, agentSystemPromptService,
                 reviewCommentContextRenderer, generationRevertService, sandboxClient, generationBudgetService, generationCapacityHealthIndicator, effortProfileService,
-                titleSuggestionService);
+                metadataSuggestionService);
         when(auxiliaryRepositoryRepository.findByExerciseId(org.mockito.ArgumentMatchers.any())).thenReturn(java.util.List.of());
         when(sandboxClient.hasAvailableGenerationSandboxSlot()).thenReturn(true);
         when(generationBudgetService.reserveGenerationBudget(any(), any(), anyLong())).thenReturn(HyperionGenerationBudgetService.BudgetReservation.none());
@@ -607,7 +608,8 @@ class HyperionExerciseGenerationResourceTest {
         Method revert = HyperionExerciseGenerationResource.class.getMethod("revertExerciseGeneration", long.class);
         Method supported = HyperionExerciseGenerationResource.class.getMethod("getSupportedGenerationLanguages");
         Method effortProfiles = HyperionExerciseGenerationResource.class.getMethod("getGenerationEffortProfiles");
-        Method titleSuggestion = HyperionExerciseGenerationResource.class.getMethod("suggestGenerationTitle", long.class, ExerciseGenerationTitleSuggestionRequestDTO.class);
+        Method metadataSuggestion = HyperionExerciseGenerationResource.class.getMethod("suggestGenerationMetadata", long.class,
+                ExerciseGenerationMetadataSuggestionRequestDTO.class);
 
         assertThat(generate.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
         assertThat(status.getAnnotation(EnforceAtLeastEditorInExercise.class)).isNotNull();
@@ -616,7 +618,7 @@ class HyperionExerciseGenerationResourceTest {
         assertThat(supported.getAnnotation(EnforceAtLeastEditor.class)).isNotNull();
         assertThat(effortProfiles.getAnnotation(EnforceAtLeastEditor.class)).isNotNull();
         // Asked before the exercise exists, so it is gated on the course the exercise will live in rather than on the exercise.
-        assertThat(titleSuggestion.getAnnotation(EnforceAtLeastEditorInCourse.class)).isNotNull();
+        assertThat(metadataSuggestion.getAnnotation(EnforceAtLeastEditorInCourse.class)).isNotNull();
     }
 
     @Test
@@ -627,14 +629,16 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     @Test
-    void suggestGenerationTitle_returnsTheSuggestionForTheCourse() {
-        when(titleSuggestionService.suggestTitle(5L, "Build a bubble sort exercise.")).thenReturn(new ExerciseGenerationTitleSuggestionResponseDTO("Bubble Sort"));
+    void suggestGenerationMetadata_returnsTheDerivedMetadataForTheCourse() {
+        ExerciseGenerationMetadataSuggestionResponseDTO suggestion = new ExerciseGenerationMetadataSuggestionResponseDTO("Bubble Sort", "bubblesort", "de.tum.cit.aet.bubblesort",
+                DifficultyLevel.EASY, 10);
+        when(metadataSuggestionService.suggestMetadata(5L, "Build a bubble sort exercise.", ProjectType.PLAIN_MAVEN)).thenReturn(suggestion);
 
-        ResponseEntity<ExerciseGenerationTitleSuggestionResponseDTO> response = resource.suggestGenerationTitle(5L,
-                new ExerciseGenerationTitleSuggestionRequestDTO("Build a bubble sort exercise."));
+        ResponseEntity<ExerciseGenerationMetadataSuggestionResponseDTO> response = resource.suggestGenerationMetadata(5L,
+                new ExerciseGenerationMetadataSuggestionRequestDTO("Build a bubble sort exercise.", ProjectType.PLAIN_MAVEN));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull().extracting(ExerciseGenerationTitleSuggestionResponseDTO::title).isEqualTo("Bubble Sort");
+        assertThat(response.getBody()).isNotNull().isEqualTo(suggestion);
     }
 
     /** A resource wired to a deployment that configures two profiles. */
@@ -655,7 +659,7 @@ class HyperionExerciseGenerationResourceTest {
         properties.setProfiles(profiles);
         return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, auxiliaryRepositoryRepository, jobService, agentSystemPromptService,
                 reviewCommentContextRenderer, generationRevertService, sandboxClient, generationBudgetService, generationCapacityHealthIndicator,
-                new HyperionEffortProfileService(properties, List.of()), titleSuggestionService);
+                new HyperionEffortProfileService(properties, List.of()), metadataSuggestionService);
     }
 
     private void stubHappyPath(ExerciseGenerationRequestDTO request) {

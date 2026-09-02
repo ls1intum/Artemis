@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { Observable, Subject } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
+import { ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
 class MockWebsocketService {
     channels: string[] = [];
@@ -38,12 +39,15 @@ describe('HyperionExerciseGenerationService', () => {
         request.flush({ jobId: 'j1' });
     });
 
-    it('asks the course for a draft title, because titles are unique per course rather than per exercise', () => {
-        service.suggestTitle(7, 'a bounded stack exercise').subscribe((suggestion) => expect(suggestion.title).toBe('Bounded Stack'));
-        const request = httpMock.expectOne('/api/hyperion/courses/7/programming-exercises/generation/title-suggestion');
+    it('asks the course for the derived metadata, because titles and short names are unique per course rather than per exercise', () => {
+        service.suggestMetadata(7, 'a bounded stack exercise', ProjectType.PLAIN_MAVEN).subscribe((suggestion) => {
+            expect(suggestion.title).toBe('Bounded Stack');
+            expect(suggestion.shortName).toBe('boundstack');
+        });
+        const request = httpMock.expectOne('/api/hyperion/courses/7/programming-exercises/generation/metadata-suggestion');
         expect(request.request.method).toBe('POST');
-        expect(request.request.body).toEqual({ prompt: 'a bounded stack exercise' });
-        request.flush({ title: 'Bounded Stack' });
+        expect(request.request.body).toEqual({ prompt: 'a bounded stack exercise', projectType: 'PLAIN_MAVEN' });
+        request.flush({ title: 'Bounded Stack', shortName: 'boundstack', packageName: 'de.tum.cit.aet.boundstack', difficulty: 'EASY', maxPoints: 10 });
     });
 
     it('requests the run status', () => {

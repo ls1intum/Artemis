@@ -821,6 +821,15 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     long countByTitleAndExerciseGroupExamCourse(String shortName, Course course);
 
     /**
+     * Counts the exercises already using a project key. The project key is derived from the course and exercise short names and identifies the exercise's projects and
+     * repositories instance-wide, so this is the instance-wide counterpart to the course-scoped short-name checks above.
+     *
+     * @param projectKey the project key to look for, in the upper-case form {@link ProgrammingExercise#generateAndSetProjectKey()} produces
+     * @return how many programming exercises already carry that project key
+     */
+    long countByProjectKey(String projectKey);
+
+    /**
      * Finds the branch for the given exercise id.
      *
      * @param exerciseId the exercise id to find the branch for

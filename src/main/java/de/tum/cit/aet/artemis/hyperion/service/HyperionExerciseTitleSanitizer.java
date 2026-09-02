@@ -20,6 +20,9 @@ final class HyperionExerciseTitleSanitizer {
     /** A title is a label in an exercise list, not a summary; the database column allows far more, but a suggestion that long reads as a sentence. */
     static final int MAX_TITLE_LENGTH = 60;
 
+    /** How much of a brief's opening {@link #fromBriefOpening(String)} keeps. Matches the "at most six words" the prompt asks a model for. */
+    private static final int FALLBACK_TITLE_WORDS = 6;
+
     /**
      * The complement of the character class in {@link de.tum.cit.aet.artemis.core.config.Constants#TITLE_NAME_PATTERN}. Kept as its own literal rather than derived from that
      * pattern, because a pattern anchored with {@code ^} and quantified with {@code *} cannot be inverted mechanically;
@@ -50,6 +53,32 @@ final class HyperionExerciseTitleSanitizer {
         String collapsed = WHITESPACE_RUN.matcher(allowedOnly).replaceAll(" ").strip();
         String truncated = truncate(collapsed);
         return truncated.length() < MIN_TITLE_LENGTH ? "" : truncated;
+    }
+
+    /**
+     * Names an exercise from the opening of its brief, for when no model answer survives.
+     * <p>
+     * Deliberately not a constant: a brief that has been written already says what the exercise is about, and its first words name it better than a placeholder. The result is
+     * a title, not a summary, so it stops after {@link #FALLBACK_TITLE_WORDS} words.
+     *
+     * @param brief the instructor's brief, already stripped of prompt-injection vectors
+     * @return a valid title built from the brief's first words, or the empty string when the brief holds nothing usable
+     */
+    static String fromBriefOpening(String brief) {
+        String sanitized = sanitize(brief.lines().map(String::strip).filter(line -> !line.isEmpty()).findFirst().orElse(""));
+        if (sanitized.isEmpty()) {
+            return "";
+        }
+        String[] words = WHITESPACE_RUN.split(sanitized);
+        StringBuilder opening = new StringBuilder();
+        for (int index = 0; index < Math.min(words.length, FALLBACK_TITLE_WORDS); index++) {
+            if (!opening.isEmpty()) {
+                opening.append(' ');
+            }
+            opening.append(words[index]);
+        }
+        String title = truncate(opening.toString());
+        return title.length() < MIN_TITLE_LENGTH ? "" : title;
     }
 
     /**
