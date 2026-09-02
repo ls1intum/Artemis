@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Event, NavigationEnd, Router, convertToParamMap } from '@angular/router';
 import { Subject } from 'rxjs';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 describe('ExamManagementNavigationSidebarComponent', () => {
     let component: ExamManagementNavigationSidebarComponent;
@@ -138,7 +140,7 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         expect(component.expandedExams().has(2)).toBe(true);
 
         vi.advanceTimersByTime(100);
-        expect(dummyElement.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
+        expect(dummyElement.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
 
         document.body.removeChild(dummyElement);
         vi.useRealTimers();
@@ -193,5 +195,116 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         const togglerEvent = { target: togglerElement } as unknown as MouseEvent;
         component.onPanelClick(1, togglerEvent);
         expect(toggleSpy).not.toHaveBeenCalled();
+    });
+
+    describe('subpage items', () => {
+        it.each([
+            {
+                role: 'instructor',
+                course: { id: 1, isAtLeastInstructor: true, isAtLeastEditor: true, isAtLeastTutor: true } as Course,
+                expectedSubpages: [
+                    'sidebar-subpage-detail',
+                    'sidebar-subpage-edit',
+                    'sidebar-subpage-exercise-groups',
+                    'sidebar-subpage-students',
+                    'sidebar-subpage-test-runs',
+                    'sidebar-subpage-assessment-dashboard',
+                    'sidebar-subpage-grading',
+                    'sidebar-subpage-scores',
+                ],
+            },
+            {
+                role: 'editor',
+                course: { id: 1, isAtLeastInstructor: false, isAtLeastEditor: true, isAtLeastTutor: true } as Course,
+                expectedSubpages: ['sidebar-subpage-exercise-groups', 'sidebar-subpage-assessment-dashboard'],
+            },
+            {
+                role: 'tutor',
+                course: { id: 1, isAtLeastInstructor: false, isAtLeastEditor: false, isAtLeastTutor: true } as Course,
+                expectedSubpages: ['sidebar-subpage-assessment-dashboard'],
+            },
+        ])('should render the correct subpage items for $role', ({ course, expectedSubpages }) => {
+            fixture.componentRef.setInput('course', course);
+            fixture.componentRef.setInput('exams', [{ id: 1, title: 'Exam 1' } as Exam]);
+            fixture.detectChanges();
+
+            const actualSubpages = fixture.debugElement.queryAll(By.css('[data-testid^="sidebar-subpage-"]')).map((el) => el.nativeElement.getAttribute('data-testid'));
+
+            expect(new Set(actualSubpages)).toEqual(new Set(expectedSubpages));
+            expect(actualSubpages).toEqual(expectedSubpages);
+        });
+
+        it('should not render any subpage items when course has no role flags', () => {
+            fixture.componentRef.setInput('course', { id: 1 } as Course);
+            fixture.detectChanges();
+
+            const actualSubpages = fixture.debugElement.queryAll(By.css('[data-testid^="sidebar-subpage-"]'));
+            expect(actualSubpages).toHaveLength(0);
+        });
+
+        it('should not render grading and assessment dashboard subpages for a test exam', () => {
+            fixture.componentRef.setInput('course', {
+                id: 1,
+                isAtLeastInstructor: true,
+                isAtLeastEditor: true,
+                isAtLeastTutor: true,
+            } as Course);
+            fixture.componentRef.setInput('exams', [{ id: 1, title: 'Test Exam', testExam: true } as Exam]);
+            fixture.detectChanges();
+
+            const actualSubpages = fixture.debugElement.queryAll(By.css('[data-testid^="sidebar-subpage-"]')).map((el) => el.nativeElement.getAttribute('data-testid'));
+
+            expect(actualSubpages).not.toContain('sidebar-subpage-assessment-dashboard');
+            expect(actualSubpages).not.toContain('sidebar-subpage-grading');
+
+            const expectedTestExamSubpages = [
+                'sidebar-subpage-detail',
+                'sidebar-subpage-edit',
+                'sidebar-subpage-exercise-groups',
+                'sidebar-subpage-students',
+                'sidebar-subpage-test-runs',
+                'sidebar-subpage-scores',
+            ];
+            expect(new Set(actualSubpages)).toEqual(new Set(expectedTestExamSubpages));
+            expect(actualSubpages).toEqual(expectedTestExamSubpages);
+        });
+
+        it('should not render assessment dashboard for a tutor on a test exam', () => {
+            fixture.componentRef.setInput('course', {
+                id: 1,
+                isAtLeastInstructor: false,
+                isAtLeastEditor: false,
+                isAtLeastTutor: true,
+            } as Course);
+            fixture.componentRef.setInput('exams', [{ id: 1, title: 'Test Exam', testExam: true } as Exam]);
+            fixture.detectChanges();
+
+            const actualSubpages = fixture.debugElement.queryAll(By.css('[data-testid^="sidebar-subpage-"]'));
+            expect(actualSubpages).toHaveLength(0);
+        });
+
+        it('should render the empty state when there are no exams', () => {
+            fixture.componentRef.setInput('course', {
+                id: 1,
+                isAtLeastInstructor: true,
+                isAtLeastEditor: true,
+                isAtLeastTutor: true,
+            } as Course);
+            fixture.componentRef.setInput('exams', []);
+            fixture.detectChanges();
+
+            const emptyContainer = fixture.debugElement.query(By.css('.p-2.text-center.text-muted'));
+            expect(emptyContainer).not.toBeNull();
+
+            const emptyMessage = fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.exam.overview.noExams"]'));
+            expect(emptyMessage).not.toBeNull();
+            expect(emptyMessage.nativeElement.textContent).toContain('artemisApp.exam.overview.noExams');
+
+            const panels = fixture.debugElement.queryAll(By.css('tum-ui-panel'));
+            expect(panels).toHaveLength(0);
+
+            const subpages = fixture.debugElement.queryAll(By.css('[data-testid^="sidebar-subpage-"]'));
+            expect(subpages).toHaveLength(0);
+        });
     });
 });

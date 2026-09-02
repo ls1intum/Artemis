@@ -98,7 +98,7 @@ export class ExamManagementNavigationSidebarComponent {
                 setTimeout(() => {
                     const element = document.getElementById('exam-' + examId);
                     if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                 }, 100);
             }
