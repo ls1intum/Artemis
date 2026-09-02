@@ -51,6 +51,7 @@ import com.github.dockerjava.api.command.InspectExecCmd;
 import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -108,6 +109,9 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
     private LocalRepository testsRepository;
 
+    /** Only created by the solution-build test; reset after it when present. */
+    private LocalRepository solutionRepository;
+
     private String commitHash;
 
     @Override
@@ -138,6 +142,55 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
     void removeRepositories() throws IOException {
         studentAssignmentRepository.resetLocalRepo();
         testsRepository.resetLocalRepo();
+        if (solutionRepository != null) {
+            solutionRepository.resetLocalRepo();
+            solutionRepository = null;
+        }
+    }
+
+    /**
+     * The solution participation is the one that generates the exercise's test cases, so its multi-container build
+     * exercises two hazards a student build never meets: each container reconciles the test-case registry against a
+     * PARTIAL result (it must not deactivate its siblings' test cases), and a test case reported by several containers
+     * (here {@code testConstructors[Policy]}, returned by both) must reach the merged result exactly once, because a
+     * duplicate test case zeroes the score.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionBuildGeneratesAllTestCasesAcrossContainersWithoutDuplicates() throws Exception {
+        String instructorImage = "mc-instructor:solution";
+        String studentImage = "mc-student:solution";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-solution");
+        mockContainerLifecycle(studentImage, "mc-student-solution");
+        // The structural results already contain the constructor test; the behavior container reports it a second time.
+        var behaviorPlusSharedTest = new java.util.HashMap<>(behaviorResults());
+        behaviorPlusSharedTest.putAll(constructorTestResult());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-solution", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-solution", RESULTS_DIRECTORY_REGEX, behaviorPlusSharedTest);
+
+        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyGitRepoFile.toPath(), solutionRepository.workingCopyGitRepo);
+        solutionRepository.workingCopyGitRepo.push().call();
+
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+
+        ProgrammingSubmission submission = awaitFinalizedResult(solutionParticipation.getId(), 120);
+
+        // Neither container deactivated the other's test cases: the registry is the union of both.
+        Set<String> expectedNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(expectedNames);
+
+        // The shared test case reached the merged result once, so the result was scored instead of zeroed as a duplicate.
+        Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(submission.getLatestResult().getId());
+        assertThat(feedbackTestNames(result)).containsExactlyInAnyOrderElementsOf(expectedNames);
+        assertThat(result.getFeedbacks()).filteredOn(feedback -> "testConstructors[Policy]".equals(feedbackTestName(feedback))).hasSize(1);
+        assertThat(result.getFeedbacks()).noneMatch(feedback -> feedback.getText() != null && feedback.getText().contains("Duplicate Test Case"));
+        assertThat(result.getScore()).isGreaterThan(0.0);
+        assertThat(result.isSuccessful()).isTrue();
+        assertThat(submission.isBuildFailed()).isFalse();
+        assertThat(submission.getExpectedContainerCount()).isEqualTo(2);
     }
 
     @Test
@@ -405,6 +458,12 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
                 .filter(entry -> entry.getKey().contains("SortingExampleBehaviorTest")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    /** The single constructor test file ({@code testConstructors[Policy]}), used to make two containers report one test case. */
+    private Map<String, String> constructorTestResult() throws IOException {
+        return dockerClientTestService.createMapFromTestResultsFolder(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH).entrySet().stream()
+                .filter(entry -> entry.getKey().contains("ConstructorTest")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
     // -------------------------------------------------------------------------------------------------
     // Assertion helpers
     // -------------------------------------------------------------------------------------------------
@@ -431,8 +490,11 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
      */
     private Set<String> feedbackTestNames(Result result) {
         return result.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback())
-                .filter(feedback -> !"Test was not executed.".equals(feedback.getDetailText()))
-                .map(feedback -> feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : feedback.getText()).collect(Collectors.toSet());
+                .filter(feedback -> !"Test was not executed.".equals(feedback.getDetailText())).map(this::feedbackTestName).collect(Collectors.toSet());
+    }
+
+    private String feedbackTestName(Feedback feedback) {
+        return feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : feedback.getText();
     }
 
     private BuildStatus statusOfJobWithImage(List<BuildJob> jobs, String dockerImage) {
