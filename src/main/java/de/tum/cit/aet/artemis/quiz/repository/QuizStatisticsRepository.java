@@ -42,7 +42,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
      * @return participant counts grouped by rating bucket
      */
     @Query("""
-            SELECT COALESCE(result.rated, false) AS rated,
+            SELECT COALESCE(result.rated, FALSE) AS rated,
                 COUNT(result.id) AS participantCount
             FROM Result result
                 JOIN result.submission submission
@@ -51,19 +51,19 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
             WHERE result.exerciseId = :exerciseId
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
-                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
+                AND (COALESCE(participation.testRun, FALSE) = FALSE OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT newer.id
                     FROM Result newer
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
-                        AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND COALESCE(newer.rated, FALSE) = COALESCE(result.rated, FALSE)
                         AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
                             OR (newer.completionDate = result.completionDate AND newer.id > result.id))
                 )
-            GROUP BY COALESCE(result.rated, false)
+            GROUP BY COALESCE(result.rated, FALSE)
             """)
     List<ParticipantCount> findParticipantCounts(@Param("exerciseId") long exerciseId);
 
@@ -76,7 +76,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
      * @return score buckets with their participant counts
      */
     @Query("""
-            SELECT COALESCE(result.rated, false) AS rated,
+            SELECT COALESCE(result.rated, FALSE) AS rated,
                 result.score AS score,
                 COUNT(result.id) AS participantCount
             FROM Result result
@@ -86,19 +86,19 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
             WHERE result.exerciseId = :exerciseId
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
-                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
+                AND (COALESCE(participation.testRun, FALSE) = FALSE OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT newer.id
                     FROM Result newer
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
-                        AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND COALESCE(newer.rated, FALSE) = COALESCE(result.rated, FALSE)
                         AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
                             OR (newer.completionDate = result.completionDate AND newer.id > result.id))
                 )
-            GROUP BY COALESCE(result.rated, false), result.score
+            GROUP BY COALESCE(result.rated, FALSE), result.score
             """)
     List<PointBucket> findPointStatistic(@Param("exerciseId") long exerciseId);
 
@@ -113,7 +113,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
      * @return one aggregate for each populated rated/unrated bucket
      */
     @Query("""
-            SELECT COALESCE(result.rated, false) AS rated,
+            SELECT COALESCE(result.rated, FALSE) AS rated,
                 COUNT(answer.id) AS participantCount,
                 SUM(CASE WHEN answer.scoreInPoints >= :questionPoints THEN 1 ELSE 0 END) AS correctCount
             FROM SubmittedAnswer answer
@@ -131,19 +131,19 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                 )
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
-                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
+                AND (COALESCE(participation.testRun, FALSE) = FALSE OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT newer.id
                     FROM Result newer
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
-                        AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND COALESCE(newer.rated, FALSE) = COALESCE(result.rated, FALSE)
                         AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
                             OR (newer.completionDate = result.completionDate AND newer.id > result.id))
                 )
-            GROUP BY COALESCE(result.rated, false)
+            GROUP BY COALESCE(result.rated, FALSE)
             """)
     List<QuestionAggregate> findQuestionAggregate(@Param("questionId") long questionId, @Param("questionPoints") double questionPoints);
 
@@ -157,7 +157,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
      */
     @Query("""
             SELECT question.id AS questionId,
-                COALESCE(result.rated, false) AS rated,
+                COALESCE(result.rated, FALSE) AS rated,
                 COUNT(answer.id) AS participantCount,
                 SUM(CASE WHEN answer.scoreInPoints >= question.points THEN 1 ELSE 0 END) AS correctCount
             FROM SubmittedAnswer answer
@@ -169,7 +169,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
             WHERE question.exercise.id = :exerciseId
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
-                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
+                AND (COALESCE(participation.testRun, FALSE) = FALSE OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT duplicateAnswer.id
                     FROM SubmittedAnswer duplicateAnswer
@@ -182,13 +182,13 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                     FROM Result newer
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
-                        AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND COALESCE(newer.rated, FALSE) = COALESCE(result.rated, FALSE)
                         AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
                             OR (newer.completionDate = result.completionDate AND newer.id > result.id))
                 )
-            GROUP BY question.id, COALESCE(result.rated, false)
+            GROUP BY question.id, COALESCE(result.rated, FALSE)
             """)
     List<QuizOverviewAggregate> findQuestionAggregatesForQuiz(@Param("exerciseId") long exerciseId);
 
@@ -205,7 +205,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
      */
     @Query("""
             SELECT answer.selection AS selection,
-                COALESCE(result.rated, false) AS rated
+                COALESCE(result.rated, FALSE) AS rated
             FROM SubmittedAnswer answer
                 JOIN answer.submission submission
                 JOIN submission.participation participation
@@ -214,7 +214,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
             WHERE answer.quizQuestion.id = :questionId
                 AND result.score IS NOT NULL
                 AND result.completionDate IS NOT NULL
-                AND (COALESCE(participation.testRun, false) = false OR exercise.exerciseGroup IS NULL)
+                AND (COALESCE(participation.testRun, FALSE) = FALSE OR exercise.exerciseGroup IS NULL)
                 AND NOT EXISTS (
                     SELECT duplicateAnswer.id
                     FROM SubmittedAnswer duplicateAnswer
@@ -227,7 +227,7 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
                     FROM Result newer
                         JOIN newer.submission newerSubmission
                     WHERE newerSubmission.participation.id = submission.participation.id
-                        AND COALESCE(newer.rated, false) = COALESCE(result.rated, false)
+                        AND COALESCE(newer.rated, FALSE) = COALESCE(result.rated, FALSE)
                         AND newer.score IS NOT NULL
                         AND newer.completionDate IS NOT NULL
                         AND (newer.completionDate > result.completionDate
