@@ -330,10 +330,21 @@ public class ExerciseVariantGroupService {
      * @param exercise the member exercise about to receive the group's timeline
      */
     private void rejectIfQuizMemberNotEditable(Exercise exercise) {
-        if (exercise instanceof QuizExercise quizExercise && !quizExerciseService.isEditable(quizExercise)) {
+        if (!canJoinGroup(exercise)) {
             throw new BadRequestAlertException("The timeline of a variant group cannot be changed while a member quiz has started or has ended", ENTITY_NAME,
                     "quizMemberNotEditable");
         }
+    }
+
+    /**
+     * Whether the exercise may join a variant group at all, so a caller that would have to undo persisted work after a
+     * rejected {@link #assignToGroup} can ask first. Same condition as {@link #rejectIfQuizMemberNotEditable}.
+     *
+     * @param exercise the candidate member
+     * @return false only for a quiz that has started or ended — every other exercise can join
+     */
+    public boolean canJoinGroup(Exercise exercise) {
+        return !(exercise instanceof QuizExercise quizExercise) || quizExerciseService.isEditable(quizExercise);
     }
 
     /**

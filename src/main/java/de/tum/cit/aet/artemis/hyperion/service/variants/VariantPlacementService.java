@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
@@ -33,6 +34,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 public class VariantPlacementService {
 
     private static final Logger log = LoggerFactory.getLogger(VariantPlacementService.class);
+
+    /** Why a quiz cannot join a variant group: joining stamps the group's timeline onto it (see ExerciseVariantGroupService). */
+    private static final String QUIZ_NOT_EDITABLE_REASON = "a quiz that has already started or ended cannot join a variant group";
 
     private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
@@ -88,13 +92,30 @@ public class VariantPlacementService {
                 if (placement.newGroup() == null) {
                     throw new IllegalStateException("NEW_GROUP placement without a group payload (should have been rejected at the REST boundary)");
                 }
+                if (!exerciseVariantGroupService.canJoinGroup(variant)) {
+                    // A quiz clone inherits the source's dates, so a source whose batch started produces a variant
+                    // that cannot join a group. Creating the group first would leave it behind, empty.
+                    log.warn("Not creating a variant group for variant exercise {}: {}", variant.getId(), QUIZ_NOT_EDITABLE_REASON);
+                    return List.of("FINALIZING: the variant was left ungrouped — " + QUIZ_NOT_EDITABLE_REASON);
+                }
                 // Same payload and entity mapping as the group-creation endpoint, so the wizard's new-group form
                 // (title, maxPoints, shared timeline dates) is applied in full.
                 ExerciseVariantGroup group = exerciseVariantGroupService.createGroup(course.getId(), placement.newGroup().toEntity());
                 // The wizard presents NEW_GROUP as "group the variant WITH its source": pull the source in first
                 // (so a date the wizard left empty is adopted from the source, not the clone), then the variant.
                 String sourceSkipReason = assignSourceToNewGroup(sourceExerciseId, group, course);
-                exerciseVariantGroupService.assignToGroup(variant, group);
+                try {
+                    exerciseVariantGroupService.assignToGroup(variant, group);
+                }
+                catch (BadRequestAlertException raced) {
+                    // The variant became ineligible between the check above and here — its quiz batch started while
+                    // the source was being added. Drop the group unless the source made it in, so no empty group is left.
+                    if (sourceSkipReason != null) {
+                        exerciseVariantGroupRepository.delete(group);
+                    }
+                    log.warn("Could not place variant exercise {} into the new variant group: {}", variant.getId(), raced.getMessage());
+                    return List.of("FINALIZING: the variant was left ungrouped — " + QUIZ_NOT_EDITABLE_REASON);
+                }
                 log.debug("Placed variant exercise {} into new variant group {}", variant.getId(), group.getId());
                 if (sourceSkipReason != null) {
                     // The wizard promised "group the variant with its original". The variant is in the new group,
@@ -132,7 +153,18 @@ public class VariantPlacementService {
             log.warn("Not adding source quiz {} to new variant group {}: only individual-mode quizzes can join a group", sourceExerciseId, group.getId());
             return "only individual-mode quizzes can join a variant group";
         }
-        exerciseVariantGroupService.assignToGroup(source, group);
+        if (!exerciseVariantGroupService.canJoinGroup(source)) {
+            log.warn("Not adding source exercise {} to new variant group {}: {}", sourceExerciseId, group.getId(), QUIZ_NOT_EDITABLE_REASON);
+            return QUIZ_NOT_EDITABLE_REASON;
+        }
+        try {
+            exerciseVariantGroupService.assignToGroup(source, group);
+        }
+        catch (BadRequestAlertException raced) {
+            // The source's quiz batch started between the check above and the assignment.
+            log.warn("Could not add source exercise {} to new variant group {}: {}", sourceExerciseId, group.getId(), raced.getMessage());
+            return QUIZ_NOT_EDITABLE_REASON;
+        }
         log.debug("Added source exercise {} to new variant group {}", sourceExerciseId, group.getId());
         return null;
     }
