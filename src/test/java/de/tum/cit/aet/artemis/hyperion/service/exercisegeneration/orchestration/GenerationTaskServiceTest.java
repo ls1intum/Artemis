@@ -909,6 +909,31 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void tokenAccountingFailure_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
+        // Observed in a live campaign: a single failed critic request made the usage account indeterminate, and an exercise that had already passed differential verification
+        // and been checkpointed was thrown away. Saving consumes no provider tokens, so an account that cannot be closed is a reason to stop spending, not to destroy work.
+        // The run is still reported with an incomplete accounting state.
+        when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
+            throw new GenerationJobService.TokenUsageAccountingException();
+        });
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            @SuppressWarnings("unchecked")
+            Consumer<ChatResponse> usageSink = invocation.getArgument(8);
+            usageSink.accept(responseWithTokens(7, 3));
+            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
+                "reservation-accounting-verified"));
+
+        verify(jobService).markTokenAccountingIncomplete(JOB_ID);
+        verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString());
+        verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+        assertThat(sentEvents()).anyMatch(event -> event.message() != null && event.message().contains("keeping and saving the already-verified exercise"));
+        assertThat(sentEvents().getLast().type()).isNotEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+    }
+
+    @Test
     void tokenBudgetExceeded_withoutAVerifiedCandidate_endsCancelledWithoutPersisting() {
         taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
                 auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 10,
@@ -946,7 +971,9 @@ class GenerationTaskServiceTest {
 
         assertThat(sentEvents().getLast().message()).contains("token usage could not be accounted for");
         verify(jobService).markTokenAccountingIncomplete(JOB_ID);
-        verify(jobService).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), argThat(message -> message.contains("token usage could not be accounted for")));
+        // The local stop flag already ends every further model call. A hard system cancellation would additionally mark the job cancelled, which is what used to destroy a
+        // verified candidate the provider had already been paid for.
+        verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString());
         verify(generationBudgetService).retainReservationForBudgetWindow("reservation-accounting-failed");
         verify(generationBudgetService, never()).releaseReservation("reservation-accounting-failed");
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());

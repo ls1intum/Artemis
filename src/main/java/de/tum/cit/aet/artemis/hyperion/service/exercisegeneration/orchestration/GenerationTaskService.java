@@ -255,11 +255,14 @@ public class GenerationTaskService {
                 if (outcome.specDocument() != null) {
                     jobService.recordSpecDocument(exerciseId, jobId, outcome.specDocument());
                 }
-                if (tokenAccountingFailed.get()) {
+                if (tokenAccountingFailed.get() && !outcome.isMechanicallyVerified()) {
                     emitter.milestone(ExerciseGenerationEventDTO
                             .of(ExerciseGenerationEventDTO.Type.CANCELLED, "Generation stopped because token usage could not be accounted for. Nothing was changed.")
                             .withTerminationReason(terminationReason));
                     return;
+                }
+                if (tokenAccountingFailed.get()) {
+                    emitter.progress("Provider token usage could not be accounted for; keeping and saving the already-verified exercise instead of discarding it.");
                 }
                 if (tokenBudgetExceeded.get()) {
                     // The budget controls provider spend, so it stops further model calls but must not discard work already paid for: saving consumes no provider tokens.
@@ -645,7 +648,10 @@ public class GenerationTaskService {
                 if (tokenAccountingFailed.compareAndSet(false, true)) {
                     log.warn("Exercise generation job {} stopped because provider token usage could not be determined", jobId);
                     jobService.markTokenAccountingIncomplete(jobId);
-                    jobService.requestSystemCancellation(exerciseId, jobId, "Generation stopped because token usage could not be accounted for. Nothing was changed.");
+                    // Only the local flag, for the same reason the token-budget branch above uses one: the orchestrator's cancelled-supplier already reads it and stops every
+                    // further model call, whereas requestSystemCancellation would mark the job cancelled and make enterNonCancellablePhase refuse to save a verified candidate
+                    // the provider has already been paid for. An indeterminate account is a reason to stop spending, not a reason to destroy work; the run is still reported
+                    // with an incomplete accounting state, so nothing is claimed that was not measured.
                 }
             }
         };
