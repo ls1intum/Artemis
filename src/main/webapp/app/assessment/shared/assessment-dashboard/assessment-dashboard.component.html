@@ -30,7 +30,7 @@
             @if (deimosModuleEnabled()) {
                 <button [jhiFeatureToggleHide]="FeatureToggle.Deimos" tumUiButton severity="info" size="small" (click)="openDeimosBatchDialog()">
                     <fa-icon [icon]="faShieldAlt" />
-                    <span jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
+                    <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.deimos.button.courseTrigger"></span>
                 </button>
             }
         }
