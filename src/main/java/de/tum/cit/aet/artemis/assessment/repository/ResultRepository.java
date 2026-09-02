@@ -71,14 +71,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     long countByExerciseIds(@Param("exerciseIds") Set<Long> exerciseIds);
 
-    @Query("""
-            SELECT r
-            FROM Result r
-                LEFT JOIN FETCH r.assessor
-            WHERE r.id = :resultId
-            """)
-    Optional<Result> findByIdWithEagerAssessor(@Param("resultId") long resultId);
-
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
