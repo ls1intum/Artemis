@@ -33,6 +33,34 @@ Do not reference Artemis properties from package source, and do not reference `-
 directly from application components. Change the host mapping when a package-wide theme decision
 changes.
 
+### Three color vocabularies coexist; application code uses one
+
+While the migration runs, three separate systems can name a color in a template, and they switch on
+different signals:
+
+| Vocabulary              | Looks like                                                                           | Switches on                                         | Status in application code                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Artemis semantic layer  | `text-state-danger`, `var(--module-bg)`, `var(--body-color)`                         | the dark theme stylesheet, loaded asynchronously    | **the vocabulary to use**                                                     |
+| PrimeUI Tailwind plugin | `text-muted-color`, `text-color`, `bg-emphasis`, `rounded-border`, `border-surface*` | the PrimeNG dark-theme attribute, set synchronously | legacy carry-over; do not add new uses                                        |
+| TUM UI theme contract   | `--tumaet-ui-*`                                                                      | `data-theme`, set synchronously                     | package-internal; reachable from an application only through the host mapping |
+
+<Callout variant={CalloutVariant.warning}>
+    Do not mix vocabularies within one element or one template. The three switch at different moments during a theme change and on a cold load, so a mixed element renders
+    half-switched — a dark border around a light fill — until the last of them catches up. Cloudscape states the same rule as [not mixing components from different visual
+    modes](https://cloudscape.design/foundation/visual-foundation/visual-modes/) in one application.
+</Callout>
+
+Two consequences worth knowing before you reach for a class name:
+
+- **The PrimeUI utilities are not Artemis design tokens.** They agree with the Artemis roles today
+  only because two files are kept in step by hand. Where that hand-maintenance stopped — the primary
+  color in light mode, and every state color — they disagree. Replace them as you touch a template:
+  a TUM UI component input first, then a semantic Tailwind utility, then an Artemis semantic
+  property.
+- **TUM UI's own Tailwind class names do not exist in the application bundle.** The package compiles
+  its theme into its prefixed build, so `text-muted`, `bg-content-background` and `border-border`
+  generate no rule in Artemis and fail silently. Reaching for them looks correct and renders nothing.
+
 ## Choosing styles
 
 Use the first suitable option:
@@ -78,6 +106,31 @@ Use TUM UI for a component-shaped status:
 Color must never be the only signal. Pair a state color with text, an icon, or another programmatic
 cue as required by
 [WCAG 1.4.1](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html).
+
+### State roles are fills; check the pairing before using one as a foreground
+
+`--danger`, `--success`, `--warning`, and `--info` are the saturated fill colors of a state. They are
+readable as a foreground only where the surface allows it, and light mode is where they fail: on a
+white card, `--warning` measures 1.63:1 and `--info` 3.04:1 — both below the 3:1 that
+[WCAG 1.4.11](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html) requires even of a
+non-text icon. Only `--danger` clears 4.5:1 as body text.
+
+For state-colored **text or icons**, use a TUM UI component with a `severity`, which resolves the
+dark-corrected foreground role, or the `--artemis-alert-{state}-color` property directly. Reserve
+`text-state-*` for a fill, a border, or a foreground whose pairing you have measured. Contrast is a
+property of the pairing, not of the token: the same muted foreground passes on a card surface and
+fails on the slightly darker emphasis surface.
+
+### Fixed chrome opts out of surface-derived properties
+
+A region painted the same color in both themes — the navigation bar, editor chrome — is not the page
+surface, so every property derived from the page surface resolves against the wrong background there.
+The navbar is `--navbar-bg` in both themes, and a component placed inside it that resolves a muted
+foreground against the page surface measures 2.31:1 in light mode. Such a region sets its own
+foreground properties (`--navbar-dark-color` and the scoped `--tumaet-ui-*` overrides beside it),
+which every other navbar item already does. Scoping `data-theme` onto the region is not a substitute:
+the host mapping in `tailwind.css` is unlayered and outranks the package's own theme block, so a
+scoped attribute flips only the properties the host does not name.
 
 ## Adding or changing a theme role
 

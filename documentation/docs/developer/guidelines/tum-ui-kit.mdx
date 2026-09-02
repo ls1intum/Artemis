@@ -80,6 +80,145 @@ but its final state is not a useful reference; do not create hidden duplicates o
 by accessible role and name. Do not assert CSS classes, duplicate unit-test matrices, add snapshots,
 or disable accessibility rules to make a story pass.
 
+## API design rules
+
+Two constraints sit under every rule below. The package is **private and compiled**: consumers reach
+it only through `src/public-api.ts`, deep imports are rejected, and there is no copy-in escape hatch,
+so composition is the only door a consumer has when a contract falls short. And **Angular does not
+resolve class conflicts by argument order**: a host class and a consumer class merge additively and
+the winner is CSS source order, which the consumer does not control. A consumer override therefore
+has exactly two legitimate routes — a **variant input** or a **component-scoped CSS custom
+property**. Everything else ends in `!important`.
+
+### Vocabulary
+
+Use the shared `TumUiSeverity` and `TumUiSize` unions and re-export them per component; do not
+declare a local union, and do not invent a second spelling for a value another component already
+names. A component whose input drifts (`error` where the package says `danger`, `normal` where it
+says `medium`) cannot be lined up with the component next to it. A **lifecycle** `state`, as on
+`tum-ui-status-dot` and `tum-ui-step`, is a different concept from a colour role and keeps its own
+union.
+
+| Concept             | Canonical                             | Do not introduce                                         |
+| ------------------- | ------------------------------------- | -------------------------------------------------------- |
+| semantic colour     | `severity`                            | a per-component severity union                           |
+| size                | `size`                                | a per-component size union, `normal`, `default`          |
+| validity            | `invalid`, plus `[attr.aria-invalid]` | a prefixed variant such as `tumUiInputInvalid`           |
+| visibility toggle   | `showX`                               | `hideX`, `shouldDisplayX`                                |
+| option list         | `options`                             | `suggestions`                                            |
+| controlled value    | `value = model()`                     | an output plus a private signal                          |
+| "the value changed" | `valueChange`, or `<noun>Change`      | `changed` / `selected` / `selectionChange` for one thing |
+
+Do not prefix a directive's inputs unless the input **is** the attribute value: `selector:
+'input[tumUiInput]'` already scopes them, and `tumUiInputInvalid` beside a sibling control's `invalid`
+in the same form is the confusion that produces.
+
+### Composition
+
+- **Sub-components for structure, attribute directives for leaf styling.** An element sub-component
+  gets its own host classes, its own `data-slot`, its own accessibility contract, and composes with
+  `@if` / `@for`. An attribute slot is invisible in autocomplete, usable once per position, and
+  silently no-ops when misspelled.
+- **A string input must never suppress projected content.** A template shaped
+  `@if (value()) { … } @else { <ng-content /> }` makes an empty translated string fall through to
+  projection, and it strips the accessible name from any control that referenced the header. Prefer
+  projection or a `-title` sub-component the control can reference by id; where both must coexist,
+  render them **additively** in one line, as `tum-ui-step` does.
+- **Anything whose element identity a consumer may need to change ships as an attribute directive.**
+  Angular cannot swap a host element, so `selector: 'a[tumUiButton], button[tumUiButton]'` is the
+  package's `asChild`. Where both a component and a directive exist they must be **feature-equal** and
+  share one `*.variants.ts`, otherwise "a link that looks like a button" silently loses states with no
+  compile error. Declare it as a real `@Directive` — a `@Component` with `template: '<ng-content />'`
+  **replaces** the host's children instead of composing with them.
+- **A `TemplateRef` input is the smell that a configuration API ran out of expressiveness.** Prefer
+  projection. Remember that `<ng-content>` projects once, at its declaration site, so a compound
+  design keeps every slot on exactly one code path.
+- **The package never decides what an application says.** Defaulting an input to a translation key is
+  the package choosing Artemis's copy. Use a projected slot, and keep a string input as an explicitly
+  documented convenience with no default.
+
+Parent-to-child context uses the **shared-signal service** pattern. Angular has no React context and
+`ng-content` cannot inspect projected children, so a parent provides a service and registers its input
+signal; children inject it optionally and fall back, which keeps a part usable on its own.
+`TumUiStepperService` and `TumUiTabsService` are the reference:
+
+```ts
+@Injectable()
+export class TumUiItemGroupService {
+    private readonly sizeSignal = signal<Signal<TumUiSize>>(signal('medium'));
+    readonly size = computed(() => this.sizeSignal()());
+    register(size: Signal<TumUiSize>): void {
+        this.sizeSignal.set(size);
+    }
+}
+
+// In the child: the part must still render standalone, with a documented fallback.
+private readonly group = inject(TumUiItemGroupService, { optional: true });
+readonly size = input<TumUiSize>();
+protected readonly effectiveSize = computed(() => this.size() ?? this.group?.size() ?? 'medium');
+```
+
+### State hooks and controlled state
+
+Every component emits `data-slot="<part-name>"` on its **host**, and every stateful one also emits
+`data-state`. One attribute serves as the animation hook, the styling hook that survives a class
+rename, and the end-to-end test hook. Put it on the host, never on an inner element — a hook one
+component publishes on its host and another on an inner `<span>` is the same concept at two depths,
+and only one of them is selectable from outside.
+
+Internal open, selected or expanded state is a `model()`, never an `output()`. A model collapses the
+controlled and uncontrolled cases into one API: `[(open)]` binds it, `[open]` reads it, and unbound it
+holds its own state. An output alone leaves a consumer unable to open the component programmatically.
+Reserve `output()` for events that are not state.
+
+```ts
+host: {
+    '[attr.data-slot]': '"panel"',
+    '[attr.data-state]': "collapsed() ? 'collapsed' : 'expanded'",
+},
+readonly collapsed = model(false);
+```
+
+The `data-state` attribute is also what keeps motion declarative and out of TypeScript; see
+[Client UX Patterns: Motion](/developer/guidelines/client-ux#motion) for the token vocabulary and the
+reduced-motion contract.
+
+### Accessibility contract
+
+- **Name the CDK primitive the component wraps, or explain why none exists** — `Overlay`, `Dialog`,
+  `ListKeyManager`, `FocusKeyManager`, `TreeKeyManager`, `cdkTrapFocus`, `Directionality`,
+  `ScrollingModule`, `CdkTable`. "We will handle keydown ourselves" fails the proposal.
+- **State never reaches assistive technology by colour, glyph or animation alone.** An `sr-only` word
+  always accompanies it, as in `tum-ui-status-dot` and `tum-ui-step`.
+- **A visual invalid state emits `aria-invalid`.** A red border without it is state by colour alone,
+  and leaves every consumer to hand-add the attribute.
+- **A live region is opt-in, and there is at most one per surface.** Deriving `role="status"` from
+  severity makes a permanently rendered info message a permanent live region while a first-render
+  error alert never fires. Expose `live = input(false)` and let the consumer decide.
+- **`aria-controls` must point at an element present in the DOM in both states**; a dangling IDREF
+  while collapsed is a defect.
+- **`role="group"` and `role="progressbar"` require an accessible name.** Make the label input
+  required or derive it. An unnamed `role="status"` is the one thing a status region must not be.
+- **Never use the native `title` attribute to carry information** — it is unavailable to keyboard and
+  touch users. Use `[tumUiTooltip]`.
+- **Any component that distinguishes state by colour needs a `forced-colors: active` block.** Keep an
+  icon and a `1px solid CanvasText` boundary, with `forced-color-adjust: none` on the semantic glyph;
+  otherwise the components whose entire job is to separate states collapse into one another in Windows
+  High Contrast.
+
+### Scope discipline
+
+Write the one-sentence justification a stranger who has never heard of the feature would accept. If
+the sentence contains a product noun, it is application composition, not a package component.
+
+Do not build speculatively. Standing decisions **not** to build: a custom scroll area, which replaces
+platform behaviour (momentum, overlay scrollbars, high-contrast rendering, screen-reader scroll
+announcements) for cosmetics where `overflow-y-auto overscroll-contain` is correct; a toast channel,
+because Artemis has an alert service and a second channel is a coherence regression; and a tree —
+build the flat grouped list first, and if measured depth justifies one, wrap `@angular/cdk/tree`'s
+`TreeKeyManager` rather than hand-rolling the
+[APG treeview keyboard contract](https://www.w3.org/WAI/ARIA/apg/patterns/treeview/).
+
 ## Run status components
 
 Two components report the progress of a long-running operation. Both are status displays: they are
