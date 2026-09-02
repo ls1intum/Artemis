@@ -155,7 +155,11 @@ class ProgrammingExerciseExportServiceTest extends AbstractSpringIntegrationLoca
         // A .git directory on its own proves nothing; the commits are what unticking "combine student commits" is about.
         try (Git git = Git.open(exportedRepository.toFile())) {
             assertThat(git.log().call()).as("the student's commits must survive the export").isNotEmpty();
+            assertThat(git.status().call().isClean()).as("the materialized working tree must match the index it ships with").isTrue();
         }
+        // The history no longer costs a clone: without a rewriting option the repository is materialized straight from
+        // the bare repository, so the export never asks for a checkout directory.
+        verify(fileService, never()).createTemporaryDirectory(any(Path.class), any(), anyLong());
     }
 
     /**

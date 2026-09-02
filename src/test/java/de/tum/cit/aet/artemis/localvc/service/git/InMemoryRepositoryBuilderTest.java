@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.FileUtils;
@@ -125,6 +126,41 @@ class InMemoryRepositoryBuilderTest {
         ZipTestUtil.extractZip(archive, extracted);
         try (Git exported = Git.open(extracted.toFile())) {
             assertThat(exported.status().call().isClean()).as("a freshly extracted archive containing a symlink must not be dirty").isTrue();
+        }
+    }
+
+    /**
+     * The data export hands each student a directory holding their repository, and used to get there by cloning the
+     * bare repository and checking it out. Materializing the same content straight from the bare repository skips the
+     * clone entirely, so the archive has to come out indistinguishable from a checkout: history walkable, working tree
+     * matching the index, and the executable bit intact.
+     */
+    @Test
+    void shouldMaterializeAUsableRepositoryIntoADirectoryWithoutCloning() throws Exception {
+        Path source = tempDir.resolve("directory-source");
+        ObjectId secondCommit;
+        try (Git git = Git.init().setDirectory(source.toFile()).setInitialBranch(BRANCH).call()) {
+            FileUtils.writeStringToFile(source.resolve("src/Main.java").toFile(), "public class Main {}", StandardCharsets.UTF_8);
+            FileUtils.writeStringToFile(source.resolve("gradlew").toFile(), "#!/bin/sh\n", StandardCharsets.UTF_8);
+            Files.setPosixFilePermissions(source.resolve("gradlew"), PosixFilePermissions.fromString("rwxr-xr-x"));
+            git.add().addFilepattern(".").call();
+            GitService.commit(git).setMessage("first").setSign(false).call();
+            FileUtils.writeStringToFile(source.resolve("src/Main.java").toFile(), "public class Main { int x; }", StandardCharsets.UTF_8);
+            git.add().addFilepattern(".").call();
+            secondCommit = GitService.commit(git).setMessage("second").setSign(false).call().getId();
+        }
+
+        Path target = tempDir.resolve("materialized");
+        try (Repository repository = new Repository(source.resolve(Constants.DOT_GIT).toString(), REPOSITORY_URI)) {
+            InMemoryRepositoryBuilder.writeToDirectory(repository, target);
+        }
+
+        assertThat(target.resolve("src/Main.java")).content(StandardCharsets.UTF_8).isEqualTo("public class Main { int x; }");
+        assertThat(Files.isExecutable(target.resolve("gradlew"))).as("the executable bit must survive materialization").isTrue();
+        try (Git materialized = Git.open(target.toFile())) {
+            assertThat(materialized.getRepository().resolve(Constants.HEAD)).isEqualTo(secondCommit);
+            assertThat(materialized.log().call()).as("the history must be walkable").hasSize(2);
+            assertThat(materialized.status().call().isClean()).as("the working tree and the index must agree").isTrue();
         }
     }
 

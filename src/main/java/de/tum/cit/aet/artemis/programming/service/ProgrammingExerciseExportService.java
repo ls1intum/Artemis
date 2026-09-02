@@ -522,7 +522,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         // halfway, and its delay has to outlast the whole checkout phase, which for an anonymising export of a large
         // exercise runs for many minutes.
         final Path checkoutDir;
-        if (requiresCheckout(repositoryExportOptions, content)) {
+        if (requiresCheckout(repositoryExportOptions)) {
             try {
                 checkoutDir = fileService.createTemporaryDirectory(repoDownloadClonePath, "repo-checkout-", CHECKOUT_DIRECTORY_BACKSTOP_DELETION_DELAY_IN_MINUTES);
             }
@@ -617,17 +617,16 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * instead, which is the case for course and exam archiving and for the data export.
      *
      * <p>
-     * A caller that needs the history keeps the checkout as well. Streaming a student repository with its history would
-     * change the layout the manual export and the data export have always produced, and deriving the answer from the
-     * options alone would silently drop the history of an instructor who simply unticked both rewriting checkboxes.
+     * Asking for the history does not require one: a repository can be materialized with its full history straight from
+     * the bare repository, into a ZIP or into a directory. Only the options that rewrite what is exported need a working
+     * copy to rewrite.
      *
      * @param repositoryExportOptions the options the export runs with
-     * @param content                 how much of the repository the caller asked for
      * @return true if the repository has to be checked out before it can be exported
      */
-    private static boolean requiresCheckout(RepositoryExportOptionsDTO repositoryExportOptions, RepositoryExportContent content) {
-        return content == RepositoryExportContent.WITH_HISTORY || repositoryExportOptions.filterLateSubmissions() || repositoryExportOptions.addParticipantName()
-                || repositoryExportOptions.combineStudentCommits() || repositoryExportOptions.anonymizeRepository() || repositoryExportOptions.normalizeCodeStyle();
+    private static boolean requiresCheckout(RepositoryExportOptionsDTO repositoryExportOptions) {
+        return repositoryExportOptions.filterLateSubmissions() || repositoryExportOptions.addParticipantName() || repositoryExportOptions.combineStudentCommits()
+                || repositoryExportOptions.anonymizeRepository() || repositoryExportOptions.normalizeCodeStyle();
     }
 
     /**
@@ -663,9 +662,14 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             return null;
         }
 
-        if (!requiresCheckout(repositoryExportOptions, content)) {
-            String zippedRepoName = gitRepositoryExportService.getStudentRepositoryName(programmingExercise, participation, false);
-            return gitRepositoryExportService.exportRepositoryToZipFile(participation.getVcsRepositoryUri(), outputDir, zippedRepoName, content);
+        if (!requiresCheckout(repositoryExportOptions)) {
+            String repositoryName = gitRepositoryExportService.getStudentRepositoryName(programmingExercise, participation, false);
+            // Callers asking for the history get a directory, which is the layout they have always produced; callers
+            // asking for a snapshot get one ZIP per repository. Neither needs a working copy on the way.
+            if (content == RepositoryExportContent.WITH_HISTORY) {
+                return gitRepositoryExportService.exportRepositoryToDirectory(participation.getVcsRepositoryUri(), outputDir, repositoryName);
+            }
+            return gitRepositoryExportService.exportRepositoryToZipFile(participation.getVcsRepositoryUri(), outputDir, repositoryName, content);
         }
 
         try {

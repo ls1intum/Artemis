@@ -136,6 +136,43 @@ public class GitRepositoryExportService {
     }
 
     /**
+     * Materializes a repository with its full history into a directory, straight from the bare repository.
+     *
+     * <p>
+     * Callers that have to hand back a directory rather than a ZIP - the personal data export does, because a student
+     * should not have to unpack a second archive to reach their own code - used to clone the repository and check it
+     * out to get there. Reading the objects directly skips the clone and the temporary working copy it needed.
+     *
+     * <p>
+     * The directory is assembled under a temporary name and moved into place only on success, so a failure cannot leave
+     * a half-written repository behind for a later step to pick up.
+     *
+     * @param repositoryUri   the repository to export
+     * @param targetDirectory the directory the repository directory is created in
+     * @param directoryName   the name of the repository directory
+     * @return the path of the materialized repository directory
+     * @throws IOException if the repository cannot be read or the directory cannot be written
+     */
+    public Path exportRepositoryToDirectory(VcsRepositoryUri repositoryUri, Path targetDirectory, String directoryName) throws IOException {
+        Files.createDirectories(targetDirectory);
+        Path repositoryPath = targetDirectory.resolve(FileUtil.sanitizeFilename(directoryName));
+        Path partialPath = targetDirectory.resolve(repositoryPath.getFileName() + PARTIAL_EXPORT_SUFFIX);
+
+        try {
+            try (Repository bareRepository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false)) {
+                InMemoryRepositoryBuilder.writeToDirectory(bareRepository, partialPath);
+            }
+            FileUtils.moveDirectory(partialPath.toFile(), repositoryPath.toFile());
+        }
+        finally {
+            if (Files.exists(partialPath) && !FileUtils.deleteQuietly(partialPath.toFile())) {
+                log.error("Could not delete the incomplete export {}", partialPath);
+            }
+        }
+        return repositoryPath;
+    }
+
+    /**
      * Writes a zip of the given repository directly into the target directory, reading the objects from the bare
      * repository on disk.
      *

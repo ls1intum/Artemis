@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.localvc.service.git;
 
-import static de.tum.cit.aet.artemis.localvc.service.git.InMemoryDirCache.DIRECTORY_EXECUTE_MODE;
 import static de.tum.cit.aet.artemis.localvc.service.git.InMemoryDirCache.EXECUTE_MODE;
 import static de.tum.cit.aet.artemis.localvc.service.git.InMemoryDirCache.READ_WRITE_MODE;
 
@@ -8,16 +7,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.zip.Deflater;
-import java.util.zip.ZipEntry;
 
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.eclipse.jgit.dircache.DirCacheBuilder;
 import org.eclipse.jgit.dircache.DirCacheEntry;
@@ -88,6 +83,26 @@ public class InMemoryRepositoryBuilder {
      * @throws IOException if reading the repository or ZIP serialization fails
      */
     public static void writeZip(Repository bareRepository, OutputStream outputStream) throws IOException {
+        try (RepositoryContentSink sink = new ZipRepositoryContentSink(outputStream)) {
+            write(bareRepository, sink);
+        }
+    }
+
+    /**
+     * Materializes the same repository into a directory on disk instead of a ZIP, so that a caller which has to hand
+     * back a directory does not have to clone the repository and check it out first.
+     *
+     * @param bareRepository  the bare repository on disk to export
+     * @param targetDirectory the directory to write the working tree and the synthetic {@code .git} into
+     * @throws IOException if reading the repository or writing the directory fails
+     */
+    public static void writeToDirectory(Repository bareRepository, Path targetDirectory) throws IOException {
+        try (RepositoryContentSink sink = new DirectoryRepositoryContentSink(targetDirectory)) {
+            write(bareRepository, sink);
+        }
+    }
+
+    private static void write(Repository bareRepository, RepositoryContentSink sink) throws IOException {
         String branch = bareRepository.getBranch();
         // Read the refs once, before anything is written. The working tree, the index, the pack and the serialized refs
         // all have to describe the same snapshot, and writing the working tree of a large repository takes long enough
@@ -99,16 +114,8 @@ public class InMemoryRepositoryBuilder {
         List<Ref> refsToExport = collectBranchAndTagRefs(bareRepository, branch);
         ObjectId commitId = exportedCommit(refsToExport, branch);
 
-        // Close-shielded so that closing the ZIP stream releases its deflater without also closing the caller's stream.
-        try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(CloseShieldOutputStream.wrap(outputStream)); RevWalk rw = new RevWalk(bareRepository)) {
-
-            zipOutputStream.setMethod(ZipEntry.DEFLATED);
-            zipOutputStream.setLevel(Deflater.BEST_COMPRESSION);
-
-            // keep a set of created directory entries to avoid duplicates
-            Set<String> createdDirs = new HashSet<>();
-            // Create .git scaffolding FIRST (deduped)
-            writeGitScaffold(zipOutputStream, createdDirs);
+        try (RevWalk rw = new RevWalk(bareRepository)) {
+            writeGitScaffold(sink);
 
             RevCommit commit = rw.parseCommit(commitId);
             RevTree tree = commit.getTree();
@@ -139,43 +146,36 @@ public class InMemoryRepositoryBuilder {
 
                     if (mode == FileMode.REGULAR_FILE || mode == FileMode.EXECUTABLE_FILE) {
                         boolean executable = mode == FileMode.EXECUTABLE_FILE;
-                        ensureParentDirs(zipOutputStream, createdDirs, path);
-                        ZipArchiveEntry zipEntry = new ZipArchiveEntry(path.replace('\\', '/'));
-                        zipEntry.setUnixMode(executable ? EXECUTE_MODE : READ_WRITE_MODE); // -rwxr-xr-x or -rw-r--r--
-                        zipOutputStream.putArchiveEntry(zipEntry);
-                        bareRepository.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB).copyTo(zipOutputStream);
-                        zipOutputStream.closeArchiveEntry();
+                        try (OutputStream fileStream = sink.openFile(path.replace('\\', '/'), executable ? EXECUTE_MODE : READ_WRITE_MODE)) {
+                            bareRepository.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB).copyTo(fileStream);
+                        }
                     }
                     else if (mode == FileMode.SYMLINK) {
                         // Materialize symlink as a plain text file containing the link target.
-                        ensureParentDirs(zipOutputStream, createdDirs, path);
-                        ZipArchiveEntry zipEntry = new ZipArchiveEntry(path.replace('\\', '/'));
-                        // Zip has no native symlink type; write target as text (or skip)
-                        zipEntry.setUnixMode(READ_WRITE_MODE);
-                        zipOutputStream.putArchiveEntry(zipEntry);
-                        bareRepository.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB).copyTo(zipOutputStream);
-                        zipOutputStream.closeArchiveEntry();
+                        // A ZIP has no symlink type and a checkout of this archive stores the target as text, which is
+                        // what core.symlinks = false in the generated config describes.
+                        try (OutputStream fileStream = sink.openFile(path.replace('\\', '/'), READ_WRITE_MODE)) {
+                            bareRepository.open(treeWalk.getObjectId(0), Constants.OBJ_BLOB).copyTo(fileStream);
+                        }
                     }
                 }
                 // NOW finalize and serialize the index once
                 dirCacheBuilder.finish();
                 try (ByteArrayOutputStream indexOut = new ByteArrayOutputStream()) {
                     dirCache.writeTo(indexOut);
-                    putGitBytes(zipOutputStream, createdDirs, "index", indexOut.toByteArray());
+                    putGitBytes(sink, "index", indexOut.toByteArray());
                 }
             }
 
-            createGitIndex(bareRepository, refsToExport, zipOutputStream, createdDirs);
+            createGitIndex(bareRepository, refsToExport, sink);
 
             // refs + HEAD + config
-            putGitBytes(zipOutputStream, createdDirs, "HEAD", ("ref: refs/heads/" + branch + "\n").getBytes(StandardCharsets.UTF_8));
+            putGitBytes(sink, "HEAD", ("ref: refs/heads/" + branch + "\n").getBytes(StandardCharsets.UTF_8));
             for (Ref ref : refsToExport) {
-                putGitBytes(zipOutputStream, createdDirs, ref.getName(), (ref.getObjectId().name() + "\n").getBytes(StandardCharsets.UTF_8));
+                putGitBytes(sink, ref.getName(), (ref.getObjectId().name() + "\n").getBytes(StandardCharsets.UTF_8));
             }
 
-            writeGitConfig(zipOutputStream, createdDirs);
-
-            zipOutputStream.finish(); // finalize central directory
+            writeGitConfig(sink);
         }
     }
 
@@ -235,11 +235,10 @@ public class InMemoryRepositoryBuilder {
      * Deliberately without a remote: the only URL available here is the server's internal path to the bare repository,
      * which is both unusable on the machine that extracts the archive and something the archive should not disclose.
      *
-     * @param zipOutputStream open ZIP stream to receive the entry
-     * @param createdDirs     set used to deduplicate directory entries
+     * @param sink where the repository is being materialized
      * @throws IOException if the ZIP entry cannot be written
      */
-    private static void writeGitConfig(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
+    private static void writeGitConfig(RepositoryContentSink sink) throws IOException {
         // symlinks = false because a zip has no symlink type: the working tree stores a symlink as a plain file holding
         // the link target, while the index still records mode 120000. Without this, git on a symlink-capable system
         // compares the two and reports a type change, so a freshly extracted archive would be dirty before it is
@@ -252,7 +251,7 @@ public class InMemoryRepositoryBuilder {
                     logallrefupdates = true
                     symlinks = false
                 """;
-        putGitBytes(zipOutputStream, createdDirs, "config", config.getBytes(StandardCharsets.UTF_8));
+        putGitBytes(sink, "config", config.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -270,13 +269,12 @@ public class InMemoryRepositoryBuilder {
      * being archived. JGit can name the pack before writing it, since the name is derived from the object list that
      * {@code preparePack} produced rather than from the serialized bytes.
      *
-     * @param bareRepository  the bare repository the objects are read from
-     * @param refs            the branches and tags that define reachability for the pack
-     * @param zipOutputStream open ZIP stream to receive pack and index entries
-     * @param createdDirs     set used to deduplicate directory entries
+     * @param bareRepository the bare repository the objects are read from
+     * @param refs           the branches and tags that define reachability for the pack
+     * @param sink           where the repository is being materialized
      * @throws IOException if pack/index creation or ZIP writes fail
      */
-    private static void createGitIndex(Repository bareRepository, List<Ref> refs, ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) throws IOException {
+    private static void createGitIndex(Repository bareRepository, List<Ref> refs, RepositoryContentSink sink) throws IOException {
         try (ObjectReader reader = bareRepository.newObjectReader();
                 ObjectWalk objectWalk = new ObjectWalk(reader);
                 PackWriter packWriter = new PackWriter(new PackConfig(bareRepository), reader)) {
@@ -293,9 +291,8 @@ public class InMemoryRepositoryBuilder {
             packWriter.preparePack(NullProgressMonitor.INSTANCE, objectWalk, tips, PackWriter.NONE, PackWriter.NONE);
 
             String packHashHex = packWriter.computeName().name();
-            writeGitEntry(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".pack",
-                    out -> packWriter.writePack(NullProgressMonitor.INSTANCE, NullProgressMonitor.INSTANCE, out));
-            writeGitEntry(zipOutputStream, createdDirs, "objects/pack/pack-" + packHashHex + ".idx", packWriter::writeIndex);
+            writeGitEntry(sink, "objects/pack/pack-" + packHashHex + ".pack", out -> packWriter.writePack(NullProgressMonitor.INSTANCE, NullProgressMonitor.INSTANCE, out));
+            writeGitEntry(sink, "objects/pack/pack-" + packHashHex + ".idx", packWriter::writeIndex);
         }
     }
 
@@ -303,12 +300,11 @@ public class InMemoryRepositoryBuilder {
      * Opens a {@code .git/} entry and lets the writer stream its content straight into the ZIP, so nothing has to be
      * buffered on the heap first. The ZIP stream is close-shielded because the writers close what they are given.
      */
-    private static void writeGitEntry(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String relPath, GitEntryWriter writer) throws IOException {
-        String full = ".git/" + relPath;
-        ensureParentDirs(zipOutputStream, createdDirs, full);
-        zipOutputStream.putArchiveEntry(new ZipArchiveEntry(full));
-        writer.writeTo(CloseShieldOutputStream.wrap(zipOutputStream));
-        zipOutputStream.closeArchiveEntry();
+    private static void writeGitEntry(RepositoryContentSink sink, String relPath, GitEntryWriter writer) throws IOException {
+        try (OutputStream entryStream = sink.openFile(".git/" + relPath, READ_WRITE_MODE)) {
+            // The writers close what they are handed, which must end this entry rather than the whole sink.
+            writer.writeTo(CloseShieldOutputStream.wrap(entryStream));
+        }
     }
 
     @FunctionalInterface
@@ -320,90 +316,31 @@ public class InMemoryRepositoryBuilder {
     // ---- Helpers ----------------------------------------------------------------
 
     /**
-     * Adds the minimal directory skeleton for {@code .git/} into the ZIP.
-     * Idempotent: duplicate directories are suppressed via {@code createdDirs}.
+     * Adds the minimal directory skeleton for {@code .git/}.
+     * Idempotent: the sink suppresses duplicate directories.
      *
-     * @param zipOutputStream open ZIP stream
-     * @param createdDirs     directory de-duplication set
+     * @param sink where the repository is being materialized
+     * @throws IOException if a directory cannot be created
      */
-    private static void writeGitScaffold(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs) {
-        mkdir(zipOutputStream, createdDirs, ".git/");
-        mkdir(zipOutputStream, createdDirs, ".git/objects/");
-        mkdir(zipOutputStream, createdDirs, ".git/objects/pack/");
-        mkdir(zipOutputStream, createdDirs, ".git/refs/");
-        mkdir(zipOutputStream, createdDirs, ".git/refs/heads/");
-    }
-
-    /**
-     * Ensures that all parent directories of {@code path} exist as ZIP directory
-     * entries (normalized with forward slashes). Safe to call repeatedly.
-     *
-     * @param zipOutputStream open ZIP stream
-     * @param createdDirs     directory de-duplication set
-     * @param path            file path whose parent directories should be materialized
-     */
-    private static void ensureParentDirs(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String path) {
-        String norm = path.replace('\\', '/');
-        int last = norm.lastIndexOf('/');
-        if (last < 0) {
-            return; // no parent
-        }
-        String parent = norm.substring(0, last); // up to (but not including) the leaf
-        int i = 0;
-        while ((i = parent.indexOf('/', i)) != -1) {
-            String dir = parent.substring(0, i + 1);
-            mkdir(zipOutputStream, createdDirs, dir);  // writes "dir/" only
-            i++;
-        }
-        // also ensure the full parent dir itself (if not already ending with '/')
-        mkdir(zipOutputStream, createdDirs, parent.endsWith("/") ? parent : parent + "/");
-    }
-
-    /**
-     * Adds a ZIP directory entry with POSIX execute bits (drwxr-xr-x) if it does not
-     * already exist in {@code createdDirs}. Logs and skips on IO errors.
-     *
-     * @param zipOutputStream open ZIP stream
-     * @param createdDirs     directory de-duplication set
-     * @param dir             directory path (with or without trailing slash)
-     */
-    private static void mkdir(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String dir) {
-        if (!dir.endsWith("/")) {
-            dir = dir + "/";
-        }
-        if (!createdDirs.add(dir)) { // skip duplicates
-            return;
-        }
-        // avoid duplicate entries
-        try {
-            ZipArchiveEntry zipEntry = new ZipArchiveEntry(dir);
-            log.debug("Add dir to zip: {}", dir);
-            zipEntry.setUnixMode(DIRECTORY_EXECUTE_MODE);         // drwxr-xr-x
-            zipOutputStream.putArchiveEntry(zipEntry);
-            zipOutputStream.closeArchiveEntry();
-        }
-        catch (IOException ex) {
-            log.warn("Could not add directory to zip: {}", dir, ex);
-        }
+    private static void writeGitScaffold(RepositoryContentSink sink) throws IOException {
+        sink.createDirectory(".git/");
+        sink.createDirectory(".git/objects/");
+        sink.createDirectory(".git/objects/pack/");
+        sink.createDirectory(".git/refs/");
+        sink.createDirectory(".git/refs/heads/");
     }
 
     /**
      * Writes a file under {@code .git/} at {@code relPath} with the given bytes.
      * Parent directories are created if missing.
      *
-     * @param zipOutputStream open ZIP stream
-     * @param createdDirs     directory de-duplication set
-     * @param relPath         path relative to {@code .git/} (e.g., {@code refs/heads/main})
-     * @param bytes           file content
+     * @param sink    where the repository is being materialized
+     * @param relPath path relative to {@code .git/} (e.g., {@code refs/heads/main})
+     * @param bytes   file content
      * @throws IOException if the ZIP entry cannot be written
      */
-    private static void putGitBytes(ZipArchiveOutputStream zipOutputStream, Set<String> createdDirs, String relPath, byte[] bytes) throws IOException {
-        String full = ".git/" + relPath;
-        ensureParentDirs(zipOutputStream, createdDirs, full);  // parent dirs only
-        ZipArchiveEntry zipEntry = new ZipArchiveEntry(full);
-        zipOutputStream.putArchiveEntry(zipEntry);
-        zipOutputStream.write(bytes);
-        zipOutputStream.closeArchiveEntry();
+    private static void putGitBytes(RepositoryContentSink sink, String relPath, byte[] bytes) throws IOException {
+        sink.writeFile(".git/" + relPath, bytes, READ_WRITE_MODE);
     }
 
 }
