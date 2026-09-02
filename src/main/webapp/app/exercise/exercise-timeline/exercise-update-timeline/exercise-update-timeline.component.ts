@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -30,18 +30,21 @@ export class ExerciseUpdateTimelineComponent {
     readonly timelineStatus = output<TimelineStatus>();
 
     readonly canConfigureExampleSolutionPublication = computed(() => this.hasExampleSolution() && !this.isImport() && !this.lockedToGroup());
+    private readonly exampleSolutionPublicationState = computed(() => {
+        const hasDate = this.exampleSolutionPublicationDate() !== undefined;
+        return {
+            canShow: !this.isImport() && !this.lockedToGroup() && (this.hasExampleSolution() || hasDate),
+            hasDate,
+        };
+    });
 
-    /**
-     * Follows whether the opt-in is configurable at all, but stays user-writable in between: losing the example
-     * solution closes the picker, and an exercise that already has a publication date opens it.
-     */
-    readonly isExampleSolutionPublicationDateVisible = linkedSignal<boolean, boolean>({
-        source: this.canConfigureExampleSolutionPublication,
-        computation: (canConfigure, previous) => {
-            if (!canConfigure) {
+    readonly isExampleSolutionPublicationDateVisible = linkedSignal<{ canShow: boolean; hasDate: boolean }, boolean>({
+        source: this.exampleSolutionPublicationState,
+        computation: (state, previous) => {
+            if (!state.canShow) {
                 return false;
             }
-            return previous?.source ? previous.value : untracked(this.exampleSolutionPublicationDate) !== undefined;
+            return previous?.source.canShow ? previous.value : state.hasDate;
         },
     });
 

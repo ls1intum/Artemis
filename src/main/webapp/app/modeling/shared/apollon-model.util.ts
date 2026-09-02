@@ -82,7 +82,7 @@ function getNestedNodeElements(model: UMLModel | ApollonModelData | undefined): 
 }
 
 export function countModelElements(model: UMLModel | ApollonModelData | undefined): number {
-    return getModelNodes(model).length + getModelEdges(model).length;
+    return getModelNodes(model).length + getNestedNodeElements(model).length + getModelEdges(model).length;
 }
 
 export function isModelEmpty(model: UMLModel | ApollonModelData | undefined): boolean {

@@ -96,15 +96,17 @@ describe('ExerciseUpdateTimelineComponent', () => {
         expect(hint()).not.toBeNull();
     });
 
-    it('should hide but keep a publication date the exercise cannot currently configure', async () => {
-        // `BaseExercise.isValidExampleSolutionPublicationDate` only constrains ordering, so a date without an example
-        // solution is valid server side. Opening the form must not discard it; only switching the opt-in off may.
+    it('should expose a stored publication date for correction when the exercise has no example solution', async () => {
         const stored = dayjs();
         await createComponent({ hasExampleSolution: false, exampleSolutionPublicationDate: stored });
 
-        expect(component.isExampleSolutionPublicationDateVisible()).toBe(false);
+        expect(component.isExampleSolutionPublicationDateVisible()).toBe(true);
         expect(component.exampleSolutionPublicationDate()).toBe(stored);
-        expect(labelKeys()).not.toContain('artemisApp.exercise.exampleSolutionPublicationDate');
+        expect(labelKeys()).toContain('artemisApp.exercise.exampleSolutionPublicationDate');
+
+        const corrected = stored.add(1, 'day');
+        component.exampleSolutionPublicationDate.set(corrected);
+        expect(component.exampleSolutionPublicationDate()).toBe(corrected);
     });
 
     it('should show a preserved publication date when it becomes configurable', async () => {

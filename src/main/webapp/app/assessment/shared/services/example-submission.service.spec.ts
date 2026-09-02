@@ -184,6 +184,29 @@ describe('Example Submission Service', () => {
             expect(service.getSubmissionSize(modelingSubmission, modelingExercise)).toBe(3);
         });
 
+        it.each([
+            {
+                shape: 'v3',
+                model: {
+                    version: '3.0.0',
+                    elements: { class: { id: 'class' }, attribute: { id: 'attribute' }, method: { id: 'method' } },
+                    relationships: { edge: { id: 'edge' } },
+                },
+            },
+            {
+                shape: 'v4',
+                model: {
+                    nodes: [{ id: 'class', data: { attributes: [{ id: 'attribute' }], methods: [{ id: 'method' }] } }],
+                    edges: [{ id: 'edge' }],
+                },
+            },
+        ])('should count equivalent $shape models consistently', ({ model }) => {
+            const modelingExercise = { type: ExerciseType.MODELING } as Exercise;
+            const modelingSubmission = { model: JSON.stringify(model) } as ModelingSubmission;
+
+            expect(service.getSubmissionSize(modelingSubmission, modelingExercise)).toBe(4);
+        });
+
         it('should return 0 for a modeling submission without a model', () => {
             const modelingExercise = { type: ExerciseType.MODELING } as Exercise;
 
