@@ -80,6 +80,8 @@ out/
 # Visual Studio Code
 ######################
 .vscode/
+# Exercise templates ship run configurations for the online IDE, so they must stay tracked
+!/src/main/resources/templates/**/.vscode/
 
 ######################
 # Maven
