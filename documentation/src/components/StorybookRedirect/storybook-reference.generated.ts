@@ -86,6 +86,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'overlays-tooltip--docs';
         case 'patterns-document-review':
             return 'patterns-document-review--docs';
+        case 'patterns-metering':
+            return 'patterns-metering--docs';
         case 'patterns-run-status':
             return 'patterns-run-status--docs';
         default:
