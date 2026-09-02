@@ -116,7 +116,9 @@ export class ExerciseHeadersInformationComponent {
      * live-quiz countdown that stands in for it) and the assessment due date. False on the variant cards of an
      * exercise group, whose server-side timeline overwrites those three on every member
      * ({@code ExerciseVariantGroupService#applyGroupTimeline}), so the group header states them once instead of once
-     * per card. The complaint due date is not covered: it is derived per student from that student's last result.
+     * per card. Two dates are not covered, because neither is the group's to state: the complaint due date, derived
+     * per student from that student's last result, and a participation's individual due date (see
+     * {@link hasIndividualDueDate}).
      */
     readonly showSharedTimelineDates = input<boolean>(true);
     readonly athenaEnabled = input<boolean>(false);
@@ -130,6 +132,13 @@ export class ExerciseHeadersInformationComponent {
     readonly resolvedCourse = computed<Course | undefined>(() => this.course() ?? getCourseFromExercise(this.exercise()));
 
     readonly dueDate = computed<dayjs.Dayjs | undefined>(() => getExerciseDueDate(this.exercise(), this.studentParticipation()));
+
+    /**
+     * Whether the shown due date comes from the participation's individual due date rather than from the exercise.
+     * Such an extension is granted per student, so no enclosing group timeline governs it and it stays visible even
+     * when {@link showSharedTimelineDates} suppresses the group-governed dates.
+     */
+    private readonly hasIndividualDueDate = computed<boolean>(() => this.studentParticipation()?.individualDueDate !== undefined && this.exercise().dueDate !== undefined);
 
     private readonly allResults = computed<Result[]>(() => getAllResultsOfAllSubmissions(this.studentParticipation()?.submissions));
 
@@ -229,6 +238,12 @@ export class ExerciseHeadersInformationComponent {
                 if (dueDateItem) {
                     items.push(dueDateItem);
                 }
+            }
+        } else if (this.hasIndividualDueDate()) {
+            // The group header can only state the shared deadline, so an individual extension has to be shown here.
+            const dueDateItem = this.getDueDateItem();
+            if (dueDateItem) {
+                items.push(dueDateItem);
             }
         }
         const exercise = this.exercise();

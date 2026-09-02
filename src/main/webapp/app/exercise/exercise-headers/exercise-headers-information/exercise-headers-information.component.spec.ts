@@ -314,6 +314,29 @@ describe('ExerciseHeadersInformationComponent', () => {
             expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.difficulty');
         });
 
+        it('should keep a participation-specific individual due date', () => {
+            // An extension is granted per student, so the group header cannot state it and the card has to.
+            const individualDueDate = dayjs().add(3, 'days');
+            fixture.componentRef.setInput('studentParticipation', { id: 1, individualDueDate });
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const dueDateItem = component.informationBoxItems().find((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(dueDateItem?.content.value).toBe(individualDueDate);
+        });
+
+        it('should not show an individual due date for an exercise without a due date', () => {
+            // getExerciseDueDate ignores the individual date in that case, so there is nothing to state.
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { dueDate: undefined }));
+            fixture.componentRef.setInput('studentParticipation', { id: 1, individualDueDate: dayjs().add(3, 'days') });
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const titles = component.informationBoxItems().map((item) => item.title);
+            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+        });
+
         it('should drop the live quiz countdown that stands in for the due date', () => {
             fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { type: ExerciseType.QUIZ }));
             fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, remainingTimeText: '5 min', showResultsAvailable: false });
