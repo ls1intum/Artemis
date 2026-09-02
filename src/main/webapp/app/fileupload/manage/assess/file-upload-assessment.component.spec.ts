@@ -3,9 +3,10 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, ParamMap, Params, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, ParamMap, Params, Router, UrlTree, convertToParamMap, provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -147,6 +148,7 @@ describe('FileUploadAssessmentComponent', () => {
                     useValue: {
                         params: routeParams$.asObservable(),
                         queryParamMap: routeQueryParams$.asObservable(),
+                        snapshot: { queryParams: { 'correction-round': '0', testRun: 'false' } },
                     },
                 },
                 {
@@ -334,6 +336,23 @@ describe('FileUploadAssessmentComponent', () => {
             component.ngOnInit();
 
             expect(getWithoutAssessmentSpy).toHaveBeenCalledWith(20, true, 0);
+        });
+
+        it('should keep the exam route and query parameters when replacing new with the loaded submission id', () => {
+            routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 'new', examId: 5, exerciseGroupId: 10 });
+            const submission = createSubmission();
+            setLatestSubmissionResult(submission, createResult(submission));
+            vi.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(submission));
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree').mockReturnValue({ toString: () => '/rewritten' } as unknown as UrlTree);
+            const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+            component.ngOnInit();
+
+            expect(createUrlTreeSpy).toHaveBeenCalledExactlyOnceWith(
+                ['/course-management', '123', 'exams', '5', 'exercise-groups', '10', 'file-upload-exercises', '20', 'submissions', '2278', 'assessment'],
+                { queryParams: { 'correction-round': '0', testRun: 'false' } },
+            );
+            expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
         });
 
         it('should navigate back and show alert when no optimal submission is available', () => {
