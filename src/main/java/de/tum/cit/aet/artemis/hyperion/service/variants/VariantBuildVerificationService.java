@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.hibernate.LazyInitializationException;
@@ -91,6 +92,16 @@ public class VariantBuildVerificationService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    /**
+     * Participations whose wait timed out. The build they were waiting for was abandoned but keeps running in CI, so
+     * the next wait for that participation must discard the straggler it eventually produces: that result reports on
+     * the repository as it was BEFORE the repair round, yet it completes inside the new wait's freshness window and
+     * would otherwise be accepted as its result. Builds per participation are sequential (see the freshness note on
+     * {@link #waitForBuildResult}), so discarding exactly one result per abandoned build is enough. Consumed on the
+     * next wait for that participation.
+     */
+    private final Set<Long> participationsWithAbandonedBuild = ConcurrentHashMap.newKeySet();
+
     public VariantBuildVerificationService(TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ResultRepository resultRepository, GitService gitService, ContinuousIntegrationTriggerService continuousIntegrationTriggerService,
@@ -156,10 +167,20 @@ public class VariantBuildVerificationService {
         }
 
         int pollCount = 0;
+        // A previous wait for this participation timed out; the first fresh result here may be that abandoned
+        // build's straggler, which was produced before this round's changes (see the field's javadoc).
+        boolean discardAbandonedResult = participationsWithAbandonedBuild.remove(participation.getId());
+        Instant acceptFrom = notBefore;
         while (System.currentTimeMillis() - startTime < TIMEOUT) {
             try {
                 Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
-                if (result.isPresent() && isFreshEnough(result.get(), notBefore)) {
+                if (result.isPresent() && isFreshEnough(result.get(), acceptFrom) && discardAbandonedResult) {
+                    discardAbandonedResult = false;
+                    acceptFrom = result.get().getCompletionDate().toInstant();
+                    log.warn("Discarding the {} build result of exercise {} that completed at {}: it belongs to the build a previous wait abandoned when it timed out, so it "
+                            + "does not cover this round's changes", repositoryType, exercise.getId(), acceptFrom);
+                }
+                else if (result.isPresent() && isFreshEnough(result.get(), acceptFrom)) {
                     attachTestCaseFeedback(result.get(), exercise, repositoryType);
                     log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
                     warnIfCommitMismatch(repositoryType, exercise.getId(), commitHash, result.get());
@@ -180,7 +201,18 @@ public class VariantBuildVerificationService {
             }
         }
         log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, TIMEOUT);
+        noteAbandonedBuild(participation.getId());
         return new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
+    }
+
+    /**
+     * Records that a wait for this participation timed out, so the next wait for it discards the abandoned build's
+     * straggler result. Package-private: a test cannot afford to reach this state through the real timeout.
+     *
+     * @param participationId the participation whose build was abandoned
+     */
+    void noteAbandonedBuild(long participationId) {
+        participationsWithAbandonedBuild.add(participationId);
     }
 
     /**
@@ -222,6 +254,14 @@ public class VariantBuildVerificationService {
             }
         }
         long startTime = System.currentTimeMillis();
+        // Same straggler guard as the single-build wait: a type whose previous wait timed out must discard the
+        // first result of this one (see participationsWithAbandonedBuild).
+        Map<RepositoryType, Boolean> discardAbandonedResult = new EnumMap<>(RepositoryType.class);
+        Map<RepositoryType, Instant> acceptFrom = new EnumMap<>(RepositoryType.class);
+        awaited.forEach((repositoryType, participation) -> {
+            discardAbandonedResult.put(repositoryType, participationsWithAbandonedBuild.remove(participation.getId()));
+            acceptFrom.put(repositoryType, pending.get(repositoryType).triggeredAt());
+        });
         while (!awaited.isEmpty() && System.currentTimeMillis() - startTime < TIMEOUT) {
             Iterator<Map.Entry<RepositoryType, ProgrammingExerciseParticipation>> iterator = awaited.entrySet().iterator();
             while (iterator.hasNext()) {
@@ -230,7 +270,14 @@ public class VariantBuildVerificationService {
                 PendingBuild pendingBuild = pending.get(repositoryType);
                 try {
                     Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(entry.getValue().getId());
-                    if (result.isPresent() && isFreshEnough(result.get(), pendingBuild.triggeredAt())) {
+                    if (result.isPresent() && isFreshEnough(result.get(), acceptFrom.get(repositoryType)) && discardAbandonedResult.get(repositoryType)) {
+                        discardAbandonedResult.put(repositoryType, false);
+                        Instant completedAt = result.get().getCompletionDate().toInstant();
+                        acceptFrom.put(repositoryType, completedAt);
+                        log.warn("Discarding the {} build result of exercise {} that completed at {}: it belongs to the build a previous wait abandoned when it timed out, so "
+                                + "it does not cover this round's changes", repositoryType, exercise.getId(), completedAt);
+                    }
+                    else if (result.isPresent() && isFreshEnough(result.get(), acceptFrom.get(repositoryType))) {
                         attachTestCaseFeedback(result.get(), exercise, repositoryType);
                         warnIfCommitMismatch(repositoryType, exercise.getId(), pendingBuild.commitHash(), result.get());
                         outcomes.put(repositoryType,
@@ -246,10 +293,11 @@ public class VariantBuildVerificationService {
                 Thread.sleep(POLL_INTERVAL);
             }
         }
-        for (RepositoryType repositoryType : awaited.keySet()) {
+        awaited.forEach((repositoryType, participation) -> {
             log.warn("Timed out waiting for {} build result in exercise {} after {}ms", repositoryType, exercise.getId(), TIMEOUT);
+            noteAbandonedBuild(participation.getId());
             outcomes.put(repositoryType, new BuildResultOutcome(null, BuildResultState.TIMED_OUT));
-        }
+        });
         return outcomes;
     }
 
