@@ -383,6 +383,43 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
             AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
             assertThat(usage.used()).isZero();
         }
+
+        @Test
+        void requestAthenaFeedback_shouldRejectAndNotConsumeCapSlotWhenOnlySubmissionAlreadyHasAthenaResult() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
+            enableAthenaForCourse();
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+
+            // a repeated or recovery request must not consume a cap slot without dispatching any new generation: the
+            // generator silently skips a submission that already has an Athena result, so this attempt must be
+            // rejected up front instead of reserving a slot for a request that will never generate feedback
+            StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            TextSubmission submission = addTextSubmission(participation, "Answer for which Athena feedback was already generated.");
+            saveAthenaResult(submission, textExercise.getId(), ZonedDateTime.now());
+
+            studentExam.getStudentParticipations().add(participation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            StudentExam finalStudentExam = studentExam;
+            assertThatExceptionOfType(BadRequestAlertException.class)
+                    .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+
+            AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+            assertThat(usage.used()).isZero();
+        }
     }
 
     @Nested

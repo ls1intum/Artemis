@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -45,6 +46,8 @@ public class StudentExamAthenaFeedbackService {
 
     private final Optional<ModelingFeedbackApi> modelingFeedbackApi;
 
+    private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
+
     /**
      * Maximum number of Athena feedback requests a student may accumulate across all of their submitted test-exam
      * attempts for a given exam. Reuses the course-exercise cap so the two stay in sync.
@@ -53,11 +56,12 @@ public class StudentExamAthenaFeedbackService {
     private int allowedFeedbackRequests;
 
     public StudentExamAthenaFeedbackService(StudentExamRepository studentExamRepository, StudentParticipationRepository studentParticipationRepository,
-            Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi) {
+            Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         this.studentExamRepository = studentExamRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingFeedbackApi = modelingFeedbackApi;
+        this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
     /**
@@ -69,9 +73,10 @@ public class StudentExamAthenaFeedbackService {
      * course level. The cap check and the reservation of this attempt's slot happen atomically in a single database
      * transaction (see {@link StudentExamRepository#reserveAthenaFeedbackRequestIfBelowCap}), so concurrent requests -
      * whether for this attempt or another attempt of the same user/exam - cannot both observe a cap that has not yet
-     * been reached. Individual submissions that already have an Athena result are skipped silently inside the async
-     * dispatch in {@code generateAutomaticFeedbackForTestExamAsync}, so remaining unassessed submissions in the same
-     * attempt still get processed.
+     * been reached. Participations whose latest submission already has an Athena result are excluded up front (see
+     * {@link #isEligibleForAthenaFeedback}), so a repeated or recovery request cannot consume a cap slot without
+     * dispatching any new generation; only the resulting still-eligible submissions are dispatched to
+     * {@code generateAutomaticFeedbackForTestExamAsync}.
      *
      * @param studentExam the submitted student exam
      * @param currentUser the user requesting feedback
@@ -103,11 +108,12 @@ public class StudentExamAthenaFeedbackService {
         }
 
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerLatestSubmissionResult(studentExam, false);
-        // Exclude participations whose latest submission is empty: the feedback generators below skip empty submissions
-        // silently, so including them here would consume a cap slot without ever generating feedback.
+        // Exclude participations whose latest submission is empty or already has an Athena result: the feedback
+        // generators below skip both cases silently, so including them here would consume a cap slot without ever
+        // generating new feedback.
         List<StudentParticipation> eligibleParticipations = participations.stream()
                 .filter(participation -> participation.getExercise() != null && eligibleExerciseIds.contains(participation.getExercise().getId()))
-                .filter(StudentExamAthenaFeedbackService::hasNonEmptySupportedSubmission).toList();
+                .filter(this::isEligibleForAthenaFeedback).toList();
         if (eligibleParticipations.isEmpty()) {
             throw new BadRequestAlertException("No exam exercises with course-level Athena formative feedback enabled", "StudentExam", "noCourseLevelAthenaFormativeEnabled", true);
         }
@@ -155,21 +161,21 @@ public class StudentExamAthenaFeedbackService {
     }
 
     /**
-     * Determines whether the participation's latest submission is a non-empty text or modeling submission, i.e. one
-     * that the corresponding feedback generator will actually process instead of skipping.
+     * Determines whether the participation's latest submission is a non-empty text or modeling submission without an
+     * existing Athena result, i.e. one that the corresponding feedback generator will actually process instead of
+     * skipping.
      */
-    private static boolean hasNonEmptySupportedSubmission(StudentParticipation participation) {
+    private boolean isEligibleForAthenaFeedback(StudentParticipation participation) {
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
         if (latestSubmission.isEmpty()) {
             return false;
         }
         Submission submission = latestSubmission.get();
-        if (submission instanceof TextSubmission textSubmission) {
-            return !textSubmission.isEmpty();
+        boolean nonEmptySupportedSubmission = (submission instanceof TextSubmission textSubmission && !textSubmission.isEmpty())
+                || (submission instanceof ModelingSubmission modelingSubmission && !modelingSubmission.isEmpty());
+        if (!nonEmptySupportedSubmission) {
+            return false;
         }
-        if (submission instanceof ModelingSubmission modelingSubmission) {
-            return !modelingSubmission.isEmpty();
-        }
-        return false;
+        return athenaFeedbackApi.map(api -> !api.submissionHasAthenaResult(submission)).orElse(true);
     }
 }
