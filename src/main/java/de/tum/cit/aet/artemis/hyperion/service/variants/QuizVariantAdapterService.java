@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
@@ -68,12 +69,14 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
 
     private final UserRepository userRepository;
 
+    private final ExerciseDeletionService exerciseDeletionService;
+
     @Nullable
     private final ChatClient chatClient;
 
     public QuizVariantAdapterService(QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService, QuizExerciseService quizExerciseService,
             VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService, ObjectMapper objectMapper, HyperionPromptTemplateService templateService,
-            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, @Nullable ChatClient chatClient) {
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ExerciseDeletionService exerciseDeletionService, @Nullable ChatClient chatClient) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
         this.quizExerciseService = quizExerciseService;
@@ -83,6 +86,7 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
+        this.exerciseDeletionService = exerciseDeletionService;
         this.chatClient = chatClient;
     }
 
@@ -167,6 +171,19 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
             return quizExerciseRepository.findByIdElseThrow(variant.getId());
         }
         catch (Exception e) {
+            // The import saves the quiz BEFORE creating its channel and updating competency progress, and the save
+            // is identity-preserving, so a post-save failure leaves the new id on `original` while this method
+            // never returns — the pipeline's own null-variant cleanup could never find that clone (same reasoning
+            // as the programming provisioner's post-import cleanup).
+            Long provisionedId = original.getId();
+            if (provisionedId != null && !provisionedId.equals(source.getId())) {
+                try {
+                    exerciseDeletionService.delete(provisionedId, true);
+                }
+                catch (Exception cleanupException) {
+                    log.error("Failed to clean up partially provisioned quiz variant exercise {} after a provisioning failure", provisionedId, cleanupException);
+                }
+            }
             throw new RuntimeException("Importing the quiz variant clone failed: " + e.getMessage(), e);
         }
     }
