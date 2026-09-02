@@ -64,7 +64,8 @@
                             [class.variant-card--medium]="exercise.difficulty === DifficultyLevel.MEDIUM"
                             [class.variant-card--hard]="exercise.difficulty === DifficultyLevel.HARD"
                         >
-                            <a class="variant-card__link" [routerLink]="exerciseLink(exercise)">
+                            <!-- `gap-2` is the gap the shared `.detail-header-card` puts between its title row and its information boxes. -->
+                            <a class="variant-card__link flex flex-1 flex-col gap-2" [routerLink]="exerciseLink(exercise)">
                                 <div class="d-flex align-items-center gap-2">
                                     <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary" />
                                     <span class="fw-semibold text-body">{{ exercise.title }}</span>
