@@ -1,14 +1,12 @@
 @if (group(); as group) {
     <div class="exercise-page d-flex flex-column h-100 overflow-hidden">
-        <div class="d-flex flex-column p-2 rounded-3 module-bg mb-2">
-            <div class="d-flex align-items-center gap-2">
-                <h5 class="mb-0 py-1">
+        <div class="detail-header-card module-bg rounded-3 p-2 shell-divider-b">
+            <div class="detail-header-title-row gap-2">
+                <h5 class="mb-0">
                     <fa-icon [icon]="faLayerGroup" />
                     {{ group.title }}
                 </h5>
             </div>
-
-            <hr class="my-2" />
 
             <div class="d-flex flex-wrap gap-2">
                 @if (exerciseSumMaxPoints() > 0) {
@@ -49,7 +47,7 @@
 
         <div class="d-flex flex-column h-100 overflow-hidden module-bg rounded-3 p-2">
             <div class="group-panel-scroll">
-                <div class="variant-callout rounded-3 p-3 mb-3">
+                <div class="mb-3">
                     <div class="fw-semibold mb-1" jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.heading"></div>
                     <p class="mb-0 text-body-secondary">
                         <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.body" [translateValues]="{ count: exercises().length }"></span>
@@ -71,8 +69,6 @@
                                     <fa-icon [icon]="getIcon(exercise.type)" class="text-secondary" />
                                     <span class="fw-semibold text-body">{{ exercise.title }}</span>
                                 </div>
-
-                                <hr class="my-2" />
 
                                 <jhi-exercise-headers-information
                                     [exercise]="exercise"
