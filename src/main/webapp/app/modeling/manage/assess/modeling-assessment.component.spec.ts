@@ -655,8 +655,6 @@ describe('ModelingAssessmentComponent', () => {
 
         expect(emitted).toEqual([[PACKAGE_ID]]);
     });
-
-    /** Installs a jsdom-friendly Fullscreen API and returns a restore function. */
     const stubFullscreenApi = (requestFullscreen: () => Promise<void>) => {
         let fullscreenElement: Element | null = null;
         const originals = {
@@ -798,12 +796,8 @@ describe('ModelingAssessmentComponent', () => {
         }
     });
 });
-
-/** Stands in for a chrome island such as the Athena notice. */
 @Component({ selector: 'jhi-chrome-notice-stub', template: '<span class="chrome-notice">notice</span>' })
 class ChromeNoticeStubComponent {}
-
-/** Host for the bare-attribute form of the marker, which must keep meaning "always occupied". */
 @Component({
     selector: 'jhi-modeling-assessment-bare-slot-host',
     template: `
@@ -832,8 +826,6 @@ class ModelingAssessmentChromeHostComponent {
     readonly umlModel = createV4ModelWithNodes();
     readonly diagramType = UMLDiagramType.ClassDiagram;
 }
-
-/** Pins both halves of the {@link ModelingAssessmentRegion} contract: unoccupied reserves nothing, occupied really mounts. */
 describe('ModelingAssessmentComponent chrome regions', () => {
     let fixture: ComponentFixture<ModelingAssessmentChromeHostComponent>;
     let editor: InstanceType<typeof MockApollonEditor>;
@@ -890,23 +882,14 @@ describe('ModelingAssessmentComponent chrome regions', () => {
         expect(bareEditor._regionElements.get('top-left')!.contains(bare.debugElement.query(By.css('[data-testid="bare-notice"]')).nativeElement)).toBe(true);
         bare.destroy();
     });
-
-    /**
-     * The reserved inset is layout and tracks the panel; the camera belongs to the reader. Refitting
-     * on every reservation threw away the tutor's zoom and pan each time they toggled "Your
-     * assessment" — mid-assessment, while reading a single element.
-     */
     it('should reserve room for the panel on every change but frame the camera only once', () => {
         const component = fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance;
-        const panel = document.createElement('div');
         let panelWidth = 0;
-        const openPanel = document.createElement('div');
-        openPanel.className = 'apollon-rail-disclosure__panel';
-        openPanel.getBoundingClientRect = () => ({ width: panelWidth }) as DOMRect;
-        panel.appendChild(openPanel);
+        const disclosure = fixture.debugElement.query(By.css('jhi-apollon-rail-disclosure')).componentInstance;
+        vi.spyOn(disclosure, 'getVisiblePanelRect').mockImplementation(() => ({ width: panelWidth }) as DOMRect);
 
         const scheduleFitView = vi.spyOn(component as any, 'scheduleFitView');
-        const reserve = () => (component as any).reserveRoomForPanel(panel);
+        const reserve = () => (component as any).reserveRoomForPanel();
         editor.updateControl.mockClear();
         (component as any).hasFramedForPanelInset = false;
         (component as any).lastReservedPanelWidth = -1;
@@ -922,5 +905,22 @@ describe('ModelingAssessmentComponent chrome regions', () => {
         expect(editor.updateControl).toHaveBeenLastCalledWith('apollon:host:right-rail', expect.objectContaining({ inset: { right: 280 } }));
 
         expect(scheduleFitView).toHaveBeenCalledTimes(1);
+    });
+
+    it('should observe and avoid the floating panel rather than its rail host', () => {
+        const component = fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance;
+        const disclosure = fixture.debugElement.query(By.css('jhi-apollon-rail-disclosure'));
+        const floatingPanel = disclosure.query(By.css('.apollon-rail-disclosure__panel')).nativeElement as HTMLElement;
+        const panelRect = { left: 500, right: 900, width: 400 } as DOMRect;
+        vi.spyOn(floatingPanel, 'getBoundingClientRect').mockReturnValue(panelRect);
+        const observe = vi.spyOn(ResizeObserver.prototype, 'observe');
+
+        (component as any).observePanelWidth();
+
+        expect(observe).toHaveBeenCalledWith(floatingPanel);
+        expect((component as any).panelObstruction()).toBe(panelRect);
+
+        disclosure.componentInstance.visible.set(false);
+        expect((component as any).panelObstruction()).toBeUndefined();
     });
 });

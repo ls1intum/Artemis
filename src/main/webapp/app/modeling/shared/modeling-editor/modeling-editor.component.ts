@@ -84,6 +84,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     private readonly editorTopLeftRegion = viewChild<ElementRef<HTMLElement>>('editorTopLeftRegion');
     private readonly editorBottomCenter = viewChild<ElementRef<HTMLElement>>('editorBottomCenter');
     private readonly editorProblemStatement = viewChild('editorProblemStatement', { read: ElementRef<HTMLElement> });
+    private readonly problemStatementDisclosure = viewChild<ApollonRailDisclosureComponent>('editorProblemStatement');
     private readonly projectedTopLeft = contentChild(ModelingEditorTopLeftDirective, { read: ElementRef });
     private readonly projectedBottomCenter = contentChild(ModelingEditorBottomCenterDirective, { read: ElementRef });
     protected readonly hasEditorTopLeft = computed(() => !!this.projectedTopLeft());
@@ -234,14 +235,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         const collaborationEnabled = untracked(() => this.collaborationEnabled()) && !this.readOnly();
         const collaborationUser = collaborationEnabled ? untracked(() => this.collaborationUser()) : undefined;
 
-        // Apollon creates its collaboration layer at construction, so wait until the local user is available.
         if (collaborationEnabled && !collaborationUser) {
             return;
         }
 
         this.destroyApollonEditor();
 
-        // Model updates have a dedicated effect; tracking them here would rebuild the collaboration session.
         const inputModel = untracked(() => this.umlModel());
         const umlModel = inputModel ? ModelingEditorComponent.modelWithoutAssessments(inputModel) : undefined;
 
@@ -286,14 +285,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         }
     }
 
-    /**
-     * Hands a projected element back to the frame before Apollon releases the region.
-     *
-     * Apollon's region cleanup removes whatever it still hosts from the document, so releasing a region while the
-     * projected element is inside it detaches that element for good — its `[hidden]`/`@if` bindings then govern a node
-     * that is no longer in the tree. {@link ModelingAssessmentComponent#synchronizeHostRegion} re-parents first for the
-     * same reason.
-     */
+    /** Reparents projected content before Apollon removes the released region from the DOM. */
     private releaseHostRegion(region: Parameters<ApollonEditor['getRegionElement']>[0], element: HTMLElement | undefined): void {
         if (element) {
             this.editorFrame()?.nativeElement.prepend(element);
@@ -485,7 +477,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         const editorStyle = getComputedStyle(editorFrame);
         const paletteRect = palette?.getBoundingClientRect();
         const paletteRegion = palette?.closest<HTMLElement>('[data-apollon-region]')?.dataset.apollonRegion;
-        const problemStatement = this.editorProblemStatement()?.nativeElement;
         const placement = calculateBottomCenterPlacement({
             root: apollonRoot.getBoundingClientRect(),
             zoom: zoom.getBoundingClientRect(),
@@ -493,7 +484,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             surface: placementControl.getBoundingClientRect(),
             palette: paletteRect,
             paletteRegion,
-            obstruction: problemStatement && !problemStatement.hidden ? problemStatement.getBoundingClientRect() : undefined,
+            obstruction: this.problemStatementDisclosure()?.getVisiblePanelRect(),
             chromeGap: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-gap')) || 0,
             chromeEdge: Number.parseFloat(editorStyle.getPropertyValue('--apollon-chrome-edge')) || 0,
             rootFontSize: Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
@@ -573,11 +564,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         return true;
     }
 
-    /**
-     * Stands down when the promoted frame stops being something the user is looking at — the exam page switcher moved
-     * to another exercise, or the frame's `@if` was torn down. Without this the document stays fullscreen on a frame
-     * the host believes it has hidden.
-     */
+    /** Exits fullscreen when navigation hides or destroys the promoted frame. */
     private escapeFullscreen(): void {
         const wasFullscreen = document.fullscreenElement === document.documentElement;
         this.restoreFullscreenPresentation();

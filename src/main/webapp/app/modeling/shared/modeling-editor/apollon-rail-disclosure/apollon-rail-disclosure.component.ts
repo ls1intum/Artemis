@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, model, output } from '@angular/core';
+import { Component, ElementRef, computed, input, linkedSignal, model, output, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -6,14 +6,7 @@ import { ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives
 
 let nextDisclosureId = 0;
 
-/**
- * A side panel that hangs off one of Apollon's rails: a chrome-styled trigger island and a resizable
- * panel that floats out from underneath it. The host element is what a caller hands to
- * `editor.getRegionElement('right-rail')`.
- *
- * The panel floats over the canvas instead of reserving a column, so the rail only ever gives up the
- * trigger's width and the diagram keeps its framing whether the panel is open or shut.
- */
+/** Resizable panel projected from an Apollon rail without reserving canvas width. */
 @Component({
     selector: 'jhi-apollon-rail-disclosure',
     templateUrl: './apollon-rail-disclosure.component.html',
@@ -26,19 +19,17 @@ let nextDisclosureId = 0;
     },
 })
 export class ApollonRailDisclosureComponent {
+    private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
     protected readonly panelId = `apollon-rail-disclosure-${++nextDisclosureId}`;
     protected readonly faExpand = faChevronDown;
     protected readonly faCollapse = faChevronUp;
 
-    /** Names the surface on the trigger, and labels the region for assistive tech. */
     readonly label = input.required<string>();
     readonly icon = input.required<IconDefinition>();
     readonly testId = input<string>();
     readonly visible = model(false);
-    /** Only the host can see what else the editor has parked below the trigger; see `calculateRailDisclosureMaxHeight`. */
     readonly maxHeight = input(720);
     readonly initialWidth = input(416);
-    /** Undefined sizes the panel to its content (capped by {@link maxHeight}); set it only for a surface that is always long. */
     readonly initialHeight = input<number | undefined>(undefined);
 
     readonly resized = output<ResizableSizeEvent>();
@@ -46,6 +37,14 @@ export class ApollonRailDisclosureComponent {
     protected readonly width = linkedSignal(() => this.initialWidth());
     protected readonly height = linkedSignal<number | undefined>(() => this.initialHeight());
     protected readonly resizeConstraints = computed(() => ({ minWidth: 288, maxWidth: 704, minHeight: 224, maxHeight: this.maxHeight() }));
+
+    getPanelElement(): HTMLElement | undefined {
+        return this.panel()?.nativeElement;
+    }
+
+    getVisiblePanelRect(): DOMRect | undefined {
+        return this.visible() ? this.getPanelElement()?.getBoundingClientRect() : undefined;
+    }
 
     protected toggle(): void {
         this.visible.update((visible) => !visible);

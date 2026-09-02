@@ -83,11 +83,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly topLeftRegion = viewChild<ElementRef<HTMLElement>>('topLeftRegion');
     private readonly topRightRegion = viewChild<ElementRef<HTMLElement>>('topRightRegion');
     private readonly bottomCenterRegion = viewChild<ElementRef<HTMLElement>>('bottomCenterRegion');
-    // Read as directives, not elements: a slot that is present but unoccupied
-    // must leave its region unmounted. See `ModelingAssessmentRegion`.
     private readonly projectedTopLeft = contentChild(ModelingAssessmentTopLeftDirective);
     private readonly projectedTopRight = contentChild(ModelingAssessmentTopRightDirective);
     protected readonly panelRegion = viewChild('panelRegion', { read: ElementRef<HTMLElement> });
+    private readonly panelDisclosure = viewChild<ApollonRailDisclosureComponent>('panelRegion');
     private readonly projectedPanel = contentChild(ModelingAssessmentPanelDirective);
     private panelRegionMounted = false;
 
@@ -131,14 +130,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     constructor() {
         super();
-        // The reservation measures the rendered panel, so it has to run after Angular has applied its `hidden`
-        // binding rather than off the toggle's own event, which fires before the DOM is written.
         afterRenderEffect(() => {
             this.panelVisible();
-            const panel = untracked(() => this.panelRegion()?.nativeElement);
-            if (panel) {
-                untracked(() => this.reserveRoomForPanel(panel));
-            }
+            untracked(() => this.reserveRoomForPanel());
         });
         this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
             this.apollonEditor?.setLabels(createApollonLabels(this.translateService));
@@ -165,9 +159,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             this.updateApollonAssessments(this.referencedFeedbacks);
         });
 
-        // Apollon bakes `readonly` in at construction, so a flip on the live instance — submitting an assessment
-        // swaps in a fresh result and locks the canvas — has to be pushed onto the editor. Without it the canvas
-        // still accepts edits and updates the point tally client side while nothing can be saved any more.
         effect(() => {
             const readOnly = this.readOnly();
             const editor = this.apollonEditor;
@@ -291,7 +282,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.synchronizeAssessmentSelectionSubscription(this.apollonEditor, this.readOnly());
     }
 
-    /** Assessment consumers need selected element ids, not assessment ids. */
     private synchronizeAssessmentSelectionSubscription(editor: ApollonEditor, readOnly: boolean): void {
         if (readOnly && this.assessmentSelectionSubscription === undefined) {
             this.assessmentSelectionSubscription = editor.subscribeToSelectionChange((selections) => this.selectedElementIdsChanged.emit(selections));
@@ -317,10 +307,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         const panelWasMounted = this.panelRegionMounted;
         this.panelRegionMounted = this.synchronizeHostRegion('right-rail', panel, isOccupied(this.projectedPanel()), this.panelRegionMounted);
         if (this.panelRegionMounted && !panelWasMounted) {
-            // The rail clips its content, which would cut off a panel that hangs past its trigger.
-            // Must follow the first `getRegionElement`, which is what creates the control.
             this.apollonEditor.updateControl('apollon:host:right-rail', { style: { overflow: 'visible' } });
-            this.observePanelWidth(panel);
+            this.observePanelWidth();
         }
         this.bottomCenterRegionMounted = this.synchronizeHostRegion(
             'bottom-center',
@@ -357,31 +345,32 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.scheduleChromePlacement();
     }
 
-    private observePanelWidth(panel: HTMLElement): void {
+    private observePanelWidth(): void {
         this.panelResizeObserver?.disconnect();
-        this.panelResizeObserver = new ResizeObserver(() => this.reserveRoomForPanel(panel));
-        this.panelResizeObserver.observe(panel);
-        this.reserveRoomForPanel(panel);
+        this.panelResizeObserver = new ResizeObserver(() => {
+            this.reserveRoomForPanel();
+            this.scheduleChromePlacement();
+        });
+        const floatingPanel = this.panelDisclosure()?.getPanelElement();
+        if (floatingPanel) {
+            this.panelResizeObserver.observe(floatingPanel);
+        }
+        this.reserveRoomForPanel();
     }
 
-    /** Reserve the floating panel width because the rail inset covers only its trigger. */
-    private reserveRoomForPanel(panel: HTMLElement): void {
+    private reserveRoomForPanel(): void {
         if (!this.apollonEditor) {
             return;
         }
-        const openPanel = panel.querySelector<HTMLElement>('.apollon-rail-disclosure__panel:not([hidden])');
-        const width = Math.ceil(openPanel?.getBoundingClientRect().width ?? 0);
+        const width = Math.ceil(this.panelDisclosure()?.getVisiblePanelRect()?.width ?? 0);
         if (width === this.lastReservedPanelWidth) {
             return;
         }
         this.lastReservedPanelWidth = width;
         this.apollonEditor.updateControl('apollon:host:right-rail', {
             style: { overflow: 'visible' },
-            // 'auto' alone measures only the in-flow trigger; the float needs saying.
             inset: width > 0 ? { right: width } : 'auto',
         });
-        // Apollon fits on mount, before this inset exists, so one refit corrects that first frame.
-        // Never again: the viewport is the reader's, and they toggle this panel while assessing.
         if (!this.hasFramedForPanelInset) {
             this.hasFramedForPanelInset = true;
             this.scheduleFitView();
@@ -442,7 +431,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         return true;
     }
 
-    /** Mirrors {@link ModelingEditorComponent#escapeFullscreen}: the host hid or dropped the frame, so let go of the screen. */
     private escapeFullscreen(): void {
         const wasFullscreen = document.fullscreenElement === document.documentElement;
         this.restoreFullscreenPresentation();
@@ -500,10 +488,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         );
     }
 
-    /** The open panel floats over the canvas, so bottom-center has to dodge it. */
     private panelObstruction(): DOMRect | undefined {
-        const panel = this.panelRegion()?.nativeElement;
-        return panel && !panel.hidden ? panel.getBoundingClientRect() : undefined;
+        return this.panelDisclosure()?.getVisiblePanelRect();
     }
 
     private updateBottomCenterPlacement(): void {
@@ -700,7 +686,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             const currentModel = editor.model;
             const hasRemovedAssessment = Object.keys(currentModel.assessments ?? {}).some((id) => !incomingIds.has(id));
             if (hasRemovedAssessment) {
-                // Apollon can upsert assessments individually but removal requires replacing the complete model.
                 editor.model = cloneWith(currentModel, {
                     assessments: Object.fromEntries(assessments.map((assessment) => [assessment.modelElementId, assessment])),
                 });

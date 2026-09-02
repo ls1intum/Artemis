@@ -15,9 +15,8 @@
         <fa-icon [icon]="visible() ? faCollapse : faExpand" aria-hidden="true" />
     </button>
 </div>
-<!-- Kept mounted while collapsed: the body is projected content, and tearing it
-     down would drop the reader's scroll position every time the panel is shut. -->
 <section
+    #panel
     class="apollon-rail-disclosure__panel apollon-glass"
     [id]="panelId"
     [hidden]="!visible()"
