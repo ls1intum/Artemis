@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -78,17 +77,8 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private static final int MAX_SEARCH_LINE_LENGTH = 300;
 
-    /** Per-round tool-call budget (see {@link #stopNotice()}); higher than the quiz budget — repo work needs more calls. */
+    /** Per-round tool-call budget (see {@link VariantRoundBudget}); higher than the quiz budget — repo work needs more calls. */
     private static final int TOOL_CALL_BUDGET = 60;
-
-    /**
-     * Grace calls granted past {@link #TOOL_CALL_BUDGET} before the round is stopped outright: the budget
-     * notice is advisory — only {@code finish} (or any {@code returnDirect} result) ends Spring AI's internal
-     * loop, so a model that keeps calling tools instead would never stop. Past the hard stop every tool result
-     * is returned directly (see {@link VariantToolset#withTiming}), which ends the round deterministically. The
-     * grace leaves the model room to call finish itself first, so a normal round never reaches this.
-     */
-    private static final int TOOL_CALL_GRACE_CALLS = 10;
 
     /** Character budget for {@link #prefetchContext}'s file-content section — bounds the prompt tokens it adds. */
     private static final int MAX_PREFETCH_CONTENT_CHARS = 30_000;
@@ -146,13 +136,9 @@ class ProgrammingVariantTools implements VariantToolset {
 
     private volatile String finishSummary;
 
-    /** Atomic: Spring AI may invoke tool callbacks concurrently within one model turn. */
-    private final AtomicInteger toolCallsUsed = new AtomicInteger();
-
     private final ConcurrentHashMap<String, VariantJob.CallStat> toolCallStats = new ConcurrentHashMap<>();
 
-    /** Set by {@link #stopNotice()} once the round must end now — cancelled, or past the hard tool-call stop. */
-    private volatile boolean roundOver;
+    private final VariantRoundBudget budget;
 
     ProgrammingVariantTools(ProgrammingExercise exercise, User user, String jobId, ExerciseVariantJobService jobService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService, String defaultBranch,
@@ -170,11 +156,12 @@ class ProgrammingVariantTools implements VariantToolset {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.solutionBuildForTestDiscovery = solutionBuildForTestDiscovery;
         this.defaultBranch = defaultBranch;
+        this.budget = new VariantRoundBudget(TOOL_CALL_BUDGET, jobId, jobService);
     }
 
     @Override
     public List<ToolCallback> toolCallbacks() {
-        return VariantToolset.withTiming(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks(), toolCallStats, () -> roundOver);
+        return VariantToolset.withTiming(MethodToolCallbackProvider.builder().toolObjects(this).build().getToolCallbacks(), toolCallStats, budget::roundOver);
     }
 
     @Override
@@ -867,30 +854,9 @@ class ProgrammingVariantTools implements VariantToolset {
         return "Summary recorded. You are done with this round.";
     }
 
-    /**
-     * Combined stop check for cancellation and the per-round tool budget — every tool except finish short-circuits
-     * with the returned directive. Short-circuit instead of throwing: Spring AI returns tool exceptions to the
-     * model as ordinary tool results, so an exception cannot abort the round; the pipeline performs the actual
-     * abort at the next round boundary. The budget exists because Spring AI's internal tool loop has no iteration
-     * cap, and a model that keeps re-reading and re-reasoning would loop indefinitely. A model that ignores the
-     * directive is stopped by {@link #TOOL_CALL_GRACE_CALLS} calls later; cancellation ends the round the same
-     * way, since nothing it produces from here on is kept.
-     */
+    /** Cancellation / tool-budget check every tool except finish short-circuits on; see {@link VariantRoundBudget}. */
     private String stopNotice() {
-        // Every tool call is a liveness signal for the long internal agent round (see the job's staleness handling).
-        jobService.heartbeat(jobId);
-        if (jobService.isCancelRequested(jobId)) {
-            roundOver = true;
-            return "The variant generation job was CANCELLED. Do not call any more tools; the round is over and all further work will be discarded.";
-        }
-        int used = toolCallsUsed.incrementAndGet();
-        if (used > TOOL_CALL_BUDGET) {
-            if (used > TOOL_CALL_BUDGET + TOOL_CALL_GRACE_CALLS) {
-                roundOver = true;
-            }
-            return "TOOL BUDGET EXHAUSTED for this round (" + TOOL_CALL_BUDGET + " calls). Do not call any other tool. Call finish NOW with a short summary of what you changed.";
-        }
-        return null;
+        return budget.stopNotice();
     }
 
     private Repository checkout(RepositoryType repositoryType) throws GitAPIException {
