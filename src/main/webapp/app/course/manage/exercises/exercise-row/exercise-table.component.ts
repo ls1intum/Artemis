@@ -324,7 +324,7 @@ export class ExerciseTableComponent {
             case DifficultyLevel.EASY:
                 return 'success';
             case DifficultyLevel.MEDIUM:
-                return 'warn';
+                return 'warning';
             case DifficultyLevel.HARD:
                 return 'danger';
             default:

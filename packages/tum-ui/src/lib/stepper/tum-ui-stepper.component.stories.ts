@@ -302,3 +302,61 @@ export const ConnectorAlignment: Story = {
         await expect(second.querySelector('.tum-ui-step-connector')!.getBoundingClientRect().height).toBe(0);
     },
 };
+
+// --- Non-text contrast, measured -----------------------------------------------------------------------------
+// WCAG 1.4.11 asks for 3:1 on a graphical object a reader needs in order to understand the content. A ladder's
+// markers and rails are exactly that, so they are measured here, once, in both themes.
+const CONTRAST_MINIMUM = 3;
+
+function relativeLuminance(colour: string): number {
+    const [red, green, blue] = colour
+        .match(/[\d.]+/g)!
+        .slice(0, 3)
+        .map((channel) => Number(channel) / 255);
+    const linear = (channel: number) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
+}
+
+function contrastRatio(foreground: string, background: string): number {
+    const [lighter, darker] = [relativeLuminance(foreground), relativeLuminance(background)].sort((left, right) => right - left);
+    return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * Every marker ring and every connector, measured against the surface. The stage that used to fail is `pending`:
+ * drawn in the border colour it measured 1.23:1 in light and 1.24:1 in dark, so the part of the ladder that says
+ * "not started" was the part nobody could see. It now takes the muted colour, like the ink beside it.
+ */
+export const NonTextContrast: Story = {
+    tags: ['!dev', '!autodocs'],
+    parameters: {
+        layout: 'padded',
+    },
+    render: () => ({
+        template: `
+            <tum-ui-stepper ariaLabel="Contrast probe" data-testid="contrast-ladder">
+                <tum-ui-step state="complete" label="Complete" />
+                <tum-ui-step state="failed" label="Failed" />
+                <tum-ui-step state="skipped" label="Skipped" />
+                <tum-ui-step state="current" label="Current" />
+                <tum-ui-step state="pending" label="Pending" />
+            </tum-ui-stepper>
+        `,
+    }),
+    play: async ({ canvas }) => {
+        const surface = getComputedStyle(document.body).backgroundColor;
+        const steps = Array.from(canvas.getByTestId('contrast-ladder').querySelectorAll('tum-ui-step'));
+
+        for (const step of steps) {
+            const state = step.getAttribute('data-state');
+            const marker = getComputedStyle(step.querySelector('.tum-ui-step-marker')!);
+            await expect(contrastRatio(marker.borderTopColor, surface), `${state} marker ring reaches 3:1`).toBeGreaterThanOrEqual(CONTRAST_MINIMUM);
+            await expect(contrastRatio(marker.color, surface), `${state} marker glyph reaches 3:1`).toBeGreaterThanOrEqual(CONTRAST_MINIMUM);
+
+            const connector = step.querySelector('.tum-ui-step-connector')!;
+            if (connector.getBoundingClientRect().height > 0) {
+                await expect(contrastRatio(getComputedStyle(connector).borderInlineStartColor, surface), `${state} connector reaches 3:1`).toBeGreaterThanOrEqual(CONTRAST_MINIMUM);
+            }
+        }
+    },
+};

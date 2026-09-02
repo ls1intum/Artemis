@@ -1,0 +1,29 @@
+/*
+ * The navbar is a fixed dark surface in BOTH themes (`--navbar-bg` = #353d47), while every TUM UI token resolves
+ * against the page surface. Without a chrome context the trigger's muted label measures 2.31:1 in light — the
+ * worst-contrast item in the whole navbar — and the count tag paints a #f1f5f9 blob in light and disappears at
+ * 1.30:1 in dark.
+ *
+ * Scoped to the host, so it reaches the trigger only: the tray itself is portalled into the CDK overlay container
+ * on the page surface, where custom properties declared here no longer inherit and the ordinary tokens are right.
+ * Delete this block once `navbar.scss` carries the same chrome context for every navbar item.
+ */
+:host {
+    /* 10.8:1 on the navbar. */
+    --tumaet-ui-text-color: white;
+
+    /* 6.4:1 once composited on the navbar, against the 3.47:1 of the plain nav links beside it. */
+    --tumaet-ui-muted-color: color-mix(in srgb, white 72%, transparent);
+    --tumaet-ui-hover-background: color-mix(in srgb, white 12%, transparent);
+    --tumaet-ui-border-color: color-mix(in srgb, white 24%, transparent);
+}
+
+/*
+ * `global.scss` paints every anchor outside its `:not(.btn, .tum-ui-btn, …)` exclusion list #3e8acc, and that rule
+ * (0,1,1) outranks the `text-text` utility `[tumUiItem]` sets (0,1,0) — which is how one row ended up rendered by
+ * two systems, a blue title above a muted status line. Matching on the element plus the class ties the specificity
+ * and the component stylesheet wins on source order. Hover, focus and the transition all come from the directive.
+ */
+a.hyperion-jobs-indicator-row {
+    color: inherit;
+}

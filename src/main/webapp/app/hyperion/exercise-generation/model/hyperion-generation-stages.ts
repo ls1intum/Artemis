@@ -20,6 +20,9 @@ export const HYPERION_STAGES: readonly { readonly key: HyperionStageKey; readonl
     { key: 'save', phases: ['SAVING'] },
 ];
 
+/** How many rungs the ladder has. A real, fixed denominator is what makes "Step 2 of 5" a fact rather than a guess. */
+export const HYPERION_STAGE_COUNT = HYPERION_STAGES.length;
+
 /** The design stage is the only one the agent reports substeps for; every other stage has none. */
 export const HYPERION_SUBSTEP_STAGE: HyperionStageKey = 'design';
 
@@ -185,18 +188,63 @@ export function stageStates(events: readonly HyperionGenerationEvent[], outcome:
     // Only a run that is still going has a stage the clock may keep counting in.
     const runningSince = outcome !== undefined ? undefined : implicitPreparing ? firstTimestamp : enteredAtIso;
     return HYPERION_STAGES.map((stage, index) => {
-        const state = stageState(index, current, furthest, outcome);
+        const own = stageState(index, current, furthest, outcome);
+        const substeps = stage.key === HYPERION_SUBSTEP_STAGE && substepLatest >= 0 ? substepStates(own, substepLatest, substepFurthest) : undefined;
+        // A parent stage is only ever as healthy as its least healthy substep.
+        const state = mostCriticalState(own, substeps);
         const turns = turnsPerStage[index];
         return {
             key: stage.key,
             state,
-            substeps: stage.key === HYPERION_SUBSTEP_STAGE && substepLatest >= 0 ? substepStates(state, substepLatest, substepFurthest) : undefined,
+            substeps,
             // A stage that is still running has not finished anything yet, and one that never ran has nothing to report.
             summary: turns > 0 && state !== 'current' && state !== 'pending' ? { turns, files: filesPerStage[index] } : undefined,
             elapsedMs: elapsedPerStage[index],
             runningSince: state === 'current' ? runningSince : undefined,
         };
     });
+}
+
+/**
+ * Which rung of the ladder the run is on, as a position, never as a completion count.
+ *
+ * Derived from the furthest stage the run actually reached, so it cannot walk backwards when a repair round returns
+ * the run to an earlier stage. A counter that goes from "step 4 of 5" to "step 3 of 5" is worse than no counter,
+ * because it reads as the run losing ground.
+ *
+ * `pending` and `skipped` both mean "the run was never here": a run that failed in stage 2 leaves stages 3 to 5
+ * skipped, and reporting it as "step 5 of 5" would claim it got to the end.
+ *
+ * `undefined` while nothing has started, because "step 0 of 5" is not a position.
+ */
+export function stagePosition(stages: readonly HyperionStage[]): number | undefined {
+    for (let index = stages.length - 1; index >= 0; index--) {
+        const state = stages[index].state;
+        if (state !== 'pending' && state !== 'skipped') {
+            return index + 1;
+        }
+    }
+    return undefined;
+}
+
+/**
+ * A stage's state, raised to the most critical state any of its substeps is in.
+ *
+ * Precedence: failed, then running, then complete, then skipped, then pending. A substep reporting a failure while its
+ * parent still shows a spinner is a lie the ladder would tell once per repair round, and it is asserted here rather
+ * than in a template so every surface that renders the ladder tells the same story.
+ *
+ * Today {@link substepStates} derives each substep from its parent, so this can only ever confirm the parent. It is
+ * the guard for the moment the server starts reporting a substep outcome independently, which is the point at which a
+ * template-level fix would be forgotten.
+ */
+export function mostCriticalState(parent: TumUiStepState, substeps: readonly HyperionSubstep[] | undefined): TumUiStepState {
+    if (!substeps?.length) {
+        return parent;
+    }
+    const order: TumUiStepState[] = ['failed', 'current', 'complete', 'skipped', 'pending'];
+    const rank = (state: TumUiStepState) => order.indexOf(state);
+    return substeps.reduce((worst, substep) => (rank(substep.state) < rank(worst) ? substep.state : worst), parent);
 }
 
 /**

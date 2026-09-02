@@ -12,9 +12,9 @@
     background: transparent;
     outline-color: transparent;
     transition:
-        color 0.2s,
-        background 0.2s,
-        outline-color 0.2s;
+        color var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard),
+        background var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard),
+        outline-color var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard);
 }
 
 :host.tum-ui-tab-disabled {

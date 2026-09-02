@@ -72,7 +72,7 @@
                         <td>
                             <tum-ui-tag
                                 class="whitespace-nowrap"
-                                [severity]="node.brokerConnected ? 'success' : 'warn'"
+                                [severity]="node.brokerConnected ? 'success' : 'warning'"
                                 [value]="(node.brokerConnected ? 'artemisApp.websocketAdmin.connected' : 'artemisApp.websocketAdmin.disconnected') | artemisTranslate"
                                 data-testid="broker-status-tag"
                             />

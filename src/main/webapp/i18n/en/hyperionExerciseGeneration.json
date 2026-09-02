@@ -11,7 +11,7 @@
                 "brief": {
                     "header": "Generate a programming exercise",
                     "intro": "Describe what students should learn and build. Artemis writes the problem statement, starter code, sample solution, and tests, builds them, and checks that the sample solution passes and the starter code fails. Nothing is saved to your course until those checks pass.",
-                    "consequences": "This creates a new, unreleased Java exercise in your course right away. You can rename it, change its points, or delete it at any time.",
+                    "consequences": "This creates a new, unreleased Java exercise in your course right away, and then generates for about {{min}} to {{max}} minutes. You can rename it, change its points, or delete it at any time.",
                     "label": "What should students learn and build?",
                     "hint": "Describe the learning goal, the behaviour you expect, and anything that matters for your course. You can leave API names, edge cases, and test design to Artemis.",
                     "error": "Add a bit more detail — at least {{min}} characters — so Artemis has enough to work with.",
@@ -22,6 +22,7 @@
                     "suggestNeedsBrief": "Write at least {{min}} characters first.",
                     "suggestRunning": "Reading your description…",
                     "suggestFailed": "Artemis could not suggest metadata. Try again, or fill the fields in yourself.",
+                    "suggestApplied": "Artemis filled in the exercise details below. Change anything you like before you generate.",
                     "metadataTitle": "Exercise metadata",
                     "metadataHint": "Artemis can propose all of this, or you can fill it in yourself. Nothing is set for you until you ask for a suggestion.",
                     "metadataSuggested": "Suggested by Artemis",
@@ -54,7 +55,7 @@
                     "blockedSuggesting": "Waiting for the suggested metadata.",
                     "blockedIncomplete": "Fill in the title, short name, package name, and points, or let Artemis suggest them.",
                     "blockedInvalid": "Correct the fields marked above before you generate.",
-                    "aiNotice": "Artemis uses a large language model for this. Review everything it produces before you release the exercise.",
+                    "aiNotice": "Artemis uses a large language model for this, and the run's own page reports what it spent. Review everything it produces before you release the exercise.",
                     "draftTitle": "AI draft exercise",
                     "generate": "Create draft and start generating",
                     "setupFailed": "Artemis could not create the draft exercise. Your description is still here, so you can try again.",
@@ -93,7 +94,11 @@
                     "toolCalls": "{{count}} actions",
                     "files": "{{count}} files",
                     "latestFile": "Latest file — {{file}}",
-                    "recent": "Recent activity"
+                    "recent": "Recent activity",
+                    "stalled": "No update for {{duration}} — still connected",
+                    "stalledOffline": "No update for {{duration}} — the connection to the run was lost",
+                    "workingState": "Working",
+                    "stalledState": "Stalled"
                 },
                 "usage": {
                     "title": "Cost and usage",
@@ -103,7 +108,6 @@
                         "incomplete": "Incomplete account"
                     },
                     "incompleteHint": "Some of this run's model calls could not be accounted for. Everything below is a lower bound — the run cost at least this much, not nothing.",
-                    "pendingHint": "The run is still going, so these are the figures so far, not a final total.",
                     "costSoFar": "estimated so far",
                     "costFinal": "estimated cost",
                     "costPartialHint": "Some responses used a model with no configured price, so the real cost is higher.",
@@ -112,6 +116,7 @@
                     "notPricedHint": "No price is configured for a model this run used, so Artemis cannot estimate what it cost.",
                     "budgetLabel": "Token budget",
                     "budgetAriaLabel": "Share of the token budget this run has used",
+                    "budgetValueText": "{{used}} of {{budget}} billable tokens, {{level}}",
                     "noBudget": "tokens charged — this Artemis server sets no token ceiling for a run.",
                     "inputLabel": "Input tokens",
                     "outputLabel": "Output tokens",
@@ -119,7 +124,15 @@
                     "modelCallsLabel": "AI calls",
                     "agentTurnsLabel": "Agent steps",
                     "attemptsLabel": "Attempts",
-                    "modelsLabel": "Models"
+                    "modelsLabel": "Models",
+                    "billableTokens": "billable tokens",
+                    "totalTokens": "tokens",
+                    "sealedAt": "sealed at {{time}}",
+                    "budgetWithin": "within budget",
+                    "budgetNear": "near the budget limit",
+                    "budgetOver": "over budget",
+                    "budgetOfLabel": "of",
+                    "budgetShareSuffix": "of budget"
                 },
                 "status": {
                     "queued": "Waiting to start",
@@ -137,13 +150,29 @@
                     "title": "AI generation",
                     "backToExercise": "Back to the exercise",
                     "elapsed": "Elapsed",
-                    "typicalDuration": "Runs usually take 10 to 25 minutes.",
                     "progressTitle": "Progress",
                     "otherInstructor": "Another instructor started this run. You can follow it, but only they can cancel it.",
                     "statusUnavailable": "The generation status could not be loaded. Nothing has been changed in your exercise.",
                     "retryStatus": "Try again",
                     "notStartedTitle": "No generation has run for this exercise",
-                    "notStartedHint": "Start one from the exercise list with Add exercise, then Generate."
+                    "notStartedHint": "Generating writes a problem statement, starter code, a sample solution and tests into this exercise. It takes about 10 to 25 minutes and uses a large language model.",
+                    "stepLabel": "Step",
+                    "stepValue": "{{position}} of {{total}}",
+                    "stepCounter": "Step {{position}} of {{total}}",
+                    "spendLabel": "Spend",
+                    "spendAtLeast": "at least this much",
+                    "filesLabel": "Files",
+                    "costNotPriced": "cost not priced",
+                    "typicalBand": "usually {{min}}–{{max}} min",
+                    "longerThanUsual": "longer than usual — still working",
+                    "stageStrip": "All {{total}} stages",
+                    "stageStripWithDuration": "All {{total}} stages · {{duration}}",
+                    "lastUpdate": "Last update at {{time}}",
+                    "stillRunningOnServer": "The run itself is still going on the server. Only this page cannot read its status right now.",
+                    "notStartedWhoCanAct": "An instructor or editor of this course can start a generation.",
+                    "stageAnnouncement": "Step {{position}} of {{total}}, {{stage}}.",
+                    "stalledAnnouncement": "No update for {{minutes}} minutes. The run is still connected.",
+                    "stalledOfflineAnnouncement": "No update for {{minutes}} minutes, and the status of the run could not be read."
                 },
                 "live": {
                     "repairRound": "Review round {{round}} — {{blocking}} to fix, {{advisory}} to look at ({{carriedOver}} carried over, {{drained}} resolved, {{fresh}} new)",
@@ -152,21 +181,50 @@
                 "artifacts": {
                     "title": "What Artemis has produced so far",
                     "notSavedHint": "None of this is in your exercise yet. It is saved only if every check passes.",
+                    "savedHint": "Artemis saved this into your exercise. Review it before you release it.",
+                    "loading": "Loading the retained draft…",
                     "specTitle": "Exercise design",
                     "specHint": "What Artemis decided to build, before it wrote any code.",
-                    "specPending": "Artemis is still deciding what to build.",
+                    "specPending": "No exercise design yet",
+                    "specPendingHint": "Artemis is still deciding what to build.",
                     "statementTitle": "Problem statement",
-                    "statementPending": "Not written yet.",
+                    "statementPending": "No problem statement yet",
+                    "statementPendingHint": "Artemis writes it near the end of the design stage.",
                     "filesTitle": "Files",
-                    "filesHint": "Files Artemis has written so far.",
-                    "filesPending": "No files written yet.",
+                    "filesPending": "No files yet",
+                    "filesPendingHint": "They appear here as Artemis writes them.",
+                    "filesNone": "No files were written",
+                    "filesNoneHint": "This run ended before it wrote anything into the repositories.",
+                    "statementNone": "No problem statement was kept",
+                    "specNone": "No exercise design was kept",
+                    "notKeptHint": "This run ended without producing one, or without keeping a copy of it.",
                     "writingNow": "Writing now",
+                    "writtenLast": "Written last",
                     "loadFailed": "The retained draft could not be loaded.",
                     "retryLoad": "Try again",
                     "action": {
                         "write": "Added",
                         "edit": "Changed",
                         "delete": "Deleted"
+                    },
+                    "content": {
+                        "selectTitle": "Pick a file to read it",
+                        "selectHint": "Choose a file from the list to see what Artemis wrote into it.",
+                        "lines": "{{count}} lines",
+                        "loading": "Loading the file…",
+                        "openInEditor": "Open in code editor",
+                        "deletedTitle": "Artemis deleted this file",
+                        "deletedHint": "There is nothing to read. Deleting a file is a normal part of reworking a draft.",
+                        "emptyFileTitle": "This file is empty",
+                        "emptyFileHint": "Artemis wrote it without any content.",
+                        "failedTitle": "The file could not be loaded",
+                        "failedHint": "The retained draft could not be fetched. Nothing in your exercise was changed.",
+                        "pendingRunTitle": "Contents are not available while the run is going",
+                        "pendingRunHint": "Artemis reports which files it writes, but cannot serve their contents until the run has finished.",
+                        "savedTitle": "This file is in your exercise",
+                        "savedHint": "Artemis saved the run into the repositories. Open the code editor to read the file as it was stored.",
+                        "notRetainedTitle": "This run kept no copy of its files",
+                        "notRetainedHint": "Only the list of what it wrote survives. Run again to produce a draft you can read."
                     }
                 },
                 "outcome": {
@@ -183,7 +241,8 @@
                     "retained": "The work Artemis had done is kept so you can look at it. It is not part of your exercise.",
                     "nothingRetained": "Nothing from this run could be kept, so there is nothing to inspect. Your exercise is unchanged — run it again when you are ready.",
                     "technicalDetails": "Show technical details",
-                    "disclaimer": "Generated with AI. Check the problem statement, the tests, and the sample solution before releasing this exercise."
+                    "disclaimer": "Generated with AI. Check the problem statement, the tests, and the sample solution before releasing this exercise.",
+                    "serverMessageCount": "{{count}} server messages"
                 },
                 "verdict": {
                     "title": "Checks",
@@ -194,7 +253,9 @@
                     "consistencyPassed": "Build and grading consistency checks passed",
                     "consistencyFailed": "Build or grading consistency checks failed",
                     "tests": "{{count}} tests",
-                    "oneTest": "1 test"
+                    "oneTest": "1 test",
+                    "passed": "Passed",
+                    "failed": "Failed"
                 },
                 "terminationReason": {
                     "CONVERGED": "Every check passed.",
@@ -225,7 +286,8 @@
                     "cancelConfirmReject": "Keep generating",
                     "runAgain": "Run again",
                     "openEditor": "Open code editor",
-                    "openRun": "Open the generation view"
+                    "openRun": "Open the generation view",
+                    "start": "Generate this exercise"
                 }
             },
             "jobs": {
@@ -233,8 +295,21 @@
                 "ariaLabel": "AI generation runs",
                 "title": "AI generation runs",
                 "empty": "No generation runs yet.",
+                "emptyHint": "A run appears here as soon as you start one from an exercise.",
                 "dismiss": "Dismiss this run",
-                "unseen": "{{count}} finished runs you have not opened",
+                "summaryRunning": "{{count}} running",
+                "summaryAttention": "{{count}} to check",
+                "summaryFinished": "{{count}} finished",
+                "runningMinutes": "running for {{minutes}} min",
+                "runningUnderMinute": "just started",
+                "ranMinutes": "ran for {{minutes}} min",
+                "ranUnderMinute": "ran for under a minute",
+                "state": {
+                    "idle": "Nothing running",
+                    "running": "Generating",
+                    "attention": "Needs your attention",
+                    "success": "Finished"
+                },
                 "loadFailed": "The generation runs could not be loaded.",
                 "retry": "Try again"
             },
@@ -264,6 +339,7 @@
                 "cancelFailed": "The generation could not be cancelled. Its status was refreshed.",
                 "reverting": "Undoing…",
                 "changedFiles": "Saved files",
+                "changedFilesNotNavigable": "These open in the editor once the run has saved them into your exercise.",
                 "reviewSavedChanges": "Review saved changes",
                 "reviewSavedChangesHint": "Open the exercise version history or the exact saved repository commit.",
                 "reviewBlockedByLocalEdits": "Save or discard your local edits before opening the saved-change review.",

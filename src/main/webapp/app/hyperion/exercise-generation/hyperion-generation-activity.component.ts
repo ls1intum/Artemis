@@ -3,6 +3,7 @@ import {
     TumUiButtonDirective,
     TumUiDialogComponent,
     TumUiMessageComponent,
+    TumUiMessageSeverity,
     TumUiStatusDotComponent,
     TumUiStatusDotState,
     TumUiTagComponent,
@@ -12,34 +13,20 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, ou
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faRotateLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HyperionGenerationActivityFacade, HyperionGenerationCompletedEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
-import { displayFileChangePath, latestTerminalEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
+import { latestTerminalEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
+import { HyperionEmptyComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-empty.component';
+import { HyperionArtifactFile, artifactFiles, artifactKeyForChange } from 'app/hyperion/exercise-generation/artifacts/hyperion-artifact-file';
+import { HyperionFileChangeListComponent } from 'app/hyperion/exercise-generation/run/hyperion-file-change-list.component';
 import { activityView } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
 import { HyperionRunUsageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-usage.component';
-import { ExerciseGenerationFileChange, HyperionFileChangeRepo, HyperionGenerationMode } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
-
-const REPO_ORDER: HyperionFileChangeRepo[] = ['solution', 'template', 'tests', 'other'];
-
-/** One changed file with everything the template needs already resolved, so no binding calls a method. */
-interface RepoFileEntry {
-    key: string;
-    file: ExerciseGenerationFileChange;
-    displayPath: string;
-    accessibleLabel: string;
-    navigable: boolean;
-}
-
-interface RepoFileGroup {
-    repo: HyperionFileChangeRepo;
-    files: RepoFileEntry[];
-}
+import { ExerciseGenerationFileChange, HyperionGenerationMode } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 interface ActivityLiveStatus {
     message?: string;
@@ -68,13 +55,15 @@ export type { HyperionGenerationCompletedEvent } from './hyperion-generation-act
 @Component({
     selector: 'jhi-hyperion-generation-activity',
     templateUrl: './hyperion-generation-activity.component.html',
+    styleUrl: './hyperion-generation-activity.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [HyperionGenerationActivityFacade],
     imports: [
-        FaIconComponent,
         RouterLink,
         TranslateDirective,
         ArtemisTranslatePipe,
+        HyperionEmptyComponent,
+        HyperionFileChangeListComponent,
         HyperionRunProgressComponent,
         HyperionRunUsageComponent,
         TumUiButtonComponent,
@@ -192,7 +181,7 @@ export class HyperionGenerationActivityComponent {
             case 'partial':
                 return { state: 'warning', labelKey: 'artemisApp.hyperion.generation.status.partial' };
             case 'failed':
-                return { state: 'error', labelKey: 'artemisApp.hyperion.generation.status.failed' };
+                return { state: 'danger', labelKey: 'artemisApp.hyperion.generation.status.failed' };
             case 'cancelled':
                 return { state: 'neutral', labelKey: 'artemisApp.hyperion.generation.status.cancelled' };
         }
@@ -210,19 +199,23 @@ export class HyperionGenerationActivityComponent {
         const exerciseId = this.exerciseId();
         return courseId !== undefined && exerciseId !== undefined ? ['/course-management', courseId, 'programming-exercises', exerciseId, 'generation'] : undefined;
     });
-    readonly filesByRepo = computed<RepoFileGroup[]>(() => {
-        const entries = this.fileChanges().map<RepoFileEntry>((file) => ({
-            key: `${file.repo}:${file.path}`,
-            file,
-            displayPath: displayFileChangePath(file),
-            accessibleLabel: `${this.translateService.instant(`artemisApp.hyperion.generationActivity.repo.${file.repo}`)}: ${displayFileChangePath(file)}`,
-            navigable: this.canNavigateFileChange(file),
-        }));
-        return REPO_ORDER.map((repo) => ({
-            repo,
-            files: entries.filter((entry) => entry.file.repo === repo).sort((first, second) => first.displayPath.localeCompare(second.displayPath)),
-        })).filter((group) => group.files.length > 0);
-    });
+    /**
+     * The changed files, in the shape the run page's list renders. The panel and the run page therefore show the same
+     * rows in the same order, at two densities, rather than two hand-rolled lists that drift.
+     *
+     * No retained snapshot is merged in here: the panel is a monitor for the run that is happening beside the editor,
+     * and the retained draft belongs to the run page, which is where an instructor goes to read it.
+     */
+    readonly artifacts = computed(() => artifactFiles(this.fileChanges()));
+    /** Which rows do something when picked. A file only opens in the editor once the run has saved it there. */
+    readonly navigableKeys = computed(() =>
+        this.fileChanges()
+            .filter((file) => this.canNavigateFileChange(file))
+            .map(artifactKeyForChange),
+    );
+    /** Says, once, why the rows are inert - instead of leaving a list of things that quietly do nothing when clicked. */
+    readonly changedFilesHintKey = computed(() => (this.navigableKeys().length ? undefined : 'artemisApp.hyperion.generationActivity.changedFilesNotNavigable'));
+    private readonly changeByArtifactKey = computed(() => new Map(this.fileChanges().map((file) => [artifactKeyForChange(file), file])));
     readonly liveStatus = computed<ActivityLiveStatus | undefined>(() => {
         if (this.refreshingEditor()) {
             return { labelKey: 'artemisApp.hyperion.generationActivity.refreshingEditor', busy: true };
@@ -253,6 +246,22 @@ export class HyperionGenerationActivityComponent {
         return undefined;
     });
     readonly terminalMessage = computed(() => this.terminalEvent()?.message);
+    /**
+     * How loudly the run's closing message is delivered.
+     *
+     * It used to be muted text in a grey box, which is the styling of an aside - and this sentence is the panel's
+     * answer to the only question the panel asks. It is a message of the run's own severity now.
+     */
+    readonly terminalMessageSeverity = computed<TumUiMessageSeverity>(() => {
+        const type = this.terminalEvent()?.type;
+        if (type === 'ERROR') {
+            return 'danger';
+        }
+        if (type === 'CANCELLED') {
+            return 'secondary';
+        }
+        return 'info';
+    });
     readonly persistenceState = computed(() => {
         if (this.running()) {
             // A run that has not written anything yet is the healthy state, so it is stated, not warned about.
@@ -265,7 +274,7 @@ export class HyperionGenerationActivityComponent {
             }
             if (terminal.liveExerciseChanged) {
                 return terminal.completionStatus === 'NEEDS_REVIEW'
-                    ? { labelKey: 'artemisApp.hyperion.generationActivity.persistence.savedNeedsReview', severity: 'warn' as const }
+                    ? { labelKey: 'artemisApp.hyperion.generationActivity.persistence.savedNeedsReview', severity: 'warning' as const }
                     : { labelKey: 'artemisApp.hyperion.generationActivity.persistence.saved', severity: 'success' as const };
             }
             return { labelKey: 'artemisApp.hyperion.generationActivity.persistence.notSaved', severity: 'danger' as const };
@@ -309,7 +318,6 @@ export class HyperionGenerationActivityComponent {
         return persistence ? `${headline} — ${this.translateService.instant(persistence.labelKey)}` : headline;
     });
 
-    protected readonly faSpinner = faSpinner;
     protected readonly faRotateLeft = faRotateLeft;
 
     constructor() {
@@ -350,6 +358,14 @@ export class HyperionGenerationActivityComponent {
     selectFile(fileChange: ExerciseGenerationFileChange): void {
         if (this.canNavigateFileChange(fileChange)) {
             this.fileChangeSelected.emit(fileChange);
+        }
+    }
+
+    /** A row the instructor picked, mapped back to the change event the editor knows how to navigate to. */
+    selectArtifact(artifact: HyperionArtifactFile): void {
+        const fileChange = this.changeByArtifactKey().get(artifact.key);
+        if (fileChange) {
+            this.selectFile(fileChange);
         }
     }
 

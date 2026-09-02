@@ -1,8 +1,21 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Subject } from 'rxjs';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { TumUiButtonComponent, TumUiCardComponent, TumUiMessageComponent, TumUiMessageSeverity, TumUiStatusDotState } from '@tumaet/ui-angular';
+import { TranslateService } from '@ngx-translate/core';
+import {
+    TumUiButtonComponent,
+    TumUiCardActionComponent,
+    TumUiCardComponent,
+    TumUiCardHeaderComponent,
+    TumUiCardTitleComponent,
+    TumUiMessageComponent,
+    TumUiMessageSeverity,
+    TumUiPanelComponent,
+    TumUiStatusDotState,
+} from '@tumaet/ui-angular';
 
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
@@ -12,8 +25,10 @@ import { HyperionRunHeaderComponent } from 'app/hyperion/exercise-generation/run
 import { HyperionRunOutcomeCheck, HyperionRunOutcomeComponent, HyperionRunOutcomeView } from 'app/hyperion/exercise-generation/run/hyperion-run-outcome.component';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
 import { HyperionRunUsageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-usage.component';
-import { HyperionRunOutcome, runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
-import { activityView } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
+import { HYPERION_STAGE_COUNT, HyperionRunOutcome, runOutcome, stagePosition, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
+import { activityView, formatClockTime, formatElapsed, isStalled } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
+import { serverTimeSignal } from 'app/localci/hyperion-generation-job.utils';
+import { HyperionRunAnnouncerService } from 'app/hyperion/exercise-generation/run/hyperion-run-announcer.service';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { latestTerminalEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -30,7 +45,7 @@ const STATUS_DOT_STATE: Record<RunStatus, TumUiStatusDotState> = {
     saved: 'success',
     needsReview: 'warning',
     partial: 'warning',
-    failed: 'error',
+    failed: 'danger',
     cancelled: 'neutral',
     notStarted: 'neutral',
     unknown: 'unknown',
@@ -46,10 +61,10 @@ const OUTCOME_STATUS: Record<HyperionRunOutcome, RunStatus> = {
 
 const OUTCOME_SEVERITY: Record<HyperionRunOutcome, TumUiMessageSeverity> = {
     saved: 'success',
-    needsReview: 'warn',
-    partial: 'warn',
-    failed: 'error',
-    cancelled: 'warn',
+    needsReview: 'warning',
+    partial: 'warning',
+    failed: 'danger',
+    cancelled: 'warning',
 };
 
 /** The `generation.outcome.*` key prefix for each outcome; the run page owns this so the copy stays in one place. */
@@ -64,15 +79,31 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
 /**
  * The page a Hyperion whole-exercise generation run lives on.
  *
- * A run creates a real exercise and takes many minutes, so it has a URL: it survives a reload, it can be sent to a
- * colleague, and an instructor can walk away and come back to it. The dialog that starts a run is only for the brief.
+ * It answers one question: *what happened to this generation, and what do I do next?* A run creates a real exercise
+ * and takes many minutes, so it has a URL: it survives a reload, it can be sent to a colleague, and an instructor can
+ * walk away and come back to it. The dialog that starts a run is only for the brief.
+ *
+ * Four ranked regions rather than five equal cards, because five containers of identical weight rank nothing:
+ *
+ * 0. **Header** - identity, status, the facts rail (elapsed, step, spend, files) and the actions.
+ * 1. **The answer** - the ladder while the run is going, the verdict once it is over with the ladder folded to a strip.
+ * 2. **What it produced** - the artifacts, always open, never auto-collapsed at the moment they become the answer.
+ * 3. **Run detail** - the spend in full, as a ruled section at lower contrast rather than as a fourth card.
+ *
+ * Cost is made more prominent by *position and persistence*, not by size: a real figure in the header, visible in
+ * every state, while the verdict keeps the top of the hierarchy. The nine states: **empty** (never run - carries the
+ * action rather than directions to it), **loading**, **running**, **stalled** (see the activity area), **partial**,
+ * **error** and **stale** (the last known ladder stays on screen with a retry, never a blanked page),
+ * **unauthorised** (no spend column, no Cancel, and a sentence saying why), **terminal success / failure**.
  */
 @Component({
     selector: 'jhi-hyperion-run-page',
     templateUrl: './hyperion-run-page.component.html',
+    styleUrl: './hyperion-run-page.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [HyperionGenerationActivityFacade],
+    providers: [HyperionGenerationActivityFacade, HyperionRunAnnouncerService],
     imports: [
+        ArtemisTranslatePipe,
         TranslateDirective,
         HyperionArtifactsComponent,
         HyperionRunHeaderComponent,
@@ -80,12 +111,18 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
         HyperionRunProgressComponent,
         HyperionRunUsageComponent,
         TumUiButtonComponent,
+        TumUiCardActionComponent,
         TumUiCardComponent,
+        TumUiCardHeaderComponent,
+        TumUiCardTitleComponent,
         TumUiMessageComponent,
+        TumUiPanelComponent,
     ],
 })
 export class HyperionRunPageComponent {
     private readonly route = inject(ActivatedRoute);
+    private readonly translateService = inject(TranslateService);
+    private readonly announcer = inject(HyperionRunAnnouncerService);
     private readonly facade = inject(HyperionGenerationActivityFacade);
     private readonly registry = inject(HyperionJobRegistryService);
     private readonly generationService = inject(HyperionExerciseGenerationService);
@@ -133,6 +170,17 @@ export class HyperionRunPageComponent {
     protected readonly outcome = computed(() => runOutcome(this.events()));
     protected readonly terminal = computed(() => this.outcome() !== undefined);
     protected readonly stages = computed(() => stageStates(this.events(), this.outcome()));
+    /** `Step 2 of 5`, from position in the fixed five stages rather than from completion, so it never walks backwards. */
+    protected readonly stepPosition = computed(() => stagePosition(this.stages()));
+    protected readonly stepTotal = HYPERION_STAGE_COUNT;
+    protected readonly fileCount = computed(() => this.fileChanges().length);
+    /**
+     * Whether the page can still reach the server.
+     *
+     * The stall wording promises the run is "still connected", so the promise is withdrawn the moment the status check
+     * itself starts failing - at which point the page reports a lost connection instead, in its own words.
+     */
+    protected readonly connected = computed(() => !this.statusLoadFailed());
     /** What the agent is doing, rendered inside the ladder under the stage that is running. */
     protected readonly activityView = computed(() => activityView(this.events(), this.outcome(), this.fileChanges()));
     /** The newest thing the server said, shown under the stage it belongs to. */
@@ -180,6 +228,40 @@ export class HyperionRunPageComponent {
 
     protected readonly cancelAvailable = computed(() => !this.terminal() && this.running() && this.ownedByCaller() && this.facade.cancellable());
     protected readonly runAgainAvailable = computed(() => this.terminal() && this.ownedByCaller() && !this.starting());
+    /**
+     * An empty state with no action is an apology, so the one that starts a run lives here rather than as a sentence
+     * telling the instructor where to find it. Re-uses the same start path as Run again, with the same caveat: the
+     * original brief is not readable through the API, so the server falls back to the exercise's own problem statement.
+     */
+    protected readonly startAvailable = computed(() => this.notStarted() && this.ownedByCaller() && !this.starting());
+
+    /** How long a finished run took, for the folded stage strip. Static: a terminal run has no clock left to tick. */
+    protected readonly runDuration = computed(() => {
+        const startedAt = this.startedAt();
+        const endedAt = this.endedAt();
+        if (!startedAt || !endedAt) {
+            return undefined;
+        }
+        const seconds = Math.max(0, Math.floor((Date.parse(endedAt) - Date.parse(startedAt)) / 1000));
+        return Number.isFinite(seconds) ? formatElapsed(seconds) : undefined;
+    });
+
+    /**
+     * The header of the folded stage ladder on a finished run.
+     *
+     * The ladder collapses to a strip rather than disappearing, because the stages are still real information about
+     * what the run did - they are simply no longer the answer.
+     */
+    protected readonly stageStripHeader = computed(() => {
+        const duration = this.runDuration();
+        const total = this.stepTotal;
+        return duration
+            ? this.translateService.instant('artemisApp.hyperion.generation.run.stageStripWithDuration', { total, duration })
+            : this.translateService.instant('artemisApp.hyperion.generation.run.stageStrip', { total });
+    });
+
+    /** When the page last heard anything at all, so stale data on screen is marked as stale rather than passed off as current. */
+    protected readonly lastUpdateTime = computed(() => formatClockTime(this.events().at(-1)?.timestamp));
 
     protected readonly starting = signal(false);
     protected readonly startFailed = signal(false);
@@ -240,12 +322,65 @@ export class HyperionRunPageComponent {
             nothingRetained: !this.savedToExercise() && !this.facade.artifactsRetained(),
             // The server's own prose is English and technical; it belongs behind the disclosure, never in the headline.
             serverMessages: [...(terminal?.message ? [terminal.message] : []), ...(verdict?.reasons ?? [])],
+            // Diagnostic rather than a figure: the model name belongs in the log, not on the surface reporting spend.
+            models: this.spend()?.models ?? [],
             events: this.events(),
+        };
+    });
+
+    /** Emits once the run is over, which is what stops the stall watch from ticking for the rest of the session. */
+    private readonly runEnded = new Subject<void>();
+    private readonly now = serverTimeSignal(this.runEnded);
+
+    /**
+     * The one thing worth interrupting a screen-reader user for, or nothing.
+     *
+     * Three triggers and no others - a stage change, entering the stalled state, a terminal outcome - each with a
+     * stable identity so the announcement is made on entering the state rather than repeated while it lasts. The
+     * elapsed clock, the counters and the per-file events are deliberately absent: a value that updates once a second
+     * is not a status message.
+     */
+    private readonly announcement = computed<{ id: string; message: string } | undefined>(() => {
+        const outcome = this.outcome();
+        if (outcome) {
+            return { id: `terminal:${outcome}`, message: this.translateService.instant(`artemisApp.hyperion.generation.outcome.${OUTCOME_COPY[outcome]}Title`) };
+        }
+        const liveness = this.activityView().liveness;
+        if (isStalled(liveness, this.now())) {
+            const minutes = Math.round(liveness!.stalledAfterMs / 60_000);
+            const key = this.connected() ? 'artemisApp.hyperion.generation.run.stalledAnnouncement' : 'artemisApp.hyperion.generation.run.stalledOfflineAnnouncement';
+            return { id: 'stalled', message: this.translateService.instant(key, { minutes }) };
+        }
+        const current = this.stages().find((stage) => stage.state === 'current');
+        const position = this.stepPosition();
+        if (!current || position === undefined) {
+            return undefined;
+        }
+        return {
+            id: `stage:${current.key}`,
+            message: this.translateService.instant('artemisApp.hyperion.generation.run.stageAnnouncement', {
+                position,
+                total: this.stepTotal,
+                stage: this.translateService.instant(`artemisApp.hyperion.generation.stage.${current.key}`),
+            }),
         };
     });
 
     constructor() {
         this.facade.connect({ exerciseId: this.exerciseId, refreshingEditor: signal(false) });
+
+        effect(() => {
+            if (this.terminal()) {
+                this.runEnded.next();
+            }
+        });
+
+        effect(() => {
+            const announcement = this.announcement();
+            if (announcement) {
+                untracked(() => this.announcer.announce(announcement.id, announcement.message));
+            }
+        });
 
         // Opening the run page is what "seeing" a finished run means, so the navbar badge clears here.
         effect(() => {
@@ -287,8 +422,21 @@ export class HyperionRunPageComponent {
      * not replay the brief.
      */
     protected runAgain(): void {
+        if (this.runAgainAvailable()) {
+            this.start();
+        }
+    }
+
+    /** The empty state's own action, which is the same request as Run again on an exercise that has never run. */
+    protected startFirstRun(): void {
+        if (this.startAvailable()) {
+            this.start();
+        }
+    }
+
+    private start(): void {
         const exerciseId = this.exerciseId();
-        if (exerciseId === undefined || this.starting() || !this.runAgainAvailable()) {
+        if (exerciseId === undefined || this.starting()) {
             return;
         }
         const mode = this.facade.mode() ?? 'GENERATE';

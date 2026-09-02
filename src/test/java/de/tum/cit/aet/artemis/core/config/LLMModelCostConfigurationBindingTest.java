@@ -18,6 +18,7 @@ import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.env.PropertySource;
 import org.springframework.core.env.SystemEnvironmentPropertySource;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 
 /** Guards operator-supplied model pricing and normalized managed-deployment keys. */
@@ -119,6 +120,40 @@ class LLMModelCostConfigurationBindingTest {
 
         assertThat(strippedKeys).doesNotHaveDuplicates();
         assertThat(config.getModelCosts()).containsKeys("gpt54", "gpt5mini", "gpt55");
+    }
+
+    @Test
+    void shippedConfigurationBindsTheDeployedModelKeyVerbatim() throws IOException {
+        // The bracket-quoted key in application-artemis.yml is only useful if Spring keeps the slash, the dot and
+        // the capitals. Relaxed binding would fold them away, and stripToAlphanumeric does not lower-case, so a
+        // folded key would silently never match the identifier the provider reports.
+        var modelCosts = bind(shippedConfiguration()).getModelCosts();
+
+        assertThat(modelCosts).containsKey("Qwen/Qwen3.8-27B");
+        assertThat(modelCosts.get("Qwen/Qwen3.8-27B").getInputCostPerMillionEur()).isCloseTo(0.2764f, within(1e-5f));
+        assertThat(modelCosts.get("Qwen/Qwen3.8-27B").getOutputCostPerMillionEur()).isCloseTo(2.1593f, within(1e-5f));
+        assertThat(modelCosts.get("Qwen/Qwen3.8-27B").getCachedInputCostPerMillionEur()).isCloseTo(0.0276f, within(1e-5f));
+    }
+
+    @Test
+    void shippedConfigurationKeysAreValidAndUniqueOnceStripped() throws IOException {
+        var config = bind(shippedConfiguration());
+
+        // Both lookup paths LLMTokenUsageService uses must stay well-formed for whatever the file ships.
+        config.validateModelCosts();
+        assertThat(config.getModelCosts().keySet().stream().map(LLMModelCostConfiguration::stripToAlphanumeric).toList()).doesNotHaveDuplicates();
+        assertThat(LLMModelCostConfiguration.stripToAlphanumeric("Qwen/Qwen3.8-27B")).isEqualTo("QwenQwen3827B");
+    }
+
+    /**
+     * The configuration file that actually ships.
+     * <p>
+     * Deliberately read from the source tree rather than from the classpath: {@code src/test/resources} carries its own
+     * {@code config/application-artemis.yml}, which shadows the production one for every test, so a
+     * {@code ClassPathResource} here would silently assert against the test fixture and pass while the deployment is unpriced.
+     */
+    private static Resource shippedConfiguration() {
+        return new FileSystemResource("src/main/resources/config/application-artemis.yml");
     }
 
     private static void putEnvCost(Map<String, Object> environment, String key, String input, String output) {

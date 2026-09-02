@@ -1,12 +1,35 @@
 @if (!view().empty) {
-    <div class="mt-1 flex min-w-0 flex-col gap-1" data-testid="hyperion-run-activity">
+    <div class="mt-1 flex min-w-0 flex-col gap-1" data-testid="hyperion-run-activity" [attr.data-liveness]="liveness()?.stalled ? 'stalled' : 'working'">
         @if (liveness(); as line) {
-            <!-- Ticks once a second, so it must never be announced: a per-second live region is unusable with a screen reader. -->
-            <p class="m-0 flex items-center gap-1 text-sm text-muted-color" aria-live="off" data-testid="hyperion-run-activity-liveness">
-                @if (line.waiting) {
-                    <fa-icon [icon]="faSpinner" animation="spin" />
+            <!--
+                Ticks once a second, so it must never be announced: a per-second live region is unusable with a screen
+                reader. The stall is announced once, elsewhere, by the run page's announcer.
+            -->
+            <p class="hyperion-liveness m-0 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm" aria-live="off" data-testid="hyperion-run-activity-liveness">
+                <!--
+                    The dot carries the state word for assistive technology and stops pulsing the moment the run stalls,
+                    because a busy animation on a stuck run is the animation contradicting the sentence beside it.
+                -->
+                <tum-ui-status-dot
+                    class="shrink-0"
+                    [state]="line.dotState"
+                    [label]="(line.stalled ? 'artemisApp.hyperion.generation.activity.stalledState' : 'artemisApp.hyperion.generation.activity.workingState') | artemisTranslate"
+                    [showLabel]="false"
+                />
+                <span class="min-w-0 tabular-nums wrap-anywhere">{{ line.labelKey | artemisTranslate: { duration: line.duration } }}</span>
+                @if (promoteCancel()) {
+                    <!-- The escape action moves to where the reader is already looking, rather than staying in the header. -->
+                    <tum-ui-button
+                        severity="danger"
+                        variant="outlined"
+                        size="small"
+                        [loading]="cancelPending()"
+                        (clicked)="cancelRequested.emit()"
+                        data-testid="hyperion-run-activity-cancel"
+                    >
+                        <span [jhiTranslate]="cancelPending() ? 'artemisApp.hyperion.generation.actions.cancelling' : 'artemisApp.hyperion.generation.actions.cancel'"></span>
+                    </tum-ui-button>
                 }
-                <span class="tabular-nums">{{ line.labelKey | artemisTranslate: { duration: line.duration } }}</span>
             </p>
         }
 
@@ -18,7 +41,7 @@
         }
 
         @if (counters().length) {
-            <ul class="m-0 flex list-none flex-wrap gap-x-3 gap-y-1 p-0 text-xs text-muted-color" data-testid="hyperion-run-activity-meter">
+            <ul class="m-0 flex list-none flex-wrap gap-x-3 gap-y-1 p-0 text-sm text-muted-color" data-testid="hyperion-run-activity-meter">
                 @for (counter of counters(); track counter.key) {
                     <li class="tabular-nums" [attr.data-counter]="counter.key">{{ counter.labelKey | artemisTranslate: { count: counter.count } }}</li>
                 }
@@ -27,10 +50,15 @@
 
         @if (recent().length) {
             <section class="min-w-0" aria-labelledby="hyperion-run-activity-recent-title" data-testid="hyperion-run-activity-recent">
-                <h4 id="hyperion-run-activity-recent-title" class="mt-1 mb-1 text-xs! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.activity.recent"></h4>
-                <ol class="m-0 flex list-none flex-col gap-0.5 p-0 text-xs text-muted-color">
+                <!-- Sized by this component's own stylesheet, which is what removes the `!` the type utilities needed. -->
+                <h4 id="hyperion-run-activity-recent-title" class="hyperion-activity-title" jhiTranslate="artemisApp.hyperion.generation.activity.recent"></h4>
+                <!--
+                    The list reserves its full height, so a message arriving pushes nothing: the largest motion a page
+                    can make is moving the text somebody is reading, and none of this is user-initiated.
+                -->
+                <ol class="hyperion-activity-log m-0 flex list-none flex-col gap-0.5 p-0 text-sm text-muted-color" [style.--hyperion-activity-rows]="recentLimit">
                     @for (entry of recent(); track entry.key) {
-                        <li class="flex min-w-0 gap-2">
+                        <li class="flex min-w-0 gap-2" [animate.enter]="rowEnterClass()">
                             <span class="w-16 shrink-0 tabular-nums">{{ entry.time }}</span>
                             <span class="min-w-0 wrap-anywhere">{{ entry.message }}</span>
                         </li>

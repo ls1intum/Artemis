@@ -20,8 +20,8 @@ function user(login: string, imageUrl?: string): User {
     return { login, imageUrl } as User;
 }
 
-function event(type: HyperionGenerationEvent['type'], completionStatus?: HyperionGenerationEvent['completionStatus']): HyperionGenerationEvent {
-    return { type, completionStatus, timestamp: '2026-07-10T20:00:00Z', message: `${type} happened` };
+function event(type: HyperionGenerationEvent['type'], completionStatus?: HyperionGenerationEvent['completionStatus'], timestamp = '2026-07-10T20:00:00Z'): HyperionGenerationEvent {
+    return { type, completionStatus, timestamp, message: `${type} happened` };
 }
 
 function status(partial: Partial<HyperionGenerationStatus>): HyperionGenerationStatus {
@@ -130,6 +130,27 @@ describe('HyperionJobRegistryService', () => {
         service.refresh();
 
         expect(service.entries()[0].status).toBe('unknown');
+    });
+
+    it('records when a run ended from the server event, so a late reconciliation still reports the real duration', () => {
+        const service = createService();
+        service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
+
+        getStatus.mockReturnValue(of(status({ running: false, events: [event('STARTED'), event('DONE', 'SUCCESS', '2026-07-10T20:21:00Z')] })));
+        service.refresh();
+
+        expect(service.entries()[0].endedAt).toBe('2026-07-10T20:21:00Z');
+    });
+
+    it('records no ending at all for a run whose ending it never saw', () => {
+        const service = createService();
+        service.track({ jobId: 'j1', exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting', mode: 'GENERATE' });
+
+        // The exercise has moved on to another job, so how and when this run stopped is simply not known.
+        getStatus.mockReturnValue(of(status({ jobId: 'j2', running: true, events: [event('STARTED')] })));
+        service.refresh();
+
+        expect(service.entries()[0].endedAt).toBeUndefined();
     });
 
     it('reports a failed run as attention once the appearance debounce elapsed', () => {

@@ -13,7 +13,7 @@ export interface TumUiCheckboxChangeEvent {
     templateUrl: './tum-ui-checkbox.component.html',
     styleUrl: './tum-ui-checkbox.component.scss',
     imports: [FaIconComponent],
-    host: { class: 'tum-ui-checkbox' },
+    host: { class: 'tum-ui-checkbox', '[attr.data-slot]': '"checkbox"' },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumUiCheckboxComponent), multi: true }],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

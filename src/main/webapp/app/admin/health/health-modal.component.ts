@@ -203,13 +203,13 @@ export class HealthModalComponent {
         return 'buildAgent' in agent || 'maxNumberOfConcurrentBuildJobs' in agent || 'runningBuildJobs' in agent;
     }
 
-    getStatusBadgeSeverity(status: string): 'success' | 'secondary' | 'warn' {
+    getStatusBadgeSeverity(status: string): 'success' | 'secondary' | 'warning' {
         switch (status) {
             case 'ACTIVE':
                 return 'success';
             case 'PAUSED':
             case 'SELF_PAUSED':
-                return 'warn';
+                return 'warning';
             default:
                 return 'secondary';
         }

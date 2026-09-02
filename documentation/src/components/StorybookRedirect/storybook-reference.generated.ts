@@ -20,12 +20,20 @@ export function storybookStoryFromHash(hash: string): string {
             return 'data-display-card--docs';
         case 'data-display-chip':
             return 'data-display-chip--docs';
+        case 'data-display-empty':
+            return 'data-display-empty--docs';
+        case 'data-display-item':
+            return 'data-display-item--docs';
         case 'data-display-native-table':
             return 'data-display-native-table--docs';
         case 'data-display-paginator':
             return 'data-display-paginator--docs';
         case 'data-display-panel':
             return 'data-display-panel--docs';
+        case 'data-display-prose':
+            return 'data-display-prose--docs';
+        case 'data-display-separator':
+            return 'data-display-separator--docs';
         case 'data-display-table':
             return 'data-display-table--docs';
         case 'data-display-tag':
@@ -38,6 +46,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'feedback-progress-bar--docs';
         case 'feedback-progress-spinner':
             return 'feedback-progress-spinner--docs';
+        case 'feedback-skeleton':
+            return 'feedback-skeleton--docs';
         case 'feedback-status-dot':
             return 'feedback-status-dot--docs';
         case 'feedback-stepper':
@@ -74,6 +84,8 @@ export function storybookStoryFromHash(hash: string): string {
             return 'overlays-popover--docs';
         case 'overlays-tooltip':
             return 'overlays-tooltip--docs';
+        case 'patterns-document-review':
+            return 'patterns-document-review--docs';
         case 'patterns-run-status':
             return 'patterns-run-status--docs';
         default:

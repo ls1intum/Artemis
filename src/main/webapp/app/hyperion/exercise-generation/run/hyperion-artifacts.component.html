@@ -1,51 +1,96 @@
 <section aria-labelledby="hyperion-artifacts-title" data-testid="hyperion-artifacts">
-    <h2 id="hyperion-artifacts-title" class="mb-1 text-lg! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.artifacts.title"></h2>
-    <p class="mb-3 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.notSavedHint"></p>
+    <!--
+        The heading takes its size from this component's own stylesheet rather than from `!` utilities. A rule on
+        `.hyperion-artifacts-title` has specificity (0,1,0) and beats both Bootstrap's unlayered `h2` and
+        `global.scss`'s `body, h1..h4 { font-weight: 400 }`, which are (0,0,1) - the same trick the prose stylesheet
+        uses, and the reason none of the typography here needs `!`.
+    -->
+    <h2 id="hyperion-artifacts-title" class="hyperion-artifacts-title mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generation.artifacts.title"></h2>
+    <p class="mt-0 mb-3 text-sm text-muted-color" [jhiTranslate]="hintKey()"></p>
 
-    <div class="flex flex-col gap-3">
-        <tum-ui-panel
-            [header]="'artemisApp.hyperion.generation.artifacts.specTitle' | artemisTranslate"
-            toggleable
-            [(collapsed)]="specCollapsed"
-            data-testid="hyperion-artifacts-spec"
-        >
-            <p class="mt-0 mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.specHint"></p>
-            @if (hasSpecDocument()) {
-                <pre class="m-0 max-h-96 overflow-y-auto overscroll-contain rounded-border bg-emphasis p-3 text-sm whitespace-pre-wrap wrap-anywhere">{{ specDocument() }}</pre>
-            } @else {
-                <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.specPending"></p>
-            }
-        </tum-ui-panel>
+    @if (retainedLoadFailed()) {
+        <!-- Above the panels, not inside one: the fetch that failed is what fills two of the three tabs. -->
+        <tum-ui-message severity="danger" class="mb-3 block" data-testid="hyperion-artifacts-load-failed">
+            <div class="flex flex-wrap items-center gap-3">
+                <span jhiTranslate="artemisApp.hyperion.generation.artifacts.loadFailed"></span>
+                <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="retryRetainedArtifacts()" data-testid="hyperion-artifacts-retry">
+                    <span jhiTranslate="artemisApp.hyperion.generation.artifacts.retryLoad"></span>
+                </tum-ui-button>
+            </div>
+        </tum-ui-message>
+    }
 
-        <tum-ui-panel
-            [header]="'artemisApp.hyperion.generation.artifacts.statementTitle' | artemisTranslate"
-            toggleable
-            [(collapsed)]="statementCollapsed"
-            data-testid="hyperion-artifacts-statement"
-        >
-            @if (retainedLoadFailed()) {
-                <tum-ui-message severity="error" class="mb-2 block" data-testid="hyperion-artifacts-statement-failed">
-                    <span jhiTranslate="artemisApp.hyperion.generation.artifacts.loadFailed"></span>
-                    <tum-ui-button class="ml-2" size="small" severity="secondary" variant="outlined" (clicked)="retryRetainedArtifacts()">
-                        <span jhiTranslate="artemisApp.hyperion.generation.artifacts.retryLoad"></span>
-                    </tum-ui-button>
-                </tum-ui-message>
-            }
-            @if (hasProblemStatement()) {
-                <pre class="m-0 max-h-96 overflow-y-auto overscroll-contain rounded-border bg-emphasis p-3 text-sm whitespace-pre-wrap wrap-anywhere">{{ problemStatement() }}</pre>
-            } @else if (!retainedLoading() && !retainedLoadFailed()) {
-                <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.statementPending"></p>
-            }
-        </tum-ui-panel>
+    <tum-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)">
+        <tum-ui-tab-list>
+            <tum-ui-tab value="statement" data-testid="hyperion-artifacts-tab-statement">
+                <span jhiTranslate="artemisApp.hyperion.generation.artifacts.statementTitle"></span>
+            </tum-ui-tab>
+            <tum-ui-tab value="spec" data-testid="hyperion-artifacts-tab-spec">
+                <span jhiTranslate="artemisApp.hyperion.generation.artifacts.specTitle"></span>
+            </tum-ui-tab>
+            <tum-ui-tab value="files" data-testid="hyperion-artifacts-tab-files">
+                <span class="flex items-baseline gap-2">
+                    <span jhiTranslate="artemisApp.hyperion.generation.artifacts.filesTitle"></span>
+                    @if (fileCount(); as count) {
+                        <span class="text-sm text-muted-color tabular-nums">{{ count }}</span>
+                    }
+                </span>
+            </tum-ui-tab>
+        </tum-ui-tab-list>
 
-        <tum-ui-panel
-            [header]="'artemisApp.hyperion.generation.artifacts.filesTitle' | artemisTranslate"
-            toggleable
-            [(collapsed)]="filesCollapsed"
-            data-testid="hyperion-artifacts-files"
-        >
-            <p class="mt-0 mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.filesHint"></p>
-            <jhi-hyperion-file-change-list [files]="files()" [running]="running()" />
-        </tum-ui-panel>
-    </div>
+        <tum-ui-tab-panels>
+            <tum-ui-tab-panel value="statement" class="block pt-3" preserveContent>
+                @if (hasProblemStatement()) {
+                    <jhi-hyperion-markdown [markdown]="problemStatement()" data-testid="hyperion-artifacts-statement" />
+                } @else if (markdownLoading()) {
+                    <ng-container [ngTemplateOutlet]="markdownPlaceholder" />
+                } @else {
+                    <jhi-hyperion-empty [titleKey]="statementEmptyTitleKey()" [descriptionKey]="statementEmptyHintKey()" data-testid="hyperion-artifacts-statement-empty" />
+                }
+            </tum-ui-tab-panel>
+
+            <tum-ui-tab-panel value="spec" class="block pt-3" preserveContent>
+                <p class="mt-0 mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.specHint"></p>
+                @if (hasSpec()) {
+                    <jhi-hyperion-markdown [markdown]="spec()" data-testid="hyperion-artifacts-spec" />
+                } @else if (markdownLoading()) {
+                    <ng-container [ngTemplateOutlet]="markdownPlaceholder" />
+                } @else {
+                    <jhi-hyperion-empty [titleKey]="specEmptyTitleKey()" [descriptionKey]="specEmptyHintKey()" data-testid="hyperion-artifacts-spec-empty" />
+                }
+            </tum-ui-tab-panel>
+
+            <tum-ui-tab-panel value="files" class="block pt-3" preserveContent>
+                @if (fileCount()) {
+                    <div class="grid gap-4 lg:grid-cols-3">
+                        <div class="min-w-0 lg:col-span-1">
+                            <jhi-hyperion-file-change-list [files]="artifacts()" [running]="running()" [selectedKey]="selectedFileKey()" (fileSelected)="selectFile($event)" />
+                        </div>
+                        <div class="min-w-0 lg:col-span-2">
+                            <jhi-hyperion-file-content
+                                [file]="selectedFile()"
+                                [state]="contentState()"
+                                [editorLink]="selectedEditorLink()"
+                                (retryRequested)="retryRetainedArtifacts()"
+                            />
+                        </div>
+                    </div>
+                } @else {
+                    <jhi-hyperion-file-change-list [files]="artifacts()" [running]="running()" [emptyTitleKey]="filesEmptyTitleKey()" [emptyDescriptionKey]="filesEmptyHintKey()" />
+                }
+            </tum-ui-tab-panel>
+        </tum-ui-tab-panels>
+    </tum-ui-tabs>
 </section>
+
+<ng-template #markdownPlaceholder>
+    <!--
+        A reserved box with static placeholders, never a shimmer: an infinite auto-starting animation running past
+        five seconds alongside other content is WCAG 2.2.2 territory, and a muted block says the same thing. The
+        placeholders are `aria-hidden`; the box carries `aria-busy` and the loading word.
+    -->
+    <div class="hyperion-markdown-placeholder" aria-busy="true" data-testid="hyperion-artifacts-loading">
+        <span class="sr-only" jhiTranslate="artemisApp.hyperion.generation.artifacts.loading"></span>
+        <tum-ui-skeleton lines="4" />
+    </div>
+</ng-template>

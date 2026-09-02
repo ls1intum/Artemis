@@ -11,6 +11,8 @@ import { TumUiPopoverComponent } from './tum-ui-popover.component';
     selector: '[tumUiPopoverTrigger]',
     host: {
         '(click)': 'toggle()',
+        '[attr.data-slot]': '"popover-trigger"',
+        '[attr.data-state]': "popover().isOpen() ? 'open' : 'closed'",
         '[attr.aria-haspopup]': "'dialog'",
         '[attr.aria-expanded]': "popover().isOpen() ? 'true' : 'false'",
     },

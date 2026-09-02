@@ -182,16 +182,33 @@ artemis:
       stale-job-scan-ms: 60000 # Deadline/stale-slot cleanup interval.
       provider-hard-failure-cooldown: PT5M # Shared admission for agent-turn, contract, and critic calls after hard quota/auth/config failures; transient rate limits do not open it.
   llm:  # Shared LLM configuration for Spring AI-based services (Hyperion, Atlas)
-    # Optional token costs (EUR per million tokens). No model prices are built in: register every model for which
-    # Artemis should estimate cost. Missing prices deliberately produce an incomplete estimate rather than a
-    # fabricated zero-cost result. Dotted keys must be bracket-quoted, e.g. "[gpt-5.4]".
-    # model-costs:
-    #   "[gpt-5.4]":
-    #     input-cost-per-million-eur: 2.30
-    #     output-cost-per-million-eur: 13.80
-    #     cached-input-cost-per-million-eur: 0.23
+    # Optional token costs (EUR per million tokens). Register every model for which Artemis should estimate cost.
+    # Missing prices deliberately produce an incomplete estimate rather than a fabricated zero-cost result.
+    # Keys containing a dot, a slash or an uppercase letter must be bracket-quoted so Spring keeps them verbatim,
+    # e.g. "[gpt-5.4]" or "[Qwen/Qwen3.8-27B]". A bracket-quoted key is matched against the model identifier the
+    # provider reports, first exactly and then stripped to its alphanumeric characters (LLMTokenUsageService).
+    # Note that the environment-variable form (ARTEMIS_LLM_MODELCOSTS_<KEY>_...) lower-cases the key, so it can
+    # only price a model whose identifier is itself lower-case; a mixed-case identifier has to be configured here.
     # A deployment whose provider contract is explicitly free should configure all three prices as 0.
     # Missing prices remain distinguishable from a known zero price and make the estimate incomplete.
+    model-costs:
+      # The model the TUM Hyperion deployment serves through the donated Logos endpoint (/models reports exactly
+      # this identifier). Be clear about what this figure is and is not:
+      #   * It is OpenRouter's public reference catalogue price for Qwen3.8 27B — USD 0.32 input, USD 2.50 output,
+      #     USD 0.032 cache-read per million tokens (https://openrouter.ai/qwen/qwen3.8-27b, read 2026-09-02).
+      #   * It is NOT an invoice. The endpoint is self-hosted and bills Artemis nothing. The figure exists so a run
+      #     can be reported in the units the rest of the world prices this work in, and so the spend surface reports
+      #     a real number instead of "Not priced". Read it as "what this run would have cost at catalogue rates".
+      # Converted at EUR 1 = USD 1.1578, the rate recorded when these three figures were written (2026-09-02). The
+      # rate is pinned here because Artemis performs no currency conversion of its own — it stores and reports
+      # whatever EUR figure it is given. Re-derive all three from the ECB daily euro foreign exchange reference
+      # rate (https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml) whenever this price is revisited; a
+      # drifting rate silently changes what the spend surface claims.
+      #   0.32 / 1.1578 = 0.2764   2.50 / 1.1578 = 2.1593   0.032 / 1.1578 = 0.0276
+      "[Qwen/Qwen3.8-27B]":
+        input-cost-per-million-eur: 0.2764
+        output-cost-per-million-eur: 2.1593
+        cached-input-cost-per-million-eur: 0.0276
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini

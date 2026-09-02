@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -19,6 +20,12 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.boot.context.properties.bind.Binder;
+import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
+import org.springframework.boot.env.YamlPropertySourceLoader;
+import org.springframework.core.env.MutablePropertySources;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
@@ -85,6 +92,36 @@ class LLMTokenUsageServiceTest {
 
         assertThat(request.costPerMillionInputToken()).isEqualTo(2.30f);
         assertThat(request.costPerMillionOutputToken()).isEqualTo(13.80f);
+    }
+
+    @Test
+    void buildLLMRequest_withShippedConfiguration_pricesTheDeployedModel() throws IOException {
+        // End-to-end over the file that actually ships: the bracket-quoted key in application-artemis.yml has to
+        // resolve for the identifier the Logos endpoint reports verbatim, slash and capitals included. Without this
+        // the spend surface reports "Not priced" and nobody finds out until a run has already been paid for.
+        LLMTokenUsageService service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, bindShippedConfiguration());
+
+        LLMRequest request = service.buildLLMRequest("Qwen/Qwen3.8-27B", 1_000_000, 1_000_000, "HYPERION", "req-1", 500_000L);
+
+        assertThat(request.costPerMillionInputToken()).isEqualTo(0.2764f);
+        assertThat(request.costPerMillionOutputToken()).isEqualTo(2.1593f);
+        assertThat(request.costPerMillionCachedInputToken()).isEqualTo(0.0276f);
+        assertThat(request.costEstimateComplete()).isTrue();
+    }
+
+    @Test
+    void buildLLMRequest_withShippedConfiguration_doesNotPriceALowerCasedDeployedModel() throws IOException {
+        // Guards the trap in the environment-variable path: ARTEMIS_LLM_MODELCOSTS_QWENQWEN3827B_... binds the key
+        // "qwenqwen3827b", while stripToAlphanumeric leaves the reported identifier as "QwenQwen3827B". The two never
+        // meet, which is why the price is configured in YAML rather than as an environment variable.
+        LLMModelCostConfiguration lowerCased = new LLMModelCostConfiguration();
+        LLMModelCostConfiguration.ModelCostProperties cost = new LLMModelCostConfiguration.ModelCostProperties();
+        cost.setInputCostPerMillionEur(0.2764f);
+        cost.setOutputCostPerMillionEur(2.1593f);
+        lowerCased.setModelCosts(Map.of("qwenqwen3827b", cost));
+        LLMTokenUsageService service = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, lowerCased);
+
+        assertThat(service.buildLLMRequest("Qwen/Qwen3.8-27B", 11, 7, "HYPERION").costEstimateComplete()).isFalse();
     }
 
     @Test
@@ -239,6 +276,21 @@ class LLMTokenUsageServiceTest {
         when(usage.getCompletionTokens()).thenReturn(completionTokens);
         when(usage.getCacheReadInputTokens()).thenReturn(cachedInputTokens);
         return response;
+    }
+
+    /**
+     * Binds {@code artemis.llm} out of the shipped configuration file exactly as Spring Boot does at startup.
+     * <p>
+     * Read from the source tree rather than from the classpath: {@code src/test/resources} carries its own
+     * {@code config/application-artemis.yml}, which shadows the production one for every test, so a
+     * {@code ClassPathResource} here would silently price against the test fixture and pass while the deployment is unpriced.
+     */
+    private static LLMModelCostConfiguration bindShippedConfiguration() throws IOException {
+        Resource resource = new FileSystemResource("src/main/resources/config/application-artemis.yml");
+        assertThat(resource.exists()).as("shipped Artemis configuration must be readable from the source tree").isTrue();
+        MutablePropertySources propertySources = new MutablePropertySources();
+        new YamlPropertySourceLoader().load("application-artemis", resource).forEach(propertySources::addLast);
+        return new Binder(ConfigurationPropertySources.from(propertySources)).bind("artemis.llm", LLMModelCostConfiguration.class).orElseGet(LLMModelCostConfiguration::new);
     }
 
     private static LLMModelCostConfiguration createCostConfiguration() {

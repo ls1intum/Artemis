@@ -54,7 +54,11 @@ describe('ReviewAdaptExerciseDialogComponent', () => {
         expect(items[1]).toContain('sorted-second');
         expect(items[2]).toContain('sorted-last');
         expect(list.querySelectorAll('tum-ui-tag')).toHaveLength(3);
-        expect(fixture.nativeElement.querySelector('tum-ui-message[severity="warn"][role="status"]')).not.toBeNull();
+        // The notice is present from the moment the dialog opens, so it is read in document order rather than
+        // announced: `tum-ui-message` is only a live region when asked, and this one deliberately does not ask.
+        const notice = fixture.nativeElement.querySelector('tum-ui-message[data-severity="warning"]');
+        expect(notice).not.toBeNull();
+        expect(notice.getAttribute('role')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('adaptExercise.persistenceNotice');
     });
 

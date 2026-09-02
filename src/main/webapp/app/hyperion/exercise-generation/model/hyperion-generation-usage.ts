@@ -52,6 +52,58 @@ export interface HyperionSpendView {
     cost: HyperionSpendCost;
 }
 
+/**
+ * The one figure a spend surface leads with, in the only two units that can ever be real.
+ *
+ * Money is the hero when money is known. When it is not - our own deployment configures no price for the model these
+ * runs use - the hero is the token figure that *was* measured, plainly labelled, and the missing currency amount is
+ * demoted to a sentence. It is never a hero-sized word, and never a zero: a surface whose largest element is the word
+ * "Not priced" spends its most prominent position admitting it has nothing to show.
+ *
+ * `lowerBound` is the "at least" prefix. It is set from the accounting state, because an account that could not be
+ * closed makes every figure derived from it a floor - and "at least nothing" is still a claim of free, which is why a
+ * zero can never carry it (a zero amount is reported as `notPriced` before it ever reaches here).
+ */
+export type HyperionSpendHero =
+    | { kind: 'money'; eur: number; lowerBound: boolean }
+    /** `billable` is charged against the run's ceiling with cached input already discounted; `total` is input + output. */
+    | { kind: 'tokens'; unit: 'billable' | 'total'; tokens: number; lowerBound: boolean };
+
+/** Where a run's share of its token ceiling stops being background information and starts being a warning. */
+export const BUDGET_NEAR_PERCENT = 75;
+/** A run is only "over budget" once it is past the ceiling. Calling 90% "over" would be the colour lying in words. */
+export const BUDGET_OVER_PERCENT = 100;
+
+/** How a share of the ceiling reads in words, so the meter's colour is never the only thing that crossed a threshold. */
+export type HyperionBudgetLevel = 'within' | 'near' | 'over';
+
+export function budgetLevel(percent: number): HyperionBudgetLevel {
+    return percent >= BUDGET_OVER_PERCENT ? 'over' : percent >= BUDGET_NEAR_PERCENT ? 'near' : 'within';
+}
+
+/**
+ * The hero figure for a spend view: whichever unit is actually measured.
+ *
+ * A partly-priced total of zero is already `notPriced` by the time it gets here, so the tokens branch covers both "no
+ * price is configured at all" and "nothing that ran had one".
+ */
+export function spendHero(view: HyperionSpendView): HyperionSpendHero {
+    // Only a permanently unclosable account makes a figure a floor; a running total is provisional, which the
+    // accounting tag says in its own words rather than by prefixing every number with "at least".
+    const lowerBound = view.accounting === 'INCOMPLETE';
+    if (view.cost.kind === 'amount') {
+        return { kind: 'money', eur: view.cost.eur, lowerBound };
+    }
+    if (view.cost.kind === 'lowerBound') {
+        return { kind: 'money', eur: view.cost.eur, lowerBound: true };
+    }
+    // The sealed total carries no billable figure - cached input is discounted at a weight that is not part of the
+    // terminal account - so a finished unpriced run leads with the two counts it does have, under a different word.
+    return view.billableTokens !== undefined
+        ? { kind: 'tokens', unit: 'billable', tokens: view.billableTokens, lowerBound }
+        : { kind: 'tokens', unit: 'total', tokens: view.inputTokens + view.outputTokens, lowerBound };
+}
+
 export interface HyperionSpendInput {
     /** The newest live snapshot the run streamed, or `undefined` when none has arrived or survived the transcript bound. */
     liveUsage?: ExerciseGenerationLiveUsage;

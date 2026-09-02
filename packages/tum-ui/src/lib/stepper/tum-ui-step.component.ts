@@ -41,6 +41,7 @@ const STEP_STATE_KEY: Record<TumUiStepState, TumUiTranslationKey> = {
     styleUrl: './tum-ui-step.component.scss',
     imports: [FaIconComponent],
     host: {
+        '[attr.data-slot]': '"step"',
         role: 'listitem',
         class: 'tum-ui-step',
         '[attr.data-state]': 'state()',

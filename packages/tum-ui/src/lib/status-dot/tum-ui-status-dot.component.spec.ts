@@ -48,7 +48,7 @@ describe('TumUiStatusDotComponent', () => {
     });
 
     it('reports every state it supports for styling and inspection', () => {
-        for (const state of ['queued', 'running', 'success', 'warning', 'error', 'neutral', 'unknown'] as const) {
+        for (const state of ['queued', 'running', 'success', 'warning', 'danger', 'neutral', 'unknown'] as const) {
             withState(state);
             expect(host.getAttribute('data-state')).toBe(state);
         }
@@ -59,7 +59,7 @@ describe('TumUiStatusDotComponent', () => {
     // `unknown` a dashed ring, and only `queued` and `running` animating — is asserted in a real browser by the
     // `StateShapes` play function of the status dot story.
     it('keeps one indicator element whatever the state is', () => {
-        for (const state of ['queued', 'running', 'success', 'warning', 'error', 'neutral', 'unknown'] as const) {
+        for (const state of ['queued', 'running', 'success', 'warning', 'danger', 'neutral', 'unknown'] as const) {
             withState(state);
             expect(fixture.debugElement.queryAll(By.css('.tum-ui-status-dot-indicator'))).toHaveLength(1);
             expect(dot().getAttribute('aria-hidden')).toBe('true');

@@ -4,6 +4,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
     selector: 'tum-ui-button-group',
     template: '<ng-content />',
     host: {
+        '[attr.data-slot]': '"button-group"',
         role: 'group',
         class: 'tum-ui-button-group',
     },

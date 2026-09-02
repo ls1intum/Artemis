@@ -8,19 +8,16 @@
     size="medium"
 >
     <div class="flex flex-col gap-5">
-        <div>
-            <p id="hyperion-brief-intro" class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.intro"></p>
-            <p class="mt-2 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.consequences"></p>
-        </div>
+        <p id="hyperion-brief-intro" class="text-muted-color m-0" jhiTranslate="artemisApp.hyperion.generation.brief.intro"></p>
 
         @if (setupFailed()) {
-            <tum-ui-message severity="error" class="block" data-testid="hyperion-brief-setup-failed">
+            <tum-ui-message severity="danger" live class="block" data-testid="hyperion-brief-setup-failed">
                 <span jhiTranslate="artemisApp.hyperion.generation.brief.setupFailed"></span>
             </tum-ui-message>
         }
 
         @if (startFailed()) {
-            <tum-ui-message severity="error" class="block" data-testid="hyperion-brief-start-failed">
+            <tum-ui-message severity="danger" live class="block" data-testid="hyperion-brief-start-failed">
                 <div class="flex flex-col gap-2">
                     <span jhiTranslate="artemisApp.hyperion.generation.brief.startFailed"></span>
                     @if (capacityUnavailable()) {
@@ -49,7 +46,7 @@
                         </tum-ui-button>
                     </div>
                     @if (deleteFailed()) {
-                        <span role="alert" jhiTranslate="artemisApp.hyperion.generation.brief.deleteFailed"></span>
+                        <span jhiTranslate="artemisApp.hyperion.generation.brief.deleteFailed"></span>
                     }
                 </div>
             </tum-ui-message>
@@ -67,15 +64,14 @@
                 [ngModel]="brief()"
                 (ngModelChange)="brief.set($event)"
                 (blur)="briefTouched.set(true)"
-                [tumUiInputInvalid]="showBriefError()"
+                [invalid]="showBriefError()"
                 [attr.aria-describedby]="showBriefError() ? 'hyperion-brief-hint hyperion-brief-error' : 'hyperion-brief-hint'"
-                [attr.aria-invalid]="showBriefError() ? true : null"
                 data-testid="hyperion-brief-input"
             ></textarea>
             <div class="mt-2 flex items-start justify-between gap-4 text-sm">
                 <div class="min-w-0">
                     @if (showBriefError()) {
-                        <p id="hyperion-brief-error" class="m-0 text-state-danger" role="alert" data-testid="hyperion-brief-error">
+                        <p id="hyperion-brief-error" class="m-0 text-state-danger" data-testid="hyperion-brief-error">
                             {{ 'artemisApp.hyperion.generation.brief.error' | artemisTranslate: { min: minimumBriefLength } }}
                         </p>
                     }
@@ -99,12 +95,7 @@
                     <span [jhiTranslate]="hasSuggestion() ? 'artemisApp.hyperion.generation.brief.suggestAgain' : 'artemisApp.hyperion.generation.brief.suggest'"></span>
                 </tum-ui-button>
                 @if (suggesting()) {
-                    <span
-                        class="text-sm text-muted-color"
-                        aria-live="polite"
-                        jhiTranslate="artemisApp.hyperion.generation.brief.suggestRunning"
-                        data-testid="hyperion-brief-suggest-running"
-                    ></span>
+                    <span class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.suggestRunning" data-testid="hyperion-brief-suggest-running"></span>
                 } @else if (briefInvalid()) {
                     <span class="text-sm text-muted-color" data-testid="hyperion-brief-suggest-blocked">
                         {{ 'artemisApp.hyperion.generation.brief.suggestNeedsBrief' | artemisTranslate: { min: minimumBriefLength } }}
@@ -115,14 +106,30 @@
             </div>
 
             @if (suggestionFailed()) {
-                <tum-ui-message severity="warn" class="mt-3 block" data-testid="hyperion-brief-suggest-failed">
+                <tum-ui-message severity="warning" class="mt-3 block" data-testid="hyperion-brief-suggest-failed">
                     <span jhiTranslate="artemisApp.hyperion.generation.brief.suggestFailed"></span>
                 </tum-ui-message>
             }
+
+            <!--
+                The dialog's one live region, and the reason it is a permanent empty element rather than an
+                `aria-live` attribute on the status line above: a live region only announces a change made *after* it
+                exists, so a region created together with its own text — which is what an `@if` around it produces —
+                announces nothing on most screen readers. Suggesting is the one thing in this dialog that changes
+                five fields at once without moving focus, so its start, its result and its failure are all said here,
+                once each. The failure message above stays silent for the same reason it stays visible: it is the
+                same event, and one event is one announcement. Failures that need to interrupt are `role="alert"`
+                instead, and there is at most one of those on screen at a time.
+            -->
+            <p class="sr-only m-0" role="status" data-testid="hyperion-brief-suggest-announcement">
+                @if (suggestionAnnouncement(); as announcement) {
+                    <span [jhiTranslate]="announcement"></span>
+                }
+            </p>
         </section>
 
-        <section class="border-t pt-4" aria-labelledby="hyperion-metadata-title" data-testid="hyperion-metadata-section">
-            <h3 id="hyperion-metadata-title" class="mt-0 mb-1 text-base! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.brief.metadataTitle"></h3>
+        <section class="hyperion-brief-rule pt-4" aria-labelledby="hyperion-metadata-title" data-testid="hyperion-metadata-section">
+            <h3 id="hyperion-metadata-title" class="hyperion-brief-section-title mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generation.brief.metadataTitle"></h3>
             <p class="mt-0 mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.metadataHint"></p>
 
             <div class="flex flex-col gap-4">
@@ -143,20 +150,18 @@
                         [ngModel]="title()"
                         (ngModelChange)="editTitle($event)"
                         (blur)="titleTouched.set(true)"
-                        [tumUiInputInvalid]="showTitleError() || titleTaken()"
+                        [invalid]="showTitleError() || titleTaken()"
                         [attr.aria-describedby]="showTitleError() || titleTaken() ? 'hyperion-title-hint hyperion-title-error' : 'hyperion-title-hint'"
-                        [attr.aria-invalid]="showTitleError() || titleTaken() ? true : null"
                         data-testid="hyperion-title-input"
                     />
                     @if (showTitleError()) {
-                        <p id="hyperion-title-error" class="mt-2 mb-0 text-sm text-state-danger" role="alert" data-testid="hyperion-title-error">
+                        <p id="hyperion-title-error" class="mt-2 mb-0 text-sm text-state-danger" data-testid="hyperion-title-error">
                             {{ 'artemisApp.hyperion.generation.brief.titleError' | artemisTranslate: { min: minimumTitleLength, max: maximumTitleLength } }}
                         </p>
                     } @else if (titleTaken()) {
                         <p
                             id="hyperion-title-error"
                             class="mt-2 mb-0 text-sm text-state-danger"
-                            role="alert"
                             jhiTranslate="artemisApp.hyperion.generation.brief.titleTaken"
                             data-testid="hyperion-title-taken"
                         ></p>
@@ -184,20 +189,18 @@
                             [ngModel]="shortName()"
                             (ngModelChange)="editShortName($event)"
                             (blur)="shortNameTouched.set(true)"
-                            [tumUiInputInvalid]="showShortNameError() || shortNameTaken()"
+                            [invalid]="showShortNameError() || shortNameTaken()"
                             [attr.aria-describedby]="showShortNameError() || shortNameTaken() ? 'hyperion-short-name-hint hyperion-short-name-error' : 'hyperion-short-name-hint'"
-                            [attr.aria-invalid]="showShortNameError() || shortNameTaken() ? true : null"
                             data-testid="hyperion-short-name-input"
                         />
                         @if (showShortNameError()) {
-                            <p id="hyperion-short-name-error" class="mt-2 mb-0 text-sm text-state-danger" role="alert" data-testid="hyperion-short-name-error">
+                            <p id="hyperion-short-name-error" class="mt-2 mb-0 text-sm text-state-danger" data-testid="hyperion-short-name-error">
                                 {{ 'artemisApp.hyperion.generation.brief.shortNameError' | artemisTranslate: { min: minimumShortNameLength, max: maximumShortNameLength } }}
                             </p>
                         } @else if (shortNameTaken()) {
                             <p
                                 id="hyperion-short-name-error"
                                 class="mt-2 mb-0 text-sm text-state-danger"
-                                role="alert"
                                 jhiTranslate="artemisApp.hyperion.generation.brief.shortNameTaken"
                                 data-testid="hyperion-short-name-taken"
                             ></p>
@@ -224,13 +227,12 @@
                             [ngModel]="packageName()"
                             (ngModelChange)="editPackageName($event)"
                             (blur)="packageNameTouched.set(true)"
-                            [tumUiInputInvalid]="showPackageNameError()"
+                            [invalid]="showPackageNameError()"
                             [attr.aria-describedby]="showPackageNameError() ? 'hyperion-package-name-hint hyperion-package-name-error' : 'hyperion-package-name-hint'"
-                            [attr.aria-invalid]="showPackageNameError() ? true : null"
                             data-testid="hyperion-package-name-input"
                         />
                         @if (showPackageNameError()) {
-                            <p id="hyperion-package-name-error" class="mt-2 mb-0 text-sm text-state-danger" role="alert" data-testid="hyperion-package-name-error">
+                            <p id="hyperion-package-name-error" class="mt-2 mb-0 text-sm text-state-danger" data-testid="hyperion-package-name-error">
                                 {{ 'artemisApp.hyperion.generation.brief.packageNameError' | artemisTranslate: { max: maximumPackageNameLength } }}
                             </p>
                         }
@@ -259,7 +261,7 @@
                             data-testid="hyperion-max-points-input"
                         />
                         @if (showMaxPointsError()) {
-                            <p id="hyperion-max-points-error" class="mt-2 mb-0 text-sm text-state-danger" role="alert" data-testid="hyperion-max-points-error">
+                            <p id="hyperion-max-points-error" class="mt-2 mb-0 text-sm text-state-danger" data-testid="hyperion-max-points-error">
                                 {{ 'artemisApp.hyperion.generation.brief.maxPointsError' | artemisTranslate: { min: minimumMaxPoints, max: maximumMaxPoints } }}
                             </p>
                         }
@@ -290,8 +292,8 @@
             </div>
         </section>
 
-        <section class="border-t pt-4" aria-labelledby="hyperion-brief-settings-title">
-            <h3 id="hyperion-brief-settings-title" class="mt-0 mb-1 text-base! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.brief.settingsTitle"></h3>
+        <section class="hyperion-brief-rule pt-4" aria-labelledby="hyperion-brief-settings-title">
+            <h3 id="hyperion-brief-settings-title" class="hyperion-brief-section-title mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generation.brief.settingsTitle"></h3>
             <p class="mt-0 mb-4 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.settingsHint"></p>
             <div id="hyperion-brief-build-tool-label" class="mb-2 font-medium" jhiTranslate="artemisApp.hyperion.generation.brief.buildTool"></div>
             <tum-ui-select-button
@@ -312,24 +314,31 @@
             <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.exampleText"></p>
         </tum-ui-panel>
 
-        @if (generateBlockedReason(); as blockedReason) {
-            <p class="m-0 text-sm text-muted-color" aria-live="polite" [jhiTranslate]="blockedReason" data-testid="hyperion-brief-generate-blocked"></p>
-        }
-
-        <p class="m-0 text-xs text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.aiNotice"></p>
+        <!--
+            The two sentences that change what the instructor does — this creates a real exercise in the course, and
+            a model wrote everything in it — are body size, in the default foreground, and adjacent to the button
+            they qualify. They used to be `text-sm` at the top and `text-xs` at the bottom of a 340-line dialog,
+            which is the opposite of what consequence copy is for. It is one message and not a live region: it is
+            standing information about what Generate does, present from the moment the dialog opens, so it has
+            nothing to announce.
+        -->
+        <tum-ui-message severity="info" class="block" data-testid="hyperion-brief-commitment">
+            <div class="flex flex-col gap-2">
+                <span jhiTranslate="artemisApp.hyperion.generation.brief.consequences" [translateValues]="typicalBandParams"></span>
+                <span jhiTranslate="artemisApp.hyperion.generation.brief.aiNotice"></span>
+                @if (generateBlockedReason(); as blockedReason) {
+                    <span class="text-sm" [jhiTranslate]="blockedReason" data-testid="hyperion-brief-generate-blocked"></span>
+                }
+            </div>
+        </tum-ui-message>
     </div>
 
-    <!--
-        Annotates a field whose value is still Hyperion's, and disappears the moment the instructor edits it. Deliberately
-        quiet: it appears beside five labels at once, and a badge as loud as the label it annotates competes with the form
-        rather than describing it.
-    -->
+    <!-- Annotates a field whose value is still Hyperion's, and disappears the moment the instructor edits it. It appears
+         beside five labels at once, which is what `quiet` is for. -->
     <ng-template #suggestedMark let-testid="testid">
-        <span
-            class="rounded-border border px-1.5 py-0.5 text-xs font-normal text-muted-color"
-            [attr.data-testid]="testid"
-            jhiTranslate="artemisApp.hyperion.generation.brief.metadataSuggested"
-        ></span>
+        <tum-ui-tag variant="quiet" size="small" [attr.data-testid]="testid">
+            <span jhiTranslate="artemisApp.hyperion.generation.brief.metadataSuggested"></span>
+        </tum-ui-tag>
     </ng-template>
 
     <ng-template #footer>

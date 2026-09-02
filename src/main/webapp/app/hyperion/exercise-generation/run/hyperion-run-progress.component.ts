@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { TumUiStepComponent, TumUiStepState, TumUiStepperComponent } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -50,6 +50,7 @@ interface StageTiming {
 @Component({
     selector: 'jhi-hyperion-run-progress',
     templateUrl: './hyperion-run-progress.component.html',
+    styleUrl: './hyperion-run-progress.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [ArtemisTranslatePipe, HyperionRunActivityComponent, TumUiStepComponent, TumUiStepperComponent],
 })
@@ -62,6 +63,15 @@ export class HyperionRunProgressComponent {
     readonly activity = input<HyperionActivityView | undefined>();
     /** `compact` drops the recent-activity list so the ladder fits the code editor's bottom panel. */
     readonly density = input<'full' | 'compact'>('full');
+    /** Forwarded to the activity area, which promotes Cancel into the stage row once the run stalls. */
+    readonly cancelAvailable = input(false);
+    readonly cancelPending = input(false);
+    /** Forwarded so the stall wording only promises the run is "still connected" while that is true. */
+    readonly connected = input(true);
+
+    readonly cancelRequested = output<void>();
+
+    protected readonly compact = computed(() => this.density() === 'compact');
 
     private readonly now = serverTimeSignal();
 

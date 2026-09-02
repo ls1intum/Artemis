@@ -8,8 +8,12 @@
         }
     </p>
 
-    <!-- No aria-live here: tum-ui-message binds [attr.role], which resolves to status for warn, and role="status" already implies aria-live="polite". -->
-    <tum-ui-message severity="warn">
+    <!--
+        Not a live region. The notice is part of the dialog from the moment it opens, so it is read in document order
+        by the screen reader that just entered the dialog; `live` would only make it compete for the announcement that
+        the dialog itself deserves, and a live region does not fire for content that was already there.
+    -->
+    <tum-ui-message severity="warning">
         <span jhiTranslate="artemisApp.review.adaptExercise.persistenceNotice"></span>
     </tum-ui-message>
 

@@ -56,6 +56,7 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
+const OPEN_GENERATION_FILE_STATE = 'openGenerationFilePath';
 
 type ComponentInternalsOverrides = {
     codeEditorContainer: Signal<any>;
@@ -1463,6 +1464,50 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
 
         expect(generationService.generate).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE', prompt: 'Original strategy exercise brief' });
         window.history.replaceState({}, '');
+    });
+
+    describe("the artifact browser's Open in code editor", () => {
+        /** Rebuilds the component as if it had just been activated by a navigation carrying `state`. */
+        function activateWith(state: Record<string, unknown>): void {
+            fixture.destroy();
+            vi.spyOn(TestBed.inject(Router), 'currentNavigation').mockReturnValue({ extras: { state } } as unknown as ReturnType<Router['currentNavigation']>);
+            fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+            comp = fixture.componentInstance;
+            comp.exercise.set(createMockExercise({ isAtLeastEditor: true }));
+            setCodeEditorContainer(comp, createDefaultContainerStub());
+            fixture.detectChanges();
+        }
+
+        it('opens the file the instructor was reading rather than the top of the repository', () => {
+            // The route already selected the repository, so the path is all that has to survive the navigation.
+            activateWith({ openGenerationActivity: true, [OPEN_GENERATION_FILE_STATE]: 'src/de/tum/Loan.java' });
+
+            expect(comp.fileToJumpOn).toBe('src/de/tum/Loan.java');
+
+            comp.onEditorLoaded();
+
+            expect((comp as any).codeEditorContainer().selectedFile).toBe('src/de/tum/Loan.java');
+        });
+
+        it('opens no file when the navigation named none, so an ordinary visit is untouched', () => {
+            activateWith({ openGenerationActivity: true });
+
+            expect(comp.fileToJumpOn).toBeUndefined();
+
+            comp.onEditorLoaded();
+
+            expect((comp as any).codeEditorContainer().selectedFile).toBeUndefined();
+        });
+
+        it.each([42, '', null, {}])('ignores a file path of %j rather than trusting the untyped state bag', (filePath) => {
+            activateWith({ openGenerationActivity: true, [OPEN_GENERATION_FILE_STATE]: filePath });
+
+            expect(comp.fileToJumpOn).toBeUndefined();
+        });
+
+        afterEach(() => {
+            window.history.replaceState({}, '');
+        });
     });
 
     it.each(['', '   ', 'x'.repeat(39), `  ${'x'.repeat(39)}  `])('blocks manual generation when the meaningful specification is %j', (problemStatement) => {

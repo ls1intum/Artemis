@@ -1,29 +1,62 @@
 @if (empty()) {
-    <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.filesPending" data-testid="hyperion-files-empty"></p>
+    <jhi-hyperion-empty [titleKey]="emptyTitleKey()" [descriptionKey]="emptyDescriptionKey()" [size]="emptySize()" data-testid="hyperion-files-empty" />
 } @else {
     <div class="flex flex-col gap-4" data-testid="hyperion-file-change-list">
         @for (group of groups(); track group.repo) {
-            <section [attr.data-repo]="group.repo">
-                <h4 class="mb-2 flex items-baseline gap-2 text-sm! font-semibold!">
-                    <span [jhiTranslate]="group.headingKey"></span>
-                    <span class="text-xs font-normal text-muted-color tabular-nums">{{ group.count }}</span>
-                </h4>
-                <ul class="m-0 flex list-none flex-col gap-1 p-0">
+            <div class="min-w-0" [attr.data-repo]="group.repo">
+                <!--
+                    The repository name is a label rather than a heading: this list renders inside a tab panel on the
+                    run page and inside a docked panel in the editor, and a heading correct in one of them would be at
+                    the wrong level in the other. The list is named through `aria-labelledby` instead, which is what a
+                    screen reader needs from a group either way.
+                -->
+                <p class="m-0 mb-1 flex items-baseline gap-2 text-sm font-semibold" [id]="group.labelId">
+                    <span [jhiTranslate]="group.labelKey"></span>
+                    <span class="text-sm font-normal text-muted-color tabular-nums">{{ group.count }}</span>
+                </p>
+                <ul class="m-0 flex list-none flex-col p-0" role="list" [attr.aria-labelledby]="group.labelId">
                     @for (row of group.rows; track row.key) {
-                        <li class="flex min-w-0 items-center gap-2 text-sm">
-                            <!-- The directory may be clipped at any width; the file name never is. -->
-                            <span class="flex min-w-0 flex-auto items-baseline" [title]="row.fullPath">
-                                <span class="min-w-0 truncate text-muted-color">{{ row.directory }}</span>
-                                <span class="shrink-0 font-medium">{{ row.name }}</span>
-                            </span>
-                            @if (row.writingNow) {
-                                <span class="shrink-0 text-xs text-muted-color" jhiTranslate="artemisApp.hyperion.generation.artifacts.writingNow"></span>
+                        <li class="min-w-0">
+                            @if (row.actionable) {
+                                <!--
+                                    The accessible name repeats the repository, because two repositories routinely
+                                    hold the same path and a screen reader listing the buttons on this surface would
+                                    otherwise read "src/Main.java" twice with nothing to tell them apart.
+                                -->
+                                <button
+                                    type="button"
+                                    [class]="rowClass()"
+                                    [attr.data-recent]="row.recencyLabelKey ? '' : null"
+                                    [attr.aria-current]="row.selected ? 'true' : null"
+                                    [attr.aria-label]="(group.labelKey | artemisTranslate) + ': ' + row.path"
+                                    (click)="select(row)"
+                                    data-testid="hyperion-file-row"
+                                >
+                                    <ng-container [ngTemplateOutlet]="rowContent" [ngTemplateOutletContext]="{ $implicit: row }" />
+                                </button>
+                            } @else {
+                                <div [class]="staticRowClass()" [attr.data-recent]="row.recencyLabelKey ? '' : null" data-testid="hyperion-file-row">
+                                    <ng-container [ngTemplateOutlet]="rowContent" [ngTemplateOutletContext]="{ $implicit: row }" />
+                                </div>
                             }
-                            <tum-ui-tag class="shrink-0" severity="secondary" [value]="row.actionLabelKey | artemisTranslate" />
                         </li>
                     }
                 </ul>
-            </section>
+            </div>
         }
     </div>
 }
+
+<ng-template #rowContent let-row>
+    <!-- The directory may be clipped at any width; the file name never is, because the name is the identity. -->
+    <span class="flex min-w-0 flex-auto items-baseline">
+        <span class="min-w-0 truncate text-muted-color">{{ row.directory }}</span>
+        <span class="shrink-0 font-medium">{{ row.name }}</span>
+    </span>
+    @if (row.recencyLabelKey) {
+        <span class="shrink-0 text-sm text-muted-color" [jhiTranslate]="row.recencyLabelKey"></span>
+    }
+    @if (row.actionLabelKey) {
+        <tum-ui-tag class="shrink-0" severity="secondary" [value]="row.actionLabelKey | artemisTranslate" />
+    }
+</ng-template>

@@ -27,7 +27,7 @@
         <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loading"></span>
     </div>
 } @else if (loadFailed()) {
-    <tum-ui-message severity="error" class="mb-3 block">
+    <tum-ui-message severity="danger" class="mb-3 block">
         <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
         <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="load()">
             <fa-icon [icon]="faRotate" />
@@ -35,14 +35,14 @@
         </tum-ui-button>
     </tum-ui-message>
 } @else if (notFound()) {
-    <tum-ui-message severity="warn" class="mb-3 block">
+    <tum-ui-message severity="warning" class="mb-3 block">
         <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.notFound"></span>
     </tum-ui-message>
 }
 
 @if (job(); as generation) {
     @if (backgroundRefreshFailed()) {
-        <tum-ui-message severity="warn" class="mb-3 block">
+        <tum-ui-message severity="warning" class="mb-3 block">
             <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.refreshFailed"></span>
             <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="load(false)">
                 <span jhiTranslate="metrics.refresh.button"></span>
@@ -50,7 +50,7 @@
         </tum-ui-message>
     }
     @if (cancelFailed()) {
-        <tum-ui-message severity="error" class="mb-3 block">
+        <tum-ui-message severity="danger" class="mb-3 block">
             <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.cancelFailed"></span>
         </tum-ui-message>
     }

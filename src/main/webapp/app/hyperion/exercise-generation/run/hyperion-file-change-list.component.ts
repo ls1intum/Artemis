@@ -1,76 +1,111 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { TumUiTagComponent } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { REPO_ORDER, displayFileChangePath, fileChangeKey, newestFileChange } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
-import { ExerciseGenerationFileChange, HyperionFileChangeRepo } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { HyperionEmptyComponent } from 'app/hyperion/exercise-generation/artifacts/hyperion-empty.component';
+import { HyperionArtifactFile, artifactRepoGroups } from 'app/hyperion/exercise-generation/artifacts/hyperion-artifact-file';
+import { HyperionFileChangeRepo } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
-/** One changed file with everything the template needs already resolved, so no binding calls a method. */
-interface FileChangeRow {
-    key: string;
-    repo: HyperionFileChangeRepo;
-    /** Everything up to and including the last separator; this is the part CSS may truncate. */
-    directory: string;
-    /** The file name, which stays readable at any width. */
-    name: string;
-    fullPath: string;
-    actionLabelKey: string;
-    /** Marks the file the agent is writing right now; only ever set on one row, and only while running. */
-    writingNow: boolean;
+let nextListId = 0;
+
+/** One row with every binding resolved, so no binding in the template calls a method. */
+interface FileRow {
+    readonly key: string;
+    readonly directory: string;
+    readonly name: string;
+    readonly path: string;
+    readonly actionLabelKey?: string;
+    /** The most recent write of the whole run: "writing now" while it runs, "written last" once it has stopped. */
+    readonly recencyLabelKey?: string;
+    readonly selected: boolean;
+    readonly actionable: boolean;
+    readonly file: HyperionArtifactFile;
 }
 
 interface RepoGroup {
-    repo: HyperionFileChangeRepo;
-    headingKey: string;
-    count: number;
-    rows: FileChangeRow[];
+    readonly repo: HyperionFileChangeRepo;
+    readonly labelKey: string;
+    readonly labelId: string;
+    readonly count: number;
+    readonly rows: readonly FileRow[];
 }
 
 /**
  * The files a generation run has written, grouped by repository.
  *
- * Purely presentational: it is handed the merged file changes and reports on them, so the run page and any other
- * surface show the same list in the same order.
+ * One list, two hosts: the run page's artifact browser, where picking a row shows that file's contents, and the code
+ * editor's AI panel, where picking a row opens the file in the editor. Both get the same rows in the same order,
+ * because a file that reads as `tests/…/FooTest.java` in one place and `Tests · FooTest.java` in the other is two
+ * vocabularies for one fact.
+ *
+ * The row is the affordance, not a button inside it, and a row is only interactive where the host can actually do
+ * something with it: `actionableKeys` left unset means every row acts, and a host that can act on none of them
+ * passes an empty array rather than rendering dead controls.
+ *
+ * States: **empty** (the caller supplies the sentence, because only it knows whether "no files yet" means the agent
+ * has not started or that the run kept nothing) · **populated** · **populated with one row marked as the newest
+ * write**. There is no loading state: the list streams, so a partial list is the truth rather than a placeholder.
  */
 @Component({
     selector: 'jhi-hyperion-file-change-list',
     templateUrl: './hyperion-file-change-list.component.html',
+    styleUrl: './hyperion-file-change-list.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, TranslateDirective, TumUiTagComponent],
+    imports: [NgTemplateOutlet, ArtemisTranslatePipe, TranslateDirective, HyperionEmptyComponent, TumUiTagComponent],
 })
 export class HyperionFileChangeListComponent {
-    readonly files = input.required<readonly ExerciseGenerationFileChange[]>();
+    readonly files = input.required<readonly HyperionArtifactFile[]>();
     /** While the run is going, the newest file is called out as the one being written right now. */
     readonly running = input(false);
+    /** `compact` is the docked-panel tier. Density is an input, never a second component. */
+    readonly density = input<'comfortable' | 'compact'>('comfortable');
+    readonly selectedKey = input<string | undefined>();
+    /** Which rows the host can act on. `undefined` means all of them; an empty array means none, and no row is a control. */
+    readonly actionableKeys = input<readonly string[] | undefined>();
+    /** Copy for the empty state, owned by the host because only it knows why the list is empty. */
+    readonly emptyTitleKey = input('artemisApp.hyperion.generation.artifacts.filesPending');
+    readonly emptyDescriptionKey = input<string | undefined>('artemisApp.hyperion.generation.artifacts.filesPendingHint');
+    readonly fileSelected = output<HyperionArtifactFile>();
 
-    protected readonly groups = computed<RepoGroup[]>(() => {
-        const files = this.files();
-        const writingKey = this.running() ? this.newestKey() : undefined;
-        const rows = files.map<FileChangeRow>((file) => {
-            const displayPath = displayFileChangePath(file);
-            const separator = displayPath.lastIndexOf('/');
-            const key = fileChangeKey(file);
-            return {
-                key,
-                repo: file.repo,
-                directory: separator < 0 ? '' : displayPath.slice(0, separator + 1),
-                name: separator < 0 ? displayPath : displayPath.slice(separator + 1),
-                fullPath: displayPath,
-                actionLabelKey: `artemisApp.hyperion.generation.artifacts.action.${file.action}`,
-                writingNow: key === writingKey,
-            };
-        });
-        return REPO_ORDER.map((repo) => {
-            const repoRows = rows.filter((row) => row.repo === repo).sort((first, second) => first.fullPath.localeCompare(second.fullPath));
-            return { repo, headingKey: `artemisApp.hyperion.generationActivity.repo.${repo}`, count: repoRows.length, rows: repoRows };
-        }).filter((group) => group.count > 0);
-    });
+    private readonly listId = `hyperion-file-list-${nextListId++}`;
 
     protected readonly empty = computed(() => this.files().length === 0);
+    protected readonly rowClass = computed(() => (this.density() === 'compact' ? 'hyperion-artifact-row hyperion-artifact-row-compact' : 'hyperion-artifact-row'));
+    protected readonly staticRowClass = computed(() => `${this.rowClass()} hyperion-artifact-row-static`);
+    protected readonly emptySize = computed<'small' | 'medium'>(() => (this.density() === 'compact' ? 'small' : 'medium'));
 
-    private readonly newestKey = computed(() => {
-        const newest = newestFileChange(this.files());
-        return newest ? fileChangeKey(newest) : undefined;
+    protected readonly groups = computed<RepoGroup[]>(() => {
+        const running = this.running();
+        const selectedKey = this.selectedKey();
+        const actionableKeys = this.actionableKeys();
+        return artifactRepoGroups(this.files()).map((group) => ({
+            repo: group.repo,
+            labelKey: group.labelKey,
+            labelId: `${this.listId}-${group.repo}`,
+            count: group.count,
+            rows: group.files.map<FileRow>((file) => ({
+                key: file.key,
+                directory: file.directory,
+                name: file.name,
+                path: file.path,
+                actionLabelKey: file.action ? `artemisApp.hyperion.generation.artifacts.action.${file.action}` : undefined,
+                recencyLabelKey: file.mostRecent
+                    ? running
+                        ? 'artemisApp.hyperion.generation.artifacts.writingNow'
+                        : 'artemisApp.hyperion.generation.artifacts.writtenLast'
+                    : undefined,
+                selected: file.key === selectedKey,
+                actionable: actionableKeys === undefined || actionableKeys.includes(file.key),
+                file,
+            })),
+        }));
     });
+
+    protected select(row: FileRow): void {
+        if (row.actionable) {
+            this.fileSelected.emit(row.file);
+        }
+    }
 }

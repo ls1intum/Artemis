@@ -41,8 +41,8 @@
     background: transparent;
     cursor: pointer;
     transition:
-        background 0.2s,
-        color 0.2s;
+        background var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard),
+        color var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard);
 
     &:disabled {
         cursor: auto;

@@ -10,6 +10,7 @@ export type TumUiIconFieldPosition = 'left' | 'right';
     styleUrl: './tum-ui-icon-field.component.scss',
     imports: [FaIconComponent],
     host: {
+        '[attr.data-slot]': '"icon-field"',
         class: 'tum-ui-icon-field',
         '[attr.data-position]': 'iconPosition()',
         '[attr.data-has-icon]': 'icon() ? "" : null',

@@ -79,3 +79,40 @@ export const Disabled: Story = {
         disabled: true,
     },
 };
+
+/**
+ * The invalid state, with the sentence that says what is wrong. `invalid` paints the danger border **and** sets
+ * `aria-invalid` on the inner control, so the failure is never carried by colour alone; the description is wired
+ * with `ariaDescribedBy` so the reason is read out with the field rather than sitting near it visually.
+ */
+export const Invalid: Story = {
+    args: {
+        ariaDescribedBy: 'capacity-error',
+        ariaLabel: undefined,
+        inputId: 'invalid-capacity',
+        invalid: true,
+        max: 300,
+        min: 1,
+    },
+    render: (args) => ({
+        props: args,
+        template: `
+            <label for="invalid-capacity">Capacity</label>
+            <tum-ui-input-number ${argsToTemplate(args)} />
+            <div id="capacity-error" role="alert">Capacity must be between 1 and 300.</div>
+        `,
+    }),
+};
+
+/**
+ * Measured proof that the state is both machine-readable and announced: `data-invalid` on the host for styling and
+ * for an application to select on, `aria-invalid` on the control the user actually focuses.
+ */
+export const InvalidIsAnnouncedNotOnlyColoured: Story = {
+    tags: ['!dev', '!autodocs'],
+    args: { invalid: true },
+    play: async ({ canvas, canvasElement }) => {
+        await expect(canvasElement.querySelector('tum-ui-input-number[data-invalid]')).not.toBeNull();
+        await expect(canvas.getByRole('spinbutton', { name: 'Capacity' })).toHaveAttribute('aria-invalid', 'true');
+    },
+};

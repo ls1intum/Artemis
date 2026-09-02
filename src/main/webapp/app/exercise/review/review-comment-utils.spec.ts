@@ -248,7 +248,7 @@ describe('adaptFinding', () => {
         expect(adaptFinding(issue, 'loc:3')).toEqual({
             category: ConsistencyIssueCategoryEnum.AttributeTypeMismatch,
             severity: ConsistencyIssueSeverityEnum.Medium,
-            tagSeverity: 'warn',
+            tagSeverity: 'warning',
             locationLabel: 'loc:3',
             description: 'wrong type',
             suggestedFix: { startLine: 1, endLine: 2, applied: false },
@@ -264,7 +264,7 @@ describe('adaptFinding', () => {
 describe('adaptFindingTagSeverity', () => {
     it('should map each severity to its PrimeNG tag severity', () => {
         expect(adaptFindingTagSeverity(ConsistencyIssueSeverityEnum.High)).toBe('danger');
-        expect(adaptFindingTagSeverity(ConsistencyIssueSeverityEnum.Medium)).toBe('warn');
+        expect(adaptFindingTagSeverity(ConsistencyIssueSeverityEnum.Medium)).toBe('warning');
         expect(adaptFindingTagSeverity(ConsistencyIssueSeverityEnum.Low)).toBe('info');
     });
 });

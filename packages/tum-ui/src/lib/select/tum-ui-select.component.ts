@@ -39,6 +39,7 @@ const TYPEAHEAD_DEBOUNCE_MS = 500;
 /** Single-value ControlValueAccessor backed by a listbox overlay. */
 @Component({
     selector: 'tum-ui-select',
+    host: { '[attr.data-slot]': '"select"' },
     templateUrl: './tum-ui-select.component.html',
     styleUrl: './tum-ui-select.component.scss',
     imports: [FaIconComponent, TumUiTranslatePipe],

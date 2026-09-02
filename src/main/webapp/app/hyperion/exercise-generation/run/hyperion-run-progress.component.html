@@ -10,7 +10,7 @@
                     Not announced: the running stage's duration counts up once a second, and a live region here would
                     read the whole ladder aloud every second.
                 -->
-                <p class="m-0 flex flex-wrap items-baseline gap-x-2 text-xs tabular-nums text-muted-color" aria-live="off">
+                <p class="m-0 flex flex-wrap items-baseline gap-x-2 tabular-nums text-muted-color" [class.text-xs]="compact()" [class.text-sm]="!compact()" aria-live="off">
                     @if (timings()[step.key]; as timing) {
                         <span data-testid="hyperion-run-stage-time" [attr.data-live]="timing.live">{{ timing.key | artemisTranslate: { duration: timing.duration } }}</span>
                     }
@@ -34,7 +34,12 @@
                     Ruled off when the stage has substeps: what the agent is doing belongs to the stage, and without the rule
                     it butts up against the last substep in the list and reads as that one's.
                 -->
-                <div [class.mt-3]="step.detailRuled" [class.border-t]="step.detailRuled" [class.pt-3]="step.detailRuled">
+                <!--
+                    The rule is drawn from the TUM UI border token rather than from a bare `border-t` utility: with
+                    Tailwind preflight disabled, the bare utility inherits a `border-color` that resolves to
+                    `currentColor` in this build, so a hairline meant to be 1.24:1 in dark renders at 17.63:1.
+                -->
+                <div [class.mt-3]="step.detailRuled" [class.hyperion-stage-rule]="step.detailRuled" [class.pt-3]="step.detailRuled">
                     <!-- One live region for the whole ladder: it sits on the current step, and only one step is ever current. -->
                     <div role="status" class="text-sm text-muted-color">
                         @if (liveMessage(); as message) {
@@ -60,7 +65,14 @@
 
                     @if (activity(); as view) {
                         <!-- Outside the live region above: its clock ticks every second and must not be announced. -->
-                        <jhi-hyperion-run-activity [view]="view" [density]="density()" />
+                        <jhi-hyperion-run-activity
+                            [view]="view"
+                            [density]="density()"
+                            [cancelAvailable]="cancelAvailable()"
+                            [cancelPending]="cancelPending()"
+                            [connected]="connected()"
+                            (cancelRequested)="cancelRequested.emit()"
+                        />
                     }
                 </div>
             }

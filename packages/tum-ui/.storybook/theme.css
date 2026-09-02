@@ -109,40 +109,10 @@ body {
     width: min(46rem, 100%);
 }
 
-.tum-ui-story-run-header {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: space-between;
-    padding: calc(var(--tumaet-ui-spacing) * 5) calc(var(--tumaet-ui-spacing) * 5) 0;
-    gap: calc(var(--tumaet-ui-spacing) * 4);
-}
-
-.tum-ui-story-run-identity {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: calc(var(--tumaet-ui-spacing) * 2);
-}
-
-.tum-ui-story-run-title {
-    margin: 0;
-    font-size: var(--tumaet-ui-font-size-lg);
-    font-weight: 600;
-    line-height: var(--tumaet-ui-line-height-lg);
-}
-
 .tum-ui-story-run-tags {
     display: flex;
     flex-wrap: wrap;
     gap: calc(var(--tumaet-ui-spacing) * 2);
-}
-
-.tum-ui-story-run-state {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: calc(var(--tumaet-ui-spacing) * 4);
 }
 
 .tum-ui-story-run-elapsed {
@@ -156,29 +126,188 @@ body {
     gap: calc(var(--tumaet-ui-spacing) * 5);
 }
 
-.tum-ui-story-run-artifacts {
-    display: flex;
-    margin: 0;
-    flex-direction: column;
-    padding: 0;
-    gap: calc(var(--tumaet-ui-spacing) * 2);
-    list-style: none;
-}
-
-.tum-ui-story-run-artifact {
-    display: flex;
-    justify-content: space-between;
-    gap: calc(var(--tumaet-ui-spacing) * 4);
-}
-
-.tum-ui-story-run-note,
-.tum-ui-story-run-artifact-meta {
-    margin: 0;
-    color: var(--tumaet-ui-muted-color);
-}
-
 .tum-ui-story-run-footer {
     display: flex;
     justify-content: flex-end;
     gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+/* Document review pattern: the frame what a job produced is read in. */
+.tum-ui-story-review-card {
+    display: block;
+    width: min(52rem, 100%);
+}
+
+.tum-ui-story-review-alert {
+    display: block;
+    margin-bottom: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.tum-ui-story-review-alert-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+}
+
+.tum-ui-story-review-tab-label {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.tum-ui-story-review-panel {
+    display: block;
+    padding-top: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+/* The gap between a heading placeholder and the paragraph placeholders under it, reserved rather than animated. */
+.tum-ui-story-review-skeleton-gap {
+    height: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.tum-ui-story-review-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: start;
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+/* A vertical rule needs a height to draw at all; it takes the taller of the two columns beside it. */
+.tum-ui-story-review-rule {
+    align-self: stretch;
+}
+
+.tum-ui-story-review-detail {
+    min-width: 0;
+}
+
+/* Metering pattern: the frame what a job spent is reported in. */
+.tum-ui-story-meter-card {
+    display: block;
+    width: min(38rem, 100%);
+}
+
+.tum-ui-story-meter-accounting {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+.tum-ui-story-meter-sealed {
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+}
+
+.tum-ui-story-meter-body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing) * 4);
+}
+
+.tum-ui-story-meter-notice {
+    display: block;
+}
+
+.tum-ui-story-meter-hero,
+.tum-ui-story-meter-budget {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: calc(var(--tumaet-ui-spacing));
+}
+
+.tum-ui-story-meter-hero-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+    margin: 0;
+}
+
+/* Deliberately not hero-sized: a qualifier that outsizes what it qualifies stops being read as a qualifier. */
+.tum-ui-story-meter-qualifier,
+.tum-ui-story-meter-unit {
+    font-size: var(--tumaet-ui-font-size-sm);
+}
+
+.tum-ui-story-meter-qualifier {
+    color: var(--tumaet-ui-muted-color);
+}
+
+.tum-ui-story-meter-amount {
+    font-size: var(--tumaet-ui-font-size-lg);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.tum-ui-story-meter-caption {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--tumaet-ui-muted-color);
+    font-size: var(--tumaet-ui-font-size-sm);
+}
+
+.tum-ui-story-meter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: calc(var(--tumaet-ui-spacing) * 3);
+    margin: 0;
+    font-size: var(--tumaet-ui-font-size-sm);
+}
+
+.tum-ui-story-meter-row-figure {
+    display: flex;
+    align-items: baseline;
+    gap: var(--tumaet-ui-spacing);
+}
+
+.tum-ui-story-meter-muted {
+    color: var(--tumaet-ui-muted-color);
+}
+
+/* Every changing figure is tabular so a digit never shifts the ones beside it as the run works. */
+.tum-ui-story-meter-number {
+    font-variant-numeric: tabular-nums;
+}
+
+.tum-ui-story-meter-bar {
+    display: block;
+}
+
+.tum-ui-story-meter-uncapped {
+    margin: 0;
+    font-size: var(--tumaet-ui-font-size-sm);
+}
+
+.tum-ui-story-meter-figures {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--tumaet-ui-spacing) calc(var(--tumaet-ui-spacing) * 4);
+    margin: 0;
+    font-size: var(--tumaet-ui-font-size-sm);
+}
+
+.tum-ui-story-meter-figure {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: calc(var(--tumaet-ui-spacing) * 2);
+}
+
+/* A figure whose label is clipped away is worse than no figure at all, so the label wraps and the value does not. */
+.tum-ui-story-meter-figure > dt {
+    min-width: 0;
+}
+
+.tum-ui-story-meter-figure-value {
+    display: flex;
+    flex-shrink: 0;
+    align-items: baseline;
+    gap: var(--tumaet-ui-spacing);
+    margin: 0;
 }

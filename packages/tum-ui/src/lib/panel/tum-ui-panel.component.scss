@@ -34,7 +34,7 @@
     background: transparent;
     color: inherit;
     cursor: pointer;
-    transition: background-color 0.15s ease-in-out;
+    transition: background-color var(--tumaet-ui-duration-instant) var(--tumaet-ui-easing-standard);
 
     &:hover {
         background-color: color-mix(in srgb, currentcolor 8%, transparent);
@@ -49,7 +49,7 @@
 .tum-ui-panel-content-container {
     display: grid;
     grid-template-rows: 1fr;
-    transition: grid-template-rows 0.2s ease-in-out;
+    transition: grid-template-rows var(--tumaet-ui-duration-expand) var(--tumaet-ui-easing-standard);
 }
 
 :host([data-collapsed='true']) .tum-ui-panel-content-container {

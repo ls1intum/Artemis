@@ -14,6 +14,7 @@ import {
     TumUiMessageComponent,
     TumUiPanelComponent,
     TumUiSelectButtonComponent,
+    TumUiTagComponent,
 } from '@tumaet/ui-angular';
 
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -55,6 +56,15 @@ const MIN_SHORT_NAME_LENGTH = 3;
 const MIN_MAX_POINTS = 1;
 const MAX_MAX_POINTS = 9999;
 
+/**
+ * The band a whole-exercise run usually falls in, stated before the instructor commits rather than only after.
+ *
+ * Mirrors the band the run header reports while a run is in flight; kept as a local constant rather than imported so
+ * the two surfaces can be read independently, and so a dialog that must render without a run has no run-page import.
+ */
+const TYPICAL_DURATION_MIN_MINUTES = 10;
+const TYPICAL_DURATION_MAX_MINUTES = 25;
+
 /** The server's own key for "no build agent has a free sandbox slot", which is the one failure worth retrying as-is. */
 const CAPACITY_ERROR_KEY = 'generationCapacityUnavailable';
 
@@ -76,6 +86,7 @@ type IdentifierField = (typeof IDENTIFIER_CONFLICT_FIELDS)[string];
 @Component({
     selector: 'jhi-hyperion-brief-dialog',
     templateUrl: './hyperion-brief-dialog.component.html',
+    styleUrl: './hyperion-brief-dialog.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         ArtemisTranslatePipe,
@@ -90,6 +101,7 @@ type IdentifierField = (typeof IDENTIFIER_CONFLICT_FIELDS)[string];
         TumUiMessageComponent,
         TumUiPanelComponent,
         TumUiSelectButtonComponent,
+        TumUiTagComponent,
     ],
 })
 export class HyperionBriefDialogComponent {
@@ -200,6 +212,24 @@ export class HyperionBriefDialogComponent {
     protected readonly hasSuggestion = computed(() => this.suggestion() !== undefined);
     readonly canSuggest = computed(() => !this.briefInvalid() && !this.suggesting());
 
+    /**
+     * What the dialog's single live region says, which is the whole story of the one action that changes the form
+     * without moving focus: asking, the answer, or the failure. Undefined for the state nobody needs told — a
+     * dialog nobody has asked anything of yet.
+     */
+    protected readonly suggestionAnnouncement = computed(() => {
+        if (this.suggesting()) {
+            return 'artemisApp.hyperion.generation.brief.suggestRunning';
+        }
+        if (this.suggestionFailed()) {
+            return 'artemisApp.hyperion.generation.brief.suggestFailed';
+        }
+        if (this.hasSuggestion()) {
+            return 'artemisApp.hyperion.generation.brief.suggestApplied';
+        }
+        return undefined;
+    });
+
     private readonly metadataIncomplete = computed(
         () => this.trimmedTitle().length === 0 || this.trimmedShortName().length === 0 || this.trimmedPackageName().length === 0 || this.maxPoints() === undefined,
     );
@@ -239,6 +269,8 @@ export class HyperionBriefDialogComponent {
     protected readonly maximumPackageNameLength = MAX_PACKAGE_NAME_LENGTH;
     protected readonly minimumMaxPoints = MIN_MAX_POINTS;
     protected readonly maximumMaxPoints = MAX_MAX_POINTS;
+    /** The forward statement of how long this takes, said next to the button that starts it. */
+    protected readonly typicalBandParams = { min: TYPICAL_DURATION_MIN_MINUTES, max: TYPICAL_DURATION_MAX_MINUTES };
     protected readonly buildToolOptions = [
         { value: ProjectType.PLAIN_MAVEN, labelKey: 'artemisApp.hyperion.generation.buildTools.maven' },
         { value: ProjectType.PLAIN_GRADLE, labelKey: 'artemisApp.hyperion.generation.buildTools.gradle' },

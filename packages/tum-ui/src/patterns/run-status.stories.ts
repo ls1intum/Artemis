@@ -2,8 +2,20 @@ import { moduleMetadata } from '@storybook/angular-vite';
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 
 import { TumUiButtonComponent } from '../lib/button/tum-ui-button.component';
+import {
+    TumUiCardActionComponent,
+    TumUiCardContentComponent,
+    TumUiCardFooterComponent,
+    TumUiCardHeaderComponent,
+    TumUiCardTitleComponent,
+} from '../lib/card/tum-ui-card-parts.component';
 import { TumUiCardComponent } from '../lib/card/tum-ui-card.component';
 import { TumUiChipComponent } from '../lib/chip/tum-ui-chip.component';
+import { TumUiEmptyDescriptionComponent, TumUiEmptyHeaderComponent, TumUiEmptyTitleComponent } from '../lib/empty/tum-ui-empty-parts.component';
+import { TumUiEmptyComponent } from '../lib/empty/tum-ui-empty.component';
+import { TumUiItemGroupComponent } from '../lib/item/tum-ui-item-group.component';
+import { TumUiItemContentComponent, TumUiItemDescriptionComponent, TumUiItemTitleComponent } from '../lib/item/tum-ui-item-parts.component';
+import { TumUiItemComponent } from '../lib/item/tum-ui-item.component';
 import { TumUiMessageComponent, TumUiMessageSeverity } from '../lib/message/tum-ui-message.component';
 import { TumUiPanelComponent } from '../lib/panel/tum-ui-panel.component';
 import { TumUiStatusDotComponent, TumUiStatusDotState } from '../lib/status-dot/tum-ui-status-dot.component';
@@ -39,6 +51,8 @@ interface RunStatusStoryArgs {
     stages: readonly RunStage[];
     artifacts: readonly RunArtifact[];
     artifactsEmptyText: string;
+    /** The second half of an empty state: what fills the region, or who is able to fill it. */
+    artifactsEmptyHint: string;
     outcome?: RunOutcome;
     primaryAction?: string;
     secondaryAction?: string;
@@ -67,6 +81,11 @@ const artifacts: RunArtifact[] = [
  * This page adds no new component and no new styling contract. It exists so the states a reviewer has to sign off —
  * queued, running, repairing, and each way the run can end — can be compared side by side in both themes. Everything
  * a story arranges is a `.tum-ui-story-*` class in the Storybook theme, so no story invents component styling.
+ *
+ * It is also the reference for how a card is composed now: `tum-ui-card-header` puts the run's identity on the left
+ * and its status and cancel control on the right, and `tum-ui-card-title [level]` makes the region reachable by
+ * heading navigation. The deprecated `[tumUiCardHeader]` / `[tumUiCardFooter]` attribute slots still work and are
+ * deliberately not demonstrated anywhere, so nobody copies them out of here.
  */
 const meta = {
     title: 'Patterns/Run status',
@@ -74,8 +93,22 @@ const meta = {
         moduleMetadata({
             imports: [
                 TumUiButtonComponent,
+                TumUiCardActionComponent,
                 TumUiCardComponent,
+                TumUiCardContentComponent,
+                TumUiCardFooterComponent,
+                TumUiCardHeaderComponent,
+                TumUiCardTitleComponent,
                 TumUiChipComponent,
+                TumUiEmptyComponent,
+                TumUiEmptyDescriptionComponent,
+                TumUiEmptyHeaderComponent,
+                TumUiEmptyTitleComponent,
+                TumUiItemComponent,
+                TumUiItemContentComponent,
+                TumUiItemDescriptionComponent,
+                TumUiItemGroupComponent,
+                TumUiItemTitleComponent,
                 TumUiMessageComponent,
                 TumUiPanelComponent,
                 TumUiStatusDotComponent,
@@ -93,7 +126,8 @@ const meta = {
         cancellable: true,
         stages: withDetail(stages('complete', 'current', 'pending', 'pending', 'pending'), 'Plan', 'Working out the order of the remaining stages.'),
         artifacts: [],
-        artifactsEmptyText: 'Artifacts appear here as stages finish.',
+        artifactsEmptyText: 'Nothing produced yet',
+        artifactsEmptyHint: 'Artifacts appear here as stages finish.',
     },
     parameters: {
         layout: 'padded',
@@ -102,25 +136,23 @@ const meta = {
         props: { ...args },
         template: `
             <tum-ui-card class="tum-ui-story-run-card">
-                <div tumUiCardHeader class="tum-ui-story-run-header">
-                    <div class="tum-ui-story-run-identity">
-                        <h2 class="tum-ui-story-run-title">{{ title }}</h2>
-                        <div class="tum-ui-story-run-tags">
-                            @for (tag of tags; track tag) {
-                                <tum-ui-chip size="small" [label]="tag" />
-                            }
-                        </div>
+                <tum-ui-card-header>
+                    <tum-ui-card-title [level]="2">{{ title }}</tum-ui-card-title>
+                    <div class="tum-ui-story-run-tags">
+                        @for (tag of tags; track tag) {
+                            <tum-ui-chip size="small" [label]="tag" />
+                        }
                     </div>
-                    <div class="tum-ui-story-run-state">
+                    <tum-ui-card-action>
                         <tum-ui-status-dot [state]="status" [label]="statusLabel" [live]="true" />
                         <span class="tum-ui-story-run-elapsed">{{ elapsed }}</span>
                         @if (cancellable) {
                             <tum-ui-button severity="secondary" variant="outlined" size="small">Cancel</tum-ui-button>
                         }
-                    </div>
-                </div>
+                    </tum-ui-card-action>
+                </tum-ui-card-header>
 
-                <div class="tum-ui-story-run-body">
+                <tum-ui-card-content class="tum-ui-story-run-body">
                     <tum-ui-stepper ariaLabel="Run stages">
                         @for (stage of stages; track stage.label) {
                             <tum-ui-step [state]="stage.state" [label]="stage.label" [stateLabel]="stage.stateLabel">
@@ -133,33 +165,40 @@ const meta = {
 
                     <tum-ui-panel header="Artifacts" [toggleable]="true">
                         @if (artifacts.length) {
-                            <ul class="tum-ui-story-run-artifacts">
+                            <tum-ui-item-group ariaLabel="Artifacts" [separators]="true">
                                 @for (artifact of artifacts; track artifact.name) {
-                                    <li class="tum-ui-story-run-artifact">
-                                        <span>{{ artifact.name }}</span>
-                                        <span class="tum-ui-story-run-artifact-meta">{{ artifact.meta }}</span>
-                                    </li>
+                                    <tum-ui-item>
+                                        <tum-ui-item-content>
+                                            <tum-ui-item-title>{{ artifact.name }}</tum-ui-item-title>
+                                            <tum-ui-item-description>{{ artifact.meta }}</tum-ui-item-description>
+                                        </tum-ui-item-content>
+                                    </tum-ui-item>
                                 }
-                            </ul>
+                            </tum-ui-item-group>
                         } @else {
-                            <p class="tum-ui-story-run-note">{{ artifactsEmptyText }}</p>
+                            <tum-ui-empty size="small">
+                                <tum-ui-empty-header>
+                                    <tum-ui-empty-title>{{ artifactsEmptyText }}</tum-ui-empty-title>
+                                    <tum-ui-empty-description>{{ artifactsEmptyHint }}</tum-ui-empty-description>
+                                </tum-ui-empty-header>
+                            </tum-ui-empty>
                         }
                     </tum-ui-panel>
 
                     @if (outcome) {
                         <tum-ui-message [severity]="outcome.severity" [text]="outcome.text" />
                     }
-                </div>
+                </tum-ui-card-content>
 
                 @if (primaryAction || secondaryAction) {
-                    <div tumUiCardFooter class="tum-ui-story-run-footer">
+                    <tum-ui-card-footer class="tum-ui-story-run-footer">
                         @if (secondaryAction) {
                             <tum-ui-button severity="secondary" variant="text">{{ secondaryAction }}</tum-ui-button>
                         }
                         @if (primaryAction) {
                             <tum-ui-button>{{ primaryAction }}</tum-ui-button>
                         }
-                    </div>
+                    </tum-ui-card-footer>
                 }
             </tum-ui-card>
         `,
@@ -184,6 +223,32 @@ export const Queued: Story = {
 
 /** The one running stage owns the spinner, the live detail line, and `aria-current`; the blue rail stops there. */
 export const Running: Story = {};
+
+/**
+ * The run has not reported anything for longer than it usually would. Nothing is known to be wrong, so the ladder does
+ * not change shape and no stage is marked failed — the claim would be unfounded. What changes is everything that can
+ * change honestly: the dot and its word, a detail line that says how long the silence has lasted, and the outcome
+ * block, which names the one action the reader actually has. Compare against `Running`: the review question is whether
+ * "working" and "stuck" are distinguishable without reading a single number.
+ */
+export const Stalled: Story = {
+    args: {
+        status: 'warning',
+        statusLabel: 'No update for 4 minutes',
+        elapsed: '09:38',
+        stages: withDetail(
+            stages('complete', 'complete', 'current', 'pending', 'pending'),
+            'Build and test',
+            'Started 4 minutes ago. Nothing has been reported since, which is longer than this stage usually takes.',
+        ),
+        artifacts: [artifacts[0]],
+        outcome: {
+            severity: 'warning',
+            // Not "the run has failed": it has not, and saying so would be the surface inventing an outcome.
+            text: 'The run may still be working. If it is stuck, cancelling now keeps everything the finished stages produced.',
+        },
+    },
+};
 
 /** Repair is a stage, not a separate mode: the ladder keeps its shape and the detail line carries the attempt count. */
 export const RepairLoop: Story = {
@@ -221,7 +286,7 @@ export const NeedsReview: Story = {
         stages: withDetail(stages('complete', 'complete', 'complete', 'complete', 'complete'), 'Review and repair', 'Two checks could not be resolved automatically.'),
         artifacts,
         outcome: {
-            severity: 'warn',
+            severity: 'warning',
             text: 'Two checks need a decision before this result can be used.',
         },
         primaryAction: 'Review findings',
@@ -239,7 +304,7 @@ export const PartiallySaved: Story = {
         stages: withDetail(stages('complete', 'complete', 'complete', 'complete', 'complete'), 'Publish', '3 of 5 artifacts stored.'),
         artifacts,
         outcome: {
-            severity: 'warn',
+            severity: 'warning',
             text: '3 of 5 artifacts were saved. The remaining 2 were rejected and are still only in this run.',
         },
         primaryAction: 'Retry saving',
@@ -250,14 +315,14 @@ export const PartiallySaved: Story = {
 /** The failing stage keeps its place, so the ladder shows how far the run got before it stopped. */
 export const Failed: Story = {
     args: {
-        status: 'error',
+        status: 'danger',
         statusLabel: 'Failed',
         elapsed: '02:36',
         cancellable: false,
         stages: withDetail(stages('complete', 'complete', 'failed', 'pending', 'pending'), 'Build and test', 'The build did not produce a runnable artifact.'),
         artifacts: [artifacts[0]],
         outcome: {
-            severity: 'error',
+            severity: 'danger',
             text: 'The run stopped in "Build and test". Nothing after that stage ran.',
         },
         primaryAction: 'Retry run',
@@ -297,7 +362,8 @@ export const StatusUnavailable: Story = {
         // that nothing could be read about them at all. An empty ladder makes no claim; the dot and the message do.
         stages: stageNames.map((label): RunStage => ({ label, state: 'pending', stateLabel: 'Unknown' })),
         artifacts: [],
-        artifactsEmptyText: 'Artifacts cannot be listed while the status is unavailable.',
+        artifactsEmptyText: 'Artifacts cannot be listed',
+        artifactsEmptyHint: 'The run may have produced some. Retry to find out — nothing here says it did not.',
         outcome: {
             severity: 'secondary',
             text: 'The run may still be going. Its progress could not be read, so nothing below is live.',

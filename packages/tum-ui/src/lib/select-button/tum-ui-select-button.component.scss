@@ -59,7 +59,7 @@
     inset: 0;
     background-color: transparent;
     pointer-events: none;
-    transition: background-color 0.15s ease;
+    transition: background-color var(--tumaet-ui-duration-instant) var(--tumaet-ui-easing-standard);
 }
 
 .tum-ui-select-button-option:not(:disabled):hover::after {

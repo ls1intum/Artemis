@@ -175,3 +175,22 @@
         border-color: var(--p-content-border-color);
     }
 }
+
+/*
+ * `--color-border` is not ours: `@tumaet/apollon` ships its own
+ * `@layer base { *, ::before, ::after { border-color: var(--color-border) } }`, and that rule lands *after* the one
+ * above in the shipped bundle, so it is the one that actually decides the colour of every bare Tailwind `border*`
+ * utility in Artemis. Nothing in the dependency graph defines the variable — verified against the built
+ * `styles.css`, where `var(--color-border)` is used once and declared nowhere — so it falls back to the initial
+ * value, `currentColor`, and the borders are drawn in the *text* colour. Measured: #ffffff on #16191d in dark,
+ * 17.63:1, where the border token intends 1.24:1.
+ *
+ * Defining it is therefore not a preference but a repair, and it must live at `:root` rather than in `@theme inline`
+ * — that block inlines values into the utilities it generates and emits no custom property at all, so it cannot
+ * satisfy a `var()` a dependency wrote. The indirection through the TUM UI token is what makes it theme-correct:
+ * custom properties substitute at the point of use, so an element under `[data-theme='dark']` resolves the dark
+ * value even though `--color-border` itself is declared only once.
+ */
+:root {
+    --color-border: var(--tumaet-ui-border-color);
+}

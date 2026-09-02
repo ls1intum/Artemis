@@ -66,13 +66,13 @@
                                 @if (selectionHasGroupMember()) {
                                     <!-- Editing a group member's timeline here would desync it, so only this action is disabled. -->
                                     <span [tumUiTooltip]="'artemisApp.exerciseManagement.selection.editSelectedGroupLocked' | artemisTranslate" tumUiTooltipPlacement="top">
-                                        <button tumUiButton type="button" severity="warn" size="small" [disabled]="true">
+                                        <button tumUiButton type="button" severity="warning" size="small" [disabled]="true">
                                             <fa-icon [icon]="faWrench" />
                                             <span jhiTranslate="entity.action.editSelected"></span>
                                         </button>
                                     </span>
                                 } @else {
-                                    <button tumUiButton type="button" severity="warn" size="small" (click)="editSelectedExercises()">
+                                    <button tumUiButton type="button" severity="warning" size="small" (click)="editSelectedExercises()">
                                         <fa-icon [icon]="faWrench" />
                                         <span jhiTranslate="entity.action.editSelected"></span>
                                     </button>
@@ -214,7 +214,7 @@
                                 </span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <tum-ui-button severity="warn" variant="outlined" size="small" (clicked)="openGroupEditModal(card.group.id!)">
+                                <tum-ui-button severity="warning" variant="outlined" size="small" (clicked)="openGroupEditModal(card.group.id!)">
                                     <fa-icon [icon]="faPen" />
                                     <span class="ms-1" jhiTranslate="artemisApp.exerciseVariantGroup.edit"></span>
                                 </tum-ui-button>

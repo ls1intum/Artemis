@@ -206,20 +206,25 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-usage"]')).toBeNull();
     });
 
-    it('reports the run state as a dot with its own word, and stops spinning once the run is terminal', () => {
+    it('reports the run state as a dot with its own word, and never adds a second glyph for the same fact', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
 
         const statusDot = () => fixture.nativeElement.querySelector('[data-testid="hyperion-generation-status-dot"]') as HTMLElement;
+        const liveStatus = () => fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"]') as HTMLElement;
         expect(statusDot().getAttribute('data-state')).toBe('running');
         expect(statusDot().textContent).toContain('generation.status.running');
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"] fa-icon')).not.toBeNull();
+        expect(liveStatus().textContent).toContain('generationActivity.running');
+        // The dot already carries "running" as a state and as a word. A spinning glyph beside it was a third loading
+        // idiom in this one file saying the same thing, so the panel has exactly one moving indicator, not two.
+        expect(liveStatus().querySelector('fa-icon')).toBeNull();
 
         service.stream$.next({ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true });
         fixture.detectChanges();
 
         expect(statusDot().getAttribute('data-state')).toBe('success');
         expect(statusDot().textContent).toContain('generation.status.saved');
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-live-status"] fa-icon')).toBeNull();
+        expect(liveStatus().textContent).toContain('generationActivity.terminalStatus.DONE');
+        expect(liveStatus().querySelector('fa-icon')).toBeNull();
     });
 
     it("links to this exercise's run page once the course is known", () => {
@@ -547,9 +552,9 @@ describe('HyperionGenerationActivityComponent', () => {
         const component = fixture.componentInstance;
         expect(component.jobId()).toBe('j1');
         expect(component.fileChanges()).toHaveLength(2);
-        expect(component.filesByRepo().map((group) => group.repo)).toEqual(['solution', 'tests']);
+        expect(component.artifacts().map((file) => file.repo)).toEqual(['solution', 'tests']);
         // No disclosure to open: the files are simply there, under the ladder.
-        expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file-static"]')).toHaveLength(2);
+        expect(fixture.nativeElement.querySelectorAll('div[data-testid="hyperion-file-row"]')).toHaveLength(2);
     });
 
     it('has no separate details disclosure to open, because the activity now lives in the ladder', () => {
@@ -620,12 +625,14 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(announcement).toContain('generationActivity.terminalStatus.ERROR');
         expect(announcement).toContain('generationActivity.persistence.failed');
         expect(announcement).not.toContain('Still editing');
+        // The run's closing sentence is the panel's answer, so it is a message at the run's own severity - and it is
+        // still not a live region, because the CDK announcer above already said it once.
         const terminalMessage = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-terminal-message"]');
         expect(terminalMessage.textContent).toContain('Generation failed');
-        expect(terminalMessage.tagName).toBe('DIV');
+        expect(terminalMessage.tagName).toBe('TUM-UI-MESSAGE');
+        expect(terminalMessage.getAttribute('data-severity')).toBe('danger');
         expect(terminalMessage.getAttribute('role')).toBeNull();
         expect(terminalMessage.getAttribute('aria-live')).toBeNull();
-        expect(terminalMessage.closest('tum-ui-message')).toBeNull();
     });
 
     it('announces the editor refresh before reporting the terminal result as ready', () => {
@@ -689,7 +696,7 @@ describe('HyperionGenerationActivityComponent', () => {
         });
         fixture.detectChanges();
 
-        const buttons = [...fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file"] button')] as HTMLButtonElement[];
+        const buttons = [...fixture.nativeElement.querySelectorAll('button[data-testid="hyperion-file-row"]')] as HTMLButtonElement[];
         expect(buttons.map((button) => button.getAttribute('aria-label'))).toEqual([
             'artemisApp.hyperion.generationActivity.repo.solution: src/Main.java',
             'artemisApp.hyperion.generationActivity.repo.template: src/Main.java',
@@ -735,7 +742,8 @@ describe('HyperionGenerationActivityComponent', () => {
     it('does not manufacture a file preview before the first file arrives', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
 
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-file-row"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-changed-files"]')).toBeNull();
     });
 
     it('coalesces live fileChanges by repository and path', () => {
@@ -761,7 +769,7 @@ describe('HyperionGenerationActivityComponent', () => {
             fileChanges: [fileChange('solution/Z.java', 'write'), fileChange('solution/A.java', 'write')],
         });
 
-        expect(fixture.componentInstance.filesByRepo()[0].files.map((entry) => entry.file.path)).toEqual(['solution/A.java', 'solution/Z.java']);
+        expect(fixture.componentInstance.artifacts().map((file) => file.path)).toEqual(['A.java', 'Z.java']);
     });
 
     it('keeps live changed-file controls non-actionable until the run is terminal', () => {
@@ -775,13 +783,16 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.detectChanges();
 
         expect(component.fileChanges()).toHaveLength(2);
-        expect(component.filesByRepo().map((group) => [group.repo, group.files.map((entry) => entry.file.path)])).toEqual([
-            ['solution', ['src/Main.java']],
-            ['template', ['src/Main.java']],
+        expect(component.artifacts().map((file) => [file.repo, file.path])).toEqual([
+            ['solution', 'src/Main.java'],
+            ['template', 'src/Main.java'],
         ]);
 
-        expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file"]')).toHaveLength(0);
-        expect(fixture.nativeElement.querySelectorAll('[data-testid="hyperion-generation-file-static"]')).toHaveLength(2);
+        // Nothing is saved yet, so no row is a control - and the panel says why rather than leaving inert rows.
+        expect(component.navigableKeys()).toHaveLength(0);
+        expect(fixture.nativeElement.querySelectorAll('button[data-testid="hyperion-file-row"]')).toHaveLength(0);
+        expect(fixture.nativeElement.querySelectorAll('div[data-testid="hyperion-file-row"]')).toHaveLength(2);
+        expect(fixture.nativeElement.textContent).toContain('generationActivity.changedFilesNotNavigable');
         expect(selected).not.toHaveBeenCalled();
     });
 
@@ -796,7 +807,7 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.componentInstance.fileChangeSelected.subscribe(selected);
 
         fixture.detectChanges();
-        const changedFile = fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"] button') as HTMLButtonElement;
+        const changedFile = fixture.nativeElement.querySelector('button[data-testid="hyperion-file-row"]') as HTMLButtonElement;
         changedFile.click();
 
         expect(changedFile.disabled).toBe(false);
@@ -815,8 +826,8 @@ describe('HyperionGenerationActivityComponent', () => {
 
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"]')).toBeNull();
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file-static"]')?.textContent).toContain('src/Removed.java');
+        expect(fixture.nativeElement.querySelector('button[data-testid="hyperion-file-row"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('div[data-testid="hyperion-file-row"]')?.textContent).toContain('Removed.java');
         expect(selected).not.toHaveBeenCalled();
     });
 
@@ -906,8 +917,8 @@ describe('HyperionGenerationActivityComponent', () => {
         fixture.detectChanges();
 
         // Nothing was saved, so the files are reported but nothing can be opened from here.
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file"]')).toBeNull();
-        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-generation-file-static"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('button[data-testid="hyperion-file-row"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('div[data-testid="hyperion-file-row"]')).not.toBeNull();
     });
 
     it.each([

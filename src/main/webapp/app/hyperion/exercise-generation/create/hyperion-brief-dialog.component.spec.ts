@@ -192,6 +192,42 @@ describe('HyperionBriefDialogComponent', () => {
             expect(component.shortName()).toBe('');
         });
 
+        it('tells a screen reader what the suggestion did, from a region that exists before it has anything to say', () => {
+            const announcement = query('hyperion-brief-suggest-announcement');
+
+            // Empty and already in the DOM: a live region created together with its own text announces nothing.
+            expect(announcement).not.toBeNull();
+            expect(announcement!.textContent!.trim()).toBe('');
+            expect(document.body.querySelectorAll('[role="status"], [role="alert"]')).toHaveLength(1);
+
+            const pending = new Subject<HyperionMetadataSuggestion>();
+            suggestMetadataSpy.mockReturnValue(pending);
+            component.brief.set(BRIEF);
+            component.suggestMetadata();
+            fixture.detectChanges();
+
+            expect(query('hyperion-brief-suggest-announcement')!.textContent).toContain('artemisApp.hyperion.generation.brief.suggestRunning');
+
+            pending.next(SUGGESTION);
+            pending.complete();
+            fixture.detectChanges();
+
+            // Five fields changed without focus moving, so the outcome is said rather than only shown.
+            expect(query('hyperion-brief-suggest-announcement')!.textContent).toContain('artemisApp.hyperion.generation.brief.suggestApplied');
+        });
+
+        it('announces a failed suggestion once, from that region rather than from the message that shows it', () => {
+            suggestMetadataSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+            component.brief.set(BRIEF);
+
+            component.suggestMetadata();
+            fixture.detectChanges();
+
+            expect(query('hyperion-brief-suggest-announcement')!.textContent).toContain('artemisApp.hyperion.generation.brief.suggestFailed');
+            expect(query('hyperion-brief-suggest-failed')!.getAttribute('role')).toBeNull();
+            expect(document.body.querySelectorAll('[role="status"], [role="alert"]')).toHaveLength(1);
+        });
+
         it('marks the values that came from Hyperion, and stops marking a value the instructor changes', () => {
             component.brief.set(BRIEF);
             fixture.detectChanges();
@@ -560,6 +596,56 @@ describe('HyperionBriefDialogComponent', () => {
 
             expect(component.deleteFailed()).toBe(true);
             expect(component.createdExercise()?.id).toBe(42);
+        });
+    });
+
+    describe('what the instructor is committing to', () => {
+        it('states the consequence, the duration band and the model notice next to the button that starts the run', () => {
+            const commitment = query('hyperion-brief-commitment');
+
+            expect(commitment).not.toBeNull();
+            expect(commitment!.textContent).toContain('artemisApp.hyperion.generation.brief.consequences');
+            expect(commitment!.textContent).toContain('artemisApp.hyperion.generation.brief.aiNotice');
+            // Adjacent to the decision: the commitment block is the last thing in the dialog body, and the footer follows it.
+            const body = document.body.querySelector('[data-testid="hyperion-brief-commitment"]')!.parentElement!;
+            expect(body.lastElementChild).toBe(commitment);
+        });
+
+        it('says what a disabled Generate is waiting for, inside that same block', () => {
+            component.brief.set('too short');
+            fixture.detectChanges();
+
+            const blocked = query('hyperion-brief-generate-blocked');
+            expect(blocked?.textContent).toContain('artemisApp.hyperion.generation.brief.blockedBrief');
+            expect(query('hyperion-brief-commitment')!.contains(blocked)).toBe(true);
+        });
+
+        it('interrupts with an alert only for a failure, never for a field the instructor has not finished', () => {
+            component.brief.set('too short');
+            component.briefTouched.set(true);
+            component.editTitle('!!');
+            component.titleTouched.set(true);
+            component.editShortName('!!');
+            component.shortNameTouched.set(true);
+            fixture.detectChanges();
+
+            // The field errors are described errors: aria-describedby plus aria-invalid, and no live interruption.
+            expect(document.body.querySelectorAll('[role="alert"]')).toHaveLength(0);
+            expect(query('hyperion-brief-error')).not.toBeNull();
+            expect(document.body.querySelector('#hyperion-brief')?.getAttribute('aria-describedby')).toContain('hyperion-brief-error');
+            expect(document.body.querySelector('#hyperion-brief')?.getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('raises exactly one alert when the run could not be started', () => {
+            component.brief.set(BRIEF);
+            component.suggestMetadata();
+            setupSucceeds();
+            vi.spyOn(generationService, 'generate').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+
+            component.generate();
+            fixture.detectChanges();
+
+            expect(document.body.querySelectorAll('[role="alert"]')).toHaveLength(1);
         });
     });
 

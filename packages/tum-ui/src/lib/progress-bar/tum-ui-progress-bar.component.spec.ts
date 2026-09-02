@@ -49,38 +49,73 @@ describe('TumUiProgressBarComponent', () => {
         expect(host.getAttribute('aria-label')).toBe('Course completion');
     });
 
-    it('clamps the exposed value, fill, and label to the valid range', () => {
+    it('clamps the exposed value and the fill to the declared range', () => {
         fixture.componentRef.setInput('value', 130);
         fixture.detectChanges();
         expect(host.getAttribute('aria-valuenow')).toBe('100');
         expect(fill().style.width).toBe('100%');
-        expect(label().textContent?.trim()).toBe('100%');
 
         fixture.componentRef.setInput('value', -10);
         fixture.detectChanges();
         expect(host.getAttribute('aria-valuenow')).toBe('0');
         expect(fill().style.width).toBe('0%');
-        expect(label().textContent?.trim()).toBe('');
     });
 
-    it('renders the default {value}{unit} label when showValue is true (default)', () => {
-        fixture.componentRef.setInput('value', 60);
+    it('reports a real scale, so "17 of 42" does not reach assistive technology as 40 percent', () => {
+        fixture.componentRef.setInput('min', 0);
+        fixture.componentRef.setInput('max', 42);
+        fixture.componentRef.setInput('value', 17);
+        fixture.componentRef.setInput('valueText', '17 of 42 files');
+        fixture.detectChanges();
+
+        expect(host.getAttribute('aria-valuemin')).toBe('0');
+        expect(host.getAttribute('aria-valuemax')).toBe('42');
+        expect(host.getAttribute('aria-valuenow')).toBe('17');
+        expect(host.getAttribute('aria-valuetext')).toBe('17 of 42 files');
+        expect(fill().style.width).toBe(`${(17 / 42) * 100}%`);
+    });
+
+    it('offsets the fill against a non-zero floor', () => {
+        fixture.componentRef.setInput('min', 10);
+        fixture.componentRef.setInput('max', 20);
+        fixture.componentRef.setInput('value', 15);
+        fixture.detectChanges();
+        expect(fill().style.width).toBe('50%');
+    });
+
+    it('reports zero rather than dividing by a scale of no width', () => {
+        fixture.componentRef.setInput('min', 5);
+        fixture.componentRef.setInput('max', 5);
+        fixture.componentRef.setInput('value', 5);
+        fixture.detectChanges();
+        expect(fill().style.width).toBe('0%');
+    });
+
+    it('renders the consumer-supplied reading beside the bar, never inside the clipping fill', () => {
+        fixture.componentRef.setInput('valueText', '60%');
         fixture.detectChanges();
         expect(label().textContent?.trim()).toBe('60%');
+        expect(fill().contains(label())).toBe(false);
     });
 
-    it('respects a custom unit', () => {
-        fixture.componentRef.setInput('value', 7);
-        fixture.componentRef.setInput('unit', ' pts');
-        fixture.detectChanges();
-        expect(label().textContent?.trim()).toBe('7 pts');
-    });
-
-    it('hides the default label when showValue is false', () => {
-        fixture.componentRef.setInput('value', 60);
+    it('hides the reading when showValue is off', () => {
+        fixture.componentRef.setInput('valueText', '60%');
         fixture.componentRef.setInput('showValue', false);
         fixture.detectChanges();
         expect(label().textContent?.trim()).toBe('');
+    });
+
+    it('withholds the transition until the first value has been painted', async () => {
+        // A page load that sweeps the bar up from zero implies progress the reader did not witness, so the flag
+        // that enables the transition is only set once the initial width has been drawn.
+        const fresh = TestBed.createComponent(TumUiProgressBarComponent);
+        const freshHost = fresh.nativeElement as HTMLElement;
+        expect(freshHost.getAttribute('data-committed')).toBeNull();
+
+        fresh.detectChanges();
+        await fresh.whenStable();
+        fresh.detectChanges();
+        expect(freshHost.getAttribute('data-committed')).toBe('true');
     });
 });
 

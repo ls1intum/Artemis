@@ -39,6 +39,7 @@ let nextAutoCompleteId = 0;
 /** Single- or multi-value ControlValueAccessor with consumer-supplied suggestions. */
 @Component({
     selector: 'tum-ui-autocomplete',
+    host: { '[attr.data-slot]': '"autocomplete"' },
     templateUrl: './tum-ui-autocomplete.component.html',
     styleUrl: './tum-ui-autocomplete.component.scss',
     imports: [TumUiChipComponent, TumUiTranslatePipe],

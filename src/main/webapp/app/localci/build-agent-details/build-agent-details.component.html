@@ -100,7 +100,7 @@
                     <p class="text-muted-color" jhiTranslate="artemisApp.buildAgents.generationSandboxes.loading"></p>
                 }
                 @if (generationSandboxesLoadFailed()) {
-                    <tum-ui-message severity="warn" class="mb-3 block">
+                    <tum-ui-message severity="warning" class="mb-3 block">
                         <span jhiTranslate="artemisApp.buildAgents.generationSandboxes.loadFailed"></span>
                         <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="refreshGenerationSandboxes()">
                             <fa-icon [icon]="faSync" />
@@ -133,7 +133,7 @@
         </div>
     }
     @if (agentNotFound()) {
-        <tum-ui-message severity="warn" class="mb-4 block">
+        <tum-ui-message severity="warning" class="mb-4 block">
             <div>
                 <span jhiTranslate="artemisApp.buildAgents.notFound" [translateValues]="{ agentName: agentName() }"></span>
                 <br />

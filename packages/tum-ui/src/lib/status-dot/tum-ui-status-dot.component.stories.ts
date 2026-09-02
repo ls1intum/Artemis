@@ -4,14 +4,14 @@ import { expect } from 'storybook/test';
 
 import { TumUiStatusDotComponent, TumUiStatusDotState } from './tum-ui-status-dot.component';
 
-const states: TumUiStatusDotState[] = ['queued', 'running', 'success', 'warning', 'error', 'neutral', 'unknown'];
+const states: TumUiStatusDotState[] = ['queued', 'running', 'success', 'warning', 'danger', 'neutral', 'unknown'];
 
 const stateWord: Record<TumUiStatusDotState, string> = {
     queued: 'Queued',
     running: 'Running',
     success: 'Succeeded',
     warning: 'Needs review',
-    error: 'Failed',
+    danger: 'Failed',
     neutral: 'Not run',
     unknown: 'Status unavailable',
 };
@@ -70,7 +70,7 @@ export const Warning: Story = {
 
 export const Error: Story = {
     args: {
-        state: 'error',
+        state: 'danger',
         label: 'Failed',
     },
 };
@@ -169,6 +169,61 @@ export const StateShapes: Story = {
         for (const state of states) {
             const animated = indicator(state).animationName !== 'none';
             await expect(animated, `${state} animates`).toBe(state === 'queued' || state === 'running');
+        }
+    },
+};
+
+// --- Non-text contrast, measured -----------------------------------------------------------------------------
+// WCAG 1.4.11 asks for 3:1 on a graphical object a reader needs in order to understand the state. Measured here,
+// once, in both themes, so no feature has to re-measure it per consumer.
+const CONTRAST_MINIMUM = 3;
+
+function relativeLuminance(colour: string): number {
+    const [red, green, blue] = colour
+        .match(/[\d.]+/g)!
+        .slice(0, 3)
+        .map((channel) => Number(channel) / 255);
+    const linear = (channel: number) => (channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
+}
+
+function contrastRatio(foreground: string, background: string): number {
+    const [lighter, darker] = [relativeLuminance(foreground), relativeLuminance(background)].sort((left, right) => right - left);
+    return (lighter + 0.05) / (darker + 0.05);
+}
+
+/**
+ * The contrast check the whole package leans on. Every dot is a graphical object a reader needs in order to read
+ * the state, so each one owes 3:1 against the surface behind it — filled states through their fill, hollow states
+ * through their ring. This is why the semantic states use the `-foreground` colours: the raw warning fill measures
+ * 1.63:1 on white, and a yellow dot nobody can see is not a warning.
+ */
+export const NonTextContrast: Story = {
+    tags: ['!dev', '!autodocs'],
+    decorators: [moduleMetadata({ imports: [TumUiStatusDotComponent] })],
+    parameters: {
+        layout: 'padded',
+    },
+    render: () => ({
+        props: { rows: states.map((state) => ({ state, label: stateWord[state] })) },
+        template: `
+            <div class="tum-ui-story-legend">
+                @for (row of rows; track row.state) {
+                    <tum-ui-status-dot [state]="row.state" [label]="row.label" [attr.data-testid]="'dot-' + row.state" />
+                    <code>{{ row.state }}</code>
+                }
+            </div>
+        `,
+    }),
+    play: async ({ canvas }) => {
+        const surface = getComputedStyle(document.body).backgroundColor;
+
+        for (const state of states) {
+            const indicator = canvas.getByTestId(`dot-${state}`).querySelector('.tum-ui-status-dot-indicator')!;
+            const styles = getComputedStyle(indicator);
+            const hollow = styles.backgroundColor === 'rgba(0, 0, 0, 0)';
+            const ink = hollow ? styles.borderTopColor : styles.backgroundColor;
+            await expect(contrastRatio(ink, surface), `${state} reaches 3:1 against the surface`).toBeGreaterThanOrEqual(CONTRAST_MINIMUM);
         }
     },
 };

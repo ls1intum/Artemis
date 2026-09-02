@@ -48,6 +48,14 @@ export interface HyperionJobEntry {
     mode: HyperionGenerationMode;
     /** ISO timestamp of when the run was started or first observed. */
     startedAt: string;
+    /**
+     * ISO timestamp of the server event that ended the run, when this browser saw one.
+     *
+     * Taken from the server's own event rather than from the clock at reconciliation time, so a run reconciled ten
+     * minutes after it stopped still reports the duration it actually took. Absent whenever the end was never
+     * observed — a run that ended while the browser was closed reports no duration at all rather than a made-up one.
+     */
+    endedAt?: string;
     status: HyperionJobStatus;
     /** Whether the user has opened this run since it reached a terminal status. */
     seen: boolean;
@@ -252,9 +260,10 @@ export class HyperionJobRegistryService {
     }
 
     /** Derives the status of one entry from the exercise's current server status. */
-    private resolve(entry: HyperionJobEntry, status: HyperionGenerationStatus | undefined): { status: HyperionJobStatus; message?: string } {
+    private resolve(entry: HyperionJobEntry, status: HyperionGenerationStatus | undefined): { status: HyperionJobStatus; message?: string; endedAt?: string } {
         if (!status || status.jobId !== entry.jobId) {
-            // The exercise has no job any more, or has moved on to a newer one: this run ended without us seeing how.
+            // The exercise has no job any more, or has moved on to a newer one: this run ended without us seeing how,
+            // so it also gets no end timestamp — an unwitnessed ending is not a duration.
             return { status: 'unknown' };
         }
         const events = status.events ?? [];
@@ -263,7 +272,7 @@ export class HyperionJobRegistryService {
             const cancelRequested = events.some((event) => event.type === 'CANCELLED');
             return { status: cancelRequested ? 'cancelling' : events.length > 0 ? 'running' : 'queued', message: lastMessage };
         }
-        return { status: terminalStatusOf(events), message: lastMessage };
+        return { status: terminalStatusOf(events), message: lastMessage, endedAt: terminalTimestampOf(events) };
     }
 
     /** Single funnel for every entry mutation: prunes, sorts, persists and republishes derived state. */
@@ -341,6 +350,12 @@ export class HyperionJobRegistryService {
     }
 }
 
+/** The server's own timestamp for the event that ended a finished run, when it sent one that parses. */
+function terminalTimestampOf(events: readonly HyperionGenerationEvent[]): string | undefined {
+    const timestamp = [...events].reverse().find((event) => event.type === 'DONE' || event.type === 'CANCELLED' || event.type === 'ERROR')?.timestamp;
+    return timestamp !== undefined && Number.isFinite(Date.parse(timestamp)) ? timestamp : undefined;
+}
+
 /** Picks the terminal status implied by a finished run's events. */
 function terminalStatusOf(events: readonly HyperionGenerationEvent[]): HyperionJobStatus {
     const last = [...events].reverse().find((event) => event.type === 'DONE' || event.type === 'CANCELLED' || event.type === 'ERROR');
@@ -409,6 +424,7 @@ function isPersistedEntry(candidate: unknown): candidate is HyperionJobEntry {
         typeof entry.exerciseTitle === 'string' &&
         typeof entry.startedAt === 'string' &&
         typeof entry.status === 'string' &&
+        (entry.endedAt === undefined || typeof entry.endedAt === 'string') &&
         !Number.isNaN(Date.parse(entry.startedAt))
     );
 }

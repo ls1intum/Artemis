@@ -11,6 +11,7 @@ import { TumUiTabComponent } from './tum-ui-tab.component';
     templateUrl: './tum-ui-tab-list.component.html',
     styleUrl: './tum-ui-tab-list.component.scss',
     host: {
+        '[attr.data-slot]': '"tab-list"',
         role: 'tablist',
         class: 'tum-ui-tab-list tum:relative tum:flex tum:w-full tum:min-w-0 tum:max-w-full tum:overflow-x-auto tum:border-b tum:border-border',
         '(keydown)': 'onKeydown($event)',

@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
-import { formatEuro, formatTokenCount, newestLiveUsage, spendView } from 'app/hyperion/exercise-generation/model/hyperion-generation-usage';
+import {
+    BUDGET_NEAR_PERCENT,
+    BUDGET_OVER_PERCENT,
+    budgetLevel,
+    formatEuro,
+    formatTokenCount,
+    newestLiveUsage,
+    spendHero,
+    spendView,
+} from 'app/hyperion/exercise-generation/model/hyperion-generation-usage';
 import { ExerciseGenerationLiveUsage } from 'app/openapi/model/exercise-generation-live-usage';
 import { ExerciseGenerationUsage } from 'app/openapi/model/exercise-generation-usage';
 
@@ -114,6 +123,76 @@ describe('spendView', () => {
 
     it('treats an unknown accounting state as still accumulating rather than as sealed', () => {
         expect(spendView({ liveUsage: live(), ownedByCaller: true, terminal: false })!.accounting).toBe('PENDING');
+    });
+});
+
+describe('spendHero', () => {
+    function hero(input: Parameters<typeof spendView>[0]) {
+        return spendHero(spendView(input)!);
+    }
+
+    it('leads with money whenever money is known', () => {
+        expect(hero({ liveUsage: live(), accountingState: 'PENDING', ownedByCaller: true, terminal: false })).toEqual({
+            kind: 'money',
+            eur: 0.42,
+            lowerBound: false,
+        });
+    });
+
+    it('leads with the tokens it did measure when nothing was priced, rather than with a word', () => {
+        // The hero slot is for a figure. Spending it on the string "Not priced" makes the largest element on the
+        // surface an admission that it has nothing to show, while a real, measured number is sitting right there.
+        expect(hero({ liveUsage: live({ estimatedCostEur: undefined, estimatedCostComplete: false }), ownedByCaller: true, terminal: false })).toEqual({
+            kind: 'tokens',
+            unit: 'billable',
+            tokens: 60_000,
+            lowerBound: false,
+        });
+    });
+
+    it('falls back to input plus output on a sealed total, which carries no billable figure', () => {
+        // Cached input is discounted at a weight that is not part of the terminal account, so the sealed shape has no
+        // billable count at all - and the two counts it does have are reported under their own, different word.
+        expect(hero({ usage: sealed({ estimatedCostEur: 0, estimatedCostEurComplete: false }), accountingState: 'COMPLETE', ownedByCaller: true, terminal: true })).toEqual({
+            kind: 'tokens',
+            unit: 'total',
+            tokens: 200_000,
+            lowerBound: false,
+        });
+    });
+
+    it('marks a partly priced amount as a floor, and never "at least nothing"', () => {
+        expect(hero({ usage: sealed({ estimatedCostEurComplete: false }), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: true })).toEqual({
+            kind: 'money',
+            eur: 0.84,
+            lowerBound: true,
+        });
+
+        // A priced total of zero is not a lower bound of zero; it is a run whose cost is unknown, so tokens lead.
+        expect(hero({ usage: sealed({ estimatedCostEur: 0, estimatedCostEurComplete: false }), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: true })).toEqual({
+            kind: 'tokens',
+            unit: 'total',
+            tokens: 200_000,
+            lowerBound: true,
+        });
+    });
+
+    it('makes every figure of an account that could not be closed a lower bound', () => {
+        expect(hero({ liveUsage: live(), accountingState: 'INCOMPLETE', ownedByCaller: true, terminal: false }).lowerBound).toBe(true);
+        // A running total is provisional rather than a floor; the accounting tag says so in its own words.
+        expect(hero({ liveUsage: live(), accountingState: 'PENDING', ownedByCaller: true, terminal: false }).lowerBound).toBe(false);
+    });
+});
+
+describe('budgetLevel', () => {
+    it('gives every colour the bar can take a word to go with it', () => {
+        expect(budgetLevel(0)).toBe('within');
+        expect(budgetLevel(BUDGET_NEAR_PERCENT - 1)).toBe('within');
+        expect(budgetLevel(BUDGET_NEAR_PERCENT)).toBe('near');
+        expect(budgetLevel(BUDGET_OVER_PERCENT - 1)).toBe('near');
+        // "Over budget" means past the ceiling. Saying it at 90% would be the word contradicting the number beside it.
+        expect(budgetLevel(BUDGET_OVER_PERCENT)).toBe('over');
+        expect(budgetLevel(140)).toBe('over');
     });
 });
 

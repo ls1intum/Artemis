@@ -191,8 +191,8 @@ describe('HealthModalComponent', () => {
     it('should map build agent status to the correct badge severity', () => {
         expect(comp.getStatusBadgeSeverity('ACTIVE')).toBe('success');
         expect(comp.getStatusBadgeSeverity('IDLE')).toBe('secondary');
-        expect(comp.getStatusBadgeSeverity('PAUSED')).toBe('warn');
-        expect(comp.getStatusBadgeSeverity('SELF_PAUSED')).toBe('warn');
+        expect(comp.getStatusBadgeSeverity('PAUSED')).toBe('warning');
+        expect(comp.getStatusBadgeSeverity('SELF_PAUSED')).toBe('warning');
         expect(comp.getStatusBadgeSeverity('UNKNOWN_STATUS')).toBe('secondary');
     });
 

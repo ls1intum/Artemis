@@ -11,7 +11,7 @@
                 "brief": {
                     "header": "Programmieraufgabe generieren",
                     "intro": "Beschreibe, was Studierende lernen und umsetzen sollen. Artemis schreibt Aufgabenstellung, Startcode, Musterlösung und Tests, baut sie und prüft, dass die Musterlösung besteht und der Startcode scheitert. In deinen Kurs wird nichts gespeichert, bevor diese Prüfungen bestanden sind.",
-                    "consequences": "Dabei wird sofort eine neue, unveröffentlichte Java-Aufgabe in deinem Kurs angelegt. Du kannst sie jederzeit umbenennen, anders bepunkten oder löschen.",
+                    "consequences": "Dabei wird sofort eine neue, unveröffentlichte Java-Aufgabe in deinem Kurs angelegt, und die Generierung läuft dann etwa {{min}} bis {{max}} Minuten. Du kannst sie jederzeit umbenennen, anders bepunkten oder löschen.",
                     "label": "Was sollen Studierende lernen und umsetzen?",
                     "hint": "Beschreibe das Lernziel, das erwartete Verhalten und alles, was für deinen Kurs wichtig ist. API-Namen, Randfälle und Testentwurf kannst du Artemis überlassen.",
                     "error": "Ergänze etwas mehr Detail — mindestens {{min}} Zeichen — damit Artemis genug Grundlage hat.",
@@ -22,6 +22,7 @@
                     "suggestNeedsBrief": "Schreibe zuerst mindestens {{min}} Zeichen.",
                     "suggestRunning": "Deine Beschreibung wird gelesen…",
                     "suggestFailed": "Artemis konnte keine Metadaten vorschlagen. Versuche es erneut oder fülle die Felder selbst aus.",
+                    "suggestApplied": "Artemis hat die Angaben zur Aufgabe unten ausgefüllt. Du kannst alles ändern, bevor du generierst.",
                     "metadataTitle": "Aufgaben-Metadaten",
                     "metadataHint": "Artemis kann all das vorschlagen, oder du füllst es selbst aus. Bis du einen Vorschlag anforderst, wird nichts für dich gesetzt.",
                     "metadataSuggested": "Von Artemis vorgeschlagen",
@@ -54,7 +55,7 @@
                     "blockedSuggesting": "Warten auf die vorgeschlagenen Metadaten.",
                     "blockedIncomplete": "Fülle Titel, Kurzname, Paketname und Punkte aus, oder lass Artemis sie vorschlagen.",
                     "blockedInvalid": "Korrigiere die oben markierten Felder, bevor du generierst.",
-                    "aiNotice": "Artemis nutzt dafür ein großes Sprachmodell. Prüfe alles, was dabei entsteht, bevor du die Aufgabe freigibst.",
+                    "aiNotice": "Artemis nutzt dafür ein großes Sprachmodell, und die Seite des Laufs zeigt, was er verbraucht hat. Prüfe alles, was dabei entsteht, bevor du die Aufgabe freigibst.",
                     "draftTitle": "KI-Aufgabenentwurf",
                     "generate": "Entwurf anlegen und Generierung starten",
                     "setupFailed": "Artemis konnte den Aufgabenentwurf nicht anlegen. Deine Beschreibung bleibt erhalten, sodass du es erneut versuchen kannst.",
@@ -93,7 +94,11 @@
                     "toolCalls": "{{count}} Aktionen",
                     "files": "{{count}} Dateien",
                     "latestFile": "Zuletzt bearbeitet — {{file}}",
-                    "recent": "Letzte Aktivität"
+                    "recent": "Letzte Aktivität",
+                    "stalled": "Seit {{duration}} keine Aktualisierung — Verbindung besteht",
+                    "stalledOffline": "Seit {{duration}} keine Aktualisierung — die Verbindung zum Durchlauf ist abgerissen",
+                    "workingState": "Arbeitet",
+                    "stalledState": "Hängt"
                 },
                 "usage": {
                     "title": "Kosten und Verbrauch",
@@ -103,7 +108,6 @@
                         "incomplete": "Unvollständige Abrechnung"
                     },
                     "incompleteHint": "Einige Modellaufrufe dieses Durchlaufs konnten nicht erfasst werden. Alle Werte unten sind Untergrenzen — der Durchlauf hat mindestens so viel gekostet, nicht nichts.",
-                    "pendingHint": "Der Durchlauf läuft noch, das sind also die Werte bis jetzt und kein Endstand.",
                     "costSoFar": "geschätzt bis jetzt",
                     "costFinal": "geschätzte Kosten",
                     "costPartialHint": "Für einige Antworten ist kein Preis hinterlegt, die tatsächlichen Kosten liegen also höher.",
@@ -112,6 +116,7 @@
                     "notPricedHint": "Für ein in diesem Durchlauf verwendetes Modell ist kein Preis hinterlegt, deshalb kann Artemis die Kosten nicht schätzen.",
                     "budgetLabel": "Token-Budget",
                     "budgetAriaLabel": "Anteil des verbrauchten Token-Budgets",
+                    "budgetValueText": "{{used}} von {{budget}} abgerechneten Tokens, {{level}}",
                     "noBudget": "Tokens berechnet — dieser Artemis-Server setzt keine Token-Obergrenze pro Durchlauf.",
                     "inputLabel": "Eingabe-Tokens",
                     "outputLabel": "Ausgabe-Tokens",
@@ -119,7 +124,15 @@
                     "modelCallsLabel": "KI-Aufrufe",
                     "agentTurnsLabel": "Agentenschritte",
                     "attemptsLabel": "Versuche",
-                    "modelsLabel": "Modelle"
+                    "modelsLabel": "Modelle",
+                    "billableTokens": "abgerechnete Tokens",
+                    "totalTokens": "Tokens",
+                    "sealedAt": "abgeschlossen um {{time}}",
+                    "budgetWithin": "im Budget",
+                    "budgetNear": "nahe an der Budgetgrenze",
+                    "budgetOver": "über dem Budget",
+                    "budgetOfLabel": "von",
+                    "budgetShareSuffix": "des Budgets"
                 },
                 "status": {
                     "queued": "Wartet auf den Start",
@@ -137,13 +150,29 @@
                     "title": "KI-Generierung",
                     "backToExercise": "Zurück zur Aufgabe",
                     "elapsed": "Vergangen",
-                    "typicalDuration": "Ein Durchlauf dauert meist 10 bis 25 Minuten.",
                     "progressTitle": "Fortschritt",
                     "otherInstructor": "Eine andere Lehrperson hat diesen Durchlauf gestartet. Du kannst ihn verfolgen, abbrechen kann ihn nur sie.",
                     "statusUnavailable": "Der Generierungsstatus konnte nicht geladen werden. An deiner Aufgabe wurde nichts geändert.",
                     "retryStatus": "Erneut versuchen",
                     "notStartedTitle": "Für diese Aufgabe lief noch keine Generierung",
-                    "notStartedHint": "Starte eine über die Aufgabenliste mit „Aufgabe hinzufügen“ und dann „Generieren“."
+                    "notStartedHint": "Beim Generieren schreibt Artemis Aufgabenstellung, Startcode, Musterlösung und Tests in diese Aufgabe. Das dauert etwa 10 bis 25 Minuten und nutzt ein großes Sprachmodell.",
+                    "stepLabel": "Schritt",
+                    "stepValue": "{{position}} von {{total}}",
+                    "stepCounter": "Schritt {{position}} von {{total}}",
+                    "spendLabel": "Verbrauch",
+                    "spendAtLeast": "mindestens so viel",
+                    "filesLabel": "Dateien",
+                    "costNotPriced": "kein Preis hinterlegt",
+                    "typicalBand": "meist {{min}}–{{max}} Min.",
+                    "longerThanUsual": "länger als üblich — läuft weiter",
+                    "stageStrip": "Alle {{total}} Phasen",
+                    "stageStripWithDuration": "Alle {{total}} Phasen · {{duration}}",
+                    "lastUpdate": "Letzter Stand um {{time}}",
+                    "stillRunningOnServer": "Der Durchlauf selbst läuft auf dem Server weiter. Nur diese Seite kann seinen Status gerade nicht lesen.",
+                    "notStartedWhoCanAct": "Eine Lehrperson oder Bearbeitende dieses Kurses können eine Generierung starten.",
+                    "stageAnnouncement": "Schritt {{position}} von {{total}}, {{stage}}.",
+                    "stalledAnnouncement": "Seit {{minutes}} Minuten keine Aktualisierung. Die Verbindung zum Durchlauf besteht weiterhin.",
+                    "stalledOfflineAnnouncement": "Seit {{minutes}} Minuten keine Aktualisierung, und der Status des Durchlaufs konnte nicht gelesen werden."
                 },
                 "live": {
                     "repairRound": "Prüfrunde {{round}} — {{blocking}} zu beheben, {{advisory}} zu sichten ({{carriedOver}} übernommen, {{drained}} erledigt, {{fresh}} neu)",
@@ -152,21 +181,50 @@
                 "artifacts": {
                     "title": "Was Artemis bisher erzeugt hat",
                     "notSavedHint": "Nichts davon ist bisher in deiner Aufgabe. Gespeichert wird erst, wenn alle Prüfungen bestehen.",
+                    "savedHint": "Artemis hat das in deiner Aufgabe gespeichert. Prüfe es, bevor du sie freigibst.",
+                    "loading": "Der aufbewahrte Entwurf wird geladen…",
                     "specTitle": "Aufgabenentwurf",
                     "specHint": "Was Artemis bauen wollte, bevor Code geschrieben wurde.",
-                    "specPending": "Artemis entscheidet noch, was gebaut werden soll.",
+                    "specPending": "Noch kein Aufgabenentwurf",
+                    "specPendingHint": "Artemis entscheidet noch, was gebaut werden soll.",
                     "statementTitle": "Aufgabenstellung",
-                    "statementPending": "Noch nicht geschrieben.",
+                    "statementPending": "Noch keine Aufgabenstellung",
+                    "statementPendingHint": "Artemis schreibt sie gegen Ende der Entwurfsphase.",
                     "filesTitle": "Dateien",
-                    "filesHint": "Dateien, die Artemis bisher geschrieben hat.",
-                    "filesPending": "Bisher keine Dateien geschrieben.",
+                    "filesPending": "Noch keine Dateien",
+                    "filesPendingHint": "Sie erscheinen hier, sobald Artemis sie schreibt.",
+                    "filesNone": "Es wurden keine Dateien geschrieben",
+                    "filesNoneHint": "Dieser Lauf endete, bevor er etwas in die Repositories geschrieben hat.",
+                    "statementNone": "Es wurde keine Aufgabenstellung aufbewahrt",
+                    "specNone": "Es wurde kein Aufgabenentwurf aufbewahrt",
+                    "notKeptHint": "Dieser Lauf endete, ohne eines zu erzeugen oder eine Kopie davon aufzubewahren.",
                     "writingNow": "Wird gerade geschrieben",
+                    "writtenLast": "Zuletzt geschrieben",
                     "loadFailed": "Der aufbewahrte Entwurf konnte nicht geladen werden.",
                     "retryLoad": "Erneut versuchen",
                     "action": {
                         "write": "Hinzugefügt",
                         "edit": "Geändert",
                         "delete": "Gelöscht"
+                    },
+                    "content": {
+                        "selectTitle": "Wähle eine Datei aus, um sie zu lesen",
+                        "selectHint": "Wähle eine Datei aus der Liste, um zu sehen, was Artemis hineingeschrieben hat.",
+                        "lines": "{{count}} Zeilen",
+                        "loading": "Die Datei wird geladen…",
+                        "openInEditor": "Im Code-Editor öffnen",
+                        "deletedTitle": "Artemis hat diese Datei gelöscht",
+                        "deletedHint": "Es gibt nichts zu lesen. Eine Datei zu löschen gehört zum Überarbeiten eines Entwurfs.",
+                        "emptyFileTitle": "Diese Datei ist leer",
+                        "emptyFileHint": "Artemis hat sie ohne Inhalt geschrieben.",
+                        "failedTitle": "Die Datei konnte nicht geladen werden",
+                        "failedHint": "Der aufbewahrte Entwurf konnte nicht geladen werden. An deiner Aufgabe wurde nichts geändert.",
+                        "pendingRunTitle": "Während des Laufs sind die Inhalte nicht verfügbar",
+                        "pendingRunHint": "Artemis meldet, welche Dateien geschrieben werden, kann deren Inhalt aber erst nach dem Ende des Laufs ausliefern.",
+                        "savedTitle": "Diese Datei ist in deiner Aufgabe",
+                        "savedHint": "Artemis hat den Lauf in die Repositories gespeichert. Öffne den Code-Editor, um die Datei so zu lesen, wie sie gespeichert wurde.",
+                        "notRetainedTitle": "Dieser Lauf hat keine Kopie seiner Dateien behalten",
+                        "notRetainedHint": "Nur die Liste des Geschriebenen bleibt erhalten. Starte einen neuen Lauf, um einen lesbaren Entwurf zu erzeugen."
                     }
                 },
                 "outcome": {
@@ -183,7 +241,8 @@
                     "retained": "Was Artemis erarbeitet hat, bleibt zur Ansicht erhalten. Teil deiner Aufgabe ist es nicht.",
                     "nothingRetained": "Von diesem Durchlauf konnte nichts aufbewahrt werden, es gibt also nichts anzusehen. Deine Aufgabe ist unverändert — starte einfach erneut.",
                     "technicalDetails": "Technische Details anzeigen",
-                    "disclaimer": "Mit KI erzeugt. Prüfe Aufgabenstellung, Tests und Musterlösung, bevor du diese Aufgabe freigibst."
+                    "disclaimer": "Mit KI erzeugt. Prüfe Aufgabenstellung, Tests und Musterlösung, bevor du diese Aufgabe freigibst.",
+                    "serverMessageCount": "{{count}} Servermeldungen"
                 },
                 "verdict": {
                     "title": "Prüfungen",
@@ -194,7 +253,9 @@
                     "consistencyPassed": "Prüfungen zu Build und Bewertung bestanden",
                     "consistencyFailed": "Prüfungen zu Build oder Bewertung fehlgeschlagen",
                     "tests": "{{count}} Tests",
-                    "oneTest": "1 Test"
+                    "oneTest": "1 Test",
+                    "passed": "Bestanden",
+                    "failed": "Fehlgeschlagen"
                 },
                 "terminationReason": {
                     "CONVERGED": "Alle Prüfungen bestanden.",
@@ -225,7 +286,8 @@
                     "cancelConfirmReject": "Weiter generieren",
                     "runAgain": "Erneut ausführen",
                     "openEditor": "Code-Editor öffnen",
-                    "openRun": "Generierungsansicht öffnen"
+                    "openRun": "Generierungsansicht öffnen",
+                    "start": "Diese Aufgabe generieren"
                 }
             },
             "jobs": {
@@ -233,8 +295,21 @@
                 "ariaLabel": "KI-Generierungsläufe",
                 "title": "KI-Generierungsläufe",
                 "empty": "Bisher keine Generierungsläufe.",
+                "emptyHint": "Ein Lauf erscheint hier, sobald du ihn aus einer Aufgabe startest.",
                 "dismiss": "Diesen Lauf ausblenden",
-                "unseen": "{{count}} abgeschlossene Läufe, die du noch nicht geöffnet hast",
+                "summaryRunning": "{{count}} in Arbeit",
+                "summaryAttention": "{{count}} zu prüfen",
+                "summaryFinished": "{{count}} fertig",
+                "runningMinutes": "läuft seit {{minutes}} Min.",
+                "runningUnderMinute": "gerade gestartet",
+                "ranMinutes": "lief {{minutes}} Min.",
+                "ranUnderMinute": "lief weniger als eine Minute",
+                "state": {
+                    "idle": "Nichts in Arbeit",
+                    "running": "Generierung läuft",
+                    "attention": "Braucht deine Aufmerksamkeit",
+                    "success": "Fertig"
+                },
                 "loadFailed": "Die Generierungsläufe konnten nicht geladen werden.",
                 "retry": "Erneut versuchen"
             },
@@ -264,6 +339,7 @@
                 "cancelFailed": "Die Generierung konnte nicht abgebrochen werden. Ihr Status wurde aktualisiert.",
                 "reverting": "Wird rückgängig gemacht…",
                 "changedFiles": "Gespeicherte Dateien",
+                "changedFilesNotNavigable": "Diese lassen sich im Editor öffnen, sobald der Lauf sie in deine Aufgabe gespeichert hat.",
                 "reviewSavedChanges": "Gespeicherte Änderungen prüfen",
                 "reviewSavedChangesHint": "Öffne den Versionsverlauf der Aufgabe oder den genauen gespeicherten Repository-Commit.",
                 "reviewBlockedByLocalEdits": "Speichere oder verwirf deine lokalen Änderungen, bevor du die Prüfung der gespeicherten Änderungen öffnest.",

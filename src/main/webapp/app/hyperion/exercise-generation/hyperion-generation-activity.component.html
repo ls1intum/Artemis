@@ -12,10 +12,12 @@
                     />
                     @if (liveStatus(); as status) {
                         <!-- Visible only: the same text is announced through the CDK LiveAnnouncer, see the component. -->
+                        <!--
+                            No spinner here. The status dot beside it already carries "running" as a state and as a
+                            word, and a second spinning glyph for the same fact was the third loading idiom in this one
+                            file.
+                        -->
                         <span class="flex min-w-0 items-center gap-1 text-sm text-muted-color" data-testid="hyperion-generation-live-status">
-                            @if (status.busy) {
-                                <fa-icon [icon]="faSpinner" animation="spin" />
-                            }
                             @if (status.message) {
                                 <span class="wrap-anywhere">{{ status.message }}</span>
                             } @else {
@@ -107,30 +109,39 @@
             }
 
             @if (terminalMessage(); as message) {
-                <div
-                    class="bg-emphasis mx-3 my-2 min-w-0 rounded-border border px-3 py-2 text-sm wrap-anywhere text-muted-color"
-                    data-testid="hyperion-generation-terminal-message"
-                >
-                    {{ message }}
-                </div>
+                <!--
+                    The run's closing sentence is this panel's answer, so it is delivered at the run's own severity.
+                    It used to be muted text in a hover-coloured box, which measures 1.10:1 against the surface behind
+                    it in light - the styling of an aside, on the one thing the panel exists to say.
+                -->
+                <tum-ui-message [severity]="terminalMessageSeverity()" class="mx-3 my-2 block w-auto" data-testid="hyperion-generation-terminal-message">
+                    <span class="min-w-0 text-sm font-semibold wrap-anywhere">{{ message }}</span>
+                </tum-ui-message>
             }
 
             @if (idle()) {
-                <div class="flex h-full min-h-0 flex-col items-center justify-center gap-2 p-4 text-center text-muted-color" data-testid="hyperion-generation-empty">
-                    <strong jhiTranslate="artemisApp.hyperion.generationActivity.emptyTitle"></strong>
-                    @if (startAllowed()) {
-                        <span jhiTranslate="artemisApp.hyperion.generationActivity.emptyHint"></span>
-                        <tum-ui-button size="small" (clicked)="requestStart()" data-testid="hyperion-generation-start">
-                            <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"></span>
-                        </tum-ui-button>
-                    } @else {
-                        <span jhiTranslate="artemisApp.hyperion.generationActivity.unavailableHint"></span>
-                    }
+                <!--
+                    The title used to be a bare `<strong>`, i.e. weight standing in for structure inside a labelled
+                    region with no heading of its own. The empty state carries the action that resolves it when the
+                    instructor may act, and names the reason there is none when they may not.
+                -->
+                <div class="flex h-full min-h-0 flex-col items-center justify-center p-4" data-testid="hyperion-generation-empty">
+                    <jhi-hyperion-empty
+                        titleKey="artemisApp.hyperion.generationActivity.emptyTitle"
+                        [descriptionKey]="startAllowed() ? 'artemisApp.hyperion.generationActivity.emptyHint' : 'artemisApp.hyperion.generationActivity.unavailableHint'"
+                        size="small"
+                    >
+                        @if (startAllowed()) {
+                            <tum-ui-button size="small" (clicked)="requestStart()" data-testid="hyperion-generation-start">
+                                <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateCode"></span>
+                            </tum-ui-button>
+                        }
+                    </jhi-hyperion-empty>
                 </div>
             }
 
             @if (statusLoadFailed()) {
-                <tum-ui-message severity="error" class="mx-3 my-2 w-auto">
+                <tum-ui-message severity="danger" class="mx-3 my-2 w-auto">
                     <div class="flex w-full items-center justify-between gap-2">
                         <span jhiTranslate="artemisApp.hyperion.generationActivity.statusUnavailable"></span>
                         <tum-ui-button size="small" severity="secondary" variant="text" (clicked)="retryStatus()" data-testid="hyperion-generation-status-retry">
@@ -141,7 +152,7 @@
             }
 
             @if (revertPartialRepositories(); as repositories) {
-                <tum-ui-message severity="error" class="mx-3 my-2 w-auto" data-testid="hyperion-generation-revert-partial">
+                <tum-ui-message severity="danger" class="mx-3 my-2 w-auto" data-testid="hyperion-generation-revert-partial">
                     <span jhiTranslate="artemisApp.hyperion.generationActivity.revertPartialFailed" [translateValues]="{ repositories }"></span>
                 </tum-ui-message>
             }
@@ -152,9 +163,9 @@
                     aria-labelledby="hyperion-review-saved-title"
                     data-testid="hyperion-generation-review"
                 >
-                    <div class="min-w-0 text-xs">
-                        <h4 id="hyperion-review-saved-title" class="mt-0 mb-1 text-sm!" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChanges"></h4>
-                        <span class="wrap-anywhere text-muted-color" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChangesHint"></span>
+                    <div class="min-w-0">
+                        <h4 id="hyperion-review-saved-title" class="hyperion-panel-heading mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChanges"></h4>
+                        <span class="text-xs wrap-anywhere text-muted-color" jhiTranslate="artemisApp.hyperion.generationActivity.reviewSavedChangesHint"></span>
                     </div>
                     <div class="flex min-w-0 flex-wrap gap-1">
                         @for (target of reviewTargets(); track target) {
@@ -176,43 +187,24 @@
             <!--
                 The files themselves, no longer behind a disclosure. How many there are is on the meter inside the
                 ladder; this is the panel's own affordance, because from here a saved file opens in the editor.
+
+                It is the run page's list at the docked-panel density, not a second list: the same rows, the same
+                order, the same words for a repository and for an action.
             -->
-            @if (fileChanges().length) {
+            @if (artifacts().length) {
                 <section class="min-w-0 border-t px-3 py-2" aria-labelledby="hyperion-changed-files-title" data-testid="hyperion-changed-files">
-                    <h4 id="hyperion-changed-files-title" class="mt-0 mb-1 text-xs! font-semibold!" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
-                    @for (group of filesByRepo(); track group.repo) {
-                        <div class="min-w-0" data-testid="hyperion-generation-repo">
-                            <div
-                                class="mt-2 mb-1 text-xs font-semibold tracking-wide text-muted-color uppercase"
-                                [jhiTranslate]="'artemisApp.hyperion.generationActivity.repo.' + group.repo"
-                            ></div>
-                            @for (entry of group.files; track entry.key) {
-                                @if (entry.navigable) {
-                                    <tum-ui-button
-                                        class="block w-full"
-                                        size="small"
-                                        severity="secondary"
-                                        variant="text"
-                                        [ariaLabel]="entry.accessibleLabel"
-                                        [tumUiTooltip]="entry.file.path"
-                                        tumUiTooltipPlacement="right"
-                                        (clicked)="selectFile(entry.file)"
-                                        data-testid="hyperion-generation-file"
-                                    >
-                                        <span class="block w-full overflow-hidden text-left text-ellipsis whitespace-nowrap">{{ entry.displayPath }}</span>
-                                    </tum-ui-button>
-                                } @else {
-                                    <div
-                                        class="px-3 py-1 text-sm wrap-anywhere text-muted-color"
-                                        [attr.aria-label]="entry.accessibleLabel"
-                                        data-testid="hyperion-generation-file-static"
-                                    >
-                                        {{ entry.displayPath }}
-                                    </div>
-                                }
-                            }
-                        </div>
+                    <h4 id="hyperion-changed-files-title" class="hyperion-panel-heading mt-0 mb-1" jhiTranslate="artemisApp.hyperion.generationActivity.changedFiles"></h4>
+                    @if (changedFilesHintKey(); as hintKey) {
+                        <!-- Says why the rows do nothing, rather than leaving a list that silently ignores a click. -->
+                        <p class="mt-0 mb-2 text-xs text-muted-color" [jhiTranslate]="hintKey"></p>
                     }
+                    <jhi-hyperion-file-change-list
+                        [files]="artifacts()"
+                        [running]="running()"
+                        [actionableKeys]="navigableKeys()"
+                        density="compact"
+                        (fileSelected)="selectArtifact($event)"
+                    />
                 </section>
             }
         </div>

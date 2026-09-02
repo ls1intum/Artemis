@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { RECENT_ACTIVITY_LIMIT, activityView, formatClockTime, formatDuration } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
+import {
+    MODEL_WAIT_STALLED_MS,
+    RECENT_ACTIVITY_LIMIT,
+    SILENCE_STALLED_MS,
+    activityView,
+    formatClockTime,
+    formatDuration,
+    isStalled,
+} from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { runOutcome } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { HyperionGenerationActivity, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
@@ -24,7 +32,8 @@ describe('hyperion generation activity view', () => {
             const waiting = event({ type: 'PROGRESS', message: 'Asking the model', activity: activity({ waitingOnModel: true }) });
             const events = [event({ type: 'STARTED' }), waiting];
 
-            expect(view(events).liveness).toEqual({ waitingOnModel: true, since: waiting.timestamp });
+            // A wait on one model call is expected work, so it is given the longer of the two silence allowances.
+            expect(view(events).liveness).toEqual({ waitingOnModel: true, since: waiting.timestamp, stalledAfterMs: MODEL_WAIT_STALLED_MS });
         });
 
         it('switches to the last-update reading once the model call came back', () => {
@@ -33,7 +42,7 @@ describe('hyperion generation activity view', () => {
                 event({ type: 'PROGRESS', message: 'Wrote Stack.java', activity: activity({ waitingOnModel: false, modelCalls: 1 }) }),
             ];
 
-            expect(view(events).liveness).toEqual({ waitingOnModel: false, since: events[1].timestamp });
+            expect(view(events).liveness).toEqual({ waitingOnModel: false, since: events[1].timestamp, stalledAfterMs: SILENCE_STALLED_MS });
         });
 
         it('keeps reporting the wait when a later event carries no bookkeeping of its own', () => {
@@ -54,6 +63,38 @@ describe('hyperion generation activity view', () => {
 
         it('reports nothing at all before the first event', () => {
             expect(view([])).toEqual({ liveness: undefined, counters: [], recent: [], ended: false, empty: true });
+        });
+    });
+
+    describe('stall', () => {
+        const since = '2026-01-01T12:00:00.000Z';
+        const at = (millis: number) => Date.parse(since) + millis;
+
+        it('calls a plain silence stuck only once it has lasted longer than a pause', () => {
+            const liveness = { waitingOnModel: false, since, stalledAfterMs: SILENCE_STALLED_MS };
+
+            // Minute 14 of a hung call must not look like minute 1, and an ordinary gap between calls must not trip it.
+            expect(isStalled(liveness, at(SILENCE_STALLED_MS - 1))).toBe(false);
+            expect(isStalled(liveness, at(SILENCE_STALLED_MS))).toBe(true);
+        });
+
+        it('allows a run waiting on one model call four minutes before saying the same thing', () => {
+            const liveness = { waitingOnModel: true, since, stalledAfterMs: MODEL_WAIT_STALLED_MS };
+
+            // A single long completion is expected work; calling it stuck at 90s would train the reader to ignore it.
+            expect(isStalled(liveness, at(SILENCE_STALLED_MS))).toBe(false);
+            expect(isStalled(liveness, at(MODEL_WAIT_STALLED_MS))).toBe(true);
+        });
+
+        it('never reports a stall with no reading to measure, or from a timestamp it cannot parse', () => {
+            expect(isStalled(undefined, at(MODEL_WAIT_STALLED_MS))).toBe(false);
+            expect(isStalled({ waitingOnModel: false, since: 'not a timestamp', stalledAfterMs: SILENCE_STALLED_MS }, at(MODEL_WAIT_STALLED_MS))).toBe(false);
+        });
+
+        it('stops measuring a stall once the run is over', () => {
+            const events = [event({ type: 'PROGRESS', activity: activity({ waitingOnModel: true }) }), event({ type: 'DONE', phase: 'SAVING', completionStatus: 'SUCCESS' })];
+
+            expect(isStalled(view(events).liveness, Number.MAX_SAFE_INTEGER)).toBe(false);
         });
     });
 

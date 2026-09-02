@@ -6,5 +6,5 @@
     min-width: calc(var(--tumaet-ui-spacing) * 10);
     white-space: nowrap;
     border-color: var(--tum-ui-input-group-border-color, var(--tumaet-ui-control-border-color));
-    transition: border-color 200ms;
+    transition: border-color var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard);
 }

@@ -20,6 +20,24 @@ export interface HyperionActivityMessage {
 }
 
 /**
+ * How long a run may say nothing at all before the surface stops calling it "working" and starts calling it stuck.
+ *
+ * Ninety seconds is long enough that an ordinary gap between two model calls never trips it, and short enough that a
+ * hung provider call is named while the instructor is still watching. Below the threshold the page shows a quiet
+ * spinner and a counting clock; at or past it the tone changes, the silence is stated in words, and the escape action
+ * is promoted - because otherwise minute 14 of a hung call looks exactly like minute 1.
+ */
+export const SILENCE_STALLED_MS = 90_000;
+
+/**
+ * The same threshold for a run that is explicitly waiting on one model call, which is a normal thing to be doing.
+ *
+ * Four minutes rather than ninety seconds: a single long completion is expected work, so calling it stuck too early
+ * would train the instructor to ignore the warning that matters.
+ */
+export const MODEL_WAIT_STALLED_MS = 240_000;
+
+/**
  * What the run is doing right now, measured from a server timestamp.
  *
  * The point of this is the silence: model calls in a live run landed minutes apart with nothing in between, so the
@@ -29,6 +47,22 @@ export interface HyperionActivityLiveness {
     waitingOnModel: boolean;
     /** ISO timestamp the duration is counted from. */
     since: string;
+    /** How long this particular silence may last before it is reported as a stall. Depends on what is being waited on. */
+    stalledAfterMs: number;
+}
+
+/**
+ * Whether a silence has lasted long enough to be a stall rather than a pause.
+ *
+ * Takes the clock as an argument so the decision is testable against a wire trace rather than against the wall, and so
+ * the component that owns the ticking signal is the only thing that re-renders once a second.
+ */
+export function isStalled(liveness: HyperionActivityLiveness | undefined, nowMillis: number): boolean {
+    if (!liveness) {
+        return false;
+    }
+    const since = Date.parse(liveness.since);
+    return Number.isFinite(since) && nowMillis - since >= liveness.stalledAfterMs;
 }
 
 export interface HyperionActivityView {
@@ -129,10 +163,10 @@ export function activityView(
 function livenessOf(events: readonly HyperionGenerationEvent[]): HyperionActivityLiveness | undefined {
     const waiting = events.findLast((event) => event.activity !== undefined);
     if (waiting?.activity?.waitingOnModel && hasTimestamp(waiting)) {
-        return { waitingOnModel: true, since: waiting.timestamp };
+        return { waitingOnModel: true, since: waiting.timestamp, stalledAfterMs: MODEL_WAIT_STALLED_MS };
     }
     const newest = events.findLast(hasTimestamp);
-    return newest ? { waitingOnModel: false, since: newest.timestamp } : undefined;
+    return newest ? { waitingOnModel: false, since: newest.timestamp, stalledAfterMs: SILENCE_STALLED_MS } : undefined;
 }
 
 function hasTimestamp(event: HyperionGenerationEvent): boolean {

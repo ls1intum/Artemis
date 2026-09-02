@@ -1,5 +1,10 @@
 // Colour alone never separates two states: `neutral`, `queued` and `unknown` share the muted colour and are told
 // apart by their shape — a filled dot, a ring, and a dashed ring.
+// ---
+// The semantic states take the `-foreground` state colours rather than the raw fills. A dot is a graphical object
+// a reader needs in order to understand the state, so it owes 3:1 against the surface behind it, and the raw
+// warning fill measures 1.63:1 on a light surface — a yellow dot nobody can see is not a warning. Every
+// `-foreground` variant clears 7:1 in both themes.
 :host {
     --tum-ui-status-dot-size: calc(var(--tumaet-ui-spacing) * 2);
     --tum-ui-status-dot-fill: var(--tumaet-ui-muted-color);
@@ -8,19 +13,19 @@
 }
 
 :host([data-state='running']) {
-    --tum-ui-status-dot-fill: var(--tumaet-ui-state-info);
+    --tum-ui-status-dot-fill: var(--tumaet-ui-state-info-foreground);
 }
 
 :host([data-state='success']) {
-    --tum-ui-status-dot-fill: var(--tumaet-ui-state-success);
+    --tum-ui-status-dot-fill: var(--tumaet-ui-state-success-foreground);
 }
 
 :host([data-state='warning']) {
-    --tum-ui-status-dot-fill: var(--tumaet-ui-state-warning);
+    --tum-ui-status-dot-fill: var(--tumaet-ui-state-warning-foreground);
 }
 
-:host([data-state='error']) {
-    --tum-ui-status-dot-fill: var(--tumaet-ui-state-danger);
+:host([data-state='danger']) {
+    --tum-ui-status-dot-fill: var(--tumaet-ui-state-danger-foreground);
 }
 
 // Waiting to start: an outline, not a filled dot, so a screenshot separates it from `neutral`. A ring needs a little
@@ -55,15 +60,15 @@
 @media (prefers-reduced-motion: no-preference) {
     :host([data-state='queued']) .tum-ui-status-dot-indicator,
     :host([data-state='running']) .tum-ui-status-dot-indicator {
-        animation: tum-ui-status-dot-pulse 1.8s ease-in-out infinite;
+        animation: tum-ui-status-dot-pulse var(--tumaet-ui-duration-pulse) ease-in-out infinite;
     }
 
     // The pulse owns `opacity`, so the state change transitions only the colours.
     .tum-ui-status-dot-indicator {
         transition:
-            border-color 180ms ease-out,
-            background-color 180ms ease-out,
-            color 180ms ease-out;
+            border-color var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard),
+            background-color var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard),
+            color var(--tumaet-ui-duration-state) var(--tumaet-ui-easing-standard);
     }
 }
 
@@ -75,5 +80,28 @@
 
     50% {
         opacity: 0.45;
+    }
+}
+
+// Forced colors discards every fill, so the four semantic states would render as one shape in one colour. What
+// survives is what was load-bearing anyway: the three muted states keep their filled / ring / dashed-ring
+// distinction, and the state word — always rendered, visibly or for assistive technology only — carries the rest.
+// Colour was never allowed to be the only signal here, which is why this block can afford to drop it.
+@media (forced-colors: active) {
+    .tum-ui-status-dot-indicator {
+        border-color: CanvasText;
+        background: CanvasText;
+        forced-color-adjust: none;
+    }
+
+    :host([data-state='queued']) .tum-ui-status-dot-indicator,
+    :host([data-state='unknown']) .tum-ui-status-dot-indicator {
+        background: Canvas;
+    }
+
+    // The one distinction worth keeping in colour: "in flight" against everything terminal.
+    :host([data-state='running']) .tum-ui-status-dot-indicator {
+        border-color: Highlight;
+        background: Highlight;
     }
 }

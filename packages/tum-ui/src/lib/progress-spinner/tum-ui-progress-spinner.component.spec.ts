@@ -40,4 +40,21 @@ describe('TumUiProgressSpinnerComponent', () => {
         fixture.detectChanges();
         expect(host.getAttribute('aria-label')).toBe('Loading competencies');
     });
+
+    it('can be sized, instead of every consumer inlining its own spinner around a fixed square', () => {
+        expect(host.getAttribute('data-slot')).toBe('progress-spinner');
+        expect(host.getAttribute('data-size')).toBe('large');
+
+        fixture.componentRef.setInput('size', 'small');
+        fixture.detectChanges();
+        expect(host.getAttribute('data-size')).toBe('small');
+        expect(host.classList).toContain('tum-ui-progress-spinner-small');
+    });
+
+    it('carries a static fallback for reduced motion rather than a frozen arc', () => {
+        // `animation: none` on the arc leaves a three-quarter stroke that reads as a rendering fault. The static
+        // ring is in the markup unconditionally and the stylesheet swaps between the two.
+        expect(fixture.debugElement.query(By.css('.tum-ui-progress-spinner-static'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('svg')).nativeElement.getAttribute('aria-hidden')).toBe('true');
+    });
 });

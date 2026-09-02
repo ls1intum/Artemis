@@ -1,0 +1,55 @@
+/*
+ * The region's own heading, sized here rather than by a stack of `!` utilities.
+ *
+ * Bootstrap's unlayered `h1`-`h6` rules (size, `margin-bottom: .5rem`, `font-weight: 500`, `line-height: 1.2`) and
+ * `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` all beat Tailwind's `@layer utilities`, so
+ * `class="m-0 text-sm font-semibold"` on this element set none of the three. A class selector inside an Angular
+ * component carries the encapsulation attribute and so outranks a bare element selector without `!important` — the
+ * mechanism `tum-ui-card-title` uses, applied locally because the card title is fixed at the L2 size and this is the
+ * heading of an appendix ranked deliberately below it.
+ *
+ * Sizes are named from the Tailwind type scale emitted at `:root` by the app's `tailwind.css`, so this heading and a
+ * `text-sm` utility beside it cannot drift apart.
+ */
+.hyperion-spend-title {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    font-weight: var(--font-weight-semibold);
+    color: inherit;
+}
+
+/* The docked panel is a smaller surface class: its L3 is `text-xs`, which on a page would be a fourth type size. */
+.hyperion-spend-title-compact {
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+}
+
+/*
+ * The only motion on the spend surface.
+ *
+ * Figures never tween, roll or count up: a number that animates towards its value is unreadable while it travels and
+ * disagrees with itself while a run streams an update every few seconds. The single permitted moment is the colour
+ * settling as a provisional total becomes a sealed one — a state change (NN/g's second job for motion), carried by
+ * colour only, on an element the reader is not in the middle of reading.
+ *
+ * Durations and easings come from the TUM UI motion tokens. The literal fallbacks are deliberate: the tokens ship in
+ * the package's built `styles.css`, and a `var()` with no fallback would silently disable the transition in any build
+ * where that artefact is a step behind.
+ */
+.hyperion-spend-accounting {
+    transition:
+        color var(--tumaet-ui-duration-state, 180ms) var(--tumaet-ui-easing-standard, cubic-bezier(0.2, 0, 0, 1)),
+        background-color var(--tumaet-ui-duration-state, 180ms) var(--tumaet-ui-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+}
+
+/*
+ * Kept under reduced motion rather than removed. WCAG 2.3.3 excludes changes of colour that do not affect perceived
+ * size, shape or position, and a colour that snaps carries less information than one that is seen to change — the
+ * point of the settle is that the reader notices the total stopped moving.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .hyperion-spend-accounting {
+        transition-duration: 150ms;
+    }
+}

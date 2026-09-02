@@ -85,6 +85,11 @@ const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
 const AUTO_START_EXERCISE_GENERATION_STATE = 'autoStartExerciseGeneration';
 /** Set by the run page's "Open code editor" action so the editor opens on the AI activity tab rather than Build Output. */
 const OPEN_GENERATION_ACTIVITY_STATE = 'openGenerationActivity';
+/**
+ * Set by the run page's artifact browser so "Open in code editor" lands on the file the instructor was reading
+ * rather than at the top of a repository. Repository-relative, matching what the file rows already emit in-editor.
+ */
+const OPEN_GENERATION_FILE_STATE = 'openGenerationFilePath';
 const EXERCISE_GENERATION_PROMPT_STATE = 'exerciseGenerationUserPrompt';
 const APPLIED_GENERATION_REFRESH_STATE = 'appliedHyperionGenerationRefresh';
 const MIN_MEANINGFUL_SPEC_LENGTH = 40;
@@ -106,6 +111,13 @@ interface ExerciseGenerationNavigationState {
     appliedRefresh?: AppliedGenerationRefresh;
     /** The instructor came here to watch a run, so the AI activity tab is the panel they want. */
     openActivity: boolean;
+    /**
+     * The repository-relative file the instructor came to read, when they arrived from the artifact browser.
+     *
+     * The route already names the repository, so no repository switch is needed - this only has to survive until the
+     * editor's file tree is ready, which is exactly what {@link CodeEditorInstructorAndEditorContainerComponent.fileToJumpOn} does.
+     */
+    filePath?: string;
 }
 
 function isAppliedGenerationRefresh(value: unknown): value is AppliedGenerationRefresh {
@@ -124,11 +136,13 @@ function readExerciseGenerationNavigationState(router: Router): ExerciseGenerati
     const state = router.currentNavigation()?.extras.state;
     const prompt: unknown = state?.[EXERCISE_GENERATION_PROMPT_STATE];
     const appliedRefresh: unknown = state?.[APPLIED_GENERATION_REFRESH_STATE];
+    const filePath: unknown = state?.[OPEN_GENERATION_FILE_STATE];
     return {
         autoStart: state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true,
         prompt: typeof prompt === 'string' ? prompt : undefined,
         appliedRefresh: isAppliedGenerationRefresh(appliedRefresh) ? appliedRefresh : undefined,
         openActivity: state?.[AUTO_START_EXERCISE_GENERATION_STATE] === true || state?.[OPEN_GENERATION_ACTIVITY_STATE] === true,
+        filePath: typeof filePath === 'string' && filePath.length > 0 ? filePath : undefined,
     };
 }
 interface ConsistencyIssueNavigationIssue {
@@ -305,6 +319,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     constructor() {
         super();
+        // Arriving from the artifact browser's "Open in code editor": the route already selected the repository, so
+        // the file only has to survive until the tree is ready. `onEditorLoaded()` picks it up from here, which is
+        // the same handoff the in-editor file rows and the consistency-issue jumps already use.
+        this.fileToJumpOn = this.navigationState.filePath;
         this.aiOps.setChangeHandler({
             onContentChanged: (content, exercise) => {
                 const currentExerciseId = this.exercise()?.id;

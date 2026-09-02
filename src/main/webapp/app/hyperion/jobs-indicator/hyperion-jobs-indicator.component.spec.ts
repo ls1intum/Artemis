@@ -13,8 +13,13 @@ import {
     isTerminalHyperionJobStatus,
 } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 
-function entry(jobId: string, status: HyperionJobStatus, seen = false): HyperionJobEntry {
-    return { jobId, exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting Algorithms', mode: 'GENERATE', startedAt: '2026-07-10T20:00:00Z', status, seen };
+function entry(jobId: string, status: HyperionJobStatus, seen = false, overrides: Partial<HyperionJobEntry> = {}): HyperionJobEntry {
+    return { jobId, exerciseId: 42, courseId: 7, exerciseTitle: 'Sorting Algorithms', mode: 'GENERATE', startedAt: '2026-07-10T20:00:00Z', status, seen, ...overrides };
+}
+
+/** An ISO timestamp that many minutes in the past, for the rows that count against the wall clock. */
+function minutesAgo(minutes: number): string {
+    return new Date(Date.now() - minutes * 60_000).toISOString();
 }
 
 /** Stands in for the registry with the same signal surface, so the component can be driven directly. */
@@ -132,13 +137,82 @@ describe('HyperionJobsIndicatorComponent', () => {
         expect(document.querySelectorAll('[data-testid="hyperion-jobs-indicator-entry"]')).toHaveLength(1);
     });
 
-    it('states explicitly when there is nothing to list', () => {
+    it('states explicitly when there is nothing to list, and says where a run would come from', () => {
         registry.writableIndicatorState.set('running');
         fixture.detectChanges();
 
         openTray();
 
-        expect(document.querySelector('[data-testid="hyperion-jobs-indicator-empty"]')).not.toBeNull();
+        const empty = document.querySelector('[data-testid="hyperion-jobs-indicator-empty"]');
+        expect(empty).not.toBeNull();
+        expect(empty!.textContent).toContain('artemisApp.hyperion.jobs.empty');
+        expect(empty!.textContent).toContain('artemisApp.hyperion.jobs.emptyHint');
+    });
+
+    it('presents the runs as a named list whose rows carry their own state', () => {
+        registry.writableEntries.set([entry('j1', 'failed')]);
+        registry.writableIndicatorState.set('attention');
+        fixture.detectChanges();
+
+        openTray();
+        const list = document.querySelector('[role="list"]')!;
+
+        // A named list, so a screen-reader user has something to choose between; the state is on the row for CSS and E2E.
+        expect(list.getAttribute('aria-label')).toBe('artemisApp.hyperion.jobs.title');
+        expect(list.querySelector('li')?.getAttribute('data-state')).toBe('failed');
+        expect(document.querySelector('[data-testid="hyperion-jobs-indicator-entry"]')?.tagName).toBe('A');
+    });
+
+    it('puts the aggregate state into the visible label and the accessible name, not only into the dot', () => {
+        registry.writableEntries.set([entry('j1', 'running'), entry('j2', 'failed'), entry('j3', 'saved')]);
+        registry.writableIndicatorState.set('attention');
+        fixture.detectChanges();
+
+        const trigger = fixture.nativeElement.querySelector('[data-testid="hyperion-jobs-indicator-trigger"]');
+        const summary = fixture.nativeElement.querySelector('[data-testid="hyperion-jobs-indicator-summary"]').textContent;
+
+        // One running, one unseen failure to check, one unseen clean save: three counts, in that order.
+        expect(summary).toContain('artemisApp.hyperion.jobs.summaryRunning');
+        expect(summary).toContain('artemisApp.hyperion.jobs.summaryAttention');
+        expect(summary).toContain('artemisApp.hyperion.jobs.summaryFinished');
+        // A failed run and a running one must not be the same button to a screen reader.
+        expect(trigger.getAttribute('aria-label')).toContain('artemisApp.hyperion.jobs.ariaLabel');
+        expect(trigger.getAttribute('aria-label')).toContain('artemisApp.hyperion.jobs.summaryAttention');
+    });
+
+    it('falls back to the plain noun when the debounced indicator briefly outlives its entries', () => {
+        registry.writableIndicatorState.set('running');
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-jobs-indicator-summary"]').textContent).toContain('artemisApp.hyperion.jobs.label');
+    });
+
+    it('counts a running run against the clock and freezes a finished one at the event that ended it', () => {
+        registry.writableEntries.set([
+            entry('j1', 'running', false, { startedAt: minutesAgo(7) }),
+            entry('j2', 'failed', false, { startedAt: '2026-07-10T20:00:00Z', endedAt: '2026-07-10T20:21:00Z' }),
+        ]);
+        registry.writableIndicatorState.set('attention');
+        fixture.detectChanges();
+
+        openTray();
+        const rows = document.querySelectorAll('[data-testid="hyperion-jobs-indicator-entry"]');
+
+        expect(rows[0].textContent).toContain('artemisApp.hyperion.jobs.runningMinutes');
+        // The finished run is measured against the server's own last event, so it does not count on for ever.
+        expect(rows[1].textContent).toContain('artemisApp.hyperion.jobs.ranMinutes');
+    });
+
+    it('claims no duration at all for a run whose ending it never saw', () => {
+        registry.writableEntries.set([entry('j1', 'unknown')]);
+        registry.writableIndicatorState.set('attention');
+        fixture.detectChanges();
+
+        openTray();
+        const row = document.querySelector('[data-testid="hyperion-jobs-indicator-entry"]')!;
+
+        expect(row.textContent).toContain('artemisApp.hyperion.generation.status.unknown');
+        expect(row.textContent).not.toContain('artemisApp.hyperion.jobs.ran');
     });
 
     it('states explicitly when the runs could not be loaded and offers a retry', () => {

@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { TumUiStepState } from '@tumaet/ui-angular';
 
-import { HYPERION_STAGES, HyperionStageKey, HyperionSubstepKey, runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
+import {
+    HYPERION_STAGES,
+    HYPERION_STAGE_COUNT,
+    HyperionStageKey,
+    HyperionSubstepKey,
+    mostCriticalState,
+    runOutcome,
+    stagePosition,
+    stageStates,
+} from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { HyperionGenerationActivity, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 let clock = 0;
@@ -295,5 +304,79 @@ describe('hyperion generation stage timing', () => {
         const events: HyperionGenerationEvent[] = [{ type: 'STARTED', timestamp: at(0) }];
 
         expect(stageStates(events, runOutcome(events)).find((stage) => stage.key === 'prepare')!.runningSince).toBe(at(0));
+    });
+});
+
+describe('stagePosition', () => {
+    function position(events: readonly HyperionGenerationEvent[]): number | undefined {
+        return stagePosition(stageStates(events, runOutcome(events)));
+    }
+
+    it('has no position to report before anything has started', () => {
+        // "Step 0 of 5" is not a position, so the counter is absent rather than zeroed.
+        expect(position([])).toBeUndefined();
+    });
+
+    it('reports the rung the run is on, out of the five that always exist', () => {
+        expect(HYPERION_STAGE_COUNT).toBe(5);
+        expect(position([event({ type: 'STARTED', phase: 'PREPARING' })])).toBe(1);
+        expect(position([event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'PROGRESS', phase: 'DESIGNING' })])).toBe(2);
+    });
+
+    it('never walks backwards when a repair round returns the run to an earlier stage', () => {
+        // A counter that goes from "step 4 of 5" to "step 3 of 5" reads as the run losing ground, which is worse than
+        // no counter at all - so the position is taken from the furthest rung reached, not from where the run is now.
+        const events = [
+            event({ type: 'STARTED', phase: 'PREPARING' }),
+            event({ type: 'PROGRESS', phase: 'DESIGNING' }),
+            event({ type: 'PROGRESS', phase: 'VERIFYING' }),
+            event({ type: 'PROGRESS', phase: 'REVIEWING' }),
+            event({ type: 'PROGRESS', phase: 'VERIFYING' }),
+        ];
+
+        expect(position(events)).toBe(4);
+    });
+
+    it('does not claim a run that failed early got to the end', () => {
+        // Everything past the failure is skipped, and a skipped stage is one the run was never in.
+        const events = [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'PROGRESS', phase: 'DESIGNING' }), event({ type: 'ERROR' })];
+
+        expect(position(events)).toBe(2);
+    });
+
+    it('reports a finished run as having reached the last stage', () => {
+        const events = [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'DONE', phase: 'SAVING', completionStatus: 'SUCCESS' })];
+
+        expect(position(events)).toBe(HYPERION_STAGE_COUNT);
+    });
+});
+
+describe('mostCriticalState', () => {
+    it('leaves a stage alone when it has no substeps to be worse than it', () => {
+        expect(mostCriticalState('current', undefined)).toBe('current');
+        expect(mostCriticalState('complete', [])).toBe('complete');
+    });
+
+    it('takes a stage down to its least healthy substep', () => {
+        // A substep reporting a failure while its parent still shows a spinner is a lie the ladder would tell once per
+        // repair round, so the precedence is asserted in the model rather than left to a template.
+        expect(
+            mostCriticalState('current', [
+                { key: 'concept', state: 'complete' },
+                { key: 'spec', state: 'failed' },
+            ]),
+        ).toBe('failed');
+        expect(
+            mostCriticalState('complete', [
+                { key: 'concept', state: 'complete' },
+                { key: 'spec', state: 'current' },
+            ]),
+        ).toBe('current');
+    });
+
+    it('never raises a stage above itself on the strength of a healthier substep', () => {
+        expect(mostCriticalState('failed', [{ key: 'concept', state: 'complete' }])).toBe('failed');
+        expect(mostCriticalState('pending', [{ key: 'concept', state: 'pending' }])).toBe('pending');
+        expect(mostCriticalState('complete', [{ key: 'concept', state: 'skipped' }])).toBe('complete');
     });
 });

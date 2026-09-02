@@ -23,6 +23,7 @@ const STEPPER_LIST_ORIENTATION: Record<TumUiStepperOrientation, string> = {
     selector: 'tum-ui-stepper',
     templateUrl: './tum-ui-stepper.component.html',
     host: {
+        '[attr.data-slot]': '"stepper"',
         class: 'tum-ui-stepper tum:block tum:text-text',
         '[attr.data-orientation]': 'orientation()',
     },

@@ -1,9 +1,14 @@
 <!--
-    Every heading here sizes and weights itself with `!` utilities, and has to. Bootstrap's unlayered `h1`-`h6` rules and
-    `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` both beat Tailwind's `@layer utilities`, so a plain
-    `text-lg font-semibold` on a heading is silently ignored - measured on this page, `text-xs` rendered at 21.6px and
-    nothing was semibold at all. The `!` is scoped to this feature deliberately: layering the legacy CSS would fix it
-    properly, and would restyle every heading in Artemis, which is not this pull request's to do.
+    Four ranked regions, not five equal cards: header, the answer, what it produced, and a ruled run-detail appendix.
+    Five sibling containers of identical weight rank nothing, and the page's largest number used to be the bill while
+    its smallest was the verdict.
+
+    Every region title on this page is a `tum-ui-card-title [level]` rather than an `<h2>` carrying `!` utilities.
+    Bootstrap's unlayered `h1`-`h6` rules and `global.scss`'s `body, h1, h2, h3, h4 { font-weight: 400 }` both beat
+    Tailwind's `@layer utilities`, so a plain `text-lg font-semibold` on a heading is silently ignored - measured on
+    this page, a heading asking for `text-xs` rendered at 21.6px and nothing was semibold at all. The card title owns
+    the typography of its own heading at a specificity Bootstrap cannot reach, so the workaround is gone rather than
+    repeated. It publishes `role="heading"` with `aria-level`, which is why the regions still reference it by id.
 -->
 <div class="mx-auto flex max-w-4xl flex-col gap-4 p-4" data-testid="hyperion-run-page">
     <jhi-hyperion-run-header
@@ -18,53 +23,114 @@
         [cancelAvailable]="cancelAvailable()"
         [cancelPending]="cancelRequested()"
         [runAgainAvailable]="runAgainAvailable()"
+        [startAvailable]="startAvailable()"
+        [startPending]="starting()"
         [editorLink]="editorLink()"
         [exerciseLink]="exerciseLink()"
+        [stepPosition]="stepPosition()"
+        [stepTotal]="stepTotal"
+        [spend]="spend()"
+        [fileCount]="fileCount()"
         (cancelRequested)="cancel()"
         (runAgainRequested)="runAgain()"
+        (startRequested)="startFirstRun()"
     />
 
     @if (startFailed()) {
-        <tum-ui-message severity="error" class="block" data-testid="hyperion-run-start-failed">
+        <tum-ui-message severity="danger" class="block" data-testid="hyperion-run-start-failed">
             <span jhiTranslate="artemisApp.hyperion.generationActivity.startFailed"></span>
         </tum-ui-message>
     }
 
     @if (statusLoadFailed()) {
-        <tum-ui-message severity="error" class="block" data-testid="hyperion-run-status-unavailable">
-            <div class="flex flex-wrap items-center gap-3">
+        <!--
+            Stale beats blank. This used to replace everything below it, so a failed status check erased a ladder that
+            was still correct. The last known picture stays on screen, marked with when it was last true, and the run
+            keeps going on the server whatever this page can currently see.
+        -->
+        <tum-ui-message severity="danger" class="block" data-testid="hyperion-run-status-unavailable">
+            <div class="flex min-w-0 flex-col gap-2">
                 <span jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"></span>
-                <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="retryStatus()" data-testid="hyperion-run-status-retry">
-                    <span jhiTranslate="artemisApp.hyperion.generation.run.retryStatus"></span>
-                </tum-ui-button>
+                @if (running()) {
+                    <span class="text-sm" jhiTranslate="artemisApp.hyperion.generation.run.stillRunningOnServer"></span>
+                }
+                <div class="flex flex-wrap items-center gap-3">
+                    @if (lastUpdateTime(); as time) {
+                        <span class="text-sm" data-testid="hyperion-run-last-update">{{ 'artemisApp.hyperion.generation.run.lastUpdate' | artemisTranslate: { time } }}</span>
+                    }
+                    <tum-ui-button size="small" severity="secondary" variant="outlined" (clicked)="retryStatus()" data-testid="hyperion-run-status-retry">
+                        <span jhiTranslate="artemisApp.hyperion.generation.run.retryStatus"></span>
+                    </tum-ui-button>
+                </div>
             </div>
         </tum-ui-message>
-    } @else if (notStarted()) {
+    }
+
+    @if (notStarted()) {
+        <!-- An empty state with no action is an apology, so the action that starts a run is the empty state's content. -->
         <tum-ui-card data-testid="hyperion-run-not-started">
-            <h2 class="mt-0 mb-1 text-base! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.run.notStartedTitle"></h2>
-            <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.notStartedHint"></p>
+            <tum-ui-card-header>
+                <tum-ui-card-title [level]="2">{{ 'artemisApp.hyperion.generation.run.notStartedTitle' | artemisTranslate }}</tum-ui-card-title>
+            </tum-ui-card-header>
+            <p class="m-0 text-sm" jhiTranslate="artemisApp.hyperion.generation.run.notStartedHint"></p>
+            @if (!startAvailable()) {
+                <!-- No action to offer, so the sentence names the role that has one rather than leaving a dead end. -->
+                <p class="mt-2 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.notStartedWhoCanAct"></p>
+            }
         </tum-ui-card>
     } @else {
-        <!-- One card per question the page answers: where is it, what did it cost, how did it end, what is there. -->
-        <tum-ui-card>
-            <section aria-labelledby="hyperion-run-progress-title">
-                <h2 id="hyperion-run-progress-title" class="mt-0 mb-3 text-lg! font-semibold!" jhiTranslate="artemisApp.hyperion.generation.run.progressTitle"></h2>
-                <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" />
-            </section>
-        </tum-ui-card>
-
-        @if (spend(); as spendView) {
-            <tum-ui-card>
-                <jhi-hyperion-run-usage [spend]="spendView" />
-            </tum-ui-card>
-        }
-
+        <!--
+            REGION 1 - the answer. While the run is going that is the ladder; once it is over it is the verdict, and the
+            ladder folds to a strip rather than disappearing, because the stages are still real information about what
+            the run did - they are simply no longer the answer.
+        -->
         @if (outcomeView(); as view) {
             <tum-ui-card>
                 <jhi-hyperion-run-outcome [view]="view" />
+                <tum-ui-panel class="mt-3 block" toggleable [collapsed]="true" [header]="stageStripHeader()" data-testid="hyperion-run-stage-strip">
+                    <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" />
+                </tum-ui-panel>
+            </tum-ui-card>
+        } @else {
+            <!--
+                One `tum-ui-card` per branch rather than one card with the branch inside it: a node inside a control-flow
+                block lives in an embedded view and lands in the default slot, so a `tum-ui-card-header` written there
+                would never reach the header slot it was written for.
+            -->
+            <tum-ui-card>
+                <tum-ui-card-header>
+                    <tum-ui-card-title [level]="2" id="hyperion-run-progress-title">{{ 'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate }}</tum-ui-card-title>
+                    <!--
+                        Position in the fixed five stages, never a completion percentage nobody can compute. It sits in
+                        the card's action slot, which is what a heading row's right-hand element is for - and the
+                        emptiness test is inside the slot rather than around it, because an element inside a
+                        control-flow block is projected from an embedded view and would miss the slot entirely.
+                    -->
+                    <tum-ui-card-action>
+                        @if (stepPosition(); as position) {
+                            <span class="text-sm tabular-nums text-muted-color" data-testid="hyperion-run-step-counter">{{
+                                'artemisApp.hyperion.generation.run.stepCounter' | artemisTranslate: { position, total: stepTotal }
+                            }}</span>
+                        }
+                    </tum-ui-card-action>
+                </tum-ui-card-header>
+                <!-- Labelled by the card's title, which is a `role="heading"` outside this element but in the document. -->
+                <section class="mt-3" aria-labelledby="hyperion-run-progress-title">
+                    <jhi-hyperion-run-progress
+                        [stages]="stages()"
+                        [liveMessage]="liveMessage()"
+                        [repairRound]="repairRound()"
+                        [activity]="activityView()"
+                        [cancelAvailable]="cancelAvailable()"
+                        [cancelPending]="cancelRequested()"
+                        [connected]="connected()"
+                        (cancelRequested)="cancel()"
+                    />
+                </section>
             </tum-ui-card>
         }
 
+        <!-- REGION 2 - what it produced. Open, and never auto-collapsed at the moment it becomes the answer. -->
         <tum-ui-card>
             <jhi-hyperion-artifacts
                 [exerciseId]="exerciseId()"
@@ -75,5 +141,16 @@
                 [terminal]="terminal()"
             />
         </tum-ui-card>
+
+        @if (spend(); as spendView) {
+            <!--
+                REGION 3 - run detail. A ruled section at lower contrast rather than a fourth card, so the page reads
+                as three claims plus an appendix. The spend still sits below the answer; it is made prominent by the
+                header's facts rail, which is above the fold and present in every state.
+            -->
+            <section class="hyperion-run-detail pt-4">
+                <jhi-hyperion-run-usage [spend]="spendView" [sealedAt]="endedAt()" />
+            </section>
+        }
     }
 </div>
