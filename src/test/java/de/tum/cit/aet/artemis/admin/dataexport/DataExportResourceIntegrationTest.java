@@ -60,6 +60,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+        userUtilService.addAdmin(TEST_PREFIX);
         createdTestFiles.clear();
         // Clean up any data exports from previous test runs for these specific users
         // This is more isolated than deleteAll() which would affect parallel test classes
