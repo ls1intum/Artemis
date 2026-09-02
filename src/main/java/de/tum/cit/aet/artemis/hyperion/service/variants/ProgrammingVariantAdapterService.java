@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -173,59 +174,80 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
 
         ProgrammingExercise newExercise = buildVariantSkeleton(original, plan, request);
         applyUniqueShortNameAndTitle(newExercise, original, plan.variantTitle());
+        ProgrammingExercise imported;
         try {
-            ProgrammingExercise imported = programmingExerciseImportService.importProgrammingExercise(original, newExercise, false, false, false);
-            try {
-                // The import service unconditionally resets the problem statement to the ORIGINAL's (its REST
-                // flow forbids editing the statement while importing) — re-apply the plan's statement afterwards,
-                // or the skeleton's value from buildVariantSkeleton is silently lost and the variant keeps the
-                // source text.
-                imported.setProblemStatement(stripPlantUmlCodeFences(plan.problemStatement()));
-                // The planner writes its statement against the SOURCE context, so any <testid> markers it copied
-                // reference the source's test case ids — remap them to the variant's test cases (matched by test
-                // name, both sides straight from the import) like the import flow itself does.
-                // `imported` comes back detached from findForCreationById, whose graph excludes testCases.
-                Map<String, Long> variantTestIdByName = programmingExerciseTestCaseRepository.findByExerciseId(imported.getId()).stream()
-                        .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId, (first, second) -> first));
-                Map<Long, Long> newTestCaseIdByOldId = original.getTestCases().stream().filter(testCase -> variantTestIdByName.containsKey(testCase.getTestName()))
-                        .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, testCase -> variantTestIdByName.get(testCase.getTestName()), (first, second) -> first));
-                programmingExerciseTaskService.updateTestIds(imported, newTestCaseIdByOldId);
-                // Whatever <testid> survives the remap above cannot be valid: the remap covers every id the source
-                // actually had, so a leftover id was never a real test case — the planner invented it. Observed on
-                // a run whose statement carried six ids belonging to neither exercise, which silently unlinked
-                // those tasks from grading while every gate reported green. Ids are unguessable by construction
-                // (they are assigned when the variant is created, after the plan is written), so dropping them is
-                // provably right, and dropping the reference rather than the task keeps the visible text intact.
-                imported.setProblemStatement(dropUnresolvableTestIds(imported.getProblemStatement(), variantTestIdByName.values()));
-                imported = programmingExerciseRepository.save(imported);
-                programmingExerciseTaskService.updateTasksFromProblemStatement(imported);
-                // Return a copy WITHOUT an initialized task collection: task rows change again after provisioning
-                // (agent problem-statement updates, the final FINALIZING re-sync), and saving this instance later
-                // (group placement) with a stale initialized orphanRemoval collection fails with EntityNotFound.
-                return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(imported.getId());
-            }
-            catch (Exception e) {
-                // importProgrammingExercise above already persisted the DB row + VCS repos + CI build plans. This
-                // method never returns on that path, so the pipeline's own null-variant cleanup
-                // (ExerciseVariantGenerationPipelineService.cleanupProvisionedVariant) can never find this exercise to
-                // remove it — delete it here instead of leaking it forever.
-                try {
-                    exerciseDeletionService.delete(imported.getId(), true);
-                }
-                catch (Exception cleanupException) {
-                    log.error("Failed to clean up partially provisioned variant exercise {} after a provisioning failure", imported.getId(), cleanupException);
-                    // The clone survived: hand its id to the pipeline so the FAILED job keeps the deep link.
-                    throw new LeftoverVariantExerciseException(imported.getId(), "Importing the variant clone failed: " + e.getMessage(), e);
-                }
-                throw e;
-            }
-        }
-        catch (LeftoverVariantExerciseException leftover) {
-            throw leftover;
+            imported = programmingExerciseImportService.importProgrammingExercise(original, newExercise, false, false, false);
         }
         catch (Exception e) {
-            throw new RuntimeException("Importing the variant clone failed: " + e.getMessage(), e);
+            // The import persists the exercise row before it copies the repositories, sets up the build plans and
+            // schedules its operations — a throw in one of those later steps leaves that row (and whatever
+            // infrastructure was already created) behind. The first save is a persist, so the id is on the
+            // skeleton instance this method passed in.
+            throw deleteProvisionedCloneAndWrap(newExercise.getId(), original.getId(), e);
         }
+        try {
+            // The import service unconditionally resets the problem statement to the ORIGINAL's (its REST
+            // flow forbids editing the statement while importing) — re-apply the plan's statement afterwards,
+            // or the skeleton's value from buildVariantSkeleton is silently lost and the variant keeps the
+            // source text.
+            imported.setProblemStatement(stripPlantUmlCodeFences(plan.problemStatement()));
+            // The planner writes its statement against the SOURCE context, so any <testid> markers it copied
+            // reference the source's test case ids — remap them to the variant's test cases (matched by test
+            // name, both sides straight from the import) like the import flow itself does.
+            // `imported` comes back detached from findForCreationById, whose graph excludes testCases.
+            Map<String, Long> variantTestIdByName = programmingExerciseTestCaseRepository.findByExerciseId(imported.getId()).stream()
+                    .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId, (first, second) -> first));
+            Map<Long, Long> newTestCaseIdByOldId = original.getTestCases().stream().filter(testCase -> variantTestIdByName.containsKey(testCase.getTestName()))
+                    .collect(Collectors.toMap(ProgrammingExerciseTestCase::getId, testCase -> variantTestIdByName.get(testCase.getTestName()), (first, second) -> first));
+            programmingExerciseTaskService.updateTestIds(imported, newTestCaseIdByOldId);
+            // Whatever <testid> survives the remap above cannot be valid: the remap covers every id the source
+            // actually had, so a leftover id was never a real test case — the planner invented it. Observed on
+            // a run whose statement carried six ids belonging to neither exercise, which silently unlinked
+            // those tasks from grading while every gate reported green. Ids are unguessable by construction
+            // (they are assigned when the variant is created, after the plan is written), so dropping them is
+            // provably right, and dropping the reference rather than the task keeps the visible text intact.
+            imported.setProblemStatement(dropUnresolvableTestIds(imported.getProblemStatement(), variantTestIdByName.values()));
+            imported = programmingExerciseRepository.save(imported);
+            programmingExerciseTaskService.updateTasksFromProblemStatement(imported);
+            // Return a copy WITHOUT an initialized task collection: task rows change again after provisioning
+            // (agent problem-statement updates, the final FINALIZING re-sync), and saving this instance later
+            // (group placement) with a stale initialized orphanRemoval collection fails with EntityNotFound.
+            return programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(imported.getId());
+        }
+        catch (Exception e) {
+            // importProgrammingExercise above already persisted the DB row + VCS repos + CI build plans. This
+            // method never returns on that path, so the pipeline's own null-variant cleanup
+            // (ExerciseVariantGenerationPipelineService.cleanupProvisionedVariant) can never find this exercise to
+            // remove it — delete it here instead of leaking it forever.
+            throw deleteProvisionedCloneAndWrap(imported.getId(), original.getId(), e);
+        }
+    }
+
+    /**
+     * Deletes a clone this method provisioned but will never return, and wraps the failure that made it
+     * unreachable. Both failure paths — the import throwing after its first save, and the post-import work
+     * throwing — leave an exercise that only this method knows about.
+     *
+     * @param provisionedId the id assigned to the clone, or null when nothing was persisted yet
+     * @param sourceId      the source exercise, never deleted here
+     * @param failure       the failure to wrap
+     * @return the exception to throw: a {@link LeftoverVariantExerciseException} carrying the id when the clone
+     *         survived the deletion, so the job keeps its only pointer to it; a plain wrapper otherwise
+     */
+    private RuntimeException deleteProvisionedCloneAndWrap(@Nullable Long provisionedId, Long sourceId, Exception failure) {
+        String message = "Importing the variant clone failed: " + failure.getMessage();
+        if (provisionedId == null || provisionedId.equals(sourceId)) {
+            return new RuntimeException(message, failure);
+        }
+        try {
+            exerciseDeletionService.delete(provisionedId, true);
+        }
+        catch (Exception cleanupException) {
+            log.error("Failed to clean up partially provisioned variant exercise {} after a provisioning failure", provisionedId, cleanupException);
+            // The clone survived: hand its id to the pipeline so the FAILED job keeps the deep link.
+            return new LeftoverVariantExerciseException(provisionedId, message, failure);
+        }
+        return new RuntimeException(message, failure);
     }
 
     @Override

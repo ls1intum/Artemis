@@ -105,6 +105,34 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
         verify(exerciseDeletionService).delete(99L, true);
     }
 
+    /**
+     * The import itself persists the exercise row before it copies the repositories, sets up the build plans and
+     * schedules its operations. A throw in one of those steps never reaches the post-import handler, so the outer
+     * path has to delete the row the import already assigned an id to.
+     */
+    @Test
+    void shouldDeleteTheExerciseWhenTheImportThrowsAfterAssigningItsId() throws Exception {
+        when(programmingExerciseImportService.importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean(), anyBoolean())).thenAnswer(invocation -> {
+            invocation.getArgument(1, ProgrammingExercise.class).setId(99L);
+            throw new RuntimeException("copying the repositories blew up");
+        });
+
+        assertThatThrownBy(() -> adapters.provision(source, request, job)).isInstanceOf(RuntimeException.class).hasMessageContaining("Importing the variant clone failed");
+
+        verify(exerciseDeletionService).delete(99L, true);
+    }
+
+    /** Nothing was persisted yet, so there is nothing to delete — and never the source. */
+    @Test
+    void shouldNotDeleteAnythingWhenTheImportThrowsBeforeAssigningAnId() throws Exception {
+        when(programmingExerciseImportService.importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
+                .thenThrow(new RuntimeException("the project key already exists"));
+
+        assertThatThrownBy(() -> adapters.provision(source, request, job)).isInstanceOf(RuntimeException.class).hasMessageContaining("Importing the variant clone failed");
+
+        verify(exerciseDeletionService, never()).delete(anyLong(), anyBoolean());
+    }
+
     /** When the cleanup itself fails the clone survives, so its id must reach the pipeline's id-preserving path. */
     @Test
     void shouldReportTheSurvivingCloneWhenTheCleanupDeletionThrows() {
