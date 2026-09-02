@@ -22,7 +22,6 @@ export class ModelingExplanationEditorComponent {
     notchWidth = input(104);
     autosizeMaxRows = input(3);
     autosizeMinRows = input(1);
-    /** Smallest height the reader can drag the surface down to. */
     surfaceMinHeight = input(42);
 
     protected readonly textareaId = `modeling-explanation-${++nextExplanationEditorId}`;

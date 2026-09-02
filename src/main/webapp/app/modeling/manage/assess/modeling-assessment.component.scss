@@ -17,9 +17,6 @@
     background: var(--apollon-background);
     box-shadow: 0 1px 2px color-mix(in srgb, var(--apollon-foreground) 8%, transparent);
 
-    /* Promoted to <body> while <html> is fullscreen, so it has to lay itself out against the
-       viewport; see ModelingAssessmentComponent#toggleFullscreen for why the fullscreen element
-       is the document root rather than this component. */
     &--fullscreen {
         position: fixed;
         z-index: artemis.$modeling-editor-fullscreen-z-index;
@@ -57,9 +54,6 @@
 
         &--top-left,
         &--top-right {
-            /* The overlay grid caps each top corner at fit-content(45%); letting
-               the region shrink is what turns that cap into wrapping rather than
-               an island that runs under its opposite corner. */
             min-width: 0;
             max-width: 100%;
             align-items: flex-start;

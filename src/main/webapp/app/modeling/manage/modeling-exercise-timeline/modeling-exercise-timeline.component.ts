@@ -4,10 +4,6 @@ import { ExerciseUpdateTimelineComponent } from 'app/exercise/exercise-timeline/
 import { Dayjs } from 'dayjs/esm';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 
-/**
- * Modeling flavour of {@link ExerciseUpdateTimelineComponent}: a named component so the update form and the e2e page
- * objects address a modeling exercise's timeline through a stable selector.
- */
 @Component({
     selector: 'jhi-modeling-exercise-timeline',
     imports: [ExerciseUpdateTimelineComponent],

@@ -3,7 +3,6 @@ import { Injectable, inject } from '@angular/core';
 
 export const APOLLON_FULLSCREEN_FRAME_CLASS = 'apollon-fullscreen-frame';
 
-/** Moves one editor frame to the document root while browser fullscreen is active. */
 @Injectable({ providedIn: 'root' })
 export class FullscreenPresentationService {
     private readonly document = inject(DOCUMENT);

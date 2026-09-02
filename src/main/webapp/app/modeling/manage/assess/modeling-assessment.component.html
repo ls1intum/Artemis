@@ -16,8 +16,6 @@
         [class.modeling-assessment__region--bottom-center-elevated]="bottomCenterElevated()"
     >
         @if (explanation()) {
-            <!-- Opens taller than the authoring field: the tutor is reading a student's explanation, and a one-row
-                 field would hide it behind a scrollbar they have to notice first. -->
             <jhi-modeling-explanation-editor [explanation]="explanation()" [readOnly]="true" [autosizeMaxRows]="6" [autosizeMinRows]="4" />
         }
     </div>

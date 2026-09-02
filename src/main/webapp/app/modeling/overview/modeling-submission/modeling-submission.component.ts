@@ -111,10 +111,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return tone === 'negative' ? faXmark : faTriangleExclamation;
     }
 
-    /**
-     * Same formatting as {@link UnifiedFeedbackComponent}: locale decimal separator, the course's score accuracy, and
-     * the singular/plural point label. Signed, so a deduction reads as one without relying on colour.
-     */
     protected feedbackPoints(feedback: Feedback): string {
         const credits = feedback.credits ?? 0;
         const formatted = this.localeConversionService.toLocaleString(credits, this.course()?.accuracyOfScores);
@@ -131,8 +127,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if (!assessment?.name) {
             return undefined;
         }
-        // Apollon qualifies a member as `Owner::+ field: Type`; only the separator is softened for reading. The
-        // element type stays in front of the name, because a class, an interface and an attribute can share one.
         const name = assessment.name.replace('::', ' › ');
         return assessment.type ? `${assessment.type} ${name}` : name;
     }
@@ -211,13 +205,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
     }
 
-    /**
-     * Exam submissions are complained about from the exam summary, and the feedback view is already read-only.
-     *
-     * The last two conditions mirror what {@link ComplaintsStudentViewComponent} itself allows: a practice run is not
-     * graded, and preliminary Athena feedback is a suggestion rather than an assessment. Without them this wrapper
-     * would draw its separator and padding around a component that renders nothing.
-     */
     protected showComplaintSection(): boolean {
         return (
             !!this.result() &&
@@ -287,7 +274,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private initializeApollonCollaborationUser(): void {
         void this.accountService.identity().then((user: User | undefined) => {
             if (!user) {
-                // Without an identity the editor cannot mount its collaboration layer; surface it instead of failing silently.
                 captureException('Modeling team exercise: no user identity available for Apollon collaboration.');
                 return;
             }
@@ -388,15 +374,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.updateModelAndExplanation();
     }
 
-    /**
-     * Drops everything that describes the previously loaded submission.
-     *
-     * This component is reused across participation switches — the graded and the practice participation are both
-     * `participate/:participationId` on the same route, so Angular only re-emits the params instead of re-creating the
-     * component. Every signal below is written under a condition further down (a result is only assigned when the
-     * submission actually carries one), so without this reset the practice attempt would inherit the graded result and
-     * open on its assessment instead of on the editor.
-     */
+    /** Clears state because Angular reuses this component across participation IDs. */
     private resetSubmissionScopedState(): void {
         this.result.set(undefined);
         this.assessmentResult.set(undefined);
@@ -515,7 +493,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private subscribeToWebsockets(): void {
-        // Reached again on every participation switch, so the channels of the previous participation have to go first.
         this.automaticSubmissionSubscription?.unsubscribe();
         this.automaticSubmissionSubscription = undefined;
         this.manualResultUpdateListener?.unsubscribe();
@@ -602,7 +579,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private setAutoSaveTimer(): void {
-        // A participation switch runs the setup again; a second timer would save the same diagram twice per tick.
         clearInterval(this.autoSaveInterval);
         this.autoSaveTimer.set(0);
         this.autoSaveInterval = window.setInterval(() => {
@@ -615,7 +591,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private setupSubmissionStreamForTeam(): void {
-        // Same reuse caveat as the autosave timer: without clearing, each navigation adds another sync loop.
         clearInterval(this.teamSyncInterval);
         const teamSyncInterval = window.setInterval(() => {
             this.isChanged.set(!this.canDeactivate());

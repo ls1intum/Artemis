@@ -97,12 +97,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly model = signal<UMLModel | undefined>(undefined);
     readonly modelingExercise = signal<ModelingExercise | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
-    /**
-     * The feedback list is edited in place — by the assessment editor and by the Athena suggestions that arrive later —
-     * while children read it through `result()?.feedbacks`. `equal: () => false` makes re-setting the same reference
-     * notify, so those readers see the new feedback. Replacing the object instead would detach the submission and
-     * participation the children already hold.
-     */
+    /** Feedback is mutated in place, so equal references must still notify consumers. */
     readonly result = signal<Result | undefined>(undefined, { equal: () => false });
     referencedFeedback: Feedback[] = [];
     readonly unreferencedFeedback = signal<Feedback[]>([]);
@@ -145,7 +140,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly hasAutomaticFeedback = signal(false);
     readonly hasAssessmentDueDatePassed = signal<boolean>(false);
     readonly correctionRound = signal(0);
-    /** Committed to {@link correctionRound} only when the corresponding submission load starts. */
     private correctionRoundFromUrl = 0;
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
@@ -263,8 +257,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
 
-                // Artemis is path-routed, so the assessment URL lives in `location.path()`, not `window.location.hash`.
-                // Rewrite only the `new` segment, so a reload lands on the submission this call just locked.
                 const newUrl = this.location.path().replace('/submissions/new/', `/submissions/${this.submission()!.id}/`);
                 this.location.go(newUrl);
             },
@@ -349,9 +341,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.feedbackSuggestions = suggestions;
             if (this.result()) {
                 this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
-                // The canvas reads the feedback through `result()?.feedbacks`. Editing that array in place leaves the
-                // signal's reference untouched, so without this the referenced suggestions never reach Apollon: they
-                // are listed beside the diagram but neither drawn as assessments nor highlighted on their elements.
                 this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);

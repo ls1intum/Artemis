@@ -3,9 +3,6 @@
 $resize-hit-size: 10px;
 $resize-hit-offset: math.div($resize-hit-size, 2);
 
-/* Off-rail: the host element only becomes a laid-out box once Apollon's overlay
-   engine has adopted it into a region. Until then it must not occupy the
-   editor's own layout. */
 :host {
     position: absolute;
     box-sizing: border-box;
@@ -18,9 +15,6 @@ $resize-hit-offset: math.div($resize-hit-size, 2);
     align-items: stretch;
     flex-direction: column;
     gap: 0;
-
-    /* The gap to the canvas edge every other chrome cluster keeps, so the panel
-       reads as floating over the diagram rather than bolted to its frame. */
     margin-block: var(--apollon-chrome-gap);
     margin-right: var(--apollon-chrome-edge);
     overflow: visible;
@@ -42,8 +36,6 @@ $resize-hit-offset: math.div($resize-hit-size, 2);
     border-width: var(--artemis-apollon-chrome-border-width);
 }
 
-/* Expanded, the island and the panel are one surface: the seam between them is
-   painted over so the panel reads as the trigger unfolding, not a second card. */
 .apollon-rail-disclosure__trigger-island {
     position: relative;
     align-self: flex-end;

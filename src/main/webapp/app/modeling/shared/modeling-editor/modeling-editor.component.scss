@@ -26,12 +26,6 @@
         background: var(--apollon-background);
         box-shadow: 0 1px 2px color-mix(in srgb, var(--apollon-foreground) 8%, transparent);
 
-        /* Apollon renders through React Flow, which needs its container to have
-           a resolved height - it does not size itself to its content. The tile
-           and fullscreen variants below take their height from a sized parent;
-           everywhere else (e.g. the example solution editor on the exercise
-           create/edit form, which sits in a scrolling page) there is nothing to
-           inherit from, so the canvas needs an explicit default. */
         .apollon-container {
             height: 600px;
         }

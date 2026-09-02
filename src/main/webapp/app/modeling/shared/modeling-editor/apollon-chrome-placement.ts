@@ -26,7 +26,6 @@ export const RAIL_DISCLOSURE_MAX_HEIGHT = 720;
 const MAXIMUM_SURFACE_WIDTH_REM = 44;
 const MINIMUM_INLINE_SURFACE_WIDTH_REM = 12;
 
-/** Uses viewport coordinates; previousShift makes repeated measurements idempotent. */
 export function calculateBottomCenterPlacement(geometry: BottomCenterPlacementGeometry): BottomCenterPlacement {
     const { root, zoom, minimap, surface, palette, paletteRegion, obstruction, chromeGap, chromeEdge, rootFontSize, previousShift } = geometry;
     let placementLeft = root.left + chromeEdge;

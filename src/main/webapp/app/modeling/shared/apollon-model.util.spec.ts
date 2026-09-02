@@ -13,12 +13,6 @@ import {
 import testClassDiagramV3 from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import testClassDiagramV4 from 'test/helpers/sample/modeling/test-models/class-diagram-v4.json';
 import { UMLDiagramType } from '@tumaet/apollon';
-
-/**
- * The schema version Apollon migrates every model to. Read from the normalizer
- * rather than written down, so a library bump does not turn these tests red for
- * a change they are not about — they are about migration happening at all.
- */
 const CURRENT_MODEL_VERSION = normalizeApollonModel({ version: '4.0.0', type: UMLDiagramType.ClassDiagram, nodes: [], edges: [] } as unknown as ApollonModelData).version;
 
 describe('apollon-model.util', () => {

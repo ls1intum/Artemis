@@ -8,7 +8,6 @@ interface V3Element {
     [key: string]: unknown;
 }
 
-/** Persisted Apollon data before import, including record-based v3 and array-based v4 collections. */
 export interface ApollonModelData {
     version?: string;
     nodes?: ApollonNode[] | Record<string, V3Element>;
@@ -21,7 +20,6 @@ export interface ApollonModelData {
     };
 }
 
-/** Normalizes without mutating the input and preserves an explicit empty interactive selection, which means “none” rather than “all.” */
 export function normalizeApollonModel(model: UMLModel | ApollonModelData): UMLModel {
     const hadExplicitInteractiveSelection = model.interactive !== undefined;
     const normalized = importDiagram(deepClone(model));
@@ -89,14 +87,7 @@ export function isModelEmpty(model: UMLModel | ApollonModelData | undefined): bo
     return getModelNodes(model).length === 0;
 }
 
-/**
- * The UML type of one element — `Class`, `ClassAttribute`, a relationship type — whether it is a node, an edge, or a
- * member nested in a node, and whether the model is still in its stored v3 shape or the imported v4 one.
- *
- * A feedback reference is `<type>:<id>`, and references are compared as whole strings, so this has to answer the same
- * type for an element no matter who asks: Apollon's own `elementType` says only `node` or `attribute`, which would
- * spell the same element differently from Athena and from every reference already stored.
- */
+/** Returns the stable UML type used in feedback references across stored v3 and imported v4 models. */
 export function getModelElementType(model: UMLModel | ApollonModelData | undefined, elementId: string): string | undefined {
     if (!model) {
         return undefined;

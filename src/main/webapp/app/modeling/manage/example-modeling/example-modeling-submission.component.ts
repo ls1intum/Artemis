@@ -131,13 +131,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     readonly getTotalMaxPoints = getTotalMaxPoints;
 
-    /**
-     * Score and validity of the assessment currently on screen.
-     *
-     * Must stay derived rather than recomputed from the load path: the practice assessment
-     * (`?toComplete=true`) never loads a result — the tutor must not see the instructor's solution —
-     * so there is no load event to hang an imperative recomputation on.
-     */
     private readonly scoreState = computed<{ valid: boolean; totalScore?: number; error?: string }>(() => {
         const feedbacks = this.assessments();
         if (feedbacks.length === 0) {
@@ -149,9 +142,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             return { valid: false, error: 'The score field must be a number and can not be empty!' };
         }
 
-        // Never sum the raw credits: a structured grading instruction only counts up to its `usageCount`, so a
-        // limited instruction applied twice must still score once. The canonical scorer also caps and floors the
-        // total, which is why no further clamping happens here.
+        // Structured grading usage limits make raw credit sums incorrect.
         return { valid: true, totalScore: this.structuredGradingCriterionService.computeAssessmentScore(feedbacks, getTotalMaxPoints(this.exercise())).total };
     });
 
@@ -396,16 +387,11 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             });
     }
 
-    /**
-     * The training-mode toggle lives beside the assessment, so a save from assessment mode has to carry it too. Both
-     * save paths put the object loaded from the server, so the toggle has to reach that object before either runs.
-     */
     private applySelectedModeToExampleSubmission(): void {
         this.exampleSubmission().usedForTutorial = this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY;
     }
 
     private updateExampleAssessment() {
-        // Saving only the assessment does not round-trip the example submission, so persist a pending mode change first.
         if (this.exampleSubmission().usedForTutorial !== (this.selectedMode() === ExampleSubmissionMode.ASSESS_CORRECTLY)) {
             this.updateAssessmentExplanationAndExampleAssessment();
             return;
@@ -466,22 +452,12 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     markWrongFeedback(correctionErrors: FeedbackCorrectionError[]) {
         const byReference = new Map(correctionErrors.map((err) => [err.reference, err]));
-        // Unreferenced feedback carries a generated reference too (see `addReferenceIdForExampleSubmission`), so the
-        // server's correction errors address both kinds and both have to be marked.
         this.applyCorrectionStatus((feedback) => byReference.get(feedback.reference!)?.type);
 
         this.highlightMissedFeedback();
     }
 
-    /**
-     * Applies the server's verdict to the tutor's own feedback. Both signals get a fresh array, since setting a
-     * signal to the identical reference does not notify.
-     *
-     * The two kinds need opposite treatment, dictated by who renders them: referenced feedback is mutated in place
-     * because {@link ModelingAssessmentComponent} draws the canvas from the very instances it received through
-     * `feedbackChanged`, while unreferenced feedback is replaced because each item is the input of its own
-     * `jhi-unreferenced-feedback-detail`, whose binding only changes on a new reference.
-     */
+    /** Replaces both signal arrays while preserving referenced feedback identities used by the canvas. */
     private applyCorrectionStatus(statusFor: (feedback: Feedback) => FeedbackCorrectionStatus | undefined) {
         this.referencedFeedback.update((feedbacks) => {
             for (const feedback of feedbacks) {

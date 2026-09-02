@@ -53,6 +53,7 @@
     &__complaint {
         display: flex;
         min-height: 0;
+
         // Never more than a third of the column: a long complaint scrolls inside itself and leaves the diagram usable.
         max-height: 33%;
         flex: 0 0 auto;

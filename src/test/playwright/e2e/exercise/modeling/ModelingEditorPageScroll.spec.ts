@@ -8,14 +8,6 @@ import { expectNoScrollPastApollonCanvas } from '../../../support/utils';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
-/**
- * A page that scrolls past an Apollon canvas is broken: the canvas eats the wheel, so whatever sits
- * below it cannot be reached. These tests pin the boundary — the working surfaces must never scroll,
- * and the one page that may (the exercise form) must hand the wheel back via Apollon's scroll lock.
- *
- * The assertions measure the editor's ancestors, since it is content above or below the editor that
- * pushes a page over the edge.
- */
 test.describe('Apollon canvas is never scrolled past', { tag: '@fast' }, () => {
     let modelingExercise: ModelingExercise;
 

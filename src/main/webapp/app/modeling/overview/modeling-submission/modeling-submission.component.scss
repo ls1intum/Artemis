@@ -64,9 +64,6 @@ jhi-modeling-assessment {
     flex: 1 1 auto;
 }
 
-/* Anything the page puts under the canvas takes its height FROM the canvas.
-   Growing the page instead would push the editor out of the frame, and an
-   Apollon canvas you have to scroll to reach is unusable. */
 .modeling-submission-content {
     display: flex;
     height: 100%;
@@ -96,10 +93,6 @@ jhi-modeling-assessment {
     &__canvas {
         display: flex;
         min-width: 0;
-
-        /* Under a content-sized host (the exam summary's collapsible card) this floor is the actual
-           height, so it has to be enough to review a diagram and its feedback together — and capped
-           against the viewport so such a card can never outgrow the screen. */
         min-height: min(34rem, 70dvh);
         flex: 1 1 auto;
         overflow: hidden;
@@ -165,7 +158,6 @@ jhi-modeling-assessment {
     border: 1px solid var(--apollon-border, var(--bs-border-color));
     border-radius: var(--apollon-radius-md, 6px);
     background-color: var(--apollon-surface, var(--bs-body-bg));
-
     transition: border-color 120ms ease;
 
     &[role='button'] {
@@ -247,9 +239,6 @@ jhi-modeling-assessment {
         grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
     }
 
-    /* Override, not a design: `complaints-form` and `complaints-student-view` lay themselves out with
-       `col-12 col-md-6`, which answers to the viewport rather than to this 26rem panel and would split
-       the form into half-width columns. Remove this once those two use container queries. */
     ::ng-deep .row > * {
         width: 100%;
         max-width: 100%;

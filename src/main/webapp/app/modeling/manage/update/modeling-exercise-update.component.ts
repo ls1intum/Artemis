@@ -117,7 +117,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
-    /** A signal rather than a computed, because the live Apollon model is not one; {@link calculateFormSectionStatus} pushes it. */
     protected readonly hasExampleSolution = signal(false);
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
@@ -193,7 +192,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     }
 
     private updateFormSectionsOnIsValidChange() {
-        // Runs before view init too, so the title component may not exist yet.
         const titleComponent = this.exerciseTitleChannelNameComponent?.();
         if (titleComponent?.titleChannelNameComponent) {
             titleComponent.titleChannelNameComponent().isValid();
@@ -248,7 +246,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                             const { exerciseGroupId, examId } = params;
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
-                            // Exercise ownership is exclusive: exam exercises use an exercise group; course exercises use a course.
                             this.modelingExercise.course = undefined;
                         } else {
                             this.courseService.find(courseId).subscribe((res) => (this.modelingExercise.course = res.body!));
@@ -295,7 +292,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                 empty: !hasExampleSolutionDiagram || !this.modelingExercise.exampleSolutionExplanation,
             },
             {
-                // The timeline owns the example solution publication date, so its validity counts towards grading.
                 title: 'artemisApp.exercise.sections.grading',
                 valid: Boolean(
                     (this.points()?.valid ?? true) &&
