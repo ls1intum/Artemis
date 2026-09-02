@@ -66,7 +66,7 @@ export class VariantGenerationTrayComponent {
         if (this.variantGenerationService.runningJobs().length > 0) {
             return 'running';
         }
-        const needsAttention = this.variantGenerationService.jobs().some((job) => job.phase === 'FAILED' || job.phase === 'DRAFT_WITH_WARNINGS');
+        const needsAttention = this.variantGenerationService.jobs().some((job) => this.needsAttention(job));
         return needsAttention ? 'attention' : 'success';
     });
 
@@ -128,7 +128,16 @@ export class VariantGenerationTrayComponent {
 
     /** Entries needing instructor attention get the warning accent in the list. */
     needsAttention(job: VariantJob): boolean {
-        return job.phase === 'FAILED' || job.phase === 'DRAFT_WITH_WARNINGS';
+        return job.phase === 'FAILED' || job.phase === 'DRAFT_WITH_WARNINGS' || this.hasLeftoverExercise(job);
+    }
+
+    /**
+     * A cancellation deletes the generated clone, so a CANCELLED entry normally has no exercise id. When it
+     * still carries one, that deletion failed and the exercise survives — the instructor has to delete it by
+     * hand, which makes this entry anything but an ordinary cancellation.
+     */
+    hasLeftoverExercise(job: VariantJob): boolean {
+        return job.phase === 'CANCELLED' && job.variantExerciseId !== undefined;
     }
 
     /** Cooperative cancel behind a confirmation — discards the LLM work and deletes the clone. */

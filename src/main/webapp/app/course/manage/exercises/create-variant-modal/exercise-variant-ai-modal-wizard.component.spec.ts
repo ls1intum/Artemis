@@ -672,3 +672,80 @@ describe('ExerciseVariantAiModalWizardComponent (open in editor & flagged drafts
         expect(component.warningsExpanded()).toBe(true);
     });
 });
+
+describe('ExerciseVariantAiModalWizardComponent (cancelled with a surviving clone)', () => {
+    let fixture: ComponentFixture<ExerciseVariantAiModalWizardComponent>;
+    let component: ExerciseVariantAiModalWizardComponent;
+
+    const cleanupDetail = 'The generated exercise (id 4711) could not be deleted automatically — delete it manually.';
+
+    beforeEach(async () => {
+        routerMock.navigate.mockClear();
+        await TestBed.configureTestingModule({
+            imports: [ExerciseVariantAiModalWizardComponent],
+            providers: [
+                { provide: Router, useValue: routerMock },
+                {
+                    provide: ExerciseVariantGenerationService,
+                    useValue: {
+                        startGeneration: vi.fn().mockReturnValue(of('job-1')),
+                        jobEvents: vi.fn().mockReturnValue(NEVER),
+                        // Cancelling deletes the clone, so an exercise id on a CANCELLED job means the deletion failed.
+                        getJobDetail: vi.fn().mockReturnValue(
+                            of({
+                                job: { jobId: 'job-1', phase: 'CANCELLED', variantExerciseId: 4711, failureDetail: cleanupDetail },
+                                stepOutputs: {},
+                                request: undefined,
+                            }),
+                        ),
+                        cancelJob: vi.fn().mockReturnValue(of(undefined)),
+                    },
+                },
+                { provide: ExerciseVariantGroupService, useValue: { getGroupsForCourse: vi.fn().mockReturnValue(of([])) } },
+                { provide: ExerciseService, useValue: { find: vi.fn().mockReturnValue(of({ body: { id: 4711, type: ExerciseType.QUIZ, course: { id: 9 } } as Exercise })) } },
+                {
+                    provide: TranslateService,
+                    useValue: { instant: (key: string) => key, get: (key: string) => of(key), onLangChange: of(), onTranslationChange: of(), onDefaultLangChange: of() },
+                },
+            ],
+        })
+            .overrideComponent(ExerciseVariantAiModalWizardComponent, {
+                remove: { imports: [ArtemisTranslatePipe] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? '')] },
+            })
+            .compileComponents();
+
+        fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
+        component = fixture.componentInstance;
+        fixture.componentRef.setInput('courseId', 7);
+        fixture.componentRef.setInput('monitorJobId', 'job-1');
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+        TestBed.resetTestingModule();
+    });
+
+    it('surfaces the cleanup warning and the link into the exercise that survived the cancellation', () => {
+        expect(component.jobPhase()).toBe('CANCELLED');
+        expect(component.failureDetail()).toBe(cleanupDetail);
+        expect(document.body.querySelector('[data-testid="variant-wizard-cancelled-cleanup"]')?.textContent).toContain('could not be deleted automatically');
+
+        const openEditor = document.body.querySelector('[data-testid="variant-wizard-cancelled-open-editor"]');
+        expect(openEditor).not.toBeNull();
+        component.confirmVariant();
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/course-management', 9, 'quiz-exercises', 4711, 'edit']);
+    });
+
+    it('pulls the job detail when the live CANCELLED event arrives, since the event carries neither', () => {
+        const getJobDetail = TestBed.inject(ExerciseVariantGenerationService).getJobDetail as ReturnType<typeof vi.fn>;
+        component.jobId.set('job-1');
+        getJobDetail.mockClear();
+
+        component['handleEvent']({ type: 'CANCELLED' });
+
+        expect(getJobDetail).toHaveBeenCalledWith('job-1');
+    });
+});

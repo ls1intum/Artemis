@@ -96,7 +96,7 @@
                             <div class="flex items-center gap-2 text-sm text-muted-color">
                                 @if (job.phase === 'COMPLETED') {
                                     <fa-icon [icon]="faCircleCheck" class="text-state-success" />
-                                } @else if (job.phase === 'FAILED' || job.phase === 'DRAFT_WITH_WARNINGS') {
+                                } @else if (needsAttention(job)) {
                                     <fa-icon [icon]="faTriangleExclamation" class="text-state-warning" data-testid="variant-tray-warning" />
                                 }
                                 <span data-testid="variant-tray-phase">{{ phaseLabelKey(job) | artemisTranslate }}</span>
@@ -107,6 +107,10 @@
                                     <span>({{ 'artemisApp.exerciseVariantGeneration.tray.attempt' | artemisTranslate: { attempt: job.attempt, max: job.maxAttempts } }})</span>
                                 }
                             </div>
+                            <!-- A cancellation that could not delete its clone: the leftover has to be visible here. -->
+                            @if (hasLeftoverExercise(job) && job.failureDetail) {
+                                <div class="text-sm text-state-warning" data-testid="variant-tray-cleanup-warning">{{ job.failureDetail }}</div>
+                            }
                             @if (!isTerminalVariantPhase(job.phase)) {
                                 <div class="variant-tray-steps" data-testid="variant-tray-steps">
                                     @for (phase of runningPhases; track phase; let i = $index) {

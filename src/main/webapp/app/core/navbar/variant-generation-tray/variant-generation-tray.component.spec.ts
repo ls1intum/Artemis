@@ -173,6 +173,24 @@ describe('VariantGenerationTrayComponent', () => {
         expect(component.needsAttention(cloneWith(completedJob, { phase: 'DRAFT_WITH_WARNINGS' as const }))).toBe(true);
     });
 
+    it('flags a cancelled job whose clone survived the cleanup and shows the cleanup note', () => {
+        // A cancellation deletes the clone, so an ordinary CANCELLED entry carries no exercise id.
+        const ordinaryCancellation = cloneWith(completedJob, { phase: 'CANCELLED' as const, variantExerciseId: undefined });
+        expect(component.hasLeftoverExercise(ordinaryCancellation)).toBe(false);
+        expect(component.needsAttention(ordinaryCancellation)).toBe(false);
+
+        const leftover = cloneWith(completedJob, { phase: 'CANCELLED' as const, failureDetail: 'The generated exercise (id 4711) could not be deleted automatically.' });
+        expect(component.hasLeftoverExercise(leftover)).toBe(true);
+        expect(component.needsAttention(leftover)).toBe(true);
+
+        // The tray button itself must carry the warning status, not the neutral checkmark.
+        jobs.set([leftover]);
+        fixture.detectChanges();
+        expect(component.trayStatus()).toBe('attention');
+        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-attention"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="variant-tray-success"]')).toBeNull();
+    });
+
     it('maps phases onto the step-dot timeline and off it for terminal phases', () => {
         expect(component.phaseIndex({ phase: 'ANALYZING' } as VariantJob)).toBe(0);
         expect(component.phaseIndex({ phase: 'TRANSFORMING' } as VariantJob)).toBeGreaterThan(component.phaseIndex({ phase: 'PLANNING' } as VariantJob));

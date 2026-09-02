@@ -506,12 +506,24 @@
         } @else if (jobPhase() === 'CANCELLED') {
             <div class="ai-warning mb-4" data-testid="variant-wizard-cancelled">
                 <fa-icon [icon]="faBan" class="ai-warning__icon" />
-                <span>{{ 'artemisApp.exerciseVariantGeneration.phase.CANCELLED' | artemisTranslate }}</span>
+                <div>
+                    <span>{{ 'artemisApp.exerciseVariantGeneration.phase.CANCELLED' | artemisTranslate }}</span>
+                    <!-- Cancelling deletes the clone; when that deletion failed the exercise survives, so the
+                         cleanup note and the link into it must be visible here instead of only in the server log. -->
+                    @if (failureDetail(); as detail) {
+                        <div class="text-sm text-muted-color" data-testid="variant-wizard-cancelled-cleanup">{{ detail }}</div>
+                    }
+                </div>
             </div>
-            <div class="flex justify-end">
+            <div class="flex justify-end gap-2">
                 <tum-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tum-ui-button>
+                @if (generatedVariant()) {
+                    <tum-ui-button severity="primary" size="small" [icon]="faPenToSquare" (clicked)="confirmVariant()" data-testid="variant-wizard-cancelled-open-editor">
+                        {{ 'artemisApp.exerciseVariantGeneration.wizard.openInEditor' | artemisTranslate }}
+                    </tum-ui-button>
+                }
             </div>
         } @else {
             <!-- Title/type live in the flow card above; this row only adds the variant's key facts. -->

@@ -648,6 +648,9 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
             case 'CANCELLED':
                 this.jobPhase.set('CANCELLED');
                 this.wizardStep.set(5);
+                // A cancellation whose clone could not be deleted keeps the exercise id and carries a cleanup
+                // note; neither travels on the event, so pull the job detail to surface them.
+                this.loadFullStepOutputs();
                 break;
         }
     }
@@ -675,7 +678,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.variantTitle.set(detail.job?.variantExerciseTitle ?? this.variantTitle());
         this.monitorRequest.set(detail.request ?? this.monitorRequest());
         this.totalTokensUsed.set(detail.job?.totalTokensUsed ?? this.totalTokensUsed());
-        if (this.jobPhase() === 'FAILED') {
+        if (this.jobPhase() === 'FAILED' || this.jobPhase() === 'CANCELLED') {
+            // CANCELLED normally has no exercise; when it does, the cleanup failed and this id plus the stored
+            // detail are the only pointers to the exercise the instructor has to delete by hand.
+            this.failureDetail.set(detail.job?.failureDetail ?? this.failureDetail());
             this.showResult(detail.job?.variantExerciseId);
         }
     }
