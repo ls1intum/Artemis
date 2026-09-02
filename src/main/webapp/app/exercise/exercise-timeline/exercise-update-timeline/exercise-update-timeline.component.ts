@@ -5,13 +5,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 
-/**
- * Grading timeline shared by the update forms of the manually assessed exercise types (modeling, text, file upload).
- *
- * Mirrors {@link ProgrammingExerciseUpdateTimelineComponent}: the example solution publication date is an opt-in step
- * of the timeline rather than a standalone field, so every exercise type configures and orders all of its dates in one
- * place.
- */
+/** Grading timeline shared by manually assessed exercise update forms. */
 @Component({
     selector: 'jhi-exercise-update-timeline',
     templateUrl: './exercise-update-timeline.component.html',

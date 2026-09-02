@@ -208,7 +208,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
         this.route.paramMap.subscribe((params) => {
-            // Param-only navigation reuses this component; the not-possible-yet banner must not survive the switch.
             this.assessmentNotPossibleYet.set(undefined);
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
@@ -221,8 +220,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
             const submissionId = params.get('submissionId');
             this.resultId.set(Number(params.get('resultId')) || 0);
-            // Taken from the URL once per load, so that the round the submission is requested with is also the round
-            // its results are indexed by, even when the parameter has changed since the last load.
             this.correctionRound.set(this.correctionRoundFromUrl);
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
@@ -257,8 +254,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
                 if (!submission) {
-                    // there are no unassessed submissions — leave the loading state the request entered, so the page
-                    // says so instead of staying blank behind the loading flags
                     this.submission.set(undefined);
                     this.loadingInitialSubmission.set(false);
                     this.isLoading.set(false);
@@ -281,8 +276,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.loadingInitialSubmission.set(false);
-        // The component is reused when assessing the next submission. Clear all assessment-specific state before
-        // processing the new result, in particular when that result has no feedback and handleFeedback returns early.
         this.referencedFeedback = [];
         this.unreferencedFeedback.set([]);
         this.feedbackSuggestions = [];
@@ -295,7 +288,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.course.set(getCourseFromExercise(this.modelingExercise()));
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(submission, this.resultId()));
-            // Read off the result, not off its position in the results array.
             this.correctionRound.set(this.result()?.correctionRound ?? 0);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission(), this.correctionRound()));
@@ -339,7 +331,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.isLoading.set(false);
 
-        // Suggestions only apply while the assessment consists entirely of automatic feedback.
         const automaticFeedbackCount = this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
         if (this.modelingExercise()!.feedbackSuggestionModule && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();

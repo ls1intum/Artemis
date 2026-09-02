@@ -42,16 +42,12 @@ export class ComplaintsStudentViewComponent implements OnInit {
     readonly result = input<Result>();
     readonly exam = input<Exam>();
     readonly isCurrentUserSubmissionAuthor = input<boolean>();
-    // flag to indicate exam test run. Default set to false.
     readonly testRun = input(false);
 
     submission!: Submission; // set in ngOnInit() from the participation's submissions before loadPotentialComplaint() reads it
-    // Async-loaded, template-bound state — signals so they render after their subscriptions resolve under zoneless.
     readonly complaint = signal<Complaint | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
-    // Indicates what type of complaint is currently created by the student. Undefined if the student didn't click on a button yet.
     readonly formComplaintType = signal<ComplaintType | undefined>(undefined);
-    // The number of complaints that the student is still allowed to submit in the course.
     readonly remainingNumberOfComplaints = signal(0);
     readonly isCorrectUserToFileAction = signal(false);
     readonly isExamMode = signal<boolean>(undefined!);
@@ -61,7 +57,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
 
     ComplaintType = ComplaintType;
 
-    // Icons
     faInfoCircle = faInfoCircle;
 
     ngOnInit(): void {
@@ -73,7 +68,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
             if (participation.submissions && participation.submissions.length > 0) {
                 this.submission = participation.submissions.sort((a, b) => b.id! - a.id!)[0];
             }
-            // for course exercises we track the number of allowed complaints
             if (this.course()?.complaintsEnabled) {
                 this.courseService.getNumberOfAllowedComplaintsInCourse(this.course()!.id!, this.exercise().teamMode).subscribe((allowedComplaints: number) => {
                     this.remainingNumberOfComplaints.set(allowedComplaints);
@@ -102,9 +96,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
         }
     }
 
-    /**
-     * Sets the complaint if complaint and a valid result exist
-     */
     loadPotentialComplaint(): void {
         this.complaintService
             .findBySubmissionId(this.submission.id!)
@@ -114,9 +105,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
             });
     }
 
-    /**
-     * Determines whether to show the section
-     */
     private getSectionVisibility(): boolean {
         if (!this.isAboutAnAssessment()) {
             return false;
@@ -145,9 +133,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return this.result()?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA;
     }
 
-    /**
-     * Checks whether the student is allowed to submit a complaint or not for exam and course exercises.
-     */
     private isTimeOfComplaintValid(): boolean {
         if (!this.isExamMode()) {
             const course = this.course();
@@ -160,9 +145,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return this.isWithinExamReviewPeriod();
     }
 
-    /**
-     * Checks whether the student is allowed to submit a more feedback request. This is only possible for course exercises.
-     */
     private isTimeOfFeedbackRequestValid(): boolean {
         const course = this.course();
         if (!this.isExamMode() && course?.maxRequestMoreFeedbackTimeDays) {
@@ -172,10 +154,6 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return false;
     }
 
-    /**
-     * A guard function used to indicate whether complaint submissions are valid.
-     * These are only allowed if they are submitted within the student review period.
-     */
     private isWithinExamReviewPeriod(): boolean {
         if (this.testRun()) {
             return true;
@@ -185,18 +163,12 @@ export class ComplaintsStudentViewComponent implements OnInit {
         return false;
     }
 
-    /**
-     * Function to set the complaint type (which opens the complaint form) and scrolls to the complaint form
-     */
     openComplaintForm(complainType: ComplaintType): void {
         this.formComplaintType.set(complainType);
         // Scroll once the complaint form has rendered (signal write schedules CD; afterNextRender runs after that render).
         afterNextRender(() => this.scrollToComplaint(), { injector: this.injector });
     }
 
-    /**
-     * Function to scroll to the complaint form
-     */
     private scrollToComplaint(): void {
         this.renderer.selectRootElement('#complaintScrollpoint', true).scrollIntoView({ behavior: 'smooth', block: 'end' });
     }

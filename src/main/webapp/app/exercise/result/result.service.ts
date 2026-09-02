@@ -323,22 +323,15 @@ export class ResultService implements IResultService {
     public static processReceivedResult(exercise: Exercise, result: Result): Result {
         if (result.submission?.participation) {
             (result.submission.participation as StudentParticipation).exercise = exercise;
-            // Nest submission into participation so that it is available for the result component
         }
         result.durationInMinutes = ResultService.durationInMinutes(result.completionDate!, result.submission?.participation?.initializationDate ?? exercise.releaseDate!);
         return result;
     }
 
-    /**
-     * Utility function
-     */
     private static durationInMinutes(completionDate: dayjs.Dayjs, initializationDate: dayjs.Dayjs) {
         return dayjs(completionDate).diff(initializationDate, 'minutes');
     }
 
-    /**
-     * Utility function used to trigger the download of a CSV file
-     */
     public triggerDownloadCSV(rows: string[], csvFileName: string) {
         const csvContent = 'data:text/csv;charset=utf-8,' + rows.join('\n');
         this.csvDownloadService.downloadCSV(csvContent, csvFileName);

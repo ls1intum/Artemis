@@ -86,14 +86,11 @@ export class ResultComponent {
     readonly showProgressBar = input(false);
     readonly showProgressBarBorder = input(false);
 
-    // Context resolved by trivial object-graph navigation (NOT result-picking): callers may pass the exercise/participation
-    // explicitly, otherwise we read them off the participation (or the result's submission's participation).
     readonly resolvedParticipation = computed(() => this.participation() ?? this.result()?.submission?.participation);
     readonly resolvedExercise = computed(() => {
         const participation = this.participation() ?? this.result()?.submission?.participation;
         return this.exercise() ?? (participation ? getExercise(participation) : undefined);
     });
-    // True when the passed result is actually displayable as a score (rated, or ungraded allowed, or an Athena AI result).
     private readonly displayableResult = computed(() => {
         const result = this.result();
         return !!result && ((result.score !== undefined && (result.rated || result.rated === undefined || this.showUngradedResults())) || isAthenaAIResult(result));
@@ -130,7 +127,7 @@ export class ResultComponent {
     });
 
     readonly resultString = computed(() => {
-        this.currentLang(); // re-translate the string when the UI language changes
+        this.currentLang(); // Recompute the translated text when the language changes.
         const status = this.templateStatus();
         return status === ResultTemplateStatus.LATE || this.displayableResult()
             ? this.resultService.getResultString(this.result(), this.resolvedExercise(), this.resolvedParticipation(), this.short())
@@ -159,7 +156,6 @@ export class ResultComponent {
     readonly estimatedRemaining = signal<number>(0);
     readonly estimatedDuration = signal<number>(0);
 
-    // Icons
     readonly faCircleNotch = faCircleNotch;
     readonly faExclamationCircle = faExclamationCircle;
     readonly faExclamationTriangle = faExclamationTriangle;
@@ -194,16 +190,12 @@ export class ResultComponent {
         });
     }
 
-    /**
-     * Gets the tooltip text that should be displayed next to the result string. Not required.
-     */
     buildResultTooltip(): string | undefined {
         // Only show the 'preliminary' tooltip for programming student participation results and if the buildAndTestAfterDueDate has not passed.
         const exercise = this.resolvedExercise();
         const programmingExercise = exercise as ProgrammingExercise;
         const result = this.result();
 
-        // Automatically generated feedback section
         if (result) {
             if (this.templateStatus() === ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
                 return 'artemisApp.result.resultString.automaticAIFeedbackFailedTooltip';

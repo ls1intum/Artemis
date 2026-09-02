@@ -19,7 +19,6 @@ export interface ModelingAssessmentRegion {
     readonly occupied: Signal<boolean>;
 }
 
-/** An absent slot and an unoccupied one are the same thing to the region. */
 export function isOccupied(region: ModelingAssessmentRegion | undefined): boolean {
     return !!region?.occupied();
 }

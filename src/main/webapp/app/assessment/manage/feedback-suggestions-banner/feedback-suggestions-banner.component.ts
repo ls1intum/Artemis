@@ -17,10 +17,7 @@ export interface FeedbackSuggestionsNoticeState {
     isFeedbackSuggestionsEnabled: boolean;
 }
 
-/**
- * The banner's visibility rule, exported so a host can ask whether there is anything to show before it
- * reserves space for the answer.
- */
+/** Resolves visibility before a host reserves space for the notice. */
 export function feedbackSuggestionsNotice(state: FeedbackSuggestionsNoticeState): FeedbackSuggestionsNotice | undefined {
     if (state.isLoading) {
         return state.isFeedbackSuggestionsEnabled ? 'loading' : undefined;
@@ -31,11 +28,6 @@ export function feedbackSuggestionsNotice(state: FeedbackSuggestionsNoticeState)
     return state.isFeedbackSuggestionsEnabled ? 'suggestions' : 'automaticAssessment';
 }
 
-/**
- * `banner` renders the message inline, as a band the host lays out. `chrome` renders a compact
- * island for mounting into an Apollon overlay region, where it floats over the canvas rather than
- * taking a slice of it, so the long copy moves into the info tooltip to keep the island one line wide.
- */
 export type FeedbackSuggestionsBannerAppearance = 'banner' | 'chrome';
 
 @Component({
