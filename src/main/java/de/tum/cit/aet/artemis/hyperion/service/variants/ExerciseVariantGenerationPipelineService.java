@@ -301,6 +301,10 @@ public class ExerciseVariantGenerationPipelineService {
             jobService.recordStepOutput(jobId, VariantJobPhase.VERIFYING,
                     new StepOutput(report.passed() ? "All gates green" : report.findings().size() + " finding(s) — attempt " + attempt + "/" + MAX_VERIFY_ATTEMPTS,
                             renderReport(report), Instant.now()));
+            // VERIFYING is the longest phase of a round (the programming gates wait for real CI builds), so a
+            // cancel accepted while it ran must be honored here. Every exit below returns straight into
+            // FINALIZING, which is past the last cancel window — without this check the job would finish anyway.
+            checkCancelled(jobId);
 
             if (report.passed()) {
                 return report;

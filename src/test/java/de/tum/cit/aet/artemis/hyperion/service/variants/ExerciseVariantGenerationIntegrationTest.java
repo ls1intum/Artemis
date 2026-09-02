@@ -183,6 +183,20 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
      * @param critiqueFindings findings the quiz critique soft gate reports on every verification pass
      */
     private ScriptedModel scriptChatModel(String planningResponse, Function<List<ToolCallback>, String> agentBehavior, List<String> critiqueFindings) {
+        return scriptChatModel(planningResponse, agentBehavior, critiqueFindings, () -> {
+        });
+    }
+
+    /**
+     * Variant of {@link #scriptChatModel(String, Function, List)} with a hook that runs when the quiz critique
+     * soft gate is called — the only point inside VERIFYING a test can act on.
+     *
+     * @param planningResponse the raw planner output
+     * @param agentBehavior    invoked with the round's tool callbacks; returns the round's final text
+     * @param critiqueFindings findings the critique reports on every verification pass
+     * @param onCritique       runs before the critique answers, i.e. while the pipeline is in VERIFYING
+     */
+    private ScriptedModel scriptChatModel(String planningResponse, Function<List<ToolCallback>, String> agentBehavior, List<String> critiqueFindings, Runnable onCritique) {
         ScriptedModel script = new ScriptedModel();
         doAnswer(invocation -> {
             Prompt prompt = invocation.getArgument(0);
@@ -199,6 +213,7 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
             }
             if (userText.contains("Review the variant quiz")) {
                 script.critiqueCalls().incrementAndGet();
+                onCritique.run();
                 ObjectNode critique = objectMapper.createObjectNode();
                 ArrayNode findings = critique.putArray("findings");
                 critiqueFindings.forEach(findings::add);
@@ -546,6 +561,34 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
 
         assertThat(job.getPhase()).isEqualTo(VariantJobPhase.CANCELLED);
         // The provisioned clone was deleted on the same cleanup path as hard failures.
+        assertThat(job.getVariantExerciseId()).isNull();
+        assertThat(provisionedExerciseId.get()).isNotNull();
+        await().atMost(Duration.ofSeconds(30)).until(() -> quizExerciseRepository.findById(provisionedExerciseId.get()).isEmpty());
+    }
+
+    /**
+     * VERIFYING is the longest phase of a round — for programming exercises it waits for real CI builds. A cancel
+     * accepted while it runs used to be dropped whenever the report came back green: the loop returned straight
+     * into FINALIZING, which is past the last cancel window, and the job completed anyway.
+     */
+    @Test
+    @WithMockUser(username = EDITOR_LOGIN, roles = "EDITOR")
+    void shouldHonorCancellationRequestedDuringTheFinalVerification() throws Exception {
+        AtomicReference<Long> provisionedExerciseId = new AtomicReference<>();
+        AtomicReference<String> jobIdUnderTest = new AtomicReference<>();
+        // Green gates, so without the post-verification check the job would go on to FINALIZING and COMPLETED.
+        scriptChatModel(PLAN_JSON, this::applyRetitleEdit, List.of(), () -> {
+            await().atMost(Duration.ofSeconds(10)).until(() -> jobIdUnderTest.get() != null);
+            VariantJob runningJob = jobService.getJob(jobIdUnderTest.get(), EDITOR_LOGIN).orElseThrow();
+            provisionedExerciseId.set(runningJob.getVariantExerciseId());
+            jobService.requestCancel(runningJob.getJobId(), EDITOR_LOGIN);
+        });
+
+        String jobId = startJob(sourceQuiz.getId(), domainChangeRequest(standalonePlacement()));
+        jobIdUnderTest.set(jobId);
+        VariantJob job = awaitTerminal(jobId, EDITOR_LOGIN);
+
+        assertThat(job.getPhase()).isEqualTo(VariantJobPhase.CANCELLED);
         assertThat(job.getVariantExerciseId()).isNull();
         assertThat(provisionedExerciseId.get()).isNotNull();
         await().atMost(Duration.ofSeconds(30)).until(() -> quizExerciseRepository.findById(provisionedExerciseId.get()).isEmpty());
