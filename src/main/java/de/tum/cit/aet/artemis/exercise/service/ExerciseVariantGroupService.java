@@ -103,8 +103,7 @@ public class ExerciseVariantGroupService {
                 Duration buildAndTestOffset = getBuildAndTestOffset(programmingExercise);
                 buildAndTestOffsetsByExerciseId.put(exercise.getId(), buildAndTestOffset);
                 applyGroupTimeline(group, programmingExercise);
-                programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computeBuildAndTestDate(group.getDueDate(), buildAndTestOffset));
-                programmingExercise.validateDates();
+                validateProgrammingExerciseTimeline(programmingExercise, buildAndTestOffset);
                 programmingExercises.add(programmingExercise);
             }
             else {
@@ -150,8 +149,7 @@ public class ExerciseVariantGroupService {
             // assignment must not leave the exercise grouped). Membership is then saved because the programming update flow
             // reloads by id; that flow is required to reschedule the build/test jobs.
             applyGroupTimeline(group, programmingExercise);
-            programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computeBuildAndTestDate(group.getDueDate(), originalBuildAndTestOffset));
-            programmingExercise.validateDates();
+            validateProgrammingExerciseTimeline(programmingExercise, originalBuildAndTestOffset);
             if (groupTimelineChanged) {
                 exerciseVariantGroupRepository.save(group);
             }
@@ -176,8 +174,16 @@ public class ExerciseVariantGroupService {
         return dueDate == null || buildAndTestDate == null ? null : Duration.between(dueDate, buildAndTestDate);
     }
 
-    private ZonedDateTime computeBuildAndTestDate(@Nullable ZonedDateTime dueDate, @Nullable Duration buildAndTestOffset) {
-        return dueDate == null || buildAndTestOffset == null ? null : dueDate.plus(buildAndTestOffset);
+    private void validateProgrammingExerciseTimeline(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) {
+        ZonedDateTime computedBuildAndTestDate = programmingExerciseCreationUpdateService.computeBuildAndTestDateForTimelineValidation(programmingExercise, buildAndTestOffset);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(computedBuildAndTestDate);
+        ZonedDateTime assessmentDueDate = programmingExercise.getAssessmentDueDate();
+        if (computedBuildAndTestDate != null && assessmentDueDate != null && !computedBuildAndTestDate.isBefore(assessmentDueDate)) {
+            throw new BadRequestAlertException(
+                    "The variant group timeline cannot be applied because LocalCI would run tests after the assessment due date. Move the assessment due date after the automatic test run.",
+                    ENTITY_NAME, "automaticTestRunAfterAssessmentDueDate");
+        }
+        programmingExercise.validateDates();
     }
 
     /**
@@ -217,7 +223,7 @@ public class ExerciseVariantGroupService {
      */
     private ProgrammingExercise updateProgrammingExerciseTimeline(ProgrammingExercise programmingExercise, ExerciseVariantGroup group,
             @Nullable Duration originalBuildAndTestOffset) {
-        ZonedDateTime buildAndTestDate = computeBuildAndTestDate(group.getDueDate(), originalBuildAndTestOffset);
+        ZonedDateTime buildAndTestDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
         ProgrammingExerciseTimelineUpdateDTO timelineUpdate = new ProgrammingExerciseTimelineUpdateDTO(programmingExercise.getId(), group.getReleaseDate(), group.getStartDate(),
                 group.getDueDate(), programmingExercise.getAssessmentType(), group.getAssessmentDueDate(), group.getExampleSolutionPublicationDate(), buildAndTestDate);
         return programmingExerciseCreationUpdateService.updateTimeline(timelineUpdate, null, originalBuildAndTestOffset);

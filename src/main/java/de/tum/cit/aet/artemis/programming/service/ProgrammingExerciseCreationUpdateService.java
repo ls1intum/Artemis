@@ -111,6 +111,27 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private static final int MAX_PROBLEM_STATEMENT_LENGTH = 100_000;
 
+    /**
+     * Computes the automatic build-and-test date without persisting or scheduling anything. Timeline owners use this
+     * before saving related entities so their validation agrees with the subsequent programming-exercise update.
+     *
+     * @param programmingExercise the exercise with the proposed timeline and its build configuration
+     * @param buildAndTestOffset  the offset captured before changing the due date, or {@code null} to use LocalCI's default
+     * @return the computed date, or {@code null} when no automatic after-due-date phase is configured
+     */
+    public @Nullable ZonedDateTime computeBuildAndTestDateForTimelineValidation(ProgrammingExercise programmingExercise, @Nullable Duration buildAndTestOffset) {
+        if (automaticAfterDueDateService.isEmpty()) {
+            return programmingExercise.getDueDate() == null || buildAndTestOffset == null ? null : programmingExercise.getDueDate().plus(buildAndTestOffset);
+        }
+        try {
+            return automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
+        }
+        catch (JsonProcessingException e) {
+            throw new BadRequestAlertException("The build plan configuration is invalid for exercise " + programmingExercise.getId(), "programmingExercise",
+                    "invalidBuildPlanConfiguration");
+        }
+    }
+
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
             UserRepository userRepository, ExerciseService exerciseService, ProgrammingExerciseRepository programmingExerciseRepository, ChannelService channelService,
