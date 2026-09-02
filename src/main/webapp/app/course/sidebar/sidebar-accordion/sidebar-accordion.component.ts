@@ -59,6 +59,19 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
         return value !== undefined && !Number.isNaN(value) ? value : undefined;
     });
 
+    /** Key of the time category holding the selected entity, if any. */
+    private readonly groupKeyWithSelectedItem = computed<string | undefined>(() => {
+        const selectedId = this.selectedItemId();
+        const groupedData = this.groupedData();
+        if (selectedId === undefined || !groupedData) {
+            return undefined;
+        }
+        // A variant group is a single card whose members live in groupedItems, so the selected id may match either the
+        // card itself or one of its members (the direct URL / refresh case, where a variant is open without a card).
+        const matchesSelectedId = (item: SidebarCardElement): boolean => item.id === selectedId || !!item.groupedItems?.some((variant) => variant.id === selectedId);
+        return Object.entries(groupedData).find(([, group]) => group.entityData.some(matchesSelectedId))?.[0];
+    });
+
     readonly faChevronRight = faChevronRight;
     readonly faFile = faFile;
     readonly totalUnreadMessagesPerGroup = signal<{ [key: string]: number }>({});
@@ -86,10 +99,17 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
                 }
             });
         });
+        // The selected entity changes after init as well: `routeParams` follows every NavigationEnd, and the grouped
+        // data can arrive later than the first render. Registered last so it runs after the two effects above, both
+        // of which replace the whole collapse state and would otherwise leave the opened category collapsed. Only the
+        // category key is tracked, so a manual collapse survives until the route moves to a different category.
+        effect(() => {
+            this.groupKeyWithSelectedItem();
+            untracked(() => this.expandGroupWithSelectedItem());
+        });
     }
 
     ngOnInit() {
-        this.expandGroupWithSelectedItem();
         this.setStoredCollapseState();
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((c) => {
             setTimeout(() => {
@@ -124,18 +144,9 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     }
 
     expandGroupWithSelectedItem() {
-        const selectedId = this.selectedItemId();
-        const groupedData = this.groupedData();
-        if (selectedId === undefined || !groupedData) {
-            return;
-        }
-        // A variant group is a single card whose members live in groupedItems, so the selected id may match either the
-        // card itself or one of its members (the direct URL / refresh case, where a variant is open without a card).
-        const matchesSelectedId = (item: SidebarCardElement): boolean => item.id === selectedId || !!item.groupedItems?.some((variant) => variant.id === selectedId);
-        const groupWithSelectedItem = Object.entries(groupedData).find((groupedItem) => groupedItem[1].entityData.some(matchesSelectedId));
-        if (groupWithSelectedItem) {
-            const groupName = groupWithSelectedItem[0];
-            this.collapseStateInternal.set(cloneWith(this.collapseStateInternal(), { [groupName]: false }));
+        const groupKey = this.groupKeyWithSelectedItem();
+        if (groupKey) {
+            this.collapseStateInternal.set(cloneWith(this.collapseStateInternal(), { [groupKey]: false }));
         }
     }
 

@@ -248,8 +248,32 @@ describe('SidebarAccordionComponent', () => {
     });
 
     it('should expand the group containing the selected item', () => {
-        component.expandGroupWithSelectedItem();
+        // 'future' starts collapsed and holds the item the route shows, so the initial render must open it.
         expect(component.collapseStateInternal()['future']).toBe(false);
+    });
+
+    it('should expand the group containing the selected item when the route changes after init', () => {
+        // routeParams follows every NavigationEnd, so selecting an item in a collapsed category must open it.
+        expect(component.collapseStateInternal()['noDate']).toBe(true);
+
+        fixture.componentRef.setInput('routeParams', { exerciseId: 4 });
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.collapseStateInternal()['noDate']).toBe(false);
+    });
+
+    it('should keep a category the user collapsed while the selected item does not change', () => {
+        // Only the category key is tracked, so a sidebar refresh handing over fresh grouped data with the same
+        // selection must not re-expand a category the user just collapsed.
+        component.toggleGroupCategoryCollapse('future');
+        expect(component.collapseStateInternal()['future']).toBe(true);
+
+        fixture.componentRef.setInput('groupedData', {
+            future: { entityData: [{ title: 'Title 3', type: 'Type C', id: 3, size: 'M' }] },
+        });
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.collapseStateInternal()['future']).toBe(true);
     });
 
     it('should expand the group when the selected item is a nested variant of a group', () => {

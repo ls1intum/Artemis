@@ -21,6 +21,7 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('ExerciseHeadersInformationComponent', () => {
     let component: ExerciseHeadersInformationComponent;
@@ -276,12 +277,14 @@ describe('ExerciseHeadersInformationComponent', () => {
         it('should drop the start, submission-due and assessment-due boxes while keeping the complaint due date', () => {
             const assessmentDueDate = dayjs().subtract(1, 'day');
             const lastResult = { id: 1, completionDate: assessmentDueDate, rated: true };
-            fixture.componentRef.setInput('exercise', {
-                ...baseExercise,
-                startDate: dayjs().add(2, 'days'),
-                assessmentDueDate,
-                course: { maxComplaintTimeDays: 7 },
-            });
+            fixture.componentRef.setInput(
+                'exercise',
+                cloneWith(baseExercise, {
+                    startDate: dayjs().add(2, 'days'),
+                    assessmentDueDate,
+                    course: { maxComplaintTimeDays: 7 },
+                }),
+            );
             // The complaint due date is derived from the participation's own last result, not from the exercise.
             fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [{ id: 1, results: [lastResult] }] });
             fixture.detectChanges();
@@ -302,7 +305,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         });
 
         it('should keep the per-variant boxes', () => {
-            fixture.componentRef.setInput('exercise', { ...baseExercise, difficulty: DifficultyLevel.EASY, maxPoints: 10 });
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { difficulty: DifficultyLevel.EASY, maxPoints: 10 }));
             fixture.componentRef.setInput('showSharedTimelineDates', false);
             fixture.detectChanges();
 
@@ -312,7 +315,7 @@ describe('ExerciseHeadersInformationComponent', () => {
         });
 
         it('should drop the live quiz countdown that stands in for the due date', () => {
-            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.QUIZ });
+            fixture.componentRef.setInput('exercise', cloneWith(baseExercise, { type: ExerciseType.QUIZ }));
             fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, remainingTimeText: '5 min', showResultsAvailable: false });
             fixture.componentRef.setInput('showSharedTimelineDates', false);
             fixture.detectChanges();
