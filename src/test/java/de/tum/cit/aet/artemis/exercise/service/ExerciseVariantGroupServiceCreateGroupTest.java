@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,10 +27,12 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpd
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 /**
- * A variant group is persisted before it can be attached to its course — the course owns the collection that
- * writes the FK — and the codebase runs services without {@code @Transactional}, so the two writes have to be
- * made safe by hand. These tests pin that neither half can leave a course-less group row behind: no course query
- * would ever return it, so nothing would clean it up.
+ * A variant group is persisted before it can be attached to its course — the {@code course_id} FK lives on the
+ * group's table but the {@code Course} side owns the mapping — and the codebase runs services without
+ * {@code @Transactional}, so the two writes have to be made safe by hand. These tests pin both halves: no
+ * course-less group row is ever left behind (no course query would return it, so nothing would clean it up), and
+ * the attachment writes only the new row instead of merging the course's {@code orphanRemoval} collection, which
+ * would delete a group a concurrent creation had just attached.
  */
 class ExerciseVariantGroupServiceCreateGroupTest {
 
@@ -63,13 +66,13 @@ class ExerciseVariantGroupServiceCreateGroupTest {
         Course course = new Course();
         course.setId(COURSE_ID);
         // The repository's ElseThrow lookup is a default method, which a mocked interface does not execute.
-        when(courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(COURSE_ID)).thenReturn(course);
+        when(courseRepository.findByIdElseThrow(COURSE_ID)).thenReturn(course);
     }
 
     @Test
     void deletesTheNewGroupWhenAttachingItToTheCourseFails() {
-        IllegalStateException attachmentFailed = new IllegalStateException("course save failed");
-        when(courseRepository.save(any(Course.class))).thenThrow(attachmentFailed);
+        IllegalStateException attachmentFailed = new IllegalStateException("attachment failed");
+        when(exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), COURSE_ID)).thenThrow(attachmentFailed);
 
         assertThat(catchThrowable(() -> service.createGroup(COURSE_ID, group))).isSameAs(attachmentFailed);
         verify(exerciseVariantGroupRepository).delete(savedGroup);
@@ -78,7 +81,7 @@ class ExerciseVariantGroupServiceCreateGroupTest {
     @Test
     void persistsNothingWhenTheCourseDoesNotExist() {
         EntityNotFoundException unknownCourse = new EntityNotFoundException("Course", 404L);
-        when(courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(404L)).thenThrow(unknownCourse);
+        when(courseRepository.findByIdElseThrow(404L)).thenThrow(unknownCourse);
 
         assertThat(catchThrowable(() -> service.createGroup(404L, group))).isSameAs(unknownCourse);
         verify(exerciseVariantGroupRepository, never()).save(any());
@@ -87,7 +90,31 @@ class ExerciseVariantGroupServiceCreateGroupTest {
     @Test
     void returnsThePersistedGroupOnceItIsAttached() {
         assertThat(service.createGroup(COURSE_ID, group)).isSameAs(savedGroup);
-        verify(courseRepository).save(any(Course.class));
+        verify(exerciseVariantGroupRepository).attachToCourse(savedGroup.getId(), COURSE_ID);
         verify(exerciseVariantGroupRepository, never()).delete(any());
+    }
+
+    @Test
+    void keepsTheAttachmentFailureWhenTheCompensatingDeleteAlsoFails() {
+        IllegalStateException attachmentFailed = new IllegalStateException("attachment failed");
+        when(exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), COURSE_ID)).thenThrow(attachmentFailed);
+        IllegalStateException cleanupFailed = new IllegalStateException("delete failed");
+        doThrow(cleanupFailed).when(exerciseVariantGroupRepository).delete(savedGroup);
+
+        Throwable thrown = catchThrowable(() -> service.createGroup(COURSE_ID, group));
+
+        // The caller must still learn why the attachment failed; the cleanup error only rides along.
+        assertThat(thrown).isSameAs(attachmentFailed);
+        assertThat(thrown.getSuppressed()).containsExactly(cleanupFailed);
+    }
+
+    @Test
+    void attachesTheNewRowWithoutMergingTheCoursesGroupCollection() {
+        // Saving the course would merge a detached, orphanRemoval collection: a snapshot read before a parallel
+        // creation lacks that creation's group, and the merge would delete it.
+        service.createGroup(COURSE_ID, group);
+
+        verify(courseRepository, never()).save(any(Course.class));
+        verify(courseRepository, never()).findWithEagerExerciseVariantGroupsByIdElseThrow(COURSE_ID);
     }
 }

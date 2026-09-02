@@ -7,9 +7,11 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -72,6 +74,26 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
     default ExerciseVariantGroup findByIdAndCourseIdWithoutExercisesElseThrow(Long groupId, Long courseId) throws EntityNotFoundException {
         return getValueElseThrow(findByIdAndCourseIdWithoutExercises(groupId, courseId), groupId);
     }
+
+    /**
+     * Attaches a newly created group to its course by writing the {@code course_id} that the {@code Course}-side
+     * collection would otherwise write. Native because the group entity deliberately has no {@code course} attribute —
+     * and written from this side on purpose: {@code Course.exerciseVariantGroups} is an {@code orphanRemoval}
+     * collection, so saving a course snapshot taken before a concurrent creation would treat that creation's group as
+     * removed and delete it. This statement touches the new row only.
+     *
+     * @param groupId  the id of the group to attach
+     * @param courseId the id of the course that will own it
+     * @return the number of rows written — 0 when the group no longer exists
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = """
+            UPDATE exercise_variant_group
+            SET course_id = :courseId
+            WHERE id = :groupId
+            """, nativeQuery = true)
+    int attachToCourse(@Param("groupId") long groupId, @Param("courseId") long courseId);
 
     /**
      * Resolves the group owning the given exercise, or empty if the exercise is not a variant.

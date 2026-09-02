@@ -14,13 +14,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
@@ -47,6 +48,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @Lazy
 @Service
 public class ExerciseVariantGroupService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExerciseVariantGroupService.class);
 
     private static final String ENTITY_NAME = "exerciseVariantGroup";
 
@@ -95,19 +98,28 @@ public class ExerciseVariantGroupService {
      */
     public ExerciseVariantGroup createGroup(Long courseId, ExerciseVariantGroup group) {
         group.validateDates();
-        // The course owns the unidirectional collection (the course_id FK lives on this table but is managed from the
-        // Course side), so the group has to exist before it can be attached. Not wrapped in a transaction (this
-        // codebase avoids service-level @Transactional), so the two writes are made safe by hand: the course is
-        // resolved BEFORE the first save, which leaves an unknown id persisting nothing, and a failed attachment
-        // takes the row with it — a course-less group is invisible to every course query and would linger forever.
-        Course course = courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(courseId);
+        // The course_id FK lives on this table but the Course side owns the mapping, so the group has to exist before
+        // it can be attached. Not wrapped in a transaction (this codebase avoids service-level @Transactional), so the
+        // two writes are made safe by hand: the course is resolved BEFORE the first save, which leaves an unknown id
+        // persisting nothing, and a failed attachment takes the row with it — a course-less group is invisible to
+        // every course query and would linger forever. The attachment writes the new row's FK directly instead of
+        // saving the course: that collection is orphanRemoval, so merging a snapshot taken before a concurrent
+        // creation would delete the group that creation had just attached.
+        courseRepository.findByIdElseThrow(courseId);
         ExerciseVariantGroup savedGroup = exerciseVariantGroupRepository.save(group);
         try {
-            course.addExerciseVariantGroup(savedGroup);
-            courseRepository.save(course);
+            exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), courseId);
         }
         catch (RuntimeException attachmentFailed) {
-            exerciseVariantGroupRepository.delete(savedGroup);
+            try {
+                exerciseVariantGroupRepository.delete(savedGroup);
+            }
+            catch (RuntimeException cleanupFailed) {
+                // Never let the cleanup hide why the attachment failed; log the row that has to go manually and
+                // carry the cleanup error along as a suppressed exception.
+                log.error("Could not delete variant group {} after it could not be attached to course {}", savedGroup.getId(), courseId, cleanupFailed);
+                attachmentFailed.addSuppressed(cleanupFailed);
+            }
             throw attachmentFailed;
         }
         return savedGroup;
