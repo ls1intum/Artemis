@@ -180,8 +180,12 @@ public class ExerciseVariantGenerationPipelineService {
             VerificationReport report = transformAndVerify(job, adapters, variant, plan);
 
             // --- FINALIZING --------------------------------------------------------------------------------
-            // Cannot be cancelled from here on — the last cancel window closed above.
-            jobService.updatePhase(jobId, VariantJobPhase.FINALIZING);
+            // Cannot be cancelled from here on — the last cancel window closed above. Guarded rather than a plain
+            // updatePhase: a cancel accepted between that check and this transition would otherwise be answered
+            // with success and then ignored (the guard and requestCancel share the job's lock).
+            if (!jobService.enterFinalizingUnlessCancelled(jobId)) {
+                throw new JobCancelledException();
+            }
             List<String> warnings = new ArrayList<>();
             if (!report.passed()) {
                 report.findings().forEach(finding -> warnings.add(finding.gate() + ": " + summarizeFindingForWarning(finding.message())));

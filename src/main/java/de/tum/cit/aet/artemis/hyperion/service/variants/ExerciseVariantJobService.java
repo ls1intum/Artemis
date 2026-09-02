@@ -194,6 +194,31 @@ public class ExerciseVariantJobService {
     }
 
     /**
+     * Guarded transition into {@link VariantJobPhase#FINALIZING}, the point past which a job can no longer be
+     * cancelled. Plain {@link #updatePhase} would race {@link #requestCancel}: that method accepts a request
+     * while the phase is still cancellable, so a cancel landing between the pipeline's last check and this
+     * transition would be answered with success and then ignored. Both writes take the same per-job lock, so
+     * exactly one wins — either the flag is already set and the caller aborts, or the request gets its 409.
+     *
+     * @param jobId the job id
+     * @return true when the job entered FINALIZING; false when a cancellation is pending and the caller must
+     *         abort the job instead
+     */
+    public boolean enterFinalizingUnlessCancelled(String jobId) {
+        Optional<VariantJob> finalizing = mutateIf(jobId, job -> !job.isCancelRequested(), job -> job.setPhase(VariantJobPhase.FINALIZING));
+        if (finalizing.isEmpty()) {
+            if (jobMap.get(jobId) == null) {
+                // Same contract as mutate(): a vanished entry is a bug, not a cancellation.
+                throw new IllegalStateException("Variant job " + jobId + " no longer exists");
+            }
+            return false;
+        }
+        log.info("Variant job {} entering phase {}", jobId, VariantJobPhase.FINALIZING);
+        publish(finalizing.get(), VariantGenerationEventDTO.phaseChanged(VariantJobPhase.FINALIZING));
+        return true;
+    }
+
+    /**
      * Records a repair attempt and publishes ATTEMPT (rendered as "attempt 2/3").
      *
      * @param jobId       the job id

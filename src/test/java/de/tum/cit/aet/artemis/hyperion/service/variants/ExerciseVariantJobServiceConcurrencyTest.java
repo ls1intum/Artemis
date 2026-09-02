@@ -8,11 +8,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -79,6 +81,60 @@ class ExerciseVariantJobServiceConcurrencyTest {
         }
 
         assertThat(jobService.isCancelRequested(job.getJobId())).isTrue();
+    }
+
+    /**
+     * The same map entry, the other direction: {@code requestCancel} accepts while the phase is still
+     * cancellable, so a plain {@code updatePhase(FINALIZING)} could enter the phase after a cancel had already
+     * been answered with success — the job would then finish despite the accepted cancellation. Both writes now
+     * take the job's lock, so exactly one of the two must win.
+     */
+    @RepeatedTest(20)
+    void aCancelRequestAndTheFinalizingTransitionMustNotBothSucceed() throws InterruptedException {
+        Exercise exercise = mock(Exercise.class);
+        when(exercise.getId()).thenReturn(1L);
+        when(exercise.getTitle()).thenReturn("Test Exercise");
+        when(exercise.getExerciseType()).thenReturn(ExerciseType.PROGRAMMING);
+        User user = mock(User.class);
+        when(user.getLogin()).thenReturn("instructor1");
+        VariantJob job = jobService.startJob(user, exercise, mock(VariantGenerationRequestDTO.class));
+        jobService.updatePhase(job.getJobId(), VariantJobPhase.VERIFYING);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch go = new CountDownLatch(1);
+        AtomicBoolean finalizing = new AtomicBoolean();
+        AtomicBoolean cancelAccepted = new AtomicBoolean();
+        try {
+            executor.submit(() -> {
+                ready.countDown();
+                awaitUninterruptibly(go);
+                finalizing.set(jobService.enterFinalizingUnlessCancelled(job.getJobId()));
+            });
+            executor.submit(() -> {
+                ready.countDown();
+                awaitUninterruptibly(go);
+                try {
+                    jobService.requestCancel(job.getJobId(), "instructor1");
+                    cancelAccepted.set(true);
+                }
+                catch (ConflictException expectedWhenFinalizingWon) {
+                    cancelAccepted.set(false);
+                }
+            });
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+            go.countDown();
+            executor.shutdown();
+            assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
+        finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(finalizing.get() && cancelAccepted.get()).as("an accepted cancellation must not be followed by FINALIZING").isFalse();
+        if (cancelAccepted.get()) {
+            assertThat(jobService.isCancelRequested(job.getJobId())).isTrue();
+        }
     }
 
     private static void awaitUninterruptibly(CountDownLatch latch) {
