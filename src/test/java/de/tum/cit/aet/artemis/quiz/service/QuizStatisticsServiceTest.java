@@ -19,7 +19,11 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswerSelection;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.RatedSelection;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticsRepository;
 
 class QuizStatisticsServiceTest {
@@ -30,6 +34,8 @@ class QuizStatisticsServiceTest {
 
     private QuizStatisticsRepository quizStatisticsRepository;
 
+    private LocalDataProviderService distributedDataProvider;
+
     private QuizStatisticsService quizStatisticsService;
 
     @BeforeEach
@@ -38,7 +44,8 @@ class QuizStatisticsServiceTest {
         taskScheduler = mock(TaskScheduler.class);
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenReturn(mock(ScheduledFuture.class));
         quizStatisticsRepository = mock(QuizStatisticsRepository.class);
-        quizStatisticsService = new QuizStatisticsService(quizStatisticsRepository, websocketMessagingService, taskScheduler);
+        distributedDataProvider = new LocalDataProviderService();
+        quizStatisticsService = new QuizStatisticsService(quizStatisticsRepository, websocketMessagingService, taskScheduler, distributedDataProvider);
     }
 
     @Test
@@ -59,6 +66,19 @@ class QuizStatisticsServiceTest {
     }
 
     @Test
+    void shouldCoalesceStatisticsNotificationsAcrossServiceInstances() {
+        TaskScheduler otherNodeScheduler = mock(TaskScheduler.class);
+        WebsocketMessagingService otherNodeMessagingService = mock(WebsocketMessagingService.class);
+        QuizStatisticsService otherNodeService = new QuizStatisticsService(quizStatisticsRepository, otherNodeMessagingService, otherNodeScheduler, distributedDataProvider);
+
+        quizStatisticsService.notifyStatisticsChanged(42L);
+        otherNodeService.notifyStatisticsChanged(42L);
+
+        verify(taskScheduler).schedule(any(Runnable.class), any(Instant.class));
+        verify(otherNodeScheduler, never()).schedule(any(Runnable.class), any(Instant.class));
+    }
+
+    @Test
     void shouldAllowRetryWhenSchedulingStatisticsNotificationFails() {
         when(taskScheduler.schedule(any(Runnable.class), any(Instant.class))).thenThrow(new IllegalStateException("scheduler stopped")).thenReturn(mock(ScheduledFuture.class));
 
@@ -66,6 +86,29 @@ class QuizStatisticsServiceTest {
         quizStatisticsService.notifyStatisticsChanged(42L);
 
         verify(taskScheduler, times(2)).schedule(any(Runnable.class), any(Instant.class));
+    }
+
+    @Test
+    void shouldCalculateQuestionAggregateFromTheSelectionQuery() {
+        QuizExercise quizExercise = new QuizExercise();
+        quizExercise.setId(42L);
+        MultipleChoiceQuestion question = new MultipleChoiceQuestion();
+        question.setId(7L);
+        question.setPoints(2);
+        quizExercise.addQuestion(question);
+
+        RatedSelection ratedCorrect = selection(true, 2.0);
+        RatedSelection unratedIncorrect = selection(false, 1.0);
+        RatedSelection unratedMissingScore = selection(false, null);
+        when(quizStatisticsRepository.findSelectionsForQuestion(7L)).thenReturn(List.of(ratedCorrect, unratedIncorrect, unratedMissingScore));
+
+        var response = quizStatisticsService.getQuestionStatistic(quizExercise, 7L);
+
+        assertThat(response.quizQuestionStatistic().participantsRated()).isOne();
+        assertThat(response.quizQuestionStatistic().participantsUnrated()).isEqualTo(2);
+        assertThat(response.quizQuestionStatistic().ratedCorrectCounter()).isOne();
+        assertThat(response.quizQuestionStatistic().unRatedCorrectCounter()).isZero();
+        verify(quizStatisticsRepository).findSelectionsForQuestion(7L);
     }
 
     @Test
@@ -78,5 +121,13 @@ class QuizStatisticsServiceTest {
         var statistics = quizStatisticsService.getPointStatistic(quizExercise);
 
         assertThat(statistics.quizPointStatistic().pointCounters()).hasSize(4);
+    }
+
+    private static RatedSelection selection(boolean rated, Double scoreInPoints) {
+        RatedSelection selection = mock(RatedSelection.class);
+        when(selection.getRated()).thenReturn(rated);
+        when(selection.getScoreInPoints()).thenReturn(scoreInPoints);
+        when(selection.getSelection()).thenReturn(new MultipleChoiceSubmittedAnswerSelection());
+        return selection;
     }
 }

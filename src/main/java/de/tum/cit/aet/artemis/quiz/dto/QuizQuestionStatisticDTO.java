@@ -17,19 +17,23 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
  * Participant counts are per rating bucket: one participation can contribute its latest rated result and its latest unrated result.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record QuizQuestionStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
+public record QuizQuestionStatisticDTO(Integer participantsRated, Integer participantsUnrated, Integer ratedCorrectCounter, Integer unRatedCorrectCounter,
         @JsonUnwrapped MultipleChoiceQuestionStatisticDTO multipleChoiceQuestionStatisticDTO, @JsonUnwrapped DragAndDropQuestionStatisticDTO dragAndDropQuestionStatisticDTO,
         @JsonUnwrapped ShortAnswerQuestionStatisticDTO shortAnswerQuestionStatisticDTO, String type) {
 
     /**
      * Creates the wire-compatible statistic for a quiz question.
      *
-     * @param question          the question that determines the statistic type
-     * @param counters          participant and correctness counters in rated/unrated order
-     * @param componentCounters counters keyed by answer option, drop location, or short-answer spot id
+     * @param question            the question that determines the statistic type
+     * @param ratedParticipants   the rated participant count
+     * @param unratedParticipants the unrated participant count
+     * @param ratedCorrect        the rated fully-correct count
+     * @param unratedCorrect      the unrated fully-correct count
+     * @param componentStatistics counters keyed by answer option, drop location, or short-answer spot id
      * @return the question statistic
      */
-    public static QuizQuestionStatisticDTO of(QuizQuestion question, long[] counters, Map<Long, long[]> componentCounters) {
+    public static QuizQuestionStatisticDTO of(QuizQuestion question, long ratedParticipants, long unratedParticipants, long ratedCorrect, long unratedCorrect,
+            Map<Long, QuizStatisticCounterDTO> componentStatistics) {
         MultipleChoiceQuestionStatisticDTO multipleChoiceStatistic = null;
         DragAndDropQuestionStatisticDTO dragAndDropStatistic = null;
         ShortAnswerQuestionStatisticDTO shortAnswerStatistic = null;
@@ -38,30 +42,30 @@ public record QuizQuestionStatisticDTO(Long id, Integer participantsRated, Integ
         switch (question) {
             case MultipleChoiceQuestion ignored -> {
                 type = "multiple-choice";
-                if (componentCounters != null) {
-                    multipleChoiceStatistic = new MultipleChoiceQuestionStatisticDTO(componentCounters.entrySet().stream()
-                            .map(entry -> new AnswerCounterDTO(entry.getKey(), QuizStatisticCounterDTO.of(entry.getValue()))).collect(Collectors.toSet()));
+                if (componentStatistics != null) {
+                    multipleChoiceStatistic = new MultipleChoiceQuestionStatisticDTO(
+                            componentStatistics.entrySet().stream().map(entry -> new AnswerCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
                 }
             }
             case DragAndDropQuestion ignored -> {
                 type = "drag-and-drop";
-                if (componentCounters != null) {
-                    dragAndDropStatistic = new DragAndDropQuestionStatisticDTO(componentCounters.entrySet().stream()
-                            .map(entry -> new DropLocationCounterDTO(entry.getKey(), QuizStatisticCounterDTO.of(entry.getValue()))).collect(Collectors.toSet()));
+                if (componentStatistics != null) {
+                    dragAndDropStatistic = new DragAndDropQuestionStatisticDTO(
+                            componentStatistics.entrySet().stream().map(entry -> new DropLocationCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
                 }
             }
             case ShortAnswerQuestion ignored -> {
                 type = "short-answer";
-                if (componentCounters != null) {
-                    shortAnswerStatistic = new ShortAnswerQuestionStatisticDTO(componentCounters.entrySet().stream()
-                            .map(entry -> new ShortAnswerSpotCounterDTO(entry.getKey(), QuizStatisticCounterDTO.of(entry.getValue()))).collect(Collectors.toSet()));
+                if (componentStatistics != null) {
+                    shortAnswerStatistic = new ShortAnswerQuestionStatisticDTO(
+                            componentStatistics.entrySet().stream().map(entry -> new ShortAnswerSpotCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet()));
                 }
             }
             default -> throw new IllegalArgumentException("Unsupported quiz question type " + question.getClass().getName());
         }
 
-        return new QuizQuestionStatisticDTO(null, Math.toIntExact(counters[0]), Math.toIntExact(counters[1]), Math.toIntExact(counters[2]), Math.toIntExact(counters[3]),
-                multipleChoiceStatistic, dragAndDropStatistic, shortAnswerStatistic, type);
+        return new QuizQuestionStatisticDTO(Math.toIntExact(ratedParticipants), Math.toIntExact(unratedParticipants), Math.toIntExact(ratedCorrect),
+                Math.toIntExact(unratedCorrect), multipleChoiceStatistic, dragAndDropStatistic, shortAnswerStatistic, type);
     }
 }
 

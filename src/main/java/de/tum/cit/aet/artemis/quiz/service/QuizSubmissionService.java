@@ -126,15 +126,11 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * and records the current date and time as the submission date.</li>
      * <li><b>Calculating Scores:</b> Computes the scores based on the quiz questions and updates the submission.</li>
      * <li><b>Saving Submission:</b> Saves the updated submission in the repository.</li>
-     * <li><b>Creating Result:</b> Initializes a new result, associates it with the participation, sets it as unrated
-     * and automatic, and records the current date and time as the completion date.</li>
+     * <li><b>Creating Result:</b> Initializes a new result, links it to the submission, calculates its score, and records
+     * the current date and time as the completion date.</li>
      * <li><b>Saving Result:</b> Saves the newly created result in the repository.</li>
-     * <li><b>Setting Result-Submission Relation:</b> Links the result to the submission and recalculates the score.</li>
-     * <li><b>Updating Submission with Result:</b> Adds the result to the submission and saves it again to set the result index column.</li>
-     * <li><b>Re-saving Result:</b> Saves the result again to store the calculated score.</li>
-     * <li><b>Fixing Proxy Objects:</b> Reassigns the participation to the result to avoid proxy issues.</li>
-     * <li><b>Recalculating Statistics:</b> Updates the quiz statistics based on the new result.</li>
-     * <li><b>Saving Question Progress</b>Updates the question progress based on the result and submission.</li>
+     * <li><b>Updating Submission:</b> Links the submission to its participation and result.</li>
+     * <li><b>Notifying Statistics Subscribers:</b> Notifies open instructor pages that the on-demand statistics changed.</li>
      * </ol>
      *
      * @param quizSubmission The quiz submission to be processed.
@@ -170,9 +166,6 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
         // submission while the result is still unsaved would let the cascade write one row and this save another.
         result = resultRepository.save(result);
         quizSubmissionRepository.save(quizSubmission);
-
-        // save result to store score
-        resultRepository.save(result);
 
         // Statistics are calculated on demand. Notify open instructor pages after the result and its score are durable.
         quizStatisticsService.notifyStatisticsChanged(quizExercise.getId());

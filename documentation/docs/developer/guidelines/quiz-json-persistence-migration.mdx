@@ -1,5 +1,5 @@
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
 
 # Quiz JSON Persistence Migration
 
@@ -10,9 +10,9 @@ A `QuizExercise` used to load its questions together with a fan-out of eager `@O
 The migration collapses authored question content and submitted-answer selections into JSON, then removes the relational statistics aggregates in the same cutover. Statistics are
 calculated on demand from results and selections. The final model has exactly two JSON columns:
 
-| New column | Owner entity/table | Replaces |
-| --- | --- | --- |
-| `quiz_question.content` | every `QuizQuestion` | the question's authored "correct answer" child tables |
+| New column                   | Owner entity/table      | Replaces                                                   |
+| ---------------------------- | ----------------------- | ---------------------------------------------------------- |
+| `quiz_question.content`      | every `QuizQuestion`    | the question's authored "correct answer" child tables      |
 | `submitted_answer.selection` | every `SubmittedAnswer` | the submission's selected-answer child tables / join table |
 
 The data is stored as plain POJOs serialized to JSON via Hibernate's native `@JdbcTypeCode(SqlTypes.JSON)` (the same mechanism already used by `QuizQuestionProgress.progress`,
@@ -92,17 +92,17 @@ Abbreviated keys (see the legend below):
 
 #### `selection` key legend (for reading the column directly)
 
-| JSON key | Meaning (Java field) |
-| --- | --- |
+| JSON key                     | Meaning (Java field)                                            |
+| ---------------------------- | --------------------------------------------------------------- |
 | `type` = `dnd` / `sa` / `mc` | drag-and-drop / short-answer / multiple-choice submitted answer |
-| `maps` | `mappings` (drag-and-drop) |
-| `diId` | `dragItemId` |
-| `dlId` | `dropLocationId` |
-| `texts` | `submittedTexts` (short-answer) |
-| `spotId` | `spotId` (unchanged — already short) |
-| `text` | `text` (unchanged) |
-| `correct` | `isCorrect` |
-| `soIds` | `selectedOptionIds` (multiple-choice) |
+| `maps`                       | `mappings` (drag-and-drop)                                      |
+| `diId`                       | `dragItemId`                                                    |
+| `dlId`                       | `dropLocationId`                                                |
+| `texts`                      | `submittedTexts` (short-answer)                                 |
+| `spotId`                     | `spotId` (unchanged — already short)                            |
+| `text`                       | `text` (unchanged)                                              |
+| `correct`                    | `isCorrect`                                                     |
+| `soIds`                      | `selectedOptionIds` (multiple-choice)                           |
 
 ### On-demand statistics wire values
 
@@ -117,76 +117,77 @@ Every old column and where it lands. `content` / `selection` are on the question
 
 ### Drag-and-drop
 
-| Old column | New location |
-| --- | --- |
-| `drop_location.id` | `content.dropLocations[].id` |
-| `drop_location.pos_x` / `pos_y` / `width` / `height` | `content.dropLocations[].posX` / `posY` / `width` / `height` |
-| `drop_location.invalid` | `content.dropLocations[].invalid` |
-| `drag_item.id` | `content.dragItems[].id` |
-| `drag_item.picture_file_path` | `content.dragItems[].pictureFilePath` |
-| `drag_item.text` | `content.dragItems[].text` |
-| `drag_item.invalid` | `content.dragItems[].invalid` |
-| `drag_and_drop_mapping.{id, drag_item_id, drop_location_id, invalid}` **where `question_id` is set** | `content.correctMappings[].{id, dragItemId, dropLocationId, invalid}` |
-| `drag_and_drop_mapping.{drag_item_id, drop_location_id}` **where `submitted_answer_id` is set** | `selection.maps[].{diId, dlId}` (abbreviated; no id — submission mappings have no identity) |
-| `quiz_statistic_counter.{drop_location_id, rated_counter, un_rated_counter}` (discriminator `DD`) | calculated from Results and `selection.maps[]` |
+| Old column                                                                                           | New location                                                                                |
+| ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `drop_location.id`                                                                                   | `content.dropLocations[].id`                                                                |
+| `drop_location.pos_x` / `pos_y` / `width` / `height`                                                 | `content.dropLocations[].posX` / `posY` / `width` / `height`                                |
+| `drop_location.invalid`                                                                              | `content.dropLocations[].invalid`                                                           |
+| `drag_item.id`                                                                                       | `content.dragItems[].id`                                                                    |
+| `drag_item.picture_file_path`                                                                        | `content.dragItems[].pictureFilePath`                                                       |
+| `drag_item.text`                                                                                     | `content.dragItems[].text`                                                                  |
+| `drag_item.invalid`                                                                                  | `content.dragItems[].invalid`                                                               |
+| `drag_and_drop_mapping.{id, drag_item_id, drop_location_id, invalid}` **where `question_id` is set** | `content.correctMappings[].{id, dragItemId, dropLocationId, invalid}`                       |
+| `drag_and_drop_mapping.{drag_item_id, drop_location_id}` **where `submitted_answer_id` is set**      | `selection.maps[].{diId, dlId}` (abbreviated; no id — submission mappings have no identity) |
+| `quiz_statistic_counter.{drop_location_id, rated_counter, un_rated_counter}` (discriminator `DD`)    | calculated from Results and `selection.maps[]`                                              |
 
 ### Short-answer
 
-| Old column | New location |
-| --- | --- |
-| `short_answer_spot.{id, spot_nr, width, invalid}` | `content.spots[].{id, spotNr, width, invalid}` |
-| `short_answer_solution.{id, text, invalid}` | `content.solutions[].{id, text, invalid}` |
-| `short_answer_mapping.{id, spot_id, solution_id, invalid}` | `content.correctMappings[].{id, spotId, solutionId, invalid}` |
-| `short_answer_submitted_text.{spot_id, text, is_correct}` | `selection.texts[].{spotId, text, correct}` (abbreviated; row `id` dropped — no identity) |
-| `quiz_statistic_counter.{spot_id, rated_counter, un_rated_counter}` (discriminator `SA`) | calculated from Results and `selection.texts[]` |
+| Old column                                                                               | New location                                                                              |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `short_answer_spot.{id, spot_nr, width, invalid}`                                        | `content.spots[].{id, spotNr, width, invalid}`                                            |
+| `short_answer_solution.{id, text, invalid}`                                              | `content.solutions[].{id, text, invalid}`                                                 |
+| `short_answer_mapping.{id, spot_id, solution_id, invalid}`                               | `content.correctMappings[].{id, spotId, solutionId, invalid}`                             |
+| `short_answer_submitted_text.{spot_id, text, is_correct}`                                | `selection.texts[].{spotId, text, correct}` (abbreviated; row `id` dropped — no identity) |
+| `quiz_statistic_counter.{spot_id, rated_counter, un_rated_counter}` (discriminator `SA`) | calculated from Results and `selection.texts[]`                                           |
 
 ### Multiple-choice
 
-| Old column | New location |
-| --- | --- |
-| `answer_option.{id, text, hint, explanation, is_correct, invalid}` | `content.answerOptions[].{id, text, hint, explanation, isCorrect, invalid}` |
-| `multiple_choice_submitted_answer_selected_options.selected_options_id` | `selection.soIds[]` (abbreviated) |
-| `quiz_statistic_counter.{answer_id, rated_counter, un_rated_counter}` (discriminator `AC`) | calculated from Results and `selection.soIds[]` |
+| Old column                                                                                 | New location                                                                |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `answer_option.{id, text, hint, explanation, is_correct, invalid}`                         | `content.answerOptions[].{id, text, hint, explanation, isCorrect, invalid}` |
+| `multiple_choice_submitted_answer_selected_options.selected_options_id`                    | `selection.soIds[]` (abbreviated)                                           |
+| `quiz_statistic_counter.{answer_id, rated_counter, un_rated_counter}` (discriminator `AC`) | calculated from Results and `selection.soIds[]`                             |
 
 ### Not carried over (intentionally dropped)
 
-| Old column(s) | Why |
-| --- | --- |
-| `*.question_id` / `submitted_answer_id` / `multiple_choice_submitted_answers_id` FKs | Replaced by JSON containment in the owning row |
+| Old column(s)                                                                                        | Why                                                                                            |
+| ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `*.question_id` / `submitted_answer_id` / `multiple_choice_submitted_answers_id` FKs                 | Replaced by JSON containment in the owning row                                                 |
 | `drop_locations_order`, `drag_items_order`, `spots_order`, `solutions_order`, `answer_options_order` | Array element order encodes it (preserved via ordered aggregates on both PostgreSQL and MySQL) |
-| `short_answer_mapping.correct_mappings_order` | Correct mappings are an unordered set (matched by id) |
-| `short_answer_submitted_text.id` | Submitted texts have no identity in the new model |
-| all `quiz_statistic` / `quiz_statistic_counter` ids and aggregate columns | Persisted aggregates have no identity in the on-demand model |
+| `short_answer_mapping.correct_mappings_order`                                                        | Correct mappings are an unordered set (matched by id)                                          |
+| `short_answer_submitted_text.id`                                                                     | Submitted texts have no identity in the new model                                              |
+| all `quiz_statistic` / `quiz_statistic_counter` ids and aggregate columns                            | Persisted aggregates have no identity in the on-demand model                                   |
 
 ## Migration steps
 
 The changelog runs three phases: add and backfill the two JSON columns, remove persisted statistics, then drop the relational content/selection tables.
 
-| Steps | What |
-| --- | --- |
-| 1a–1d | Add `quiz_question.content` and `submitted_answer.selection` (`jsonb` on PostgreSQL, `json` on MySQL/H2) |
-| 2, 3 | Backfill drag-and-drop `content` and `selection` |
-| 8, 9 | Backfill short-answer `content` and `selection` |
-| 12, 13 | Backfill multiple-choice `content` and `selection` |
+| Steps  | What                                                                                                                              |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| 1a–1d  | Add `quiz_question.content` and `submitted_answer.selection` (`jsonb` on PostgreSQL, `json` on MySQL/H2)                          |
+| 2, 3   | Backfill drag-and-drop `content` and `selection`                                                                                  |
+| 8, 9   | Backfill short-answer `content` and `selection`                                                                                   |
+| 12, 13 | Backfill multiple-choice `content` and `selection`                                                                                |
 | 15, 16 | **Statistics cutover (destructive):** remove the statistic owner columns, then drop `quiz_statistic_counter` and `quiz_statistic` |
-| 17 | **JSON cleanup (destructive):** drop the relational authored-content and selection tables |
+| 17     | **JSON cleanup (destructive):** drop the relational authored-content and selection tables                                         |
 
 Each dialect has its own backfill changeset: PostgreSQL uses `jsonb_build_object` / `jsonb_agg` (with `ORDER BY`), while MySQL uses `JSON_OBJECT` / `JSON_ARRAYAGG`.
 
 ## Cleanup and statistics cutover
 
 <Callout variant={CalloutVariant.danger}>
-  <strong>Steps 15–17 are destructive and irreversible.</strong> They remove persisted statistics and the source rows for authored content and selections. Run the migration
-  against a copy of the production database and verify representative quizzes before the real cutover — especially on MySQL, where the backfill SQL is not covered by the
-  automated test suite (see Caveats).
+    <strong>Steps 15–16 retire persisted statistics with reversible renames; step 17 remains destructive and irreversible.</strong> Step 17 removes the source rows for authored
+    content and selections. Run the migration against a copy of the production database and verify representative quizzes before the real cutover — especially on MySQL, where the
+    backfill SQL is not covered by the automated test suite (see Caveats).
 </Callout>
 
-**Statistics objects dropped (steps 15–16):**
+**Statistics objects retained under legacy names (steps 15–16):**
 
-`exercise.quiz_point_statistic_id`, `quiz_question.quiz_question_statistic_id`, `quiz_statistic_counter`, and `quiz_statistic`.
+`exercise.quiz_point_statistic_id` becomes `exercise.legacy_quiz_point_statistic_id`, and `quiz_question.quiz_question_statistic_id` becomes
+`quiz_question.legacy_quiz_question_statistic_id`. The tables become `legacy_quiz_statistic_counter` and `legacy_quiz_statistic`.
 
-The owner foreign keys and unique constraints are removed before the columns. The counter table is dropped before the statistic table and before the authored-content tables whose
-rows its historical foreign keys referenced. The initial schema omits the same objects for fresh installations.
+The existing foreign keys, unique constraints, indexes, and data stay attached to the renamed structures. Explicit rollback operations restore the original names. A later release
+can drop the legacy structures after the retention period.
 
 **Authored-content and selection tables dropped (step 17):**
 
@@ -196,9 +197,9 @@ rows its historical foreign keys referenced. The initial schema omits the same o
 They are dropped in dependency order, with referencing tables first. The foreign keys they hold into `quiz_question` / `submitted_answer` disappear with the tables.
 
 <Callout variant={CalloutVariant.danger}>
-  <strong>The statistics cutover is coordinated and irreversible.</strong> Stop or upgrade every old application node before this migration runs. An old node still expects the
-  removed mappings and cannot coexist with the final schema. The dropped aggregate rows and ids cannot be reconstructed; results and submitted-answer selections are the source
-  of truth after deployment.
+    <strong>The statistics cutover is coordinated but reversible.</strong> Stop or upgrade every old application node before this migration runs. An old node still expects the
+    original mappings and cannot coexist with the renamed schema. Rolling back the statistics changesets restores the original object names; the aggregate rows remain available in
+    the legacy tables but are no longer authoritative after deployment.
 </Callout>
 
 ## Correctness guarantees
@@ -206,25 +207,26 @@ They are dropped in dependency order, with referencing tables first. The foreign
 - **Keys match the POJOs.** Every backfilled JSON key equals the `@JsonProperty` / field name on the target POJO, and every POJO field is backfilled, so nothing is silently dropped on read (`FAIL_ON_UNKNOWN_PROPERTIES` is disabled globally, which makes key correctness critical).
 - **Authored component ids are preserved.** Old primary keys become question-scoped ids inside `content`, so existing submitted-answer selections still resolve after migration.
 - **Statistics are derived.** Results determine rated/unrated participation and score/correctness aggregates; the selection JSON determines per-component counts.
-- **No aggregate identity.** Statistics DTO ids are intentionally `null`; callers must not use former statistic or counter row ids.
+- **No aggregate identity.** Statistics DTOs omit former statistic and counter row ids; callers must not depend on those persisted identities.
 
 ## Caveats
 
 - **MySQL is not covered by the automated test suite** (tests use PostgreSQL via Testcontainers). Two MySQL-specific behaviors to validate on a staging copy before cutover:
-  - *Booleans*: `x = TRUE` produces the JSON numbers `1` / `0` (not `true` / `false`). Jackson coerces them back to `Boolean` on read, so this is functionally correct, but the on-disk representation differs from PostgreSQL.
-  - *Ordering*: MySQL `JSON_ARRAYAGG` has undefined order as a grouped aggregate. The migration therefore uses ordered window aggregates for every authored list and has been exercised directly on MySQL 9.7 with deliberately scrambled source ids; still verify representative migrated quizzes on staging because the destructive MySQL changesets are not part of regular CI.
+    - _Booleans_: `x = TRUE` produces the JSON numbers `1` / `0` (not `true` / `false`). Jackson coerces them back to `Boolean` on read, so this is functionally correct, but the on-disk representation differs from PostgreSQL.
+    - _Ordering_: MySQL `JSON_ARRAYAGG` has undefined order as a grouped aggregate. The migration therefore uses ordered window aggregates for every authored list and has been exercised directly on MySQL 9.7 with deliberately scrambled source ids; still verify representative migrated quizzes on staging because the destructive MySQL changesets are not part of regular CI.
 - **H2 is not backfilled.** The columns are added on H2, but there are no H2 backfill changesets — H2 is only used for ephemeral, freshly-created schemas that never contain pre-migration relational data.
-- **Irreversible.** Once the legacy child and statistics tables are dropped there is no rollback path; authored content/selections and Results are authoritative.
+- **Partial irreversibility.** The statistics retirement is reversible because the legacy objects and data are retained under new names. The authored-content and selection tables
+  dropped in step 17 cannot be reconstructed; authored content/selections in JSON and Results are authoritative.
 
 ## Differences from the earlier `feature/quiz-json-migration` branch
 
 This migration is adapted from the abandoned `feature/quiz-json-migration` branch (`20240814091201_changelog.xml`), with the following intentional differences:
 
-| Aspect | Old branch | This migration |
-| --- | --- | --- |
-| Statistics location | folded **all** statistics, incl. point stats, into `quiz_question.statistics` + `quiz_exercise.statistics` (2 extra columns) | calculated on demand from Results and submitted-answer selections |
-| Tables fully removable | could drop `quiz_statistic` **and** `quiz_statistic_counter` entirely | both are removed directly by this migration |
-| JSON keys | terse abbreviations (`locs`, `items`, `dlid`, `diid`, `txt`, `pr`/`pu`…) | descriptive names matching the POJO fields (`dropLocations`, `dragItemId`, `ratedCounter`…) |
-| Correct-mapping ids | not stored | stored (`id`), so re-evaluation can diff mappings by id |
-| Trailing-comma bug | present in the correct-mapping `JSON_OBJECT` / `json_build_object` (invalid SQL on both dialects) | fixed |
-| Table drops | present but **commented out** (never executed) | executed in steps 15–17 |
+| Aspect                 | Old branch                                                                                                                   | This migration                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Statistics location    | folded **all** statistics, incl. point stats, into `quiz_question.statistics` + `quiz_exercise.statistics` (2 extra columns) | calculated on demand from Results and submitted-answer selections                                         |
+| Tables fully removable | could drop `quiz_statistic` **and** `quiz_statistic_counter` entirely                                                        | retained for one release as `legacy_quiz_statistic` and `legacy_quiz_statistic_counter`                   |
+| JSON keys              | terse abbreviations (`locs`, `items`, `dlid`, `diid`, `txt`, `pr`/`pu`…)                                                     | descriptive names matching the POJO fields (`dropLocations`, `dragItemId`, `ratedCounter`…)               |
+| Correct-mapping ids    | not stored                                                                                                                   | stored (`id`), so re-evaluation can diff mappings by id                                                   |
+| Trailing-comma bug     | present in the correct-mapping `JSON_OBJECT` / `json_build_object` (invalid SQL on both dialects)                            | fixed                                                                                                     |
+| Table drops            | present but **commented out** (never executed)                                                                               | statistics objects are renamed for rollback; authored-content and selection tables are dropped in step 17 |

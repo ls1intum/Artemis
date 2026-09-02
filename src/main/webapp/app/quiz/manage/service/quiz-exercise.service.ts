@@ -122,18 +122,44 @@ export class QuizExerciseService {
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
+    /**
+     * Loads the calculated overview statistics for a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @return the quiz exercise overview and its calculated statistics
+     */
     findStatisticsOverview(quizExerciseId: number): Observable<StatisticsOverviewResponseType> {
         return this.getStatistics<QuizStatisticsOverviewResponse>(quizExerciseId, 'overview');
     }
 
+    /**
+     * Loads the calculated point distribution for a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @return the quiz exercise and its calculated point distribution
+     */
     findPointStatistic(quizExerciseId: number): Observable<PointStatisticsResponseType> {
         return this.getStatistics<QuizPointStatisticsResponse>(quizExerciseId, 'points');
     }
 
+    /**
+     * Loads the calculated statistic for one question in a quiz exercise.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @param questionId the ID of the quiz question
+     * @return the quiz exercise, question, and calculated question statistic
+     */
     findQuestionStatistic(quizExerciseId: number, questionId: number): Observable<QuestionStatisticResponseType> {
         return this.getStatistics<QuizQuestionStatisticResponse>(quizExerciseId, `questions/${questionId}`);
     }
 
+    /**
+     * Loads a page-specific statistics response and converts its quiz exercise dates.
+     *
+     * @param quizExerciseId the ID of the quiz exercise
+     * @param path the statistics endpoint path relative to the quiz exercise
+     * @return the converted statistics response
+     */
     private getStatistics<T extends QuizExercise>(quizExerciseId: number, path: string): Observable<HttpResponse<T>> {
         return this.http.get<T>(`${this.resourceUrl}/${quizExerciseId}/statistics/${path}`, { observe: 'response' }).pipe(
             map((res) => {

@@ -31,7 +31,7 @@ const answerCounter = { answerId: answerOption1.id } as AnswerCounter;
 const questionStatistic = { answerCounters: [answerCounter] } as MultipleChoiceQuestionStatistic;
 const question = { id: 1, answerOptions: [answerOption1] } as MultipleChoiceQuestion;
 const course = { id: 3 } as Course;
-let quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question], questionId: 1, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
+let quizExercise = { id: 22, quizStarted: true, course, quizQuestion: question, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
 
 describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     let comp: MultipleChoiceQuestionStatisticComponent;
@@ -72,7 +72,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
     });
 
     afterEach(() => {
-        quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question], questionId: 1, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
+        quizExercise = { id: 22, quizStarted: true, course, quizQuestion: question, quizQuestionStatistic: questionStatistic } as QuizQuestionStatisticResponse;
     });
 
     describe('onInit', () => {
@@ -187,12 +187,12 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             expect(comp.labels).toEqual(['test', 'B. artemisApp.showStatistic.invalid', 'test3', 'D. artemisApp.showStatistic.invalid']);
         });
 
-        it('should navigate back if the quiz does not contain any questions', () => {
+        it('should navigate back if the response question does not match the requested question', () => {
             accountSpy = vi.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const navigateByUrlMock = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
-            const emptyQuizExercise: QuizQuestionStatisticResponse = { ...quizExercise, quizQuestions: [] };
+            const mismatchedQuizExercise: QuizQuestionStatisticResponse = { ...quizExercise, quizQuestion: { ...question, id: 2 } };
 
-            const result = comp.loadQuizCommon(emptyQuizExercise);
+            const result = comp.loadQuizCommon(mismatchedQuizExercise);
 
             expect(navigateByUrlMock).toHaveBeenCalledOnce();
             expect(navigateByUrlMock).toHaveBeenCalledWith('courses');

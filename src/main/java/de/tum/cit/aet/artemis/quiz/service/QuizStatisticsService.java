@@ -6,9 +6,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMappingSelection;
@@ -36,8 +39,9 @@ import de.tum.cit.aet.artemis.quiz.dto.QuizPointStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizPointStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizQuestionStatisticResponseDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticCounterDTO;
 import de.tum.cit.aet.artemis.quiz.dto.QuizStatisticsOverviewDTO;
-import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.QuestionAggregate;
+import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.RatedSelection;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticsRepository;
 
 /**
@@ -50,19 +54,22 @@ public class QuizStatisticsService {
 
     private static final Duration NOTIFICATION_DEBOUNCE = Duration.ofSeconds(1);
 
+    private static final String NOTIFICATION_DEBOUNCE_MAP = "quiz-statistics-notification-debounce";
+
     private final QuizStatisticsRepository quizStatisticsRepository;
 
     private final WebsocketMessagingService websocketMessagingService;
 
     private final TaskScheduler taskScheduler;
 
-    private final Set<Long> pendingNotifications = ConcurrentHashMap.newKeySet();
+    private final DistributedMap<Long, String> pendingNotifications;
 
     public QuizStatisticsService(QuizStatisticsRepository quizStatisticsRepository, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+            @Qualifier("taskScheduler") TaskScheduler taskScheduler, DistributedDataProvider distributedDataProvider) {
         this.quizStatisticsRepository = quizStatisticsRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.taskScheduler = taskScheduler;
+        this.pendingNotifications = distributedDataProvider.getExpiringMap(NOTIFICATION_DEBOUNCE_MAP, NOTIFICATION_DEBOUNCE);
     }
 
     /**
@@ -73,30 +80,24 @@ public class QuizStatisticsService {
      */
     public QuizStatisticsOverviewDTO getOverview(QuizExercise quizExercise) {
         long quizExerciseId = quizExercise.getId();
-        long[] participantCounts = new long[2];
-        quizStatisticsRepository.findParticipantCounts(quizExerciseId).forEach(count -> {
-            int index = Boolean.TRUE.equals(count.getRated()) ? 0 : 1;
-            participantCounts[index] = count.getParticipantCount();
-        });
-        Map<Long, long[]> countersByQuestion = new HashMap<>();
+        CounterPair participantCounts = new CounterPair();
+        quizStatisticsRepository.findPointStatistic(quizExerciseId).forEach(bucket -> participantCounts.add(bucket.getRated(), bucket.getParticipantCount()));
+        Map<Long, QuestionCounters> countersByQuestion = new HashMap<>();
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            countersByQuestion.put(question.getId(), new long[4]);
+            countersByQuestion.put(question.getId(), new QuestionCounters());
         }
         quizStatisticsRepository.findQuestionAggregatesForQuiz(quizExerciseId).forEach(aggregate -> {
-            long[] counters = countersByQuestion.get(aggregate.getQuestionId());
-            if (counters == null) {
-                return;
+            QuestionCounters counters = countersByQuestion.get(aggregate.getQuestionId());
+            if (counters != null) {
+                counters.set(aggregate.getRated(), aggregate.getParticipantCount(), aggregate.getCorrectCount());
             }
-            int offset = Boolean.TRUE.equals(aggregate.getRated()) ? 0 : 1;
-            counters[offset] = aggregate.getParticipantCount();
-            counters[2 + offset] = aggregate.getCorrectCount();
         });
 
         Map<Long, QuizQuestionStatisticDTO> statisticsByQuestion = new HashMap<>();
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            statisticsByQuestion.put(question.getId(), QuizQuestionStatisticDTO.of(question, countersByQuestion.get(question.getId()), null));
+            statisticsByQuestion.put(question.getId(), countersByQuestion.get(question.getId()).toDto(question, null));
         }
-        return QuizStatisticsOverviewDTO.of(quizExercise, statisticsByQuestion, participantCounts[0], participantCounts[1]);
+        return QuizStatisticsOverviewDTO.of(quizExercise, statisticsByQuestion, participantCounts.rated, participantCounts.unrated);
     }
 
     /**
@@ -109,27 +110,21 @@ public class QuizStatisticsService {
         long quizExerciseId = quizExercise.getId();
         double overallPoints = quizExercise.getOverallQuizPoints();
         long roundedOverallPoints = Math.round(overallPoints);
-        Map<Double, long[]> countersByPoints = new HashMap<>();
+        Map<Double, CounterPair> countersByPoints = new HashMap<>();
         for (long points = 0; points <= roundedOverallPoints; points++) {
-            countersByPoints.put((double) points, new long[2]);
+            countersByPoints.put((double) points, new CounterPair());
         }
 
-        long ratedResultCount = 0;
-        long unratedResultCount = 0;
+        CounterPair resultCounts = new CounterPair();
         for (var bucket : quizStatisticsRepository.findPointStatistic(quizExerciseId)) {
             double points = Math.round(overallPoints * bucket.getScore() / 100);
-            long[] counters = countersByPoints.computeIfAbsent(points, ignored -> new long[2]);
-            int index = Boolean.TRUE.equals(bucket.getRated()) ? 0 : 1;
-            counters[index] += bucket.getParticipantCount();
-            if (index == 0) {
-                ratedResultCount += bucket.getParticipantCount();
-            }
-            else {
-                unratedResultCount += bucket.getParticipantCount();
-            }
+            countersByPoints.computeIfAbsent(points, ignored -> new CounterPair()).add(bucket.getRated(), bucket.getParticipantCount());
+            resultCounts.add(bucket.getRated(), bucket.getParticipantCount());
         }
 
-        QuizPointStatisticDTO pointStatistic = QuizPointStatisticDTO.of(countersByPoints, ratedResultCount, unratedResultCount);
+        Map<Double, QuizStatisticCounterDTO> counterDTOsByPoints = new HashMap<>();
+        countersByPoints.forEach((points, counters) -> counterDTOsByPoints.put(points, counters.toDto()));
+        QuizPointStatisticDTO pointStatistic = QuizPointStatisticDTO.of(counterDTOsByPoints, resultCounts.rated, resultCounts.unrated);
         return QuizPointStatisticsDTO.of(quizExercise, pointStatistic);
     }
 
@@ -144,15 +139,16 @@ public class QuizStatisticsService {
         long quizExerciseId = quizExercise.getId();
         QuizQuestion question = quizExercise.getQuizQuestions().stream().filter(candidate -> candidate.getId() != null && candidate.getId() == questionId).findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("QuizQuestion with id " + questionId + " not found in quiz exercise " + quizExerciseId));
-        long[] counters = questionAggregate(questionId, question.getPoints());
-        Map<Long, long[]> componentCounters = switch (question) {
-            case MultipleChoiceQuestion multipleChoiceQuestion -> multipleChoiceCounters(multipleChoiceQuestion);
-            case DragAndDropQuestion dragAndDropQuestion -> dragAndDropCounters(dragAndDropQuestion);
-            case ShortAnswerQuestion shortAnswerQuestion -> shortAnswerCounters(shortAnswerQuestion);
+        List<RatedSelection> selections = quizStatisticsRepository.findSelectionsForQuestion(questionId);
+        QuestionCounters counters = questionAggregate(selections, question.getPoints());
+        Map<Long, CounterPair> componentCounters = switch (question) {
+            case MultipleChoiceQuestion multipleChoiceQuestion -> multipleChoiceCounters(multipleChoiceQuestion, selections);
+            case DragAndDropQuestion dragAndDropQuestion -> dragAndDropCounters(dragAndDropQuestion, selections);
+            case ShortAnswerQuestion shortAnswerQuestion -> shortAnswerCounters(shortAnswerQuestion, selections);
             default -> throw new IllegalArgumentException("Unsupported quiz question type " + question.getClass().getName());
         };
-        QuizQuestionStatisticDTO statistic = QuizQuestionStatisticDTO.of(question, counters, componentCounters);
-        return QuizQuestionStatisticResponseDTO.of(quizExercise, questionId, statistic);
+        QuizQuestionStatisticDTO statistic = counters.toDto(question, toCounterDTOs(componentCounters));
+        return QuizQuestionStatisticResponseDTO.of(quizExercise, question, statistic);
     }
 
     /**
@@ -162,61 +158,60 @@ public class QuizStatisticsService {
      * @param quizExerciseId the id of the changed quiz exercise
      */
     public void notifyStatisticsChanged(long quizExerciseId) {
-        if (!pendingNotifications.add(quizExerciseId)) {
+        String claim = UUID.randomUUID().toString();
+        if (pendingNotifications.putIfAbsent(quizExerciseId, claim) != null) {
             return;
         }
         try {
             taskScheduler.schedule(() -> {
-                pendingNotifications.remove(quizExerciseId);
+                pendingNotifications.remove(quizExerciseId, claim);
                 websocketMessagingService.sendMessage("/topic/statistic/" + quizExerciseId, quizExerciseId);
             }, Instant.now().plus(NOTIFICATION_DEBOUNCE));
         }
         catch (RuntimeException exception) {
-            pendingNotifications.remove(quizExerciseId);
+            pendingNotifications.remove(quizExerciseId, claim);
             throw exception;
         }
     }
 
-    private long[] questionAggregate(long questionId, double questionPoints) {
-        long[] counters = new long[4];
-        for (QuestionAggregate aggregate : quizStatisticsRepository.findQuestionAggregate(questionId, questionPoints)) {
-            int offset = Boolean.TRUE.equals(aggregate.getRated()) ? 0 : 1;
-            counters[offset] = aggregate.getParticipantCount();
-            counters[2 + offset] = aggregate.getCorrectCount();
+    private static QuestionCounters questionAggregate(List<RatedSelection> selections, double questionPoints) {
+        QuestionCounters counters = new QuestionCounters();
+        for (RatedSelection selection : selections) {
+            Double scoreInPoints = selection.getScoreInPoints();
+            counters.increment(selection.getRated(), scoreInPoints != null && scoreInPoints >= questionPoints);
         }
         return counters;
     }
 
-    private Map<Long, long[]> multipleChoiceCounters(MultipleChoiceQuestion question) {
-        Map<Long, long[]> countersByAnswer = new HashMap<>();
+    private static Map<Long, CounterPair> multipleChoiceCounters(MultipleChoiceQuestion question, List<RatedSelection> selections) {
+        Map<Long, CounterPair> countersByAnswer = new HashMap<>();
         for (AnswerOption answerOption : question.getAnswerOptions()) {
-            countersByAnswer.put(answerOption.getId(), new long[2]);
+            countersByAnswer.put(answerOption.getId(), new CounterPair());
         }
-        quizStatisticsRepository.findSelectionsForQuestion(question.getId()).forEach(row -> {
+        selections.forEach(row -> {
             if (!(row.getSelection() instanceof MultipleChoiceSubmittedAnswerSelection selection)) {
                 return;
             }
-            int index = Boolean.TRUE.equals(row.getRated()) ? 0 : 1;
             Set<Long> countedAnswerOptions = new HashSet<>();
             for (Long answerOptionId : selection.getSelectedOptionIds()) {
                 if (!countedAnswerOptions.add(answerOptionId)) {
                     continue;
                 }
-                long[] counters = countersByAnswer.get(answerOptionId);
+                CounterPair counters = countersByAnswer.get(answerOptionId);
                 if (counters != null) {
-                    counters[index]++;
+                    counters.increment(row.getRated());
                 }
             }
         });
         return countersByAnswer;
     }
 
-    private Map<Long, long[]> dragAndDropCounters(DragAndDropQuestion question) {
+    private static Map<Long, CounterPair> dragAndDropCounters(DragAndDropQuestion question, List<RatedSelection> selections) {
         Map<Long, Set<Long>> correctDragItemsByDropLocation = new HashMap<>();
-        Map<Long, long[]> countersByDropLocation = new HashMap<>();
+        Map<Long, CounterPair> countersByDropLocation = new HashMap<>();
         for (DropLocation dropLocation : question.getDropLocations()) {
             correctDragItemsByDropLocation.put(dropLocation.getId(), new HashSet<>());
-            countersByDropLocation.put(dropLocation.getId(), new long[2]);
+            countersByDropLocation.put(dropLocation.getId(), new CounterPair());
         }
         for (DragAndDropMapping mapping : question.getCorrectMappings()) {
             Set<Long> correctDragItems = correctDragItemsByDropLocation.get(mapping.getDropLocation().getId());
@@ -224,7 +219,7 @@ public class QuizStatisticsService {
                 correctDragItems.add(mapping.getDragItem().getId());
             }
         }
-        quizStatisticsRepository.findSelectionsForQuestion(question.getId()).forEach(row -> {
+        selections.forEach(row -> {
             if (!(row.getSelection() instanceof DragAndDropSubmittedAnswerSelection selection)) {
                 return;
             }
@@ -232,40 +227,109 @@ public class QuizStatisticsService {
             for (DragAndDropMappingSelection mapping : selection.getMappings()) {
                 submittedDragItemByDropLocation.putIfAbsent(mapping.dropLocationId(), mapping.dragItemId());
             }
-            int index = Boolean.TRUE.equals(row.getRated()) ? 0 : 1;
             countersByDropLocation.forEach((dropLocationId, counters) -> {
                 Set<Long> correctDragItems = correctDragItemsByDropLocation.getOrDefault(dropLocationId, Set.of());
                 Long submittedDragItem = submittedDragItemByDropLocation.get(dropLocationId);
                 boolean correct = (correctDragItems.isEmpty() && submittedDragItem == null) || (submittedDragItem != null && correctDragItems.contains(submittedDragItem));
                 if (correct) {
-                    counters[index]++;
+                    counters.increment(row.getRated());
                 }
             });
         });
         return countersByDropLocation;
     }
 
-    private Map<Long, long[]> shortAnswerCounters(ShortAnswerQuestion question) {
-        Map<Long, long[]> countersBySpot = new HashMap<>();
+    private static Map<Long, CounterPair> shortAnswerCounters(ShortAnswerQuestion question, List<RatedSelection> selections) {
+        Map<Long, CounterPair> countersBySpot = new HashMap<>();
         for (ShortAnswerSpot spot : question.getSpots()) {
-            countersBySpot.put(spot.getId(), new long[2]);
+            countersBySpot.put(spot.getId(), new CounterPair());
         }
-        quizStatisticsRepository.findSelectionsForQuestion(question.getId()).forEach(row -> {
+        selections.forEach(row -> {
             if (!(row.getSelection() instanceof ShortAnswerSubmittedAnswerSelection selection)) {
                 return;
             }
-            int index = Boolean.TRUE.equals(row.getRated()) ? 0 : 1;
             Set<Long> countedSpots = new HashSet<>();
             for (ShortAnswerTextSelection submittedText : selection.getSubmittedTexts()) {
                 if (!countedSpots.add(submittedText.getSpotId())) {
                     continue;
                 }
-                long[] counters = countersBySpot.get(submittedText.getSpotId());
+                CounterPair counters = countersBySpot.get(submittedText.getSpotId());
                 if (counters != null && Boolean.TRUE.equals(submittedText.getIsCorrect())) {
-                    counters[index]++;
+                    counters.increment(row.getRated());
                 }
             }
         });
         return countersBySpot;
+    }
+
+    private static Map<Long, QuizStatisticCounterDTO> toCounterDTOs(Map<Long, CounterPair> countersByComponent) {
+        Map<Long, QuizStatisticCounterDTO> counterDTOs = HashMap.newHashMap(countersByComponent.size());
+        countersByComponent.forEach((id, counters) -> counterDTOs.put(id, counters.toDto()));
+        return counterDTOs;
+    }
+
+    private static final class CounterPair {
+
+        private long rated;
+
+        private long unrated;
+
+        private void add(boolean ratedBucket, long value) {
+            if (ratedBucket) {
+                rated += value;
+            }
+            else {
+                unrated += value;
+            }
+        }
+
+        private void increment(boolean ratedBucket) {
+            add(ratedBucket, 1);
+        }
+
+        private QuizStatisticCounterDTO toDto() {
+            return QuizStatisticCounterDTO.of(rated, unrated);
+        }
+    }
+
+    private static final class QuestionCounters {
+
+        private long ratedParticipants;
+
+        private long unratedParticipants;
+
+        private long ratedCorrect;
+
+        private long unratedCorrect;
+
+        private void set(boolean ratedBucket, long participantCount, long correctCount) {
+            if (ratedBucket) {
+                ratedParticipants = participantCount;
+                ratedCorrect = correctCount;
+            }
+            else {
+                unratedParticipants = participantCount;
+                unratedCorrect = correctCount;
+            }
+        }
+
+        private void increment(boolean ratedBucket, boolean correct) {
+            if (ratedBucket) {
+                ratedParticipants++;
+                if (correct) {
+                    ratedCorrect++;
+                }
+            }
+            else {
+                unratedParticipants++;
+                if (correct) {
+                    unratedCorrect++;
+                }
+            }
+        }
+
+        private QuizQuestionStatisticDTO toDto(QuizQuestion question, Map<Long, QuizStatisticCounterDTO> componentStatistics) {
+            return QuizQuestionStatisticDTO.of(question, ratedParticipants, unratedParticipants, ratedCorrect, unratedCorrect, componentStatistics);
+        }
     }
 }

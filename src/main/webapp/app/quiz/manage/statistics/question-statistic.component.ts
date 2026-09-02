@@ -147,11 +147,11 @@ export abstract class QuestionStatisticComponent extends AbstractQuizStatisticCo
         if (!this.accountService.isAtLeastTutor()) {
             void this.router.navigateByUrl('courses');
         }
-        // search selected question in quizExercise based on questionId
+        // Use the page-specific question response instead of loading every question in the quiz.
         this.quizExercise.set(quiz);
-        const updatedQuestion = this.quizExercise().quizQuestions?.filter((question) => this.questionIdParam === question.id)[0];
+        const updatedQuestion = quiz.quizQuestion;
         // if anyone finds a way to the Website, with a wrong combination of QuizId and QuestionId, go back to Courses
-        if (!updatedQuestion) {
+        if (this.questionIdParam !== updatedQuestion.id) {
             void this.router.navigateByUrl('courses');
             return undefined;
         }
