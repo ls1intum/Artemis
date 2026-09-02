@@ -18,6 +18,7 @@ export const examManagementRoutes: Routes = [
         loadComponent: () => import('app/exam/manage/exam-management/exam-management.component').then((m) => m.ExamManagementComponent),
         data: {
             hasSidebar: true,
+            authorities: IS_AT_LEAST_TUTOR,
         },
         children: [
             {
