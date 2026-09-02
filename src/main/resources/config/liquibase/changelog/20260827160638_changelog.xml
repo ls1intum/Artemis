@@ -5,14 +5,16 @@
     <!--
     The complete schema for the Iris proactive struggle intervention (#350), in one migration.
 
-    Additive and non-destructive: three nullable columns on the existing iris_message table and one new table.
-    No drops, no alters of existing columns, no data backfill. Existing iris_message rows get NULL.
+    Additive and non-destructive: four nullable columns plus an index on the existing iris_message table, and one
+    new table. No drops, no alters of existing columns, no data backfill. Existing iris_message rows get NULL.
 
     iris_message gains:
       origin                 marks a row as proactive, so it can be excluded from the AI rate limit, included in
                              the chat overview, and rendered differently in the history sent to Pyris
       proactive_outcome      how the episode ended; the first terminal value wins and is never overwritten
       proactive_episode_id   ties the rows of one episode together for the episode-scoped outcome endpoint
+      proactive_exercise_id  the exercise the row was decided for, so a client-reused episode id cannot make one
+                             exercise's outcome terminal for another
 
     iris_ambient_decision records the ambient hints Artemis offers, so revealing one does not trust the client.
     The ambient flow is a pull model: Artemis tells the client a hint exists and only writes the chat message when
@@ -144,6 +146,42 @@
         </delete>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_ambient_decision" constraintName="fk_iris_ambient_decision_exercise_id"
                                  referencedColumnNames="id" referencedTableName="exercise" onDelete="CASCADE" onUpdate="RESTRICT"/>
+    </changeSet>
+
+    <!--
+    Binds a proactive message to the exercise it was decided for.
+
+    proactive_episode_id alone does not identify an episode: the id is client-generated, so the same id can be sent
+    for two different exercises. Scoped only by the owning user, which closes the IDOR, one exercise's terminal
+    outcome then marked the other exercise's episode as finished.
+
+    The exercise cannot be derived from the session. iris_session.entity_id and chat_mode change on every context
+    switch (a session is born a COURSE_CHAT and is switched to an exercise later), so the session records where the
+    chat points NOW, not which exercise a historical row belongs to. The binding therefore lives on the message row,
+    written once at insert time and never updated.
+    -->
+    <changeSet id="20260827160638-7-add-proactive-exercise-id" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="iris_message" columnName="proactive_exercise_id"/></not>
+        </preConditions>
+        <addColumn tableName="iris_message">
+            <column name="proactive_exercise_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <!--
+    Every episode lookup filters on (proactive_episode_id, proactive_exercise_id) and one of them additionally on
+    proactive_outcome, so the composite index covers the whole predicate. Separate changeSet so a database that
+    already has the column still picks the index up.
+    -->
+    <changeSet id="20260827160638-8-index-proactive-episode-exercise" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="iris_message" indexName="idx_iris_message_proactive_episode_exercise"/></not>
+        </preConditions>
+        <createIndex tableName="iris_message" indexName="idx_iris_message_proactive_episode_exercise">
+            <column name="proactive_episode_id"/>
+            <column name="proactive_exercise_id"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>
