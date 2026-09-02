@@ -360,6 +360,18 @@ public class ExerciseVariantJobService {
     }
 
     /**
+     * Terminal transition to FAILED that keeps the variant exercise id, with an instructor summary. Used when the
+     * hard-failure cleanup could NOT delete the provisioned clone: the id stays the only pointer to it.
+     *
+     * @param jobId             the job id
+     * @param detail            failure description including the phase and the cleanup note
+     * @param instructorSummary AI-generated next-steps summary, or null when unavailable
+     */
+    public void failKeepingVariantExerciseId(String jobId, String detail, String instructorSummary) {
+        fail(jobId, detail, instructorSummary, false);
+    }
+
+    /**
      * Terminal transition to FAILED with an optional AI-generated instructor summary (state of the exercise
      * plus next steps). Also clears the variant exercise id — the hard-failure policy deletes the provisioned
      * clone before failing, so a deep link would point at a deleted exercise.
@@ -393,9 +405,30 @@ public class ExerciseVariantJobService {
      * @param jobId the job id
      */
     public void markCancelled(String jobId) {
+        markCancelled(jobId, null, true);
+    }
+
+    /**
+     * Terminal transition to CANCELLED for the path where the clone cleanup FAILED: the variant exercise id is
+     * kept (it is the only pointer to the surviving exercise) and the cleanup note is stored as the job's detail,
+     * so the modal shows it next to the cancelled state instead of leaving the leftover invisible.
+     *
+     * @param jobId         the job id
+     * @param cleanupDetail the instructor-visible note about the exercise that has to be deleted manually
+     */
+    public void markCancelledKeepingVariantExerciseId(String jobId, String cleanupDetail) {
+        markCancelled(jobId, cleanupDetail, false);
+    }
+
+    private void markCancelled(String jobId, String cleanupDetail, boolean clearVariantExerciseId) {
         VariantJob job = mutate(jobId, mutableJob -> {
             mutableJob.setPhase(VariantJobPhase.CANCELLED);
-            mutableJob.setVariantExerciseId(null); // clone was deleted — no deep link
+            if (clearVariantExerciseId) {
+                mutableJob.setVariantExerciseId(null); // clone was deleted — no deep link
+            }
+            else {
+                mutableJob.setFailureDetail(cleanupDetail);
+            }
             mutableJob.setFinishedAt(Instant.now());
         });
         logTelemetrySummary(job);

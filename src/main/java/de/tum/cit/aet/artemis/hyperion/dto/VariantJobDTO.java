@@ -26,7 +26,8 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
  * @param attempt              repair attempt counter (shown during REPAIRING)
  * @param maxAttempts          attempt budget
  * @param variantExerciseId    set for COMPLETED/DRAFT_WITH_WARNINGS — target of the editor deep link; null for
- *                                 CANCELLED (clone cleaned up, no link)
+ *                                 CANCELLED/FAILED once the clone was cleaned up, and kept when that cleanup
+ *                                 failed (then it points at the exercise that has to be deleted manually)
  * @param variantExerciseTitle planned variant title — the "source → variant" display; available from PLANNING on
  * @param request              the original generation request — the tray card's "what is being adapted" chips
  *                                 (same rendering as the modal's chips)

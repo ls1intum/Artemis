@@ -195,17 +195,28 @@ public class ExerciseVariantGenerationPipelineService {
                     job.getSourceExerciseId(), variant.getId());
         }
         catch (JobCancelledException cancelled) {
-            cleanupProvisionedVariant(variant, jobId);
-            jobService.markCancelled(jobId);
+            boolean cleanedUp = cleanupProvisionedVariant(variant, jobId);
+            if (cleanedUp) {
+                jobService.markCancelled(jobId);
+            }
+            else {
+                // The clone survived the failed deletion, so the id is the only pointer to it — keep it and say so.
+                jobService.markCancelledKeepingVariantExerciseId(jobId, cleanupFailedDetail(variant));
+            }
             log.info("Variant generation job {} cancelled (exercise {})", jobId, job.getSourceExerciseId());
         }
         catch (PhaseFailedException failure) {
             // Hard-failure policy: delete any half-created exercise, then FAILED. The
             // instructor summary is generated BEFORE the terminal transition so the FAILED event's detail
             // fetch already sees it (the modal loads the job detail as soon as the event arrives).
-            cleanupProvisionedVariant(variant, jobId);
+            boolean cleanedUp = cleanupProvisionedVariant(variant, jobId);
             String instructorSummary = generateFailureSummary(job, failure.getMessage());
-            jobService.fail(jobId, failure.getMessage(), instructorSummary);
+            if (cleanedUp) {
+                jobService.fail(jobId, failure.getMessage(), instructorSummary);
+            }
+            else {
+                jobService.failKeepingVariantExerciseId(jobId, failure.getMessage() + " " + cleanupFailedDetail(variant), instructorSummary);
+            }
             log.warn("Variant generation job {} failed: {}", jobId, failure.getMessage(), failure.getCause());
         }
         catch (Exception unexpected) {
@@ -223,8 +234,13 @@ public class ExerciseVariantGenerationPipelineService {
                         unexpected);
                 return;
             }
-            cleanupProvisionedVariant(variant, jobId);
-            jobService.fail(jobId, "Unexpected error: " + unexpected.getMessage(), null);
+            String detail = "Unexpected error: " + unexpected.getMessage();
+            if (cleanupProvisionedVariant(variant, jobId)) {
+                jobService.fail(jobId, detail, null);
+            }
+            else {
+                jobService.failKeepingVariantExerciseId(jobId, detail + " " + cleanupFailedDetail(variant), null);
+            }
             log.error("Variant generation job {} failed unexpectedly (exercise {})", jobId, job.getSourceExerciseId(), unexpected);
         }
     }
@@ -500,18 +516,29 @@ public class ExerciseVariantGenerationPipelineService {
     /**
      * Deletes a provisioned half-exercise via the existing deletion service — repos and build plans are
      * cleaned up on the same path as regular exercise deletion (hard-failure and cancel paths).
+     *
+     * @return true when nothing is left behind (deleted, or never provisioned); false when the clone survived a
+     *         failed deletion — the caller must then KEEP the variant exercise id, which is the only pointer to it
      */
-    private void cleanupProvisionedVariant(@Nullable Exercise variant, String jobId) {
+    private boolean cleanupProvisionedVariant(@Nullable Exercise variant, String jobId) {
         if (variant == null || variant.getId() == null) {
-            return;
+            return true;
         }
         try {
             exerciseDeletionService.delete(variant.getId(), true);
+            return true;
         }
         catch (Exception e) {
             // Never mask the original failure/cancellation with a cleanup error — flag it for manual cleanup.
             log.error("Failed to clean up provisioned variant exercise {} for job {}", variant.getId(), jobId, e);
+            return false;
         }
+    }
+
+    /** Instructor-visible note appended to the terminal detail when the clone could not be deleted. */
+    private static String cleanupFailedDetail(@Nullable Exercise variant) {
+        return "The generated exercise" + (variant != null && variant.getId() != null ? " (id " + variant.getId() + ")" : "")
+                + " could not be deleted automatically — delete it manually.";
     }
 
     /** Wraps a phase body so any exception carries the phase name into the FAILED detail ("failed in VERIFYING"). */
