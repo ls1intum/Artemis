@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
@@ -146,20 +146,27 @@ class VariantPlacementServiceNewGroupTest {
     void propagatesAnAssignmentFailureThatIsNotTheQuizRaceInsteadOfDroppingTheGroup() {
         // A programming member's timeline update rejects AFTER membership was persisted, so treating this like the
         // quiz race would delete a group that already has a member.
-        doThrow(new BadRequestAlertException("invalid build plan", "programmingExercise", "invalidBuildPlanConfiguration")).when(exerciseVariantGroupService).assignToGroup(variant,
-                createdGroup);
+        BadRequestAlertException invalidBuildPlan = invalidBuildPlanConfiguration();
+        doThrow(invalidBuildPlan).when(exerciseVariantGroupService).assignToGroup(variant, createdGroup);
 
-        assertThatThrownBy(() -> placementService.place(variant, SOURCE_ID, newGroupRequest())).isInstanceOf(BadRequestAlertException.class);
-
+        assertThat(catchThrowable(() -> placementService.place(variant, SOURCE_ID, newGroupRequest()))).isSameAs(invalidBuildPlan);
         verify(exerciseVariantGroupRepository, never()).delete(any());
     }
 
     @Test
     void propagatesASourceAssignmentFailureThatIsNotTheQuizRace() {
-        doThrow(new BadRequestAlertException("invalid build plan", "programmingExercise", "invalidBuildPlanConfiguration")).when(exerciseVariantGroupService).assignToGroup(source,
-                createdGroup);
+        BadRequestAlertException invalidBuildPlan = invalidBuildPlanConfiguration();
+        doThrow(invalidBuildPlan).when(exerciseVariantGroupService).assignToGroup(source, createdGroup);
 
-        assertThatThrownBy(() -> placementService.place(variant, SOURCE_ID, newGroupRequest())).isInstanceOf(BadRequestAlertException.class);
+        assertThat(catchThrowable(() -> placementService.place(variant, SOURCE_ID, newGroupRequest()))).isSameAs(invalidBuildPlan);
+        // The variant is placed before the source, so its membership — and the group holding it — survive the failure.
+        verify(exerciseVariantGroupService).assignToGroup(variant, createdGroup);
+        verify(exerciseVariantGroupRepository, never()).delete(any());
+    }
+
+    /** The rejection a programming member's timeline update raises after its membership was already persisted. */
+    private static BadRequestAlertException invalidBuildPlanConfiguration() {
+        return new BadRequestAlertException("invalid build plan", "programmingExercise", "invalidBuildPlanConfiguration");
     }
 
     private QuizExercise individualQuiz(long id) {
