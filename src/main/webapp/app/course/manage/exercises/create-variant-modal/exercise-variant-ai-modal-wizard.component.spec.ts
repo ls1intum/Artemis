@@ -576,6 +576,32 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
 
         expect(component.stepOutputs()).toEqual({});
     });
+
+    it('discards a variant lookup that arrives after the wizard was reset for a new generation', () => {
+        const variantLookup = new Subject<any>();
+        const exerciseService = TestBed.inject(ExerciseService);
+        vi.spyOn(exerciseService, 'find').mockReturnValue(variantLookup as any);
+
+        component.changeDomain.set(true);
+        component.domainText.set('space');
+        component.startGeneration();
+        // The terminal event starts the lookup of the generated exercise; its response is still pending.
+        jobEvents.next({ type: 'DONE', phase: 'COMPLETED', variantExerciseId: 4711 });
+        expect(exerciseService.find).toHaveBeenCalledWith(4711);
+
+        // Reopening for a parallel generation resets the wizard while the lookup is still in flight.
+        component.onClose(false);
+        fixture.componentRef.setInput('visible', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        expect(component.jobId()).toBeUndefined();
+
+        variantLookup.next({ body: { id: 4711, type: ExerciseType.QUIZ } as Exercise });
+
+        // Otherwise the fresh wizard — or a later failed job — would offer the editor link of the previous clone.
+        expect(component.generatedVariant()).toBeUndefined();
+    });
 });
 
 /**

@@ -689,8 +689,15 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private showResult(variantExerciseId: number | undefined): void {
         this.wizardStep.set(5);
         if (variantExerciseId) {
+            // A reset clears the job id while this lookup is still in flight; its response belongs to the
+            // previous wizard session and must not put that exercise (and its editor link) on a later job.
+            const requestedForJobId = this.jobId();
             this.exerciseService.find(variantExerciseId).subscribe({
-                next: (response) => this.generatedVariant.set(response.body ?? undefined),
+                next: (response) => {
+                    if (this.jobId() === requestedForJobId) {
+                        this.generatedVariant.set(response.body ?? undefined);
+                    }
+                },
                 error: () => {},
             });
         }
