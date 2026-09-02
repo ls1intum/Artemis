@@ -577,6 +577,39 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
         expect(component.stepOutputs()).toEqual({});
     });
 
+    it('discards a monitor-mode job detail whose dialog was closed or reopened for another job', () => {
+        // One pending response per job, so job A's can be delivered after the dialog moved on to job B.
+        const detailByJobId: Record<string, Subject<any>> = { 'job-A': new Subject<any>(), 'job-B': new Subject<any>() };
+        const generationService = TestBed.inject(ExerciseVariantGenerationService);
+        vi.spyOn(generationService, 'getJobDetail').mockImplementation((id: string) => detailByJobId[id] as any);
+
+        // Open the tray's monitor view for job A; its detail request is still pending.
+        fixture.componentRef.setInput('visible', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('monitorJobId', 'job-A');
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        expect(generationService.getJobDetail).toHaveBeenCalledWith('job-A');
+
+        // The instructor closes it and reopens the tray for job B before A's response arrives.
+        fixture.componentRef.setInput('visible', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('monitorJobId', 'job-B');
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+
+        detailByJobId['job-A'].next({
+            job: { jobId: 'job-A', phase: 'COMPLETED', variantExerciseId: 4711, sourceExerciseTitle: 'Job A source' },
+            stepOutputs: {},
+            request: undefined,
+        });
+
+        // A's result must not be shown under B — neither its state nor its source title.
+        expect(component.jobId()).not.toBe('job-A');
+        expect(component.monitorSourceTitle()).toBeUndefined();
+        expect(component.jobPhase()).not.toBe('COMPLETED');
+    });
+
     it('discards a variant lookup that arrives after the wizard was reset for a new generation', () => {
         const variantLookup = new Subject<any>();
         const exerciseService = TestBed.inject(ExerciseService);

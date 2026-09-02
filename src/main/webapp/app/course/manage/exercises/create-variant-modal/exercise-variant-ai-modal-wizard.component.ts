@@ -721,6 +721,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private openInMonitorMode(jobId: string): void {
         this.variantGenerationService.getJobDetail(jobId).subscribe({
             next: (detail) => {
+                // The dialog may have been closed, or reopened for a different job, while this was in flight.
+                // Applying it then would reset the modal and attach it to the superseded job.
+                if (!this.visible() || this.monitorJobId() !== jobId) {
+                    return;
+                }
                 const job = detail.job;
                 this.initializeFromJobId(jobId, job?.phase, job?.attempt, job?.maxAttempts);
                 this.stepOutputs.set(detail.stepOutputs ?? {});
