@@ -318,7 +318,22 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
+        extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise, true);
+    }
+
+    /**
+     * Same as {@link #extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification, ProgrammingExercise)}, but the
+     * caller decides whether test cases absent from this result are deactivated. A multi-container build reports one
+     * result per container, each covering only that container's test cases, so a single container must NOT deactivate the
+     * test cases of its siblings — it passes {@code false}. The single-container path, whose result covers the whole
+     * exercise, passes {@code true} so a test truly removed from the solution is deactivated.
+     *
+     * @param buildResult               the build result to extract test cases from
+     * @param exercise                  the programming exercise the test cases belong to
+     * @param deactivateAbsentTestCases whether existing active test cases absent from this result are deactivated
+     */
+    public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
+        boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise, deactivateAbsentTestCases);
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
             Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
@@ -336,6 +351,21 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @return Returns true if the test cases have changed, false if they haven't.
      */
     public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        return generateTestCasesFromBuildResult(buildResult, exercise, true);
+    }
+
+    /**
+     * Same as {@link #generateTestCasesFromBuildResult(BuildResultNotification, ProgrammingExercise)}, but the caller
+     * decides whether existing active test cases that are absent from this result are deactivated. A single container of a
+     * multi-container build sees only its own test cases, so it must not deactivate its siblings' — see
+     * {@link #extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification, ProgrammingExercise, boolean)}.
+     *
+     * @param buildResult               the build result to extract test cases from
+     * @param exercise                  the programming exercise the test cases belong to
+     * @param deactivateAbsentTestCases whether existing active test cases absent from this result are deactivated
+     * @return true if the test cases have changed, false otherwise
+     */
+    public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         // Do not generate test cases for static code analysis feedback
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = getTestCasesFromBuildResult(buildResult, exercise);
@@ -343,7 +373,7 @@ public class ProgrammingExerciseFeedbackCreationService {
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases where the activate state has changed (re-added or removed tests).
-        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks);
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks, deactivateAbsentTestCases);
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
         testCasesToSave.addAll(newTestCases);
@@ -371,12 +401,14 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
-            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks) {
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, boolean deactivateAbsentTestCases) {
         // We compare the new generated test cases from feedback with the existing test cases from the database
         return existingTestCases.stream().filter(existing -> {
             Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
-            // Either the test case was active and is not part of the feedback anymore
-            boolean existingTestCaseRemoved = matchingTestCase.isEmpty() && existing.isActive();
+            // Either the test case was active and is not part of the feedback anymore. A single container of a
+            // multi-container build only ever sees its own test cases, so deactivation is suppressed for it (the absent
+            // ones belong to sibling containers, not to a test removed from the solution).
+            boolean existingTestCaseRemoved = deactivateAbsentTestCases && matchingTestCase.isEmpty() && existing.isActive();
             // OR was not active before and is now part of the feedback again.
             boolean inactiveTestReactivated = matchingTestCase.isPresent() && !existing.isActive();
             return existingTestCaseRemoved || inactiveTestReactivated;

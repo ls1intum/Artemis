@@ -48,11 +48,11 @@ import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
@@ -79,6 +79,8 @@ public class LocalCIResultProcessingService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final ParticipationRepository participationRepository;
 
@@ -108,10 +110,12 @@ public class LocalCIResultProcessingService {
     public LocalCIResultProcessingService(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
-            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, DistributedDataAccessService distributedDataAccessService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService,
             TransactionTemplate transactionTemplate) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
@@ -351,11 +355,10 @@ public class LocalCIResultProcessingService {
     private Result processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult, List<BuildLogDTO> agentBuildLogs,
             Throwable buildException, boolean testsExpected) {
         // A container whose build script failed still completes as a normal job, and on that path the agent reports the
-        // build logs only on the result queue item, not inside the build result itself. They are merged in here so a
-        // crashed container's logs can be preserved for the student alongside its siblings' results.
-        final BuildResult effectiveBuildResult = !buildResult.hasLogs() && agentBuildLogs != null && !agentBuildLogs.isEmpty() ? new BuildResult(
-                buildResult.assignmentRepoBranchName(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(), buildResult.isBuildSuccessful(),
-                buildResult.buildRunDate(), buildResult.jobs(), agentBuildLogs, buildResult.staticCodeAnalysisReports(), true, buildResult.buildScriptExitCode()) : buildResult;
+        // build logs only on the result queue item, not inside the build result. Carry them over so a crashed
+        // container's logs are preserved for the student alongside its siblings' results.
+        final boolean logsOnlyOnQueueItem = !buildResult.hasLogs() && agentBuildLogs != null && !agentBuildLogs.isEmpty();
+        final BuildResult effectiveBuildResult = logsOnlyOnQueueItem ? buildResult.withBuildLogs(agentBuildLogs) : buildResult;
         // The containers of one submission are grouped by participation and commit hash, so a lock on that key serializes
         // them. It is a distributed lock (backed by the same cluster as the queues), so it also holds across the several
         // core nodes that process results in parallel, not only across the threads of one node. Without it, two nodes
@@ -368,7 +371,7 @@ public class LocalCIResultProcessingService {
             // Append, link and finalize run in one programmatic transaction that commits before the lock is released, so
             // the next container of the same submission sees the appended feedback and the linked build job atomically.
             return transactionTemplate.execute(status -> {
-                int expectedContainerCount = determineExpectedContainerCount(participation);
+                int expectedContainerCount = determineExpectedContainerCount(buildJob.exerciseId());
                 Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, expectedContainerCount,
                         buildJob.containerName());
                 if (aggregatedResult == null) {
@@ -380,17 +383,13 @@ public class LocalCIResultProcessingService {
                 saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
 
                 long completedContainers = buildJobRepository.countByResultId(aggregatedResult.getId());
-                if (completedContainers >= expectedContainerCount) {
-                    // The job status only captures how the job executed: a container whose build script crashed still
-                    // completes as a SUCCESSFUL job. That failure is carried by the submission's buildFailed flag
-                    // (set in appendContainerResult), so both have to agree for the result to count as successful.
-                    boolean anyContainerFailedToBuild = aggregatedResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission
-                            && programmingSubmission.isBuildFailed();
-                    boolean allContainersSucceeded = !anyContainerFailedToBuild
-                            && !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
-                    return programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allContainersSucceeded, effectiveBuildResult.buildRunDate());
+                if (completedContainers < expectedContainerCount) {
+                    return aggregatedResult;
                 }
-                return aggregatedResult;
+                // All containers are in. This service only knows how the jobs executed; whether the build itself
+                // succeeded is the grading service's call (see finalizeContainerResult).
+                boolean allJobsSucceeded = !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
+                return programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allJobsSucceeded, effectiveBuildResult.buildRunDate());
             });
         }
         finally {
@@ -402,12 +401,17 @@ public class LocalCIResultProcessingService {
      * Determines how many containers are expected to contribute to the submission's result, from the current build plan
      * of the exercise. It matches the number of build jobs the trigger scheduled for the commit unless the build plan
      * was edited in between.
+     * <p>
+     * The build config is loaded fresh by exercise id inside the current transaction, NOT read from the participation
+     * that was passed in: result processing runs on a pool thread with no open-session-in-view, so the participation is
+     * detached and its lazy {@code buildConfig} proxy would throw a {@link org.hibernate.LazyInitializationException}
+     * (it is bound to the closed session it was loaded in). Fetching in-session avoids that.
      *
-     * @param participation the participation that was built
+     * @param exerciseId the id of the exercise that was built
      * @return the expected number of containers, at least one
      */
-    private int determineExpectedContainerCount(ProgrammingExerciseParticipation participation) {
-        var buildConfig = participation.getProgrammingExercise().getBuildConfig();
+    private int determineExpectedContainerCount(long exerciseId) {
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(exerciseId).orElse(null);
         if (buildConfig == null) {
             return 1;
         }
@@ -415,7 +419,7 @@ public class LocalCIResultProcessingService {
             return Math.max(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).effectiveContainers().size(), 1);
         }
         catch (JsonProcessingException e) {
-            log.warn("Could not determine the expected container count for participation {}, assuming a single container", participation.getId(), e);
+            log.warn("Could not determine the expected container count for exercise {}, assuming a single container", exerciseId, e);
             return 1;
         }
     }

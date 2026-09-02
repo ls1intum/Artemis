@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -264,7 +265,9 @@ public class ProgrammingExerciseGradingService {
 
             ProgrammingExercise exercise = participation.getProgrammingExercise();
             if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise);
+                // This container reports only its own test cases; passing false keeps it from deactivating the test cases
+                // of its sibling containers, which each report their own share of the solution's tests separately.
+                feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise, false);
             }
 
             // The feedback produced by this container, extracted via a throwaway result.
@@ -284,14 +287,11 @@ public class ProgrammingExerciseGradingService {
                 submission.setExpectedContainerCount(expectedContainerCount);
             }
 
-            // The submission counts as failed as soon as any of its containers failed to build.
+            // Whether this container failed to build; applied to the submission once the attempt's result is resolved below.
             final boolean noTestFeedbacks = containerResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
             final Integer exitCode = buildResult.buildScriptExitCode();
             final boolean scriptFailed = exitCode != null && exitCode != 0;
             final boolean containerFailed = testsExpected ? noTestFeedbacks : scriptFailed;
-            if (containerFailed) {
-                submission.setBuildFailed(true);
-            }
 
             // Preserve the build logs of a failed container, labeled by its name and saved next to the logs of the other
             // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
@@ -303,12 +303,24 @@ public class ProgrammingExerciseGradingService {
                 buildLogService.appendBuildLogs(buildLogs, submission, containerName);
             }
 
+            // Resolving the attempt's in-progress result resets the submission's build-failed flag when it starts a fresh
+            // attempt, so the flag below reflects this attempt only: any failing container marks the submission failed.
             Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise);
-            if (!containerResult.getFeedbacks().isEmpty()) {
+            if (containerFailed) {
+                submission.setBuildFailed(true);
+            }
+            // Drop feedback for a test case the aggregated result already carries from an earlier container. A shared
+            // setup phase (e.g. the main-method check the DejaGnu containers each need) runs in several containers and
+            // reports the same test case in each, but a test name is unique per exercise: without this, the merged
+            // result would hold that test case several times, which the scoring treats as a duplicate and zeroes the
+            // score. The test cases proper are partitioned across containers, so this only ever removes such repeats.
+            var deduplicatedFeedbacks = containerResult.getFeedbacks().stream().filter(distinctNewTestCaseFeedback(aggregatedResult))
+                    .collect(Collectors.toCollection(ArrayList::new));
+            if (!deduplicatedFeedbacks.isEmpty()) {
                 // Only append the feedback here; the score is not recomputed until every container has finished
                 // (see finalizeContainerResult), because scoring a partial result would mark the tests of containers
                 // that have not finished yet as "not executed".
-                aggregatedResult = resultService.addFeedbackToResult(aggregatedResult, new ArrayList<>(containerResult.getFeedbacks()), false);
+                aggregatedResult = resultService.addFeedbackToResult(aggregatedResult, deduplicatedFeedbacks, false);
             }
             aggregatedResult.setSubmission(submission);
             aggregatedResult.setExerciseId(exercise.getId());
@@ -320,6 +332,31 @@ public class ProgrammingExerciseGradingService {
             log.error("Container result for participation {} could not be appended", participation.getId(), ex);
             return null;
         }
+    }
+
+    /**
+     * A predicate that keeps a container's feedback only if the aggregated result does not already carry feedback for the
+     * same test case. Static code analysis feedback carries no test case and is always kept; a test-case feedback is kept
+     * the first time its test case is seen across the submission's containers and dropped afterwards.
+     *
+     * @param aggregatedResult the result the containers of one submission aggregate their feedback into
+     * @return a stateful predicate to use once per container while appending its feedback
+     */
+    private Predicate<Feedback> distinctNewTestCaseFeedback(Result aggregatedResult) {
+        Set<String> seenTestCaseNames = aggregatedResult.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback()).map(this::testCaseNameOf)
+                .filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
+        return feedback -> feedback.isStaticCodeAnalysisFeedback() || seenTestCaseNames.add(testCaseNameOf(feedback));
+    }
+
+    /**
+     * The name of the test case a feedback belongs to: taken from the linked test case when the feedback is already
+     * associated with one, otherwise from the feedback text, which holds the test name until the test case exists.
+     *
+     * @param feedback the feedback to read the test case name from
+     * @return the test case name, or null if the feedback carries none
+     */
+    private String testCaseNameOf(Feedback feedback) {
+        return feedback.getTestCase() != null ? feedback.getTestCase().getTestName() : feedback.getText();
     }
 
     /**
@@ -337,6 +374,9 @@ public class ProgrammingExerciseGradingService {
             // reload with the feedback appended by the earlier containers, so the next append does not drop it
             return resultRepository.findByIdWithEagerFeedbacksElseThrow(latestResult.getId());
         }
+        // A new in-progress result marks the start of a fresh build attempt, so clear a build-failed flag left over from
+        // an earlier attempt of the same submission; the containers of this attempt set it again if any of them fails.
+        submission.setBuildFailed(false);
         Result result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         // stays null until every container has finished, which marks the result as still in progress
@@ -355,18 +395,22 @@ public class ProgrammingExerciseGradingService {
      * score over the feedback of all containers, marks the result successful only if every container succeeded, and sets
      * the completion date so the result is shown as complete.
      *
-     * @param result                 the aggregated result to finalize
-     * @param participation          the participation that was built
-     * @param allContainersSucceeded whether every container of the submission finished successfully
-     * @param completionDate         the completion date to set on the finalized result
+     * @param result           the aggregated result to finalize
+     * @param participation    the participation that was built
+     * @param allJobsSucceeded whether every container's build job finished with a successful job status
+     * @param completionDate   the completion date to set on the finalized result
      * @return the finalized result
      */
-    public Result finalizeContainerResult(Result result, ProgrammingExerciseParticipation participation, boolean allContainersSucceeded, ZonedDateTime completionDate) {
+    public Result finalizeContainerResult(Result result, ProgrammingExerciseParticipation participation, boolean allJobsSucceeded, ZonedDateTime completionDate) {
         Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId());
         boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
                 && !(participation instanceof TemplateProgrammingExerciseParticipation);
         calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
-        aggregatedResult.setSuccessful(allContainersSucceeded);
+        // A job status only records how the job executed: a container whose build script crashed still completes as a
+        // SUCCESSFUL job. The build outcome itself is the submission's build-failed flag, maintained per container in
+        // appendContainerResult, so the result is successful only when both agree.
+        boolean anyContainerFailedToBuild = result.getSubmission() instanceof ProgrammingSubmission submission && submission.isBuildFailed();
+        aggregatedResult.setSuccessful(allJobsSucceeded && !anyContainerFailedToBuild);
         aggregatedResult.setCompletionDate(completionDate);
         return resultRepository.save(aggregatedResult);
     }

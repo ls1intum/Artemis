@@ -59,4 +59,16 @@ public record BuildResult(String assignmentRepoBranchName, String assignmentRepo
         // convert the buildLogEntry DTOs to BuildLogEntry objects
         return buildLogEntries.stream().map(log -> new BuildLogEntry(log.time(), log.log())).toList();
     }
+
+    /**
+     * A copy of this build result that carries the given build logs instead of its own. Used where the agent reported
+     * the logs next to the result rather than inside it.
+     *
+     * @param buildLogs the build logs the copy should carry
+     * @return a copy of this result with the given build logs
+     */
+    public BuildResult withBuildLogs(List<BuildLogDTO> buildLogs) {
+        return new BuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, jobs, buildLogs, staticCodeAnalysisReports,
+                buildLogs != null && !buildLogs.isEmpty(), buildScriptExitCode);
+    }
 }
