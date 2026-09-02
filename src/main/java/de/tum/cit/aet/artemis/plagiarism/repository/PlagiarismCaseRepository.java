@@ -56,8 +56,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
                 LEFT JOIN exerciseGroup.exam exam
                 LEFT JOIN exam.course examCourse
-            WHERE COALESCE(course.endDate, examCourse.endDate) IS NOT NULL
-                AND COALESCE(course.endDate, examCourse.endDate) < :endDateBefore
+            WHERE COALESCE(course.endDate, examCourse.endDate) < :endDateBefore
             """)
     List<PlagiarismCase> findWithSubmissionsByCourseEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
 
@@ -76,8 +75,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
                 LEFT JOIN exerciseGroup.exam exam
                 LEFT JOIN exam.course examCourse
-            WHERE COALESCE(course.endDate, examCourse.endDate) IS NOT NULL
-                AND COALESCE(course.endDate, examCourse.endDate) < :endDateBefore
+            WHERE COALESCE(course.endDate, examCourse.endDate) < :endDateBefore
             """)
     int countByCourseEndDateBefore(@Param("endDateBefore") ZonedDateTime endDateBefore);
 

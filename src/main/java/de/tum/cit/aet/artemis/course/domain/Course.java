@@ -394,8 +394,7 @@ public class Course extends DomainObject {
     public boolean unenrollmentIsActive() {
         ZonedDateTime now = ZonedDateTime.now();
         final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
-        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
-                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
+        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate().isAfter(now)) || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
         return startCondition && endCondition;
     }
 
