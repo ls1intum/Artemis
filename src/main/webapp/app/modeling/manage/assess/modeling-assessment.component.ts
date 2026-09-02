@@ -78,7 +78,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
     private readonly fullscreenSupported = document.fullscreenEnabled;
-    /** Public so a host can render the control in its own chrome cluster. */
     readonly fullscreenActive = signal(false);
 
     private readonly topLeftRegion = viewChild<ElementRef<HTMLElement>>('topLeftRegion');
@@ -95,7 +94,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     readonly enablePopups = input(true);
     readonly panelLabel = input('');
     protected readonly hasPanel = computed(() => isOccupied(this.projectedPanel()));
-    /** Open by default: the feedback is what the assessed view exists to show. */
     readonly panelVisible = signal(true);
     protected readonly panelMaxHeight = signal(RAIL_DISCLOSURE_MAX_HEIGHT);
     protected readonly faPanel = faCommentDots;
@@ -359,7 +357,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         this.scheduleChromePlacement();
     }
 
-    /** The panel's width settles asynchronously as its content renders, so the reservation is watched, not taken once. */
     private observePanelWidth(panel: HTMLElement): void {
         this.panelResizeObserver?.disconnect();
         this.panelResizeObserver = new ResizeObserver(() => this.reserveRoomForPanel(panel));
@@ -642,7 +639,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     }
 
     private updateHighlightedElements(newElements: Map<string, string> | undefined): void {
-        // Apollon treats undefined as unchanged; null clears existing highlights.
         this.apollonEditor?.setElementHighlights(newElements ?? null);
     }
 

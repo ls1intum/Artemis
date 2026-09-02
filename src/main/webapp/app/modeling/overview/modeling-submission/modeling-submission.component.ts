@@ -55,7 +55,6 @@ import { ApollonModelData, countModelElements, hasModelElements, isModelEmpty as
 import { toSignal } from '@angular/core/rxjs-interop';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
-/** Reuses Apollon's own "this element is marked" accent, so the preview reads as part of the diagram. */
 const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
 
 @Component({
@@ -96,7 +95,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     protected readonly faEnterFullscreen = faUpRightAndDownLeftFromCenter;
     protected readonly faExitFullscreen = faDownLeftAndUpRightToCenter;
 
-    /** Matches the tone Apollon badges the same element with on the canvas, so the list speaks the diagram's language. */
     protected feedbackTone(feedback: Feedback): 'positive' | 'negative' | 'zero' {
         const credits = feedback.credits ?? 0;
         if (credits > 0) {
@@ -163,7 +161,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly resultWithComplaint = signal<Result | undefined>(undefined);
 
     readonly selectedElementIds = signal<string[]>([]);
-    /** Element referenced by the feedback entry currently hovered or focused. */
     protected readonly previewedFeedbackReferenceId = signal<string | undefined>(undefined);
     protected readonly highlightedFeedbackElements = computed(() => {
         const referenceId = this.previewedFeedbackReferenceId();
@@ -210,7 +207,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     readonly isFeedbackView = signal(false);
 
-    /** Everything the side panel can hold hangs off a result, so without one the rail would open an empty card. */
     protected hasAssessmentToShow(): boolean {
         return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
     }
@@ -232,10 +228,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         );
     }
 
-    /**
-     * Mirrors {@link shouldShowLiveEditor} for the shell: once the canvas is the read-only assessment there is nothing
-     * to submit, and offering Submit would only resubmit unchanged work.
-     */
     readonly canSubmitExercise = computed(() => this.shouldShowLiveEditor());
 
     protected shouldShowLiveEditor(): boolean {
@@ -843,17 +835,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.selectedElementIds.set(selectedElementIds);
     }
 
-    /**
-     * Whether a feedback entry is about one of the elements currently selected on the diagram.
-     * Selecting an element marks the matching entries; it must never filter the list, or the reader
-     * is left with a silently shortened assessment.
-     */
     isFeedbackForSelection(feedback: Feedback): boolean {
         const selected = this.selectedElementIds();
         return selected.length > 0 && !!feedback.referenceId && selected.includes(feedback.referenceId);
     }
 
-    /** Rings the referenced element while the reader passes over the entry: a preview, deliberately without canvas movement. */
     previewFeedbackTarget(feedback: Feedback): void {
         this.previewedFeedbackReferenceId.set(feedback.referenceId);
     }
@@ -862,7 +848,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.previewedFeedbackReferenceId.set(undefined);
     }
 
-    /** Commits to an entry: selects its element on the canvas, opens the element's popover and pans to it. */
     showFeedbackOnDiagram(feedback: Feedback): void {
         if (!feedback.referenceId) {
             return;

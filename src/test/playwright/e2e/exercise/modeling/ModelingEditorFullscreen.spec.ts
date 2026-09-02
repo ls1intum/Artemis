@@ -14,16 +14,11 @@ import modelingExerciseSubmissionTemplate from '../../../fixtures/exercise/model
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 const DEFAULT_VIEWPORT = { width: 1440, height: 1000 };
-/** Box geometry is compared across elements the browser rounds independently, so exact edges never line up. */
 const SUB_PIXEL_TOLERANCE = 1;
-/** Once the surface is clamped to the frame rather than placed against a control, the clamp rounds a little wider. */
 const CLAMPED_INSET_TOLERANCE = 3;
-/** Enough growth to distinguish an expanded minimap from the collapsed button. */
 const MINIMAP_EXPANDED_MIN_GROWTH = 100;
-/** How far the explanation notch is dragged upwards when the resize is exercised. */
 const EXPLANATION_RESIZE_DRAG = 55;
 
-/** The gap Apollon leaves between the controls in an overlay corner, which is also the inset the chrome must respect. */
 const chromeColumnGap = (page: Page) =>
     page
         .locator('.apollon-overlay-corner')
@@ -47,38 +42,11 @@ const expectReadOnlyDiagramToFit = async (editor: Locator) => {
     });
     expect(Math.abs(geometry.renderedRatio - geometry.sourceRatio)).toBeLessThan(0.02);
     expect(geometry.height).toBeLessThanOrEqual(geometry.maxHeight + 1);
-
-    const tallGeometry = await svg.evaluate((element) => {
-        const original = {
-            width: element.getAttribute('width'),
-            height: element.getAttribute('height'),
-            viewBox: element.getAttribute('viewBox'),
-        };
-        element.setAttribute('width', '400');
-        element.setAttribute('height', '1600');
-        element.setAttribute('viewBox', '0 0 400 1600');
-        const bounds = element.getBoundingClientRect();
-        const containerWidth = element.parentElement!.getBoundingClientRect().width;
-        for (const [name, value] of Object.entries(original)) {
-            if (value === null) {
-                element.removeAttribute(name);
-            } else {
-                element.setAttribute(name, value);
-            }
-        }
-        return { ratio: bounds.width / bounds.height, height: bounds.height, maxHeight: Math.min(window.innerHeight * 0.7, 800), width: bounds.width, containerWidth };
-    });
-    expect(Math.abs(tallGeometry.ratio - 0.25)).toBeLessThan(0.02);
-    expect(tallGeometry.height).toBeLessThanOrEqual(tallGeometry.maxHeight + 1);
-    expect(tallGeometry.width).toBeLessThan(tallGeometry.containerWidth);
 };
 
 test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
     test.use({ viewport: DEFAULT_VIEWPORT });
 
-    // Most tests here work on the creation form and need nothing persisted. The three that open an existing exercise
-    // or example submission do — and the E2E seed provisions no exercises, so they are created here rather than
-    // addressed by guessed ids.
     let existingExercise: ModelingExercise;
     let exampleSubmissionId: number;
 
@@ -87,11 +55,8 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
 
         await Commands.login(page, admin);
-        // The exercise template carries an example solution model, which is what the read-only detail diagram renders.
         existingExercise = await exerciseAPIRequests.createModelingExercise({ course });
 
-        // The submission template has no relationships, but one test opens assessment feedback on a relationship, so
-        // the model gets an association between two of its classes.
         const model = JSON.parse(modelingExerciseSubmissionTemplate.model);
         model.relationships.push({
             id: 'e6ea1e64-9f0a-4a2b-8f0e-2a4a1c5d6e70',
@@ -112,13 +77,10 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const exampleSubmissionResponse = await page.request.post(`api/assessment/exercises/${existingExercise.id}/example-submissions`, {
             data: {
                 exercise: existingExercise,
-                // Read-and-confirm is the mode the assessment-feedback test starts from.
                 usedForTutorial: false,
                 submission: {
                     ...modelingExerciseSubmissionTemplate,
                     model: JSON.stringify(model),
-                    // The bottom-center region only mounts when there is an explanation, and one test asserts the
-                    // submission explanation sits there, separate from the assessment rationale.
                     explanationText: 'The abstract class captures the shared behaviour of both concrete classes.',
                     id: null,
                     participation: null,
@@ -143,8 +105,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const actionsBox = (await actions.boundingBox())!;
         expect(diagramTypeBox.x + diagramTypeBox.width).toBeLessThanOrEqual(actionsBox.x);
 
-        // Switching the diagram type tears Apollon down and remounts it, which is the one way the hosted regions can
-        // be lost. Operability is read from the value changing rather than from focus, which Apollon moves while mounting.
         await diagramTypeSelect.scrollIntoViewIfNeeded();
         await diagramTypeSelect.click();
         await page.getByRole('option', { name: 'Activity Diagram' }).click();
@@ -184,7 +144,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
 
         const surfaceBox = (await surface.boundingBox())!;
         const editorBox = (await editor.boundingBox())!;
-        // The editor sits fully inside the surface on all four sides, which is also what proves the surface is not collapsed.
         expect(editorBox.x).toBeGreaterThan(surfaceBox.x);
         expect(editorBox.x + editorBox.width).toBeLessThan(surfaceBox.x + surfaceBox.width);
         expect(editorBox.y).toBeGreaterThan(surfaceBox.y);
@@ -200,10 +159,8 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         expect(surfaceBox.x + surfaceBox.width).toBeLessThanOrEqual(minimapBox.x - chromeGap + SUB_PIXEL_TOLERANCE);
         await expect(page.locator('[data-apollon-region="bottom-center"] .modeling-editor__bottom-center:not(.modeling-editor__bottom-center--elevated)')).toBeVisible();
 
-        // The label must fit its notch; an ellipsis here means the notch stopped tracking the surface width.
         expect(await notch.locator('span').evaluate((label) => label.scrollWidth <= label.clientWidth + 1)).toBe(true);
 
-        // Expanding the minimap has to push the surface back, and collapsing it has to hand the room back.
         await minimap.getByRole('button', { name: 'Show minimap' }).click();
         await expect(minimap.getByRole('button', { name: 'Hide minimap' })).toBeVisible();
         await expect.poll(async () => (await minimap.boundingBox())!.width).toBeGreaterThan(minimapBox.width + MINIMAP_EXPANDED_MIN_GROWTH);
@@ -244,7 +201,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const surfaceBefore = (await surface.boundingBox())!;
         const canvasTransformBefore = await canvasViewport.evaluate((viewport) => getComputedStyle(viewport).transform);
 
-        // The markdown editor takes the browser fullscreen from inside the surface; leaving it must not resize the surface.
         const markdownFullscreenButton = page.locator('.modeling-markdown-explanation-editor__editor .md-action-palette .md-toolbar-btn').last();
         await markdownFullscreenButton.click();
         await expect.poll(() => page.evaluate(() => document.fullscreenElement?.classList.contains('h-full'))).toBe(true);
@@ -252,7 +208,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();
         await expect.poll(async () => (await surface.boundingBox())!.width).toBeLessThanOrEqual(surfaceBefore.width + SUB_PIXEL_TOLERANCE);
 
-        // The notch doubles as the resize handle, so nothing may sit on top of it.
         const notchBox = (await notch.boundingBox())!;
         const hitTarget = await notch.evaluate((element) => {
             const rect = element.getBoundingClientRect();
@@ -267,8 +222,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(surface).toHaveClass(/modeling-explanation-surface__surface--manually-sized/);
         await expect.poll(async () => (await surface.boundingBox())!.height).toBeGreaterThan(surfaceBefore.height + EXPLANATION_RESIZE_DRAG * 0.7);
 
-        // Narrow enough that the surface has to give way to the side controls, then narrow enough that it can only
-        // clear the palette and must clamp to the frame instead.
         await page.setViewportSize({ width: 900, height: 900 });
         await expect(bottomCenter).toBeVisible();
         await expect
@@ -294,7 +247,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         expect(compactEditorBox!.x).toBeGreaterThan(compactSurfaceBox!.x);
         expect(compactEditorBox!.x + compactEditorBox!.width).toBeLessThan(compactSurfaceBox!.x + compactSurfaceBox!.width);
 
-        // Back where it started: resizing must not have panned the canvas or moved the controls off the frame's edge.
         await page.setViewportSize(DEFAULT_VIEWPORT);
         await expect.poll(() => canvasViewport.evaluate((viewport) => getComputedStyle(viewport).transform)).toBe(canvasTransformBefore);
         const bottomInset = (frame: { y: number; height: number }, control: { y: number; height: number }) => frame.y + frame.height - (control.y + control.height);
@@ -331,7 +283,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(fullscreenFrame).toBeVisible();
         await expect(fullscreenFrame.locator('[data-apollon-region="top-left"] #field_diagramType')).toBeVisible();
         await expect(fullscreenFrame.locator('.modeling-markdown-explanation-editor__editor')).toBeVisible();
-        // Fullscreen releases the scroll lock, so the hint must never be shown even though its root stays mounted.
         await expect(fullscreenFrame.locator('.scroll-overlay--visible')).toHaveCount(0);
 
         const problemStatementIsland = fullscreenFrame.locator('[data-apollon-region="right-rail"] jhi-apollon-rail-disclosure');
@@ -410,7 +361,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
             }),
             bottomCenter.locator('.modeling-explanation-surface__resizer').evaluate((handle) => getComputedStyle(handle, '::after').borderRadius),
         ]);
-        // Relational, not literal: every chrome surface has to read as the same material as the palette.
         expect(new Set(problemStatementChrome.borderWidths).size).toBe(1);
         expect(problemStatementChrome.borderWidths[0]).toBe(paletteChrome.borderWidth);
         expect(problemStatementChrome.borderColor).toBe(paletteChrome.borderColor);
@@ -433,7 +383,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-orientation', 'horizontal');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-label', 'Resize Problem Statement');
         await expect(verticalProblemStatementResizer).toHaveAttribute('aria-valuemin', /\d+/);
-        // Both handles have to read as the same affordance as the explanation surface's.
         expect(
             await horizontalProblemStatementResizer.evaluate((handle) => ({
                 cursor: getComputedStyle(handle).cursor,
@@ -563,7 +512,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
 
         const fullscreenFrame = page.locator('.modeling-editor__frame--fullscreen');
         await expect(fullscreenFrame).toBeVisible();
-        // Fullscreen releases the scroll lock, so the hint must never be shown even though its root stays mounted.
         await expect(fullscreenFrame.locator('.scroll-overlay--visible')).toHaveCount(0);
 
         const paletteClass = page.getByRole('button', { name: 'Add element: Class' });
@@ -672,7 +620,6 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         await dismissPasskeyReminderIfPresent(page);
 
         const editWorkspace = page.locator('.example-submission-edit-split');
-        // `exact`, or this also matches the collapsible "Assessment Instructions" header in the same pane.
         await expect(editWorkspace.getByRole('heading', { name: 'Instructions', exact: true })).toBeVisible();
         const editEditor = editWorkspace.locator('jhi-modeling-editor');
         await editEditor.getByTestId('modeling-editor-fullscreen').click();

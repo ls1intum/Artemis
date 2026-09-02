@@ -11,7 +11,7 @@
         <tum-ui-tab-panels>
             <tum-ui-tab-panel value="walkthrough">
                 <div class="modeling-editor-help__intro">
-                    <h5 jhiTranslate="artemisApp.modelingEditor.helpModal.basicsTitle"></h5>
+                    <h2 jhiTranslate="artemisApp.modelingEditor.helpModal.basicsTitle"></h2>
                     <p jhiTranslate="artemisApp.modelingEditor.helpModal.intro"></p>
                 </div>
                 <ol class="modeling-editor-help__walkthrough">
@@ -22,7 +22,7 @@
                             </div>
                             <div class="modeling-editor-help__step-copy">
                                 <span class="modeling-editor-help__step-number" aria-hidden="true">{{ $index + 1 }}</span>
-                                <h5 [jhiTranslate]="'artemisApp.modelingEditor.helpModal.' + walkthrough.topic + '.title'"></h5>
+                                <h3 [jhiTranslate]="'artemisApp.modelingEditor.helpModal.' + walkthrough.topic + '.title'"></h3>
                                 <p [jhiTranslate]="'artemisApp.modelingEditor.helpModal.' + walkthrough.topic + '.text'"></p>
                             </div>
                         </li>
@@ -30,7 +30,7 @@
                 </ol>
                 <section class="modeling-editor-help__refine">
                     <div class="modeling-editor-help__section-heading">
-                        <h5 jhiTranslate="artemisApp.modelingEditor.helpModal.refineTitle"></h5>
+                        <h2 jhiTranslate="artemisApp.modelingEditor.helpModal.refineTitle"></h2>
                         <p jhiTranslate="artemisApp.modelingEditor.helpModal.refineDescription"></p>
                     </div>
                     <dl>
@@ -48,7 +48,7 @@
                 <div class="modeling-editor-help__shortcut-groups">
                     @for (group of shortcutGroups; track group.label) {
                         <section>
-                            <h5 [jhiTranslate]="group.label"></h5>
+                            <h2 [jhiTranslate]="group.label"></h2>
                             <dl>
                                 @for (shortcut of group.shortcuts; track shortcut.id) {
                                     <div class="modeling-editor-help__shortcut">

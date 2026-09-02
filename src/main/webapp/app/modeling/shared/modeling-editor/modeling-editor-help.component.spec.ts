@@ -24,8 +24,6 @@ describe('ModelingEditorHelpComponent', () => {
         themeService = TestBed.inject(ThemeService);
     });
 
-    // That every walkthrough topic has a shipped image pair is asserted end to end, by the help dialog
-    // checks in `ModelingEditorFullscreen.spec.ts`. Only the theme swap is worth a unit test.
     it('uses walkthrough images for the active Artemis theme', () => {
         expect(component['walkthroughs']()).not.toHaveLength(0);
         expect(component['walkthroughs']().every(({ image }) => image.endsWith('-light.png'))).toBe(true);

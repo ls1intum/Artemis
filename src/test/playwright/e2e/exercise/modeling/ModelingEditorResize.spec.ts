@@ -7,7 +7,6 @@ import { SEED_COURSES } from '../../../support/seedData';
 
 const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
-/** Box geometry is rounded per element, so an edge flush against another overshoots it by a fraction of a pixel. */
 const SUB_PIXEL_TOLERANCE = 1;
 
 test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
@@ -168,7 +167,6 @@ test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
         await page.mouse.move(handleBox!.x - 260, handleBox!.y + handleBox!.height / 2, { steps: 12 });
         await page.mouse.up();
 
-        // The splitter hands its new width to the editor asynchronously, so the containment is polled, not sampled.
         await expect
             .poll(async () => {
                 const [frameBox, actionsBox] = await Promise.all([page.locator('.modeling-editor__frame').boundingBox(), page.locator('.modeling-editor__actions').boundingBox()]);

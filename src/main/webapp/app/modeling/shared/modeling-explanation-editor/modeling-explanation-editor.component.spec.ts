@@ -27,11 +27,9 @@ describe('ModelingExplanationEditorComponent', () => {
         fixture.detectChanges();
 
         const surface = fixture.debugElement.query(By.css('.modeling-explanation-surface__surface'));
-        const notch = fixture.debugElement.query(By.css('.modeling-explanation-surface__notch'));
-        const label = notch.query(By.css('span'));
+        const label = fixture.debugElement.query(By.css('.modeling-explanation-surface__label span'));
         const textarea = fixture.debugElement.query(By.css('textarea'));
         expect(surface).not.toBeNull();
-        expect(notch).not.toBeNull();
         expect(textarea).not.toBeNull();
         expect(textarea.nativeElement.getAttribute('aria-labelledby')).toBe(label.nativeElement.id);
         const autosize = fixture.debugElement.query(By.directive(CdkTextareaAutosize)).injector.get(CdkTextareaAutosize);
@@ -86,9 +84,9 @@ describe('ModelingExplanationEditorComponent', () => {
         fixture.componentRef.setInput('notchWidth', 208);
         fixture.detectChanges();
 
-        const notch = fixture.debugElement.query(By.css('.modeling-explanation-surface__notch'));
+        const surface = fixture.debugElement.query(By.css('.modeling-explanation-surface__surface'));
         const textarea = fixture.debugElement.query(By.css('textarea')).nativeElement as HTMLTextAreaElement;
-        expect(notch.nativeElement.style.width).toBe('208px');
+        expect(surface.nativeElement.style.getPropertyValue('--modeling-explanation-surface-label-min-width')).toBe('208px');
         expect(textarea.maxLength).toBe(2000);
     });
 

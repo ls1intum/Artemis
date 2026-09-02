@@ -5,8 +5,6 @@
 }
 
 .modeling-explanation-surface__surface {
-    --modeling-explanation-surface-seam-height: 2px;
-
     box-sizing: border-box;
     position: relative;
     display: flex;
@@ -17,16 +15,19 @@
     max-width: 100%;
     align-items: stretch;
     overflow: visible;
+    border: var(--artemis-apollon-chrome-border-width) solid var(--apollon-chrome-border);
+    border-radius: var(--apollon-chrome-radius-lg);
     background-color: var(--apollon-chrome-glass-solid);
+    box-shadow: var(--apollon-chrome-shadow-floating);
 
     &:has(.modeling-explanation-surface__content :focus-visible) {
-        .modeling-explanation-surface__shape,
-        .modeling-explanation-surface__focus-shape {
-            stroke: var(--apollon-primary);
+        border-color: var(--apollon-primary);
+        box-shadow:
+            var(--apollon-chrome-shadow-floating),
+            0 0 0 1px var(--apollon-primary);
 
-            /* Filter the outline shapes, never the whole backdrop SVG: `drop-shadow` haloes every child
-               separately, which would give the deliberately invisible seam and corner helpers a glow too. */
-            filter: drop-shadow(0 0 1px var(--apollon-primary)) drop-shadow(0 0 1px var(--apollon-primary));
+        .modeling-explanation-surface__label {
+            border-color: var(--apollon-primary);
         }
     }
 
@@ -37,87 +38,25 @@
     }
 }
 
-.modeling-explanation-surface__backdrop {
+.modeling-explanation-surface__label {
     position: absolute;
-    z-index: 0;
-    inset: 0;
-    display: block;
-    overflow: visible;
-    pointer-events: none;
-}
-
-.modeling-explanation-surface__shape,
-.modeling-explanation-surface__shape-fill {
-    fill: var(--apollon-chrome-glass-solid);
-}
-
-.modeling-explanation-surface__shape {
-    stroke: var(--apollon-chrome-border);
-    stroke-width: var(--artemis-apollon-chrome-border-width);
-    vector-effect: non-scaling-stroke;
-}
-
-.modeling-explanation-surface__focus-shape {
-    fill: none;
-    stroke: transparent;
-    stroke-width: var(--artemis-apollon-chrome-border-width);
-    vector-effect: non-scaling-stroke;
-
-    /* Cut the stretch the notch sits on out of the outline rather than covering it: `__seam-fill` is not
-       fully opaque, so a stroke painted underneath shows through as a line beneath the label. The left
-       edge above the cut comes from `__corner-edge`. */
-    clip-path: polygon(
-        var(--modeling-explanation-surface-notch-width, 0) 0,
-        100% 0,
-        100% 100%,
-        0 100%,
-        0 var(--modeling-explanation-surface-seam-height),
-        var(--modeling-explanation-surface-notch-width, 0) var(--modeling-explanation-surface-seam-height)
-    );
-}
-
-.modeling-explanation-surface__body-shape {
-    x: 0.5px;
-    y: 0.5px;
-    width: calc(100% - 1px);
-    height: calc(100% - 1px);
-    rx: var(--apollon-chrome-radius-lg);
-}
-
-.modeling-explanation-surface__corner-fill {
-    x: 0;
-    y: 0;
-    width: var(--apollon-chrome-radius-lg);
-    height: var(--apollon-chrome-radius-lg);
-}
-
-.modeling-explanation-surface__seam-fill {
-    x: 0;
-    y: 0;
-    height: var(--modeling-explanation-surface-seam-height);
-}
-
-.modeling-explanation-surface__corner-edge,
-.modeling-explanation-surface__notch-shape {
-    fill: none;
-}
-
-.modeling-explanation-surface__notch-shape {
-    fill: var(--apollon-chrome-glass-solid);
-}
-
-.modeling-explanation-surface__notch {
-    position: absolute;
-    z-index: 1;
     top: 0;
     left: 0;
     display: inline-flex;
-    height: 1.35rem;
     box-sizing: border-box;
+    width: max-content;
+    min-width: min(100%, var(--modeling-explanation-surface-label-min-width));
+    max-width: 100%;
+    height: 1.35rem;
     align-items: center;
     justify-content: center;
     gap: 0.3rem;
     padding: 0.15rem 0.5rem;
+    overflow: hidden;
+    border: var(--artemis-apollon-chrome-border-width) solid var(--apollon-chrome-border);
+    border-bottom: 0;
+    border-radius: var(--apollon-chrome-radius-lg) var(--apollon-chrome-radius-lg) 0 0;
+    background: var(--apollon-chrome-glass-solid);
     color: var(--apollon-chrome-text-muted);
     font-size: 0.7rem;
     font-weight: 650;
