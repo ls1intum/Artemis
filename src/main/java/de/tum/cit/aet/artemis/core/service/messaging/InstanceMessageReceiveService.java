@@ -84,60 +84,73 @@ public class InstanceMessageReceiveService {
     @PostConstruct
     public void init() {
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExercise((payload));
-            processSchedulePotentialAthenaExercise((payload));
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleProgrammingExercise((payload));
+                processSchedulePotentialAthenaExercise((payload));
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExerciseCancel(payload);
-            processPotentialAthenaExerciseScheduleCancel(payload);
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleProgrammingExerciseCancel(payload);
+                processPotentialAthenaExerciseScheduleCancel(payload);
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processSchedulePotentialAthenaExercise(payload);
+            SecurityUtils.runAsSystem(() -> {
+                processSchedulePotentialAthenaExercise(payload);
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.TEXT_EXERCISE_SCHEDULE_CANCEL.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processPotentialAthenaExerciseScheduleCancel(payload);
+            SecurityUtils.runAsSystem(() -> {
+                processPotentialAthenaExerciseScheduleCancel(payload);
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processRemoveNonActivatedUser((payload));
+            SecurityUtils.runAsSystem(() -> {
+                processRemoveNonActivatedUser((payload));
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelRemoveNonActivatedUser((payload));
+            SecurityUtils.runAsSystem(() -> {
+                processCancelRemoveNonActivatedUser((payload));
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.EXERCISE_RELEASED_SCHEDULE.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleExerciseReleasedNotification((payload));
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleExerciseReleasedNotification((payload));
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleAssessedExerciseSubmittedNotification((payload));
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleAssessedExerciseSubmittedNotification((payload));
+            });
         });
         distributedDataProvider.<Long[]>getReliableTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleParticipantScore(payload[0], payload[1], payload[2]);
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleParticipantScore(payload[0], payload[1], payload[2]);
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleQuizStart(payload);
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleQuizStart(payload);
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.QUIZ_EXERCISE_START_CANCEL.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelQuizStart(payload);
+            SecurityUtils.runAsSystem(() -> {
+                processCancelQuizStart(payload);
+            });
         });
 
         // Add listeners for slide unhide messages
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processScheduleSlideUnhide(payload);
+            SecurityUtils.runAsSystem(() -> {
+                processScheduleSlideUnhide(payload);
+            });
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processCancelSlideUnhide(payload);
+            SecurityUtils.runAsSystem(() -> {
+                processCancelSlideUnhide(payload);
+            });
         });
     }
 
