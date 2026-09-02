@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -87,6 +88,20 @@ class QuizVariantAdapterServiceProvisionCleanupTest {
         assertThatThrownBy(() -> adapters.provision(source, request, job)).isInstanceOf(RuntimeException.class).hasMessageContaining("Importing the quiz variant clone failed");
 
         verify(exerciseDeletionService).delete(PROVISIONED_ID, true);
+    }
+
+    /** When the cleanup itself fails the clone survives, so its id must reach the pipeline's id-preserving path. */
+    @Test
+    void shouldReportTheSurvivingCloneWhenTheCleanupDeletionThrows() throws Exception {
+        when(quizExerciseImportService.importQuizExercise(any(), any(), any())).thenAnswer(invocation -> {
+            invocation.getArgument(0, QuizExercise.class).setId(PROVISIONED_ID);
+            throw new RuntimeException("channel creation blew up");
+        });
+        doThrow(new RuntimeException("deletion blew up")).when(exerciseDeletionService).delete(PROVISIONED_ID, true);
+
+        assertThatThrownBy(() -> adapters.provision(source, request, job)).isInstanceOf(LeftoverVariantExerciseException.class)
+                .hasMessageContaining("Importing the quiz variant clone failed").extracting(exception -> ((LeftoverVariantExerciseException) exception).getExerciseId())
+                .isEqualTo(PROVISIONED_ID);
     }
 
     @Test

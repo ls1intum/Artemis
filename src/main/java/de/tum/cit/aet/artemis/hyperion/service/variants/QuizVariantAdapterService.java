@@ -175,6 +175,7 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
             // is identity-preserving, so a post-save failure leaves the new id on `original` while this method
             // never returns — the pipeline's own null-variant cleanup could never find that clone (same reasoning
             // as the programming provisioner's post-import cleanup).
+            String message = "Importing the quiz variant clone failed: " + e.getMessage();
             Long provisionedId = original.getId();
             if (provisionedId != null && !provisionedId.equals(source.getId())) {
                 try {
@@ -182,9 +183,11 @@ public class QuizVariantAdapterService implements VariantTypeAdapters {
                 }
                 catch (Exception cleanupException) {
                     log.error("Failed to clean up partially provisioned quiz variant exercise {} after a provisioning failure", provisionedId, cleanupException);
+                    // The clone survived: hand its id to the pipeline so the FAILED job keeps the deep link.
+                    throw new LeftoverVariantExerciseException(provisionedId, message, e);
                 }
             }
-            throw new RuntimeException("Importing the quiz variant clone failed: " + e.getMessage(), e);
+            throw new RuntimeException(message, e);
         }
     }
 

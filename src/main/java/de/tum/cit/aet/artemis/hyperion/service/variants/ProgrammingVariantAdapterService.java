@@ -214,9 +214,14 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
                 }
                 catch (Exception cleanupException) {
                     log.error("Failed to clean up partially provisioned variant exercise {} after a provisioning failure", imported.getId(), cleanupException);
+                    // The clone survived: hand its id to the pipeline so the FAILED job keeps the deep link.
+                    throw new LeftoverVariantExerciseException(imported.getId(), "Importing the variant clone failed: " + e.getMessage(), e);
                 }
                 throw e;
             }
+        }
+        catch (LeftoverVariantExerciseException leftover) {
+            throw leftover;
         }
         catch (Exception e) {
             throw new RuntimeException("Importing the variant clone failed: " + e.getMessage(), e);

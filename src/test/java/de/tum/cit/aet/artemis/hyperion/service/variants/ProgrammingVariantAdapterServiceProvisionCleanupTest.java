@@ -105,6 +105,16 @@ class ProgrammingVariantAdapterServiceProvisionCleanupTest {
         verify(exerciseDeletionService).delete(99L, true);
     }
 
+    /** When the cleanup itself fails the clone survives, so its id must reach the pipeline's id-preserving path. */
+    @Test
+    void shouldReportTheSurvivingCloneWhenTheCleanupDeletionThrows() {
+        doThrow(new RuntimeException("test-case id remapping blew up")).when(programmingExerciseTaskService).updateTestIds(any(), any());
+        doThrow(new RuntimeException("deletion blew up")).when(exerciseDeletionService).delete(99L, true);
+
+        assertThatThrownBy(() -> adapters.provision(source, request, job)).isInstanceOf(LeftoverVariantExerciseException.class)
+                .hasMessageContaining("Importing the variant clone failed").extracting(exception -> ((LeftoverVariantExerciseException) exception).getExerciseId()).isEqualTo(99L);
+    }
+
     @Test
     void shouldNotDeleteAnythingWhenProvisioningSucceeds() {
         when(programmingExerciseRepository.save(imported)).thenReturn(imported);

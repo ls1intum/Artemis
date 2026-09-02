@@ -69,6 +69,9 @@ public class ExerciseVariantGenerationPipelineService {
     /** Token budget for the TRANSFORMING/REPAIRING sequence, tracked via LLMTokenUsageService. */
     private static final long TOKEN_BUDGET = 500_000;
 
+    /** Bound for the cause-chain walk in {@link #leftoverExerciseId}; the real chain is three deep at most. */
+    private static final int MAX_CAUSE_CHAIN_DEPTH = 10;
+
     /** Pipeline id for token-usage traces of the PLANNING call. */
     private static final String PLAN_PIPELINE_ID = "exercise-variant-plan";
 
@@ -201,7 +204,7 @@ public class ExerciseVariantGenerationPipelineService {
             }
             else {
                 // The clone survived the failed deletion, so the id is the only pointer to it — keep it and say so.
-                jobService.markCancelledKeepingVariantExerciseId(jobId, cleanupFailedDetail(variant));
+                jobService.markCancelledKeepingVariantExerciseId(jobId, cleanupFailedDetail(variantExerciseId(variant)));
             }
             log.info("Variant generation job {} cancelled (exercise {})", jobId, job.getSourceExerciseId());
         }
@@ -209,13 +212,20 @@ public class ExerciseVariantGenerationPipelineService {
             // Hard-failure policy: delete any half-created exercise, then FAILED. The
             // instructor summary is generated BEFORE the terminal transition so the FAILED event's detail
             // fetch already sees it (the modal loads the job detail as soon as the event arrives).
-            boolean cleanedUp = cleanupProvisionedVariant(variant, jobId);
+            Long leftover = leftoverExerciseId(failure);
+            boolean cleanedUp = cleanupProvisionedVariant(variant, jobId) && leftover == null;
+            if (leftover != null) {
+                // A provisioner failed AND could not delete its own clone, so `variant` was never assigned:
+                // record the id here, it is the only pointer the tray has to the surviving exercise.
+                jobService.recordVariantExerciseId(jobId, leftover);
+            }
             String instructorSummary = generateFailureSummary(job, failure.getMessage());
             if (cleanedUp) {
                 jobService.fail(jobId, failure.getMessage(), instructorSummary);
             }
             else {
-                jobService.failKeepingVariantExerciseId(jobId, failure.getMessage() + " " + cleanupFailedDetail(variant), instructorSummary);
+                jobService.failKeepingVariantExerciseId(jobId, failure.getMessage() + " " + cleanupFailedDetail(leftover != null ? leftover : variantExerciseId(variant)),
+                        instructorSummary);
             }
             log.warn("Variant generation job {} failed: {}", jobId, failure.getMessage(), failure.getCause());
         }
@@ -235,11 +245,15 @@ public class ExerciseVariantGenerationPipelineService {
                 return;
             }
             String detail = "Unexpected error: " + unexpected.getMessage();
-            if (cleanupProvisionedVariant(variant, jobId)) {
+            Long leftover = leftoverExerciseId(unexpected);
+            if (leftover != null) {
+                jobService.recordVariantExerciseId(jobId, leftover);
+            }
+            if (cleanupProvisionedVariant(variant, jobId) && leftover == null) {
                 jobService.fail(jobId, detail, null);
             }
             else {
-                jobService.failKeepingVariantExerciseId(jobId, detail + " " + cleanupFailedDetail(variant), null);
+                jobService.failKeepingVariantExerciseId(jobId, detail + " " + cleanupFailedDetail(leftover != null ? leftover : variantExerciseId(variant)), null);
             }
             log.error("Variant generation job {} failed unexpectedly (exercise {})", jobId, job.getSourceExerciseId(), unexpected);
         }
@@ -536,9 +550,35 @@ public class ExerciseVariantGenerationPipelineService {
     }
 
     /** Instructor-visible note appended to the terminal detail when the clone could not be deleted. */
-    private static String cleanupFailedDetail(@Nullable Exercise variant) {
-        return "The generated exercise" + (variant != null && variant.getId() != null ? " (id " + variant.getId() + ")" : "")
-                + " could not be deleted automatically — delete it manually.";
+    private static String cleanupFailedDetail(@Nullable Long exerciseId) {
+        return "The generated exercise" + (exerciseId != null ? " (id " + exerciseId + ")" : "") + " could not be deleted automatically — delete it manually.";
+    }
+
+    @Nullable
+    private static Long variantExerciseId(@Nullable Exercise variant) {
+        return variant == null ? null : variant.getId();
+    }
+
+    /**
+     * Walks the cause chain for a {@link LeftoverVariantExerciseException} — a provisioner failed and could not
+     * delete the exercise its import had already persisted. The pipeline's own {@code variant} is still null on
+     * that path (provision never returned), so this id is the only record of the surviving clone.
+     *
+     * @param throwable the exception that ended the job
+     * @return the surviving exercise id, or null when nothing was left behind
+     */
+    @Nullable
+    static Long leftoverExerciseId(@Nullable Throwable throwable) {
+        // Depth-bounded rather than cycle-checked: a cause chain can be circular, and the wrapping here is at
+        // most provisioner -> RuntimeException -> PhaseFailedException.
+        Throwable current = throwable;
+        for (int depth = 0; current != null && depth < MAX_CAUSE_CHAIN_DEPTH; depth++) {
+            if (current instanceof LeftoverVariantExerciseException leftover) {
+                return leftover.getExerciseId();
+            }
+            current = current.getCause();
+        }
+        return null;
     }
 
     /** Wraps a phase body so any exception carries the phase name into the FAILED detail ("failed in VERIFYING"). */
