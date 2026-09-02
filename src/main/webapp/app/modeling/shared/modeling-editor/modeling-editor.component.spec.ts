@@ -486,8 +486,6 @@ describe('ModelingEditorComponent', () => {
         const originalExitFullscreen = Object.getOwnPropertyDescriptor(document, 'exitFullscreen');
         const originalRequestFullscreen = Object.getOwnPropertyDescriptor(document.documentElement, 'requestFullscreen');
         const requestFullscreen = vi.fn(async () => {
-            fixture.componentRef.setInput('problemStatement', '## Your task');
-            fixture.detectChanges();
             fullscreenElement = document.documentElement;
         });
         const exitFullscreen = vi.fn(async () => {
@@ -504,6 +502,11 @@ describe('ModelingEditorComponent', () => {
             await component.toggleFullscreen();
             await fixture.whenStable();
             component['onFullscreenChange']();
+            await fixture.whenStable();
+            expect(component.problemStatementVisible()).toBe(false);
+
+            fixture.componentRef.setInput('problemStatement', '## Your task');
+            fixture.detectChanges();
             await fixture.whenStable();
             await vi.waitFor(() => expect(editor.fitView).toHaveBeenCalledOnce());
 

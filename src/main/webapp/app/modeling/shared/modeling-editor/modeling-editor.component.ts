@@ -94,6 +94,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     readonly helpVisible = signal(false);
     readonly fullscreenActive = signal(false);
     readonly problemStatementVisible = signal(false);
+    private openProblemStatementOnFullscreenEntry = false;
     protected readonly problemStatementMaxHeight = signal(RAIL_DISCLOSURE_MAX_HEIGHT);
     protected readonly bottomCenterElevated = signal(false);
 
@@ -131,6 +132,14 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     constructor() {
         super();
+        effect(() => {
+            const fullscreenActive = this.fullscreenActive();
+            const problemStatement = this.problemStatement();
+            if (this.openProblemStatementOnFullscreenEntry && fullscreenActive && problemStatement?.trim()) {
+                this.problemStatementVisible.set(true);
+                this.openProblemStatementOnFullscreenEntry = false;
+            }
+        });
         this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
             this.apollonEditor?.setLabels(createApollonLabels(this.translateService));
         });
@@ -543,7 +552,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         const ownsFullscreen = ownsPresentation && document.fullscreenElement === document.documentElement;
         if (ownsFullscreen) {
             this.fullscreenActive.set(true);
-            this.problemStatementVisible.set(!!this.problemStatement()?.trim());
         } else if (ownsPresentation) {
             this.restoreFullscreenPresentation();
         }
@@ -559,6 +567,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         if (!this.fullscreenPresentation.promote(editorFrame, () => this.escapeFullscreen())) {
             return false;
         }
+        this.openProblemStatementOnFullscreenEntry = true;
         this.fullscreenActive.set(true);
         this.apollonEditor?.setScrollLock(false);
         return true;
@@ -580,6 +589,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         }
 
         this.problemStatementVisible.set(false);
+        this.openProblemStatementOnFullscreenEntry = false;
         if (this.problemStatementRegionMounted) {
             this.releaseHostRegion('right-rail', this.editorProblemStatement()?.nativeElement);
             this.problemStatementRegionMounted = false;
