@@ -15,7 +15,7 @@ class Config:
     are_files: bool
     german_translations: Path
     english_translations: Path
-    ignored_german_only_prefixes: dict[str, str]
+    ignored_german_only_prefixes: tuple[tuple[str, str], ...]
 
 
 @dataclass
@@ -110,8 +110,15 @@ def _config_from_args(argv: list[str]) -> Config:
         are_files=are_files,
         german_translations=german_translations,
         english_translations=english_translations,
-        ignored_german_only_prefixes=dict(entry.split(":", 1) for entry in args.ignore_german_only_prefix),
+        ignored_german_only_prefixes=tuple(args.ignore_german_only_prefix),
     )
+
+
+def _file_scoped_prefix(value: str) -> tuple[str, str]:
+    filename, separator, prefix = value.partition(":")
+    if not separator or not filename or not prefix:
+        raise argparse.ArgumentTypeError("expected FILE:PREFIX")
+    return filename, prefix
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -132,6 +139,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--ignore-german-only-prefix",
         action="append",
+        type=_file_scoped_prefix,
         default=[],
         metavar="FILE:PREFIX",
         help="German-only translation-key prefix to ignore, scoped to one translation filename.",
@@ -141,7 +149,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
 
 
 def _compare_directories(
-    german_dir: Path, english_dir: Path, ignored_german_only_prefixes: dict[str, str]
+    german_dir: Path, english_dir: Path, ignored_german_only_prefixes: tuple[tuple[str, str], ...]
 ) -> Diff:
     def json_files(directory: Path) -> set[Path]:
         return {
@@ -191,7 +199,7 @@ def _find_file_pairs(
 
 
 def _compare_files(
-    german: Path, english: Path, ignored_german_only_prefixes: dict[str, str]
+    german: Path, english: Path, ignored_german_only_prefixes: tuple[tuple[str, str], ...]
 ) -> Diff:
     german_keys = _without_ignored_german_only_prefixes(
         _flat_json_keys(german), german.name, ignored_german_only_prefixes
@@ -207,16 +215,10 @@ def _compare_files(
 
 
 def _without_ignored_german_only_prefixes(
-    keys: set[str], filename: str, ignored_prefixes: dict[str, str]
+    keys: set[str], filename: str, ignored_prefixes: tuple[tuple[str, str], ...]
 ) -> set[str]:
-    prefix = ignored_prefixes.get(filename)
-    if prefix is None:
-        return keys
-    return {
-        key
-        for key in keys
-        if key != prefix and not key.startswith(f"{prefix}.")
-    }
+    prefixes = tuple(prefix for ignored_filename, prefix in ignored_prefixes if ignored_filename == filename)
+    return {key for key in keys if not any(key == prefix or key.startswith(f"{prefix}.") for prefix in prefixes)}
 
 
 def _flat_json_keys(json_file: Path) -> set[str]:
