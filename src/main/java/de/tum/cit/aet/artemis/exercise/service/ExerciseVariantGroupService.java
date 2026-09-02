@@ -108,7 +108,10 @@ public class ExerciseVariantGroupService {
         courseRepository.findByIdElseThrow(courseId);
         ExerciseVariantGroup savedGroup = exerciseVariantGroupRepository.save(group);
         try {
-            exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), courseId);
+            if (exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), courseId) != 1) {
+                // The row is gone (a concurrent deletion between the save and this update), so nothing was attached.
+                throw new IllegalStateException("Could not attach variant group " + savedGroup.getId() + " to course " + courseId);
+            }
         }
         catch (RuntimeException attachmentFailed) {
             try {

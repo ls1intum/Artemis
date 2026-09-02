@@ -62,6 +62,7 @@ class ExerciseVariantGroupServiceCreateGroupTest {
         savedGroup.setId(9L);
         savedGroup.setTitle(group.getTitle());
         when(exerciseVariantGroupRepository.save(group)).thenReturn(savedGroup);
+        when(exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), COURSE_ID)).thenReturn(1);
 
         Course course = new Course();
         course.setId(COURSE_ID);
@@ -106,6 +107,16 @@ class ExerciseVariantGroupServiceCreateGroupTest {
         // The caller must still learn why the attachment failed; the cleanup error only rides along.
         assertThat(thrown).isSameAs(attachmentFailed);
         assertThat(thrown.getSuppressed()).containsExactly(cleanupFailed);
+    }
+
+    @Test
+    void deletesTheNewGroupWhenTheAttachmentUpdatesNoRow() {
+        // The row was deleted between the save and the update, so the group exists nowhere and must not be returned
+        // as if it had been attached.
+        when(exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), COURSE_ID)).thenReturn(0);
+
+        assertThat(catchThrowable(() -> service.createGroup(COURSE_ID, group))).isInstanceOf(IllegalStateException.class);
+        verify(exerciseVariantGroupRepository).delete(savedGroup);
     }
 
     @Test
