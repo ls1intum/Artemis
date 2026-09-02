@@ -22,6 +22,8 @@ import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-
 import { DeleteDialogData, triggerDeleteDialogDelete } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { provideHttpClient } from '@angular/common/http';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
@@ -378,7 +380,53 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
         expect(armSpy).toHaveBeenCalledExactlyOnceWith(instruction);
     });
 
-    it('should not arm the instruction on Enter/Space when a feedback list host is registered', () => {
+    it('should arm and apply to a referenced feedback target while a feedback list host is registered', () => {
+        fixture.componentRef.setInput('readonly', false);
+        fixture.componentRef.setInput('criteria', [
+            {
+                id: 1,
+                title: 'Documentation',
+                structuredGradingInstructions: [{ id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction],
+            } as GradingCriterion,
+        ]);
+        comp.ngOnInit();
+        fixture.detectChanges();
+
+        const host: GradingInstructionSelectionHost = {
+            appliedInstructionIds: signal(new Set()),
+            appliedInstructionCounts: signal(new Map()),
+            removableInstructionIds: signal(new Set()),
+            applyInstruction: vi.fn(),
+            unapplyOneInstruction: vi.fn(),
+            unapplyInstruction: vi.fn(),
+        };
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        selectionService.register(host);
+        fixture.detectChanges();
+
+        const instruction = { id: 1, instructionDescription: 'description', credits: 4, usageCount: 0 } as GradingInstruction;
+        expect(comp.selectable()).toBe(true);
+        expect(fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement.getAttribute('tabindex')).toBe('0');
+        expect(fixture.debugElement.query(By.directive(TumUiCheckboxComponent))).not.toBeNull();
+
+        const preventDefault = vi.fn();
+        comp.onInstructionKeydown(
+            { key: 'Enter', preventDefault, target: fixture.debugElement.query(By.css('#criterion-0-instruction-0')).nativeElement } as unknown as KeyboardEvent,
+            instruction,
+        );
+
+        expect(selectionService.hasArmedInstruction()).toBe(true);
+        expect(host.applyInstruction).not.toHaveBeenCalled();
+
+        const referencedFeedback = { credits: 0, reference: 'file:Main.java_line:3' } as Feedback;
+        expect(TestBed.inject(StructuredGradingCriterionService).applyArmedInstructionToFeedback(referencedFeedback)).toBe(true);
+        expect(referencedFeedback.gradingInstruction).toEqual(instruction);
+        expect(referencedFeedback.credits).toBe(4);
+        expect(selectionService.hasArmedInstruction()).toBe(false);
+        expect(host.applyInstruction).not.toHaveBeenCalled();
+    });
+
+    it('should not arm when Enter/Space targets the nested checkbox', () => {
         fixture.componentRef.setInput('readonly', false);
         fixture.componentRef.setInput('criteria', undefined);
         fixture.detectChanges();
@@ -393,9 +441,9 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
             unapplyInstruction: vi.fn(),
         } as GradingInstructionSelectionHost);
         const armSpy = vi.spyOn(selectionService, 'armInstruction');
+        const checkbox = document.createElement('tum-ui-checkbox');
 
-        expect(comp.selectable()).toBe(true);
-        comp.onInstructionKeydown({ key: 'Enter', preventDefault: vi.fn() } as unknown as KeyboardEvent, instruction);
+        comp.onInstructionKeydown({ key: ' ', preventDefault: vi.fn(), target: checkbox } as unknown as KeyboardEvent, instruction);
 
         expect(armSpy).not.toHaveBeenCalled();
     });

@@ -262,15 +262,19 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
     }
 
     /**
-     * Keyboard stand-in for drag-and-drop when there is no checkbox ({@link selectable} is false): Enter/Space arm
-     * the instruction for the next feedback drop. Does not use {@link GradingInstructionSelectionService.setApplied},
-     * which no-ops without a registered host.
+     * Keyboard stand-in for drag-and-drop: Enter/Space arm the instruction for the next referenced feedback target.
+     * Works with or without a registered unreferenced-feedback host (checkboxes stay the path for that list).
+     * Ignores keys aimed at nested controls so checkbox / stepper Space and Enter keep their own behavior.
      */
     onInstructionKeydown(event: KeyboardEvent, instruction: GradingInstruction): void {
-        if (this.selectable() || !this.isDraggable(instruction)) {
+        if (!this.isDraggable(instruction)) {
             return;
         }
         if (event.key !== 'Enter' && event.key !== ' ') {
+            return;
+        }
+        const target = event.target as HTMLElement | null;
+        if (target?.closest('input, textarea, button, a, select, tum-ui-checkbox, [role="checkbox"], [contenteditable="true"]')) {
             return;
         }
         event.preventDefault();
