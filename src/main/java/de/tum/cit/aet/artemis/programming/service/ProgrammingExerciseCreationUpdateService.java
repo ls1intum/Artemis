@@ -123,6 +123,7 @@ public class ProgrammingExerciseCreationUpdateService {
         if (automaticAfterDueDateService.isEmpty()) {
             return programmingExercise.getDueDate() == null || buildAndTestOffset == null ? null : programmingExercise.getDueDate().plus(buildAndTestOffset);
         }
+        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
         try {
             return automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(programmingExercise, buildAndTestOffset);
         }

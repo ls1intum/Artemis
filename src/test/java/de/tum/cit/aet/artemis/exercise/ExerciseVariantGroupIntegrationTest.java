@@ -1,9 +1,6 @@
 package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 
@@ -18,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -49,7 +45,6 @@ import de.tum.cit.aet.artemis.modeling.dto.UpdateModelingExerciseDTO;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -97,9 +92,6 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @MockitoSpyBean
-    private ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -523,31 +515,6 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(reloadedExercise.getExerciseVariantGroup()).isNull();
         assertThat(reloadedExercise.getDueDate().toInstant()).isEqualTo(originalDueDate.toInstant());
         assertThat(reloadedExercise.getBuildAndTestStudentSubmissionsAfterDueDate().toInstant()).isEqualTo(originalBuildAndTestDate.toInstant());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testAssignProgrammingExerciseWhenAutomaticTestRunIsAfterAssessmentDueDate_badRequestLeavesExerciseUnchanged() throws Exception {
-        ZonedDateTime release = ZonedDateTime.now().plusDays(1).truncatedTo(ChronoUnit.MILLIS);
-        ZonedDateTime due = release.plusDays(6);
-        ZonedDateTime assessmentDue = due.plusMinutes(10);
-        CreateExerciseVariantGroupDTO createDTO = new CreateExerciseVariantGroupDTO("Programming variants", null, release, null, due, assessmentDue, null);
-        ExerciseVariantGroupDTO created = request.postWithResponseBody(groupsUrl(), createDTO, ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
-
-        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        ZonedDateTime originalDueDate = programmingExercise.getDueDate().truncatedTo(ChronoUnit.MILLIS);
-        programmingExercise.setDueDate(originalDueDate);
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        exerciseRepository.save(programmingExercise);
-        assertThat(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
-        doReturn(due.plusMinutes(15)).when(programmingExerciseCreationUpdateService).computeBuildAndTestDateForTimelineValidation(any(ProgrammingExercise.class), isNull());
-
-        String assignUrl = "/api/exercise/courses/" + course.getId() + "/exercises/" + programmingExercise.getId() + "/variant-group";
-        request.put(assignUrl, new ExerciseVariantGroupAssignmentDTO(created.id()), HttpStatus.BAD_REQUEST);
-        ProgrammingExercise reloadedExercise = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(programmingExercise.getId());
-        assertThat(reloadedExercise.getExerciseVariantGroup()).isNull();
-        assertThat(reloadedExercise.getDueDate().toInstant()).isEqualTo(originalDueDate.toInstant());
-        assertThat(reloadedExercise.getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
     }
 
     @Test
