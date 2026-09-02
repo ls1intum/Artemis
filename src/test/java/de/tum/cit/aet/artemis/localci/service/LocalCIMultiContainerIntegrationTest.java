@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
@@ -162,7 +164,8 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
      * A failed build attempt marks the submission as failed. A later attempt of the SAME commit that succeeds must
      * come out successful: the flag belongs to the attempt, not to the submission forever. The rebuild also meets a
      * tutor's draft manual assessment on the submission, which has no completion date either: the containers must
-     * open a fresh automatic result instead of appending their feedback to the draft.
+     * open a fresh automatic result instead of appending their feedback to the draft; the finished feedback is then
+     * merged into the draft, as it is after a single-container build.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -209,10 +212,103 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(rebuiltSubmission.isBuildFailed()).isFalse();
         assertThat(feedbackTestNames(rebuiltResult)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
 
-        // The draft was left alone: still open, and it received none of the containers' feedback.
-        Result untouchedDraft = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualDraft.getId());
-        assertThat(untouchedDraft.getCompletionDate()).isNull();
-        assertThat(untouchedDraft.getFeedbacks()).isEmpty();
+        // The draft was not used as the aggregate (the automatic result above is separate), but, as after a
+        // single-container build, the finished automatic feedback was merged into it for the tutor; it stays open.
+        Result draftAfterRebuild = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualDraft.getId());
+        assertThat(draftAfterRebuild.getCompletionDate()).isNull();
+        assertThat(draftAfterRebuild.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(feedbackTestNames(draftAfterRebuild)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+    }
+
+    /**
+     * The student policies of a single-container result apply to the merged result of a multi-container build as well.
+     * The lock-repository policy's result-time step is a fallback for submissions that exceed the limit without the
+     * VCS having blocked them: such a result is stored as not rated. That situation is reproduced by activating a
+     * limit-one policy after two submissions already exist and rebuilding — the merged result must then be unrated.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testLockRepositoryPolicyMarksTheMergedResultOfAnOverLimitSubmissionUnrated() throws Exception {
+        String instructorImage = "mc-instructor:lock";
+        String studentImage = "mc-student:lock";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-lock");
+        mockContainerLifecycle(studentImage, "mc-student-lock");
+        stubLockTestResults();
+
+        // Two student submissions, each built and merged, before any policy exists.
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.remoteBareGitRepo.getRepository(), student1, Optional.empty(), Optional.empty(),
+                Optional.empty());
+        ProgrammingSubmission firstSubmission = awaitFinalizedResult(participation.getId(), 120);
+
+        String secondCommit = localVCLocalCITestService.commitFile(studentAssignmentRepository.workingCopyGitRepoFile.toPath(), studentAssignmentRepository.workingCopyGitRepo,
+                "second-push.txt");
+        studentAssignmentRepository.workingCopyGitRepo.push().call();
+        stubLockTestResults();
+        localVCServletService.processNewPush(secondCommit, studentAssignmentRepository.remoteBareGitRepo.getRepository(), student1, Optional.empty(), Optional.empty(),
+                Optional.empty());
+        ProgrammingSubmission secondSubmission = awaitFinalizedResultAfter(participation.getId(), firstSubmission.getLatestResult().getId(), 120);
+
+        // Now a lock-repository policy allowing a single submission becomes active.
+        LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
+        lockRepositoryPolicy.setSubmissionLimit(1);
+        lockRepositoryPolicy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+
+        // A rebuild of the over-limit submission: the merged result is stored, but not rated.
+        stubLockTestResults();
+        localCITriggerService.triggerBuild(participation, false);
+        ProgrammingSubmission rebuiltSubmission = awaitFinalizedResultAfter(participation.getId(), secondSubmission.getLatestResult().getId(), 120);
+        Result rebuiltResult = rebuiltSubmission.getLatestResult();
+        assertThat(rebuiltResult.getCompletionDate()).isNotNull();
+        assertThat(rebuiltResult.isRated()).isFalse();
+    }
+
+    /** Fresh result streams for both lock-test containers; a mocked archive stream can only be read once per build. */
+    private void stubLockTestResults() throws IOException {
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-lock", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-lock", RESULTS_DIRECTORY_REGEX, behaviorResults());
+    }
+
+    /**
+     * When a submission is already under manual assessment, a new automatic result merges its feedback into that
+     * manual result instead of standing on its own, exactly as after a single-container build. The merged result of a
+     * rebuild therefore lands in the completed manual result, alongside the tutor's assessment.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMergedResultFeedbackIsMergedIntoTheLatestManualResult() throws Exception {
+        String instructorImage = "mc-instructor:manual";
+        String studentImage = "mc-student:manual";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-manual");
+        mockContainerLifecycle(studentImage, "mc-student-manual");
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-manual", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-manual", RESULTS_DIRECTORY_REGEX, behaviorResults());
+
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        processNewPush();
+        ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 120);
+
+        // A tutor completes a manual assessment of the submission.
+        Result manualResult = new Result();
+        manualResult.setAssessmentType(AssessmentType.MANUAL);
+        manualResult.setCompletionDate(ZonedDateTime.now());
+        manualResult.setSubmission(submission);
+        manualResult.setExerciseId(programmingExercise.getId());
+        manualResult = resultRepository.save(manualResult);
+
+        // Rebuild the same commit with fresh result streams.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-manual", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-manual", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        localCITriggerService.triggerBuild(participation, false);
+        awaitFinalizedResultAfter(participation.getId(), manualResult.getId(), 120);
+
+        // The containers' feedback was merged into the manual result.
+        Result mergedManualResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(manualResult.getId());
+        assertThat(mergedManualResult.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(feedbackTestNames(mergedManualResult)).containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
     }
 
     /**
