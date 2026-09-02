@@ -739,6 +739,7 @@ public class MetricsBean {
         });
         tags.add(Tag.of("examId", Long.toString(exam.id())));
         tags.add(Tag.of("examName", exam.title()));
+        // If the exam's course is not in the active-courses set, no semester tag is emitted either, same as courseId and courseName above.
         examCourse.ifPresent(course -> tags.add(Tag.of("semester", course.semester())));
 
         return Tags.of(tags);
