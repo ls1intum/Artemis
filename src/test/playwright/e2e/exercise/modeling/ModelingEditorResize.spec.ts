@@ -52,11 +52,11 @@ test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
         await expect(actionIsland).not.toContainText(/All changes saved|Unsaved changes|Saving/);
 
         const explanationSurface = page.locator('.modeling-explanation-surface__surface');
-        const explanationNotch = page.locator('.modeling-explanation-surface__notch');
+        const explanationLabel = page.locator('.modeling-explanation-surface__label');
         const explanationResizer = page.locator('.modeling-explanation-surface__resizer');
         const textarea = explanationSurface.locator('textarea');
         await expect(textarea).toBeVisible();
-        await expect(explanationNotch).toContainText('Explanation');
+        await expect(explanationLabel).toContainText('Explanation');
         await expect(explanationResizer).toHaveAttribute('role', 'separator');
         await expect(explanationResizer).toHaveAttribute('aria-orientation', 'horizontal');
         await page.getByRole('button', { name: 'Collapse panel' }).click();
