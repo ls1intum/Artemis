@@ -51,7 +51,7 @@ public class RateLimitService {
     }
 
     /**
-     * Enforces rate limiting by consuming 1 token from a per-minute bucket.
+     * Enforces rate limiting by consuming 1 token from a per-minute bucket counted per client address.
      * Throws {@link RateLimitExceededException} if the rate limit is exceeded.
      *
      * @param clientId identifier for the client (typically an IP address)
@@ -59,9 +59,26 @@ public class RateLimitService {
      * @throws RateLimitExceededException if the rate limit is exceeded
      */
     public void enforcePerMinute(IPAddress clientId, RateLimitType rpmType) {
+        enforcePerMinute(clientId, String.valueOf(clientId), rpmType);
+    }
+
+    /**
+     * Enforces rate limiting by consuming 1 token from a per-minute bucket counted against {@code countingKey}.
+     * Throws {@link RateLimitExceededException} if the rate limit is exceeded.
+     * <p>
+     * The counting key decides who shares a budget (a client address, or {@code "user:" + login} for per-user
+     * limits). Exemption stays address-based on purpose: {@code exemptionAddress} is still checked against the
+     * configured exempt addresses, so a load generator listed there bypasses the limit even on a per-user endpoint.
+     *
+     * @param exemptionAddress the client address used only for the exempt-address check (may be {@code null})
+     * @param countingKey      the identity the limit is counted against (must not be {@code null})
+     * @param rpmType          the rate limit type to determine the RPM configuration
+     * @throws RateLimitExceededException if the rate limit is exceeded
+     */
+    public void enforcePerMinute(IPAddress exemptionAddress, String countingKey, RateLimitType rpmType) {
         // Skip rate limiting if disabled globally or disabled via feature toggle
         if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit)) {
-            log.debug("Rate limiting is disabled globally, skipping enforcement for client {} at {}", clientId, rpmType.name());
+            log.debug("Rate limiting is disabled globally, skipping enforcement for {} at {}", countingKey, rpmType.name());
             return;
         }
 
@@ -69,20 +86,20 @@ public class RateLimitService {
         // generator drives thousands of requests from one address, and any finite bucket would still
         // throttle it partway through a run and quietly turn the measurement into a measurement of the
         // limiter.
-        if (configurationService.isExempt(clientId)) {
-            log.debug("Client {} is exempt from rate limiting, skipping enforcement at {}", clientId, rpmType.name());
+        if (configurationService.isExempt(exemptionAddress)) {
+            log.debug("Client {} is exempt from rate limiting, skipping enforcement at {}", exemptionAddress, rpmType.name());
             return;
         }
 
-        Bucket bucket = getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType));
+        Bucket bucket = getOrCreatePerMinuteBucket(countingKey, rpmType, configurationService.getEffectiveRpm(rpmType));
         ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
         if (!probe.isConsumed()) {
             long seconds = Math.max(1, probe.getNanosToWaitForRefill() / 1_000_000_000L);
-            log.warn("Rate limit exceeded for client {} at {}, retry after {} seconds", clientId, rpmType.name(), seconds);
+            log.warn("Rate limit exceeded for {} at {}, retry after {} seconds", countingKey, rpmType.name(), seconds);
             throw new RateLimitExceededException(seconds);
         }
 
-        log.debug("Rate limit check passed for client {} at {}, remaining tokens: {}", clientId, rpmType.name(), probe.getRemainingTokens());
+        log.debug("Rate limit check passed for {} at {}, remaining tokens: {}", countingKey, rpmType.name(), probe.getRemainingTokens());
     }
 
     /**
@@ -102,7 +119,7 @@ public class RateLimitService {
         if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit) || configurationService.isExempt(clientId)) {
             return true;
         }
-        return getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).getAvailableTokens() > 0;
+        return getOrCreatePerMinuteBucket(String.valueOf(clientId), rpmType, configurationService.getEffectiveRpm(rpmType)).getAvailableTokens() > 0;
     }
 
     /**
@@ -118,13 +135,13 @@ public class RateLimitService {
         if (!configurationService.isRateLimitingEnabled() || !featureToggleService.isFeatureEnabled(Feature.RateLimit) || configurationService.isExempt(clientId)) {
             return;
         }
-        getOrCreatePerMinuteBucket(clientId, rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsume(1);
+        getOrCreatePerMinuteBucket(String.valueOf(clientId), rpmType, configurationService.getEffectiveRpm(rpmType)).tryConsume(1);
     }
 
-    private Bucket getOrCreatePerMinuteBucket(IPAddress clientId, RateLimitType rpmType, int rpm) {
+    private Bucket getOrCreatePerMinuteBucket(String countingKey, RateLimitType rpmType, int rpm) {
         BucketConfiguration cfg = perMinuteCfgCache.computeIfAbsent(rpm, RateLimitConfig::perMinute);
         // Include the rate-limit type in the bucket key so two types with the same RPM do not share a bucket.
-        return proxyManager.getProxy("type=" + rpmType.name() + "#rpm=" + rpm + "#" + clientId, () -> cfg);
+        return proxyManager.getProxy("type=" + rpmType.name() + "#rpm=" + rpm + "#" + countingKey, () -> cfg);
     }
 
     /**
