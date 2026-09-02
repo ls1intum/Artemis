@@ -502,6 +502,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsBySubmissionId(long submissionId);
 
     /**
+     * All results of a submission, newest first. A repository query rather than the submission's lazy result collection,
+     * so callers outside a transaction (holding a detached submission) can use it as well.
+     *
+     * @param submissionId the id of the submission
+     * @return the submission's results, newest first
+     */
+    List<Result> findAllBySubmissionIdOrderByIdDesc(long submissionId);
+
+    /**
      * Returns the manual results of the given submissions together with the correction round each belongs to.
      * <p>
      * Two callers need this. The scores overview renders assessment actions per correction round, so it needs one entry

@@ -361,6 +361,43 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
+     * The two steps a scored automatic result of a STUDENT participation triggers, shared by the single-container path and
+     * the multi-container finalize: locking the repository under a lock-repository submission policy, and merging the new
+     * automatic feedback into the latest manual result when the submission is already under manual assessment.
+     * <p>
+     * The submission policy is read from the exercise instance, which {@code calculateScoreForResult} has already
+     * resolved; loading it again meant a second fetch of the whole exercise and its course for every result. Neither
+     * step applies to a practice-mode participation.
+     *
+     * @param participation         the student participation the result belongs to
+     * @param processedResult       the scored automatic result
+     * @param programmingSubmission the submission the result belongs to
+     * @param latestOtherResult     the submission's latest result apart from the new one, or null if there is none
+     * @return the manual result the feedback was merged into, or empty if the automatic result stands on its own
+     */
+    private Optional<Result> applyStudentResultPolicies(ProgrammingExerciseParticipation participation, Result processedResult, ProgrammingSubmission programmingSubmission,
+            @Nullable Result latestOtherResult) {
+        // When a student receives a new result, we want to check whether we need to lock the participation and the
+        // repository when a lock repository policy is present. Only lock the repository and the participation if the
+        // participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
+        // test run repository). Student test exam participations will still be locked by this.
+        SubmissionPolicy submissionPolicy = participation.getProgrammingExercise().getSubmissionPolicy();
+        if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
+            submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
+        }
+
+        if (latestOtherResult != null && latestOtherResult.isManual() && !((Participation) participation).isPracticeMode()) {
+            // Note: in this case, we do not want to keep the automatic result on its own, but update the latest semi-automatic one
+            Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(latestOtherResult.getId(), processedResult);
+            // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
+            // submission itself did not change.
+            updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
+            return Optional.of(resultRepository.save(updatedLatestSemiAutomaticResult));
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Returns the in-progress result the containers of a submission aggregate their feedback into, creating it on the
      * first container. An in-progress result is recognized by a null completion date, so a finished result of an earlier
      * build attempt is never reused.
@@ -416,7 +453,22 @@ public class ProgrammingExerciseGradingService {
         boolean anyContainerFailedToBuild = result.getSubmission() instanceof ProgrammingSubmission submission && submission.isBuildFailed();
         aggregatedResult.setSuccessful(allJobsSucceeded && !anyContainerFailedToBuild);
         aggregatedResult.setCompletionDate(completionDate);
-        return resultRepository.save(aggregatedResult);
+        aggregatedResult = resultRepository.save(aggregatedResult);
+
+        if (isStudentParticipation && result.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
+            // The same student policies as after a single-container result. Unlike there, the aggregated result already
+            // exists (the containers' build jobs link to it), so it stays; when the submission is under manual
+            // assessment its feedback is additionally merged into that manual result, which is then the one to report.
+            // Read through the repository, not the submission's lazy result collection: callers outside a transaction hold
+            // a detached submission, whose collection cannot be initialized.
+            Result latestOtherResult = resultRepository.findAllBySubmissionIdOrderByIdDesc(programmingSubmission.getId()).stream()
+                    .filter(candidate -> !candidate.getId().equals(result.getId())).findFirst().orElse(null);
+            var mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestOtherResult);
+            if (mergedIntoManualResult.isPresent()) {
+                return mergedIntoManualResult.get();
+            }
+        }
+        return aggregatedResult;
     }
 
     /**
@@ -515,30 +567,10 @@ public class ProgrammingExerciseGradingService {
         var programmingSubmission = (ProgrammingSubmission) processedResult.getSubmission();
 
         if (isStudentParticipation) {
-            // When a student receives a new result, we want to check whether we need to lock the participation and the
-            // repository when a lock repository policy is present. At this point, we know that the programming
-            // exercise exists and that the participation must be a ProgrammingExerciseStudentParticipation.
-            // Only lock the repository and the participation if the participation is not for a test run (i.e. for a course exercise practice repository or for an instructor exam
-            // test run repository).
-            // Student test exam participations will still be locked by this.
-            // Already resolved: calculateScoreForResult above loads the submission policy for a student participation
-            // and sets it on this very exercise instance. Loading it again meant a second fetch of the whole exercise
-            // and the course it eagerly brings with it, problem statement and code of conduct included, for every
-            // result.
-            SubmissionPolicy submissionPolicy = programmingExercise.getSubmissionPolicy();
-            if (submissionPolicy instanceof LockRepositoryPolicy policy && !((ProgrammingExerciseStudentParticipation) participation).isPracticeMode()) {
-                submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
-            }
-
-            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isPracticeMode()) {
-                // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
-                Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
-                // Adding back dropped submission. The result owns the foreign key, so saving it is enough; the
-                // submission itself did not change.
-                updatedLatestSemiAutomaticResult.setSubmission(programmingSubmission);
-                resultRepository.save(updatedLatestSemiAutomaticResult);
-
-                return updatedLatestSemiAutomaticResult;
+            var mergedIntoManualResult = applyStudentResultPolicies(participation, processedResult, programmingSubmission, programmingSubmission.getLatestResult());
+            if (mergedIntoManualResult.isPresent()) {
+                // The new automatic feedback was merged into the latest manual result, which replaces the new result.
+                return mergedIntoManualResult.get();
             }
         }
 

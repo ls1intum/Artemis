@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -374,12 +375,16 @@ public class LocalCIResultProcessingService {
             // Append, link and finalize run in one programmatic transaction that commits before the lock is released, so
             // the next container of the same submission sees the appended feedback and the linked build job atomically.
             return transactionTemplate.execute(status -> {
-                int expectedContainerCount = determineExpectedContainerCount(buildJob.exerciseId());
-                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, expectedContainerCount,
-                        buildJob.containerName());
+                // The count is resolved from the build plan only once per submission: the first container writes it to the
+                // submission, and every container (this one included) reads it back from there, so a plan edited while
+                // the build is running cannot change the number of containers this build is waiting for.
+                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected,
+                        determineExpectedContainerCount(buildJob.exerciseId()), buildJob.containerName());
                 if (aggregatedResult == null) {
                     return null;
                 }
+                int expectedContainerCount = aggregatedResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission
+                        && programmingSubmission.getExpectedContainerCount() != null ? programmingSubmission.getExpectedContainerCount() : 1;
 
                 BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
                 // Link this container's build job to the shared result so finished containers can be counted below.
