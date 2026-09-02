@@ -111,6 +111,12 @@ export class ExerciseHeadersInformationComponent {
      * the variant cards), keeping the tooltip and results popover inert without an outside style override.
      */
     readonly interactive = input<boolean>(true);
+    /**
+     * Whether the submission due date (and the live-quiz countdown that replaces it) is shown. False where the due date
+     * is already stated by an enclosing header, as on the variant cards of a group whose members all share the group's
+     * due date.
+     */
+    readonly showSubmissionDueDate = input<boolean>(true);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
     /** Live participation status override for the result badge (e.g. PARTICIPATING/SUBMITTED) during a live quiz. */
@@ -212,13 +218,15 @@ export class ExerciseHeadersInformationComponent {
         // While the quiz participation component hasn't mounted yet, quizLiveHeaderInfo is still undefined; skip the
         // due-date fallback for that brief window too, otherwise the due date flashes before being replaced once the
         // quiz-specific box resolves (the exercise's own due date is known immediately, the quiz box lags behind it).
-        const quizTimeItem = this.getQuizTimeItem();
-        if (quizTimeItem) {
-            items.push(quizTimeItem);
-        } else if (!(this.exercise().type === ExerciseType.QUIZ && this.quizLiveHeaderInfo() === undefined)) {
-            const dueDateItem = this.getDueDateItem();
-            if (dueDateItem) {
-                items.push(dueDateItem);
+        if (this.showSubmissionDueDate()) {
+            const quizTimeItem = this.getQuizTimeItem();
+            if (quizTimeItem) {
+                items.push(quizTimeItem);
+            } else if (!(this.exercise().type === ExerciseType.QUIZ && this.quizLiveHeaderInfo() === undefined)) {
+                const dueDateItem = this.getDueDateItem();
+                if (dueDateItem) {
+                    items.push(dueDateItem);
+                }
             }
         }
         const exercise = this.exercise();

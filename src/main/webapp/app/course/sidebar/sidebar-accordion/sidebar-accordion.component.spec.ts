@@ -204,7 +204,7 @@ describe('SidebarAccordionComponent', () => {
         const groupIsVisible = (searchValue: string): boolean => {
             fixture.componentRef.setInput('searchValue', searchValue);
             fixture.changeDetectorRef.detectChanges();
-            return !!fixture.nativeElement.querySelector('#test-accordion-item-container-0')?.querySelector('.sidebar-group');
+            return !!fixture.nativeElement.querySelector('#test-accordion-item-container-0')?.querySelector('#test-sidebar-card-medium');
         };
 
         it('should keep the group when the search matches a member title', () => {
@@ -221,6 +221,29 @@ describe('SidebarAccordionComponent', () => {
 
         it('should hide the group when the search matches neither the group nor a member', () => {
             expect(groupIsVisible('quiz')).toBe(false);
+        });
+
+        it('should highlight the group card while the detail route shows one of its members', () => {
+            // The member has no card of its own, so the group card must carry the selection.
+            fixture.componentRef.setInput('routeParams', { exerciseId: 12 });
+            fixture.changeDetectorRef.detectChanges();
+
+            const card: HTMLElement = fixture.nativeElement.querySelector('#test-accordion-item-container-0 #test-sidebar-card-medium');
+            expect(card.className).toContain('bg-group-selected');
+        });
+
+        it('should not highlight the group card for an unrelated selected item', () => {
+            fixture.componentRef.setInput('routeParams', { exerciseId: 999 });
+            fixture.changeDetectorRef.detectChanges();
+
+            const card: HTMLElement = fixture.nativeElement.querySelector('#test-accordion-item-container-0 #test-sidebar-card-medium');
+            expect(card.className).not.toContain('bg-group-selected');
+        });
+
+        it('should render the group as a single card without a card per member', () => {
+            fixture.changeDetectorRef.detectChanges();
+            const cards = fixture.nativeElement.querySelector('#test-accordion-item-container-0').querySelectorAll('#test-sidebar-card-medium');
+            expect(cards).toHaveLength(1);
         });
     });
 

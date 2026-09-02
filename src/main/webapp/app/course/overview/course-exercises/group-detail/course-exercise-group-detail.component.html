@@ -75,18 +75,12 @@
                                 <hr class="my-2" />
 
                                 <jhi-exercise-headers-information
-                                    class="mb-2"
                                     [exercise]="exercise"
                                     [course]="course()"
                                     [studentParticipation]="exerciseParticipation(exercise)"
                                     [interactive]="false"
+                                    [showSubmissionDueDate]="false"
                                 />
-
-                                @if (renderedStatements().get(exercise.id!); as renderedPs) {
-                                    <div class="variant-card__ps markdown-preview" [innerHTML]="renderedPs"></div>
-                                } @else {
-                                    <p class="text-body-tertiary fst-italic mb-0" jhiTranslate="artemisApp.exerciseVariantGroup.detail.noProblemStatement"></p>
-                                }
                             </a>
                         </div>
                     }

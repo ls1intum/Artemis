@@ -1,11 +1,9 @@
-import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { Params, Router } from '@angular/router';
+import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { CheckboxModule } from 'primeng/checkbox';
 import { SidebarCardDirective } from '../directive/sidebar-card.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -27,13 +25,12 @@ const EMPTY_COLLAPSE_STATE = emptyCollapseState as CollapseState;
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, FormsModule, CheckboxModule, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     private metisConversationService = inject(MetisConversationService);
     private localStorageService = inject(LocalStorageService);
-    private router = inject(Router);
     private ngUnsubscribe = new Subject<void>();
 
     readonly onUpdateSidebar = output<void>();
@@ -53,6 +50,14 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     /** Working copy of the collapse state. Seeded by reference from the {@link collapseState} input so in-place
      *  property mutations remain visible to the parent, but can be replaced when a stored state is restored. */
     readonly collapseStateInternal = signal<CollapseState>(EMPTY_COLLAPSE_STATE);
+
+    /** Id of the entity the detail route currently shows, used to highlight its card (or the group card holding it). */
+    readonly selectedItemId = computed<number | undefined>(() => {
+        const params = this.routeParams();
+        const routeParamKey = params && Object.keys(params)[0];
+        const value = routeParamKey ? Number(params[routeParamKey]) : undefined;
+        return value !== undefined && !Number.isNaN(value) ? value : undefined;
+    });
 
     readonly faChevronRight = faChevronRight;
     readonly faFile = faFile;
@@ -119,21 +124,18 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
     }
 
     expandGroupWithSelectedItem() {
-        const routeParams = this.routeParams();
+        const selectedId = this.selectedItemId();
         const groupedData = this.groupedData();
-        if (routeParams) {
-            const routeParamKey = Object.keys(routeParams)[0];
-            if (routeParams[routeParamKey] && groupedData) {
-                const selectedId = Number(routeParams[routeParamKey]);
-                // A variant group is a single top-level card whose members live in groupedItems, so the selected id
-                // may match either the card itself or one of its nested variants (direct URL / refresh case).
-                const matchesSelectedId = (item: SidebarCardElement): boolean => item.id === selectedId || !!item.groupedItems?.some((variant) => variant.id === selectedId);
-                const groupWithSelectedItem = Object.entries(groupedData).find((groupedItem) => groupedItem[1].entityData.some(matchesSelectedId));
-                if (groupWithSelectedItem) {
-                    const groupName = groupWithSelectedItem[0];
-                    this.collapseStateInternal.set(cloneWith(this.collapseStateInternal(), { [groupName]: false }));
-                }
-            }
+        if (selectedId === undefined || !groupedData) {
+            return;
+        }
+        // A variant group is a single card whose members live in groupedItems, so the selected id may match either the
+        // card itself or one of its members (the direct URL / refresh case, where a variant is open without a card).
+        const matchesSelectedId = (item: SidebarCardElement): boolean => item.id === selectedId || !!item.groupedItems?.some((variant) => variant.id === selectedId);
+        const groupWithSelectedItem = Object.entries(groupedData).find((groupedItem) => groupedItem[1].entityData.some(matchesSelectedId));
+        if (groupWithSelectedItem) {
+            const groupName = groupWithSelectedItem[0];
+            this.collapseStateInternal.set(cloneWith(this.collapseStateInternal(), { [groupName]: false }));
         }
     }
 
@@ -165,18 +167,5 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
 
     getGroupedByWeek(groupKey: string): WeekGroup[] {
         return WeekGroupingUtil.getGroupedByWeek(this.groupedData()[groupKey].entityData, this.storageId(), groupKey, this.searchValue());
-    }
-
-    onGroupVariantSelected(group: SidebarCardElement, variant: SidebarCardElement, checked: boolean): void {
-        group.groupedItems?.forEach((item) => (item.selected = false));
-        variant.selected = checked;
-    }
-
-    onGroupClicked(event: MouseEvent, group: SidebarCardElement): void {
-        const target = event.target as HTMLElement;
-        if (!group.routerLink || target.closest('.sidebar-group-variant') || target.closest('.sidebar-group-header')) {
-            return;
-        }
-        void this.router.navigateByUrl(group.routerLink);
     }
 }

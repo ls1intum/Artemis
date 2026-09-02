@@ -269,4 +269,28 @@ describe('ExerciseHeadersInformationComponent', () => {
         titles = component.informationBoxItems().map((item) => item.title);
         expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
     });
+
+    describe('showSubmissionDueDate', () => {
+        it('should drop the submission-due box while keeping the other boxes', () => {
+            expect(component.informationBoxItems().map((item) => item.title)).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+
+            fixture.componentRef.setInput('showSubmissionDueDate', false);
+            fixture.detectChanges();
+
+            const titles = component.informationBoxItems().map((item) => item.title);
+            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
+            // The assessment due date is a different date and stays; only the duplicated submission due date goes.
+            expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+        });
+
+        it('should drop the live quiz countdown that stands in for the due date', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.QUIZ });
+            fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, remainingTimeText: '5 min', showResultsAvailable: false });
+            fixture.componentRef.setInput('showSubmissionDueDate', false);
+            fixture.detectChanges();
+
+            expect(component.informationBoxItems().map((item) => item.title)).not.toContain('artemisApp.quizExercise.remainingTime');
+        });
+    });
 });
