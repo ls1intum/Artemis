@@ -38,8 +38,10 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
@@ -264,6 +266,31 @@ class GenerationJobReplayStoreTest {
         assertThat(events.getLast().repairRound()).isNotNull();
         assertThat(events).extracting(ExerciseGenerationEventDTO::message).doesNotContain("p0", "p1");
         assertThat(events).extracting(ExerciseGenerationEventDTO::message).contains("p" + (GenerationJobReplayStore.MAX_RETAINED_EVENTS - 1));
+    }
+
+    @Test
+    void recordEvent_beyondTheRetentionBound_evictsSpendStampedProgressLinesLikeAnyOther() {
+        // Only the newest spend snapshot is worth anything, so a stamped line must stay the first thing the bound drops. If stamping made a line structural, a run that reports
+        // its cost every turn would evict its own ladder.
+        long exerciseId = 617L;
+        String key = String.valueOf(exerciseId);
+        String jobId = "spend-stamped";
+        ExerciseGenerationLiveUsageDTO liveUsage = new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 3, 0.0042, true);
+        jobMap().set(key, jobInfo(jobId, exerciseId));
+        replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
+        replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "HEAD"), false);
+        replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.phase(ExerciseGenerationEventDTO.Phase.DESIGNING, "designing").withLiveUsage(liveUsage), false);
+        for (int index = 0; index < GenerationJobReplayStore.MAX_RETAINED_EVENTS; index++) {
+            replayStore.recordEvent(exerciseId, jobId,
+                    ExerciseGenerationEventDTO.activity("p" + index, new ExerciseGenerationActivityDTO(null, 1, index + 1, true, index, 0, 0)).withLiveUsage(liveUsage), false);
+        }
+
+        List<ExerciseGenerationEventDTO> events = transcriptMap().get(key).events();
+
+        assertThat(events).hasSize(GenerationJobReplayStore.MAX_RETAINED_EVENTS);
+        assertThat(events.get(2).phase()).as("the stamped phase event is structural and outlives the stamped prose").isEqualTo(ExerciseGenerationEventDTO.Phase.DESIGNING);
+        assertThat(events).extracting(ExerciseGenerationEventDTO::message).doesNotContain("p0", "p1");
+        assertThat(events.getLast().liveUsage()).isEqualTo(liveUsage);
     }
 
     @Test

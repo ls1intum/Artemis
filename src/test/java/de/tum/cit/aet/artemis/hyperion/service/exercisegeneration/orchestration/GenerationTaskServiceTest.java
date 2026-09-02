@@ -26,6 +26,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,7 +41,9 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.scheduling.TaskScheduler;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.buildagent.service.InteractiveSandbox;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
@@ -137,7 +140,7 @@ class GenerationTaskServiceTest {
         when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(true);
         when(jobService.recordEvent(anyLong(), anyString(), any(), anyBoolean())).thenReturn(true);
         when(jobService.recordFileChange(anyLong(), anyString(), any())).thenReturn(true);
-        when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
+        when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
         });
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenReturn(new GenerationPersistenceService.PersistResult(Map.of(),
                 Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(), exercise.getTitle(), "main", true, 17L));
@@ -189,9 +192,14 @@ class GenerationTaskServiceTest {
     }
 
     private static ChatResponse responseWithTokens(long promptTokens, long completionTokens) {
+        return responseWithTokens(promptTokens, completionTokens, null);
+    }
+
+    private static ChatResponse responseWithTokens(long promptTokens, long completionTokens, @Nullable Long cachedInputTokens) {
         Usage usage = mock(Usage.class);
         when(usage.getPromptTokens()).thenReturn((int) promptTokens);
         when(usage.getCompletionTokens()).thenReturn((int) completionTokens);
+        when(usage.getCacheReadInputTokens()).thenReturn(cachedInputTokens);
         ChatResponseMetadata metadata = mock(ChatResponseMetadata.class);
         when(metadata.getUsage()).thenReturn(usage);
         ChatResponse response = mock(ChatResponse.class);
@@ -913,7 +921,7 @@ class GenerationTaskServiceTest {
         // Observed in a live campaign: a single failed critic request made the usage account indeterminate, and an exercise that had already passed differential verification
         // and been checkpointed was thrown away. Saving consumes no provider tokens, so an account that cannot be closed is a reason to stop spending, not to destroy work.
         // The run is still reported with an incomplete accounting state.
-        when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
+        when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
             throw new GenerationJobService.TokenUsageAccountingException();
         });
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
@@ -931,6 +939,47 @@ class GenerationTaskServiceTest {
         verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
         assertThat(sentEvents()).anyMatch(event -> event.message() != null && event.message().contains("keeping and saving the already-verified exercise"));
         assertThat(sentEvents().getLast().type()).isNotEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+    }
+
+    @Test
+    void liveSpendOnAStreamedEvent_isTheSameBillableTotalTheBudgetGuardCharges() {
+        // One number, two consumers: the bar the instructor watches and the guard that stops the run must be the same total, cached input discounted alike.
+        taskService = new GenerationTaskService(orchestrator, persistenceService, reviewService, websocket, jobService, programmingExerciseRepository,
+                auxiliaryRepositoryRepository, generationBudgetService, generationRevertService, taskScheduler, ObservationRegistry.NOOP, java.time.Duration.ofMinutes(30), 700,
+                java.time.Duration.ofSeconds(15));
+        when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            Consumer<LLMRequest> liveUsageSink = invocation.getArgument(4);
+            return (Consumer<ChatResponse>) response -> liveUsageSink.accept(new LLMRequest("model", 1000, 1f, 100, 2f, "pipeline", "provider-id", 800L, 0.1f, true));
+        });
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            ProviderUsageSink usageSink = invocation.getArgument(8);
+            usageSink.accept(responseWithTokens(1000, 100, 800L));
+            GenerationProgressSink progress = invocation.getArgument(6);
+            progress.activity("Thinking about the next step.", new ExerciseGenerationActivityDTO("artifacts", 1, 2, true, 1, 0, 0));
+            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO stamped = sentEvents().stream().filter(event -> event.activity() != null).findFirst().orElseThrow();
+        // 200 uncached input plus half of 800 cache reads plus 100 output.
+        assertThat(stamped.liveUsage().billableTokens()).isEqualTo(700);
+        assertThat(stamped.liveUsage().tokenBudget()).isEqualTo(700);
+        assertThat(stamped.liveUsage().inputTokens()).isEqualTo(1000);
+        assertThat(stamped.liveUsage().cachedInputTokens()).isEqualTo(800);
+        assertThat(stamped.liveUsage().modelCalls()).isEqualTo(1);
+        // The same 700 is what the guard weighed against the 700-token bound.
+        assertThat(sentEvents()).anyMatch(event -> event.message() != null && event.message().contains("token budget was reached; keeping and saving"));
+    }
+
+    @Test
+    void liveSpendIsStampedOnPhaseBoundariesFromTheRunStart() {
+        run(GenerationMode.GENERATE, outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of())));
+
+        ExerciseGenerationEventDTO firstPhase = sentEvents().stream().filter(event -> event.phase() != null).findFirst().orElseThrow();
+        assertThat(firstPhase.liveUsage().tokenBudget()).isEqualTo(250_000);
+        assertThat(firstPhase.liveUsage().billableTokens()).isZero();
+        assertThat(firstPhase.liveUsage().estimatedCostEur()).isZero();
     }
 
     @Test
@@ -956,7 +1005,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenAccountingFailure_cancelsTheJobAndRetainsItsWorstCaseReservation() {
-        when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
+        when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
             throw new GenerationJobService.TokenUsageAccountingException();
         });
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
@@ -994,7 +1043,7 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenAccountingFailure_stillSealsOnWorkerExit_soTheAccountIsNeverLeftPendingForever() {
-        when(jobService.tokenUsageSink(any(), any(), any(), any())).thenReturn(response -> {
+        when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
             throw new GenerationJobService.TokenUsageAccountingException();
         });
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {

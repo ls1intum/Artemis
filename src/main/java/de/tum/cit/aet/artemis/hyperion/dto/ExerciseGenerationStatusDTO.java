@@ -22,9 +22,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param ownedByCaller     whether the requesting instructor owns the active run and may inspect its retained details
  * @param cancellable       whether the active run is still in its disposable sandbox phase and can be cancelled safely
  * @param specDocument      the gate-approved {@code SPEC.md} behavioural specification; omitted for non-owner or sanitized views, when the stage was skipped, or before the gate
- * @param usage             aggregate model usage for this terminal run; owner-only and absent while running or when accounting could not be loaded
- * @param accountingState   how complete {@code usage} is as an account of this run's provider spend. A running job is {@code PENDING}; terminal status without retained usage is
- *                              {@code INCOMPLETE}
+ * @param usage             aggregate model usage for this run; owner-only, and reported while the run is still going so an instructor can see what it is spending. Absent when
+ *                              the accounting could not be loaded
+ * @param accountingState   how complete {@code usage} is as an account of this run's provider spend. A run whose accounting is not sealed yet — every running job — is
+ *                              {@code PENDING}, so a live figure is never mistaken for a total; a status without retained usage, and any status for a caller who does not own the
+ *                              run, is {@code INCOMPLETE}
  * @param effortProfile     the effort profile this run actually resolved to; omitted for sanitized views and for deployments that configure no profiles
  * @param artifactsRetained whether an unsaved candidate from this run is actually retained and readable through the retained-artifacts endpoint. Answers exactly one question
  *                              for the client — is there anything for the instructor to look at — so it can stop promising kept work for a run that kept none. Derived from the

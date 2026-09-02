@@ -38,6 +38,7 @@ export class HyperionRunActivityComponent {
     private readonly now = serverTimeSignal(this.runEnded);
 
     protected readonly counters = computed(() => this.view().counters);
+    protected readonly latestFile = computed(() => this.view().latestFile);
     protected readonly recent = computed(() => (this.density() === 'full' ? this.view().recent : []));
 
     protected readonly liveness = computed<LivenessLine | undefined>(() => {

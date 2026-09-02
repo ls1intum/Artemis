@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { TumUiButtonComponent, TumUiMessageComponent, TumUiMessageSeverity, TumUiStatusDotState } from '@tumaet/ui-angular';
+import { TumUiButtonComponent, TumUiCardComponent, TumUiMessageComponent, TumUiMessageSeverity, TumUiStatusDotState } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -11,6 +11,7 @@ import { HyperionArtifactsComponent } from 'app/hyperion/exercise-generation/run
 import { HyperionRunHeaderComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-header.component';
 import { HyperionRunOutcomeCheck, HyperionRunOutcomeComponent, HyperionRunOutcomeView } from 'app/hyperion/exercise-generation/run/hyperion-run-outcome.component';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
+import { HyperionRunUsageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-usage.component';
 import { HyperionRunOutcome, runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { activityView } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
@@ -76,7 +77,9 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
         HyperionRunHeaderComponent,
         HyperionRunOutcomeComponent,
         HyperionRunProgressComponent,
+        HyperionRunUsageComponent,
         TumUiButtonComponent,
+        TumUiCardComponent,
         TumUiMessageComponent,
     ],
 })
@@ -118,12 +121,19 @@ export class HyperionRunPageComponent {
     protected readonly cancelRequested = this.facade.cancelRequested;
     protected readonly specDocument = this.facade.specDocument;
     protected readonly repairRound = this.facade.repairRound;
+    /**
+     * What the run has spent, or `undefined` when nothing may honestly be shown.
+     *
+     * Owner-only, and absent rather than zeroed: an instructor watching someone else's run gets no spend figures at
+     * all, because the server withholds them and an empty meter would read as a run that cost nothing.
+     */
+    protected readonly spend = this.facade.spend;
 
     protected readonly outcome = computed(() => runOutcome(this.events()));
     protected readonly terminal = computed(() => this.outcome() !== undefined);
     protected readonly stages = computed(() => stageStates(this.events(), this.outcome()));
     /** What the agent is doing, rendered inside the ladder under the stage that is running. */
-    protected readonly activityView = computed(() => activityView(this.events(), this.outcome()));
+    protected readonly activityView = computed(() => activityView(this.events(), this.outcome(), this.fileChanges()));
     /** The newest thing the server said, shown under the stage it belongs to. */
     protected readonly liveMessage = computed(() => this.events().findLast((event) => event.message)?.message);
 

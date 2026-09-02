@@ -29,6 +29,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -39,7 +40,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationTimeouts;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDTO;
@@ -182,22 +182,34 @@ public class GenerationJobService {
     }
 
     public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId) {
-        return tokenUsageSink(courseId, exerciseId, userId, null);
+        return tokenUsageSink(courseId, exerciseId, userId, null, null);
+    }
+
+    public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId, @Nullable String generationJobId) {
+        return tokenUsageSink(courseId, exerciseId, userId, generationJobId, null);
     }
 
     /**
      * Creates a sink that persists provider usage for a generation job.
+     * <p>
+     * {@code liveUsageSink} receives the same recorded request, so a caller that reports the run's spend while it is still going reads the prices and the token split that were
+     * actually recorded instead of resolving them a second time.
      *
      * @param courseId        the course, if known
      * @param exerciseId      the exercise, if known
      * @param userId          the user, if known
      * @param generationJobId the generation job, if known
+     * @param liveUsageSink   observer of each recorded request, if the caller reports usage while the run is in flight
      * @return the usage sink
      */
-    public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId, @Nullable String generationJobId) {
+    public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId, @Nullable String generationJobId,
+            @Nullable Consumer<LLMRequest> liveUsageSink) {
         return chatResponse -> {
             boolean recorded = llmTokenUsageService.trackChatResponseTokenUsage(chatResponse, LLMServiceType.HYPERION, GENERATION_PIPELINE_ID,
                     builder -> builder.withCourse(courseId).withExercise(exerciseId).withUser(userId), request -> {
+                        if (liveUsageSink != null) {
+                            liveUsageSink.accept(request);
+                        }
                         if (generationJobId != null) {
                             replayStore.recordUsage(generationJobId, request);
                             recordPersistedUsage(exerciseId, generationJobId, (long) request.numInputTokens() + request.numOutputTokens());
@@ -436,7 +448,7 @@ public class GenerationJobService {
     }
 
     public Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
-        return replayStore.getStatus(user, exercise).map(this::withTerminalUsage);
+        return replayStore.getStatus(user, exercise);
     }
 
     /**
@@ -474,17 +486,6 @@ public class GenerationJobService {
 
     void recordAttempt(String generationJobId) {
         replayStore.recordAttempt(generationJobId);
-    }
-
-    private ExerciseGenerationStatusDTO withTerminalUsage(ExerciseGenerationStatusDTO status) {
-        if (status.running()) {
-            return status;
-        }
-        if (!status.ownedByCaller()) {
-            return status.withUsage(null, ExerciseGenerationAccountingState.INCOMPLETE);
-        }
-        GenerationJobReplayStore.UsageSnapshot snapshot = replayStore.usageSnapshot(status.jobId());
-        return status.withUsage(snapshot.usage(), snapshot.accountingState());
     }
 
     public void discardRetainedRun(long exerciseId, String jobId) {

@@ -5,14 +5,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import {
-    MAX_RETAINED_EVENTS,
     TERMINAL_EVENT_TYPES,
+    boundEvents,
     fileChangeKey,
     latestTerminalEvent,
     mergeEvents,
     mergeFileChanges,
     newerFileChange,
 } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
+import { HyperionAccountingState, newestLiveUsage, spendView } from 'app/hyperion/exercise-generation/model/hyperion-generation-usage';
+import { ExerciseGenerationUsage } from 'app/openapi/model/exercise-generation-usage';
 import {
     ExerciseGenerationFileChange,
     ExerciseGenerationRevertResult,
@@ -128,8 +130,40 @@ export class HyperionGenerationActivityFacade {
     readonly canRevert = computed(() => !this.running() && !this.refreshingEditor() && !this.reverted() && this.revertAvailable());
     readonly effectiveRevertMode = computed(() => this.revertMode() ?? this.revertedMode() ?? this.mode());
 
+    /**
+     * The run's provider spend as the status endpoint reports it: a snapshot while it runs, the sealed total after.
+     *
+     * The server only fills this in for the instructor who started the run, so it is absent for anyone else however
+     * long they watch.
+     */
+    readonly usage = signal<ExerciseGenerationUsage | undefined>(undefined);
+    /** How complete {@link usage} is. `PENDING` is a running total, `INCOMPLETE` a permanent lower bound - never zero. */
+    readonly accountingState = signal<HyperionAccountingState | undefined>(undefined);
+
     /** Why the run ended, from the newest terminal event; `undefined` while it is still going. */
     readonly terminationReason = computed(() => latestTerminalEvent(this.events())?.terminationReason);
+
+    /** Whether the run has ended, which is what makes the sealed usage authoritative over any streamed snapshot. */
+    private readonly terminal = computed(() => latestTerminalEvent(this.events()) !== undefined);
+
+    /** The newest spend snapshot the run streamed, which is the only source that carries the token budget. */
+    readonly liveUsage = computed(() => newestLiveUsage(this.events()));
+
+    /**
+     * What this run has spent, or `undefined` when nothing may honestly be shown.
+     *
+     * Derived here rather than in either component so the run page and the code editor's panel cannot disagree about
+     * what a run cost, and so the rules that decide when a figure may be shown at all are testable on their own.
+     */
+    readonly spend = computed(() =>
+        spendView({
+            liveUsage: this.liveUsage(),
+            usage: this.usage(),
+            accountingState: this.accountingState(),
+            ownedByCaller: this.ownedByCaller(),
+            terminal: this.terminal(),
+        }),
+    );
 
     /** The newest repair-round bookkeeping the server reported, so the review stage can say which round it is on. */
     readonly repairRound = computed(() => this.events().findLast((event) => event.repairRound !== undefined)?.repairRound);
@@ -338,6 +372,10 @@ export class HyperionGenerationActivityFacade {
                     this.revertMode.set(status.revertMode);
                     this.ownedByCaller.set(status.ownedByCaller === true);
                     this.cancellable.set(status.cancellable === true);
+                    // Taken as sent, including the absence of usage: the server withholds it from a non-owner and after
+                    // the retained evidence expires, and keeping the last figures would turn either into a claim.
+                    this.usage.set(status.usage);
+                    this.accountingState.set(status.accountingState);
                     // A later poll for the same job may omit the design document; keep the one already shown rather than blanking the panel.
                     if (!sameJob || status.specDocument !== undefined) {
                         this.specDocument.set(status.specDocument);
@@ -489,6 +527,9 @@ export class HyperionGenerationActivityFacade {
                 this.jobId.set(state.jobId);
                 this.mode.set(undefined);
                 this.events.set([]);
+                // A different run's spend must never be carried over onto the one that just took its place.
+                this.usage.set(undefined);
+                this.accountingState.set(undefined);
                 this.clearFileChanges();
             }
             this.running.set(true);
@@ -516,7 +557,7 @@ export class HyperionGenerationActivityFacade {
             this.upsertFileChange(message);
             return;
         }
-        this.events.update((list) => [...list, message].slice(-MAX_RETAINED_EVENTS));
+        this.events.update((list) => boundEvents([...list, message]));
         if (TERMINAL_EVENT_TYPES.has(message.type)) {
             // A terminal event originates from the server-owned job stream and is authoritative for that job's completion. Treat later REST failures as a new outage window
             // instead of carrying retry debt from the pre-terminal reconciliation phase.
@@ -640,6 +681,8 @@ export class HyperionGenerationActivityFacade {
         this.completionStatus.set(undefined);
         this.liveExerciseChanged.set(undefined);
         this.events.set([]);
+        this.usage.set(undefined);
+        this.accountingState.set(undefined);
         this.specDocument.set(undefined);
         this.artifactsRetained.set(false);
         this.clearFileChanges();
@@ -734,6 +777,8 @@ export class HyperionGenerationActivityFacade {
         this.emittedTerminalJobs.clear();
         this.events.set([]);
         this.verdict.set(undefined);
+        this.usage.set(undefined);
+        this.accountingState.set(undefined);
         this.specDocument.set(undefined);
         this.artifactsRetained.set(false);
         this.completionStatus.set(undefined);

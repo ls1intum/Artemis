@@ -11,6 +11,8 @@ import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generat
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
 import { HyperionGenerationEvent, HyperionGenerationStatus } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ExerciseGenerationLiveUsage } from 'app/openapi/model/exercise-generation-live-usage';
+import { ExerciseGenerationUsage } from 'app/openapi/model/exercise-generation-usage';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 
@@ -43,6 +45,39 @@ function status(partial: Partial<HyperionGenerationStatus>): HyperionGenerationS
         accountingState: 'COMPLETE',
         // Retention is something the server has to assert; a test that does not say so has kept nothing.
         artifactsRetained: false,
+        ...partial,
+    };
+}
+
+function liveUsage(partial: Partial<ExerciseGenerationLiveUsage> = {}): ExerciseGenerationLiveUsage {
+    return {
+        inputTokens: 90_000,
+        outputTokens: 10_000,
+        cachedInputTokens: 40_000,
+        billableTokens: 250_000,
+        tokenBudget: 1_000_000,
+        modelCalls: 12,
+        estimatedCostEur: 0.42,
+        estimatedCostComplete: true,
+        ...partial,
+    };
+}
+
+function sealedUsage(partial: Partial<ExerciseGenerationUsage> = {}): ExerciseGenerationUsage {
+    return {
+        modelCalls: 24,
+        toolCalls: 60,
+        agentTurns: 18,
+        attempts: 2,
+        inputTokens: 180_000,
+        outputTokens: 20_000,
+        cachedInputTokens: 80_000,
+        cachedInputTokensComplete: true,
+        estimatedCostEur: 0.84,
+        estimatedCostEurComplete: true,
+        models: ['gpt-5-mini'],
+        providerRequestIds: ['req-1'],
+        providerRequestIdsComplete: true,
         ...partial,
     };
 }
@@ -261,11 +296,160 @@ describe('HyperionRunPageComponent', () => {
         expect(testId('hyperion-run-elapsed')!.textContent!.trim()).toBe('12:34');
     });
 
-    it('shows no percentage and no progress bar anywhere on the page', () => {
+    it('never estimates how far along the run is: no percentage, no bar, no bar role', () => {
+        // The agent's remaining work is not knowable, so the ladder reports a stage and a clock. The only bar on this
+        // page is the token budget, which measures a real quantity against a real ceiling - and this run has neither.
         render(status({ running: true, events: [event({ type: 'STARTED', phase: 'PREPARING' })] }));
 
         expect(fixture.nativeElement.textContent).not.toContain('%');
         expect(fixture.nativeElement.querySelector('progress')).toBeNull();
         expect(fixture.nativeElement.querySelector('[role="progressbar"]')).toBeNull();
+        expect(testId('hyperion-run-usage')).toBeNull();
+    });
+
+    it('reports how long each stage took, and keeps a clock on the one still running', () => {
+        render(
+            status({
+                running: true,
+                events: [
+                    { type: 'STARTED', phase: 'PREPARING', timestamp: '2026-01-01T10:00:00Z' },
+                    { type: 'PROGRESS', phase: 'DESIGNING', timestamp: '2026-01-01T10:01:30Z' },
+                ],
+            }),
+        );
+
+        const prepare = fixture.nativeElement.querySelector('[data-stage="prepare"] [data-testid="hyperion-run-stage-time"]') as HTMLElement;
+        expect(prepare.textContent).toContain('artemisApp.hyperion.generation.stage.took');
+        expect(prepare.getAttribute('data-live')).toBe('false');
+
+        const design = fixture.nativeElement.querySelector('[data-stage="design"] [data-testid="hyperion-run-stage-time"]') as HTMLElement;
+        expect(design.textContent).toContain('artemisApp.hyperion.generation.stage.runningFor');
+        expect(design.getAttribute('data-live')).toBe('true');
+        // A stage nobody has reached has no time to report.
+        expect(fixture.nativeElement.querySelector('[data-stage="save"] [data-testid="hyperion-run-stage-time"]')).toBeNull();
+    });
+
+    describe('spend', () => {
+        it('meters the newest streamed snapshot against the run budget while it is going', () => {
+            render(
+                status({
+                    running: true,
+                    accountingState: 'PENDING',
+                    usage: sealedUsage(),
+                    events: [
+                        event({ type: 'STARTED', phase: 'PREPARING', liveUsage: liveUsage({ billableTokens: 10_000, modelCalls: 1 }) }),
+                        event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage() }),
+                    ],
+                }),
+            );
+
+            const panel = testId('hyperion-run-usage')!;
+            expect(panel.getAttribute('data-accounting')).toBe('PENDING');
+            // The newest snapshot wins over both the older one and the status usage.
+            expect(testId('hyperion-run-usage-budget')!.getAttribute('data-percent')).toBe('25');
+            expect(testId('hyperion-run-usage-budget-value')!.textContent).toContain('250,000 / 1,000,000');
+            expect(testId('hyperion-run-usage-cost-amount')!.textContent!.trim()).toBe('€0.42');
+            // A running run's figures are a running total, and the panel says so rather than leaving it to be inferred.
+            expect(testId('hyperion-run-usage-accounting')!.textContent).toContain('artemisApp.hyperion.generation.usage.state.pending');
+            expect(testId('hyperion-run-usage-cost-caption')!.textContent).toContain('artemisApp.hyperion.generation.usage.costSoFar');
+            expect(panel.querySelector('[data-figure="input"]')!.textContent).toContain('90,000');
+        });
+
+        it('falls back to the status usage on reconnect, so a reload is not blank until the next event', () => {
+            // The transcript that came back carries no snapshot; the status endpoint reports the accumulator instead.
+            render(status({ running: true, accountingState: 'PENDING', usage: sealedUsage(), events: [event({ type: 'STARTED', phase: 'PREPARING' })] }));
+
+            const panel = testId('hyperion-run-usage')!;
+            expect(panel.querySelector('[data-figure="input"]')!.textContent).toContain('180,000');
+            // The sealed shape carries no billable figure, so no proportion is drawn from it.
+            expect(testId('hyperion-run-usage-budget')).toBeNull();
+            expect(testId('hyperion-run-usage-no-budget')).toBeNull();
+        });
+
+        it('seals to the status total once the run has ended', () => {
+            render(
+                status({
+                    accountingState: 'COMPLETE',
+                    usage: sealedUsage(),
+                    events: [event({ type: 'STARTED', phase: 'PREPARING', liveUsage: liveUsage() }), event({ type: 'DONE', phase: 'SAVING', completionStatus: 'SUCCESS' })],
+                }),
+            );
+
+            const panel = testId('hyperion-run-usage')!;
+            expect(panel.getAttribute('data-accounting')).toBe('COMPLETE');
+            expect(testId('hyperion-run-usage-cost-amount')!.textContent!.trim()).toBe('€0.84');
+            expect(panel.querySelector('[data-figure="input"]')!.textContent).toContain('180,000');
+            expect(panel.querySelector('[data-figure="attempts"]')!.textContent).toContain('2');
+            expect(testId('hyperion-run-usage-models')!.textContent).toContain('gpt-5-mini');
+        });
+
+        it('shows an instructor watching someone else’s run no spend figures at all', () => {
+            // The server withholds them, so anything rendered here could only be an empty or zeroed panel.
+            render(
+                status({
+                    running: true,
+                    ownedByCaller: false,
+                    cancellable: false,
+                    accountingState: 'INCOMPLETE',
+                    events: [event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage() })],
+                }),
+            );
+
+            expect(testId('hyperion-run-usage')).toBeNull();
+        });
+
+        it('says a run is not priced instead of showing it as free', () => {
+            render(
+                status({
+                    running: true,
+                    accountingState: 'PENDING',
+                    events: [event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage({ estimatedCostEur: undefined, estimatedCostComplete: false }) })],
+                }),
+            );
+
+            const cost = testId('hyperion-run-usage-cost')!;
+            expect(cost.getAttribute('data-cost')).toBe('notPriced');
+            expect(cost.textContent).toContain('artemisApp.hyperion.generation.usage.notPriced');
+            expect(testId('hyperion-run-usage-cost-amount')).toBeNull();
+            expect(cost.textContent).not.toContain('0.00');
+            expect(cost.textContent).not.toContain('€');
+        });
+
+        it('renders spend without a proportion when the deployment configured no token ceiling', () => {
+            render(
+                status({
+                    running: true,
+                    accountingState: 'PENDING',
+                    events: [event({ type: 'PROGRESS', phase: 'DESIGNING', liveUsage: liveUsage({ tokenBudget: 0 }) })],
+                }),
+            );
+
+            expect(testId('hyperion-run-usage-budget')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[role="progressbar"]')).toBeNull();
+            expect(testId('hyperion-run-usage-no-budget')!.textContent).toContain('250,000');
+        });
+
+        it('says an audit that could not be closed is a lower bound, not a zero', () => {
+            render(
+                status({
+                    accountingState: 'INCOMPLETE',
+                    usage: sealedUsage({ cachedInputTokensComplete: false, estimatedCostEurComplete: false }),
+                    events: [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'ERROR', terminationReason: 'AGENT_ERROR' })],
+                }),
+            );
+
+            expect(testId('hyperion-run-usage')!.getAttribute('data-accounting')).toBe('INCOMPLETE');
+            expect(testId('hyperion-run-usage-incomplete')!.textContent).toContain('artemisApp.hyperion.generation.usage.incompleteHint');
+            expect(testId('hyperion-run-usage-cost')!.getAttribute('data-cost')).toBe('lowerBound');
+            expect(testId('hyperion-run-usage-cost')!.textContent).toContain('artemisApp.hyperion.generation.usage.atLeast');
+            // The cached share was not reported for every response, so it is a floor too.
+            expect(testId('hyperion-run-usage-figures')!.querySelector('[data-figure="cached"]')!.textContent).toContain('artemisApp.hyperion.generation.usage.atLeast');
+        });
+
+        it('shows no panel at all before the run has been charged for anything', () => {
+            render(status({ running: true, accountingState: 'PENDING', events: [event({ type: 'STARTED', phase: 'PREPARING' })] }));
+
+            expect(testId('hyperion-run-usage')).toBeNull();
+        });
     });
 });

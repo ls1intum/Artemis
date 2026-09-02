@@ -92,6 +92,12 @@
                 </div>
             }
 
+            @if (spend(); as spendView) {
+                <div class="border-b px-3 py-2">
+                    <jhi-hyperion-run-usage [spend]="spendView" density="compact" />
+                </div>
+            }
+
             @if (runPageLink(); as runLink) {
                 <div class="px-3 py-1">
                     <a tumUiButton size="small" severity="secondary" variant="text" [routerLink]="runLink" data-testid="hyperion-generation-open-run">

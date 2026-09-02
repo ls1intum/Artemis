@@ -33,6 +33,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
         @Schema(description = "On a terminal event, why the generation run ended") @Nullable TerminationReason terminationReason,
         @Schema(description = "On a repair-round progress event, that round's finding bookkeeping") @Nullable ExerciseGenerationRepairRoundDTO repairRound,
         @Schema(description = "On a progress event produced from inside the agent loop, what the run was doing at that moment") @Nullable ExerciseGenerationActivityDTO activity,
+        @Schema(description = "On an activity or phase event, what the run has spent up to that moment") @Nullable ExerciseGenerationLiveUsageDTO liveUsage,
         @Schema(description = "The moment the event was produced", requiredMode = Schema.RequiredMode.REQUIRED) Instant timestamp) implements Serializable {
 
     @Serial
@@ -106,20 +107,37 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
     }
 
     public static ExerciseGenerationEventDTO of(Type type, @Nullable String message) {
-        return new ExerciseGenerationEventDTO(type, message, null, null, null, null, null, null, null, null, null, Instant.now());
+        return new ExerciseGenerationEventDTO(type, message, null, null, null, null, null, null, null, null, null, null, Instant.now());
     }
 
     public static ExerciseGenerationEventDTO phase(Phase phase, String message) {
-        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, phase, null, null, null, null, null, null, null, null, Instant.now());
+        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, phase, null, null, null, null, null, null, null, null, null, Instant.now());
     }
 
     public static ExerciseGenerationEventDTO repairRound(@Nullable String message, ExerciseGenerationRepairRoundDTO repairRound) {
-        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, Phase.REPAIRING, null, null, null, null, null, null, repairRound, null, Instant.now());
+        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, Phase.REPAIRING, null, null, null, null, null, null, repairRound, null, null, Instant.now());
     }
 
     /** A plain progress line with the run's live activity attached, so a client can render "waiting on the model since …" without parsing the message. */
     public static ExerciseGenerationEventDTO activity(@Nullable String message, ExerciseGenerationActivityDTO activity) {
-        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, null, null, null, null, null, null, null, null, activity, Instant.now());
+        return new ExerciseGenerationEventDTO(Type.PROGRESS, message, null, null, null, null, null, null, null, null, activity, null, Instant.now());
+    }
+
+    /**
+     * This event with the run's spend so far attached, stamped where the running totals are known.
+     * <p>
+     * Only the newest snapshot is of interest, so this deliberately adds nothing the replay's eviction rule looks at: a stamped progress line stays as droppable as the plain one
+     * it would otherwise have been.
+     *
+     * @param liveUsage what the run has spent so far; {@code null} leaves the event unchanged
+     * @return a copy carrying the snapshot, or {@code this} when there is nothing to add
+     */
+    public ExerciseGenerationEventDTO withLiveUsage(@Nullable ExerciseGenerationLiveUsageDTO liveUsage) {
+        if (liveUsage == null) {
+            return this;
+        }
+        return new ExerciseGenerationEventDTO(type, message, phase, completionStatus, verdict, liveExerciseChanged, savedRepositoryCommits, savedExerciseVersionId,
+                terminationReason, repairRound, activity, liveUsage, timestamp);
     }
 
     /**
@@ -133,7 +151,7 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
             return this;
         }
         return new ExerciseGenerationEventDTO(type, message, phase, completionStatus, verdict, liveExerciseChanged, savedRepositoryCommits, savedExerciseVersionId,
-                terminationReason, repairRound, activity, timestamp);
+                terminationReason, repairRound, activity, liveUsage, timestamp);
     }
 
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict) {
@@ -153,6 +171,6 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
     public static ExerciseGenerationEventDTO done(@Nullable String message, CompletionStatus completionStatus, @Nullable ExerciseGenerationVerdictDTO verdict,
             boolean liveExerciseChanged, @Nullable Map<String, String> savedRepositoryCommits, @Nullable Long savedExerciseVersionId) {
         return new ExerciseGenerationEventDTO(Type.DONE, message, Phase.SAVING, completionStatus, verdict, liveExerciseChanged,
-                savedRepositoryCommits == null ? null : Map.copyOf(savedRepositoryCommits), savedExerciseVersionId, null, null, null, Instant.now());
+                savedRepositoryCommits == null ? null : Map.copyOf(savedRepositoryCommits), savedExerciseVersionId, null, null, null, null, Instant.now());
     }
 }

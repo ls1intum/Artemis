@@ -148,7 +148,8 @@ public class HyperionExerciseMetadataSuggestionService {
 
         String title = uniqueTitle(HyperionExerciseTitleSanitizer.sanitize(answer.title()), sanitizedBrief, course);
         String shortName = uniqueShortName(HyperionExerciseIdentifierDeriver.deriveShortName(title), course);
-        String packageName = HyperionExerciseIdentifierDeriver.derivePackageName(shortName, projectType);
+        // From the title, not from the short name: the short name is abbreviated to fit a repository slug, and a package has room for the words themselves.
+        String packageName = HyperionExerciseIdentifierDeriver.derivePackageName(title, projectType);
         return new ExerciseGenerationMetadataSuggestionResponseDTO(title, shortName, packageName, difficulty(answer, sanitizedBrief), DRAFT_MAX_POINTS);
     }
 

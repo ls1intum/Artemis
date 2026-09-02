@@ -1,20 +1,35 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, model, output, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import dayjs from 'dayjs/esm';
-import { faRotate } from '@fortawesome/free-solid-svg-icons';
-import { TranslateService } from '@ngx-translate/core';
-import { Subject, catchError, debounceTime, filter, map, merge, of, switchMap, tap } from 'rxjs';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiMessageComponent, TumUiPanelComponent, TumUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import {
+    TumUiButtonComponent,
+    TumUiDialogComponent,
+    TumUiInputDirective,
+    TumUiInputNumberComponent,
+    TumUiMessageComponent,
+    TumUiPanelComponent,
+    TumUiSelectButtonComponent,
+    TumUiTagComponent,
+} from '@tumaet/ui-angular';
 
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import {
+    MAX_PACKAGE_NAME_LENGTH,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
+    PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
+    PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH,
+    SHORT_NAME_PATTERN,
+} from 'app/foundation/constants/input.constants';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionMetadataSuggestion } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
@@ -24,37 +39,40 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/progr
 const MIN_BRIEF_LENGTH = 40;
 const MAX_BRIEF_LENGTH = 8000;
 
+/** {@code Exercise.validateTitle} on the server: shorter than three characters is rejected, and the column holds 255. */
 const MIN_TITLE_LENGTH = 3;
-const MAX_TITLE_LENGTH = 255;
+const MAX_TITLE_LENGTH = PROGRAMMING_EXERCISE_NAME_MAX_LENGTH;
 
-/** The server's rule for a programming exercise title, mirrored so a title Artemis will reject is caught before the draft is created. */
+/** The server's rule for a programming exercise title ({@code Constants.TITLE_NAME_PATTERN}), mirrored so a title Artemis will reject is caught before the draft is created. */
 const TITLE_PATTERN = /^[\p{L}\p{M}\p{N}_\-\s]*$/u;
 
-/** Long enough that a suggestion follows a pause in writing rather than a keystroke, short enough to have arrived by the time the brief is finished. */
-const SUGGESTION_DEBOUNCE_MS = 800;
+/** The shortest name {@code Constants.SHORT_NAME_PATTERN} accepts: a letter plus two more alphanumerics. Stated separately only so the error message can name it. */
+const MIN_SHORT_NAME_LENGTH = 3;
 
-/** Mirrors {@code HyperionExerciseMetadataSuggestionService.DRAFT_MAX_POINTS}, for the window before the first suggestion arrives. */
-const DRAFT_MAX_POINTS = 10;
+/**
+ * What {@code Exercise.validateScoreSettings} demands of an exercise that counts towards the score — more than zero — expressed as the range
+ * {@code ProgrammingExerciseUpdateComponent.validateExercisePoints} enforces in the ordinary exercise form, so both forms refuse the same numbers.
+ */
+const MIN_MAX_POINTS = 1;
+const MAX_MAX_POINTS = 9999;
 
 /** The server's own key for "no build agent has a free sandbox slot", which is the one failure worth retrying as-is. */
 const CAPACITY_ERROR_KEY = 'generationCapacityUnavailable';
 
-/**
- * The server's keys for an identifier another exercise took first. Both are races rather than mistakes: the suggestion was free when it was made, and asking again produces one
- * that is free now.
- */
-const IDENTIFIER_CONFLICT_ERROR_KEYS = ['shortnameAlreadyExists', 'titleAlreadyExists'];
+/** The server's keys for an identifier another exercise took first, mapped to the field the instructor would have to change. */
+const IDENTIFIER_CONFLICT_FIELDS: Record<string, 'title' | 'shortName'> = { titleAlreadyExists: 'title', shortnameAlreadyExists: 'shortName' };
+
+type IdentifierField = (typeof IDENTIFIER_CONFLICT_FIELDS)[string];
 
 /**
  * The brief that starts a whole-exercise generation run.
  *
- * The instructor states their intent once; Artemis derives everything that follows from it. What is asked for is what
- * cannot be derived: what to build, and in which build tool. The title and the difficulty are suggested from the brief
- * and stay editable. The short name, the package name and the points are derived and only shown, because inventing a
- * repository slug is a decision without a choice — the summary panel is there so a wrong one can still be caught.
+ * The instructor states their intent once, and then decides everything the draft is made of. Nothing is filled in behind their back: pressing "Suggest metadata" is the only thing
+ * that writes into the title, the short name, the package name, the points and the difficulty, and every one of those is an editable field validated against the very rule the
+ * create request will apply. Generation stays blocked until they are all present and valid, because a derived value quietly substituted at submit time is the behaviour this
+ * dialog exists to avoid.
  *
- * The draft is created unreleased and stays that way until the instructor releases it. Once a run has started, the
- * dialog is done: the run itself lives at its own URL.
+ * The draft is created unreleased and stays that way until the instructor releases it. Once a run has started, the dialog is done: the run itself lives at its own URL.
  */
 @Component({
     selector: 'jhi-hyperion-brief-dialog',
@@ -68,16 +86,17 @@ const IDENTIFIER_CONFLICT_ERROR_KEYS = ['shortnameAlreadyExists', 'titleAlreadyE
         TumUiButtonComponent,
         TumUiDialogComponent,
         TumUiInputDirective,
+        TumUiInputNumberComponent,
         TumUiMessageComponent,
         TumUiPanelComponent,
         TumUiSelectButtonComponent,
+        TumUiTagComponent,
     ],
 })
 export class HyperionBriefDialogComponent {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly generationService = inject(HyperionExerciseGenerationService);
     private readonly registry = inject(HyperionJobRegistryService);
-    private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
     private readonly destroyRef = inject(DestroyRef);
 
@@ -89,16 +108,36 @@ export class HyperionBriefDialogComponent {
 
     readonly brief = signal('');
     readonly briefTouched = signal(false);
+
     readonly title = signal('');
     readonly titleTouched = signal(false);
-    /** Set as soon as the instructor changes the field themselves; from then on no suggestion may overwrite what they wrote. */
+    /** Set as soon as the instructor changes the field themselves; from then on only the suggest button may replace what they wrote. */
     readonly titleEdited = signal(false);
-    /** The same rule for the difficulty: a value the instructor chose is theirs, and a later suggestion must not move it. */
-    readonly difficultyEdited = signal(false);
-    readonly suggesting = signal(false);
-    /** Everything the last suggestion derived; undefined until one arrives, which is the only case the local identifier fallback covers. */
-    readonly suggestion = signal<HyperionMetadataSuggestion | undefined>(undefined);
+
+    readonly shortName = signal('');
+    readonly shortNameTouched = signal(false);
+    readonly shortNameEdited = signal(false);
+
+    readonly packageName = signal('');
+    readonly packageNameTouched = signal(false);
+    readonly packageNameEdited = signal(false);
+
+    readonly maxPoints = signal<number | undefined>(undefined);
+    readonly maxPointsTouched = signal(false);
+    readonly maxPointsEdited = signal(false);
+
+    /** The one metadata value with a defensible default, because "medium" is a choice an instructor can leave standing rather than a name only Artemis could invent. */
     readonly difficulty = signal<DifficultyLevel>(DifficultyLevel.MEDIUM);
+    readonly difficultyEdited = signal(false);
+
+    readonly suggesting = signal(false);
+    readonly suggestionFailed = signal(false);
+    /** The last suggestion, which is what lets each field say whether its current value came from Hyperion or from the instructor. */
+    readonly suggestion = signal<HyperionMetadataSuggestion | undefined>(undefined);
+
+    /** The identifier another exercise took first, when it was the instructor's own and therefore not Artemis's to replace. */
+    readonly conflictingIdentifier = signal<IdentifierField | undefined>(undefined);
+
     readonly projectType = signal<ProjectType>(ProjectType.PLAIN_MAVEN);
     readonly provisioning = signal(false);
     readonly setupFailed = signal(false);
@@ -111,42 +150,96 @@ export class HyperionBriefDialogComponent {
 
     /** The example starts folded away: it is a reference, not something to read past on every visit. */
     protected readonly exampleCollapsed = signal(true);
-    /** So does what Artemis derived: it is there to be checked when something looks wrong, not to be read every time. */
-    protected readonly summaryCollapsed = signal(true);
 
     protected readonly briefLength = computed(() => this.brief().trim().length);
     protected readonly briefTooShort = computed(() => this.briefLength() < MIN_BRIEF_LENGTH);
     protected readonly briefInvalid = computed(() => this.briefTooShort() || this.briefLength() > MAX_BRIEF_LENGTH);
     protected readonly showBriefError = computed(() => this.briefTouched() && this.briefTooShort());
 
-    /** The field only appears once there is a brief worth naming, so an empty dialog does not open with an empty title to fill in. */
-    protected readonly showTitleField = computed(() => !this.briefInvalid());
     protected readonly trimmedTitle = computed(() => this.title().trim());
-    /**
-     * An empty field is not an error: it is the state before the first suggestion arrives, and the fallback in {@link buildExercise} covers it. Only a title the instructor
-     * typed that Artemis would refuse blocks generation.
-     */
+    protected readonly trimmedShortName = computed(() => this.shortName().trim());
+    protected readonly trimmedPackageName = computed(() => this.packageName().trim());
+
+    /** Blackbox exercises are validated against a single-identifier pattern; every other Java project against the dotted one. */
+    private readonly packageNamePattern = computed(
+        () => new RegExp(this.projectType() === ProjectType.MAVEN_BLACKBOX ? PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN),
+    );
+
+    /** Empty is incomplete rather than wrong, so an untouched field says "still missing" instead of shouting at an instructor who has not started. */
     protected readonly titleInvalid = computed(() => {
         const title = this.trimmedTitle();
-        return title.length > 0 && (title.length < MIN_TITLE_LENGTH || !TITLE_PATTERN.test(title));
+        return title.length > 0 && (title.length < MIN_TITLE_LENGTH || title.length > MAX_TITLE_LENGTH || !TITLE_PATTERN.test(title));
     });
+    protected readonly shortNameInvalid = computed(() => {
+        const shortName = this.trimmedShortName();
+        return shortName.length > 0 && (shortName.length > PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH || !SHORT_NAME_PATTERN.test(shortName));
+    });
+    protected readonly packageNameInvalid = computed(() => {
+        const packageName = this.trimmedPackageName();
+        return packageName.length > 0 && (packageName.length > MAX_PACKAGE_NAME_LENGTH || !this.packageNamePattern().test(packageName));
+    });
+    protected readonly maxPointsInvalid = computed(() => {
+        const points = this.maxPoints();
+        return points !== undefined && (!Number.isFinite(points) || points < MIN_MAX_POINTS || points > MAX_MAX_POINTS);
+    });
+
     protected readonly showTitleError = computed(() => this.titleTouched() && this.titleInvalid());
+    protected readonly showShortNameError = computed(() => this.shortNameTouched() && this.shortNameInvalid());
+    protected readonly showPackageNameError = computed(() => this.packageNameTouched() && this.packageNameInvalid());
+    protected readonly showMaxPointsError = computed(() => this.maxPointsTouched() && this.maxPointsInvalid());
 
-    /** Says where a pre-selected difficulty came from, so a filled-in control does not read as a silent default nobody chose. */
-    protected readonly difficultyFromBrief = computed(() => this.suggestion() !== undefined && !this.difficultyEdited());
+    protected readonly titleTaken = computed(() => this.conflictingIdentifier() === 'title');
+    protected readonly shortNameTaken = computed(() => this.conflictingIdentifier() === 'shortName');
 
-    readonly canGenerate = computed(() => !this.briefInvalid() && !this.titleInvalid() && this.startError() === undefined);
+    /** Says which values are Hyperion's, so a filled-in field never reads as a silent default nobody chose. */
+    protected readonly titleFromSuggestion = computed(() => this.suggestion() !== undefined && !this.titleEdited());
+    protected readonly shortNameFromSuggestion = computed(() => this.suggestion() !== undefined && !this.shortNameEdited());
+    protected readonly packageNameFromSuggestion = computed(() => this.suggestion() !== undefined && !this.packageNameEdited());
+    protected readonly maxPointsFromSuggestion = computed(() => this.suggestion() !== undefined && !this.maxPointsEdited());
+    protected readonly difficultyFromSuggestion = computed(() => this.suggestion() !== undefined && !this.difficultyEdited());
+
+    protected readonly hasSuggestion = computed(() => this.suggestion() !== undefined);
+    readonly canSuggest = computed(() => !this.briefInvalid() && !this.suggesting());
+
+    private readonly metadataIncomplete = computed(
+        () => this.trimmedTitle().length === 0 || this.trimmedShortName().length === 0 || this.trimmedPackageName().length === 0 || this.maxPoints() === undefined,
+    );
+    private readonly metadataInvalid = computed(() => this.titleInvalid() || this.shortNameInvalid() || this.packageNameInvalid() || this.maxPointsInvalid());
+
+    readonly canGenerate = computed(() => !this.briefInvalid() && !this.suggesting() && !this.metadataIncomplete() && !this.metadataInvalid() && this.startError() === undefined);
+
+    /** What a disabled Generate button is waiting for, so it is never merely grey. */
+    protected readonly generateBlockedReason = computed(() => {
+        if (this.briefInvalid()) {
+            return 'artemisApp.hyperion.generation.brief.blockedBrief';
+        }
+        if (this.suggesting()) {
+            return 'artemisApp.hyperion.generation.brief.blockedSuggesting';
+        }
+        if (this.metadataIncomplete()) {
+            return 'artemisApp.hyperion.generation.brief.blockedIncomplete';
+        }
+        if (this.metadataInvalid()) {
+            return 'artemisApp.hyperion.generation.brief.blockedInvalid';
+        }
+        return undefined;
+    });
 
     protected readonly startFailed = computed(() => this.startError() !== undefined);
     /** A capacity refusal changed nothing, so trying again is the answer; anything else may need the draft gone. */
     protected readonly capacityUnavailable = computed(() => this.errorKeyOf(this.startError()) === CAPACITY_ERROR_KEY);
 
     protected readonly DifficultyLevel = DifficultyLevel;
-    protected readonly faRotate = faRotate;
+    protected readonly faWandMagicSparkles = faWandMagicSparkles;
     protected readonly minimumBriefLength = MIN_BRIEF_LENGTH;
     protected readonly maximumBriefLength = MAX_BRIEF_LENGTH;
     protected readonly minimumTitleLength = MIN_TITLE_LENGTH;
     protected readonly maximumTitleLength = MAX_TITLE_LENGTH;
+    protected readonly minimumShortNameLength = MIN_SHORT_NAME_LENGTH;
+    protected readonly maximumShortNameLength = PROGRAMMING_EXERCISE_SHORT_NAME_MAX_LENGTH;
+    protected readonly maximumPackageNameLength = MAX_PACKAGE_NAME_LENGTH;
+    protected readonly minimumMaxPoints = MIN_MAX_POINTS;
+    protected readonly maximumMaxPoints = MAX_MAX_POINTS;
     protected readonly buildToolOptions = [
         { value: ProjectType.PLAIN_MAVEN, labelKey: 'artemisApp.hyperion.generation.buildTools.maven' },
         { value: ProjectType.PLAIN_GRADLE, labelKey: 'artemisApp.hyperion.generation.buildTools.gradle' },
@@ -157,53 +250,51 @@ export class HyperionBriefDialogComponent {
         { value: DifficultyLevel.HARD, labelKey: 'artemisApp.DifficultyLevel.HARD' },
     ];
 
-    /** The brief once it is worth naming, and the empty string while it is not, so a shrinking brief cancels a pending suggestion instead of asking for one. */
-    private readonly suggestionBrief = computed(() => (this.briefInvalid() ? '' : this.brief().trim()));
-
-    private readonly regenerateRequests = new Subject<void>();
-
-    constructor() {
-        const whileTyping = toObservable(this.suggestionBrief).pipe(
-            debounceTime(SUGGESTION_DEBOUNCE_MS),
-            // Not merely dropped on arrival: once the instructor has titled the exercise themselves, there is nothing left to ask for.
-            filter((brief) => brief.length > 0 && !this.titleEdited()),
-        );
-        const onRequest = this.regenerateRequests.pipe(
-            map(() => this.suggestionBrief()),
-            filter((brief) => brief.length > 0),
-        );
-        merge(whileTyping, onRequest)
-            .pipe(
-                tap(() => this.suggesting.set(true)),
-                // switchMap, so a brief that keeps growing is answered by its latest version rather than by whichever request returns last.
-                switchMap((brief) => this.requestSuggestion(brief)),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe((suggestion) => {
+    /** The only path that writes metadata the instructor did not type, and it runs only when they press the button. */
+    suggestMetadata(): void {
+        if (!this.canSuggest()) {
+            return;
+        }
+        this.suggestionFailed.set(false);
+        this.suggesting.set(true);
+        this.requestSuggestion().subscribe({
+            next: (suggestion) => {
                 this.suggesting.set(false);
-                this.applySuggestion(suggestion);
-            });
+                this.applySuggestion(suggestion, false);
+            },
+            error: () => {
+                this.suggesting.set(false);
+                this.suggestionFailed.set(true);
+            },
+        });
     }
 
-    /** Records that the title is the instructor's now, so nothing in flight or asked for later overwrites it. */
+    /** Records that the title is the instructor's now, so no recovery overwrites it behind their back. */
     editTitle(title: string): void {
         this.title.set(title);
         this.titleEdited.set(true);
+        this.clearConflict('title');
     }
 
-    /** The same for the difficulty: choosing one settles it, and the hint saying where it came from goes away with it. */
+    editShortName(shortName: string): void {
+        this.shortName.set(shortName);
+        this.shortNameEdited.set(true);
+        this.clearConflict('shortName');
+    }
+
+    editPackageName(packageName: string): void {
+        this.packageName.set(packageName);
+        this.packageNameEdited.set(true);
+    }
+
+    editMaxPoints(maxPoints: number | undefined): void {
+        this.maxPoints.set(maxPoints);
+        this.maxPointsEdited.set(true);
+    }
+
     editDifficulty(difficulty: DifficultyLevel): void {
         this.difficulty.set(difficulty);
         this.difficultyEdited.set(true);
-    }
-
-    /**
-     * Hands the title back to Hyperion: the instructor's edit is given up deliberately, which is what makes the button mean something. A difficulty they chose stays theirs —
-     * this button is about the name.
-     */
-    regenerateTitle(): void {
-        this.titleEdited.set(false);
-        this.regenerateRequests.next();
     }
 
     /** Provisions the draft exercise and starts the run, then hands the instructor over to the run's own page. */
@@ -213,6 +304,7 @@ export class HyperionBriefDialogComponent {
         }
         this.setupFailed.set(false);
         this.startError.set(undefined);
+        this.conflictingIdentifier.set(undefined);
         this.provisioning.set(true);
         this.provisionAndStart(true);
     }
@@ -266,11 +358,21 @@ export class HyperionBriefDialogComponent {
         this.title.set('');
         this.titleTouched.set(false);
         this.titleEdited.set(false);
+        this.shortName.set('');
+        this.shortNameTouched.set(false);
+        this.shortNameEdited.set(false);
+        this.packageName.set('');
+        this.packageNameTouched.set(false);
+        this.packageNameEdited.set(false);
+        this.maxPoints.set(undefined);
+        this.maxPointsTouched.set(false);
+        this.maxPointsEdited.set(false);
+        this.difficulty.set(DifficultyLevel.MEDIUM);
         this.difficultyEdited.set(false);
         this.suggesting.set(false);
+        this.suggestionFailed.set(false);
         this.suggestion.set(undefined);
-        this.summaryCollapsed.set(true);
-        this.difficulty.set(DifficultyLevel.MEDIUM);
+        this.conflictingIdentifier.set(undefined);
         this.projectType.set(ProjectType.PLAIN_MAVEN);
         this.provisioning.set(false);
         this.setupFailed.set(false);
@@ -280,27 +382,52 @@ export class HyperionBriefDialogComponent {
         this.createdExercise.set(undefined);
     }
 
-    private requestSuggestion(brief: string) {
-        return this.generationService.suggestMetadata(this.courseId(), brief, this.projectType()).pipe(catchError(() => of(undefined)));
+    private clearConflict(field: IdentifierField): void {
+        if (this.conflictingIdentifier() === field) {
+            this.conflictingIdentifier.set(undefined);
+        }
     }
 
-    /** Fills in what the instructor has not claimed for themselves, and always replaces the derived identifiers, which are nobody's to claim. */
-    private applySuggestion(suggestion: HyperionMetadataSuggestion | undefined): void {
+    private requestSuggestion() {
+        return this.generationService.suggestMetadata(this.courseId(), this.brief().trim(), this.projectType()).pipe(takeUntilDestroyed(this.destroyRef));
+    }
+
+    /**
+     * Writes a suggestion into the fields.
+     *
+     * @param keepInstructorEdits whether a field the instructor has already typed in keeps their value. False when they pressed the suggest button, which is a deliberate request
+     *                                for Hyperion's answer to everything; true when Artemis is recovering from a lost race, where nobody asked for their work to be thrown away.
+     */
+    private applySuggestion(suggestion: HyperionMetadataSuggestion, keepInstructorEdits: boolean): void {
         this.suggestion.set(suggestion);
-        if (!this.titleEdited()) {
-            // The server answers with a usable title even when its model does not, so only a transport failure reaches the local fallback.
-            this.title.set(suggestion?.title ?? this.translateService.instant('artemisApp.hyperion.generation.brief.draftTitle'));
+        this.conflictingIdentifier.set(undefined);
+        if (!keepInstructorEdits || !this.titleEdited()) {
+            this.title.set(suggestion.title);
+            this.titleEdited.set(false);
         }
-        if (suggestion && !this.difficultyEdited()) {
+        if (!keepInstructorEdits || !this.shortNameEdited()) {
+            this.shortName.set(suggestion.shortName);
+            this.shortNameEdited.set(false);
+        }
+        if (!keepInstructorEdits || !this.packageNameEdited()) {
+            this.packageName.set(suggestion.packageName);
+            this.packageNameEdited.set(false);
+        }
+        if (!keepInstructorEdits || !this.maxPointsEdited()) {
+            this.maxPoints.set(suggestion.maxPoints);
+            this.maxPointsEdited.set(false);
+        }
+        if (!keepInstructorEdits || !this.difficultyEdited()) {
             this.difficulty.set(DifficultyLevel[suggestion.difficulty]);
+            this.difficultyEdited.set(false);
         }
     }
 
     /**
      * Creates the draft and starts the run on it.
      *
-     * @param mayReSuggest whether a lost race for the title or short name may be answered by asking for a fresh suggestion and trying once more. False on that second attempt,
-     *                         so a course that keeps taking the name ends at the failure message rather than in a loop.
+     * @param mayReSuggest whether a lost race for a value Hyperion suggested may be answered by asking for a fresh one and trying once more. False on that second attempt, so a
+     *                         course that keeps taking the name ends at the conflict message rather than in a loop.
      */
     private provisionAndStart(mayReSuggest: boolean): void {
         this.programmingExerciseService
@@ -319,24 +446,36 @@ export class HyperionBriefDialogComponent {
                     this.startRun(created.id);
                 },
                 error: (error: unknown) => {
-                    if (mayReSuggest && this.isIdentifierConflict(error)) {
+                    const conflict = this.identifierConflictField(error);
+                    if (conflict === undefined) {
+                        this.provisioning.set(false);
+                        this.setupFailed.set(true);
+                        return;
+                    }
+                    // A value the instructor typed is theirs even when it turns out to be taken: Artemis says so and lets them pick, rather than silently substituting its own.
+                    const instructorsOwn = conflict === 'title' ? this.titleEdited() : this.shortNameEdited();
+                    if (mayReSuggest && !instructorsOwn) {
                         this.reSuggestAndRetry();
                         return;
                     }
                     this.provisioning.set(false);
-                    this.setupFailed.set(true);
+                    this.conflictingIdentifier.set(conflict);
                 },
             });
     }
 
-    /** Another exercise took the name between the suggestion and the submit. Ask once for one that is free now, and try again with it. */
+    /** Another exercise took a name Hyperion suggested between the suggestion and the submit. Ask once for one that is free now, keeping whatever the instructor typed themselves. */
     private reSuggestAndRetry(): void {
-        this.requestSuggestion(this.brief().trim())
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((suggestion) => {
-                this.applySuggestion(suggestion);
+        this.requestSuggestion().subscribe({
+            next: (suggestion) => {
+                this.applySuggestion(suggestion, true);
                 this.provisionAndStart(false);
-            });
+            },
+            error: () => {
+                this.provisioning.set(false);
+                this.setupFailed.set(true);
+            },
+        });
     }
 
     private startRun(exerciseId: number): void {
@@ -356,9 +495,9 @@ export class HyperionBriefDialogComponent {
             });
     }
 
-    private isIdentifierConflict(error: unknown): boolean {
+    private identifierConflictField(error: unknown): IdentifierField | undefined {
         const errorKey = this.errorKeyOf(error instanceof HttpErrorResponse ? error : undefined);
-        return errorKey !== undefined && IDENTIFIER_CONFLICT_ERROR_KEYS.includes(errorKey);
+        return errorKey === undefined ? undefined : IDENTIFIER_CONFLICT_FIELDS[errorKey];
     }
 
     private openRun(jobId: string): void {
@@ -379,26 +518,22 @@ export class HyperionBriefDialogComponent {
         return typeof body?.errorKey === 'string' ? body.errorKey : undefined;
     }
 
+    /** Every value here is one the instructor can see and change in the dialog; {@link canGenerate} is what guarantees none of them is missing. */
     private buildExercise(courseId: number): ProgrammingExercise {
         const course = new Course();
         course.id = courseId;
         const exercise = new ProgrammingExercise(course, undefined);
-        const suggestion = this.suggestion();
-        // Reached only when no suggestion arrived at all — a transport failure — because the server answers with valid identifiers even when its model does not.
-        const fallbackIdentifier = `gen${Date.now().toString(36)}`;
-        // A successful run replaces this with the heading of the statement it wrote, so it is the draft title rather than the final one. The fallback covers the window before
-        // the first suggestion arrives; the field is editable, so a clash with an existing exercise is the instructor's to resolve.
-        exercise.title = this.trimmedTitle() || this.translateService.instant('artemisApp.hyperion.generation.brief.draftTitle');
-        exercise.shortName = suggestion?.shortName ?? fallbackIdentifier;
+        exercise.title = this.trimmedTitle();
+        exercise.shortName = this.trimmedShortName();
         exercise.problemStatement = '';
-        exercise.maxPoints = suggestion?.maxPoints ?? DRAFT_MAX_POINTS;
+        exercise.maxPoints = this.maxPoints();
         exercise.difficulty = this.difficulty();
         // Keep the draft unreleased until an instructor deliberately schedules it after reviewing the result.
         exercise.releaseDate = dayjs().add(1, 'year');
         exercise.assessmentType = AssessmentType.AUTOMATIC;
         exercise.programmingLanguage = ProgrammingLanguage.JAVA;
         exercise.projectType = this.projectType();
-        exercise.packageName = suggestion?.packageName ?? `de.tum.cit.aet.${fallbackIdentifier}`;
+        exercise.packageName = this.trimmedPackageName();
         exercise.allowOnlineEditor = true;
         exercise.allowOfflineIde = true;
         return exercise;

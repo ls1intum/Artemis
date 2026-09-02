@@ -8,7 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { activityView } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
-import { HyperionGenerationActivity, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ExerciseGenerationFileChange, HyperionGenerationActivity, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 let clock = 0;
 
@@ -28,11 +28,15 @@ describe('HyperionRunProgressComponent', () => {
         });
     });
 
-    function createWith(events: readonly HyperionGenerationEvent[], density: 'full' | 'compact' = 'full'): ComponentFixture<HyperionRunProgressComponent> {
+    function createWith(
+        events: readonly HyperionGenerationEvent[],
+        density: 'full' | 'compact' = 'full',
+        files: readonly ExerciseGenerationFileChange[] = [],
+    ): ComponentFixture<HyperionRunProgressComponent> {
         const outcome = runOutcome(events);
         const fixture = TestBed.createComponent(HyperionRunProgressComponent);
         fixture.componentRef.setInput('stages', stageStates(events, outcome));
-        fixture.componentRef.setInput('activity', activityView(events, outcome));
+        fixture.componentRef.setInput('activity', activityView(events, outcome, files));
         fixture.componentRef.setInput('liveMessage', events.findLast((candidate) => candidate.message)?.message);
         fixture.componentRef.setInput('density', density);
         fixture.detectChanges();
@@ -102,5 +106,50 @@ describe('HyperionRunProgressComponent', () => {
         const fixture = createWith([event({ type: 'STARTED', phase: 'PREPARING', activity: activity() })]);
 
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-substeps"]')).toBeNull();
+    });
+
+    it('reports the time a finished stage took next to what it got done', () => {
+        const fixture = createWith([
+            { type: 'STARTED', phase: 'PREPARING', timestamp: '2026-01-01T12:00:00Z' },
+            { type: 'PROGRESS', phase: 'DESIGNING', timestamp: '2026-01-01T12:00:42Z', activity: activity({ turn: 1, filesWritten: 3 }) },
+        ]);
+
+        const prepare = fixture.nativeElement.querySelector('[data-stage="prepare"] [data-testid="hyperion-run-stage-time"]') as HTMLElement;
+        expect(prepare.textContent).toContain('artemisApp.hyperion.generation.stage.took');
+        expect(prepare.getAttribute('data-live')).toBe('false');
+        // The ticking clock is never announced: a live region here would read the whole ladder aloud once a second.
+        expect(fixture.nativeElement.querySelector('[role="status"] [data-testid="hyperion-run-stage-time"]')).toBeNull();
+        expect(prepare.closest('[aria-live="off"]')).not.toBeNull();
+    });
+
+    it('names the file the agent is working on right now, and stops naming one when the run ends', () => {
+        const files: ExerciseGenerationFileChange[] = [
+            { type: 'FILE_CHANGE', path: 'tests/src/test/java/StackTest.java', repo: 'tests', action: 'write', turn: 1, timestamp: '2026-01-01T12:00:01Z' },
+            { type: 'FILE_CHANGE', path: 'solution/src/main/java/Stack.java', repo: 'solution', action: 'edit', turn: 4, timestamp: '2026-01-01T12:00:09Z' },
+        ];
+        const running = createWith([event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ turn: 4 }) })], 'full', files);
+
+        expect(running.nativeElement.querySelector('[data-testid="hyperion-run-activity-file"]')!.textContent).toContain('artemisApp.hyperion.generation.activity.latestFile');
+
+        const ended = createWith(
+            [event({ type: 'PROGRESS', phase: 'DESIGNING', activity: activity({ turn: 4 }) }), event({ type: 'DONE', completionStatus: 'SUCCESS' })],
+            'full',
+            files,
+        );
+        // A finished run's files are listed in full elsewhere; singling one out would claim it is still being written.
+        expect(ended.nativeElement.querySelector('[data-testid="hyperion-run-activity-file"]')).toBeNull();
+    });
+
+    it('keeps the stage clock in the code editor panel, where the transcript does not fit', () => {
+        const fixture = createWith(
+            [
+                { type: 'STARTED', phase: 'PREPARING', timestamp: '2026-01-01T12:00:00Z' },
+                { type: 'PROGRESS', phase: 'DESIGNING', timestamp: '2026-01-01T12:00:20Z', message: 'Choosing a concept', activity: activity({ turn: 2 }) },
+            ],
+            'compact',
+        );
+
+        expect(fixture.nativeElement.querySelector('[data-stage="design"] [data-testid="hyperion-run-stage-time"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-activity-recent"]')).toBeNull();
     });
 });

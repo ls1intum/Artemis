@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,6 +12,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 
 class GenerationProgressEmitterTest {
@@ -24,7 +26,11 @@ class GenerationProgressEmitterTest {
     private final List<ExerciseGenerationEventDTO> sent = new ArrayList<>();
 
     private GenerationProgressEmitter newEmitter() {
-        return new GenerationProgressEmitter((event, terminal) -> recorded.add(new Recorded(event, terminal)), sent::add);
+        return newEmitter(() -> null);
+    }
+
+    private GenerationProgressEmitter newEmitter(Supplier<ExerciseGenerationLiveUsageDTO> liveUsage) {
+        return new GenerationProgressEmitter((event, terminal) -> recorded.add(new Recorded(event, terminal)), sent::add, liveUsage);
     }
 
     @Test
@@ -202,8 +208,46 @@ class GenerationProgressEmitterTest {
     }
 
     @Test
+    void activityAndPhaseEvents_carryWhatTheRunHasSpentSoFar() {
+        ExerciseGenerationLiveUsageDTO liveUsage = new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 3, 0.0042, true);
+        GenerationProgressEmitter emitter = newEmitter(() -> liveUsage);
+
+        emitter.activity("Thinking about the next step.", new ExerciseGenerationActivityDTO("artifacts", 1, 7, true, 6, 11, 4));
+        emitter.phase(ExerciseGenerationEventDTO.Phase.VERIFYING, "Building both exercise variants");
+
+        assertThat(sent).hasSize(2).allSatisfy(event -> assertThat(event.liveUsage()).isEqualTo(liveUsage));
+        assertThat(recorded).allSatisfy(entry -> assertThat(entry.event().liveUsage()).isEqualTo(liveUsage));
+    }
+
+    /** A run emits far more lines than it changes state, and only the newest snapshot is worth anything: stamping every line would repeat it for nothing. */
+    @Test
+    void plainAndRepairRoundLines_carryNoSpendSnapshot() {
+        GenerationProgressEmitter emitter = newEmitter(() -> new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 3, 0.0042, true));
+
+        emitter.progress("Setting up the build environment");
+        emitter.progress("Quality review round 1", new ExerciseGenerationRepairRoundDTO(1, 1, 2, 0, 0, 0, 2));
+        emitter.milestone(ExerciseGenerationEventDTO.done("saved", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true));
+
+        assertThat(sent).hasSize(3).allSatisfy(event -> assertThat(event.liveUsage()).isNull());
+    }
+
+    /** The stamped line has to stay as droppable as the plain one it would otherwise have been, or a talkative run pushes its own ladder out of the bounded transcript. */
+    @Test
+    void aStampedActivityLine_staysAnOrdinaryProgressLine() {
+        GenerationProgressEmitter emitter = newEmitter(() -> new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 3, 0.0042, true));
+
+        emitter.activity("Thinking about the next step.", new ExerciseGenerationActivityDTO("artifacts", 1, 7, true, 6, 11, 4));
+
+        assertThat(sent).singleElement().satisfies(event -> {
+            assertThat(event.type()).isEqualTo(ExerciseGenerationEventDTO.Type.PROGRESS);
+            assertThat(event.phase()).isNull();
+            assertThat(event.repairRound()).isNull();
+        });
+    }
+
+    @Test
     void rejectedEvent_isNotSentToTheLiveClient() {
-        GenerationProgressEmitter emitter = new GenerationProgressEmitter((event, terminal) -> false, sent::add);
+        GenerationProgressEmitter emitter = new GenerationProgressEmitter((event, terminal) -> false, sent::add, () -> null);
 
         emitter.milestone(ExerciseGenerationEventDTO.done("late success", ExerciseGenerationEventDTO.CompletionStatus.SUCCESS, null, true));
 

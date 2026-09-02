@@ -11,6 +11,7 @@
 import type { ExerciseGenerationVerdict } from './exercise-generation-verdict';
 import type { ExerciseGenerationRepairRound } from './exercise-generation-repair-round';
 import type { ExerciseGenerationActivity } from './exercise-generation-activity';
+import type { ExerciseGenerationLiveUsage } from './exercise-generation-live-usage';
 
 /**
  * A progress event streamed to the instructor while an agentic whole-exercise generation or adaptation runs
@@ -38,6 +39,8 @@ export interface ExerciseGenerationEvent {
     repairRound?: ExerciseGenerationRepairRound;
     /** On a progress event produced from inside the agent loop, what the run was doing at that moment */
     activity?: ExerciseGenerationActivity;
+    /** On an activity or phase event, what the run has spent up to that moment */
+    liveUsage?: ExerciseGenerationLiveUsage;
     /** The moment the event was produced */
     timestamp: string;
 }

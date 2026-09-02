@@ -10,6 +10,13 @@
             </p>
         }
 
+        @if (latestFile(); as file) {
+            <!-- The one concrete thing to point at while the agent writes code, which is the longest part of a run. -->
+            <p class="m-0 min-w-0 text-sm text-muted-color" data-testid="hyperion-run-activity-file">
+                {{ 'artemisApp.hyperion.generation.activity.latestFile' | artemisTranslate: { file } }}
+            </p>
+        }
+
         @if (counters().length) {
             <ul class="m-0 flex list-none flex-wrap gap-x-3 gap-y-1 p-0 text-xs text-muted-color" data-testid="hyperion-run-activity-meter">
                 @for (counter of counters(); track counter.key) {

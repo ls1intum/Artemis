@@ -97,7 +97,8 @@ class HyperionExerciseMetadataSuggestionServiceTest {
 
         assertThat(suggestion.title()).isEqualTo("Bounded Stack");
         assertThat(suggestion.shortName()).isEqualTo("boundstack");
-        assertThat(suggestion.packageName()).isEqualTo("de.tum.cit.aet.boundstack");
+        // The package follows the title's own words; only the short name is abbreviated, because only the short name has to fit a repository slug.
+        assertThat(suggestion.packageName()).isEqualTo("de.tum.cit.aet.boundedstack");
         assertThat(suggestion.difficulty()).isEqualTo(DifficultyLevel.HARD);
         assertThat(suggestion.maxPoints()).isEqualTo(HyperionExerciseMetadataSuggestionService.DRAFT_MAX_POINTS);
     }
@@ -176,7 +177,8 @@ class HyperionExerciseMetadataSuggestionServiceTest {
         var suggestion = suggest(serviceAnswering("{\"title\": \"Bounded Stack\"}"), BRIEF);
 
         assertThat(suggestion.shortName()).isEqualTo("boundstack2");
-        assertThat(suggestion.packageName()).isEqualTo("de.tum.cit.aet.boundstack2");
+        // The package does not follow the disambiguation: two exercises may share a package name, and only the short name has to be free.
+        assertThat(suggestion.packageName()).isEqualTo("de.tum.cit.aet.boundedstack");
     }
 
     @Test

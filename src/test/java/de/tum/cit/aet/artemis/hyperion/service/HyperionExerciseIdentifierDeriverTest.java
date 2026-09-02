@@ -86,26 +86,53 @@ class HyperionExerciseIdentifierDeriverTest {
 
     @Test
     void buildsThePackageOnTheInstitutionalPrefix() {
-        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("gradeclassenum", ProjectType.PLAIN_MAVEN)).isEqualTo("de.tum.cit.aet.gradeclassenum");
+        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("Bounded Stack", ProjectType.PLAIN_MAVEN)).isEqualTo("de.tum.cit.aet.boundedstack");
+    }
+
+    @Test
+    void namesThePackageAfterTheTitleRatherThanAfterTheAbbreviatedShortName() {
+        // The short name is cut down to fit a repository slug; folding that abbreviation into a package produced "de.tum.cit.aet.gradeclassenum" for this very title.
+        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("Grade Classification with Enum Outcomes", ProjectType.PLAIN_MAVEN))
+                .isEqualTo("de.tum.cit.aet.gradeclassificationenumoutcomes");
+    }
+
+    /** The conventions the client's {@code deriveProposedPackageName} established, which this rule keeps even though it budgets the segment differently. */
+    @ParameterizedTest
+    @CsvSource({ "Café Menü Planner, de.tum.cit.aet.cafemenuplanner", "2048 Game, de.tum.cit.aet.game", "Switch, de.tum.cit.aet.switchexercise",
+            "Summarizing Bicycle-Share Trips, de.tum.cit.aet.summarizingbicyclesharetrips" })
+    void keepsTheConventionsTheClientProposalEstablished(String title, String expected) {
+        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName(title, ProjectType.PLAIN_MAVEN)).isEqualTo(expected);
+    }
+
+    @Test
+    void dropsStopWordsFromThePackageJustAsItDropsThemFromTheShortName() {
+        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("Traversal of the Binary Search Trees", ProjectType.PLAIN_MAVEN))
+                .isEqualTo("de.tum.cit.aet.traversalbinarysearchtrees");
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "enum", "class", "int", "static", "synchronized", "gradeclassenum", "boundstack", "exercise" })
-    void producesAPackageTheJavaRuleAccepts(String shortName) {
-        String packageName = HyperionExerciseIdentifierDeriver.derivePackageName(shortName, ProjectType.PLAIN_GRADLE);
+    @ValueSource(strings = { "Enum", "Class Design", "Static Members", "Grade Classification with Enum Outcomes", "Bounded Stack", "Exercise", "3 2 1", "!!!", "  ",
+            "Ünïcödé Ëxërcïsë Nämës" })
+    void producesAPackageTheJavaRuleAccepts(String title) {
+        String packageName = HyperionExerciseIdentifierDeriver.derivePackageName(title, ProjectType.PLAIN_GRADLE);
 
         assertThat(ProgrammingExerciseValidationService.PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN.matcher(packageName).matches()).as("package name '%s'", packageName).isTrue();
         assertThat(packageName).hasSizeLessThanOrEqualTo(MAX_PACKAGE_NAME_LENGTH);
     }
 
     @Test
-    void escapesAShortNameThatIsAJavaKeywordInsteadOfProducingAnInvalidPackage() {
-        // "enum" is a perfectly good short name and an impossible package segment, so the segment is what changes.
-        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("enum", ProjectType.PLAIN_MAVEN)).isEqualTo("de.tum.cit.aet.enumexercise");
+    void escapesATitleThatIsAJavaKeywordInsteadOfProducingAnInvalidPackage() {
+        // "Enum" is a perfectly good title and an impossible package segment, so the segment is what changes.
+        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("Enum", ProjectType.PLAIN_MAVEN)).isEqualTo("de.tum.cit.aet.enumexercise");
     }
 
     @Test
-    void keepsThePackageWithinTheLengthCapEvenForAnAbsurdShortName() {
+    void fallsBackToAWordForATitleWithNoUsableLettersAtAll() {
+        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("42 !!!", ProjectType.PLAIN_MAVEN)).isEqualTo("de.tum.cit.aet.exercise");
+    }
+
+    @Test
+    void keepsThePackageWithinTheRuleThatValidatesItEvenForAnAbsurdTitle() {
         String packageName = HyperionExerciseIdentifierDeriver.derivePackageName("a".repeat(200), ProjectType.PLAIN_MAVEN);
 
         assertThat(packageName).hasSize(MAX_PACKAGE_NAME_LENGTH);
@@ -113,12 +140,20 @@ class HyperionExerciseIdentifierDeriverTest {
     }
 
     @Test
+    void stopsAtAWordBoundaryRatherThanCuttingAWordInHalfToFillTheBudget() {
+        // The second word would overrun the budget, so it is left out entirely instead of contributing a fragment.
+        String packageName = HyperionExerciseIdentifierDeriver.derivePackageName("%s %s".formatted("a".repeat(50), "b".repeat(50)), ProjectType.PLAIN_MAVEN);
+
+        assertThat(packageName).isEqualTo("de.tum.cit.aet." + "a".repeat(50));
+    }
+
+    @Test
     void givesABlackboxProjectTheBareIdentifierItsLayoutExpects() {
-        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("boundstack", ProjectType.MAVEN_BLACKBOX)).isEqualTo("boundstack");
+        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("Transit Fare Ledger", ProjectType.MAVEN_BLACKBOX)).isEqualTo("transitfareledger");
     }
 
     @Test
     void treatsAnAbsentProjectTypeAsADottedOne() {
-        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("boundstack", null)).isEqualTo("de.tum.cit.aet.boundstack");
+        assertThat(HyperionExerciseIdentifierDeriver.derivePackageName("Bounded Stack", null)).isEqualTo("de.tum.cit.aet.boundedstack");
     }
 }

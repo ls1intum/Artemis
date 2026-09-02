@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
@@ -490,10 +491,31 @@ final class GenerationJobReplayStore {
     }
 
     /**
-     * The current or most-recent run's transcript for the exercise, for reconnection/replay, with a {@code running} flag derived from the live slot; empty unless a transcript
-     * is retained for this user.
+     * The current or most-recent run's transcript for the exercise, for reconnection/replay, with a {@code running} flag derived from the live slot and the owner's usage
+     * attached; empty unless a transcript is retained for this user.
      */
     Optional<ExerciseGenerationStatusDTO> getStatus(User user, ProgrammingExercise exercise) {
+        return readStatus(user, exercise).map(this::withOwnerUsage);
+    }
+
+    /**
+     * Attaches the run's usage for the instructor who started it, whether the run is still going or already terminal.
+     * <p>
+     * A running run reports what it has spent so far, carrying its accumulator's own {@link ExerciseGenerationAccountingState#PENDING}, which says exactly that: not sealed, so a
+     * snapshot rather than a total. Reading the accumulator neither seals nor completes it, so nothing here can turn an unfinished account into a claimed one.
+     * <p>
+     * Anyone else gets no usage and an {@code INCOMPLETE} account: a caller not entitled to the detail will never receive it, before or after the run ends, so {@code PENDING}
+     * would promise a total that is never coming.
+     */
+    private ExerciseGenerationStatusDTO withOwnerUsage(ExerciseGenerationStatusDTO status) {
+        if (!status.ownedByCaller()) {
+            return status.withUsage(null, ExerciseGenerationAccountingState.INCOMPLETE);
+        }
+        UsageSnapshot snapshot = usageSnapshot(status.jobId());
+        return status.withUsage(snapshot.usage(), snapshot.accountingState());
+    }
+
+    private Optional<ExerciseGenerationStatusDTO> readStatus(User user, ProgrammingExercise exercise) {
         String key = key(exercise.getId());
         jobMap().lock(key);
         try {
@@ -768,9 +790,7 @@ final class GenerationJobReplayStore {
 
         JobUsage add(LLMRequest request) {
             long cached = request.numCachedInputTokens() == null ? 0 : request.numCachedInputTokens();
-            long uncached = request.numInputTokens() - cached;
-            double cost = (uncached * request.costPerMillionInputToken() + cached * request.costPerMillionCachedInputToken()
-                    + request.numOutputTokens() * request.costPerMillionOutputToken()) / 1_000_000.0;
+            double cost = LLMTokenUsageService.estimatedCostEur(request);
             LinkedHashSet<String> nextModels = new LinkedHashSet<>(models);
             if (request.model() != null && !request.model().isBlank()) {
                 nextModels.add(request.model());

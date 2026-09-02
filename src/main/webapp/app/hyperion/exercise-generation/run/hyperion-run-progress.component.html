@@ -10,8 +10,19 @@
                 </tum-ui-stepper>
             }
 
-            @if (step.summaryKey; as summaryKey) {
-                <p class="m-0 text-xs tabular-nums text-muted-color" data-testid="hyperion-run-stage-summary">{{ summaryKey | artemisTranslate: step.summaryParams }}</p>
+            @if (timings()[step.key] || step.summaryKey) {
+                <!--
+                    Not announced: the running stage's duration counts up once a second, and a live region here would
+                    read the whole ladder aloud every second.
+                -->
+                <p class="m-0 flex flex-wrap items-baseline gap-x-2 text-xs tabular-nums text-muted-color" aria-live="off">
+                    @if (timings()[step.key]; as timing) {
+                        <span data-testid="hyperion-run-stage-time" [attr.data-live]="timing.live">{{ timing.key | artemisTranslate: { duration: timing.duration } }}</span>
+                    }
+                    @if (step.summaryKey; as summaryKey) {
+                        <span data-testid="hyperion-run-stage-summary">{{ summaryKey | artemisTranslate: step.summaryParams }}</span>
+                    }
+                </p>
             }
 
             @if (step.detail) {

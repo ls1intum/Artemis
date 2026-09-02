@@ -22,7 +22,15 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationS
  * {@link ProgrammingExerciseValidationService} for the package name.
  * <p>
  * The short name is a repository and project-key component — it appears twice in every student repository URL — so it is kept far shorter than the {@code 36} characters Artemis
- * tolerates, and readable: "Grade Classification with Enum Outcomes" becomes {@code gradeclassenum} rather than a timestamp nobody can place.
+ * tolerates, and readable: "Grade Classification with Enum Outcomes" becomes {@code gradeclassenum} rather than a timestamp nobody can place. The package name is not derived from
+ * that abbreviation and is not abbreviated itself: it has a hundred characters to spend and nothing to gain by spending fewer, so the same title yields
+ * {@code de.tum.cit.aet.gradeclassificationenumoutcomes}.
+ * <p>
+ * The package conventions are the client's, from {@code deriveProposedPackageName} in {@code problem-statement.utils.ts}: accents folded, title words lower-cased and joined
+ * without separators, truncated at a word boundary rather than mid-word, never starting with a digit, {@code exercise} appended to escape a Java keyword, and a bare identifier
+ * for {@code MAVEN_BLACKBOX}. The budget deliberately differs. The client caps its proposal at {@code 32} characters because it fills a form field an instructor is expected to
+ * read and shorten by hand; this value is generated for them and judged only by
+ * {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_PACKAGE_NAME_LENGTH}, so it is budgeted against that rule and stays descriptive.
  */
 final class HyperionExerciseIdentifierDeriver {
 
@@ -114,23 +122,37 @@ final class HyperionExerciseIdentifierDeriver {
     }
 
     /**
-     * Derives the Java package name from an already derived short name.
+     * Derives the Java package name from the exercise title.
      * <p>
-     * A short name that is a Java keyword ({@code enum}, {@code class}, ...) is a valid short name and an invalid package segment, so the segment — not the short name — carries
-     * the escape.
+     * Derived from the title rather than from the short name, and from whole words rather than from abbreviations: the short name is cut down to fit a repository slug, and folding
+     * that abbreviation into a package puts {@code de.tum.cit.aet.gradeclassenum} in a place with a hundred characters to spend. The conventions are the client's from
+     * {@code deriveProposedPackageName}; the budget is this rule's own, for the reason the class javadoc gives.
+     * <p>
+     * A title whose words form a Java keyword ({@code enum}, {@code switch}, ...) is a valid title and an invalid package segment, so the segment carries the escape.
      *
-     * @param shortName   the exercise short name
+     * @param title       the exercise title, already sanitised into something Artemis accepts as a title
      * @param projectType the project type the exercise will use; {@code MAVEN_BLACKBOX} takes a single-identifier package, everything else the dotted institutional prefix
-     * @return a package name matching the Java/Kotlin package rule and within {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_PACKAGE_NAME_LENGTH}
+     * @return a package name matching the Java/Kotlin package rule and within {@link de.tum.cit.aet.artemis.core.config.Constants#MAX_PACKAGE_NAME_LENGTH}; never blank
      */
-    static String derivePackageName(String shortName, @Nullable ProjectType projectType) {
+    static String derivePackageName(String title, @Nullable ProjectType projectType) {
         // Blackbox exercises are validated against the same Java pattern but conventionally carry a bare identifier rather than a dotted package.
         String prefix = projectType == ProjectType.MAVEN_BLACKBOX ? "" : PACKAGE_PREFIX + ".";
         int budget = MAX_PACKAGE_NAME_LENGTH - prefix.length();
-        String segment = shortName.length() <= budget ? shortName : shortName.substring(0, budget);
-        for (String candidateSegment : List.of(segment, truncate(segment + FILLER, budget), FILLER)) {
+        StringBuilder joined = new StringBuilder();
+        // Stop words are dropped for the same reason the short name drops them: they say nothing about the exercise and crowd out the words that do.
+        for (String word : meaningfulWords(title)) {
+            // Truncate at a word boundary: a mid-word cut produces gibberish like "…playlistplayba". A single overlong first word is capped below instead.
+            if (!joined.isEmpty() && joined.length() + word.length() > budget) {
+                break;
+            }
+            joined.append(word);
+        }
+        // The pattern demands a leading letter, and a title like "2048 Game" does not offer one until its digits are gone.
+        String segment = truncate(LEADING_NON_LETTER.matcher(joined.toString()).replaceFirst(""), budget);
+        for (String candidateSegment : List.of(segment, segment + FILLER, FILLER)) {
             String candidate = prefix + candidateSegment;
-            if (ProgrammingExerciseValidationService.PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN.matcher(candidate).matches() && candidate.length() <= MAX_PACKAGE_NAME_LENGTH) {
+            if (!candidateSegment.isEmpty() && ProgrammingExerciseValidationService.PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN.matcher(candidate).matches()
+                    && candidate.length() <= MAX_PACKAGE_NAME_LENGTH) {
                 return candidate;
             }
         }

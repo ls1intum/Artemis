@@ -255,6 +255,23 @@ public class LLMTokenUsageService {
     }
 
     /**
+     * The EUR a single recorded request costs at the prices resolved for its model, cache reads charged at their own price.
+     * <p>
+     * Callers that report a cost must not each derive it: an aggregate that priced cache reads at the uncached rate would overstate a long agent run several times over. A request
+     * whose model has no configured price carries zero prices and {@code costEstimateComplete = false}, so the figure this returns is a lower bound unless every request that fed
+     * it was complete.
+     *
+     * @param request one recorded provider request
+     * @return the estimated cost in EUR
+     */
+    public static double estimatedCostEur(LLMRequest request) {
+        long cachedTokens = request.numCachedInputTokens() == null ? 0 : request.numCachedInputTokens();
+        long uncachedTokens = request.numInputTokens() - cachedTokens;
+        return (uncachedTokens * request.costPerMillionInputToken() + cachedTokens * request.costPerMillionCachedInputToken()
+                + request.numOutputTokens() * request.costPerMillionOutputToken()) / 1_000_000.0;
+    }
+
+    /**
      * @param chatResponse the chat response containing provider usage metadata, may be null
      * @return prompt plus completion tokens, or zero when usage metadata is unavailable
      */

@@ -1,0 +1,95 @@
+<section class="flex min-w-0 flex-col gap-3" aria-labelledby="hyperion-run-usage-title" data-testid="hyperion-run-usage" [attr.data-accounting]="spend().accounting">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <!-- Two headings rather than one styled two ways: the code editor's panel nests its sections under h4. -->
+        @if (compact()) {
+            <h4 id="hyperion-run-usage-title" class="m-0 text-xs font-semibold" jhiTranslate="artemisApp.hyperion.generation.usage.title"></h4>
+        } @else {
+            <h2 id="hyperion-run-usage-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.generation.usage.title"></h2>
+        }
+        <!--
+            The accounting state is never left to the reader to infer from the numbers: a running total, a sealed
+            total and a permanent lower bound look identical otherwise, and only one of them is what it appears.
+        -->
+        <tum-ui-tag [severity]="accountingSeverity()" data-testid="hyperion-run-usage-accounting">
+            <span [jhiTranslate]="accountingLabelKey()"></span>
+        </tum-ui-tag>
+    </div>
+
+    @if (incomplete()) {
+        <!-- The one statement that must survive every density: an account that could not be closed is not a zero. -->
+        <tum-ui-message severity="warn" class="block" data-testid="hyperion-run-usage-incomplete">
+            <span class="text-sm" jhiTranslate="artemisApp.hyperion.generation.usage.incompleteHint"></span>
+        </tum-ui-message>
+    }
+
+    <!-- The headline figure. Not announced: it changes as the run works, and must not be read out on every event. -->
+    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1" aria-live="off" data-testid="hyperion-run-usage-cost" [attr.data-cost]="cost().kind">
+        @if (cost().kind === 'notPriced') {
+            <!-- No price is configured, which is not a cost of nothing: a figure of any kind here would be a claim. -->
+            <span
+                class="font-semibold text-muted-color"
+                [class.text-2xl]="!compact()"
+                [class.text-base]="compact()"
+                jhiTranslate="artemisApp.hyperion.generation.usage.notPriced"
+            ></span>
+        } @else {
+            @if (cost().kind === 'lowerBound') {
+                <!-- Some responses had no configured price, so the amount below is a floor and has to say so. -->
+                <span class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.usage.atLeast"></span>
+            }
+            <span class="font-semibold tabular-nums" [class.text-2xl]="!compact()" [class.text-base]="compact()" data-testid="hyperion-run-usage-cost-amount">{{
+                cost().amount
+            }}</span>
+        }
+        <span class="text-sm text-muted-color" data-testid="hyperion-run-usage-cost-caption" [jhiTranslate]="cost().captionKey"></span>
+    </div>
+
+    @if (budget(); as line) {
+        <div class="flex min-w-0 flex-col gap-1" data-testid="hyperion-run-usage-budget" [attr.data-percent]="line.percent">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-3 text-sm" aria-live="off">
+                <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.generation.usage.budgetLabel"></span>
+                <span class="tabular-nums" data-testid="hyperion-run-usage-budget-value">{{ line.used }} / {{ line.budget }} · {{ line.share }}</span>
+            </div>
+            <tum-ui-progress-bar
+                class="block"
+                [value]="line.percent"
+                [severity]="line.severity"
+                [showValue]="false"
+                [ariaLabel]="'artemisApp.hyperion.generation.usage.budgetAriaLabel' | artemisTranslate"
+            />
+        </div>
+    } @else if (uncappedTokens(); as tokens) {
+        <!-- No ceiling was configured, so there is no proportion to draw; the spend is reported on its own instead. -->
+        <p class="m-0 flex flex-wrap items-baseline gap-x-2 text-sm text-muted-color" aria-live="off" data-testid="hyperion-run-usage-no-budget">
+            <span class="tabular-nums">{{ tokens }}</span>
+            <span jhiTranslate="artemisApp.hyperion.generation.usage.noBudget"></span>
+        </p>
+    }
+
+    <dl class="m-0 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3" aria-live="off" data-testid="hyperion-run-usage-figures">
+        @for (figure of figures(); track figure.key) {
+            <div class="flex min-w-0 items-baseline justify-between gap-2" [attr.data-figure]="figure.key">
+                <dt class="min-w-0 truncate text-muted-color" [jhiTranslate]="figure.labelKey"></dt>
+                <dd class="m-0 flex shrink-0 items-baseline gap-1">
+                    @if (figure.lowerBound) {
+                        <!-- The provider did not report this for every response, so the count is a floor, not a total. -->
+                        <span class="text-muted-color" jhiTranslate="artemisApp.hyperion.generation.usage.atLeast"></span>
+                    }
+                    <span class="tabular-nums">{{ figure.value }}</span>
+                </dd>
+            </div>
+        }
+    </dl>
+
+    @if (models(); as modelList) {
+        <p class="m-0 flex flex-wrap gap-x-2 text-xs wrap-anywhere text-muted-color" data-testid="hyperion-run-usage-models">
+            <span jhiTranslate="artemisApp.hyperion.generation.usage.modelsLabel"></span>
+            <span>{{ modelList }}</span>
+        </p>
+    }
+
+    @if (pendingHint()) {
+        <!-- Redundant with the tag above at panel width, where the space is worth more than the second saying of it. -->
+        <p class="m-0 text-xs text-muted-color" data-testid="hyperion-run-usage-pending-hint" jhiTranslate="artemisApp.hyperion.generation.usage.pendingHint"></p>
+    }
+</section>

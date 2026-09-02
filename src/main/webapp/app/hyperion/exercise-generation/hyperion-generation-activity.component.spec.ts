@@ -166,6 +166,46 @@ describe('HyperionGenerationActivityComponent', () => {
         expect(ladder.componentInstance.liveMessage()).toBe('Designing the exercise');
     });
 
+    it('reports what the run has spent next to the ladder, in the panel-sized variant', () => {
+        const fixture = createWith({
+            jobId: 'j1',
+            running: true,
+            accountingState: 'PENDING',
+            events: [
+                {
+                    type: 'PROGRESS',
+                    phase: 'DESIGNING',
+                    timestamp: '2026-07-13T09:00:00Z',
+                    liveUsage: {
+                        inputTokens: 90_000,
+                        outputTokens: 10_000,
+                        cachedInputTokens: 40_000,
+                        billableTokens: 250_000,
+                        tokenBudget: 1_000_000,
+                        modelCalls: 12,
+                        estimatedCostEur: 0.42,
+                        estimatedCostComplete: true,
+                    },
+                },
+            ],
+            fileChanges: [],
+        });
+
+        const spend = fixture.nativeElement.querySelector('[data-testid="hyperion-run-usage"]') as HTMLElement;
+        expect(spend).not.toBeNull();
+        expect(spend.getAttribute('data-accounting')).toBe('PENDING');
+        expect(spend.querySelector('[data-testid="hyperion-run-usage-budget"]')!.getAttribute('data-percent')).toBe('25');
+        // The model list is the first thing to go at this width; the honest statements are not droppable.
+        expect(spend.querySelector('[data-testid="hyperion-run-usage-models"]')).toBeNull();
+        expect(spend.querySelector('[data-testid="hyperion-run-usage-accounting"]')!.textContent).toContain('generation.usage.state.pending');
+    });
+
+    it('shows no spend at all while another instructor’s run is being watched', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, ownedByCaller: false, cancellable: false, accountingState: 'INCOMPLETE', events: [], fileChanges: [] });
+
+        expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-usage"]')).toBeNull();
+    });
+
     it('reports the run state as a dot with its own word, and stops spinning once the run is terminal', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
 

@@ -1,4 +1,5 @@
-import { HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { ExerciseGenerationFileChange, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
+import { displayFileChangePath, newestFileChange } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
 import { HyperionRunOutcome } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 
 /** How many past messages the stepper keeps in view. Long enough to see a pattern, short enough not to become a log. */
@@ -33,6 +34,13 @@ export interface HyperionActivityLiveness {
 export interface HyperionActivityView {
     liveness?: HyperionActivityLiveness;
     counters: HyperionActivityCounter[];
+    /**
+     * The file the agent touched most recently, while it is still working.
+     *
+     * Named because "writing code" is the longest and least legible part of a run: a path moving through the test,
+     * solution and template trees is the difference between watching progress and watching a spinner.
+     */
+    latestFile?: string;
     recent: HyperionActivityMessage[];
     /** The run is over, which freezes every ticker rather than letting it count on forever. */
     ended: boolean;
@@ -72,7 +80,11 @@ export function formatClockTime(timestamp: string | undefined): string {
  * Kept out of the components so both the run page and the code editor's panel report the same thing, and so the
  * rules can be tested against a wire trace rather than against rendered DOM.
  */
-export function activityView(events: readonly HyperionGenerationEvent[], outcome: HyperionRunOutcome | undefined): HyperionActivityView {
+export function activityView(
+    events: readonly HyperionGenerationEvent[],
+    outcome: HyperionRunOutcome | undefined,
+    files: readonly ExerciseGenerationFileChange[] = [],
+): HyperionActivityView {
     const ended = outcome !== undefined;
     const activity = events.findLast((event) => event.activity !== undefined)?.activity;
     const counters: HyperionActivityCounter[] = activity
@@ -95,7 +107,17 @@ export function activityView(events: readonly HyperionGenerationEvent[], outcome
         .reverse()
         .map<HyperionActivityMessage>((event, index) => ({ key: `${event.timestamp}|${index}`, time: formatClockTime(event.timestamp), message: event.message! }));
     const liveness = ended ? undefined : livenessOf(events);
-    return { liveness, counters, recent, ended, empty: liveness === undefined && counters.length === 0 && recent.length === 0 };
+    // A finished run's files are listed in full elsewhere; singling one out would only claim it is still being written.
+    const newestFile = ended ? undefined : newestFileChange(files);
+    const latestFile = newestFile ? displayFileChangePath(newestFile) : undefined;
+    return {
+        liveness,
+        counters,
+        latestFile,
+        recent,
+        ended,
+        empty: liveness === undefined && counters.length === 0 && recent.length === 0 && latestFile === undefined,
+    };
 }
 
 /**

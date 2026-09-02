@@ -241,3 +241,59 @@ describe('hyperion stage summaries', () => {
         expect(stageStates(events, runOutcome(events)).every((stage) => stage.summary === undefined)).toBe(true);
     });
 });
+
+describe('hyperion generation stage timing', () => {
+    /** Every stage's accumulated time in seconds, keyed by stage. */
+    function seconds(events: readonly HyperionGenerationEvent[]): Record<HyperionStageKey, number> {
+        const stages = stageStates(events, runOutcome(events));
+        return Object.fromEntries(stages.map((stage) => [stage.key, stage.elapsedMs / 1000])) as Record<HyperionStageKey, number>;
+    }
+
+    function at(secondsIntoTheRun: number): string {
+        return new Date(Date.UTC(2026, 0, 1, 10, 0, 0) + secondsIntoTheRun * 1000).toISOString();
+    }
+
+    it('measures a stage from the moment it was entered to the moment the run left it', () => {
+        const events: HyperionGenerationEvent[] = [
+            { type: 'STARTED', phase: 'PREPARING', timestamp: at(0) },
+            { type: 'PROGRESS', phase: 'DESIGNING', timestamp: at(30) },
+            { type: 'PROGRESS', phase: 'VERIFYING', timestamp: at(330) },
+            { type: 'DONE', phase: 'SAVING', completionStatus: 'SUCCESS', timestamp: at(400) },
+        ];
+
+        expect(seconds(events)).toMatchObject({ prepare: 30, design: 300, build: 70 });
+        // The terminal event closes the stage the run stopped in rather than leaving it counting for the session.
+        expect(stageStates(events, runOutcome(events)).every((stage) => stage.runningSince === undefined)).toBe(true);
+    });
+
+    it('adds up the visits to a stage a repair round returns to, rather than spanning the detour', () => {
+        const events: HyperionGenerationEvent[] = [
+            { type: 'PROGRESS', phase: 'VERIFYING', timestamp: at(0) },
+            { type: 'PROGRESS', phase: 'REVIEWING', timestamp: at(60) },
+            // Back to building for a repair round. The 120 s spent reviewing must not be credited to the build stage.
+            { type: 'PROGRESS', phase: 'VERIFYING', timestamp: at(180) },
+            { type: 'PROGRESS', phase: 'REVIEWING', timestamp: at(240) },
+            { type: 'DONE', phase: 'SAVING', completionStatus: 'SUCCESS', timestamp: at(300) },
+        ];
+
+        // Build ran twice for a minute each; review ran for two minutes and then for the last minute of the run.
+        expect(seconds(events)).toMatchObject({ build: 120, review: 180 });
+    });
+
+    it('marks only the running stage as still counting, and only while the run is going', () => {
+        const events: HyperionGenerationEvent[] = [
+            { type: 'STARTED', phase: 'PREPARING', timestamp: at(0) },
+            { type: 'PROGRESS', phase: 'DESIGNING', timestamp: at(45) },
+        ];
+        const stages = stageStates(events, runOutcome(events));
+
+        expect(stages.find((stage) => stage.key === 'design')!.runningSince).toBe(at(45));
+        expect(stages.filter((stage) => stage.runningSince !== undefined)).toHaveLength(1);
+    });
+
+    it('counts a run that has started but reported no phase yet against the preparing stage', () => {
+        const events: HyperionGenerationEvent[] = [{ type: 'STARTED', timestamp: at(0) }];
+
+        expect(stageStates(events, runOutcome(events)).find((stage) => stage.key === 'prepare')!.runningSince).toBe(at(0));
+    });
+});

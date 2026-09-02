@@ -22,6 +22,7 @@ import { displayFileChangePath, latestTerminalEvent } from 'app/hyperion/exercis
 import { activityView } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { runOutcome, stageStates } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { HyperionRunProgressComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-progress.component';
+import { HyperionRunUsageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-usage.component';
 import { ExerciseGenerationFileChange, HyperionFileChangeRepo, HyperionGenerationMode } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 
 const REPO_ORDER: HyperionFileChangeRepo[] = ['solution', 'template', 'tests', 'other'];
@@ -75,6 +76,7 @@ export type { HyperionGenerationCompletedEvent } from './hyperion-generation-act
         TranslateDirective,
         ArtemisTranslatePipe,
         HyperionRunProgressComponent,
+        HyperionRunUsageComponent,
         TumUiButtonComponent,
         TumUiButtonDirective,
         TumUiDialogComponent,
@@ -169,7 +171,9 @@ export class HyperionGenerationActivityComponent {
     /** The one progress ladder, rendered by `jhi-hyperion-run-progress`. */
     readonly stages = computed(() => stageStates(this.events(), this.outcome()));
     /** The agent's activity, reported inside that ladder rather than in a detail region of its own. */
-    readonly activityView = computed(() => activityView(this.events(), this.outcome()));
+    readonly activityView = computed(() => activityView(this.events(), this.outcome(), this.fileChanges()));
+    /** What the run has spent, owner-only and absent rather than zeroed. The same figures the run page reports. */
+    readonly spend = this.facade.spend;
     readonly liveMessage = computed(() => this.events().findLast((event) => event.message)?.message);
     readonly repairRound = computed(() => this.events().findLast((event) => event.repairRound)?.repairRound);
     /**

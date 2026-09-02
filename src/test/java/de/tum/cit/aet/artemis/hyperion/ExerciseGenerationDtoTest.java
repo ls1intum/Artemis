@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
@@ -166,6 +167,47 @@ class ExerciseGenerationDtoTest {
         assertThat(activity.get("turn").asInt()).isEqualTo(1);
         assertThat(activity.has("step")).as("an absent substep is omitted rather than sent as null").isFalse();
         assertThat(json.has("phase")).isFalse();
+    }
+
+    /**
+     * The client renders a progress bar and a euro figure from these, so {@code false} and the zero counters have to reach the wire; {@code NON_EMPTY} inclusion would drop them
+     * if it treated them as empty.
+     */
+    @Test
+    void liveUsageSerializesItsCountersEvenWhenNothingHasBeenSpentYet() throws Exception {
+        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.phase(ExerciseGenerationEventDTO.Phase.PREPARING, "Preparing")
+                .withLiveUsage(new ExerciseGenerationLiveUsageDTO(0, 0, 0, 0, 250_000, 0, 0d, true));
+
+        JsonNode liveUsage = mapper.readTree(mapper.writeValueAsString(event)).get("liveUsage");
+
+        assertThat(liveUsage.get("inputTokens").asLong()).isZero();
+        assertThat(liveUsage.get("outputTokens").asLong()).isZero();
+        assertThat(liveUsage.get("cachedInputTokens").asLong()).isZero();
+        assertThat(liveUsage.get("billableTokens").asLong()).isZero();
+        assertThat(liveUsage.get("modelCalls").asLong()).isZero();
+        assertThat(liveUsage.get("tokenBudget").asLong()).isEqualTo(250_000);
+        assertThat(liveUsage.get("estimatedCostEur").asDouble()).isZero();
+        assertThat(liveUsage.get("estimatedCostComplete").asBoolean()).isTrue();
+    }
+
+    /** An unpriced model has to read as "not priced", never as "free": the absent figure is what stops the client from claiming a cost nobody computed. */
+    @Test
+    void liveUsageOmitsTheCostWhenTheEstimateIsIncomplete() throws Exception {
+        ExerciseGenerationEventDTO event = ExerciseGenerationEventDTO.activity("Thinking.", new ExerciseGenerationActivityDTO(null, 1, 1, true, 1, 0, 0))
+                .withLiveUsage(new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 1, null, false));
+
+        JsonNode liveUsage = mapper.readTree(mapper.writeValueAsString(event)).get("liveUsage");
+
+        assertThat(liveUsage.has("estimatedCostEur")).isFalse();
+        assertThat(liveUsage.get("estimatedCostComplete").asBoolean()).isFalse();
+        assertThat(liveUsage.get("billableTokens").asLong()).isEqualTo(700);
+    }
+
+    @Test
+    void eventsWithoutASpendSnapshotOmitIt() throws Exception {
+        JsonNode json = mapper.readTree(mapper.writeValueAsString(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, "Setting up the build environment")));
+
+        assertThat(json.has("liveUsage")).isFalse();
     }
 
     @Test

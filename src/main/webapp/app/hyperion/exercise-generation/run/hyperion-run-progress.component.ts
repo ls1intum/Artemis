@@ -2,9 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { TumUiStepComponent, TumUiStepState, TumUiStepperComponent } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { HyperionActivityView } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
+import { HyperionActivityView, formatElapsed } from 'app/hyperion/exercise-generation/model/hyperion-generation-activity';
 import { HyperionStage, HyperionStageKey, HyperionSubstepKey } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { HyperionRunActivityComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-activity.component';
+import { serverTimeSignal } from 'app/localci/hyperion-generation-job.utils';
 import { ExerciseGenerationRepairRound } from 'app/openapi/model/exercise-generation-repair-round';
 
 interface ProgressSubstep {
@@ -25,6 +26,14 @@ interface ProgressStep {
     detail: boolean;
 }
 
+/** How long a stage has been going, or how long it took. Kept apart from {@link ProgressStep} so the ladder is not rebuilt every second. */
+interface StageTiming {
+    key: string;
+    duration: string;
+    /** True while the stage is the one running, which is what makes the duration a clock rather than a record. */
+    live: boolean;
+}
+
 /**
  * The one progress ladder for a Hyperion run. The run page and the code editor's AI activity panel both render this,
  * so a run cannot appear to be at two different points depending on where an instructor is looking.
@@ -32,6 +41,9 @@ interface ProgressStep {
  * Everything the agent is doing is reported inside the ladder: the design stage's substeps as a nested ladder, and
  * the live line, the clock, the counters and the recent messages under the stage that is running. There is no second
  * place to look, and no disclosure to open first.
+ *
+ * Every stage also reports its own time. A run takes tens of minutes and a single stage can be silent for several, so
+ * "designing, 6:12" is the difference between a run that is working and one that is stuck.
  */
 @Component({
     selector: 'jhi-hyperion-run-progress',
@@ -48,6 +60,8 @@ export class HyperionRunProgressComponent {
     readonly activity = input<HyperionActivityView | undefined>();
     /** `compact` drops the recent-activity list so the ladder fits the code editor's bottom panel. */
     readonly density = input<'full' | 'compact'>('full');
+
+    private readonly now = serverTimeSignal();
 
     /** The repair round only makes sense while the review stage is the one running. */
     protected readonly visibleRepairRound = computed(() => {
@@ -81,5 +95,33 @@ export class HyperionRunProgressComponent {
             summaryParams: stage.summary,
             detail: stage.key === detailKey,
         }));
+    });
+
+    /**
+     * Every stage's duration, keyed by stage.
+     *
+     * Separate from {@link steps} so a ticking second only re-renders these few strings, and the clock is only read at
+     * all while some stage is actually running - once the run ends this stops depending on the ticker entirely.
+     */
+    protected readonly timings = computed<Partial<Record<HyperionStageKey, StageTiming>>>(() => {
+        const stages = this.stages();
+        const running = stages.some((stage) => stage.runningSince !== undefined);
+        const now = running ? this.now() : 0;
+        const timings: Partial<Record<HyperionStageKey, StageTiming>> = {};
+        for (const stage of stages) {
+            const since = stage.runningSince === undefined ? Number.NaN : Date.parse(stage.runningSince);
+            const live = Number.isFinite(since);
+            // A clock skew must never subtract from a stage's recorded time, so the live part is clamped at zero.
+            const totalMs = stage.elapsedMs + (live ? Math.max(0, now - since) : 0);
+            if (totalMs <= 0 && !live) {
+                continue;
+            }
+            timings[stage.key] = {
+                key: live ? 'artemisApp.hyperion.generation.stage.runningFor' : 'artemisApp.hyperion.generation.stage.took',
+                duration: formatElapsed(Math.floor(totalMs / 1000)),
+                live,
+            };
+        }
+        return timings;
     });
 }

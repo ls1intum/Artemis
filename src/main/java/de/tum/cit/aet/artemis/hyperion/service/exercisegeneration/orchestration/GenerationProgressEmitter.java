@@ -2,10 +2,14 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEventDTO.Phase;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationLiveUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRepairRoundDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationActivityTracker;
 
@@ -14,6 +18,9 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.Generati
  * is never published. A run emits roughly one line per bounded agent turn, so every accepted line can be pushed without batching.
  * <p>
  * One emitter is created per job, which is also the scope of the {@link GenerationActivityTracker} it owns: nothing in a run's activity accounting can leak into the next run.
+ * <p>
+ * The run's spend is stamped onto the events that already say what the run is doing — the activity lines and the phase boundaries — rather than onto every line: only the newest
+ * snapshot is worth anything, and a plain progress line is exactly what the bounded transcript drops first.
  */
 class GenerationProgressEmitter implements GenerationProgressSink {
 
@@ -21,11 +28,15 @@ class GenerationProgressEmitter implements GenerationProgressSink {
 
     private final Consumer<ExerciseGenerationEventDTO> send;
 
+    private final Supplier<@Nullable ExerciseGenerationLiveUsageDTO> liveUsage;
+
     private final GenerationActivityTracker activityTracker = new GenerationActivityTracker();
 
-    GenerationProgressEmitter(BiPredicate<ExerciseGenerationEventDTO, Boolean> recordEvent, Consumer<ExerciseGenerationEventDTO> send) {
+    GenerationProgressEmitter(BiPredicate<ExerciseGenerationEventDTO, Boolean> recordEvent, Consumer<ExerciseGenerationEventDTO> send,
+            Supplier<@Nullable ExerciseGenerationLiveUsageDTO> liveUsage) {
         this.recordEvent = recordEvent;
         this.send = send;
+        this.liveUsage = liveUsage;
     }
 
     @Override
@@ -35,7 +46,7 @@ class GenerationProgressEmitter implements GenerationProgressSink {
 
     @Override
     public void activity(String message, ExerciseGenerationActivityDTO activity) {
-        emit(ExerciseGenerationEventDTO.activity(message, activity));
+        emit(ExerciseGenerationEventDTO.activity(message, activity).withLiveUsage(liveUsage.get()));
     }
 
     void progress(String message) {
@@ -54,7 +65,7 @@ class GenerationProgressEmitter implements GenerationProgressSink {
 
     @Override
     public void phase(Phase phase, String message) {
-        emit(ExerciseGenerationEventDTO.phase(phase, message));
+        emit(ExerciseGenerationEventDTO.phase(phase, message).withLiveUsage(liveUsage.get()));
     }
 
     private void emit(ExerciseGenerationEventDTO event) {

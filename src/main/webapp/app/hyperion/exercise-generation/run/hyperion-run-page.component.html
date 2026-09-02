@@ -33,27 +33,40 @@
             </div>
         </tum-ui-message>
     } @else if (notStarted()) {
-        <section class="rounded-border border p-4" data-testid="hyperion-run-not-started">
+        <tum-ui-card data-testid="hyperion-run-not-started">
             <h2 class="mt-0 mb-1 text-base font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.notStartedTitle"></h2>
             <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.notStartedHint"></p>
-        </section>
+        </tum-ui-card>
     } @else {
-        <section aria-labelledby="hyperion-run-progress-title">
-            <h2 id="hyperion-run-progress-title" class="mb-2 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.progressTitle"></h2>
-            <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" />
-        </section>
+        <!-- One card per question the page answers: where is it, what did it cost, how did it end, what is there. -->
+        <tum-ui-card>
+            <section aria-labelledby="hyperion-run-progress-title">
+                <h2 id="hyperion-run-progress-title" class="mt-0 mb-3 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.progressTitle"></h2>
+                <jhi-hyperion-run-progress [stages]="stages()" [liveMessage]="liveMessage()" [repairRound]="repairRound()" [activity]="activityView()" />
+            </section>
+        </tum-ui-card>
 
-        @if (outcomeView(); as view) {
-            <jhi-hyperion-run-outcome [view]="view" />
+        @if (spend(); as spendView) {
+            <tum-ui-card>
+                <jhi-hyperion-run-usage [spend]="spendView" />
+            </tum-ui-card>
         }
 
-        <jhi-hyperion-artifacts
-            [exerciseId]="exerciseId()"
-            [specDocument]="specDocument()"
-            [savedProblemStatement]="savedProblemStatement()"
-            [files]="fileChanges()"
-            [running]="running()"
-            [terminal]="terminal()"
-        />
+        @if (outcomeView(); as view) {
+            <tum-ui-card>
+                <jhi-hyperion-run-outcome [view]="view" />
+            </tum-ui-card>
+        }
+
+        <tum-ui-card>
+            <jhi-hyperion-artifacts
+                [exerciseId]="exerciseId()"
+                [specDocument]="specDocument()"
+                [savedProblemStatement]="savedProblemStatement()"
+                [files]="fileChanges()"
+                [running]="running()"
+                [terminal]="terminal()"
+            />
+        </tum-ui-card>
     }
 </div>

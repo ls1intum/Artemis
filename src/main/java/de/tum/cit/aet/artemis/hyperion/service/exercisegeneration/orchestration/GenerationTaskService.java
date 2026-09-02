@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -28,7 +27,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.hyperion.config.GenerationShutdownGuard;
@@ -196,13 +194,18 @@ public class GenerationTaskService {
         long exerciseId = event.exercise().getId();
         String login = user.getLogin();
         String topic = TOPIC_PREFIX + jobId;
+        // The run's own token bound, not the deployment default: a request that asked for less had exactly that much reserved at admission, so spending the deployment default
+        // here would overshoot a reservation that other jobs are already being admitted against. Resolved before anything is emitted, because the instructor is shown the run's
+        // spend as a share of it.
+        long runTokenBudget = event.settings() == null ? maxTokensPerJob : event.settings().maxTokensPerJob();
+        GenerationLiveUsage liveUsage = new GenerationLiveUsage(runTokenBudget, cachedInputTokenWeight);
         GenerationProgressEmitter emitter = new GenerationProgressEmitter((progressEvent, terminal) -> {
             boolean accepted = jobService.recordEvent(exerciseId, jobId, progressEvent, terminal);
             if (terminal && accepted) {
                 observation.lowCardinalityKeyValue("artemis.hyperion.outcome", progressEvent.type().name().toLowerCase(Locale.ROOT));
             }
             return accepted;
-        }, progressEvent -> websocket.send(login, topic, progressEvent));
+        }, progressEvent -> websocket.send(login, topic, progressEvent), liveUsage::snapshot);
         // File changes share the progress topic and are retained latest-per-path for reconnect.
         Consumer<ExerciseGenerationFileChangeDTO> fileChangeSink = change -> {
             if (jobService.recordFileChange(exerciseId, jobId, change)) {
@@ -251,11 +254,9 @@ public class GenerationTaskService {
             heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise generation"));
             emitter.phase(Phase.PREPARING, "Preparing an isolated workspace and build environment");
-            // The run's own token bound, not the deployment default: a request that asked for less had exactly that much reserved at admission, so spending the deployment
-            // default here would overshoot a reservation that other jobs are already being admitted against.
-            long runTokenBudget = event.settings() == null ? maxTokensPerJob : event.settings().maxTokensPerJob();
-            Consumer<ChatResponse> usageSink = budgetedUsageSink(jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId(), jobId), exerciseId, jobId,
-                    tokenBudgetExceeded, tokenAccountingFailed, runTokenBudget);
+            Consumer<ChatResponse> usageSink = budgetedUsageSink(
+                    jobService.tokenUsageSink(courseIdOf(exercise), exerciseId, user.getId(), jobId, liveUsage::recordAccountedRequest), exerciseId, jobId, tokenBudgetExceeded,
+                    tokenAccountingFailed, runTokenBudget, liveUsage);
             BooleanSupplier cancelled = () -> jobService.isCancelled(jobId) || deadlineExceeded.get() || tokenBudgetExceeded.get() || tokenAccountingFailed.get()
                     || heartbeatLost.get();
             GenerationOutcome generated = orchestrator.generate(exercise, user, userPrompt, jobId, event.mode(), cancelled, emitter, fileChangeSink, usageSink, event.sourceBrief(),
@@ -617,8 +618,7 @@ public class GenerationTaskService {
     }
 
     private ProviderUsageSink budgetedUsageSink(Consumer<ChatResponse> delegate, long exerciseId, String jobId, AtomicBoolean tokenBudgetExceeded,
-            AtomicBoolean tokenAccountingFailed, long runTokenBudget) {
-        AtomicLong tokensUsed = new AtomicLong();
+            AtomicBoolean tokenAccountingFailed, long runTokenBudget, GenerationLiveUsage liveUsage) {
         return new ProviderUsageSink() {
 
             @Override
@@ -646,10 +646,11 @@ public class GenerationTaskService {
                     return;
                 }
 
+                // Charged before the ceiling is consulted: what the run has spent is reported to the instructor whether or not a ceiling bounds it.
+                long total = liveUsage.addBillableTokens(response);
                 if (runTokenBudget <= 0) {
                     return;
                 }
-                long total = tokensUsed.addAndGet(LLMTokenUsageService.billableTokens(response, cachedInputTokenWeight));
                 if (total >= runTokenBudget && tokenBudgetExceeded.compareAndSet(false, true)) {
                     // Only the local flag: the orchestrator's cancelled-supplier reads it and stops all further model calls. Not requestSystemCancellation, which would mark the
                     // job cancelled and make enterNonCancellablePhase refuse the save of an already-paid-for verified candidate.

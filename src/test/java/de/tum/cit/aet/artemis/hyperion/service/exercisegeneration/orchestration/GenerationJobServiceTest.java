@@ -172,6 +172,47 @@ class GenerationJobServiceTest {
     }
 
     @Test
+    void runningStatusReportsWhatTheOwnerHasSpentSoFarAsAPendingAccount() {
+        // An instructor watching a run has to be able to see what it is spending; withholding the figure until the run is terminal leaves the expensive part invisible.
+        LLMTokenUsageService tokenUsageService = mock(LLMTokenUsageService.class);
+        GenerationJobService meteredJobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+        }, tokenUsageService);
+        meteredJobService.init();
+        ProgrammingExercise exercise = exercise(51L);
+        User owner = user("owner");
+        doAnswer(invocation -> {
+            Consumer<LLMRequest> observer = invocation.getArgument(4);
+            observer.accept(new LLMRequest("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true));
+            return true;
+        }).when(tokenUsageService).trackChatResponseTokenUsage(any(), any(), anyString(), any(), any());
+
+        String jobId = meteredJobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE);
+        meteredJobService.tokenUsageSink(null, exercise.getId(), null, jobId).accept(mock(ChatResponse.class));
+        meteredJobService.recordAgentTurn(jobId);
+
+        ExerciseGenerationStatusDTO status = meteredJobService.getStatus(owner, exercise).orElseThrow();
+
+        assertThat(status.running()).isTrue();
+        assertThat(status.usage()).isEqualTo(new ExerciseGenerationUsageDTO(1, 0, 1, 0, 100, 50, 20, true, 0.000182, true, List.of("model"), List.of("provider-id"), true));
+        // Not sealed, so the figure is a snapshot rather than a total, and reading it must not have sealed it either.
+        assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.PENDING);
+        assertThat(meteredJobService.getStatus(owner, exercise).orElseThrow().accountingState()).isEqualTo(ExerciseGenerationAccountingState.PENDING);
+    }
+
+    @Test
+    void runningStatusForANonOwnerReportsNoUsageAtAll() {
+        ProgrammingExercise exercise = exercise(52L);
+        jobService.startJob(user("owner"), exercise, "do it", GenerationMode.GENERATE);
+
+        assertThat(jobService.getStatus(user("other"), exercise)).hasValueSatisfying(status -> {
+            assertThat(status.running()).isTrue();
+            assertThat(status.usage()).isNull();
+            // A caller who is not entitled to the detail never receives it, so promising a total that is still accumulating would be a lie.
+            assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
+        });
+    }
+
+    @Test
     void transientAccountingStaysIncompleteAfterAnUncertainProviderAttempt() {
         ProgrammingExercise exercise = exercise(48L);
         User owner = user("owner");
@@ -852,8 +893,8 @@ class GenerationJobServiceTest {
 
         ExerciseGenerationStatusDTO status = jobService.getStatus(owner, exercise).orElseThrow();
         assertThat(status.mode()).isEqualTo(GenerationMode.ADAPT);
-        assertThat(status.usage()).isNull();
-        // Still running: the cost so far is a snapshot, not a total.
+        // Nothing has been spent yet, but the account already exists. Still running: the cost so far is a snapshot, not a total.
+        assertThat(status.usage()).isEqualTo(new ExerciseGenerationUsageDTO(0, 0, 0, 0, 0, 0, 0, true, 0, true, List.of(), List.of(), true));
         assertThat(status.accountingState()).isEqualTo(ExerciseGenerationAccountingState.PENDING);
     }
 
