@@ -30,9 +30,9 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExerciseParticipationTestRepository;
 
 /**
  * Unit tests for the joint {@code waitForBuildResults} (performance lever B1): the solution and template builds
@@ -47,7 +47,7 @@ class VariantBuildVerificationServiceJointWaitTest {
 
     private ResultTestRepository resultRepository;
 
-    private TemplateProgrammingExerciseParticipationRepository templateRepository;
+    private TemplateProgrammingExerciseParticipationTestRepository templateRepository;
 
     private SolutionProgrammingExerciseParticipationRepository solutionRepository;
 
@@ -57,7 +57,7 @@ class VariantBuildVerificationServiceJointWaitTest {
 
     @BeforeEach
     void setUp() {
-        templateRepository = mock(TemplateProgrammingExerciseParticipationRepository.class);
+        templateRepository = mock(TemplateProgrammingExerciseParticipationTestRepository.class);
         solutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         ProgrammingSubmissionRepository submissionRepository = mock(ProgrammingSubmissionRepository.class);
         resultRepository = mock(ResultTestRepository.class);

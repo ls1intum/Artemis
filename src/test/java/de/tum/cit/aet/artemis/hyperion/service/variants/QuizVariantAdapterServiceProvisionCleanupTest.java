@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 
 /**
  * Unit test for the quiz counterpart of the programming provisioner's post-import cleanup (see
@@ -40,7 +40,7 @@ class QuizVariantAdapterServiceProvisionCleanupTest {
 
     private static final long PROVISIONED_ID = 99L;
 
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     private QuizExerciseImportService quizExerciseImportService;
 
@@ -56,7 +56,7 @@ class QuizVariantAdapterServiceProvisionCleanupTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        quizExerciseRepository = mock(QuizExerciseRepository.class);
+        quizExerciseRepository = mock(QuizExerciseTestRepository.class);
         quizExerciseImportService = mock(QuizExerciseImportService.class);
         exerciseDeletionService = mock(ExerciseDeletionService.class);
 
