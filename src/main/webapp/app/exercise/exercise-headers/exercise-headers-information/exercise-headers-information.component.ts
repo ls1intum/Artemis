@@ -112,11 +112,13 @@ export class ExerciseHeadersInformationComponent {
      */
     readonly interactive = input<boolean>(true);
     /**
-     * Whether the submission due date (and the live-quiz countdown that replaces it) is shown. False where the due date
-     * is already stated by an enclosing header, as on the variant cards of a group whose members all share the group's
-     * due date.
+     * Whether the dates an enclosing timeline governs are shown: the start date, the submission due date (with the
+     * live-quiz countdown that stands in for it) and the assessment due date. False on the variant cards of an
+     * exercise group, whose server-side timeline overwrites those three on every member
+     * ({@code ExerciseVariantGroupService#applyGroupTimeline}), so the group header states them once instead of once
+     * per card. The complaint due date is not covered: it is derived per student from that student's last result.
      */
-    readonly showSubmissionDueDate = input<boolean>(true);
+    readonly showSharedTimelineDates = input<boolean>(true);
     readonly athenaEnabled = input<boolean>(false);
     readonly feedbackRequestLimit = input<number>(DEFAULT_ATHENA_FEEDBACK_REQUEST_LIMIT);
     /** Live participation status override for the result badge (e.g. PARTICIPATING/SUBMITTED) during a live quiz. */
@@ -166,7 +168,7 @@ export class ExerciseHeadersInformationComponent {
     /** All header information boxes, in display order: the generic exercise boxes first, then the live quiz boxes last. */
     readonly informationBoxItems = computed<InformationBox[]>(() => {
         const items: InformationBox[] = [...this.getPointsItems(), ...this.getDueDateItems()];
-        const startDateItem = this.getStartDateItem();
+        const startDateItem = this.showSharedTimelineDates() ? this.getStartDateItem() : undefined;
         if (startDateItem) {
             items.push(startDateItem);
         }
@@ -218,7 +220,7 @@ export class ExerciseHeadersInformationComponent {
         // While the quiz participation component hasn't mounted yet, quizLiveHeaderInfo is still undefined; skip the
         // due-date fallback for that brief window too, otherwise the due date flashes before being replaced once the
         // quiz-specific box resolves (the exercise's own due date is known immediately, the quiz box lags behind it).
-        if (this.showSubmissionDueDate()) {
+        if (this.showSharedTimelineDates()) {
             const quizTimeItem = this.getQuizTimeItem();
             if (quizTimeItem) {
                 items.push(quizTimeItem);
@@ -231,7 +233,7 @@ export class ExerciseHeadersInformationComponent {
         }
         const exercise = this.exercise();
         // If the due date is in the past and the assessment due date is in the future, show the assessment due date
-        if (this.dueDate()?.isBefore(this.now) && exercise.assessmentDueDate?.isAfter(this.now)) {
+        if (this.showSharedTimelineDates() && this.dueDate()?.isBefore(this.now) && exercise.assessmentDueDate?.isAfter(this.now)) {
             items.push({
                 title: 'artemisApp.courseOverview.exerciseDetails.assessmentDue',
                 content: {

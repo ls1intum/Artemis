@@ -270,24 +270,51 @@ describe('ExerciseHeadersInformationComponent', () => {
         expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
     });
 
-    describe('showSubmissionDueDate', () => {
-        it('should drop the submission-due box while keeping the other boxes', () => {
-            expect(component.informationBoxItems().map((item) => item.title)).toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+    describe('showSharedTimelineDates', () => {
+        // A variant group overwrites its members' start, due and assessment-due dates with its own, so the group
+        // header states them once and the cards must not repeat them. The complaint due date is per student.
+        it('should drop the start, submission-due and assessment-due boxes while keeping the complaint due date', () => {
+            const assessmentDueDate = dayjs().subtract(1, 'day');
+            const lastResult = { id: 1, completionDate: assessmentDueDate, rated: true };
+            fixture.componentRef.setInput('exercise', {
+                ...baseExercise,
+                startDate: dayjs().add(2, 'days'),
+                assessmentDueDate,
+                course: { maxComplaintTimeDays: 7 },
+            });
+            // The complaint due date is derived from the participation's own last result, not from the exercise.
+            fixture.componentRef.setInput('studentParticipation', { id: 1, submissions: [{ id: 1, results: [lastResult] }] });
+            fixture.detectChanges();
 
-            fixture.componentRef.setInput('showSubmissionDueDate', false);
+            const shown = component.informationBoxItems().map((item) => item.title);
+            expect(shown).toContain('artemisApp.courseOverview.exerciseDetails.complaintDue');
+
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
+            fixture.detectChanges();
+
+            const hidden = component.informationBoxItems().map((item) => item.title);
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.startDate');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
+            expect(hidden).not.toContain('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+            // Derived per student from that student's own last result, so it is not the group's to state.
+            expect(hidden).toContain('artemisApp.courseOverview.exerciseDetails.complaintDue');
+        });
+
+        it('should keep the per-variant boxes', () => {
+            fixture.componentRef.setInput('exercise', { ...baseExercise, difficulty: DifficultyLevel.EASY, maxPoints: 10 });
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
             fixture.detectChanges();
 
             const titles = component.informationBoxItems().map((item) => item.title);
-            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDueOver');
-            expect(titles).not.toContain('artemisApp.courseOverview.exerciseDetails.submissionDue');
-            // The assessment due date is a different date and stays; only the duplicated submission due date goes.
-            expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.assessmentDue');
+            expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.points');
+            expect(titles).toContain('artemisApp.courseOverview.exerciseDetails.difficulty');
         });
 
         it('should drop the live quiz countdown that stands in for the due date', () => {
             fixture.componentRef.setInput('exercise', { ...baseExercise, type: ExerciseType.QUIZ });
             fixture.componentRef.setInput('quizLiveHeaderInfo', { showRemainingTime: true, remainingTimeText: '5 min', showResultsAvailable: false });
-            fixture.componentRef.setInput('showSubmissionDueDate', false);
+            fixture.componentRef.setInput('showSharedTimelineDates', false);
             fixture.detectChanges();
 
             expect(component.informationBoxItems().map((item) => item.title)).not.toContain('artemisApp.quizExercise.remainingTime');
