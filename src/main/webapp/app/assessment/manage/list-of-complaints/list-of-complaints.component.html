@@ -26,25 +26,29 @@
         @if (allComplaintsForTutorLoaded() && complaintType() === ComplaintType.MORE_FEEDBACK) {
             <span jhiTranslate="artemisApp.moreFeedback.list.allRequestsLoaded"></span>
         }
-        @if (!allComplaintsForTutorLoaded()) {
-            <button
-                class="btn btn-outline-info m-1"
-                (click)="triggerShowAllComplaints()"
-                [disabled]="allComplaintsForTutorLoaded()"
-                name="loadAllComplaintsForTutor"
-                id="button_loadAllComplaintsForTutor"
-            >
-                @if (isLoadingAllComplaints()) {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                }
-                @if (complaintType() === ComplaintType.COMPLAINT) {
-                    <span jhiTranslate="artemisApp.complaint.listOfComplaints.loadAllComplaints"></span>
-                }
-                @if (complaintType() === ComplaintType.MORE_FEEDBACK) {
-                    <span jhiTranslate="artemisApp.moreFeedback.list.loadAllRequests"></span>
-                }
-            </button>
-        }
+        <button
+            class="btn btn-outline-info m-1"
+            (click)="toggleAllComplaints()"
+            [disabled]="isLoadingAllComplaints()"
+            name="loadAllComplaintsForTutor"
+            id="button_loadAllComplaintsForTutor"
+        >
+            @if (isLoadingAllComplaints()) {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            }
+            @if (!allComplaintsForTutorLoaded() && complaintType() === ComplaintType.COMPLAINT) {
+                <span jhiTranslate="artemisApp.complaint.listOfComplaints.loadAllComplaints"></span>
+            }
+            @if (!allComplaintsForTutorLoaded() && complaintType() === ComplaintType.MORE_FEEDBACK) {
+                <span jhiTranslate="artemisApp.moreFeedback.list.loadAllRequests"></span>
+            }
+            @if (allComplaintsForTutorLoaded() && complaintType() === ComplaintType.COMPLAINT) {
+                <span jhiTranslate="artemisApp.complaint.listOfComplaints.hideOtherComplaints"></span>
+            }
+            @if (allComplaintsForTutorLoaded() && complaintType() === ComplaintType.MORE_FEEDBACK) {
+                <span jhiTranslate="artemisApp.moreFeedback.list.hideOtherRequests"></span>
+            }
+        </button>
     </div>
     <div class="row table-responsive">
         @if (!loading()) {

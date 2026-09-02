@@ -62,6 +62,9 @@ export class ListOfComplaintsComponent implements OnInit {
     readonly filterOption = signal<number | undefined>(undefined);
 
     readonly loading = signal(true);
+    // Cached so toggling "load all"/"hide others" after the first fetch is a pure client-side swap, no repeat request.
+    private ownComplaints?: Complaint[];
+    private allTutorsComplaints?: Complaint[];
     // Icons
     faSort = faSort;
     faFolderOpen = faFolderOpen;
@@ -123,21 +126,28 @@ export class ListOfComplaintsComponent implements OnInit {
         complaintResponse.subscribe({
             next: (res) => {
                 this.complaints.set(res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? []);
-                if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
-                    this.showAddressedComplaints.set(true);
-                }
-
-                if (!this.showAddressedComplaints()) {
-                    this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted === undefined));
-                } else if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
-                    this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted !== undefined));
-                } else {
-                    this.complaintsToShow.set(this.complaints());
-                }
+                this.applyComplaintFilter();
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
             complete: () => this.loading.set(false),
         });
+    }
+
+    /**
+     * Re-applies the addressed/unaddressed filter to the currently loaded {@link complaints} and updates {@link complaintsToShow}.
+     */
+    private applyComplaintFilter(): void {
+        if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
+            this.showAddressedComplaints.set(true);
+        }
+
+        if (!this.showAddressedComplaints()) {
+            this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted === undefined));
+        } else if (this.filterOption() === this.FILTER_OPTION_ADDRESSED_COMPLAINTS) {
+            this.complaintsToShow.set(this.complaints().filter((complaint) => complaint.accepted !== undefined));
+        } else {
+            this.complaintsToShow.set(this.complaints());
+        }
     }
 
     openAssessmentEditor(complaint: Complaint) {
@@ -194,14 +204,36 @@ export class ListOfComplaintsComponent implements OnInit {
     }
 
     /**
-     * Used to lazy-load all complaints from the server for a tutor or editor.
+     * Toggles between the tutor's own complaints and all complaints in the course.
+     * The "all" list is fetched from the server once and cached, so switching back and forth afterwards is instant.
      */
-    triggerShowAllComplaints() {
+    toggleAllComplaints() {
+        if (this.allComplaintsForTutorLoaded()) {
+            this.complaints.set(this.ownComplaints ?? []);
+            this.allComplaintsForTutorLoaded.set(false);
+            this.applyComplaintFilter();
+            return;
+        }
+
+        if (this.allTutorsComplaints) {
+            this.complaints.set(this.allTutorsComplaints);
+            this.allComplaintsForTutorLoaded.set(true);
+            this.applyComplaintFilter();
+            return;
+        }
+
+        this.ownComplaints = this.complaints();
         this.isLoadingAllComplaints.set(true);
-        const complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType());
-        this.subscribeToComplaintResponse(complaintResponse);
-        this.isLoadingAllComplaints.set(false);
-        this.allComplaintsForTutorLoaded.set(true);
+        this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType()).subscribe({
+            next: (res) => {
+                this.allTutorsComplaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
+                this.complaints.set(this.allTutorsComplaints);
+                this.allComplaintsForTutorLoaded.set(true);
+                this.applyComplaintFilter();
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            complete: () => this.isLoadingAllComplaints.set(false),
+        });
     }
 
     calculateComplaintLockStatus(complaint: Complaint) {

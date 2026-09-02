@@ -50,6 +50,16 @@
                                 <span jhiTranslate="artemisApp.exercise.teams"></span>
                             </a>
                         }
+                        <!-- Complaints -->
+                        @if (
+                            canAccessParticipationsAndScores() &&
+                            (programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise().allowComplaintsForAutomaticAssessments)
+                        ) {
+                            <a [routerLink]="[baseResource(), 'complaints']" class="btn btn-primary btn-sm">
+                                <fa-icon [icon]="faFlag" />
+                                <span jhiTranslate="artemisApp.exercise.complaints"></span>
+                            </a>
+                        }
                         @if (programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise().allowComplaintsForAutomaticAssessments) {
                             <a [routerLink]="[shortBaseResource(), 'assessment-dashboard', programmingExercise().id]" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faUserCheck" />
