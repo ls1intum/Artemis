@@ -470,8 +470,8 @@ public class IrisStruggleInterventionService {
         }
 
         // Terminal gate (delivered reasons only): if the episode already has a terminal outcome (e.g. the
-        // student DISMISSED mid-flight), skip persist and emit a noop event. Neither this check nor the
-        // persist-then-outcome pair below is atomic against a concurrent dismiss; see isEpisodeTerminal.
+        // student DISMISSED mid-flight), skip persist and emit a noop event. This read is the cheap fast path; the
+        // authoritative one runs under the episode's registry lock in the same transaction as the write.
         if (episodeId != null && isEpisodeTerminal(episodeId, user.getId(), job.exerciseId())) {
             irisChatWebsocketService.sendStruggleEvent(user, new StruggleInterventionEventDTO(job.exerciseId(), "confirm_close", null, null, null, null, null, null, null, null,
                     episodeId, resolved, null, null, statusUpdate.rationale()));
@@ -479,7 +479,7 @@ public class IrisStruggleInterventionService {
         }
 
         if (resolved) {
-            // progress resolved=true: persist closing message (1), broadcast live (1b), write RECOVERED (2).
+            // progress resolved=true: persist the closing message and its RECOVERED outcome together, then broadcast.
             String closingSentence = statusUpdate.closingSentence();
             if (closingSentence == null || closingSentence.isBlank()) {
                 closingSentence = "Nice work, that is resolved.";
@@ -1003,12 +1003,14 @@ public class IrisStruggleInterventionService {
      * would strand it. The session is taken as a parameter rather than resolved, because the active path still
      * needs the session id for that frame even when the message itself was dropped.
      *
-     * @param session    the already-resolved exercise-chat session to persist into
-     * @param user       the student the proactive message belongs to (logging scope)
-     * @param exerciseId the programming exercise id the message is bound to (logging scope)
-     * @param result     the proactive message text returned by the gate
-     * @param episodeId  the client-allocated episode UUID; stamped on the persisted message when non-null
-     * @return the saved message, or null if it could not be persisted
+     * @param session          the already-resolved exercise-chat session to persist into
+     * @param user             the student the proactive message belongs to (logging scope)
+     * @param exerciseId       the programming exercise id the message is bound to (logging scope)
+     * @param result           the proactive message text returned by the gate
+     * @param episodeId        the client-allocated episode UUID; stamped on the persisted message when non-null
+     * @param outcomeOnSuccess if non-null, recorded as the episode's terminal outcome in the same transaction as the
+     *                             append, which is what makes the confirm-close row and its outcome atomic
+     * @return whether the episode was already terminal, and the saved message when one was written
      */
     private ProactiveAppend saveProactiveMessageWithRetry(IrisChatSession session, User user, long exerciseId, String result, @Nullable String episodeId,
             @Nullable IrisProactiveOutcome outcomeOnSuccess) {
@@ -1118,24 +1120,14 @@ public class IrisStruggleInterventionService {
      * stable under out-of-order persistence.
      *
      * <p>
-     * KNOWN AND ACCEPTED: this is a check, not a claim. Every caller reads it and then writes in a separate
-     * statement, so a terminal outcome that commits in between is not seen, and the callback persists its message
-     * (or announces its ambient offer) after the episode is already closed. The same window exists between the
-     * closing-message insert and the {@code RECOVERED} write in {@link #handleConfirmClose}.
+     * This is the cheap, unlocked read: a fast path that lets a caller complete silently without opening a
+     * transaction. It is not the decision. Every path that goes on to write re-checks under the episode's registry
+     * write lock inside the same transaction as its write, which is what makes the pair atomic against a concurrent
+     * outcome.
      *
      * <p>
-     * It cannot be closed by locking here. The obvious mutex, the chat session, is not one: sessions are resolved as
-     * "the latest for (user, exercise)" with no uniqueness constraint, so an episode's existing row and the next
-     * append can sit in different sessions and would take different locks. Nor can the episode lock itself: before
-     * its first message row is written, an episode has no row to lock, which is also why an outcome arriving first
-     * can only be deferred. Closing it needs the episode to become a row of its own, created when the trigger is
-     * accepted (the episode id arrives synchronously in {@link #prepareTrigger}), holding the terminal outcome and
-     * serving as the mutex for the append, the reveal and the outcome write alike.
-     *
-     * <p>
-     * Until then the compensation is the client's: it drops a decide event for an episode it already closed, and
-     * removes the row through {@link #deleteSupersededProactiveMessage}, which is what that endpoint exists for. The
-     * proactive feature is off per course by default, so nothing reaches a student before this is decided.
+     * An episode with no registry row falls back to the message rows, which is exactly how this worked before the
+     * registry existed, so a job still in flight across the deployment that introduced it is unaffected.
      *
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the job's owning user; only outcomes on rows in this user's sessions are considered
@@ -1154,6 +1146,13 @@ public class IrisStruggleInterventionService {
      * {@code UnexpectedRollbackException} at commit rather than as the handled duplicate it is. The reread runs in a
      * second transaction for the same reason, and rethrows the original failure if it finds nothing, since not every
      * integrity violation is a duplicate key.
+     *
+     * <p>
+     * A new row inherits any terminal outcome the episode already reached on its message rows, so an id reused
+     * across the deployment that introduced the registry does not come back open. That carry-over is a snapshot, not
+     * a serialized read: a legacy outcome write taking the pre-registry path at the very same moment is not ordered
+     * against it. The window exists only for episodes that predate the registry and closes as soon as they age out,
+     * so it is accepted rather than locked.
      *
      * @param userId     the struggling student
      * @param exerciseId the exercise the run belongs to
