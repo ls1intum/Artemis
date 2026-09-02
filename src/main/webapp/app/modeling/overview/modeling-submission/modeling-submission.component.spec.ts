@@ -644,7 +644,6 @@ describe('ModelingSubmissionComponent', () => {
         comp.showFeedbackOnDiagram(<Feedback>(<unknown>{ referenceId: 'element-7' }));
         expect(revealAssessment).toHaveBeenCalledWith('element-7');
 
-        // General feedback points at no element, so the canvas must not move.
         comp.showFeedbackOnDiagram(<Feedback>(<unknown>{ detailText: 'general remark' }));
         expect(revealAssessment).toHaveBeenCalledOnce();
     });
@@ -882,9 +881,6 @@ describe('ModelingSubmissionComponent', () => {
         });
     });
     describe('feedback presentation', () => {
-        // The list beside the canvas has to read like the diagram: same tone, a sign on every score, and the
-        // element name Apollon shows. Credits of exactly 0 are their own case — feedback without points is a
-        // remark, not a deduction.
         it.each([
             { credits: 5, tone: 'positive', signed: true, pluralKey: 'many', icon: faCheck },
             { credits: 1, tone: 'positive', signed: true, pluralKey: 'one', icon: faCheck },
@@ -900,8 +896,6 @@ describe('ModelingSubmissionComponent', () => {
             expect(comp['feedbackTone'](feedback)).toBe(tone);
             expect(comp['feedbackToneIcon'](feedback)).toBe(icon);
 
-            // Points go through the shared locale formatting, so the assertion is on the key and the formatted value
-            // rather than on a raw number: a German reader must see "2,5", and one point must not read "1 Points".
             const rendered = comp['feedbackPoints'](feedback);
             expect(translate).toHaveBeenCalledWith(`artemisApp.assessment.detail.points.${pluralKey}`, { points: (credits ?? 0).toLocaleString('en') });
             expect(rendered.startsWith('+')).toBe(signed);
@@ -912,13 +906,11 @@ describe('ModelingSubmissionComponent', () => {
             comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
 
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('attribute Course › + title: String');
-            // A class and an attribute can carry the same name, so the type is what tells them apart.
             comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: 'class' } });
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('class TestClass');
             comp.assessmentsNames.set({ ref1: { name: 'TestClass', type: '' } });
             expect(comp['feedbackElementName']({ referenceId: 'ref1' } as Feedback)).toBe('TestClass');
             comp.assessmentsNames.set({ ref1: { name: 'Course::+ title: String', type: 'attribute' } });
-            // No reference, no entry for the reference, and an entry without a name all mean "nothing to show".
             expect(comp['feedbackElementName']({} as Feedback)).toBeUndefined();
             expect(comp['feedbackElementName']({ referenceId: 'unknown' } as Feedback)).toBeUndefined();
             comp.assessmentsNames.set({ ref1: { name: '', type: 'attribute' } });
@@ -1010,8 +1002,6 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     describe('complaint section', () => {
-        // The complaint belongs to a result, is meaningless in an exam, and must not appear in the read-only
-        // feedback view of an older submission.
         it.each([
             { result: true, examMode: false, feedbackView: false, expected: true },
             { result: false, examMode: false, feedbackView: false, expected: false },

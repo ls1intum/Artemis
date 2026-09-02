@@ -167,8 +167,6 @@ describe('ResultComponent', () => {
         });
 
         it('renders a failed programming build in red and keeps it clickable', () => {
-            // Guards the other side of the widened contract: with a participation present, isBuildFailedAndResultIsAutomatic
-            // must still find the submission (via the result, and via the participation) and colour the badge as failed.
             const buildFailedResult: Result = {
                 id: 9,
                 score: 0,
@@ -196,7 +194,6 @@ describe('ResultComponent', () => {
         });
 
         describe('results that belong to no participation', () => {
-            // See the participation note in result.utils.ts.
             const exampleSubmissionResult: Result = {
                 id: 7,
                 score: 90,
@@ -218,7 +215,6 @@ describe('ResultComponent', () => {
                 expect(fixture.debugElement.nativeElement.querySelector(RESULT_SCORE_SELECTOR)).toBeTruthy();
                 expect(comp.textColorClass()).toBe('text-state-success');
                 expect(comp.resultIconClass()).toBeDefined();
-                // A missing participation is not a programmer error, so it must not blank the score.
                 expect(comp.resultString()).not.toBe('');
             });
 
@@ -237,7 +233,6 @@ describe('ResultComponent', () => {
 
                 expect(navigateSpy).not.toHaveBeenCalled();
                 expect(openModalSpy).not.toHaveBeenCalled();
-                // The feedback dialog requires a participation; we must not even build its parameters.
                 expect(prepareFeedbackSpy).not.toHaveBeenCalled();
             });
         });
@@ -332,8 +327,6 @@ describe('ResultComponent', () => {
     });
 
     it('should open the details only when isInSidebarCard is false', () => {
-        // The click handler is bound unconditionally; showDetails() itself enforces the contract via canShowDetails(),
-        // so assert on the observable effect (a dialog opening) rather than on whether the handler was invoked.
         const openModalSpy = vi.spyOn(dialogService, 'open');
 
         fixture.componentRef.setInput('exercise', {

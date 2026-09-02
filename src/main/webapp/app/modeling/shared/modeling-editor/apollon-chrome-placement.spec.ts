@@ -48,8 +48,6 @@ describe('calculateBottomCenterPlacement', () => {
     });
 
     it('keeps clear of a palette in the right rail, mirroring the left-rail case', () => {
-        // The zoom/minimap row still leaves room, so the surface stays inline and is bounded by the palette's left
-        // edge rather than by the editor's right inset.
         const placement = calculateBottomCenterPlacement({
             ...baseGeometry,
             palette: rectangle(760, 984),
@@ -57,7 +55,6 @@ describe('calculateBottomCenterPlacement', () => {
         });
 
         expect(placement.elevated).toBe(false);
-        // Right bound is min(minimap.left - gap, palette.left - gap) = min(876, 752) = 752; left bound is zoom.right + gap = 124.
         expect(placement.panelWidth).toBe(628);
         expect(placement.shift).toBe(-62);
     });
@@ -71,8 +68,6 @@ describe('calculateBottomCenterPlacement', () => {
             paletteRegion: 'right-rail',
         });
 
-        // Elevated, so the surface hangs off the right bound, which the palette has pulled in from the editor's own
-        // inset (984) to palette.left - gap = 692. Width is then 692 - 16 = 676, capped by nothing.
         expect(placement.elevated).toBe(true);
         expect(placement.panelWidth).toBe(676);
         expect(placement.shift).toBe(-146);
@@ -123,7 +118,6 @@ describe('bottom-center placement DOM updates', () => {
 });
 
 describe('calculateRailDisclosureMaxHeight', () => {
-    // A 1000x1000 canvas with the disclosure trigger parked in the top right.
     const baseGeometry = {
         root: { left: 0, right: 1000, bottom: 1000 },
         trigger: { right: 900, bottom: 100 },
@@ -145,7 +139,6 @@ describe('calculateRailDisclosureMaxHeight', () => {
     });
 
     it('ignores chrome the panel does not reach across', () => {
-        // The panel spans 600..900, so chrome that ends at 500 is beside it rather than beneath it.
         const height = calculateRailDisclosureMaxHeight({ ...baseGeometry, bottomChrome: [chrome(100, 500, 600)] });
 
         expect(height).toBe(RAIL_DISCLOSURE_MAX_HEIGHT);

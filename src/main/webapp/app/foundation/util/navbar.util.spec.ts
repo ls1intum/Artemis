@@ -62,7 +62,6 @@ describe('navbar util shell metrics', () => {
     }
 
     it('writes the measured navbar and footer heights, snapped to the device pixel grid', () => {
-        // jsdom reports devicePixelRatio 1, so the grid here is whole CSS pixels.
         addElement('jhi-navbar', 63.75);
         addElement('jhi-footer', 31.5);
 
@@ -93,8 +92,6 @@ describe('navbar util shell metrics', () => {
             startObserving();
             vi.runAllTimers();
 
-            // At ratio 2 the grid is every 0.5 CSS pixels, so a half-pixel survives that whole-pixel
-            // rounding would discard.
             expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('63.5px');
             expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('31.5px');
         } finally {

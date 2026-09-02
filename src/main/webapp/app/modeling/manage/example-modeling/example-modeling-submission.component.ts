@@ -105,7 +105,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     readonly selectedMode = signal<ExampleSubmissionMode>(undefined!);
     ExampleSubmissionMode = ExampleSubmissionMode;
 
-    /** The one highlight this view paints: the elements a tutor in training assessed differently from the sample. */
     readonly legendHighlights = computed<ModelingAssessmentLegendHighlight[]>(() =>
         this.highlightedElements().size > 0 ? [{ color: this.highlightColor, text: 'artemisApp.modelingAssessment.legend.incorrectAssessment' }] : [],
     );
@@ -162,7 +161,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     highlightedElements = signal<Map<string, string>>(new Map<string, string>());
     referencedExampleFeedback: Feedback[] = [];
-    // A CSS custom property keeps Apollon's inline highlight responsive to Artemis theme changes.
     readonly highlightColor = 'color-mix(in srgb, var(--tumaet-ui-primary-color) 35%, transparent)';
 
     faSave = faSave;
@@ -463,7 +461,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     markAllFeedbackToCorrect() {
         this.applyCorrectionStatus(() => 'CORRECT');
-        // Clears the "you missed this" tint of a previous, wrong attempt, and repaints the canvas.
         this.highlightMissedFeedback();
     }
 

@@ -54,7 +54,6 @@ describe('FullscreenPresentationService', () => {
                 disconnect() {}
             },
         );
-        // jsdom has no layout, so the visibility probe has to be driven explicitly.
         const checkVisibility = vi.fn().mockReturnValue(true);
         (parent as unknown as { checkVisibility: () => boolean }).checkVisibility = checkVisibility;
         const onEscape = vi.fn();
@@ -62,7 +61,6 @@ describe('FullscreenPresentationService', () => {
         service.promote(editor, onEscape);
         expect(observed).toContain(parent);
 
-        // Still shown, merely re-measured (e.g. the page scrolled): not an escape.
         fireIntersection();
         expect(onEscape).not.toHaveBeenCalled();
 

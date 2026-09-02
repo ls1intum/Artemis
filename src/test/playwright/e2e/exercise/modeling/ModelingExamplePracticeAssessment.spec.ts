@@ -43,7 +43,6 @@ test.describe('Modeling example submission practice assessment', { tag: '@slow' 
         expect(exampleSubmissionResponse.ok()).toBe(true);
         exampleSubmissionId = (await exampleSubmissionResponse.json()).id;
 
-        // A single unreferenced feedback keeps the expected solution independent of the diagram's element ids.
         const assessmentResponse = await page.request.put(`api/modeling/modeling-submissions/${exampleSubmissionId}/example-assessment`, {
             data: [{ credits: 5, text: 'Sample solution feedback', type: 'MANUAL_UNREFERENCED', reference: '1' }],
         });
@@ -62,10 +61,7 @@ test.describe('Modeling example submission practice assessment', { tag: '@slow' 
         const unreferencedFeedback = page.locator('jhi-unreferenced-feedback');
         await expect(page.locator('jhi-modeling-assessment')).toBeVisible();
 
-        // The tutor starts from an empty assessment and must be able to submit it right away.
         await expect(submit).toBeEnabled();
-        // The instructor's assessment is the solution: it is never shown as the tutor's own, but the editor to write
-        // one's own unreferenced feedback has to be there regardless.
         await expect(unreferencedFeedback).toBeVisible();
         await expect(unreferencedFeedback.locator('jhi-unreferenced-feedback-detail')).toHaveCount(0);
 
@@ -74,11 +70,9 @@ test.describe('Modeling example submission practice assessment', { tag: '@slow' 
         const score = feedbackCard.locator('input[type="number"]');
         await expect(feedbackCard).toBeVisible();
 
-        // A feedback whose score has been cleared is not submittable ...
         await score.fill('');
         await expect(submit).toBeDisabled();
 
-        // ... a score that does not match the instructor's is, it is just wrong.
         await score.fill('1');
         await feedbackCard.locator('textarea').fill('Not quite the instructor wording');
         await expect(submit).toBeEnabled();
@@ -87,7 +81,6 @@ test.describe('Modeling example submission practice assessment', { tag: '@slow' 
         await expect(page.locator('.alert-inner').filter({ hasText: 'mistake' })).toBeVisible();
         await expect(feedbackCard).toContainText('score');
 
-        // Correcting the score turns the same submission into a passing one.
         await score.fill('5');
         await feedbackCard.locator('textarea').fill('Sample solution feedback');
         await submit.click();

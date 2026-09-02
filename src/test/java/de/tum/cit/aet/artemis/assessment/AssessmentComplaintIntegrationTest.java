@@ -262,8 +262,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutPreliminaryAthenaFeedback_isRejected() throws Exception {
-        // Preliminary AI feedback is a suggestion the student asked for, not a tutor's assessment: there is no assessor
-        // to address, and the complained result is filtered out of the assessment dashboard.
         modelingAssessment.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         resultRepository.save(modelingAssessment);
 
@@ -597,10 +595,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getComplaintsForAssessmentDashboard_complaintOnAthenaResult_doesNotFailTheRequest() throws Exception {
-        // Complaints on preliminary AI feedback are rejected now, but instances that took one before still hold the
-        // rows. The dashboard drops the Athena results from every submission, so the complained result disappears
-        // while it is being read, which used to answer 500 for the whole exercise.
+    void getComplaintsForAssessmentDashboard_complaintOnAthenaResult_returnsComplaint() throws Exception {
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaint.getResult().setHasComplaint(true);
         complaint.getResult().setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);

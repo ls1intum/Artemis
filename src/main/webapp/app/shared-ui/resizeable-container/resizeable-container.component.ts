@@ -53,12 +53,10 @@ export class ResizeableContainerComponent {
      */
     readonly expandProblemStatement = input<boolean>(false);
 
-    // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
 
-    // Make right side always expanded for smaller screens
     onWindowResize(event: UIEvent) {
         if ((event.target as Window).innerWidth <= 992) {
             this.collapsed.set(false);

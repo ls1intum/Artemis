@@ -23,7 +23,6 @@ import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TumUiButtonDirective, TumUiInputDirective, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 
-/** Host DOM element augmented with the ApollonEditor instance exposed for E2E test access. */
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
 @Component({
@@ -41,7 +40,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private elementRef = inject(ElementRef);
 
     readonly editorContainer = viewChild.required<ElementRef>('editorContainer');
-    /** Canvas-scoped controls; Apollon's top-right overlay region adopts this node once the editor exists. */
     private readonly editorActions = viewChild<ElementRef<HTMLElement>>('editorActions');
 
     courseId = input.required<number>();
@@ -58,23 +56,19 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     private selectionSubscription: number | undefined;
     private actionsRegionMounted = false;
 
-    /** Edited separately from `apollonDiagram` so the signal changes by reference rather than by mutation. */
     readonly title = signal('');
     readonly isTitleValid = computed(() => this.title().trim().length > 0);
 
-    /** Derived, never assigned: a diagram is saved while neither its model nor its title differs from what was stored. */
     readonly isSaved = computed(() => this.currentModelJson() === this.lastSavedModelJson() && this.title() === (this.apollonDiagram()?.title ?? ''));
 
     readonly cropToSelection = signal(true);
 
-    /** Mirrors Apollon's selection so the download control has a real disabled state. */
     readonly selectedElementIds = signal<string[]>([]);
     readonly hasSelection = computed(() => this.selectedElementIds().length > 0);
 
     /** Apollon's model lives in its own store, so it is mirrored here for anything derived from it. */
     private readonly currentModel = signal<UMLModel | undefined>(undefined);
 
-    /** Whether the diagram holds at least one element a drag-and-drop quiz question can be generated from. */
     readonly hasInteractive = computed(() => hasQuizRelevantElements(this.currentModel()));
 
     readonly downloadHint = computed(() =>
@@ -83,11 +77,9 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     readonly canGenerate = computed(() => !!this.apollonDiagram() && this.isTitleValid() && this.hasInteractive());
     readonly generateHint = computed(() => (this.hasInteractive() ? '' : this.translateService.instant('artemisApp.apollonDiagram.create.validationError')));
 
-    /** Auto-save interval handle and timer counter */
     autoSaveInterval: ReturnType<typeof setInterval> | undefined;
     autoSaveTimer = 0;
 
-    // Icons
     faDownload = faDownload;
     faCropSimple = faCropSimple;
     faArrowLeft = faArrowLeft;
@@ -102,9 +94,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Initializes Apollon Editor and sets auto save timer
-     */
     ngOnInit() {
         this.apollonDiagramService.find(this.apollonDiagramId(), this.courseId()).subscribe({
             next: (response) => {
@@ -123,9 +112,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Clears auto save interval and destroys Apollon Editor
-     */
     ngOnDestroy() {
         if (this.autoSaveInterval) {
             clearInterval(this.autoSaveInterval);
@@ -134,10 +120,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.destroyApollonEditor();
     }
 
-    /**
-     * Initializes Apollon Editor with UML Model
-     * @param initialModel
-     */
     initializeApollonEditor(initialModel?: UMLModel | ApollonModelData) {
         this.destroyApollonEditor();
 
@@ -156,7 +138,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             availableViews: [ApollonView.Modelling, ApollonView.Highlight],
         };
         this.apollonEditor = new ApollonEditor(this.editorContainer().nativeElement, editorOptions);
-        // Expose the ApollonEditor instance on the host DOM element for E2E test access.
         (this.elementRef.nativeElement as ApollonEditorHostElement).__apollonEditor = this.apollonEditor;
         // Apollon's React/Zustand store fires outside Angular; the signal writes below schedule
         // change detection under zoneless, so template bindings stay fresh.
@@ -207,9 +188,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         editor?.destroy();
     }
 
-    /**
-     * Saves the diagram
-     */
     async saveDiagram(): Promise<boolean> {
         if (!this.apollonDiagram() || !this.apollonEditor) {
             return false;
@@ -265,10 +243,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * This function sets and starts an auto-save timer that automatically saves changes
-     * to the model after 30 seconds.
-     */
     private setAutoSaveTimer(): void {
         if (this.autoSaveInterval) {
             clearInterval(this.autoSaveInterval);
@@ -283,11 +257,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }, AUTOSAVE_CHECK_INTERVAL);
     }
 
-    /**
-     * Generates the Drag and Drop Model Quiz question.
-     *
-     * @async
-     */
     async generateExercise() {
         if (!this.hasInteractive()) {
             this.alertService.error('artemisApp.apollonDiagram.create.validationError');
@@ -304,11 +273,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Download the current selection of the diagram as a PNG image.
-     *
-     * @async
-     */
     async downloadSelection() {
         if (!this.hasSelection() || !this.apollonEditor) {
             return;
@@ -323,11 +287,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.download(png);
     }
 
-    /**
-     * Automatically trigger the download of a file.
-     *
-     * @param {Blob | File} file A `Blob` or `File` object which should be downloaded.
-     */
     private download(file: Blob | File) {
         const anchor = document.createElement('a');
         document.body.appendChild(anchor);

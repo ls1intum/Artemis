@@ -41,7 +41,6 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(exerciseAssessment.getLockedMessage()).toBeVisible();
-            // The instructions live beside the canvas, never below it.
             await expectNoScrollPastApollonCanvas(page);
             await modelingExerciseAssessment.addNewFeedback(1, 'Thanks, good job.');
             await modelingExerciseAssessment.openAssessmentForComponent(1);
@@ -72,7 +71,6 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
             await modelingExerciseFeedback.shouldShowScore(20);
             await modelingExerciseFeedback.shouldShowAdditionalFeedback(1, 'Thanks, good job.');
             await modelingExerciseFeedback.shouldShowComponentFeedback(1, 2, 'Good');
-            // Feedback and complaint actions both live inside the editor's chrome, so neither may push the page.
             await expectNoScrollPastApollonCanvas(page);
             await modelingExerciseFeedback.complain('I am not happy with your assessment.');
             await expectNoScrollPastApollonCanvas(page);

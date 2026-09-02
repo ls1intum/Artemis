@@ -24,7 +24,6 @@ export class RatingComponent {
     readonly result = input<Result>();
     participation = input.required<StudentParticipation>();
     readonly isOwnerOfParticipation = input<boolean>();
-    /** Star size in px; hosts embedded in dense chrome ask for a smaller one. */
     readonly starSize = input('24');
     /**
      * `stacked` is the page-level callout used by the exercise result pages.
@@ -62,12 +61,7 @@ export class RatingComponent {
         });
     }
 
-    /**
-     * Update/Create new Rating for the result
-     * @param event - starRating component that holds new rating value
-     */
     onRate(event: { oldValue: number; newValue: number }) {
-        // block rating to prevent double sending of post request
         const result = this.result();
         if (this.disableRating() || !result) {
             return;
@@ -78,7 +72,6 @@ export class RatingComponent {
 
         this.disableRating.set(true);
         let observable: Observable<number>;
-        // set/update feedback on the server
         if (oldRating) {
             observable = this.ratingService.updateRating(this.rating(), result.id!);
         } else {

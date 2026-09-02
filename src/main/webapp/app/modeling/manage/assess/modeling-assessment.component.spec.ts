@@ -25,7 +25,6 @@ const { MockApollonEditor } = vi.hoisted(() => {
             return id;
         });
 
-        // Reports the ids of the selected *elements*, which is what feedback references point at.
         subscribeToSelectionChange = vi.fn((callback: (selectedElementIds: string[]) => void) => {
             const id = ++this._subscriptionCounter;
             this._selectionChangeSubscriptions.set(id, callback);
@@ -407,10 +406,6 @@ describe('ModelingAssessmentComponent', () => {
         });
 
         it('references an element by its UML type, not by the kind Apollon reports', () => {
-            // Apollon 5.3 answers `node` / `edge` / `attribute` for elementType. Taking that would spell this element
-            // `node:<id>` while Athena, the example assessments and every stored reference spell it `Package:<id>`;
-            // references are compared as whole strings, so the tutor-training comparison would call correct feedback
-            // unnecessary and could not point at the element it named.
             fixture.componentRef.setInput('umlModel', makeMockModel());
 
             const [created] = comp.generateFeedbackFromAssessment([assessmentFor({ elementType: 'node' })]);
@@ -442,7 +437,6 @@ describe('ModelingAssessmentComponent', () => {
             const suggestion = Feedback.forModeling(1, 'Original detail', PACKAGE_ID, 'Package');
             suggestion.text = FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'Missing abstraction';
             comp.elementFeedback.set(PACKAGE_ID, suggestion);
-            // Adapting is measured against what Apollon last showed, so seed that baseline before syncing.
             comp['shownInApollon'].set(PACKAGE_ID, 'Original detail');
 
             comp.generateFeedbackFromAssessment([assessmentFor({ feedback: 'Edited detail' })]);
@@ -634,7 +628,6 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         expect(editor.setReadonly).toHaveBeenCalledWith(true);
-        // Selection is only reported while read-only, so the flip has to bring that subscription with it.
         expect(editor.subscribeToSelectionChange).toHaveBeenCalled();
 
         fixture.componentRef.setInput('readOnly', false);
@@ -644,7 +637,6 @@ describe('ModelingAssessmentComponent', () => {
         expect(editor.unsubscribe).toHaveBeenCalled();
     });
 
-    // Consumers match these ids against `Feedback.referenceId`, which is the element's id, not the assessment's.
     it('should report the ids of the selected elements, not of their assessments', async () => {
         fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
@@ -720,7 +712,6 @@ describe('ModelingAssessmentComponent', () => {
         const api = stubFullscreenApi(async () => {});
         const frame = fixture.nativeElement.querySelector('.modeling-assessment') as HTMLElement;
         const originalParent = frame.parentNode;
-        // A video player, a dialog, anything: promoting on top of it would leave two owners of the same screen.
         api.setFullscreenElement(document.createElement('video'));
 
         try {
@@ -747,7 +738,6 @@ describe('ModelingAssessmentComponent', () => {
         try {
             await comp.toggleFullscreen();
 
-            // A refused request must not strand the canvas under <body>, detached from its layout.
             expect(frame.parentNode).toBe(originalParent);
             expect(frame.classList.contains(APOLLON_FULLSCREEN_FRAME_CLASS)).toBe(false);
             expect(comp.fullscreenActive()).toBe(false);
@@ -776,8 +766,6 @@ describe('ModelingAssessmentComponent', () => {
         }
     });
 
-    // Subtree fullscreen would make this component the fullscreen element, and a browser paints nothing outside that
-    // subtree — so the Apollon popovers this canvas enables, which portal under <body>, would vanish.
     it('should take the document root fullscreen with its frame promoted to the body', async () => {
         fixture.detectChanges();
         await fixture.whenStable();
@@ -870,7 +858,6 @@ describe('ModelingAssessmentComponent chrome regions', () => {
     const noticeElement = () => fixture.debugElement.query(By.css('[data-testid="chrome-notice"]')).nativeElement as HTMLElement;
 
     it('should never mount an unoccupied region, even though the slot is filled', () => {
-        // The slot is projected the whole time; only occupancy is off.
         expect(fixture.debugElement.query(By.css('[data-testid="chrome-notice"]'))).not.toBeNull();
         expect(editor.getRegionElement).not.toHaveBeenCalledWith('top-left');
         expect(fixture.debugElement.query(By.css('.modeling-assessment__region--top-left')).nativeElement.classList).not.toContain('modeling-assessment__region--mounted');
@@ -883,7 +870,6 @@ describe('ModelingAssessmentComponent chrome regions', () => {
 
         const region = editor._regionElements.get('top-left');
         expect(region).toBeDefined();
-        // Containment, not just directive resolution: an unattached slot would mount an empty region.
         expect(region!.contains(noticeElement())).toBe(true);
         expect(noticeElement().closest('.modeling-assessment__region--top-left')?.classList).toContain('modeling-assessment__region--mounted');
 
@@ -913,7 +899,6 @@ describe('ModelingAssessmentComponent chrome regions', () => {
     it('should reserve room for the panel on every change but frame the camera only once', () => {
         const component = fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).componentInstance;
         const panel = document.createElement('div');
-        // `reserveRoomForPanel` measures the open panel, and skips when the width is unchanged.
         let panelWidth = 0;
         const openPanel = document.createElement('div');
         openPanel.className = 'apollon-rail-disclosure__panel';
@@ -922,7 +907,6 @@ describe('ModelingAssessmentComponent chrome regions', () => {
 
         const scheduleFitView = vi.spyOn(component as any, 'scheduleFitView');
         const reserve = () => (component as any).reserveRoomForPanel(panel);
-        // The component already reserved once as it rendered; rewind to before that so this drives the whole sequence.
         editor.updateControl.mockClear();
         (component as any).hasFramedForPanelInset = false;
         (component as any).lastReservedPanelWidth = -1;

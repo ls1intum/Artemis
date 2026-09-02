@@ -176,8 +176,6 @@ describe('ResizableDirective', () => {
     });
 
     it('leaves a handle that is already an interactive control announced as that control', async () => {
-        // The lecture video player resizes from a <button> that also resets the split on enter/space. Overriding its
-        // role would rename it to an unnamed separator and shadow the keys it already owns.
         fixture.componentInstance.edges.set({ left: '.button-handle' });
         fixture.detectChanges();
         await fixture.whenStable();
@@ -186,7 +184,6 @@ describe('ResizableDirective', () => {
         expect(handle.getAttribute('role')).toBeNull();
         expect(handle.getAttribute('aria-valuenow')).toBeNull();
         expect(handle.getAttribute('aria-controls')).toBeNull();
-        // It is still a drag handle, just not a re-labelled one.
         expect(handle.style.cursor).toBe('col-resize');
     });
 

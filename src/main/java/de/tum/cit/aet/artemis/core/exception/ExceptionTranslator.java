@@ -146,11 +146,11 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * Handles bad requests, omitting alert headers when the caller handles the response body.
+     * Handles structured bad-request alerts.
      *
-     * @param ex      the bad request
-     * @param request the current request
-     * @return the problem detail response
+     * @param ex      the exception
+     * @param request the request
+     * @return the error response
      */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
@@ -180,11 +180,11 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * Reports concurrent writes as conflicts and retains the cause in the server log.
+     * Handles concurrent persistence failures.
      *
-     * @param ex      the concurrency failure
-     * @param request the current request
-     * @return the conflict response
+     * @param ex      the exception
+     * @param request the request
+     * @return the error response
      */
     @ExceptionHandler
     public ResponseEntity<ProblemDetail> handleConcurrencyFailure(ConcurrencyFailureException ex, NativeWebRequest request) {

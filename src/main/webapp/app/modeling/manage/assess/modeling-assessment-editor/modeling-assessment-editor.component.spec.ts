@@ -182,8 +182,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         const layout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent)).componentInstance as AssessmentLayoutComponent;
         expect(layout.showComplaintSection()).toBe(false);
 
-        // The form sits in the canvas column, so answering a complaint needs no scrolling; the feedback pane keeps only
-        // the feedback and the notes, and the "scroll down to review the complaint" banner is gone from both.
         const canvas = fixture.debugElement.query(By.css('[assessmentWorkspaceCanvas]'));
         expect(canvas.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
 
@@ -193,7 +191,6 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
     });
 
-    // Artemis is path-routed, so the assessment URL lives in the path and `window.location.hash` is always empty.
     it('should rewrite only the new segment of the assessment path once a random submission is locked', async () => {
         const location = TestBed.inject(Location);
         vi.spyOn(location, 'path').mockReturnValue('/course-management/1/modeling-exercises/7/submissions/new/assessment?correction-round=0');
@@ -834,8 +831,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
             expect(banner).not.toBeNull();
             expect(banner.componentInstance.appearance()).toBe('chrome');
-            // The mocked canvas renders no projection slots, so placement is asserted logically: the banner
-            // is content of the canvas component, and its top-left directive is what mounts it into the chrome.
             expect(fixture.debugElement.query(By.directive(ModelingAssessmentComponent)).query(By.directive(FeedbackSuggestionsBannerComponent))).not.toBeNull();
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(true);
         });
@@ -867,7 +862,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             component.modelingExercise.set({ id: 1, feedbackSuggestionModule: 'module_modeling_llm' } as ModelingExercise);
             component.result.set({ id: 7, feedbacks: [] } as unknown as Result);
 
-            // The shape AthenaService builds for a referenced modeling suggestion.
             const referencedSuggestion = new Feedback();
             referencedSuggestion.type = FeedbackType.AUTOMATIC;
             referencedSuggestion.reference = 'Class:node-1';
@@ -879,8 +873,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            // The feedback array is edited in place, so this only holds while the result signal still notifies its
-            // readers. Without that the suggestion is listed beside the diagram but never reaches the canvas.
             const canvas = fixture.debugElement.query(By.directive(ModelingAssessmentComponent));
             expect(canvas.componentInstance.resultFeedbacks()).toContain(referencedSuggestion);
             expect(component.highlightedElements().get('node-1')).toBeDefined();
@@ -892,7 +884,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            // Projected unconditionally (see `ModelingAssessmentRegion`), but claiming no canvas room and painting nothing.
             const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
             expect(banner.query(By.css('.feedback-suggestions-chrome'))).toBeNull();

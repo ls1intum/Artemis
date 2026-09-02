@@ -531,8 +531,6 @@ describe('Example Modeling Submission Component', () => {
     });
 
     it('should respect structured grading instruction usageCount when scoring', () => {
-        // A five-point instruction limited to one use: applying it twice must still score five, or the header
-        // disagrees with what the server will persist.
         const limitedInstruction = { id: 1, credits: 5, usageCount: 1 };
         const first = { ...mockFeedbackWithReference, credits: 5, gradingInstruction: limitedInstruction } as Feedback;
         const second = { ...mockFeedbackWithoutReference, credits: 5, gradingInstruction: limitedInstruction } as Feedback;
@@ -572,10 +570,8 @@ describe('Example Modeling Submission Component', () => {
         it('should allow submitting the assessment as soon as the page is opened', async () => {
             await startPracticeAssessment();
 
-            // The instructor's assessment is the solution and must not leak into the tutor's own assessment.
             expect(comp.result()).toBeUndefined();
             expect(comp.assessments()).toHaveLength(0);
-            // Valid without any result having been loaded, which is the only state this mode ever reaches.
             expect(comp.assessmentsAreValid()).toBe(true);
 
             const submitButton = fixture.nativeElement.querySelector('#submit-example-assessment') as HTMLButtonElement;
@@ -629,12 +625,9 @@ describe('Example Modeling Submission Component', () => {
             comp.markAllFeedbackToCorrect();
             comp.markWrongFeedback([{ reference: '1', type: FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK } as FeedbackCorrectionError]);
 
-            // Referenced feedback keeps its identity: the modeling assessment component renders correctionStatus off
-            // these very objects.
             expect(comp.referencedFeedback()[0]).toBe(referenced);
             expect(referenced.correctionStatus).toBe('CORRECT');
 
-            // Unreferenced feedback is replaced instead, so the per-item input binding of the feedback card changes.
             expect(comp.unreferencedFeedback()[0]).not.toBe(unreferenced);
             expect(comp.unreferencedFeedback()[0].correctionStatus).toBe(FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK);
         });

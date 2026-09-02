@@ -34,7 +34,6 @@ function setupCanvasAndImageMocks() {
         } as unknown as HTMLCanvasElement;
     };
 
-    // The DOM overload set includes deprecated tags; this test only requests canvas.
     // eslint-disable-next-line @typescript-eslint/no-deprecated
     const originalCreateElement = document.createElement.bind(document);
     const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation((tagName: string) => {

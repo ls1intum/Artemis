@@ -688,7 +688,6 @@ describe('ApollonDiagramDetail Component', () => {
 
             expect(fixture.componentInstance.canGenerate()).toBe(false);
 
-            // The editor's model object is not a signal, so only the model-change notification can invalidate the computed.
             currentModel = v4Model;
             emitModelChange!(v4Model);
 

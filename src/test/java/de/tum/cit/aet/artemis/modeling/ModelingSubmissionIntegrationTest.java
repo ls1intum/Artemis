@@ -1081,10 +1081,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getSubmissionsWithResultsForParticipation_withUnfinishedAssessment_stillAnswers() throws Exception {
-        // A tutor who has started an assessment but not submitted it leaves a result without a completion date. Sorting
-        // the results by that date used to fail the whole request, so a student who asked Athena for feedback while an
-        // assessment was open could not load their feedback at all.
+    void getSubmissionsWithResultsForParticipation_withUnfinishedAssessment_returnsResults() throws Exception {
         classExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         classExercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseUtilService.updateExercise(classExercise);
@@ -1104,7 +1101,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(submissions).hasSize(1);
         var results = submissions.getFirst().results();
         assertThat(results).hasSize(2);
-        // The finished assessment comes first; the one still being written has no date and sorts last.
         assertThat(results.getFirst().completionDate()).isNotNull();
         assertThat(results.getLast().completionDate()).isNull();
     }

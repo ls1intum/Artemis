@@ -150,8 +150,6 @@ describe('ExerciseUpdateTimelineComponent', () => {
     });
 
     it('should disable the opt-in while the variant group governs the dates', async () => {
-        // A group-governed exercise must not be able to ADD a date either, or the
-        // form would offer a control whose value the group immediately overrides.
         await createComponent({ hasExampleSolution: true, lockedToGroup: true });
 
         expect(toggle().disabled).toBe(true);
@@ -183,7 +181,6 @@ describe('ExerciseUpdateTimelineComponent', () => {
             'artemisApp.exercise.startDate',
             'artemisApp.exercise.dueDate',
         ]);
-        // The referenced items are the very ones rendered on the timeline, not copies.
         expect(exampleSolutionItem.orderCheckAgainst).toEqual([
             items[labels.indexOf('artemisApp.exercise.releaseDate')],
             items[labels.indexOf('artemisApp.exercise.startDate')],

@@ -444,7 +444,6 @@ describe('ModelingExerciseUpdateComponent', () => {
         toggle.click();
         fixture.detectChanges();
 
-        // The publication date joins the other exercise dates as the last (and therefore latest) timeline step.
         expect(fixture.nativeElement.querySelectorAll('jhi-modeling-exercise-timeline .timeline-item-row')).toHaveLength(5);
         expect(fixture.nativeElement.querySelector('jhi-modeling-exercise-timeline #datepicker-4')).not.toBeNull();
     });

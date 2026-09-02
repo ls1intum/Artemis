@@ -127,7 +127,6 @@ describe('ExerciseSplitPanelComponent', () => {
     });
 
     it('should not make the left panel full bleed while the modeling exercise has no editor panel, so the problem statement keeps its padding', () => {
-        // Before the participation starts there is no editor panel, and the problem statement becomes the left panel.
         fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.MODELING } as Exercise);
         fixture.componentRef.setInput('studentParticipation', undefined);
         fixture.detectChanges();
@@ -233,7 +232,6 @@ describe('ExerciseSplitPanelComponent', () => {
         fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);
         fixture.detectChanges();
 
-        // With nothing routed there is no surface to ask, so the shell decides on its own.
         expect(component.canSubmit()).toBe(true);
 
         const editable = signal(true);
@@ -243,7 +241,6 @@ describe('ExerciseSplitPanelComponent', () => {
         editable.set(false);
         expect(component.canSubmit()).toBe(false);
 
-        // A component that never goes read-only does not opt in, so it is unaffected.
         component.onOutletDeactivate();
         component.onOutletActivate({ submitExercise: () => {} });
         expect(component.canSubmit()).toBe(true);

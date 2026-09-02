@@ -370,7 +370,6 @@ describe('ResultUtils', () => {
     });
 
     describe('results without a participation', () => {
-        // See the participation note in result.utils.ts.
         const automaticResult = { id: 1, score: 80, assessmentType: AssessmentType.AUTOMATIC } as Result;
 
         it('isBuildFailedAndResultIsAutomatic does not throw and reports no build failure', () => {

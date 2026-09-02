@@ -108,7 +108,6 @@ describe('FeedbackSuggestionsBannerComponent', () => {
                 inputs: { isLoading: true, isFeedbackSuggestionsEnabled: true },
                 notice: 'loading',
                 labelKey: 'artemisApp.assessment.feedbackSuggestions.chrome.loading',
-                // Nothing to explain yet, so no affordance that suggests there is.
                 hasInfoButton: false,
             },
         ])('should render $name', ({ inputs, notice, labelKey, hasInfoButton }) => {
@@ -123,7 +122,6 @@ describe('FeedbackSuggestionsBannerComponent', () => {
             const label = fixture.debugElement.query(By.css('.feedback-suggestions-chrome__label'));
             expect(label.injector.get(TranslateDirective).jhiTranslate()).toBe(labelKey);
             expect(!!fixture.debugElement.query(By.css('[data-testid="feedback-suggestions-chrome-info"]'))).toBe(hasInfoButton);
-            // The chrome appearance must never fall back to the inline band.
             expect(fixture.debugElement.queryAll(By.directive(Message))).toHaveLength(0);
         });
 

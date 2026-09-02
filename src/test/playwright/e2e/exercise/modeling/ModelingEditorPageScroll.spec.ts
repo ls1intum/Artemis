@@ -40,7 +40,6 @@ test.describe('Apollon canvas is never scrolled past', { tag: '@fast' }, () => {
         const containerScrolls = await page.locator('#course-body-container').evaluate((element) => element.scrollHeight > element.clientHeight + 1);
         expect(pageScrolls || containerScrolls).toBe(true);
 
-        // With scroll lock engaged, a wheel over the canvas must scroll the page instead of zooming.
         const scroller = page.locator('#course-body-container');
         const before = await scroller.evaluate((element) => element.scrollTop);
         const zoom = page.locator('[data-apollon-control="apollon:zoom"]');

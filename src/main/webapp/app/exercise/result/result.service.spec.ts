@@ -368,8 +368,6 @@ describe('ResultService', () => {
 
             expect(resultService.getResultString(modelingResult, modelingExercise, undefined, true)).toBe('artemisApp.result.resultString.short');
             expect(translateServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.result.resultString.short', { relativeScore: 42 });
-            // The fixture exercise carries no course, which legitimately reports a rounding-settings exception; only
-            // the "undefined result or exercise" report must be absent.
             expect(captureExceptionSpy).not.toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });
 

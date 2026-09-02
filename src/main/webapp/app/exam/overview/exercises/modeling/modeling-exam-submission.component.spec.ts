@@ -163,7 +163,6 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(modelingEditor).not.toBeNull();
             const umlModel = modelingEditor.componentInstance.umlModel();
             expect(umlModel).toBeDefined();
-            // Normalized to whatever schema version Apollon currently migrates to.
             expect(umlModel.version).toMatch(/^4\.\d+\.\d+$/);
             expect(umlModel.type).toBe('ClassDiagram');
             expect(modelingEditor.componentInstance.withExplanation()).toBe(true);

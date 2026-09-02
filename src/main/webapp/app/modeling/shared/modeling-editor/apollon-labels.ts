@@ -24,15 +24,7 @@ function setTranslatedCallback(labels: Partial<ApollonLabels>, tree: Record<stri
     }
 }
 
-/**
- * Builds Apollon overrides while retaining callbacks for labels with runtime values.
- *
- * Only locales that actually differ from Apollon carry keys: `DEFAULT_LABELS` is
- * already English, so `i18n/en` deliberately defines none and every English string
- * comes from the library. The translation consistency check explicitly exempts this
- * namespace; mirroring it would create hundreds of duplicates to synchronize with
- * every Apollon release.
- */
+/** Builds localized overrides for Apollon's default labels. */
 export function createApollonLabels(translator: ApollonLabelTranslator): Partial<ApollonLabels> {
     const translationTree = translator.instant(APOLLON_TRANSLATION_PREFIX);
     if (!isRecord(translationTree)) {
