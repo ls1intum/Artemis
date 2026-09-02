@@ -73,6 +73,33 @@ describe('FullscreenPresentationService', () => {
         vi.unstubAllGlobals();
     });
 
+    it('allows a fresh promotion after an escaped presentation is restored', () => {
+        parent = document.createElement('div');
+        const editor = document.createElement('div');
+        const nextEditor = document.createElement('div');
+        parent.append(editor, nextEditor);
+        document.body.append(parent);
+        let escape = () => {};
+        vi.stubGlobal(
+            'IntersectionObserver',
+            class {
+                constructor(callback: () => void) {
+                    escape = callback;
+                }
+                observe() {}
+                disconnect() {}
+            },
+        );
+        (parent as unknown as { checkVisibility: () => boolean }).checkVisibility = () => false;
+
+        service.promote(editor, () => service.restore());
+        escape();
+
+        expect(service.promote(nextEditor)).toBe(true);
+        expect(service.owns(nextEditor)).toBe(true);
+        vi.unstubAllGlobals();
+    });
+
     it('escapes when the promoted editor is destroyed underneath it', async () => {
         parent = document.createElement('div');
         const editor = document.createElement('div');

@@ -456,7 +456,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private restoreFullscreenPresentation(): void {
         const assessmentFrame = this.assessmentFrame()?.nativeElement;
-        if (!this.fullscreenPresentation.owns(assessmentFrame)) {
+        if (!this.fullscreenActive() && !this.fullscreenPresentation.owns(assessmentFrame)) {
             return;
         }
 

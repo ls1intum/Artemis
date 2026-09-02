@@ -34,7 +34,7 @@ describe('ModelingExplanationSurfaceComponent', () => {
             readonly disconnect = vi.fn();
             readonly unobserve = vi.fn();
 
-            constructor(callback: ResizeObserverCallback) {
+            constructor(readonly callback: ResizeObserverCallback) {
                 resizeObservers.push({ callback, observe: this.observe, disconnect: this.disconnect });
             }
         } as unknown as typeof ResizeObserver;
@@ -73,7 +73,8 @@ describe('ModelingExplanationSurfaceComponent', () => {
         const notch = surfaceDebug.query(By.css('.modeling-explanation-surface__notch')).nativeElement as HTMLElement;
         const label = notch.querySelector('span')!;
         const notchObserver = mutationObservers.find((observer) => observer.observe.mock.calls.some(([target]) => target === notch))!;
-        const surfaceObserver = resizeObservers.find((observer) => observer.observe.mock.calls.some(([target]) => target === surface))!;
+        // jhiResizable observes the same element. The surface component registers its observer afterwards.
+        const surfaceObserver = (surfaceDebug.componentInstance as unknown as { resizeObserver: (typeof resizeObservers)[number] }).resizeObserver;
         Object.defineProperty(label, 'scrollWidth', { configurable: true, value: 180 });
 
         notchObserver.callback([], {} as MutationObserver);
@@ -113,9 +114,12 @@ describe('ModelingExplanationSurfaceComponent', () => {
     });
 
     it('disconnects both layout observers', () => {
-        const surface = fixture.debugElement.query(By.css('.modeling-explanation-surface__surface')).nativeElement as HTMLElement;
         const notch = fixture.debugElement.query(By.css('.modeling-explanation-surface__notch')).nativeElement as HTMLElement;
-        const surfaceObserver = resizeObservers.find((observer) => observer.observe.mock.calls.some(([target]) => target === surface))!;
+        const surfaceObserver = (
+            fixture.debugElement.query(By.directive(ModelingExplanationSurfaceComponent)).componentInstance as unknown as {
+                resizeObserver: (typeof resizeObservers)[number];
+            }
+        ).resizeObserver;
         const notchObserver = mutationObservers.find((observer) => observer.observe.mock.calls.some(([target]) => target === notch))!;
         fixture.destroy();
 

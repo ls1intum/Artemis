@@ -19,6 +19,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
     template: '',
 })
 class StubModelingEditorComponent {
+    tile = input(false);
     umlModel = input<UMLModel>();
     diagramType = input<UMLDiagramType>();
     problemStatement = input<string>();

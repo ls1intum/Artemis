@@ -851,7 +851,13 @@ describe('ModelingAssessmentEditorComponent', () => {
 
             const banner = fixture.debugElement.query(By.directive(FeedbackSuggestionsBannerComponent));
             expect(banner.injector.get(ModelingAssessmentTopLeftDirective).occupied()).toBe(false);
-            expect(component.legendHighlights()).toEqual([{ color: FeedbackHighlightColor.CYAN, text: 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions' }]);
+            expect(component.legendHighlights()).toEqual([
+                {
+                    color: FeedbackHighlightColor.CYAN,
+                    text: 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions',
+                    info: 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo',
+                },
+            ]);
         });
 
         it('should hand a referenced suggestion to the canvas, so Apollon can draw and highlight it', async () => {

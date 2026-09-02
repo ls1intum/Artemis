@@ -115,11 +115,6 @@ if (typeof Element.prototype.matches === 'undefined') {
     } as typeof Element.prototype.matches;
 }
 
-// jsdom leaves document.fullscreenEnabled undefined; every supported browser reports a boolean
-if (document.fullscreenEnabled === undefined) {
-    Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, get: () => true });
-}
-
 // Ensure Element.prototype.checkVisibility exists (jsdom does not implement it; every supported browser does)
 if (typeof Element.prototype.checkVisibility === 'undefined') {
     Element.prototype.checkVisibility = function (this: Element): boolean {

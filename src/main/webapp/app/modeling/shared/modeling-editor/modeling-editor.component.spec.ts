@@ -138,8 +138,10 @@ describe('ModelingEditorComponent', () => {
     const diagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     const classDiagram = deepClone(testClassDiagram) as unknown as UMLModel;
     const route = { params: of({ id: 1, courseId: 123 }), snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
+    const originalFullscreenEnabled = Object.getOwnPropertyDescriptor(document, 'fullscreenEnabled');
 
     beforeEach(() => {
+        Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
         diagram.id = 1;
         diagram.jsonRepresentation = JSON.stringify(classDiagram);
 
@@ -164,6 +166,11 @@ describe('ModelingEditorComponent', () => {
             component.ngOnDestroy();
         }
         fixture?.destroy();
+        if (originalFullscreenEnabled) {
+            Object.defineProperty(document, 'fullscreenEnabled', originalFullscreenEnabled);
+        } else {
+            Reflect.deleteProperty(document, 'fullscreenEnabled');
+        }
         vi.restoreAllMocks();
     });
 

@@ -73,6 +73,16 @@ describe('navbar util shell metrics', () => {
         expect(document.documentElement.style.getPropertyValue('--footer-height')).toBe('32px');
     });
 
+    it('measures once when ResizeObserver is unavailable', () => {
+        addElement('jhi-navbar', 64);
+        globalThis.ResizeObserver = undefined as unknown as typeof ResizeObserver;
+
+        expect(() => startObserving()).not.toThrow();
+        vi.runAllTimers();
+
+        expect(document.documentElement.style.getPropertyValue('--navbar-height')).toBe('64px');
+    });
+
     it('snaps against devicePixelRatio, so a whole CSS pixel is not assumed to be a whole device pixel', () => {
         const originalRatio = window.devicePixelRatio;
         Object.defineProperty(window, 'devicePixelRatio', { value: 2, configurable: true });

@@ -268,7 +268,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
             (this.elementRef.nativeElement as ApollonEditorE2eHostElement).__apollonEditor = this.apollonEditor;
             this.mountEditorRegions();
-            this.observeChromeMount();
+            this.observeChromeLayout();
 
             this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
                 if (this.isDestroyed) {
@@ -376,10 +376,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
         const topLeft = this.editorTopLeftRegion()?.nativeElement;
         const hasProjectedTopLeft = !!topLeft?.querySelector('.modeling-editor__top-left')?.childElementCount;
-        if (topLeft && (this.hasEditorTopLeftRegion() || hasProjectedTopLeft)) {
+        const shouldMountTopLeft = !!topLeft && (this.hasEditorTopLeftRegion() || hasProjectedTopLeft);
+        if (shouldMountTopLeft && !this.topLeftRegionMounted) {
             this.apollonEditor.getRegionElement('top-left').append(topLeft);
             this.topLeftRegionMounted = true;
-        } else if (this.topLeftRegionMounted) {
+        } else if (!shouldMountTopLeft && this.topLeftRegionMounted) {
             this.releaseHostRegion('top-left', topLeft);
             this.topLeftRegionMounted = false;
         }
@@ -410,7 +411,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     private observeChromeLayout(): void {
         const editorFrame = this.editorFrame()?.nativeElement;
-        if (!editorFrame) {
+        if (!editorFrame || this.chromeResizeObserver) {
             return;
         }
 
@@ -587,7 +588,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     private restoreFullscreenPresentation(): void {
         const editorFrame = this.editorFrame()?.nativeElement;
-        if (!this.fullscreenPresentation.owns(editorFrame)) {
+        if (!this.fullscreenActive() && !this.fullscreenPresentation.owns(editorFrame)) {
             return;
         }
 

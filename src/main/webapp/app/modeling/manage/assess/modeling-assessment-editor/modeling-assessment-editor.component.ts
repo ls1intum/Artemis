@@ -117,6 +117,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             highlights.push({
                 color: FeedbackHighlightColor.CYAN,
                 text: this.isFeedbackSuggestionsEnabled ? 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions' : 'artemisApp.modelingAssessment.legend.automaticAssessment',
+                info: this.isFeedbackSuggestionsEnabled
+                    ? 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo'
+                    : 'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable',
             });
         }
         if (this.highlightMissingFeedback()) {

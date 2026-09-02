@@ -117,6 +117,8 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
     /** Apollon lays the canvas out around its chrome, so a control being on screen is what makes a measurement final. */
     const canvasIsLaidOut = (page: Page) => expect(page.locator('jhi-modeling-assessment [data-apollon-control="apollon:zoom"]')).toBeVisible();
 
+    const waitForLayout = (page: Page) => page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+
     test('shows loaded automatic feedback in the legend without changing the canvas size', async ({ login, page, exerciseAssessment }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
         // The tutor, not the instructor: this is the tutor assessment page, and the notice is gated on the logged-in
@@ -125,9 +127,10 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
         await dismissPasskeyReminderIfPresent(page);
         await exerciseAssessment.clickHaveReadInstructionsButton();
         await exerciseAssessment.clickStartNewAssessment();
-        const automaticFeedbackLegendItem = page.locator('jhi-modeling-assessment-legend .assessment-legend__item').filter({ hasText: /AI feedback suggestion/i });
+        const automaticFeedbackLegendItem = page.locator('jhi-modeling-assessment-legend .assessment-legend__item').filter({ hasText: /Automatic assessment/i });
         await expect(automaticFeedbackLegendItem).toHaveCount(0);
         await canvasIsLaidOut(page);
+        await waitForLayout(page);
         const without = await canvasSize(page);
         await expectNoScrollPastApollonCanvas(page);
 
@@ -138,6 +141,7 @@ test.describe('Athena chrome on the tutor assessment page', { tag: '@fast' }, ()
         await expect(page.locator('jhi-modeling-assessment .feedback-suggestions-chrome')).toHaveCount(0);
 
         await canvasIsLaidOut(page);
+        await waitForLayout(page);
         await expect.poll(() => canvasSize(page)).toEqual(without);
         await expectNoScrollPastApollonCanvas(page);
     });

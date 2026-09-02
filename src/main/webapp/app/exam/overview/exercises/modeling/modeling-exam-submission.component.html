@@ -33,7 +33,7 @@
                         [withExplanation]="true"
                         [explanation]="explanationText()"
                         (explanationChange)="explanationChanged($event)"
-                        [savedStatus]="{ isChanged: !studentSubmission().isSynced, isSaving: false }"
+                        [savedStatus]="savedStatus()"
                     />
                 </div>
             }

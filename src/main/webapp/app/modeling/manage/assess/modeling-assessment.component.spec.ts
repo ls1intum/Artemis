@@ -172,6 +172,7 @@ describe('ModelingAssessmentComponent', () => {
     const PACKAGE_ID = 'b234e5cb-33e3-4957-ae04-f7990ce8571a';
     const CONNECTED_CLASS_ID = '2f67120e-b491-4222-beb1-79e87c2cf54d';
     const RELATIONSHIP_ID = '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd';
+    const originalFullscreenEnabled = Object.getOwnPropertyDescriptor(document, 'fullscreenEnabled');
 
     const makeMockModel = () => deepClone(testClassDiagram as unknown as UMLModel);
 
@@ -218,6 +219,7 @@ describe('ModelingAssessmentComponent', () => {
     };
 
     beforeEach(() => {
+        Object.defineProperty(document, 'fullscreenEnabled', { configurable: true, value: true });
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), ModelingAssessmentComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -239,6 +241,11 @@ describe('ModelingAssessmentComponent', () => {
             comp.ngOnDestroy();
         }
         fixture?.destroy();
+        if (originalFullscreenEnabled) {
+            Object.defineProperty(document, 'fullscreenEnabled', originalFullscreenEnabled);
+        } else {
+            Reflect.deleteProperty(document, 'fullscreenEnabled');
+        }
         vi.restoreAllMocks();
     });
 

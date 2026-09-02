@@ -69,44 +69,6 @@
     }
 }
 
-.modeling-assessment-highlights {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-
-    h3 {
-        margin: 0;
-        color: var(--tumaet-ui-text-color);
-        font-size: 1rem;
-        font-weight: 650;
-    }
-
-    &__item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: var(--tumaet-ui-text-color);
-        font-size: 0.875rem;
-    }
-
-    &__swatch {
-        display: block;
-        width: 1.25rem;
-        height: 1.25rem;
-        flex: 0 0 auto;
-        border: 1px solid var(--tumaet-ui-border-color);
-        border-radius: var(--tumaet-ui-radius-sm);
-    }
-}
-
-.color-red {
-    background: var(--apollon-assessment-negative-bg, color-mix(in srgb, var(--tumaet-ui-text-color) 18%, transparent));
-}
-
-.color-cyan {
-    background: color-mix(in srgb, var(--tumaet-ui-primary-color) 35%, transparent);
-}
-
 .modeling-assessment-not-found {
     display: flex;
     align-items: center;

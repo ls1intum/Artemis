@@ -604,6 +604,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         complaint.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         complaint.getResult().setHasComplaint(true);
         complaint.getResult().setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        complaint.getResult().setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepository.save(complaint.getResult());
         complaintRepo.save(complaint);
 
@@ -612,8 +613,24 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         final var submissionWithComplaintDTOs = request.getList("/api/exercise/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK,
                 SubmissionWithComplaintDTO.class, params);
 
-        // The submission carries only the Athena result, so it is skipped rather than reported - but the request stands.
-        assertThat(submissionWithComplaintDTOs).as("the dashboard answers instead of failing").isEmpty();
+        assertThat(submissionWithComplaintDTOs).hasSize(1);
+        assertThat(submissionWithComplaintDTOs.getFirst().complaint().getResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC_ATHENA);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintAboutPreliminaryAthenaExamFeedback_isRejected() throws Exception {
+        final TextExercise examExercise = examUtilService.addEnrolledCourseExamWithReviewDatesExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        final TextSubmission submission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
+        final Result result = Objects.requireNonNull(submission.getLatestResult());
+        result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        resultRepository.save(result);
+        final var requestDto = new ComplaintRequestDTO(result.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(examExercise.getExam().getId()));
+
+        request.post("/api/assessment/complaints", requestDto, HttpStatus.BAD_REQUEST);
+
+        assertThat(complaintRepo.findByResultId(result.getId())).isNotPresent();
     }
 
     @Test

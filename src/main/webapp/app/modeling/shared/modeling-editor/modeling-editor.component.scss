@@ -203,7 +203,7 @@
 }
 
 @container (max-width: 42rem) {
-    .modeling-editor__actions [data-slot='button'] > span {
+    .modeling-editor__actions .apollon-chrome-iconbtn > span {
         display: none;
     }
 

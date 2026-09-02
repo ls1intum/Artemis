@@ -1,8 +1,9 @@
-import { Component, computed, input, linkedSignal, model, output, untracked } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, model, output, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 /**
  * Grading timeline shared by the update forms of the manually assessed exercise types (modeling, text, file upload).
@@ -23,6 +24,7 @@ export class ExerciseUpdateTimelineComponent {
     readonly isImport = input(false);
     /** Dates are governed by the exercise's variant group; see {@link TimelineComponent}. */
     readonly lockedToGroup = input(false);
+    readonly includedInOverallScore = input<IncludedInOverallScore | undefined>(IncludedInOverallScore.INCLUDED_COMPLETELY);
     readonly lockedClick = output<void>();
 
     readonly releaseDate = model<Dayjs | undefined>();
@@ -65,6 +67,17 @@ export class ExerciseUpdateTimelineComponent {
 
     readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
+    constructor() {
+        let previouslyHadExampleSolution: boolean | undefined;
+        effect(() => {
+            const hasExampleSolution = this.hasExampleSolution();
+            if (previouslyHadExampleSolution && !hasExampleSolution) {
+                this.exampleSolutionPublicationDate.set(undefined);
+            }
+            previouslyHadExampleSolution = hasExampleSolution;
+        });
+    }
+
     protected onPublicationOptInChange(visible: boolean): void {
         this.isExampleSolutionPublicationDateVisible.set(visible);
         if (!visible) {
@@ -104,12 +117,8 @@ export class ExerciseUpdateTimelineComponent {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
                 date: this.exampleSolutionPublicationDate,
-                // Only the release and start dates are hard lower bounds server side
-                // (`BaseExercise.isValidExampleSolutionPublicationDate`). The due-date bound is conditional — an
-                // exercise not included in the score may publish its solution earlier — and the assessment due date is
-                // never a bound at all. The default "after every preceding item" check would reject schedules the
-                // server accepts.
-                orderCheckAgainst: [releaseDateItem, startDateItem],
+                orderCheckAgainst:
+                    this.includedInOverallScore() === IncludedInOverallScore.NOT_INCLUDED ? [releaseDateItem, startDateItem] : [releaseDateItem, startDateItem, dueDateItem],
             });
         }
         return timelineItems;

@@ -61,6 +61,10 @@ let activeObserver: ResizeObserver | undefined;
  * re-creation during HMR, overlapping test fixtures) cannot silently disable a live observer.
  */
 export function observeShellMetrics(): () => void {
+    if (typeof ResizeObserver === 'undefined') {
+        measureShellMetrics();
+        return () => {};
+    }
     const observer = new ResizeObserver(() => measureShellMetrics());
     activeObserver = observer;
     reattachShellMetricsObserver();

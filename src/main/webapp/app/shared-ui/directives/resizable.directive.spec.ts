@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ResizableConstraints, ResizableDirective, ResizableEdges, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
 
 @Component({
@@ -81,8 +82,20 @@ describe('ResizableDirective', () => {
     let fixture: ComponentFixture<ResizableTestHostComponent>;
     let host: HTMLElement;
     let panel: HTMLElement;
+    let resizeObservers: Array<{ callback: ResizeObserverCallback; observe: ReturnType<typeof vi.fn>; disconnect: ReturnType<typeof vi.fn> }>;
+    const originalResizeObserver = globalThis.ResizeObserver;
 
     beforeEach(async () => {
+        resizeObservers = [];
+        globalThis.ResizeObserver = class {
+            readonly observe = vi.fn();
+            readonly disconnect = vi.fn();
+            readonly unobserve = vi.fn();
+
+            constructor(callback: ResizeObserverCallback) {
+                resizeObservers.push({ callback, observe: this.observe, disconnect: this.disconnect });
+            }
+        } as unknown as typeof ResizeObserver;
         await TestBed.configureTestingModule({ imports: [ResizableTestHostComponent] }).compileComponents();
         fixture = TestBed.createComponent(ResizableTestHostComponent);
         host = fixture.nativeElement as HTMLElement;
@@ -91,6 +104,23 @@ describe('ResizableDirective', () => {
         panel.getBoundingClientRect = () => ({ width: 200, height: 100, left: 100, top: 0, right: 300, bottom: 100, x: 100, y: 0, toJSON: () => ({}) }) as DOMRect;
         fixture.componentInstance.constraints.set({ minWidth: 100, maxWidth: 400 });
         fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        globalThis.ResizeObserver = originalResizeObserver;
+    });
+
+    it('refreshes handle metadata when the host resizes and disconnects the observer on destroy', () => {
+        const directive = fixture.debugElement.query(By.directive(ResizableDirective)).injector.get(ResizableDirective);
+        const observer = resizeObservers.find(({ observe }) => observe.mock.calls.some(([target]) => target === panel))!;
+        const scheduleHandleStyles = vi.spyOn(directive as any, 'scheduleHandleStyles');
+
+        expect(observer.observe).toHaveBeenCalledExactlyOnceWith(panel);
+        observer.callback([], {} as ResizeObserver);
+        expect(scheduleHandleStyles).toHaveBeenCalledOnce();
+
+        fixture.destroy();
+        expect(observer.disconnect).toHaveBeenCalledOnce();
     });
 
     it('grows the width when dragging the left handle leftwards and writes inline width', () => {

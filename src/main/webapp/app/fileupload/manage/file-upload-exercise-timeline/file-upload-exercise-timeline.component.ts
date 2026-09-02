@@ -2,6 +2,7 @@ import { Component, input, model, output } from '@angular/core';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ExerciseUpdateTimelineComponent } from 'app/exercise/exercise-timeline/exercise-update-timeline/exercise-update-timeline.component';
 import { Dayjs } from 'dayjs/esm';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-timeline',
@@ -12,6 +13,7 @@ export class FileUploadExerciseTimelineComponent {
     readonly hasExampleSolution = input(false);
     readonly isImport = input(false);
     readonly lockedToGroup = input(false);
+    readonly includedInOverallScore = input<IncludedInOverallScore | undefined>(IncludedInOverallScore.INCLUDED_COMPLETELY);
     readonly lockedClick = output<void>();
 
     readonly releaseDate = model<Dayjs | undefined>();

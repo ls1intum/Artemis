@@ -107,7 +107,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
     /** The one highlight this view paints: the elements a tutor in training assessed differently from the sample. */
     readonly legendHighlights = computed<ModelingAssessmentLegendHighlight[]>(() =>
-        this.toComplete() || this.highlightedElements().size > 0 ? [{ color: this.highlightColor, text: 'artemisApp.modelingAssessment.legend.incorrectAssessment' }] : [],
+        this.highlightedElements().size > 0 ? [{ color: this.highlightColor, text: 'artemisApp.modelingAssessment.legend.incorrectAssessment' }] : [],
     );
 
     protected readonly trainingModeOptions = computed(() => {

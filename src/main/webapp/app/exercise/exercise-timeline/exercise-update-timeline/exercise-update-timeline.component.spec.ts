@@ -9,6 +9,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExerciseTimelineStubComponent } from 'test/helpers/stubs/exercise/exercise-timeline-stub.component';
 import { ExerciseUpdateTimelineComponent } from './exercise-update-timeline.component';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('ExerciseUpdateTimelineComponent', () => {
     let component: ExerciseUpdateTimelineComponent;
@@ -167,7 +168,7 @@ describe('ExerciseUpdateTimelineComponent', () => {
 
         expect(emitSpy).toHaveBeenCalledExactlyOnceWith(timelineStatus);
     });
-    it('should only order the example solution publication date against the release and start dates', async () => {
+    it('should require a scored exercise to publish its example solution after the due date', async () => {
         await createComponent({ hasExampleSolution: true, exampleSolutionPublicationDate: dayjs() });
 
         const items = component.timelineItems();
@@ -175,8 +176,31 @@ describe('ExerciseUpdateTimelineComponent', () => {
         const labels = items.map((item) => item.labelStringKey);
 
         expect(exampleSolutionItem.labelStringKey).toBe('artemisApp.exercise.exampleSolutionPublicationDate');
-        expect(exampleSolutionItem.orderCheckAgainst?.map((item) => item.labelStringKey)).toEqual(['artemisApp.exercise.releaseDate', 'artemisApp.exercise.startDate']);
+        expect(exampleSolutionItem.orderCheckAgainst?.map((item) => item.labelStringKey)).toEqual([
+            'artemisApp.exercise.releaseDate',
+            'artemisApp.exercise.startDate',
+            'artemisApp.exercise.dueDate',
+        ]);
         // The referenced items are the very ones rendered on the timeline, not copies.
-        expect(exampleSolutionItem.orderCheckAgainst).toEqual([items[labels.indexOf('artemisApp.exercise.releaseDate')], items[labels.indexOf('artemisApp.exercise.startDate')]]);
+        expect(exampleSolutionItem.orderCheckAgainst).toEqual([
+            items[labels.indexOf('artemisApp.exercise.releaseDate')],
+            items[labels.indexOf('artemisApp.exercise.startDate')],
+            items[labels.indexOf('artemisApp.exercise.dueDate')],
+        ]);
+    });
+
+    it('should allow an unscored exercise to publish its example solution before the due date', async () => {
+        await createComponent({ hasExampleSolution: true, exampleSolutionPublicationDate: dayjs(), includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED });
+
+        expect(component.timelineItems()[4].orderCheckAgainst).toEqual([component.timelineItems()[0], component.timelineItems()[1]]);
+    });
+
+    it('should clear the publication date when an existing example solution is removed', async () => {
+        await createComponent({ hasExampleSolution: true, exampleSolutionPublicationDate: dayjs() });
+
+        fixture.componentRef.setInput('hasExampleSolution', false);
+        fixture.detectChanges();
+
+        expect(component.exampleSolutionPublicationDate()).toBeUndefined();
     });
 });
