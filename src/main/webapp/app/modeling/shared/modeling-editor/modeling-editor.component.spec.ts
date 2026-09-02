@@ -346,6 +346,7 @@ describe('ModelingEditorComponent', () => {
         const disclosure = island.querySelector('[data-testid="modeling-editor-problem-statement"]') as HTMLButtonElement;
         const horizontalResizer = island.querySelector('.apollon-rail-disclosure__resizer--left') as HTMLElement;
         const verticalResizer = island.querySelector('.apollon-rail-disclosure__resizer--bottom') as HTMLElement;
+        const scheduleChromePlacement = vi.spyOn(component as any, 'scheduleChromePlacement');
         expect(island.hidden).toBe(true);
         expect(editor.getRegionElement).not.toHaveBeenCalledWith('right-rail');
 
@@ -365,12 +366,14 @@ describe('ModelingEditorComponent', () => {
         expect(editor._regionElements.get('right-rail')?.contains(island)).toBe(true);
         expect(panel.hidden).toBe(true);
 
+        scheduleChromePlacement.mockClear();
         disclosure.focus();
         disclosure.click();
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(component.problemStatementVisible()).toBe(true);
+        expect(scheduleChromePlacement).toHaveBeenCalled();
         expect(disclosure.getAttribute('aria-expanded')).toBe('true');
         expect(panel.hidden).toBe(false);
         expect(island.querySelector('.markdown-preview')).not.toBeNull();
@@ -397,11 +400,13 @@ describe('ModelingEditorComponent', () => {
         expect(panel.style.height).toBe('496px');
         expect(verticalResizer.getAttribute('aria-valuenow')).toBe('496');
 
+        scheduleChromePlacement.mockClear();
         disclosure.click();
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(component.problemStatementVisible()).toBe(false);
+        expect(scheduleChromePlacement).toHaveBeenCalled();
         expect(panel.hidden).toBe(true);
         expect(editor.releaseRegionElement).not.toHaveBeenCalledWith('right-rail');
         expect(editor._regionElements.get('right-rail')?.contains(island)).toBe(true);

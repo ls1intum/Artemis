@@ -217,7 +217,10 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             this.fullscreenActive();
             this.bottomCenterElevated();
             if (!this.isDestroyed && this.apollonEditor) {
-                untracked(() => this.mountEditorRegions());
+                untracked(() => {
+                    this.mountEditorRegions();
+                    this.scheduleChromePlacement();
+                });
             }
         });
     }
