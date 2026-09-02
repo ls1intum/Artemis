@@ -11,9 +11,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.ParticipantCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.PointBucket;
-import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.QuestionAggregate;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.QuizOverviewAggregate;
 import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.RatedSelection;
 
@@ -25,47 +23,15 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizStatisticProjections.RatedSele
  * Instructor test runs for exam exercises are excluded. Course practice participations remain eligible even though
  * they also use the test-run flag.
  * <p>
- * The correlated anti-joins are required because results reference submissions while the latest-result rule is scoped to a participation and rating bucket. The normalized lookup
- * is
- * supported by {@code idx_submission_participation_submission_date} and {@code idx_result_submission_completion_date}; duplicate-answer anti-joins remain separate because they
- * select the greatest answer id within one submission and question.
+ * The three remaining correlated anti-joins serve distinct response shapes and are required because results reference submissions while the latest-result rule is scoped to a
+ * participation and rating bucket. Replacing them with a window function in a derived query prevents Hibernate from bootstrapping when JDBC metadata access is disabled. The
+ * normalized lookup is supported by {@code idx_submission_participation_submission_date} and {@code idx_result_submission_completion_date}; duplicate-answer anti-joins select the
+ * greatest answer id within one submission and question.
  */
 @Profile(PROFILE_CORE)
 @Lazy
 @org.springframework.stereotype.Repository
 public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Long> {
-
-    /**
-     * Counts the latest completed result of every participation and rated/unrated bucket.
-     *
-     * @param exerciseId the quiz exercise id
-     * @return participant counts grouped by rating bucket
-     */
-    @Query("""
-            SELECT COALESCE(result.rated, FALSE) AS rated,
-                COUNT(result.id) AS participantCount
-            FROM Result result
-                JOIN result.submission submission
-                JOIN submission.participation participation
-                JOIN participation.exercise exercise
-            WHERE result.exerciseId = :exerciseId
-                AND result.score IS NOT NULL
-                AND result.completionDate IS NOT NULL
-                AND (COALESCE(participation.testRun, FALSE) = FALSE OR exercise.exerciseGroup IS NULL)
-                AND NOT EXISTS (
-                    SELECT newer.id
-                    FROM Result newer
-                        JOIN newer.submission newerSubmission
-                    WHERE newerSubmission.participation.id = submission.participation.id
-                        AND COALESCE(newer.rated, FALSE) = COALESCE(result.rated, FALSE)
-                        AND newer.score IS NOT NULL
-                        AND newer.completionDate IS NOT NULL
-                        AND (newer.completionDate > result.completionDate
-                            OR (newer.completionDate = result.completionDate AND newer.id > result.id))
-                )
-            GROUP BY COALESCE(result.rated, FALSE)
-            """)
-    List<ParticipantCount> findParticipantCounts(@Param("exerciseId") long exerciseId);
 
     /**
      * Groups the latest completed result of every participation and rated/unrated bucket by score.
@@ -103,54 +69,9 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
     List<PointBucket> findPointStatistic(@Param("exerciseId") long exerciseId);
 
     /**
-     * Counts participants and fully correct answers for one question.
-     * <p>
-     * If a submission contains duplicate answers for the question, only the answer with the greatest id is counted. Results use the same latest-per-participation and rated-bucket
-     * rule as {@link #findPointStatistic(long)}.
-     *
-     * @param questionId     the quiz question id
-     * @param questionPoints the points required for a fully correct answer
-     * @return one aggregate for each populated rated/unrated bucket
-     */
-    @Query("""
-            SELECT COALESCE(result.rated, FALSE) AS rated,
-                COUNT(answer.id) AS participantCount,
-                SUM(CASE WHEN answer.scoreInPoints >= :questionPoints THEN 1 ELSE 0 END) AS correctCount
-            FROM SubmittedAnswer answer
-                JOIN answer.submission submission
-                JOIN submission.participation participation
-                JOIN participation.exercise exercise
-                JOIN Result result ON result.submission = submission
-            WHERE answer.quizQuestion.id = :questionId
-                AND NOT EXISTS (
-                    SELECT duplicateAnswer.id
-                    FROM SubmittedAnswer duplicateAnswer
-                    WHERE duplicateAnswer.submission = submission
-                        AND duplicateAnswer.quizQuestion = answer.quizQuestion
-                        AND duplicateAnswer.id > answer.id
-                )
-                AND result.score IS NOT NULL
-                AND result.completionDate IS NOT NULL
-                AND (COALESCE(participation.testRun, FALSE) = FALSE OR exercise.exerciseGroup IS NULL)
-                AND NOT EXISTS (
-                    SELECT newer.id
-                    FROM Result newer
-                        JOIN newer.submission newerSubmission
-                    WHERE newerSubmission.participation.id = submission.participation.id
-                        AND COALESCE(newer.rated, FALSE) = COALESCE(result.rated, FALSE)
-                        AND newer.score IS NOT NULL
-                        AND newer.completionDate IS NOT NULL
-                        AND (newer.completionDate > result.completionDate
-                            OR (newer.completionDate = result.completionDate AND newer.id > result.id))
-                )
-            GROUP BY COALESCE(result.rated, FALSE)
-            """)
-    List<QuestionAggregate> findQuestionAggregate(@Param("questionId") long questionId, @Param("questionPoints") double questionPoints);
-
-    /**
      * Counts participants and fully correct answers for every question in a quiz.
      * <p>
-     * Duplicate answers and superseded results are resolved by the same rules as {@link #findQuestionAggregate(long, double)}.
+     * Duplicate answers and superseded results use the same greatest-id and latest-result rules as the question selection query.
      *
      * @param exerciseId the quiz exercise id
      * @return aggregates grouped by question and rated/unrated bucket
@@ -193,18 +114,18 @@ public interface QuizStatisticsRepository extends Repository<SubmittedAnswer, Lo
     List<QuizOverviewAggregate> findQuestionAggregatesForQuiz(@Param("exerciseId") long exerciseId);
 
     /**
-     * Loads the selections used to calculate component counters for one question.
+     * Loads the selections and scores used to calculate all counters for one question.
      * <p>
      * Only the greatest-id answer per submission/question and the latest completed result per participation/rated bucket contribute.
      * At most one row per participation and rating bucket is returned, so materializing the result remains bounded by the participant population and avoids a transactional
-     * streaming
-     * boundary in the service.
+     * streaming boundary in the service.
      *
      * @param questionId the quiz question id
-     * @return the selected answer values and their rated/unrated buckets
+     * @return the selected answer values, scores, and normalized rating buckets
      */
     @Query("""
             SELECT answer.selection AS selection,
+                answer.scoreInPoints AS scoreInPoints,
                 COALESCE(result.rated, FALSE) AS rated
             FROM SubmittedAnswer answer
                 JOIN answer.submission submission

@@ -10,49 +10,41 @@ public final class QuizStatisticProjections {
     private QuizStatisticProjections() {
     }
 
+    /**
+     * A score bucket and its participant count for one normalized rating bucket.
+     */
     public interface PointBucket {
 
-        Boolean getRated();
+        boolean getRated();
 
-        Double getScore();
+        double getScore();
 
         long getParticipantCount();
     }
 
     /**
-     * Participant totals grouped by the normalized rated bucket.
+     * Participant and correctness counts for one quiz question and normalized rating bucket.
      */
-    public interface ParticipantCount {
-
-        Boolean getRated();
-
-        long getParticipantCount();
-    }
-
-    public interface QuestionAggregate {
-
-        Boolean getRated();
-
-        long getParticipantCount();
-
-        long getCorrectCount();
-    }
-
     public interface QuizOverviewAggregate {
 
         long getQuestionId();
 
-        Boolean getRated();
+        boolean getRated();
 
         long getParticipantCount();
 
         long getCorrectCount();
     }
 
+    /**
+     * A submitted-answer selection, its score, and the normalized rating bucket of its result.
+     */
     public interface RatedSelection {
 
         SubmittedAnswerSelection getSelection();
 
-        Boolean getRated();
+        Double getScoreInPoints();
+
+        boolean getRated();
     }
 }

@@ -74,7 +74,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
-
     /**
      * Find all results for an exercise ordered by completion date.
      * Uses the denormalized result.exerciseId for efficient filtering.

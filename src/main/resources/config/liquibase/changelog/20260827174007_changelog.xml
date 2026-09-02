@@ -3,17 +3,17 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <!--
-        Quiz statistics are calculated on demand from completed results and submitted-answer selections. Remove the
+        Quiz statistics are calculated on demand from completed results and submitted-answer selections. Retire the
         persisted statistics graph after the released quiz JSON migration has finished using it.
 
         The initial schema and released changelogs intentionally remain unchanged to preserve their recorded checksums.
-        Fresh installations therefore create these obsolete structures and drop them here, matching the established
-        cleanup convention in 20260728223939_changelog.xml.
+        Fresh installations therefore create these obsolete structures and retire them here. The structures are renamed
+        instead of dropped so that their data remains available for one release and the migration can be rolled back.
     -->
 
     <!--
         Older completed quiz results can lack a completion date. Preserve them for on-demand statistics by using the
-        submission date as the best available historical approximation before removing the persisted statistics.
+        submission date as the best available historical approximation before retiring the persisted statistics.
     -->
     <changeSet id="20260827174007-00-backfill-result-completion-date-mysql" author="Nihad74" dbms="mysql">
         <sql>
@@ -26,6 +26,9 @@
                 AND s.submission_date IS NOT NULL
                 AND e.discriminator = 'Q'
         </sql>
+        <rollback>
+            <!-- The affected rows cannot be distinguished from pre-existing completion dates after this backfill. -->
+        </rollback>
     </changeSet>
     <changeSet id="20260827174007-00-backfill-result-completion-date-postgresql" author="Nihad74" dbms="postgresql">
         <sql>
@@ -39,68 +42,38 @@
                 AND s.submission_date IS NOT NULL
                 AND e.discriminator = 'Q'
         </sql>
+        <rollback>
+            <!-- The affected rows cannot be distinguished from pre-existing completion dates after this backfill. -->
+        </rollback>
     </changeSet>
 
-    <!-- PostgreSQL normalizes the historical Hibernate-generated foreign-key names to lower case; MySQL retains them. -->
-    <changeSet id="20260827174007-01-drop-exercise-statistic-fk-mysql" author="Nihad74" dbms="mysql">
-        <preConditions onFail="MARK_RAN">
-            <foreignKeyConstraintExists foreignKeyTableName="exercise" foreignKeyName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
-        </preConditions>
-        <dropForeignKeyConstraint baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42"/>
+    <!--
+        Rename obsolete columns and tables instead of dropping them. MySQL and PostgreSQL retain their foreign keys,
+        unique constraints, indexes, and data when Liquibase renames these structures. A later release can drop the
+        legacy structures after the retention period.
+    -->
+    <changeSet id="20260827174007-01-rename-exercise-statistic-column" author="Nihad74">
+        <renameColumn tableName="exercise" oldColumnName="quiz_point_statistic_id" newColumnName="legacy_quiz_point_statistic_id" columnDataType="BIGINT"/>
+        <rollback>
+            <renameColumn tableName="exercise" oldColumnName="legacy_quiz_point_statistic_id" newColumnName="quiz_point_statistic_id" columnDataType="BIGINT"/>
+        </rollback>
     </changeSet>
-    <changeSet id="20260827174007-02-drop-exercise-statistic-fk-postgresql" author="Nihad74" dbms="postgresql">
-        <sql>ALTER TABLE exercise DROP CONSTRAINT IF EXISTS fk1kyxexi1uqeu8pw3vcbulfi42</sql>
+    <changeSet id="20260827174007-02-rename-question-statistic-column" author="Nihad74">
+        <renameColumn tableName="quiz_question" oldColumnName="quiz_question_statistic_id" newColumnName="legacy_quiz_question_statistic_id" columnDataType="BIGINT"/>
+        <rollback>
+            <renameColumn tableName="quiz_question" oldColumnName="legacy_quiz_question_statistic_id" newColumnName="quiz_question_statistic_id" columnDataType="BIGINT"/>
+        </rollback>
     </changeSet>
-    <changeSet id="20260827174007-03-drop-question-statistic-fk-mysql" author="Nihad74" dbms="mysql">
-        <preConditions onFail="MARK_RAN">
-            <foreignKeyConstraintExists foreignKeyTableName="quiz_question" foreignKeyName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
-        </preConditions>
-        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
+    <changeSet id="20260827174007-03-rename-statistic-counter-table" author="Nihad74">
+        <renameTable oldTableName="quiz_statistic_counter" newTableName="legacy_quiz_statistic_counter"/>
+        <rollback>
+            <renameTable oldTableName="legacy_quiz_statistic_counter" newTableName="quiz_statistic_counter"/>
+        </rollback>
     </changeSet>
-    <changeSet id="20260827174007-04-drop-question-statistic-fk-postgresql" author="Nihad74" dbms="postgresql">
-        <sql>ALTER TABLE quiz_question DROP CONSTRAINT IF EXISTS fkoi0sqphft8m7f92qa7ui8i3ac</sql>
-    </changeSet>
-
-    <changeSet id="20260827174007-05-drop-exercise-statistic-unique-constraint" author="Nihad74">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="exercise" indexName="uk_exercise_quiz_point_statistic"/>
-        </preConditions>
-        <dropUniqueConstraint tableName="exercise" constraintName="uk_exercise_quiz_point_statistic"/>
-    </changeSet>
-    <changeSet id="20260827174007-06-drop-question-statistic-unique-constraint-mysql" author="Nihad74" dbms="mysql">
-        <preConditions onFail="MARK_RAN">
-            <indexExists tableName="quiz_question" indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
-        </preConditions>
-        <dropUniqueConstraint tableName="quiz_question" constraintName="UC_QUESTIONQUESTION_STATISTIC_ID_COL"/>
-    </changeSet>
-    <changeSet id="20260827174007-07-drop-question-statistic-unique-index-postgresql" author="Nihad74" dbms="postgresql">
-        <sql>DROP INDEX IF EXISTS uc_questionquestion_statistic_id_col</sql>
-    </changeSet>
-
-    <changeSet id="20260827174007-08-drop-exercise-statistic-column" author="Nihad74">
-        <preConditions onFail="MARK_RAN">
-            <columnExists tableName="exercise" columnName="quiz_point_statistic_id"/>
-        </preConditions>
-        <dropColumn tableName="exercise" columnName="quiz_point_statistic_id"/>
-    </changeSet>
-    <changeSet id="20260827174007-09-drop-question-statistic-column" author="Nihad74">
-        <preConditions onFail="MARK_RAN">
-            <columnExists tableName="quiz_question" columnName="quiz_question_statistic_id"/>
-        </preConditions>
-        <dropColumn tableName="quiz_question" columnName="quiz_question_statistic_id"/>
-    </changeSet>
-
-    <!-- Dropping the counter table first removes its remaining foreign key into quiz_statistic. -->
-    <changeSet id="20260827174007-10-drop-statistic-counter-table" author="Nihad74">
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="quiz_statistic_counter"/>
-        </preConditions>
-        <dropTable tableName="quiz_statistic_counter"/>
-    </changeSet>
-    <changeSet id="20260827174007-11-drop-statistic-table" author="Nihad74">
-        <preConditions onFail="MARK_RAN">
-            <tableExists tableName="quiz_statistic"/>
-        </preConditions>
-        <dropTable tableName="quiz_statistic"/>
+    <changeSet id="20260827174007-04-rename-statistic-table" author="Nihad74">
+        <renameTable oldTableName="quiz_statistic" newTableName="legacy_quiz_statistic"/>
+        <rollback>
+            <renameTable oldTableName="legacy_quiz_statistic" newTableName="quiz_statistic"/>
+        </rollback>
     </changeSet>
 </databaseChangeLog>

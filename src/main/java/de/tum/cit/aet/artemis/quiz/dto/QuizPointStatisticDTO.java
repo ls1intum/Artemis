@@ -14,16 +14,15 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizPointStatisticDTO(Set<PointCounterDTO> pointCounters, @JsonUnwrapped QuizStatisticDTO quizStatistic) {
 
-    public static QuizPointStatisticDTO of(Map<Double, long[]> countersByPoints, long ratedResultCount, long unratedResultCount) {
-        Set<PointCounterDTO> pointCounters = countersByPoints.entrySet().stream().map(entry -> new PointCounterDTO(entry.getKey(), QuizStatisticCounterDTO.of(entry.getValue())))
-                .collect(Collectors.toSet());
-        QuizStatisticDTO quizStatistic = new QuizStatisticDTO(null, Math.toIntExact(ratedResultCount), Math.toIntExact(unratedResultCount));
+    public static QuizPointStatisticDTO of(Map<Double, QuizStatisticCounterDTO> countersByPoints, long ratedResultCount, long unratedResultCount) {
+        Set<PointCounterDTO> pointCounters = countersByPoints.entrySet().stream().map(entry -> new PointCounterDTO(entry.getKey(), entry.getValue())).collect(Collectors.toSet());
+        QuizStatisticDTO quizStatistic = new QuizStatisticDTO(Math.toIntExact(ratedResultCount), Math.toIntExact(unratedResultCount));
         return new QuizPointStatisticDTO(pointCounters, quizStatistic);
     }
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record QuizStatisticDTO(Long id, Integer participantsRated, Integer participantsUnrated) {
+record QuizStatisticDTO(Integer participantsRated, Integer participantsUnrated) {
 }
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

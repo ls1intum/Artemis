@@ -26,7 +26,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -108,7 +107,6 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
-import de.tum.cit.aet.artemis.quiz.test_repository.SubmittedAnswerTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 
 class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
@@ -900,6 +898,31 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         quizExerciseUtilService.renameAndSaveQuiz(examQuizExercise, searchTerm + "-Morpork");
 
         exerciseIntegrationTestService.testCourseAndExamFilters("/api/quiz/quiz-exercises", searchTerm);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldReturnOnDemandPointStatisticsWhenUsingLegacyRecalculationPath() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), QuizMode.SYNCHRONIZED);
+        String statisticsBasePath = "/api/quiz/quiz-exercises/" + quizExercise.getId();
+
+        JsonNode currentResponse = request.get(statisticsBasePath + "/statistics/points", OK, JsonNode.class);
+        JsonNode legacyResponse = request.get(statisticsBasePath + "/recalculate-statistics", OK, JsonNode.class);
+
+        assertThat(legacyResponse.path("id").asLong()).isEqualTo(quizExercise.getId());
+        assertThat(legacyResponse.path("quizQuestions")).isNotEmpty();
+        assertThat(legacyResponse.path("quizPointStatistic")).isEqualTo(currentResponse.path("quizPointStatistic"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReturnForbiddenWhenStudentUsesLegacyRecalculationPath() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusHours(1),
+                QuizMode.SYNCHRONIZED);
+        String statisticsBasePath = "/api/quiz/quiz-exercises/" + quizExercise.getId();
+
+        request.get(statisticsBasePath + "/statistics/points", FORBIDDEN, JsonNode.class);
+        request.get(statisticsBasePath + "/recalculate-statistics", FORBIDDEN, JsonNode.class);
     }
 
     @Test

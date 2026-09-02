@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.QuizQuestionWithSolutionDTO;
 
 /**
  * Response for the quiz statistics overview page.
@@ -36,10 +35,13 @@ public record QuizStatisticsOverviewDTO(@JsonUnwrapped QuizExerciseWithoutQuesti
     }
 }
 
+/**
+ * Minimal question data required by the quiz statistics overview.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-record QuestionStatisticsDTO(@JsonUnwrapped QuizQuestionWithSolutionDTO question, QuizQuestionStatisticDTO quizQuestionStatistic) {
+record QuestionStatisticsDTO(Long id, String title, double points, Boolean invalid, QuizQuestionStatisticDTO quizQuestionStatistic) {
 
     static QuestionStatisticsDTO of(QuizQuestion question, QuizQuestionStatisticDTO statistic) {
-        return new QuestionStatisticsDTO(QuizQuestionWithSolutionDTO.of(question), statistic);
+        return new QuestionStatisticsDTO(question.getId(), question.getTitle(), question.getPoints(), question.isInvalid(), statistic);
     }
 }

@@ -250,7 +250,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void calculateStatisticsOnDemand_backfillsLegacyCompletionDateThroughMigration() throws Exception {
+    void shouldBackfillLegacyCompletionDateThroughMigrationWhenCalculatingStatisticsOnDemand() throws Exception {
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         ZonedDateTime submissionDate = ZonedDateTime.now().minusDays(1);
         QuizSubmission quizSubmission = createScoredSubmission(quizExercise, true, submissionDate);
@@ -273,7 +273,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void calculateStatisticsOnDemand_usesLatestResultPerRatingAndTreatsNullRatedAsUnrated() throws Exception {
+    void shouldUseLatestResultPerRatingAndTreatNullRatedAsUnratedWhenCalculatingStatisticsOnDemand() throws Exception {
         QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         ZonedDateTime tiedCompletionDate = ZonedDateTime.now().minusMinutes(1);
 
@@ -344,7 +344,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void calculateStatisticsOnDemand_includesCoursePracticeAndExcludesExamTestRuns() throws Exception {
+    void shouldIncludeCoursePracticeAndExcludeExamTestRunsWhenCalculatingStatisticsOnDemand() throws Exception {
         ZonedDateTime completionDate = ZonedDateTime.now().minusMinutes(1);
         QuizExercise coursePracticeQuizExercise = quizExerciseService.save(setupQuizExerciseParameters());
         QuizSubmission coursePracticeSubmission = createScoredSubmission(coursePracticeQuizExercise, true, completionDate);
