@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission.cr
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -369,10 +370,13 @@ public class ProgrammingExerciseGradingService {
      * @return the aggregated result to append feedback to
      */
     private Result getOrCreateAggregatedResult(ProgrammingSubmission submission, ProgrammingExercise exercise) {
-        Result latestResult = submission.getLatestResult();
-        if (latestResult != null && latestResult.getCompletionDate() == null) {
+        // The in-progress aggregate is the newest AUTOMATIC result without a completion date. The assessment type matters:
+        // a tutor's draft manual assessment also has no completion date yet and must not receive container feedback.
+        var inProgressAggregate = submission.getResults().stream()
+                .filter(candidate -> candidate.getAssessmentType() == AssessmentType.AUTOMATIC && candidate.getCompletionDate() == null).max(Comparator.comparing(Result::getId));
+        if (inProgressAggregate.isPresent()) {
             // reload with the feedback appended by the earlier containers, so the next append does not drop it
-            return resultRepository.findByIdWithEagerFeedbacksElseThrow(latestResult.getId());
+            return resultRepository.findByIdWithEagerFeedbacksElseThrow(inProgressAggregate.get().getId());
         }
         // A new in-progress result marks the start of a fresh build attempt, so clear a build-failed flag left over from
         // an earlier attempt of the same submission; the containers of this attempt set it again if any of them fails.

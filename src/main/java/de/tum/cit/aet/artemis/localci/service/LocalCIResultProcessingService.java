@@ -317,8 +317,11 @@ public class LocalCIResultProcessingService {
             }
         }
 
-        // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository
-        if (isSolutionBuildOfTestOrAuxPush(buildJob)) {
+        // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository.
+        // A multi-container solution build reports one queue item per container; the template is rebuilt once, when the
+        // container that completed the merged result comes through, not once per container.
+        boolean completedMergedResult = buildJob.containerName() == null || (result != null && result.getCompletionDate() != null);
+        if (isSolutionBuildOfTestOrAuxPush(buildJob) && completedMergedResult) {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
                 // Run async to not block the result processing thread
