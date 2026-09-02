@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,7 +24,6 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -37,13 +37,13 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.localvc.service.GitRepositoryExportService.RepositoryExportContent;
 import de.tum.cit.aet.artemis.modeling.api.ModelingApollonApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -72,11 +73,9 @@ public class DataExportExerciseCreationService {
 
     static final String CSV_FILE_EXTENSION = ".csv";
 
-    private final Path repoClonePath;
+    private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     private static final Logger log = LoggerFactory.getLogger(DataExportExerciseCreationService.class);
-
-    private final FileService fileService;
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
@@ -95,20 +94,19 @@ public class DataExportExerciseCreationService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
-            ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
-            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<ModelingApollonApi> modelingApollonApi, ComplaintRepository complaintRepository,
-            ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
-        this.fileService = fileService;
+    public DataExportExerciseCreationService(ProgrammingExerciseExportService programmingExerciseExportService,
+            DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService, Optional<PlagiarismCaseApi> plagiarismCaseApi,
+            Optional<ModelingApollonApi> modelingApollonApi, ComplaintRepository complaintRepository, ExerciseRepository exerciseRepository, ResultService resultService,
+            AuthorizationCheckService authCheckService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.modelingApollonApi = modelingApollonApi;
         this.complaintRepository = complaintRepository;
         this.exerciseRepository = exerciseRepository;
-        this.repoClonePath = repoClonePath;
         this.resultService = resultService;
         this.authCheckService = authCheckService;
+        this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
     /**
@@ -163,12 +161,10 @@ public class DataExportExerciseCreationService {
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
 
-        // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export
-        // --> we can delete it after use
-        var tempRepoWorkingDir = fileService.getTemporaryUniqueSubfolderPath(repoClonePath, 10);
-        // NOTE: repositoryExportOptions.filterLateSubmissions must be false here because we do not want to filter any submissions for the data export
-        programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, Map.of(), tempRepoWorkingDir, exerciseDir,
-                Collections.synchronizedList(new ArrayList<>()), repositoryExportOptions);
+        // NOTE: repositoryExportOptions.filterLateSubmissions must be false here because we do not want to filter any submissions for the data export.
+        // The export asks for the history: a data export is the student's own copy of their work, so their commits belong in it.
+        programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, Map.of(), exerciseDir,
+                Collections.synchronizedList(new ArrayList<>()), repositoryExportOptions, RepositoryExportContent.WITH_HISTORY);
 
         createPlagiarismCaseInfoExport(programmingExercise, exerciseDir, user.getId());
     }
@@ -207,6 +203,13 @@ public class DataExportExerciseCreationService {
         boolean includeResults = (exercise.isExamExercise() && exercise.getExam().resultsPublished())
                 || (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise) && !(exercise instanceof QuizExercise))
                 || (exercise.isCourseExercise() && exercise instanceof QuizExercise quizExercise && quizExercise.isQuizEnded()) || isInstructor;
+        if (exercise instanceof ProgrammingExercise) {
+            // attach the automatic test-case and SCA feedback (stored in compact typed tables) as legacy
+            // views for all exported results at once - two grouped queries instead of two per result
+            var allResults = exercise.getStudentParticipations().stream().flatMap(participation -> participation.getSubmissions().stream())
+                    .flatMap(submission -> submission.getResults().stream()).filter(Objects::nonNull).toList();
+            programmingFeedbackSynthesizerService.attachSynthesizedFeedback(allResults);
+        }
         for (var participation : exercise.getStudentParticipations()) {
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
