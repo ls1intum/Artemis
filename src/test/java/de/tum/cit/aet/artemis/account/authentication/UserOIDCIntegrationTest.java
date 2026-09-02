@@ -499,4 +499,135 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         assertThat(response.getContentAsString()).contains("vscode://aet-tum.iris-thaumantias/auth-callback?error=server_error");
         assertThat(session.isInvalid()).isTrue();
     }
+
+    @Test
+    void testOidcLogin_withRedirectIOS_generatesExchangeCodeAndRedirectsToIOS() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        String expectedChallenge = "E9Melhoa2OwvFrGMTJguCH5A_lUhKw6YGzaWzkTCdcM";
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "ios");
+        session.setAttribute("OIDC_CODE_CHALLENGE", expectedChallenge);
+        request.setSession(session);
+
+        String expectedCode = "mock-exchange-code-ios-123";
+        when(oidcExchangeCodeService.isValidCodeChallenge(expectedChallenge)).thenReturn(true);
+        when(oidcExchangeCodeService.storeJwtAndGenerateCode(anyString(), anyString())).thenReturn(expectedCode);
+
+        Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
+        var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        // 1. Check the redirect to /oauth-callback with a code
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?code=" + expectedCode);
+
+        // 2. Check the arguments for jwt token exchange
+        ArgumentCaptor<String> jwtCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> challengeCaptor = ArgumentCaptor.forClass(String.class);
+        verify(oidcExchangeCodeService, times(1)).storeJwtAndGenerateCode(jwtCaptor.capture(), challengeCaptor.capture());
+        String storedJwt = jwtCaptor.getValue();
+        assertThat(storedJwt).isNotNull().isNotBlank();
+        assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).contains(storedJwt);
+        assertThat(challengeCaptor.getValue()).isEqualTo(expectedChallenge);
+
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    @Test
+    void testOidcLogin_withRedirectIOS_missingCodeChallenge_redirectsWithInvalidRequestError() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "ios");
+        // OIDC_CODE_CHALLENGE is missing
+        request.setSession(session);
+
+        Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
+        var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=invalid_request");
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    @Test
+    void testOidcLogin_withRedirectIOS_storeJwtFails_redirectsWithServerError() throws Exception {
+        assertStudentNotExists();
+        createUser(STUDENT_NAME + "@artemis.local");
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        String expectedChallenge = "E9Melhoa2OwvFrGMTJguCH5A_lUhKw6YGzaWzkTCdcM";
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "ios");
+        session.setAttribute("OIDC_CODE_CHALLENGE", expectedChallenge);
+        request.setSession(session);
+
+        when(oidcExchangeCodeService.isValidCodeChallenge(expectedChallenge)).thenReturn(true);
+        when(oidcExchangeCodeService.storeJwtAndGenerateCode(anyString(), anyString())).thenReturn(null);
+
+        Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
+        var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
+
+        successHandler.onAuthenticationSuccess(request, response, auth);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=server_error");
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    @Test
+    void testOidcFailureHandler_withRedirectIOS_deactivatedUser_redirectsToIOSWithError() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "ios");
+        request.setSession(session);
+
+        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "Deactivated");
+
+        failureHandler.onAuthenticationFailure(request, response, exception);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=deactivated");
+        assertThat(session.isInvalid()).isTrue();
+    }
+
+    @Test
+    void testOidcFailureHandler_withRedirectIOS_genericError_redirectsToIOSWithError() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute("OIDC_REDIRECT", "ios");
+        request.setSession(session);
+
+        OAuth2AuthenticationException exception = new OAuth2AuthenticationException(new OAuth2Error("invalid_issuer"), "Wrong Issuer");
+
+        failureHandler.onAuthenticationFailure(request, response, exception);
+
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
+        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=oidcFailure");
+        assertThat(session.isInvalid()).isTrue();
+    }
 }
