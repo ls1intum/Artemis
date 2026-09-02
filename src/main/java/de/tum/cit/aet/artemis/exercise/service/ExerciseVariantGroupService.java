@@ -275,12 +275,15 @@ public class ExerciseVariantGroupService {
 
     /**
      * For a still-empty group, adopts the joining exercise's dates for any shared field the group doesn't define yet, and
-     * persists if anything changed. Groups that already have members keep their existing timeline.
+     * persists if anything changed. Groups that already have members keep their existing timeline. {@link #assignToGroup}
+     * calls this for the exercise that joins first; public for a caller that has to persist membership in a different
+     * order than the dates should be adopted in (see {@code VariantPlacementService}: the generated variant is placed
+     * first, but its source is the exercise whose dates the group should take).
      *
      * @param group    the group the exercise is joining (its current members must already be loaded)
      * @param exercise the exercise joining the group, whose dates are the source to adopt from
      */
-    private void adoptMissingDatesFromExercise(ExerciseVariantGroup group, Exercise exercise) {
+    public void adoptMissingDatesFromExercise(ExerciseVariantGroup group, Exercise exercise) {
         if (!group.getExercises().isEmpty()) {
             return;
         }

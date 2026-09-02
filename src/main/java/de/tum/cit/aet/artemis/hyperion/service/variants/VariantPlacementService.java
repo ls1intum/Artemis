@@ -38,6 +38,9 @@ public class VariantPlacementService {
     /** Why a quiz cannot join a variant group: joining stamps the group's timeline onto it (see ExerciseVariantGroupService). */
     private static final String QUIZ_NOT_EDITABLE_REASON = "a quiz that has already started or ended cannot join a variant group";
 
+    /** Error key {@code ExerciseVariantGroupService} rejects a started or ended quiz member with — the only recoverable assignment failure. */
+    private static final String QUIZ_NOT_EDITABLE_ERROR_KEY = "quizMemberNotEditable";
+
     private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
@@ -100,23 +103,35 @@ public class VariantPlacementService {
                 }
                 // Same payload and entity mapping as the group-creation endpoint, so the wizard's new-group form
                 // (title, maxPoints, shared timeline dates) is applied in full.
+                Exercise source = exerciseRepository.findByIdElseThrow(sourceExerciseId);
+                String sourceSkipReason = sourceSkipReason(source, course);
                 ExerciseVariantGroup group = exerciseVariantGroupService.createGroup(course.getId(), placement.newGroup().toEntity());
-                // The wizard presents NEW_GROUP as "group the variant WITH its source": pull the source in first
-                // (so a date the wizard left empty is adopted from the source, not the clone), then the variant.
-                String sourceSkipReason = assignSourceToNewGroup(sourceExerciseId, group, course);
+                if (sourceSkipReason == null) {
+                    // The wizard presents NEW_GROUP as "group the variant WITH its source", so a date it left empty
+                    // is adopted from the source, not the clone. Seeded onto the still-empty group instead of by
+                    // letting the source join first: source membership is persisted and stamps the group's timeline
+                    // onto the instructor's own exercise, which a failed variant placement would then have to undo.
+                    exerciseVariantGroupService.adoptMissingDatesFromExercise(group, source);
+                }
                 try {
                     exerciseVariantGroupService.assignToGroup(variant, group);
                 }
                 catch (BadRequestAlertException raced) {
-                    // The variant became ineligible between the check above and here — its quiz batch started while
-                    // the source was being added. Drop the group unless the source made it in, so no empty group is left.
-                    if (sourceSkipReason != null) {
-                        exerciseVariantGroupRepository.delete(group);
+                    if (!QUIZ_NOT_EDITABLE_ERROR_KEY.equals(raced.getErrorKey())) {
+                        // Any other rejection (e.g. a programming exercise's invalid build plan configuration) can be
+                        // raised AFTER membership was persisted; dropping the group would then delete a live one.
+                        throw raced;
                     }
+                    // The variant became ineligible between the check above and here — its quiz batch started while
+                    // the group was being prepared. Nothing has joined yet, so the group goes with it.
+                    exerciseVariantGroupRepository.delete(group);
                     log.warn("Could not place variant exercise {} into the new variant group: {}", variant.getId(), raced.getMessage());
                     return List.of("FINALIZING: the variant was left ungrouped — " + QUIZ_NOT_EDITABLE_REASON);
                 }
                 log.debug("Placed variant exercise {} into new variant group {}", variant.getId(), group.getId());
+                if (sourceSkipReason == null) {
+                    sourceSkipReason = assignSourceToNewGroup(source, group);
+                }
                 if (sourceSkipReason != null) {
                     // The wizard promised "group the variant with its original". The variant is in the new group,
                     // the source is not — reporting COMPLETED here would be a false success, so surface it.
@@ -128,44 +143,61 @@ public class VariantPlacementService {
     }
 
     /**
-     * Pulls the source exercise into the group freshly created for its variants — that is the wizard's NEW_GROUP
-     * promise. Sources a group cannot legally contain are skipped instead of failing the job (the variant's own
-     * placement, the actual job outcome, still happens): exam exercises, sources that moved to another group
-     * mid-job, and non-individual quizzes (rejected by the assignment service). Eligibility is re-checked here
-     * rather than only at the REST boundary because the source can change while generation runs.
+     * Why the source exercise cannot join the group freshly created for its variants — the wizard's NEW_GROUP promise.
+     * Sources a group cannot legally contain are skipped instead of failing the job (the variant's own placement, the
+     * actual job outcome, still happens): exam exercises, sources that moved to another group mid-job, non-individual
+     * quizzes, and quizzes that have started or ended (all rejected by the assignment service). Eligibility is
+     * re-checked here rather than only at the REST boundary because the source can change while generation runs.
      *
-     * @return null when the source was added, otherwise the instructor-facing reason it was skipped
+     * @param source the exercise the variant was generated from
+     * @param course the course of the variant, which the source must share
+     * @return null when the source may join, otherwise the instructor-facing reason it is skipped
      */
     @Nullable
-    private String assignSourceToNewGroup(Long sourceExerciseId, ExerciseVariantGroup group, Course course) {
-        Exercise source = exerciseRepository.findByIdElseThrow(sourceExerciseId);
+    private String sourceSkipReason(Exercise source, Course course) {
         Course sourceCourse = source.getCourseViaExerciseGroupOrCourseMember();
         if (source.isExamExercise() || sourceCourse == null || !Objects.equals(course.getId(), sourceCourse.getId())) {
-            log.warn("Not adding source exercise {} to new variant group {}: not a course exercise of course {}", sourceExerciseId, group.getId(), course.getId());
+            log.warn("Not adding source exercise {} to a new variant group: not a course exercise of course {}", source.getId(), course.getId());
             return "it is not an exercise of this course";
         }
         if (source.getExerciseVariantGroup() != null) {
-            log.warn("Not adding source exercise {} to new variant group {}: it already belongs to group {}", sourceExerciseId, group.getId(),
-                    source.getExerciseVariantGroup().getId());
+            log.warn("Not adding source exercise {} to a new variant group: it already belongs to group {}", source.getId(), source.getExerciseVariantGroup().getId());
             return "it already belongs to another variant group";
         }
         if (source instanceof QuizExercise quizExercise && quizExercise.getQuizMode() != QuizMode.INDIVIDUAL) {
-            log.warn("Not adding source quiz {} to new variant group {}: only individual-mode quizzes can join a group", sourceExerciseId, group.getId());
+            log.warn("Not adding source quiz {} to a new variant group: only individual-mode quizzes can join a group", source.getId());
             return "only individual-mode quizzes can join a variant group";
         }
         if (!exerciseVariantGroupService.canJoinGroup(source)) {
-            log.warn("Not adding source exercise {} to new variant group {}: {}", sourceExerciseId, group.getId(), QUIZ_NOT_EDITABLE_REASON);
+            log.warn("Not adding source exercise {} to a new variant group: {}", source.getId(), QUIZ_NOT_EDITABLE_REASON);
             return QUIZ_NOT_EDITABLE_REASON;
         }
+        return null;
+    }
+
+    /**
+     * Adds the eligible source exercise to the group its variant now belongs to. Runs after the variant's own
+     * assignment, so a rejection here costs a warning instead of a rollback of persisted membership.
+     *
+     * @param source the exercise the variant was generated from
+     * @param group  the group the variant was just placed in
+     * @return null when the source was added, otherwise the instructor-facing reason it was skipped
+     */
+    @Nullable
+    private String assignSourceToNewGroup(Exercise source, ExerciseVariantGroup group) {
         try {
             exerciseVariantGroupService.assignToGroup(source, group);
         }
         catch (BadRequestAlertException raced) {
-            // The source's quiz batch started between the check above and the assignment.
-            log.warn("Could not add source exercise {} to new variant group {}: {}", sourceExerciseId, group.getId(), raced.getMessage());
+            if (!QUIZ_NOT_EDITABLE_ERROR_KEY.equals(raced.getErrorKey())) {
+                // Only the quiz race is a skip; every other rejection is a real placement failure for the caller.
+                throw raced;
+            }
+            // The source's quiz batch started between the eligibility check and the assignment.
+            log.warn("Could not add source exercise {} to new variant group {}: {}", source.getId(), group.getId(), raced.getMessage());
             return QUIZ_NOT_EDITABLE_REASON;
         }
-        log.debug("Added source exercise {} to new variant group {}", sourceExerciseId, group.getId());
+        log.debug("Added source exercise {} to new variant group {}", source.getId(), group.getId());
         return null;
     }
 
