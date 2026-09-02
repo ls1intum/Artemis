@@ -247,6 +247,12 @@ public class AthenaFeedbackSuggestionsService {
             throws NetworkingException {
         log.debug("Start Athena '{}' Feedback Suggestions Service for Exercise '{}' (#{}).", isGraded ? "Graded" : "Non Graded", exercise.getTitle(), exercise.getId());
 
+        if (isGraded && exercise.getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            // Automatically assessed programming exercises rely on unit-test feedback, not Athena grading feedback
+            log.warn("Athena grading feedback is not applicable for automatically assessed exercise '{}' (#{}). Returning empty list.", exercise.getTitle(), exercise.getId());
+            return List.of();
+        }
+
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         boolean feedbackEnabled = course != null && course.getAthenaConfig() != null
                 && (isGraded ? course.getAthenaConfig().isGradingFeedbackEnabled() : course.getAthenaConfig().isFormativeFeedbackEnabled());

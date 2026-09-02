@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -65,6 +66,9 @@ class AthenaRepositoryExportServiceUnitTest {
 
         programmingExercise = new ProgrammingExercise();
         programmingExercise.setId(EXERCISE_ID);
+        // Graded Athena feedback (and thus its repository export) is only offered for manually assessed programming
+        // exercises; automatically assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         var course = new Course();
         var athenaConfig = new CourseAthenaConfig();
         athenaConfig.setGradingFeedbackEnabled(true);

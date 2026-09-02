@@ -715,6 +715,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             // Athena only supports text, programming, and modeling exercises
             return false;
         }
+        if (this instanceof ProgrammingExercise && getAssessmentType() != AssessmentType.SEMI_AUTOMATIC) {
+            // Automatically assessed programming exercises rely on unit-test feedback; Athena grading feedback is only
+            // relevant for manually assessed submissions
+            return false;
+        }
         var course = getCourseViaExerciseGroupOrCourseMember();
         var athenaConfig = course == null ? null : course.getAthenaConfig();
         return athenaConfig != null && Hibernate.isInitialized(athenaConfig) && athenaConfig.isGradingFeedbackEnabled();

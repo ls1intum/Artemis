@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.dto.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.ProgrammingFeedbackDTO;
@@ -137,6 +138,9 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setCourse(course);
+        // Graded Athena feedback is only offered for manually assessed programming exercises; automatically assessed
+        // ones rely on unit-test feedback (see testProgrammingFeedbackSuggestionsReturnsEmptyForAutomaticAssessment).
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(3L);
         StudentParticipation programmingParticipation = new StudentParticipation().exercise(programmingExercise);
@@ -194,6 +198,17 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
     @Test
     void testProgrammingFeedbackSuggestionsReturnsEmptyWhenGradingFeedbackDisabled() throws NetworkingException {
         programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+
+        List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true, null);
+
+        assertThat(suggestions).isEmpty();
+    }
+
+    @Test
+    void testProgrammingFeedbackSuggestionsReturnsEmptyForAutomaticAssessmentGradedRequest() throws NetworkingException {
+        // Automatically assessed programming exercises rely on unit-test feedback, not Athena grading feedback, even
+        // when the course has grading feedback enabled.
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
 
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission, true, null);
 
