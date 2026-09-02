@@ -660,6 +660,7 @@ export default tseslint.config(
             'src/main/webapp/app/localci/hyperion-generation-detail/**/*.html',
             'src/main/webapp/app/localci/hyperion-generation-jobs-table/**/*.html',
             'src/main/webapp/app/exercise/review/adapt-exercise-dialog/**/*.html',
+            'src/main/webapp/app/quiz/manage/apollon-diagrams/**/*.html',
             'src/main/webapp/app/exam/manage/exercise-groups/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',

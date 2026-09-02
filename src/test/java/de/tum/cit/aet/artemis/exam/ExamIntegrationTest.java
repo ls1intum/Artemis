@@ -1390,9 +1390,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
-        // One query for the exams (the course is fetch-joined). Without the join, each row triggers a secondary
-        // select for its course, so this guards the data-economy fix rather than just the response shape.
-        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(1);
+        // Two queries: one resolving the authenticated admin against the database, which @EnforceAdmin does on every
+        // admin request, and one for the exams (the course is fetch-joined). Without the join, each exam row would
+        // trigger a secondary select for its course, so this still guards the data-economy fix rather than just the
+        // response shape.
+        var exams = assertThatDb(() -> request.getList("/api/exam/admin/courses/upcoming-exams", HttpStatus.OK, UpcomingExamDTO.class)).hasBeenCalledAtMostTimes(2);
         ZonedDateTime currentDay = now().truncatedTo(ChronoUnit.DAYS);
         for (int i = 0; i < exams.size(); i++) {
             UpcomingExamDTO exam = exams.get(i);

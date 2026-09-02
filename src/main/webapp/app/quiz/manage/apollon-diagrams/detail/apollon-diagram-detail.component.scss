@@ -1,0 +1,75 @@
+/* Two spacing systems meet in this dialog, deliberately:
+   - Outside the canvas (header, footer, the inset around the canvas) uses the TUM UI
+     dialog scale — 1rem padding, 0.5rem gaps — so this PrimeNG DynamicDialog is
+     indistinguishable from a <tum-ui-dialog>. Those come from Tailwind utilities in
+     the template; nothing here re-states them.
+   - Inside the canvas, the floating action cluster uses Apollon's own chrome tokens
+     (--apollon-chrome-*), because it has to line up with Apollon's palette, zoom and
+     minimap rather than with the dialog. This is the same split the modeling editor
+     makes, and the cluster reuses Apollon's .apollon-glass / .apollon-chrome-cluster
+     primitives rather than restyling them. */
+
+:host {
+    display: flex;
+
+    /* A diagram editor cannot size itself to its content — it IS the content — so this
+       view states a height and lets flex subtract the header and footer. The former
+       `calc(100vh - 400px)` did that subtraction by hand, with 400px standing in for a
+       header, a title row, a toolbar row and a footer, none of them actually fixed. */
+    height: min(52rem, 82vh);
+    min-height: 0;
+    flex-direction: column;
+}
+
+.apollon-diagram-detail {
+    &__title-label {
+        color: var(--text-body-secondary);
+        font-size: 0.875rem;
+    }
+
+    &__title-field {
+        max-width: 32rem;
+    }
+
+    &__canvas {
+        position: relative;
+        container-type: inline-size;
+        min-height: 12rem;
+        flex: 1 1 auto;
+        border: 1px solid var(--apollon-border);
+
+        /* The same token the glass islands round themselves with (Artemis maps it to 8px),
+           so the frame and the chrome floating inside it share one radius, one step down
+           from the 12px dialog panel around them. */
+        border-radius: var(--apollon-chrome-radius-lg);
+        background: var(--apollon-background);
+        box-shadow: 0 1px 2px color-mix(in srgb, var(--apollon-foreground) 8%, transparent);
+        overflow: clip;
+    }
+
+    &__editor {
+        height: 100%;
+    }
+
+    /* Apollon's overlay region owns this node's placement once it is mounted, so the
+       cluster must not bring positioning of its own. */
+    &__actions {
+        position: static;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    &__action-hint {
+        display: inline-flex;
+    }
+}
+
+/* Same breakpoint the modeling editor uses: below it the labelled actions would eat the
+   canvas, so the cluster falls back to icons. Both buttons carry an aria-label, so the
+   accessible name survives. Only the label spans are hidden — `> span` deliberately
+   excludes the tooltip wrapper the download button lives inside. */
+@container (max-width: 42rem) {
+    .apollon-diagram-detail__actions button > span {
+        display: none;
+    }
+}
