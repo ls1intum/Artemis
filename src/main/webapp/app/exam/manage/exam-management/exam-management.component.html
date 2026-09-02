@@ -48,13 +48,7 @@
         </div>
         <!-- sidebar -->
         <div class="exam-management-sidebar" [class.sidebar-collapsed]="isCollapsed()">
-            <jhi-exam-management-navigation-sidebar
-                [isCollapsed]="isCollapsed()"
-                [pageTitle]="pageTitle()"
-                [exams]="exams()"
-                [course]="course()"
-                (toggleSidebar)="toggleSidebar()"
-            />
+            <jhi-exam-management-navigation-sidebar [isCollapsed]="isCollapsed()" [exams]="exams()" [course]="course()" (toggleSidebar)="toggleSidebar()" />
         </div>
         <!-- child route content -->
         <div class="exam-management-content module-bg rounded-md scrollable-content p-3">

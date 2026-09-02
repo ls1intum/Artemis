@@ -4,11 +4,9 @@
             <div class="sidebar-content">
                 <div class="flex items-center justify-between gap-2 py-2">
                     <div class="flex items-center">
-                        @if (pageTitle()) {
-                            <a [routerLink]="['/course-management', course().id, 'exams']" class="text-decoration-none text-body">
-                                <jhi-course-title-bar-title [title]="pageTitle()" />
-                            </a>
-                        }
+                        <a [routerLink]="['/course-management', course().id, 'exams']" class="text-decoration-none text-body">
+                            <jhi-course-title-bar-title [title]="'artemisApp.examManagement.title'" />
+                        </a>
                         <jhi-documentation-button [type]="documentationType" />
                     </div>
                     @if (!isCollapsed()) {

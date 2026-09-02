@@ -925,9 +925,9 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Studierenden Klausur ({{ examTitle }})",
-            "studentTestExam": "Studierenden Test Klausur ({{ examTitle }})",
-            "testRun": "Testlauf ({{ examTitle }})",
+            "studentExam": "Studierenden Klausur",
+            "studentTestExam": "Studierenden Test Klausur",
+            "testRun": "Testlauf",
             "exercises": "Aufgaben",
             "overview": "Übersicht",
             "downloadPDF": " PDF herunterladen",

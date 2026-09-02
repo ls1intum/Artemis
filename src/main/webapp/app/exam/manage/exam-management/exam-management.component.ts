@@ -11,7 +11,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { PageTitleView, SidebarView } from 'app/course/shared/sidebar-view.interface';
+import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 import { ExamManagementNavigationSidebarComponent } from 'app/exam/manage/exam-management/exam-management-navigation-sidebar/exam-management-navigation-sidebar.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
@@ -26,7 +26,7 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
     styleUrls: ['./exam-management.component.scss'],
     imports: [ExamManagementNavigationSidebarComponent, CourseSidebarToggleButtonComponent, RouterOutlet, RouterLink, NgTemplateOutlet, FaIconComponent, ExamModeBadgeComponent],
 })
-export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, PageTitleView {
+export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
     private route = inject(ActivatedRoute);
     private courseService = inject(CourseManagementService);
     private examManagementService = inject(ExamManagementService);
@@ -45,19 +45,14 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView, 
     readonly course = signal<Course>(undefined!);
     readonly exams = signal<Exam[]>(undefined!);
 
-    // SidebarView / PageTitleView requirements
+    // SidebarView requirements
     readonly isCollapsed = signal<boolean>(false);
-    readonly pageTitle = signal<string>('');
 
     // exam that is currently in view
     readonly currentExam = signal<Exam | undefined>(undefined);
 
     toggleSidebar(): void {
         this.isCollapsed.update((state) => !state);
-    }
-
-    setPageTitle(pageTitle: string): void {
-        this.pageTitle.set(pageTitle);
     }
 
     /**

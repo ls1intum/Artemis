@@ -76,18 +76,11 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         expect(docButton).not.toBeNull();
     });
 
-    it('should render the title when pageTitle is set', () => {
-        fixture.componentRef.setInput('pageTitle', 'artemisApp.examManagement.title');
+    it('should render the title linking to exams overview', () => {
         fixture.detectChanges();
         const titleElement = fixture.debugElement.query(By.css('jhi-course-title-bar-title'));
         expect(titleElement).not.toBeNull();
-    });
-
-    it('should not render the title when pageTitle is empty', () => {
-        fixture.componentRef.setInput('pageTitle', '');
-        fixture.detectChanges();
-        const titleElement = fixture.debugElement.query(By.css('jhi-course-title-bar-title'));
-        expect(titleElement).toBeNull();
+        expect(titleElement.componentInstance.title()).toBe('artemisApp.examManagement.title');
     });
 
     it('should render the toggle button when expanded', () => {
@@ -163,9 +156,14 @@ describe('ExamManagementNavigationSidebarComponent', () => {
     });
 
     it('should unsubscribe from router events when destroyed', () => {
-        expect(routerEventsSubject.observed).toBe(true);
+        const expandSpy = vi.spyOn(component as any, 'expandActiveExam');
+        routerEventsSubject.next(new NavigationEnd(1, '/course/1/exams/1', '/course/1/exams/1'));
+        expect(expandSpy).toHaveBeenCalledTimes(1);
+
         fixture.destroy();
-        expect(routerEventsSubject.observed).toBe(false);
+
+        routerEventsSubject.next(new NavigationEnd(2, '/course/1/exams/1', '/course/1/exams/1'));
+        expect(expandSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should toggle exam on header click in onPanelClick', () => {

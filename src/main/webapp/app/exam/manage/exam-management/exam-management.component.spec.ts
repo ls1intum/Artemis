@@ -167,11 +167,6 @@ describe('Exam Management Component', () => {
         expect(comp.isCollapsed()).toBe(false);
     });
 
-    it('should set page title', () => {
-        comp.setPageTitle('New Title');
-        expect(comp.pageTitle()).toBe('New Title');
-    });
-
     it('should update currentExam when route has child with examId', () => {
         comp.exams.set([exam]);
         mockRoute.snapshot.firstChild = {

@@ -35,7 +35,6 @@ export class ExamManagementNavigationSidebarComponent {
     private router = inject(Router);
 
     readonly isCollapsed = input<boolean>(false);
-    readonly pageTitle = input<string>('');
 
     readonly course = input.required<Course>();
     readonly exams = input.required<Exam[]>();

@@ -925,9 +925,9 @@
             }
         },
         "studentExamDetail": {
-            "studentExam": "Student exam ({{ examTitle }})",
-            "studentTestExam": "Student test exam ({{ examTitle }})",
-            "testRun": "Test Run ({{ examTitle }})",
+            "studentExam": "Student exam",
+            "studentTestExam": "Student test exam",
+            "testRun": "Test Run",
             "exercises": "Exercises",
             "overview": "Overview",
             "downloadPDF": " Download PDF",
