@@ -44,6 +44,7 @@
                     "maxPointsPlaceholder": "10",
                     "maxPointsError": "Gib einen Wert zwischen {{min}} und {{max}} an.",
                     "difficulty": "Schwierigkeit",
+                    "difficultyHint": "Wie viel Artemis den Studierenden abverlangen soll.",
                     "exampleTitle": "Beispielbeschreibung anzeigen",
                     "exampleText": "Studierende üben Generics und Ausnahmebehandlung, indem sie einen begrenzten Stack implementieren. Er muss die Last-in-first-out-Reihenfolge einhalten und Zugriffe auf einen leeren Stack mit einer eigenen Ausnahme ablehnen.",
                     "settingsTitle": "Aufgabeneinstellungen",

@@ -272,6 +272,7 @@
                                 <ng-container [ngTemplateOutlet]="suggestedMark" [ngTemplateOutletContext]="{ testid: 'hyperion-difficulty-suggested' }" />
                             }
                         </div>
+                        <p class="mb-2 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.brief.difficultyHint"></p>
                         <tum-ui-select-button
                             [options]="difficultyOptions"
                             optionValue="value"

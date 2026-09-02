@@ -44,6 +44,7 @@
                     "maxPointsPlaceholder": "10",
                     "maxPointsError": "Enter a value between {{min}} and {{max}}.",
                     "difficulty": "Difficulty",
+                    "difficultyHint": "How much Artemis should ask of your students.",
                     "exampleTitle": "Show an example brief",
                     "exampleText": "Students practise generics and exception handling by implementing a bounded stack. It must preserve last-in-first-out order and reject access to an empty stack with a dedicated exception.",
                     "settingsTitle": "Exercise settings",
