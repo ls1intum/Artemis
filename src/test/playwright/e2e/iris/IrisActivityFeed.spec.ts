@@ -73,11 +73,11 @@ test.describe('Iris activity visibility (real Pyris)', { tag: '@slow' }, () => {
         // round before its canned answer, so a real tool activity flows through Pyris.
         await chat.sendMessage('Hello Iris [e2e-tool] please look at the course details.');
 
-        // The live feed must show the tool chip with its translated label while the run
+        // The live feed must show the tool step with its translated label while the run
         // is in flight (the mock delays its follow-up answer to keep this window open).
-        const liveFeed = page.locator('.iris-activity-feed.mode-live');
-        const liveChip = liveFeed.locator('.activity-chip', { hasText: 'Looking up course info' });
-        await expect(liveChip).toBeVisible({ timeout: 60_000 });
+        const liveFeed = page.locator('.iris-activity-stepper.mode-live');
+        const liveStep = liveFeed.locator('.stepper-step', { hasText: 'Looking up course info' });
+        await expect(liveStep).toBeVisible({ timeout: 60_000 });
 
         const preambleMessage = chat.getLlmMessages().filter({ hasText: 'Let me check the course details first — mock-preamble' }).first();
         await expect(preambleMessage).toBeVisible({ timeout: 60_000 });
@@ -101,14 +101,14 @@ test.describe('Iris activity visibility (real Pyris)', { tag: '@slow' }, () => {
         // Once the answer landed, the live feed clears (the trail now lives on the message).
         await expect(liveFeed).toHaveCount(0, { timeout: 15_000 });
 
-        // The persisted trail renders expanded by default on the assistant message,
-        // showing the same chip in trail mode, and collapses via its summary.
+        // The persisted trail renders collapsed by default on the assistant message and
+        // expands via its summary, showing the same step in trail mode.
         await expect(preambleMessage.locator('details.activity-trail')).toHaveCount(0);
         const trail = finalMessage.locator('details.activity-trail');
         await expect(trail).toBeVisible({ timeout: 15_000 });
-        const trailChip = trail.locator('.iris-activity-feed.mode-trail .activity-chip', { hasText: 'Looking up course info' });
-        await expect(trailChip).toBeVisible();
+        const trailStep = trail.locator('.iris-activity-stepper.mode-trail .stepper-step', { hasText: 'Looking up course info' });
+        await expect(trailStep).toBeHidden();
         await trail.locator('summary').click();
-        await expect(trailChip).toBeHidden();
+        await expect(trailStep).toBeVisible();
     });
 });
