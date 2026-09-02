@@ -17,7 +17,17 @@
                 }
             },
             "notFound": "We couldn't find any unassessed modeling submissions. Please return to the dashboard.",
-            "impactWarning": "This feedback might affect {{affectedSubmissionsCount}} other similar submission/s."
+            "impactWarning": "This feedback might affect {{affectedSubmissionsCount}} other similar submission/s.",
+            "legend": {
+                "title": "Legend",
+                "positiveScore": "Positive score",
+                "negativeScore": "Negative score",
+                "feedbackWithoutScore": "Feedback without score",
+                "aiFeedbackSuggestions": "AI feedback suggestion",
+                "automaticAssessment": "Automatic assessment",
+                "missingAssessment": "Missing assessment",
+                "incorrectAssessment": "Incorrect assessment"
+            }
         }
     }
 }

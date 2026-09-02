@@ -104,6 +104,12 @@ public class ComplaintService {
                     "exceededComplaintTextLimit");
         }
 
+        if (originalResult.isAthenaBased()) {
+            throw new BadRequestAlertException(
+                    "Cannot submit " + (complaintRequest.complaintType() == ComplaintType.COMPLAINT ? "a complaint" : "a more feedback request") + " for preliminary AI feedback.",
+                    ENTITY_NAME, "complaintOrRequestMoreFeedbackAthena");
+        }
+
         // checking if it is allowed to create a complaint
         if (examId.isPresent()) {
             ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
