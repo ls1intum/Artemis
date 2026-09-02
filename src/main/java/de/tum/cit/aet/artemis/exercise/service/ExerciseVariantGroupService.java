@@ -96,14 +96,21 @@ public class ExerciseVariantGroupService {
     public ExerciseVariantGroup createGroup(Long courseId, ExerciseVariantGroup group) {
         group.validateDates();
         // The course owns the unidirectional collection (the course_id FK lives on this table but is managed from the
-        // Course side). Persist the group first so it gets an id, then attach it so the course_id FK is written. Not
-        // wrapped in a transaction (this codebase avoids service-level @Transactional); validation runs before the
-        // first save, so a failure between the two can only leave an orphan, course-less group no course query sees.
-        group = exerciseVariantGroupRepository.save(group);
+        // Course side), so the group has to exist before it can be attached. Not wrapped in a transaction (this
+        // codebase avoids service-level @Transactional), so the two writes are made safe by hand: the course is
+        // resolved BEFORE the first save, which leaves an unknown id persisting nothing, and a failed attachment
+        // takes the row with it — a course-less group is invisible to every course query and would linger forever.
         Course course = courseRepository.findWithEagerExerciseVariantGroupsByIdElseThrow(courseId);
-        course.addExerciseVariantGroup(group);
-        courseRepository.save(course);
-        return group;
+        ExerciseVariantGroup savedGroup = exerciseVariantGroupRepository.save(group);
+        try {
+            course.addExerciseVariantGroup(savedGroup);
+            courseRepository.save(course);
+        }
+        catch (RuntimeException attachmentFailed) {
+            exerciseVariantGroupRepository.delete(savedGroup);
+            throw attachmentFailed;
+        }
+        return savedGroup;
     }
 
     /**
