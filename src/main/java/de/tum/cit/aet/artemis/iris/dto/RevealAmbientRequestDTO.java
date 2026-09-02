@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *                            stability, not read and not stored as a separate column
  * @param clientMessageId a client-generated UUID. Accepted for wire stability, but NOT read and NOT an
  *                            idempotency key: idempotency is scoped to (user, exercise, episode) and enforced by
- *                            the ambient decision record
+ *                            the episode's recorded offer
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record RevealAmbientRequestDTO(String hintText, String level, String clientMessageId) {

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.struggle;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.ZonedDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -66,6 +69,9 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private PlatformTransactionManager transactionManager;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
 
     private ProgrammingExercise exercise;
 
@@ -109,8 +115,9 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
 
         assertThat(preparation.accepted()).isTrue();
         // A legacy client that sends no episode keeps the pre-registry behaviour rather than getting a row it can
-        // never address.
-        assertThat(irisProactiveEpisodeRepository.findAll()).isEmpty();
+        // never address. Scoped to this test's own user and exercise: the suite runs classes in parallel against one
+        // database, so asserting the table is empty would fail on whatever another class registered meanwhile.
+        assertThat(irisProactiveEpisodeRepository.findAll()).noneMatch(e -> e.getUserId() == user.getId() && e.getExerciseId() == exercise.getId());
     }
 
     @Test
@@ -143,6 +150,87 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         boolean applied = struggleInterventionService.writeEpisodeOutcome("ep-unregistered", IrisProactiveOutcome.DISMISSED, userId(), exercise.getId());
 
         assertThat(applied).as("an unregistered episode still defers, exactly as before the registry").isFalse();
+    }
+
+    @Test
+    void repeatingATriggerRefreshesLastTriggeredAt() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var first = struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-touch", true, null), null, null, null);
+        var registered = irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-touch").orElseThrow();
+        // Backdate the registration so the refresh is unambiguous, and so this row would be reaped as it stands.
+        registered.setLastTriggeredAt(ZonedDateTime.now().minusDays(30));
+        irisProactiveEpisodeRepository.save(registered);
+        // Free the single-flight slot the first trigger reserved. Without this the second call is rejected before it
+        // ever reaches the registry, and the test would report a missing refresh that never had a chance to happen.
+        pyrisJobService.releaseStruggleInFlightJob(first.trigger().jobToken(), user.getId(), exercise.getId());
+
+        // The confirm_close run that follows a decide run carries the same episode id, so re-registration is normal.
+        var second = struggleInterventionService.prepareTrigger(exercise.getId(), user, "confirm_close", new StruggleEpisodeDTO("ep-touch", true, null), "progress", null, null);
+        assertThat(second.accepted()).isTrue();
+
+        // Asserted through the retention delete rather than by reading the timestamp back. A query cannot prove the
+        // refresh landed: Hibernate returns the instance this test already holds for that id, stale timestamp and
+        // all, so the assertion would fail even with a correct refresh. The delete reads the database.
+        int deleted = irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(ZonedDateTime.now().minusDays(7));
+
+        assertThat(deleted).as("a repeat trigger must move the row out of the retention window").isZero();
+        assertThat(irisProactiveEpisodeRepository.findById(registered.getId())).as("a repeat trigger must reuse the row, not insert a second one").isPresent();
+    }
+
+    @Test
+    void retentionRemovesOnlyEpisodesThatWentQuietWithNothingToKeep() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var cutoff = ZonedDateTime.now().minusDays(7);
+        long abandoned = agedEpisode("ep-abandoned", null, false);
+        long terminal = agedEpisode("ep-terminal", IrisProactiveOutcome.DISMISSED, false);
+        long revealed = agedEpisode("ep-revealed", null, true);
+        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-live", true, null), null, null, null);
+
+        // The count is deliberately not asserted: the delete is table-wide and classes run in parallel, so another
+        // class's aged row would make it flaky. What matters is which of THESE four rows survived.
+        irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(cutoff);
+
+        assertThat(irisProactiveEpisodeRepository.findById(abandoned)).as("an episode nobody triggered for a week and that holds nothing is reaped").isEmpty();
+        assertThat(irisProactiveEpisodeRepository.findById(terminal)).as("a terminal outcome is what suppresses a late message, so it is kept").isPresent();
+        assertThat(irisProactiveEpisodeRepository.findById(revealed)).as("a consumed offer is what keeps a replayed reveal idempotent, so it is kept").isPresent();
+        assertThat(irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-live")).as("a freshly triggered episode is never reaped").isPresent();
+    }
+
+    @Test
+    void aReapedEpisodeCanBeRegisteredAgainAsANewLifecycle() {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        long reaped = agedEpisode("ep-reused", null, false);
+        irisProactiveEpisodeRepository.deleteAbandonedEpisodesLastTriggeredBefore(ZonedDateTime.now().minusDays(7));
+
+        // A late outcome for the reaped episode finds neither a registry row nor a message row: it is discarded,
+        // which is the documented contract rather than a silent write into whatever comes next.
+        assertThat(struggleInterventionService.writeEpisodeOutcome("ep-reused", IrisProactiveOutcome.DISMISSED, user.getId(), exercise.getId())).isFalse();
+
+        // Reusing the id afterwards is a NEW lifecycle under the same identity. Episode identity is
+        // (user, exercise, episodeId) with no generation, so this is a property of the natural key.
+        struggleInterventionService.prepareTrigger(exercise.getId(), user, "decide", new StruggleEpisodeDTO("ep-reused", true, null), null, null, null);
+
+        var fresh = irisProactiveEpisodeRepository.find(user.getId(), exercise.getId(), "ep-reused").orElseThrow();
+        assertThat(fresh.getId()).as("the reaped row is gone, so this is a new row").isNotEqualTo(reaped);
+        assertThat(fresh.getOutcome()).as("the discarded outcome must not carry into the new lifecycle").isNull();
+        // A stale outcome arriving now resolves against the new row, which is the aliasing the contract accepts.
+        assertThat(struggleInterventionService.writeEpisodeOutcome("ep-reused", IrisProactiveOutcome.ABANDONED, user.getId(), exercise.getId())).isTrue();
+        assertThat(irisProactiveEpisodeRepository.findById(fresh.getId()).orElseThrow().getOutcome()).isEqualTo(IrisProactiveOutcome.ABANDONED);
+    }
+
+    /** An episode last triggered well before the retention cutoff, optionally terminal and optionally with a consumed offer. */
+    private long agedEpisode(String episodeId, IrisProactiveOutcome outcome, boolean revealed) {
+        var episode = new IrisProactiveEpisode();
+        episode.setUserId(userId());
+        episode.setExerciseId(exercise.getId());
+        episode.setEpisodeId(episodeId);
+        episode.setOutcome(outcome);
+        episode.setLastTriggeredAt(ZonedDateTime.now().minusDays(30));
+        if (revealed) {
+            episode.setHintText("An offer the student already revealed.");
+            episode.setConsumedAt(ZonedDateTime.now().minusDays(29));
+        }
+        return irisProactiveEpisodeRepository.save(episode).getId();
     }
 
     @Test

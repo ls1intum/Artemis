@@ -155,7 +155,7 @@ public class PyrisStatusUpdateService {
             }
             catch (Exception e) {
                 // handleDecision emits its own silent frame on every deliberate drop, but an unexpected failure
-                // (e.g. a DataAccessException from recording the ambient decision) would otherwise escape after the
+                // (e.g. a DataAccessException from recording the ambient offer) would otherwise escape after the
                 // job was already removed, leaving the client's in-flight decide to hang until its own timeout.
                 // Complete it here before releasing the marker.
                 log.error("handleDecision failed for struggle job {} exercise {} user {}; emitting terminal completion", job.jobId(), job.exerciseId(), job.userId(), e);

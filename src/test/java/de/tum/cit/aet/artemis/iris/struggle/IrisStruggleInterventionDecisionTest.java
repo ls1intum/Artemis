@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -9,8 +10,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,14 +29,13 @@ import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisAmbientDecision;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
@@ -108,9 +110,6 @@ class IrisStruggleInterventionDecisionTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Mock
-    private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
-
-    @Mock
     private PlatformTransactionManager transactionManager;
 
     @Mock
@@ -145,7 +144,7 @@ class IrisStruggleInterventionDecisionTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
+                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
@@ -201,46 +200,64 @@ class IrisStruggleInterventionDecisionTest {
                         && Objects.equals(e.confidence(), 0.7)));
     }
 
+    /** A registered, open episode for the given id, with its lock stubbed and the registration refresh reporting a hit. */
+    private IrisProactiveEpisode registeredEpisode(String episodeId) {
+        var episode = new IrisProactiveEpisode();
+        episode.setUserId(3L);
+        episode.setExerciseId(42L);
+        episode.setEpisodeId(episodeId);
+        episode.setLastTriggeredAt(ZonedDateTime.now());
+        when(irisProactiveEpisodeRepository.touchLastTriggeredAt(eq(3L), eq(42L), eq(episodeId), any())).thenReturn(1);
+        when(irisProactiveEpisodeRepository.find(3L, 42L, episodeId)).thenReturn(Optional.of(episode));
+        when(irisProactiveEpisodeRepository.findForUpdate(3L, 42L, episodeId)).thenReturn(Optional.of(episode));
+        return episode;
+    }
+
     @Test
-    void ambient_withAnExistingOffer_refreshesItGuarded_neverMergesTheEntity() {
+    void ambient_withAnExistingOffer_refreshesTheOfferOnTheLockedEpisode() {
         // Regression guard for a lost update. The callback runs outside a transaction, so anything it loads is
         // detached, and saving a detached aggregate merges EVERY column. The old code read the decision, checked
         // consumedAt, and saved that entity: a reveal committing in between was overwritten, consumedAt and
         // consumedMessageId went back to NULL, and the already-revealed offer became revealable a second time.
         //
-        // What this test proves: the production path never merges an existing aggregate. It does NOT prove
-        // Hibernate's merge semantics or the database race itself - reproducing that interleaving deterministically
-        // would need a @MockitoSpyBean seam, and AbstractIrisIntegrationTest is not in ALLOWED_BASE_CLASSES in
-        // SpringContextConfigurationArchitectureTest, so such a seam would break the ArchUnit rule.
+        // What this test proves: a repeat callback updates the row the caller holds the episode lock on, rather than
+        // creating a second offer. It does NOT prove the database race itself - reproducing that interleaving
+        // deterministically would need a @MockitoSpyBean seam, and AbstractIrisIntegrationTest is not in
+        // ALLOWED_BASE_CLASSES in SpringContextConfigurationArchitectureTest, so such a seam would break the
+        // ArchUnit rule.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        // 1 = an unconsumed offer for this episode was refreshed in place. Stubbing this is load-bearing: Mockito's
-        // default 0 would send the code down the insert fallback and the never()-check below would pass for the
-        // wrong reason.
-        when(irisAmbientDecisionRepository.refreshIfUnconsumed(3L, 42L, "ep-123", "Re-check the logic.")).thenReturn(1);
+        var episode = registeredEpisode("ep-123");
+        episode.setHintText("An older hint.");
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
                 null, null);
 
         service.handleDecision(jobWithEpisode, update);
 
-        verify(irisAmbientDecisionRepository).refreshIfUnconsumed(3L, 42L, "ep-123", "Re-check the logic.");
-        verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
+        // The newest hint replaces the older one on the SAME row; no second episode row is created.
+        assertThat(episode.getHintText()).isEqualTo("Re-check the logic.");
+        verify(irisProactiveEpisodeRepository).save(episode);
+        verify(irisProactiveEpisodeRepository, never()).saveAndFlush(any(IrisProactiveEpisode.class));
     }
 
     @Test
     void ambient_previousOfferAlreadyRevealed_emitsSilentNotAmbient() {
-        // The episode's prior offer was already revealed: refreshIfUnconsumed matches no unconsumed row (0) and the
-        // insert collides with the consumed row (unique constraint). Nothing fresh is revealable, so the client is
-        // completed silently rather than pointed at a reveal that would return the stale, already-used row.
+        // The episode's prior offer was already revealed, so its message exists and there is nothing fresh to
+        // surface. The client is completed silently rather than pointed at a reveal that would return the stale,
+        // already-used row. Overwriting the text would also rewrite history the student has already seen.
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
-        when(irisAmbientDecisionRepository.refreshIfUnconsumed(3L, 42L, "ep-123", "Re-check the logic.")).thenReturn(0);
-        when(irisAmbientDecisionRepository.saveAndFlush(any(IrisAmbientDecision.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+        var episode = registeredEpisode("ep-123");
+        episode.setHintText("The revealed hint.");
+        episode.setConsumedAt(ZonedDateTime.now());
+        episode.setConsumedMessageId(77L);
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
                 null, null);
 
         service.handleDecision(jobWithEpisode, update);
 
+        assertThat(episode.getHintText()).isEqualTo("The revealed hint.");
+        verify(irisProactiveEpisodeRepository, never()).save(any(IrisProactiveEpisode.class));
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
         verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
@@ -259,9 +276,9 @@ class IrisStruggleInterventionDecisionTest {
 
         service.handleDecision(overlongJob, update);
 
-        // Rejected before any repository work: the blank/length guard runs before refresh and insert.
-        verify(irisAmbientDecisionRepository, never()).refreshIfUnconsumed(anyLong(), anyLong(), any(), any());
-        verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
+        // Rejected before any repository work: usableEpisodeId filters the id out before the episode is registered.
+        verify(irisProactiveEpisodeRepository, never()).touchLastTriggeredAt(anyLong(), anyLong(), any(), any());
+        verify(irisProactiveEpisodeRepository, never()).save(any(IrisProactiveEpisode.class));
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "silent".equals(e.action())));
         verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
     }
@@ -278,7 +295,8 @@ class IrisStruggleInterventionDecisionTest {
 
         service.handleDecision(blankJob, update);
 
-        verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
+        verify(irisProactiveEpisodeRepository, never()).touchLastTriggeredAt(anyLong(), anyLong(), any(), any());
+        verify(irisProactiveEpisodeRepository, never()).save(any(IrisProactiveEpisode.class));
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "silent".equals(e.action())));
         verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));
     }
@@ -326,7 +344,7 @@ class IrisStruggleInterventionDecisionTest {
 
     @Test
     void ambient_lateArrivalOnTerminalEpisode_emitsSilent_skipsRecording() {
-        // The student already dismissed this episode (a terminal outcome exists). A late ambient decision must not
+        // The student already dismissed this episode (a terminal outcome exists). A late ambient offer must not
         // resurface: the same gate the active path applies. No recording, no ambient pointer, just a silent completion.
         when(irisMessageRepository.findEpisodeOutcomes("ep-123", 3L, 42L)).thenReturn(List.of(IrisProactiveOutcome.DISMISSED));
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
@@ -334,8 +352,8 @@ class IrisStruggleInterventionDecisionTest {
 
         service.handleDecision(jobWithEpisode, update);
 
-        verify(irisAmbientDecisionRepository, never()).refreshIfUnconsumed(anyLong(), anyLong(), any(), any());
-        verify(irisAmbientDecisionRepository, never()).save(any(IrisAmbientDecision.class));
+        verify(irisProactiveEpisodeRepository, never()).touchLastTriggeredAt(anyLong(), anyLong(), any(), any());
+        verify(irisProactiveEpisodeRepository, never()).save(any(IrisProactiveEpisode.class));
         verify(irisChatSessionService, never()).getCurrentSessionOrCreateIfNotExists(any(), eq(42L), any());
         verify(irisChatWebsocketService).sendStruggleEvent(any(), argThat(e -> "decide".equals(e.kind()) && "silent".equals(e.action())));
         verify(irisChatWebsocketService, never()).sendStruggleEvent(any(), argThat(e -> "ambient".equals(e.action())));

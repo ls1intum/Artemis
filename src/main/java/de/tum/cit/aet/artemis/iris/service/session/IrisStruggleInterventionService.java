@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisAmbientDecision;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -43,7 +42,6 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
-import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
@@ -82,7 +80,7 @@ public class IrisStruggleInterventionService {
     private static final Logger log = LoggerFactory.getLogger(IrisStruggleInterventionService.class);
 
     /**
-     * Width of {@code iris_ambient_decision.episode_id} and {@code iris_message.proactive_episode_id}. Both columns
+     * Width of {@code iris_proactive_episode.episode_id} and {@code iris_message.proactive_episode_id}. Both columns
      * are varchar(64); an episode id is a client-generated UUID, so 64 is generous.
      */
     private static final int MAX_EPISODE_ID_LENGTH = 64;
@@ -113,8 +111,6 @@ public class IrisStruggleInterventionService {
 
     private final IrisMessageRepository irisMessageRepository;
 
-    private final IrisAmbientDecisionRepository irisAmbientDecisionRepository;
-
     private final IrisSessionRepository irisSessionRepository;
 
     private final IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
@@ -138,8 +134,8 @@ public class IrisStruggleInterventionService {
             IrisSettingsService irisSettingsService, IrisChatSessionRepository irisChatSessionRepository, PyrisDTOService pyrisDTOService,
             PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, UserRepository userRepository, IrisChatSessionService irisChatSessionService,
             IrisMessageService irisMessageService, IrisChatWebsocketService irisChatWebsocketService, IrisMessageRepository irisMessageRepository,
-            IrisAmbientDecisionRepository irisAmbientDecisionRepository, PlatformTransactionManager transactionManager, UserAiPreferenceService userAiPreferenceService,
-            IrisSessionRepository irisSessionRepository, IrisProactiveEpisodeRepository irisProactiveEpisodeRepository) {
+            PlatformTransactionManager transactionManager, UserAiPreferenceService userAiPreferenceService, IrisSessionRepository irisSessionRepository,
+            IrisProactiveEpisodeRepository irisProactiveEpisodeRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
@@ -152,7 +148,6 @@ public class IrisStruggleInterventionService {
         this.irisMessageService = irisMessageService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.irisMessageRepository = irisMessageRepository;
-        this.irisAmbientDecisionRepository = irisAmbientDecisionRepository;
         this.irisSessionRepository = irisSessionRepository;
         this.irisProactiveEpisodeRepository = irisProactiveEpisodeRepository;
         this.userAiPreferenceService = userAiPreferenceService;
@@ -404,9 +399,24 @@ public class IrisStruggleInterventionService {
                 // revealed records nothing, and pointing the client at a reveal that would 409 helps no one, so
                 // complete it silently instead. Without an episode id there is nothing a reveal could address; the
                 // pointer is still emitted for the client's own bookkeeping, exactly as before.
-                Boolean offered = episodeId == null ? !carriedUnusableEpisodeId
-                        : transactionTemplate.execute(status -> isEpisodeTerminalUnderLock(episodeId, user.getId(), job.exerciseId()) ? null
-                                : recordAmbientDecision(user.getId(), job.exerciseId(), episodeId, result));
+                if (episodeId != null) {
+                    // Make sure the episode has a row BEFORE the transaction opens. It normally does, because the
+                    // trigger registers it, but a job minted before the deployment that introduced the registry does
+                    // not. Registering from inside the transaction below would be worse than useless: it commits in a
+                    // transaction of its own, so the row the offer then writes to would be one this transaction never
+                    // locked, and the terminal check and the write would stop being atomic.
+                    registerEpisode(user.getId(), job.exerciseId(), episodeId);
+                }
+                Boolean offered = episodeId == null ? !carriedUnusableEpisodeId : transactionTemplate.execute(status -> {
+                    var episode = lockEpisode(episodeId, user.getId(), job.exerciseId()).orElse(null);
+                    // No row despite the registration above means retention removed it in between, which takes seven
+                    // quiet days and a trigger that then never refreshed it. Treat it as terminal rather than
+                    // announcing a pointer at an episode nothing can resolve.
+                    if (episode == null || episode.getOutcome() != null) {
+                        return null;
+                    }
+                    return recordAmbientOffer(episode, result);
+                });
                 if (offered == null) {
                     // The episode went terminal between the fast path above and the locked check. Nothing was
                     // offered, so complete silently instead of pointing the client at a hint it has already closed.
@@ -535,18 +545,24 @@ public class IrisStruggleInterventionService {
      * @return the persisted message as a DTO
      */
     private IrisMessageResponseDTO revealAmbientInTransaction(User user, long exerciseId, String episodeId, IrisChatSession session) {
-        // The registry lock comes first, before the ambient row and before anything touches the session, and it is the
-        // order every other path uses. Until it existed the reveal had no terminal check at all: a student could
-        // dismiss an offer and still reveal it, because the ambient decision's own lock says nothing about the episode.
-        if (isEpisodeTerminalUnderLock(episodeId, user.getId(), exerciseId)) {
+        // One lock, one row. The episode's write lock is both the terminal gate and the offer's mutex: before the
+        // registry the reveal had no terminal check at all, and while the offer lived in its own table its lock said
+        // nothing about the episode, so the two had to be taken in a fixed order. Now they are the same lock.
+        var episode = lockEpisode(episodeId, user.getId(), exerciseId)
+                .orElseThrow(() -> new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision"));
+        if (episode.getOutcome() != null) {
             throw new ConflictException("The ambient hint for this episode can no longer be revealed", "IrisMessage", "revealEpisodeTerminal");
         }
-        var decision = irisAmbientDecisionRepository.findForReveal(user.getId(), exerciseId, episodeId)
-                .orElseThrow(() -> new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision"));
-        if (decision.getConsumedAt() != null) {
+        if (episode.getHintText() == null) {
+            // Registered, but nothing was ever offered for it: an active decision, a silent run, or a trigger whose
+            // callback never arrived. There is no server-authored text to persist and the caller's copy must never be
+            // trusted, so this is the same refusal as an unknown episode.
+            throw new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision");
+        }
+        if (episode.getConsumedAt() != null) {
             // Already revealed. Return that reveal's row so a replay is idempotent rather than a second insert;
             // if the row is gone (superseded and deleted), the offer is spent and there is nothing to surface.
-            return irisMessageRepository.findById(decision.getConsumedMessageId() == null ? -1L : decision.getConsumedMessageId()).map(IrisMessageResponseDTO::of)
+            return irisMessageRepository.findById(episode.getConsumedMessageId() == null ? -1L : episode.getConsumedMessageId()).map(IrisMessageResponseDTO::of)
                     .orElseThrow(() -> new ConflictException("The ambient hint for this episode was already revealed", "IrisMessage", "revealAlreadyConsumed"));
         }
 
@@ -554,7 +570,7 @@ public class IrisStruggleInterventionService {
         // lock. The ambient-decision lock held here says nothing about the session: a run for a DIFFERENT exercise can
         // switch this same session between resolveProactiveSession above and the write, and the reveal would then
         // persist the hint into that other exercise's history.
-        var saved = saveProactiveMessage(session, exerciseId, decision.getHintText(), episodeId);
+        var saved = saveProactiveMessage(session, exerciseId, episode.getHintText(), episodeId);
         if (saved == null) {
             // Fail the whole reveal rather than consuming the offer: rolling back leaves the decision unconsumed, so
             // the student can reveal it again once the session is back on this exercise.
@@ -562,9 +578,9 @@ public class IrisStruggleInterventionService {
         }
 
         // The locked entity is managed, so consuming it is part of this transaction's flush.
-        decision.setConsumedAt(ZonedDateTime.now());
-        decision.setConsumedMessageId(saved.getId());
-        irisAmbientDecisionRepository.save(decision);
+        episode.setConsumedAt(ZonedDateTime.now());
+        episode.setConsumedMessageId(saved.getId());
+        irisProactiveEpisodeRepository.save(episode);
         return IrisMessageResponseDTO.of(saved);
     }
 
@@ -574,63 +590,33 @@ public class IrisStruggleInterventionService {
      *
      * <p>
      * A repeated decision callback for the same episode must not create a second offer, and must not overwrite one
-     * the student has already revealed. The unique constraint on (user, exercise, episode) enforces the first part;
-     * an existing unconsumed row simply has its text refreshed to the newest decision, and a consumed one is left
-     * alone because its message already exists.
+     * the student has already revealed. Both fall out of the offer living on the episode row: there is exactly one,
+     * a repeat callback refreshes its text, and a consumed one is left alone because its message already exists.
      *
-     * @param userId     the student the hint is offered to
-     * @param exerciseId the exercise the hint belongs to
-     * @param episodeId  the client-allocated episode id, never null here
-     * @param hintText   the hint as authored by Pyris
-     * @return {@code true} when the triple now carries a revealable (unconsumed) decision the client may be
-     *         pointed at; {@code false} when nothing revealable was recorded (over-long id, or an episode whose
-     *         previous offer the student already revealed). The caller announces an ambient pointer only on
-     *         {@code true}, so it never sends the client to a reveal that would 409.
+     * <p>
+     * The caller holds this row write-locked and this runs inside that transaction, so the terminal check and the
+     * offer commit together. It must NOT open a transaction of its own: updating the same row from a nested one
+     * would block on the lock the outer transaction is holding. That is also the one behaviour change from the
+     * separate ambient table, where the offer committed independently and survived a caller rollback. Nothing on
+     * the success path depended on it, because the websocket event only goes out after the caller commits.
+     *
+     * @param episode  the episode, already write-locked by the caller
+     * @param hintText the hint as authored by Pyris
+     * @return {@code true} when the episode now carries a revealable (unconsumed) offer the client may be pointed
+     *         at; {@code false} when the student already revealed this episode's previous offer. The caller
+     *         announces an ambient pointer only on {@code true}, so it never sends the client to a reveal that
+     *         would 409.
      */
-    private boolean recordAmbientDecision(long userId, long exerciseId, String episodeId, String hintText) {
-        // Reject a blank or over-long episode id FIRST, before any refresh or insert. A reveal rejects a blank id
-        // outright, and an over-long id fails on the column width; either way the client would be told an offer exists
-        // that a reveal can never materialise. This has to precede refreshIfUnconsumed: a legacy unconsumed row with a
-        // blank id would otherwise be refreshed, return true, and get announced as an unrevealable offer. The trigger
-        // already bounds the length via bean validation; this is the defence at the recording boundary for any path
-        // that reaches here unvalidated, and it also covers the blank case bean validation cannot express.
-        if (episodeId.isBlank() || episodeId.length() > MAX_EPISODE_ID_LENGTH) {
-            log.warn("Refusing to record an ambient decision for exercise={} user={}: episode id is blank or exceeds the {}-character limit (length {})", exerciseId, userId,
-                    MAX_EPISODE_ID_LENGTH, episodeId.length());
+    private boolean recordAmbientOffer(IrisProactiveEpisode episode, String hintText) {
+        if (episode.getConsumedAt() != null) {
+            // The student already revealed this episode's offer, so its message exists and there is nothing fresh to
+            // surface. Overwriting the text here would rewrite history the student has already seen.
+            log.debug("Ambient offer for episode {} not recorded: the previous offer was already revealed", episode.getEpisodeId());
             return false;
         }
-        // Its own transaction, always. The caller now holds the episode's registry row lock, and the duplicate insert
-        // below marks its transaction rollback-only: catching it inside the caller's transaction would turn a handled
-        // duplicate into an UnexpectedRollbackException when that transaction commits. The consequence is that the
-        // offer commits even if the caller later rolls back, which is the same order as before the registry, where
-        // the decision was already recorded before the event went out.
-        try {
-            return Boolean.TRUE.equals(requiresNewTransactionTemplate.execute(status -> {
-                // Refresh in place without loading the row first. Saving a detached aggregate merges EVERY column: a
-                // reveal committing between the read and the save would be overwritten, resetting consumedAt and
-                // consumedMessageId to NULL and making an already-revealed offer revealable a second time.
-                if (irisAmbientDecisionRepository.refreshIfUnconsumed(userId, exerciseId, episodeId, hintText) > 0) {
-                    return true;
-                }
-                // Zero rows: either no offer exists for this episode yet, or the student already revealed the previous
-                // one. Insert and let the unique constraint on (user, exercise, episode) decide between the two.
-                var decision = new IrisAmbientDecision();
-                decision.setUserId(userId);
-                decision.setExerciseId(exerciseId);
-                decision.setEpisodeId(episodeId);
-                decision.setHintText(hintText);
-                decision.setCreatedAt(ZonedDateTime.now());
-                irisAmbientDecisionRepository.saveAndFlush(decision);
-                return true;
-            }));
-        }
-        catch (DataIntegrityViolationException ex) {
-            // A consumed row already occupies this triple: the student already revealed the previous offer for this
-            // episode, so there is nothing fresh to reveal and no ambient pointer should be announced. Caught outside
-            // the template on purpose: inside, the failed insert has already made that transaction rollback-only.
-            log.debug("Ambient decision for episode {} not recorded: already present", episodeId);
-            return false;
-        }
+        episode.setHintText(hintText);
+        irisProactiveEpisodeRepository.save(episode);
+        return true;
     }
 
     /**
@@ -699,9 +685,9 @@ public class IrisStruggleInterventionService {
 
     /**
      * Persist a previously-hidden ambient hint as a {@code PROACTIVE_STRUGGLE} message with a server-assigned
-     * {@code sentAt}. Idempotency is scoped to {@code (user, exercise, episode)} and enforced by the ambient
-     * decision record, not by any client-supplied key: a replay finds the decision already consumed and returns
-     * the row that reveal created, rather than inserting a second one.
+     * {@code sentAt}. Idempotency is scoped to {@code (user, exercise, episode)} and enforced by the episode row,
+     * not by any client-supplied key: a replay finds the offer already consumed and returns the row that reveal
+     * created, rather than inserting a second one.
      *
      * <p>
      * Deliberately does NOT call {@code irisChatWebsocketService.sendMessage}: the client owns the single insert
@@ -1086,11 +1072,26 @@ public class IrisStruggleInterventionService {
      * @return true if a terminal outcome stands for this episode
      */
     private boolean isEpisodeTerminalUnderLock(String episodeId, long userId, long exerciseId) {
-        var locked = irisProactiveEpisodeRepository.findForUpdate(userId, exerciseId, episodeId);
+        var locked = lockEpisode(episodeId, userId, exerciseId);
         if (locked.isPresent()) {
             return locked.get().getOutcome() != null;
         }
         return !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty();
+    }
+
+    /**
+     * Take the episode's write lock and hand back the managed row, for the callers that go on to write to it. The
+     * boolean-only {@link #isEpisodeTerminalUnderLock} would force them to look the row up a second time, and the
+     * ambient offer and the reveal both need the entity itself: they mutate it inside the same transaction, so it
+     * has to be the instance this lock attached to.
+     *
+     * @param episodeId  the client-allocated episode UUID
+     * @param userId     the owning user
+     * @param exerciseId the exercise the episode belongs to
+     * @return the locked episode, empty when none is registered for the triple
+     */
+    private Optional<IrisProactiveEpisode> lockEpisode(String episodeId, long userId, long exerciseId) {
+        return irisProactiveEpisodeRepository.findForUpdate(userId, exerciseId, episodeId);
     }
 
     /**
@@ -1136,17 +1137,25 @@ public class IrisStruggleInterventionService {
      * @return true if a terminal outcome exists for this episode
      */
     /**
-     * Register the episode so it has a row to lock and a place to hold its terminal outcome, or return the row a
+     * Register the episode so it has a row to lock and a place to hold its terminal outcome, or refresh the row a
      * previous trigger already created for it.
      *
      * <p>
+     * An upsert rather than a read followed by a write. Reading first and then updating leaves a window in which
+     * retention deletes the row in between, and the update lands on nothing. The refresh is therefore a single
+     * guarded statement keyed on the natural key, and only a zero result falls through to the insert. Zero does not
+     * prove the row is absent - some databases report changed rather than matched rows - which is exactly why the
+     * insert keeps its duplicate-key recovery.
+     *
+     * <p>
      * Repeating a trigger for one episode is normal rather than exceptional: a {@code decide} run and the
-     * {@code confirm_close} run that follows it carry the same episode id. The unique key decides who wins a race,
-     * and the loser rereads. The catch sits OUTSIDE the transaction that attempted the insert, because a constraint
-     * violation marks its transaction rollback-only: catching it inside and carrying on would surface as an
-     * {@code UnexpectedRollbackException} at commit rather than as the handled duplicate it is. The reread runs in a
-     * second transaction for the same reason, and rethrows the original failure if it finds nothing, since not every
-     * integrity violation is a duplicate key.
+     * {@code confirm_close} run that follows it carry the same episode id. The refresh is also what keeps retention
+     * honest, since it moves {@code lastTriggeredAt} forward and an episode still being triggered is never reaped.
+     * The unique key decides who wins an insert race, and the loser rereads. The catch sits OUTSIDE the transaction
+     * that attempted the insert, because a constraint violation marks its transaction rollback-only: catching it
+     * inside and carrying on would surface as an {@code UnexpectedRollbackException} at commit rather than as the
+     * handled duplicate it is. The reread runs in a second transaction for the same reason, and rethrows the
+     * original failure if it finds nothing, since not every integrity violation is a duplicate key.
      *
      * <p>
      * A new row inherits any terminal outcome the episode already reached on its message rows, so an id reused
@@ -1155,28 +1164,38 @@ public class IrisStruggleInterventionService {
      * against it. The window exists only for episodes that predate the registry and closes as soon as they age out,
      * so it is accepted rather than locked.
      *
+     * <p>
+     * Returns nothing on purpose. Callers only need the row to exist before they lock it, and handing one back would
+     * mean re-reading after the bulk update, which bypasses the persistence context: a caller that already held the
+     * episode would be given its stale instance rather than the refreshed row.
+     *
      * @param userId     the struggling student
      * @param exerciseId the exercise the run belongs to
      * @param episodeId  the client-allocated episode id, already validated as usable
-     * @return the registered episode, newly created or pre-existing
      */
-    private IrisProactiveEpisode registerEpisode(long userId, long exerciseId, String episodeId) {
+    private void registerEpisode(long userId, long exerciseId, String episodeId) {
         try {
-            return requiresNewTransactionTemplate.execute(status -> irisProactiveEpisodeRepository.find(userId, exerciseId, episodeId).orElseGet(() -> {
+            requiresNewTransactionTemplate.executeWithoutResult(status -> {
+                if (irisProactiveEpisodeRepository.touchLastTriggeredAt(userId, exerciseId, episodeId, ZonedDateTime.now()) > 0) {
+                    return;
+                }
                 var episode = new IrisProactiveEpisode();
                 episode.setUserId(userId);
                 episode.setExerciseId(exerciseId);
                 episode.setEpisodeId(episodeId);
-                episode.setCreatedAt(ZonedDateTime.now());
+                episode.setLastTriggeredAt(ZonedDateTime.now());
                 // Carry over a terminal outcome this episode already reached before it had a registry row. A trigger
                 // that reuses such an id across the deployment would otherwise get a fresh open row, and every later
                 // check would trust it and let a late message through for an episode the student had closed.
                 irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).stream().findFirst().ifPresent(episode::setOutcome);
-                return irisProactiveEpisodeRepository.saveAndFlush(episode);
-            }));
+                irisProactiveEpisodeRepository.saveAndFlush(episode);
+            });
         }
         catch (DataIntegrityViolationException duplicate) {
-            return requiresNewTransactionTemplate.execute(status -> irisProactiveEpisodeRepository.find(userId, exerciseId, episodeId).orElseThrow(() -> duplicate));
+            // Another trigger for the same episode won the insert race. The row it created is the one every later
+            // path locks, so there is nothing left to do here; only a violation that is NOT a duplicate key must
+            // surface, which the reread distinguishes.
+            requiresNewTransactionTemplate.execute(status -> irisProactiveEpisodeRepository.find(userId, exerciseId, episodeId).orElseThrow(() -> duplicate));
         }
     }
 

@@ -15,10 +15,10 @@ import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisAmbientDecision;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.iris.dto.CancelStruggleJobRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.EpisodeOutcomeAppliedDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.dto.RevealAmbientRequestDTO;
-import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -42,7 +42,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     private static final String TEST_PREFIX = "a10endpoint";
 
     /** Fixed so the persisted fixture does not depend on the clock; nothing in these tests reads the value back. */
-    private static final ZonedDateTime AMBIENT_DECISION_CREATED_AT = ZonedDateTime.parse("2026-01-01T00:00:00Z");
+    private static final ZonedDateTime EPISODE_LAST_TRIGGERED_AT = ZonedDateTime.parse("2026-01-01T00:00:00Z");
 
     @Autowired
     private UserUtilService userUtilService;
@@ -51,7 +51,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     private IrisMessageRepository irisMessageRepository;
 
     @Autowired
-    private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
+    private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
 
     @Autowired
     private IrisMessageService irisMessageService;
@@ -92,18 +92,30 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
     // ---- reveal ----
 
     /**
-     * Record the ambient decision Artemis would have emitted, which a reveal now requires. Returns the stored,
-     * server-authored text so a test can assert that it - and not the caller's copy - is what gets persisted.
+     * Register the episode carrying the ambient offer Artemis would have emitted, which a reveal requires. Returns
+     * the row id so a test can assert that the offer survived, and the stored text is what a reveal must persist -
+     * not the caller's copy.
      */
     private long offerAmbientHint(String episodeId, String serverText) {
         var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var decision = new IrisAmbientDecision();
-        decision.setUserId(student.getId());
-        decision.setExerciseId(exerciseId());
-        decision.setEpisodeId(episodeId);
-        decision.setHintText(serverText);
-        decision.setCreatedAt(AMBIENT_DECISION_CREATED_AT);
-        return irisAmbientDecisionRepository.save(decision).getId();
+        var episode = new IrisProactiveEpisode();
+        episode.setUserId(student.getId());
+        episode.setExerciseId(exerciseId());
+        episode.setEpisodeId(episodeId);
+        episode.setHintText(serverText);
+        episode.setLastTriggeredAt(EPISODE_LAST_TRIGGERED_AT);
+        return irisProactiveEpisodeRepository.save(episode).getId();
+    }
+
+    /** Register an episode with no offer on it: a trigger was accepted but nothing ambient was ever surfaced. */
+    private void registerEpisodeWithoutOffer(String episodeId) {
+        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var episode = new IrisProactiveEpisode();
+        episode.setUserId(student.getId());
+        episode.setExerciseId(exerciseId());
+        episode.setEpisodeId(episodeId);
+        episode.setLastTriggeredAt(EPISODE_LAST_TRIGGERED_AT);
+        irisProactiveEpisodeRepository.save(episode);
     }
 
     @Test
@@ -136,8 +148,8 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void reveal_withoutAnOfferedDecision_isRefused() throws Exception {
-        // No decision was ever recorded for this episode, so there is nothing to reveal. Before the guard this
+    void reveal_withoutARegisteredEpisode_isRefused() throws Exception {
+        // No episode was ever registered for this id, so there is nothing to reveal. Before the guard this
         // inserted an LLM-authored row out of thin air, and repeating it with fresh ids minted unlimited rows.
         var body = new RevealAmbientRequestDTO("Free-form assistant history.", "ambient", "client-nodecision");
 
@@ -149,8 +161,8 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
-    void reveal_ofAnotherStudentsDecision_isRefused() throws Exception {
-        // The decision belongs to student1; the lookup is scoped by user, so nobody else can consume it.
+    void reveal_ofAnotherStudentsOffer_isRefused() throws Exception {
+        // The offer belongs to student1; the lookup is scoped by user, so nobody else can consume it.
         // student3 rather than student2 on purpose: student2 is AI-opted-out in setUp and would be rejected by
         // the opt-in gate before this guard is ever reached, which would make the test prove nothing.
         long offerId = offerAmbientHint("ep-foreign", "student1's hint.");
@@ -162,8 +174,24 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-foreign", userUtilService.getUserByLogin(TEST_PREFIX + "student3").getId(), exerciseId()))
                 .isEmpty();
         // And the owner's offer survives the attempt: a foreign call must not consume what it cannot read.
-        // findById rather than findForReveal: the latter takes a pessimistic lock and would need an active transaction.
-        assertThat(irisAmbientDecisionRepository.findById(offerId).orElseThrow().getConsumedAt()).isNull();
+        // findById rather than findForUpdate: the latter takes a pessimistic lock and would need an active transaction.
+        assertThat(irisProactiveEpisodeRepository.findById(offerId).orElseThrow().getConsumedAt()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void reveal_ofARegisteredEpisodeWithNoOffer_isRefused() throws Exception {
+        // The episode exists, so the row a reveal locks is there, but nothing ambient was ever surfaced for it: an
+        // active decision, a silent run, or a trigger whose callback never arrived. There is no server-authored text
+        // to persist, and the caller's copy must never be trusted, so this is refused like an unknown episode. Since
+        // the offer moved onto the episode row, "registered" and "was offered something" are no longer the same fact.
+        registerEpisodeWithoutOffer("ep-no-offer");
+        var body = new RevealAmbientRequestDTO("Text the client made up.", "ambient", "client-no-offer");
+
+        request.postWithResponseBody("/api/iris/chat/exercises/" + exerciseId() + "/episodes/ep-no-offer/reveal", body, IrisMessageResponseDTO.class, HttpStatus.CONFLICT);
+
+        assertThat(irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc("ep-no-offer", userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId(), exerciseId()))
+                .isEmpty();
     }
 
     @Test

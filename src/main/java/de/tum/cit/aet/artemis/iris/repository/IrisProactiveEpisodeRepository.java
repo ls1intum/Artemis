@@ -58,6 +58,32 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
     Optional<IrisProactiveEpisode> findForUpdate(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId);
 
     /**
+     * Refresh {@code last_triggered_at} on an existing episode, keyed on the natural key. This is the first half of
+     * the registration upsert: it replaces a read followed by a write, which could interleave with the retention
+     * delete and then update a row that no longer exists.
+     *
+     * <p>
+     * Deliberately no {@code outcome} predicate. Touching an episode that already ended is harmless, because rows
+     * carrying an outcome are never reaped, and a predicate here would make a zero result mean two different things.
+     *
+     * <p>
+     * Zero affected rows means "attempt the insert", not "provably absent": some databases report changed rather
+     * than matched rows, so a refresh landing on the same timestamp can report zero. The insert's duplicate-key
+     * recovery is what makes that safe.
+     *
+     * @param userId      the student the episode belongs to
+     * @param exerciseId  the exercise the episode belongs to
+     * @param episodeId   the client-allocated episode id
+     * @param triggeredAt the moment of this trigger
+     * @return number of rows updated (1 = the episode existed and was touched, 0 = attempt the insert)
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("UPDATE IrisProactiveEpisode e SET e.lastTriggeredAt = :triggeredAt WHERE e.userId = :userId AND e.exerciseId = :exerciseId AND e.episodeId = :episodeId")
+    int touchLastTriggeredAt(@Param("userId") long userId, @Param("exerciseId") long exerciseId, @Param("episodeId") String episodeId,
+            @Param("triggeredAt") ZonedDateTime triggeredAt);
+
+    /**
      * First-terminal-wins in one statement: sets the outcome only if the row does not already carry one. The guard
      * references only the target row, so it is portable and needs no same-table subquery.
      *
@@ -75,15 +101,26 @@ public interface IrisProactiveEpisodeRepository extends ArtemisJpaRepository<Iri
     int setOutcomeIfNull(@Param("id") long id, @Param("outcome") IrisProactiveOutcome outcome);
 
     /**
-     * Retention for episodes that never reached a terminal outcome: a trigger whose callback never arrived leaves an
-     * open row behind, and nothing else would ever remove it. Rows that carry an outcome are kept, since deleting
-     * one would lose the terminal state that suppresses a late message.
+     * Retention for episodes that went quiet: a trigger whose callback never arrived leaves an open row behind, and
+     * nothing on a request path would ever remove it. Two kinds of row are kept:
      *
-     * @param createdBefore rows older than this are removed
+     * <ul>
+     * <li>rows carrying an {@code outcome}, since deleting one would lose the terminal state that suppresses a late
+     * message;</li>
+     * <li>rows carrying a consumed offer, since {@code consumed_message_id} is what makes a repeated reveal return
+     * the first reveal message instead of writing a second one, and the row itself is what stops a spent offer from
+     * being revealed again.</li>
+     * </ul>
+     *
+     * <p>
+     * The cutoff is measured from {@code last_triggered_at}, which every trigger refreshes, so an episode that is
+     * still in use is never reaped out from under a run in flight.
+     *
+     * @param triggeredBefore rows last triggered before this are removed
      * @return number of rows deleted
      */
     @Transactional // ok because of modifying query
     @Modifying
-    @Query("DELETE FROM IrisProactiveEpisode e WHERE e.outcome IS NULL AND e.createdAt < :createdBefore")
-    int deleteOpenEpisodesOlderThan(@Param("createdBefore") ZonedDateTime createdBefore);
+    @Query("DELETE FROM IrisProactiveEpisode e WHERE e.outcome IS NULL AND e.consumedAt IS NULL AND e.lastTriggeredAt < :triggeredBefore")
+    int deleteAbandonedEpisodesLastTriggeredBefore(@Param("triggeredBefore") ZonedDateTime triggeredBefore);
 }

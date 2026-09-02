@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeCleanupSe
 
 /**
  * The retention job for the proactive episode registry. Without it every trigger whose callback never arrived would
- * leave an open row behind forever, since no request path removes one.
+ * leave a row behind forever, since no request path removes one.
  */
 @ExtendWith(MockitoExtension.class)
 class IrisProactiveEpisodeCleanupServiceTest {
@@ -25,14 +25,14 @@ class IrisProactiveEpisodeCleanupServiceTest {
     private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
 
     @Test
-    void deletesOpenEpisodesOlderThanTheRetentionWindow() {
+    void deletesAbandonedEpisodesOlderThanTheRetentionWindow() {
         var service = new IrisProactiveEpisodeCleanupService(irisProactiveEpisodeRepository);
         var before = ZonedDateTime.now();
 
-        service.cleanupOpenProactiveEpisodes();
+        service.cleanupAbandonedProactiveEpisodes();
 
         var cutoff = ArgumentCaptor.forClass(ZonedDateTime.class);
-        verify(irisProactiveEpisodeRepository).deleteOpenEpisodesOlderThan(cutoff.capture());
+        verify(irisProactiveEpisodeRepository).deleteAbandonedEpisodesLastTriggeredBefore(cutoff.capture());
         // Seven days back, bounded on both sides so neither a shortened window (which could delete an episode whose
         // job can still call back) nor a disabled one goes unnoticed.
         assertThat(cutoff.getValue()).isBefore(before.minusDays(7).plusMinutes(1)).isAfter(before.minusDays(7).minusMinutes(1));

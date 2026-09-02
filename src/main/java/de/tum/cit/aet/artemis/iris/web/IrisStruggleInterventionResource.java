@@ -78,7 +78,7 @@ public class IrisStruggleInterventionResource {
      * POST exercises/{exerciseId}/episodes/{episodeId}/reveal : persist a previously-hidden ambient hint.
      *
      * <p>
-     * Idempotent per {@code (user, exercise, episode)}: a retry finds the ambient decision already consumed and
+     * Idempotent per {@code (user, exercise, episode)}: a retry finds the episode's offer already consumed and
      * returns the row the first reveal created. Does NOT broadcast over the chat websocket (the client owns the
      * optimistic bubble; C2 reconciles via the returned DTO).
      *

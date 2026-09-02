@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
@@ -114,9 +113,6 @@ class IrisStruggleInterventionConfirmCloseTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Mock
-    private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
-
-    @Mock
     private PlatformTransactionManager transactionManager;
 
     @Mock
@@ -145,7 +141,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
+                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
 

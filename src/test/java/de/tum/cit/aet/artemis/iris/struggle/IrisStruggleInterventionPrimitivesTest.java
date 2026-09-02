@@ -31,14 +31,13 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisAmbientDecision;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
@@ -98,9 +97,6 @@ class IrisStruggleInterventionPrimitivesTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Mock
-    private IrisAmbientDecisionRepository irisAmbientDecisionRepository;
-
-    @Mock
     private PlatformTransactionManager transactionManager;
 
     @Mock
@@ -127,60 +123,54 @@ class IrisStruggleInterventionPrimitivesTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
+                transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 
     // ---- revealAmbient ----
 
     /**
-     * Stub the ambient decision Artemis recorded when it emitted the pointer. A reveal now requires one: it is
-     * what makes the persisted text the server's rather than the caller's, and what makes the offer single-use.
+     * Stub the episode carrying the offer Artemis recorded when it emitted the pointer. A reveal requires one: the
+     * row is what makes the persisted text the server's rather than the caller's, and what makes the offer
+     * single-use.
      *
      * @param episodeId  the episode the offer belongs to
      * @param serverText the hint text as authored by Pyris
-     * @return the stubbed decision
+     * @return the stubbed episode
      */
-    private IrisAmbientDecision offeredDecision(String episodeId, String serverText) {
-        var decision = new IrisAmbientDecision();
-        decision.setId(900L);
-        decision.setUserId(USER_ID);
-        decision.setExerciseId(EXERCISE_ID);
-        decision.setEpisodeId(episodeId);
-        decision.setHintText(serverText);
-        decision.setCreatedAt(ZonedDateTime.now());
-        // findForReveal, not the plain finder: the reveal takes the decision under a write lock so the
-        // unconsumed-check and the claim cannot interleave with a concurrent reveal of the same offer.
-        when(irisAmbientDecisionRepository.findForReveal(USER_ID, EXERCISE_ID, episodeId)).thenReturn(Optional.of(decision));
-        // lenient: the tests that assert a rejection never reach the claim, and an offered decision is still the
-        // correct precondition for them - the rejection must come from the guard under test, not from a missing offer.
-        lenient().when(irisAmbientDecisionRepository.save(decision)).thenReturn(decision);
-        return decision;
+    private IrisProactiveEpisode offeredEpisode(String episodeId, String serverText) {
+        var episode = episodeFor(episodeId, serverText);
+        // findForUpdate, not the plain finder: the reveal takes the episode under a write lock so the terminal
+        // check, the unconsumed check and the claim cannot interleave with anything writing to the same episode.
+        when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, episodeId)).thenReturn(Optional.of(episode));
+        return episode;
     }
 
     /**
-     * Build an unstubbed decision. Used where a test needs SEPARATE instances across two lookups, so one call's
-     * in-memory mutation cannot silently satisfy the next one.
+     * Build an unstubbed episode carrying an offer. Used where a test needs SEPARATE instances across two lookups,
+     * so one call's in-memory mutation cannot silently satisfy the next one.
      *
      * @param episodeId  the episode the offer belongs to
      * @param serverText the hint text as authored by Pyris
-     * @return the decision, not wired into any stub
+     * @return the episode, not wired into any lookup stub
      */
-    private IrisAmbientDecision decisionFor(String episodeId, String serverText) {
-        var decision = new IrisAmbientDecision();
-        decision.setId(900L);
-        decision.setUserId(USER_ID);
-        decision.setExerciseId(EXERCISE_ID);
-        decision.setEpisodeId(episodeId);
-        decision.setHintText(serverText);
-        decision.setCreatedAt(ZonedDateTime.now());
-        lenient().when(irisAmbientDecisionRepository.save(decision)).thenReturn(decision);
-        return decision;
+    private IrisProactiveEpisode episodeFor(String episodeId, String serverText) {
+        var episode = new IrisProactiveEpisode();
+        episode.setId(900L);
+        episode.setUserId(USER_ID);
+        episode.setExerciseId(EXERCISE_ID);
+        episode.setEpisodeId(episodeId);
+        episode.setHintText(serverText);
+        episode.setLastTriggeredAt(ZonedDateTime.now());
+        // lenient: the tests that assert a rejection never reach the claim, and an offered episode is still the
+        // correct precondition for them - the rejection must come from the guard under test, not from a missing offer.
+        lenient().when(irisProactiveEpisodeRepository.save(episode)).thenReturn(episode);
+        return episode;
     }
 
     @Test
     void revealAmbient_createsRowWithServerSentAt_andReturnsDtoWithoutSendMessage() {
-        offeredDecision("ep-1", "Re-check the loop.");
+        offeredEpisode("ep-1", "Re-check the loop.");
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
@@ -201,10 +191,10 @@ class IrisStruggleInterventionPrimitivesTest {
 
     @Test
     void revealAmbient_sessionMovedToAnotherExercise_failsAndLeavesTheOfferUnconsumed() {
-        // The ambient-decision lock says nothing about the session. A run for a DIFFERENT exercise can switch the
-        // same session between resolving it and the write, and the hint would land in that exercise's history.
+        // The episode lock says nothing about the session. A run for a DIFFERENT exercise can switch the same
+        // session between resolving it and the write, and the hint would land in that exercise's history.
         // The reveal must fail instead, so the offer stays unconsumed and the student can reveal it again later.
-        var decision = offeredDecision("ep-1", "Re-check the loop.");
+        var episode = offeredEpisode("ep-1", "Re-check the loop.");
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
         // Re-stubs the write-locked lookup for the same session id: under the lock it points at another exercise.
@@ -213,17 +203,17 @@ class IrisStruggleInterventionPrimitivesTest {
         assertThatThrownBy(() -> service.revealAmbient(user, EXERCISE_ID, "ep-1")).isInstanceOf(ConflictException.class);
 
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
-        assertThat(decision.getConsumedAt()).as("a failed reveal must leave the offer revealable").isNull();
-        assertThat(decision.getConsumedMessageId()).isNull();
+        assertThat(episode.getConsumedAt()).as("a failed reveal must leave the offer revealable").isNull();
+        assertThat(episode.getConsumedMessageId()).isNull();
     }
 
     @Test
     void revealAmbient_replay_returnsTheRowTheFirstRevealCreated_noDuplicate() {
         // Contract test, not a red proof: idempotency is scoped to (user, exercise, episode) and enforced by the
-        // decision record. A replay finds the offer already consumed and resolves the row that reveal created.
-        var decision = offeredDecision("ep-1", "Re-check the loop.");
-        decision.setConsumedAt(ZonedDateTime.now());
-        decision.setConsumedMessageId(101L);
+        // episode row. A replay finds the offer already consumed and resolves the row that reveal created.
+        var episode = offeredEpisode("ep-1", "Re-check the loop.");
+        episode.setConsumedAt(ZonedDateTime.now());
+        episode.setConsumedMessageId(101L);
         var firstReveal = new IrisMessage();
         firstReveal.setId(101L);
         firstReveal.setProactiveEpisodeId("ep-1");
@@ -236,22 +226,22 @@ class IrisStruggleInterventionPrimitivesTest {
         var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1");
 
         assertThat(dto.id()).isEqualTo(101L);
-        // No second row: the consumed decision short-circuits before any insert.
+        // No second row: the consumed offer short-circuits before any insert.
         verify(irisMessageService, never()).saveMessage(any(), any(), any());
     }
 
     @Test
     void revealAmbient_secondRevealOfTheSameEpisode_returnsTheSameRow() {
-        // The old design allowed two rows for one episode when the client varied its message id. The decision record
+        // The old design allowed two rows for one episode when the client varied its message id. The episode row
         // makes the offer single-use, so the second call must resolve the FIRST reveal's row instead of inserting.
         //
-        // Two DISTINCT decision instances on purpose. Returning one shared object would let the first call's in-memory
+        // Two DISTINCT episode instances on purpose. Returning one shared object would let the first call's in-memory
         // mutation satisfy the second lookup, and the test would still pass if the persist of the claim were deleted.
-        var unconsumed = decisionFor("ep-1", "Re-check the loop.");
-        var consumed = decisionFor("ep-1", "Re-check the loop.");
+        var unconsumed = episodeFor("ep-1", "Re-check the loop.");
+        var consumed = episodeFor("ep-1", "Re-check the loop.");
         consumed.setConsumedAt(ZonedDateTime.now());
         consumed.setConsumedMessageId(303L);
-        when(irisAmbientDecisionRepository.findForReveal(USER_ID, EXERCISE_ID, "ep-1")).thenReturn(Optional.of(unconsumed), Optional.of(consumed));
+        when(irisProactiveEpisodeRepository.findForUpdate(USER_ID, EXERCISE_ID, "ep-1")).thenReturn(Optional.of(unconsumed), Optional.of(consumed));
         var session = exerciseSession(EXERCISE_ID);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
         when(irisMessageService.saveMessage(any(), eq(session), eq(IrisMessageSender.LLM))).thenAnswer(inv -> {
@@ -271,7 +261,7 @@ class IrisStruggleInterventionPrimitivesTest {
         // The claim has to be persisted, not merely set in memory, or the offer would survive a restart unconsumed.
         assertThat(unconsumed.getConsumedAt()).isNotNull();
         assertThat(unconsumed.getConsumedMessageId()).isEqualTo(303L);
-        verify(irisAmbientDecisionRepository).save(unconsumed);
+        verify(irisProactiveEpisodeRepository).save(unconsumed);
         // Exactly one insert across both calls.
         verify(irisMessageService).saveMessage(any(), any(), any());
     }

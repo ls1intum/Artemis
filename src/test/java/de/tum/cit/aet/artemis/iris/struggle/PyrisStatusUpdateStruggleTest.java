@@ -90,7 +90,7 @@ class PyrisStatusUpdateStruggleTest {
     @Test
     void decisionCallback_whenHandleDecisionThrows_stillCompletesClientAndReleasesMarker() {
         // handleDecision emits its own silent frame on every deliberate drop, but an unexpected failure (e.g. a
-        // lock-timeout DataAccessException while recording the ambient decision) escapes after the job was already
+        // lock-timeout DataAccessException while recording the ambient offer) escapes after the job was already
         // removed. Without the dispatcher completing the client, its in-flight decide would hang until timeout.
         var update = new PyrisStruggleInterventionStatusUpdateDTO("hint", "ambient", 0.8, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null, null, null);
         doThrow(new CannotAcquireLockException("deadlock")).when(irisStruggleInterventionService).handleDecision(job, update);

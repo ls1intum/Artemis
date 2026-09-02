@@ -35,6 +35,15 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * <p>
  * {@link #outcome} is the authoritative terminal state. {@code iris_message.proactive_outcome} keeps being written
  * as a subordinate mirror, because the history replayed to Pyris and the message DTO both read it from the row.
+ *
+ * <p>
+ * The row also carries the episode's ambient offer ({@link #hintText}, {@link #consumedAt},
+ * {@link #consumedMessageId}). That used to be a table of its own, keyed on the same
+ * {@code (user, exercise, episode)} triple and therefore of the same grain. Keeping them apart cost a second
+ * unique key, a second lock and an insert race that only existed because the offer had to create its own row: with
+ * the episode registered at trigger time the offer is an update of a row the caller already holds the lock on.
+ * The three columns are nullable because a registered episode legitimately has no offer yet; that a consumed
+ * offer carries both its text and its message is enforced by the single writer, not by a constraint.
  */
 @Entity
 @Table(name = "iris_proactive_episode")
@@ -63,8 +72,36 @@ public class IrisProactiveEpisode extends DomainObject {
     @Column(name = "outcome")
     private IrisProactiveOutcome outcome;
 
-    @Column(name = "created_at", nullable = false)
-    private ZonedDateTime createdAt;
+    /**
+     * When this episode was last triggered. Registration sets it and every repeat trigger refreshes it, so
+     * retention can ask "no trigger for this episode in seven days" rather than "registered seven days ago". An
+     * episode that is still being triggered is therefore never reaped out from under a run in flight.
+     */
+    @Column(name = "last_triggered_at", nullable = false)
+    private ZonedDateTime lastTriggeredAt;
+
+    /**
+     * The ambient hint as authored by Pyris, or null while this episode has been offered nothing. A reveal
+     * persists this text, never the caller's copy, which is what stops a student from authoring assistant history.
+     */
+    @Nullable
+    @Column(name = "hint_text")
+    private String hintText;
+
+    /**
+     * Set when a reveal claims the offer. Non-null means the hint has been used up, so a second reveal returns the
+     * first one's message instead of writing another.
+     */
+    @Nullable
+    @Column(name = "consumed_at")
+    private ZonedDateTime consumedAt;
+
+    /**
+     * The message the reveal created, so a replay returns the same row rather than inserting a second one.
+     */
+    @Nullable
+    @Column(name = "consumed_message_id")
+    private Long consumedMessageId;
 
     public long getUserId() {
         return userId;
@@ -99,16 +136,44 @@ public class IrisProactiveEpisode extends DomainObject {
         this.outcome = outcome;
     }
 
-    public ZonedDateTime getCreatedAt() {
-        return createdAt;
+    public ZonedDateTime getLastTriggeredAt() {
+        return lastTriggeredAt;
     }
 
-    public void setCreatedAt(ZonedDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setLastTriggeredAt(ZonedDateTime lastTriggeredAt) {
+        this.lastTriggeredAt = lastTriggeredAt;
+    }
+
+    @Nullable
+    public String getHintText() {
+        return hintText;
+    }
+
+    public void setHintText(@Nullable String hintText) {
+        this.hintText = hintText;
+    }
+
+    @Nullable
+    public ZonedDateTime getConsumedAt() {
+        return consumedAt;
+    }
+
+    public void setConsumedAt(@Nullable ZonedDateTime consumedAt) {
+        this.consumedAt = consumedAt;
+    }
+
+    @Nullable
+    public Long getConsumedMessageId() {
+        return consumedMessageId;
+    }
+
+    public void setConsumedMessageId(@Nullable Long consumedMessageId) {
+        this.consumedMessageId = consumedMessageId;
     }
 
     @Override
     public String toString() {
-        return "IrisProactiveEpisode{" + "id=" + getId() + ", userId=" + userId + ", exerciseId=" + exerciseId + ", episodeId='" + episodeId + '\'' + ", outcome=" + outcome + '}';
+        return "IrisProactiveEpisode{" + "id=" + getId() + ", userId=" + userId + ", exerciseId=" + exerciseId + ", episodeId='" + episodeId + '\'' + ", outcome=" + outcome
+                + ", consumedAt=" + consumedAt + '}';
     }
 }
