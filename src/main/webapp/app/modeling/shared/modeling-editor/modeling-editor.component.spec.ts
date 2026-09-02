@@ -474,7 +474,6 @@ describe('ModelingEditorComponent', () => {
     it('should fullscreen the portal-safe document root, disable scroll lock, and restore the editor frame on exit', async () => {
         fixture.componentRef.setInput('umlModel', classDiagram);
         fixture.componentRef.setInput('scrollLock', true);
-        fixture.componentRef.setInput('problemStatement', '## Your task');
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -487,6 +486,8 @@ describe('ModelingEditorComponent', () => {
         const originalExitFullscreen = Object.getOwnPropertyDescriptor(document, 'exitFullscreen');
         const originalRequestFullscreen = Object.getOwnPropertyDescriptor(document.documentElement, 'requestFullscreen');
         const requestFullscreen = vi.fn(async () => {
+            fixture.componentRef.setInput('problemStatement', '## Your task');
+            fixture.detectChanges();
             fullscreenElement = document.documentElement;
         });
         const exitFullscreen = vi.fn(async () => {

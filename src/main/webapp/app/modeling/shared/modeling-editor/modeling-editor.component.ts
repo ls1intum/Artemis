@@ -543,6 +543,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         const ownsFullscreen = ownsPresentation && document.fullscreenElement === document.documentElement;
         if (ownsFullscreen) {
             this.fullscreenActive.set(true);
+            this.problemStatementVisible.set(!!this.problemStatement()?.trim());
         } else if (ownsPresentation) {
             this.restoreFullscreenPresentation();
         }
@@ -559,7 +560,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             return false;
         }
         this.fullscreenActive.set(true);
-        this.problemStatementVisible.set(!!this.problemStatement()?.trim());
         this.apollonEditor?.setScrollLock(false);
         return true;
     }
