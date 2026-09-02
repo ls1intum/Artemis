@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.CancelStruggleJobRequestDTO;
 import de.tum.cit.aet.artemis.iris.dto.EpisodeOutcomeAppliedDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
@@ -80,9 +79,7 @@ class IrisStruggleInterventionA10EndpointTest extends AbstractIrisIntegrationTes
         activateIrisFor(course);
         activateIrisFor(exercise);
 
-        var courseSettings = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(),
-                courseSettings.supportLevel(), courseSettings.rateLimit(), true), true);
+        setProactiveStruggleFor(course, true);
     }
 
     private long exerciseId() {

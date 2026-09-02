@@ -67,4 +67,21 @@ public record StruggleInterventionEventDTO(long exerciseId, String kind, @Nullab
     public static StruggleInterventionEventDTO unresolvedClose(long exerciseId, @Nullable String episodeId, @Nullable String rationale) {
         return new StruggleInterventionEventDTO(exerciseId, "confirm_close", null, null, null, null, null, null, null, null, episodeId, false, null, null, rationale);
     }
+
+    /**
+     * The completion frame for a run that ended without producing a decision at all, shaped by its intent: a
+     * {@code confirm_close} completes as {@link #unresolvedClose}, everything else (including the legacy null intent)
+     * as {@link #silentDecide}. Both the callback handler and the dispatch-failure path emit this, from two services
+     * that cannot depend on each other; deciding the shape here is what keeps them from drifting apart. The episode
+     * id is normalised, because an id that cannot serve as an identity must not reach the client as one.
+     *
+     * @param intent     the job's intent, possibly null
+     * @param exerciseId the exercise the run belongs to
+     * @param episodeId  the episode id stamped on the job, possibly null or unusable
+     * @return the terminal completion event for that intent
+     */
+    public static StruggleInterventionEventDTO terminalCompletion(@Nullable String intent, long exerciseId, @Nullable String episodeId) {
+        var usable = StruggleEpisodeDTO.usableEpisodeId(episodeId);
+        return "confirm_close".equals(intent) ? unresolvedClose(exerciseId, usable, null) : silentDecide(exerciseId, null, usable, null);
+    }
 }

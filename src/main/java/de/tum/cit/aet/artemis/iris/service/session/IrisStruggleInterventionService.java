@@ -79,12 +79,6 @@ public class IrisStruggleInterventionService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisStruggleInterventionService.class);
 
-    /**
-     * Width of {@code iris_proactive_episode.episode_id} and {@code iris_message.proactive_episode_id}. Both columns
-     * are varchar(64); an episode id is a client-generated UUID, so 64 is generous.
-     */
-    private static final int MAX_EPISODE_ID_LENGTH = 64;
-
     private static final int PERSIST_MAX_ATTEMPTS = 3;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -228,7 +222,7 @@ public class IrisStruggleInterventionService {
         // method returns, so no callback can arrive before the row exists, and every later path can therefore lock a
         // row that is already there. Registering after the reservation rather than before it keeps rejected and
         // in-flight triggers from leaving rows behind; a failure here releases the slot, so it is never leaked.
-        String registrableEpisodeId = usableEpisodeId(episodeId);
+        String registrableEpisodeId = StruggleEpisodeDTO.usableEpisodeId(episodeId);
         if (registrableEpisodeId != null) {
             try {
                 registerEpisode(user.getId(), exerciseId, registrableEpisodeId);
@@ -324,12 +318,7 @@ public class IrisStruggleInterventionService {
         }
         log.info("Struggle intervention exercise={} user={} rawAction={} confidence={} finalAction={}", job.exerciseId(), job.userId(), action, confidence, finalAction);
 
-        String episodeId = usableEpisodeId(job.episodeId());
-        // A job that carried an id we cannot use is NOT the same as one that carried none. Both stop the id from
-        // reaching any lookup or column, but a legacy job without an episode still gets its ambient bookkeeping
-        // pointer below, while an unusable id stays silent: it can never be revealed, so pointing the client at it
-        // would only produce a 409.
-        boolean carriedUnusableEpisodeId = job.episodeId() != null && episodeId == null;
+        String episodeId = StruggleEpisodeDTO.usableEpisodeId(job.episodeId());
         String result = statusUpdate.result();
 
         if (result == null || result.isEmpty()) {
@@ -407,8 +396,12 @@ public class IrisStruggleInterventionService {
                     // locked, and the terminal check and the write would stop being atomic.
                     registerEpisode(user.getId(), job.exerciseId(), episodeId);
                 }
-                Boolean offered = episodeId == null ? !carriedUnusableEpisodeId : transactionTemplate.execute(status -> {
-                    var episode = lockEpisode(episodeId, user.getId(), job.exerciseId()).orElse(null);
+                // A job that carried an id we cannot use is NOT the same as one that carried none. Both keep the id
+                // out of every lookup and column, but a legacy job without an episode still gets its ambient
+                // bookkeeping pointer, while an unusable id stays silent: it can never be revealed, so pointing the
+                // client at it would only produce a 409.
+                Boolean offered = episodeId == null ? job.episodeId() == null : transactionTemplate.execute(status -> {
+                    var episode = lockEpisodeAndReadTerminal(episodeId, user.getId(), job.exerciseId()).episode();
                     // No row despite the registration above means retention removed it in between, which takes seven
                     // quiet days and a trigger that then never refreshed it. Treat it as terminal rather than
                     // announcing a pointer at an episode nothing can resolve.
@@ -471,7 +464,7 @@ public class IrisStruggleInterventionService {
      */
     public void handleConfirmClose(StruggleInterventionJob job, PyrisStruggleInterventionStatusUpdateDTO statusUpdate) {
         var user = userRepository.findByIdElseThrow(job.userId());
-        String episodeId = usableEpisodeId(job.episodeId());
+        String episodeId = StruggleEpisodeDTO.usableEpisodeId(job.episodeId());
         String confirmReason = job.confirmReason();
         boolean resolved = statusUpdate.resolved() != null ? statusUpdate.resolved() : false;
 
@@ -548,7 +541,7 @@ public class IrisStruggleInterventionService {
         // One lock, one row. The episode's write lock is both the terminal gate and the offer's mutex: before the
         // registry the reveal had no terminal check at all, and while the offer lived in its own table its lock said
         // nothing about the episode, so the two had to be taken in a fixed order. Now they are the same lock.
-        var episode = lockEpisode(episodeId, user.getId(), exerciseId)
+        var episode = irisProactiveEpisodeRepository.findForUpdate(user.getId(), exerciseId, episodeId)
                 .orElseThrow(() -> new ConflictException("No ambient hint was offered for this episode", "IrisMessage", "revealWithoutDecision"));
         if (episode.getOutcome() != null) {
             throw new ConflictException("The ambient hint for this episode can no longer be revealed", "IrisMessage", "revealEpisodeTerminal");
@@ -636,40 +629,13 @@ public class IrisStruggleInterventionService {
     public void emitTerminalCompletion(StruggleInterventionJob job) {
         try {
             var user = userRepository.findByIdElseThrow(job.userId());
-            String episodeId = usableEpisodeId(job.episodeId());
-            if ("confirm_close".equals(job.intent())) {
-                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.unresolvedClose(job.exerciseId(), episodeId, null));
-            }
-            else {
-                irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.silentDecide(job.exerciseId(), null, episodeId, null));
-            }
+            irisChatWebsocketService.sendStruggleEvent(user, StruggleInterventionEventDTO.terminalCompletion(job.intent(), job.exerciseId(), job.episodeId()));
         }
         catch (Exception e) {
             // Never let the completion frame break the caller's cleanup: the marker release in the finally block
             // matters more than the notification, and a missing frame degrades to the client's own timeout.
             log.warn("Could not emit terminal completion for struggle job {} exercise {} user {}", job.jobId(), job.exerciseId(), job.userId(), e);
         }
-    }
-
-    /**
-     * The episode id a callback may actually use as an identity, or null when the job carries none it can.
-     *
-     * <p>
-     * A blank id is not an identity: persisted on a message it would key every episode-scoped lookup, so the first
-     * blank-id episode to end would make every later one read as that same finished episode. An over-long id does not
-     * fit {@code proactive_episode_id} either. The trigger endpoint rejects both, but a job is not covered by that
-     * validation: the job map keeps entries with a TTL, so a run minted before this validation existed can still have
-     * its callback handled by this code after a deployment. Treating such an id as "no episode" degrades to the
-     * well-defined legacy path instead of corrupting the episode keyspace.
-     *
-     * @param episodeId the id stamped on the job, possibly null
-     * @return the id when it can serve as an identity, null otherwise
-     */
-    private static @Nullable String usableEpisodeId(@Nullable String episodeId) {
-        if (episodeId == null || episodeId.isBlank() || episodeId.length() > MAX_EPISODE_ID_LENGTH) {
-            return null;
-        }
-        return episodeId;
     }
 
     private record PersistedProactive(@Nullable IrisChatSession session, @Nullable IrisMessage saved, boolean terminal) {
@@ -721,27 +687,14 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * Episode-wide first-terminal-wins outcome write. Writes {@code outcome} onto the episode's first-persisted
-     * (smallest-id) row ONLY IF no row of the episode already carries a non-null outcome. Returns {@code true}
-     * (applied) whenever a terminal outcome is established for the episode (whether THIS call wrote it or a prior one
-     * did), and {@code false} only when no terminal outcome could be established because no row exists yet (deferred,
-     * not an error - the client back-fills once the reveal/delivery row is persisted).
+     * Episode-wide first-terminal-wins outcome write. Takes the episode's registry row under a write lock, records
+     * {@code outcome} only if none stands yet, and mirrors it onto the episode's message row. Returns {@code true}
+     * whenever a terminal outcome is established for the episode, whether THIS call wrote it or a prior one did.
      *
      * <p>
-     * Portable AND race-safe without a pessimistic lock or a same-table subquery (which would trip MySQL 1093):
-     * <ul>
-     * <li>The target row is the episode's SMALLEST-id row ({@link IrisMessageRepository#findEpisodeRowsForUserOrderByIdAsc}).
-     * Ids are monotonic, so this target is stable under concurrent inserts (a delivery row that persists late gets a
-     * larger id and can never become the target). Two concurrent writers therefore pick the SAME target row.</li>
-     * <li>An episode-wide existence pre-check ({@link IrisMessageRepository#findEpisodeOutcomes}) makes first-terminal-wins
-     * stable under out-of-order persistence: once ANY row of the episode holds an outcome, every later call is a no-op.</li>
-     * <li>The row-scoped {@code WHERE id = ? AND proactive_outcome IS NULL} guard ({@link IrisMessageRepository#setProactiveOutcomeIfNull})
-     * makes concurrent writes to that one stable target land at most once.</li>
-     * <li>If the guarded update affects 0 rows (the target was concurrently given an outcome OR concurrently deleted),
-     * a re-check decides the result: {@code true} if an outcome now exists episode-wide, else {@code false} (the row
-     * vanished and nothing is established - defer so the client back-fills). This prevents a false {@code applied=true}.</li>
-     * </ul>
-     * Readers are episode-wide ({@code findEpisodeOutcomes}), so the physical row holding the outcome is immaterial.
+     * A registered episode can always record an outcome, even before its first message exists, so the only
+     * {@code false} comes from {@link #writeLegacyEpisodeOutcome}: an episode with no registry row has nowhere but a
+     * message row to put the outcome, and defers until one exists.
      *
      * <p>
      * SCOPED to the requesting user's own episode rows in the given exercise:
@@ -790,6 +743,14 @@ public class IrisStruggleInterventionService {
      * carried one, or a job still in flight across the deployment that introduced it. Behaviour is unchanged, down to
      * returning {@code false} when no message row exists yet so the client back-fills once one does.
      *
+     * <p>
+     * Race-safe without a pessimistic lock or a same-table subquery (which would trip MySQL 1093), because there is
+     * no row to lock: the target is the episode's SMALLEST-id message row, and ids are monotonic, so a row persisting
+     * later can never become the target and two concurrent writers pick the SAME one. An episode-wide pre-check makes
+     * that stable under out-of-order persistence, the row-scoped {@code WHERE id = ? AND proactive_outcome IS NULL}
+     * guard makes the write land at most once, and a zero-row update falls back to re-reading episode-wide so a row
+     * that vanished is reported as deferred rather than as a false {@code applied=true}.
+     *
      * @param episodeId  the client-allocated episode UUID
      * @param outcome    the terminal outcome to write
      * @param userId     the requesting user
@@ -803,6 +764,8 @@ public class IrisStruggleInterventionService {
         }
         var target = episodeRows.get(0);
         // Episode-wide first-terminal-wins: if any row already holds an outcome, this is a no-op (applied = true).
+        // Deliberately a fresh query rather than a scan of the rows just loaded. This path holds no lock, so the
+        // re-read is what lets it observe an outcome another transaction committed since that load.
         if (!irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty()) {
             return true;
         }
@@ -1008,14 +971,15 @@ public class IrisStruggleInterventionService {
                     // reads outside any lock, so an outcome can commit between it and this write. Here the episode's
                     // registry row is write-locked and stays locked until this transaction commits, so no outcome can
                     // be established between the check and the append.
-                    if (episodeId != null && isEpisodeTerminalUnderLock(episodeId, user.getId(), exerciseId)) {
+                    var locked = episodeId == null ? null : lockEpisodeAndReadTerminal(episodeId, user.getId(), exerciseId);
+                    if (locked != null && locked.terminal()) {
                         return ProactiveAppend.alreadyTerminal();
                     }
                     var saved = saveProactiveMessage(session, exerciseId, result, episodeId);
-                    if (saved != null && episodeId != null && outcomeOnSuccess != null) {
+                    if (saved != null && locked != null && outcomeOnSuccess != null) {
                         // Same transaction as the append, still under the same lock. Splitting the two is what let a
                         // concurrent dismiss land between a committed close row and its own outcome.
-                        recordOutcomeUnderLock(episodeId, user.getId(), exerciseId, outcomeOnSuccess);
+                        recordOutcomeUnderLock(locked.episode(), episodeId, user.getId(), exerciseId, outcomeOnSuccess);
                     }
                     return ProactiveAppend.of(saved);
                 });
@@ -1038,25 +1002,25 @@ public class IrisStruggleInterventionService {
     }
 
     /**
-     * Record the episode's terminal outcome while its registry row is already write-locked by the caller, and mirror
+     * Record the episode's terminal outcome onto the registry row the caller already holds write-locked, and mirror
      * it onto the message row. An unregistered episode has no row to carry the outcome, so it falls back to the
      * pre-registry write, where the message row is the only record there is.
      *
+     * @param episode    the locked registry row, or null when the episode is not registered
      * @param episodeId  the client-allocated episode UUID
      * @param userId     the owning user
      * @param exerciseId the exercise the episode belongs to
      * @param outcome    the terminal outcome to record
      */
-    private void recordOutcomeUnderLock(String episodeId, long userId, long exerciseId, IrisProactiveOutcome outcome) {
-        var episode = irisProactiveEpisodeRepository.find(userId, exerciseId, episodeId);
-        if (episode.isEmpty()) {
+    private void recordOutcomeUnderLock(@Nullable IrisProactiveEpisode episode, String episodeId, long userId, long exerciseId, IrisProactiveOutcome outcome) {
+        if (episode == null) {
             // Unregistered: the outcome has nowhere to live but the message row, which is exactly where it lived
             // before the registry. Writing it there keeps such an episode behaving as it always did.
             writeLegacyEpisodeOutcome(episodeId, outcome, userId, exerciseId);
             return;
         }
-        if (episode.get().getOutcome() == null) {
-            irisProactiveEpisodeRepository.setOutcomeIfNull(episode.get().getId(), outcome);
+        if (episode.getOutcome() == null) {
+            irisProactiveEpisodeRepository.setOutcomeIfNull(episode.getId(), outcome);
         }
         mirrorOutcomeOntoMessageRow(episodeId, userId, exerciseId, outcome);
     }
@@ -1071,27 +1035,25 @@ public class IrisStruggleInterventionService {
      * @param exerciseId the exercise the episode belongs to
      * @return true if a terminal outcome stands for this episode
      */
-    private boolean isEpisodeTerminalUnderLock(String episodeId, long userId, long exerciseId) {
-        var locked = lockEpisode(episodeId, userId, exerciseId);
+    private LockedEpisode lockEpisodeAndReadTerminal(String episodeId, long userId, long exerciseId) {
+        var locked = irisProactiveEpisodeRepository.findForUpdate(userId, exerciseId, episodeId);
         if (locked.isPresent()) {
-            return locked.get().getOutcome() != null;
+            return new LockedEpisode(locked.get(), locked.get().getOutcome() != null);
         }
-        return !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty();
+        return new LockedEpisode(null, !irisMessageRepository.findEpisodeOutcomes(episodeId, userId, exerciseId).isEmpty());
     }
 
     /**
-     * Take the episode's write lock and hand back the managed row, for the callers that go on to write to it. The
-     * boolean-only {@link #isEpisodeTerminalUnderLock} would force them to look the row up a second time, and the
-     * ambient offer and the reveal both need the entity itself: they mutate it inside the same transaction, so it
-     * has to be the instance this lock attached to.
+     * The episode's row under the caller's write lock, plus whether it is terminal. The two travel together because
+     * every caller that finds it non-terminal goes on to write to that same row, and looking it up again would both
+     * cost a round-trip and risk mutating a different instance than the one the lock attached to. A null
+     * {@code episode} means the episode has no registry row, where {@code terminal} comes from the message rows
+     * instead, exactly as it did before the registry existed.
      *
-     * @param episodeId  the client-allocated episode UUID
-     * @param userId     the owning user
-     * @param exerciseId the exercise the episode belongs to
-     * @return the locked episode, empty when none is registered for the triple
+     * @param episode  the locked row, or null when the episode is not registered
+     * @param terminal whether a terminal outcome stands for the episode
      */
-    private Optional<IrisProactiveEpisode> lockEpisode(String episodeId, long userId, long exerciseId) {
-        return irisProactiveEpisodeRepository.findForUpdate(userId, exerciseId, episodeId);
+    private record LockedEpisode(@Nullable IrisProactiveEpisode episode, boolean terminal) {
     }
 
     /**
@@ -1113,29 +1075,6 @@ public class IrisStruggleInterventionService {
         }
     }
 
-    /**
-     * Returns true when the episode already has a terminal outcome persisted (DISMISSED, RECOVERED, or ABANDONED).
-     * Used by the active branch to skip a late escalation that arrived after the student dismissed.
-     *
-     * <p>
-     * Reads episode-wide: checks ALL rows tagged with the episodeId, not just the earliest, so the result is
-     * stable under out-of-order persistence.
-     *
-     * <p>
-     * This is the cheap, unlocked read: a fast path that lets a caller complete silently without opening a
-     * transaction. It is not the decision. Every path that goes on to write re-checks under the episode's registry
-     * write lock inside the same transaction as its write, which is what makes the pair atomic against a concurrent
-     * outcome.
-     *
-     * <p>
-     * An episode with no registry row falls back to the message rows, which is exactly how this worked before the
-     * registry existed, so a job still in flight across the deployment that introduced it is unaffected.
-     *
-     * @param episodeId  the client-allocated episode UUID
-     * @param userId     the job's owning user; only outcomes on rows in this user's sessions are considered
-     * @param exerciseId the exercise the job ran for; an episode id reused for another exercise is not this episode
-     * @return true if a terminal outcome exists for this episode
-     */
     /**
      * Register the episode so it has a row to lock and a place to hold its terminal outcome, or refresh the row a
      * previous trigger already created for it.
@@ -1199,6 +1138,29 @@ public class IrisStruggleInterventionService {
         }
     }
 
+    /**
+     * Returns true when the episode already has a terminal outcome persisted (DISMISSED, RECOVERED, or ABANDONED).
+     * Used by the active branch to skip a late escalation that arrived after the student dismissed.
+     *
+     * <p>
+     * Reads episode-wide: checks ALL rows tagged with the episodeId, not just the earliest, so the result is
+     * stable under out-of-order persistence.
+     *
+     * <p>
+     * This is the cheap, unlocked read: a fast path that lets a caller complete silently without opening a
+     * transaction. It is not the decision. Every path that goes on to write re-checks under the episode's registry
+     * write lock inside the same transaction as its write, which is what makes the pair atomic against a concurrent
+     * outcome.
+     *
+     * <p>
+     * An episode with no registry row falls back to the message rows, which is exactly how this worked before the
+     * registry existed, so a job still in flight across the deployment that introduced it is unaffected.
+     *
+     * @param episodeId  the client-allocated episode UUID
+     * @param userId     the job's owning user; only outcomes on rows in this user's sessions are considered
+     * @param exerciseId the exercise the job ran for; an episode id reused for another exercise is not this episode
+     * @return true if a terminal outcome exists for this episode
+     */
     boolean isEpisodeTerminal(String episodeId, long userId, long exerciseId) {
         var registered = irisProactiveEpisodeRepository.find(userId, exerciseId, episodeId);
         if (registered.isPresent()) {

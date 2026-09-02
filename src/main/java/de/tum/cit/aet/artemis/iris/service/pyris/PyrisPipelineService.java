@@ -255,19 +255,14 @@ public class PyrisPipelineService {
                     if (runState == PyrisRunState.FAILED) {
                         // Preparation/connector failure: Pyris never accepted the run, so no async status callback will
                         // arrive to complete the client's in-flight request. Emit the terminal frame here before
-                        // releasing the slot. Kept inline rather than delegating to
-                        // IrisStruggleInterventionService#emitTerminalCompletion, which would introduce a bean cycle
-                        // (that service already depends on this one); the frame shape mirrors it.
+                        // releasing the slot. Sending it from here rather than delegating to
+                        // IrisStruggleInterventionService#emitTerminalCompletion avoids a bean cycle (that service
+                        // already depends on this one); the frame itself comes from the shared factory, so the two
+                        // paths cannot drift apart.
                         try {
                             if (pyrisJobService.getJob(jobToken) instanceof StruggleInterventionJob failedJob) {
-                                if ("confirm_close".equals(failedJob.intent())) {
-                                    irisChatWebsocketService.sendStruggleEvent(user,
-                                            StruggleInterventionEventDTO.unresolvedClose(failedJob.exerciseId(), failedJob.episodeId(), null));
-                                }
-                                else {
-                                    irisChatWebsocketService.sendStruggleEvent(user,
-                                            StruggleInterventionEventDTO.silentDecide(failedJob.exerciseId(), null, failedJob.episodeId(), null));
-                                }
+                                irisChatWebsocketService.sendStruggleEvent(user,
+                                        StruggleInterventionEventDTO.terminalCompletion(failedJob.intent(), failedJob.exerciseId(), failedJob.episodeId()));
                             }
                         }
                         catch (Exception e) {

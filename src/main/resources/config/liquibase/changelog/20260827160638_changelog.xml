@@ -205,7 +205,21 @@
                                  referencedColumnNames="id" referencedTableName="jhi_user" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
-    <changeSet id="20260827160638-10-add-iris-proactive-episode-exercise-fk" author="liam-berger">
+    <!--
+    PostgreSQL does not create an index for a foreign key, unlike InnoDB. Without one the ON DELETE CASCADE from
+    exercise (and from a course cascading through its exercises) scans iris_proactive_episode in full. The unique key
+    already covers the user_id reference, because user_id is its leading column.
+    -->
+    <changeSet id="20260827160638-10-index-iris-proactive-episode-exercise" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="iris_proactive_episode" indexName="idx_iris_proactive_episode_exercise"/></not>
+        </preConditions>
+        <createIndex tableName="iris_proactive_episode" indexName="idx_iris_proactive_episode_exercise">
+            <column name="exercise_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260827160638-11-add-iris-proactive-episode-exercise-fk" author="liam-berger">
         <preConditions onFail="MARK_RAN">
             <not><foreignKeyConstraintExists foreignKeyName="fk_iris_proactive_episode_exercise_id" foreignKeyTableName="iris_proactive_episode"/></not>
         </preConditions>

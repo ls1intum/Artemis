@@ -369,13 +369,8 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
         const originalSettingsValue = this.originalSettings();
         if (!this.isAdmin()) {
-            // Non-admins can only change enabled, supportLevel and customInstructions.
-            // Restore original variant and rate limits to prevent unauthorized changes.
             if (originalSettingsValue) {
-                settingsToSave.variant = originalSettingsValue.variant;
-                settingsToSave.rateLimit = originalSettingsValue.rateLimit;
-                settingsToSave.proactiveStruggleEnabled = originalSettingsValue.proactiveStruggleEnabled;
-                settingsToSave.legacyBuildTriggersEnabled = originalSettingsValue.legacyBuildTriggersEnabled;
+                this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
             }
         } else {
             // Admin: reconstruct rateLimit from form fields unless a caller only saves
@@ -456,13 +451,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         });
 
         if (!this.isAdmin()) {
-            // Non-admins cannot change variant, rate limits or the proactive-struggle flag — restore the originals.
-            // saveSettings() restores all three; leaving the flag out here let an auto-save on the enabled toggle
-            // write back whatever the signal happened to hold.
-            settingsToSave.variant = originalSettingsValue.variant;
-            settingsToSave.rateLimit = originalSettingsValue.rateLimit;
-            settingsToSave.proactiveStruggleEnabled = originalSettingsValue.proactiveStruggleEnabled;
-            settingsToSave.legacyBuildTriggersEnabled = originalSettingsValue.legacyBuildTriggersEnabled;
+            this.restoreAdminOnlyFields(settingsToSave, originalSettingsValue);
         } else if (this.isFormValid()) {
             // Admin with a valid rate-limit form: reconstruct rateLimit from the current form fields.
             settingsToSave.rateLimit = this.buildRateLimitForSave();
@@ -578,6 +567,18 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
         if (currentSettings) {
             this.settings.set(cloneWith(currentSettings, { variant: value }));
         }
+    }
+
+    /**
+     * Put the admin-only fields back to what the server holds, for a save made by someone who may not change them.
+     * Both save paths go through here: keeping two lists in step failed once already, when an auto-save on the
+     * enabled toggle wrote back whatever the signal happened to hold for a flag this list had forgotten.
+     */
+    private restoreAdminOnlyFields(target: IrisCourseSettingsDTO, original: IrisCourseSettingsDTO): void {
+        target.variant = original.variant;
+        target.rateLimit = original.rateLimit;
+        target.proactiveStruggleEnabled = original.proactiveStruggleEnabled;
+        target.legacyBuildTriggersEnabled = original.legacyBuildTriggersEnabled;
     }
 
     /**

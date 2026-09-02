@@ -88,6 +88,20 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      * @param course  the course to update
      * @param enabled the explicit decision (the field's third state, "undecided", is what an untouched course has)
      */
+    /**
+     * Turns proactive struggle detection on or off for the course, carrying every other setting through unchanged.
+     * {@code activateIrisFor} leaves it off, which is the production default, so a test that exercises the feature
+     * has to switch it on explicitly.
+     *
+     * @param course  the course whose settings to change
+     * @param enabled whether proactive struggle detection should be on
+     */
+    protected void setProactiveStruggleFor(Course course, boolean enabled) {
+        var current = irisSettingsService.getSettingsForCourse(course);
+        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(),
+                current.rateLimit(), enabled, current.legacyBuildTriggersEnabled()), true);
+    }
+
     protected void setLegacyBuildTriggersFor(Course course, boolean enabled) {
         var current = irisSettingsService.getSettingsForCourse(course);
         irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(current.enabled(), current.customInstructions(), current.variant(), current.supportLevel(),

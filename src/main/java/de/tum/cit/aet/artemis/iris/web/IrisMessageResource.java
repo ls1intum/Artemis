@@ -282,13 +282,13 @@ public class IrisMessageResource {
             throw new BadRequestException("This proactive message predates the episode's exercise binding and cannot record an outcome");
         }
         if (carriesEpisode) {
-            long userId = message.getSession().getUserId();
+            long userId = session.getUserId();
             irisStruggleInterventionService.writeEpisodeOutcome(episodeId, outcome, userId, proactiveExerciseId);
             // The episode writes to its stable smallest-id row, which is not necessarily the row addressed here.
             // Reloading messageId would then answer with a null proactiveOutcome even though one was recorded, so
             // return the row that actually carries the episode's outcome.
             var canonical = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId, proactiveExerciseId).stream().findFirst();
-            return ResponseEntity.ok(IrisMessageResponseDTO.of(canonical.map(row -> irisMessageRepository.findByIdElseThrow(row.getId())).orElse(message)));
+            return ResponseEntity.ok(IrisMessageResponseDTO.of(canonical.orElse(message)));
         }
         irisMessageRepository.setProactiveOutcomeIfNull(message.getId(), outcome);
         return ResponseEntity.ok(IrisMessageResponseDTO.of(irisMessageRepository.findByIdElseThrow(messageId)));

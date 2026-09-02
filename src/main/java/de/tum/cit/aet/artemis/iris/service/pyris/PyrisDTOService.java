@@ -178,6 +178,15 @@ public class PyrisDTOService {
      * @return the converted DTOs with proactive messages outcome-tagged
      */
     public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> messages) {
+        // One reverse pass instead of a forward scan per proactive message: "superseded" only asks whether a LATER
+        // proactive message exists, so the index of the last one answers it for every message at once.
+        int lastProactiveIndex = -1;
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if (messages.get(i).getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE) {
+                lastProactiveIndex = i;
+                break;
+            }
+        }
         var out = new ArrayList<PyrisMessageDTO>(messages.size());
         for (int i = 0; i < messages.size(); i++) {
             var m = messages.get(i);
@@ -185,7 +194,7 @@ public class PyrisDTOService {
                 out.add(PyrisMessageDTO.of(m));
             }
             else {
-                out.add(annotatedProactiveDTO(m, proactiveOutcomeTag(m, messages, i)));
+                out.add(annotatedProactiveDTO(m, proactiveOutcomeTag(m, messages, i, i < lastProactiveIndex)));
             }
         }
         return out;
@@ -194,8 +203,8 @@ public class PyrisDTOService {
     /** The IMMEDIATELY following USER reply counts as engagement only if it lands within this window of the hint (spec §7.4; ENG). */
     private static final Duration ENGAGED_REPLY_WINDOW = Duration.ofMinutes(10);
 
-    /** The wire tag for a proactive message based on its persisted outcome and surrounding messages. */
-    private static String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i) {
+    /** The wire tag for a proactive message based on its persisted outcome, its neighbour, and whether a later proactive message exists. */
+    private static String proactiveOutcomeTag(IrisMessage m, List<IrisMessage> all, int i, boolean superseded) {
         if (m.getProactiveOutcome() == IrisProactiveOutcome.DISMISSED) {
             return "(proactive hint, dismissed) ";
         }
@@ -205,7 +214,6 @@ public class PyrisDTOService {
         if (m.getHelpful() != null || replied) {
             return "(proactive hint, engaged) ";
         }
-        boolean superseded = all.subList(i + 1, all.size()).stream().anyMatch(x -> x.getOrigin() == IrisMessageOrigin.PROACTIVE_STRUGGLE);
         return superseded ? "(proactive hint, ignored) " : "(proactive hint) ";
     }
 

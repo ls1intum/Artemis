@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveEpisode;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
@@ -86,9 +85,7 @@ class IrisProactiveEpisodeRegistryTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         activateIrisFor(exercise);
 
-        var courseSettings = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(),
-                courseSettings.supportLevel(), courseSettings.rateLimit(), true), true);
+        setProactiveStruggleFor(course, true);
     }
 
     private long userId() {

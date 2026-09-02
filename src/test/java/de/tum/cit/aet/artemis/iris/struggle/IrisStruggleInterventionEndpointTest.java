@@ -64,9 +64,7 @@ class IrisStruggleInterventionEndpointTest extends AbstractIrisIntegrationTest {
 
         // activateIrisFor leaves proactive struggle OFF (the §13 default). The accepted-path test needs it ON;
         // the course-off test below flips it back off for its own case.
-        var courseSettings = irisSettingsService.getSettingsForCourse(course);
-        irisSettingsService.updateCourseSettings(course.getId(), IrisCourseSettings.of(courseSettings.enabled(), courseSettings.customInstructions(), courseSettings.variant(),
-                courseSettings.supportLevel(), courseSettings.rateLimit(), true), true);
+        setProactiveStruggleFor(course, true);
     }
 
     private long exerciseId() {

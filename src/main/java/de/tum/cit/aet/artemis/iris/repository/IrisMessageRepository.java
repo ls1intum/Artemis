@@ -47,7 +47,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
     int countFinalLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     /**
-     * Stable write-target finder for {@code writeEpisodeOutcome}, SCOPED to the requesting user's own sessions.
+     * Stable write-target finder for the pre-registry outcome write, SCOPED to the requesting user's own sessions.
      * Returns the episode's rows ordered by id ascending; the caller takes the first (smallest-id / first-persisted)
      * element as the target. JPQL has no {@code LIMIT}, so the ordered list is returned rather than a single row.
      * Unlike ordering by {@code sentAt} (which is unstable - a delivery row that persists late can carry an earlier
@@ -79,7 +79,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             FROM IrisMessage m
             WHERE m.proactiveEpisodeId = :episodeId
               AND m.proactiveExerciseId = :exerciseId
-              AND m.session.id IN (SELECT s.id FROM IrisSession s WHERE s.userId = :userId)
+              AND m.session.userId = :userId
             ORDER BY m.id ASC
             """)
     List<IrisMessage> findEpisodeRowsForUserOrderByIdAsc(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
@@ -90,8 +90,8 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
      * By first-terminal-wins (A10), at most one such value exists. Reading across ALL episode rows (not just the
      * earliest) makes the result stable under out-of-order persistence: if the delivery row's persist is still
      * pending while a later row already persisted its outcome, this query still finds it.
-     * The service helper {@link de.tum.cit.aet.artemis.iris.service.session.IrisStruggleInterventionService#isEpisodeTerminal}
-     * takes the first element.
+     * Callers that only need to know whether the episode is terminal check the result for emptiness; the one that
+     * needs the value takes the first element.
      * <p>
      * The user scope is a security guard: an unscoped
      * read would let any student probe or read the outcome of another student's episode by guessing/replaying the
@@ -110,7 +110,7 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
             WHERE m.proactiveEpisodeId = :episodeId
               AND m.proactiveExerciseId = :exerciseId
               AND m.proactiveOutcome IS NOT NULL
-              AND m.session.id IN (SELECT s.id FROM IrisSession s WHERE s.userId = :userId)
+              AND m.session.userId = :userId
             """)
     List<IrisProactiveOutcome> findEpisodeOutcomes(@Param("episodeId") String episodeId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
