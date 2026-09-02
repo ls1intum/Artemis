@@ -21,6 +21,18 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 const emptyCollapseState: Record<string, boolean> = {};
 const EMPTY_COLLAPSE_STATE = emptyCollapseState as CollapseState;
 
+/**
+ * Param key the variant-group detail route declares (`group/:groupId` in `courses.route.ts`); every other detail
+ * route names a plain entity (`:exerciseId`, `:lectureId`, …). Group and exercise ids come from independent
+ * sequences and overlap freely, so the key is the only thing that tells the two kinds of id apart.
+ */
+const VARIANT_GROUP_ROUTE_PARAM = 'groupId';
+
+/** True for the single card standing for a variant group; only such a card carries members in `groupedItems`. */
+function isVariantGroupCard(item: SidebarCardElement): boolean {
+    return !!item.groupedItems?.length;
+}
+
 @Component({
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
@@ -51,25 +63,46 @@ export class SidebarAccordionComponent implements OnInit, OnDestroy {
      *  property mutations remain visible to the parent, but can be replaced when a stored state is restored. */
     readonly collapseStateInternal = signal<CollapseState>(EMPTY_COLLAPSE_STATE);
 
-    /** Id of the entity the detail route currently shows, used to highlight its card (or the group card holding it). */
-    readonly selectedItemId = computed<number | undefined>(() => {
+    /**
+     * The entity the detail route currently shows: its id together with the param that named it. The param is kept
+     * because the id alone does not say which kind of entity it belongs to (see {@link VARIANT_GROUP_ROUTE_PARAM}).
+     */
+    private readonly selectedRouteEntity = computed<{ paramKey: string; id: number } | undefined>(() => {
         const params = this.routeParams();
-        const routeParamKey = params && Object.keys(params)[0];
-        const value = routeParamKey ? Number(params[routeParamKey]) : undefined;
-        return value !== undefined && !Number.isNaN(value) ? value : undefined;
+        const paramKey = params && Object.keys(params)[0];
+        if (!paramKey) {
+            return undefined;
+        }
+        const id = Number(params[paramKey]);
+        return Number.isNaN(id) ? undefined : { paramKey, id };
+    });
+
+    /**
+     * Id of the entity the detail route shows, forwarded to the cards so the group card holding it stays highlighted
+     * while the member it groups has no card of its own. A group route contributes nothing: its own card is
+     * highlighted by `routerLinkActive`, and forwarding the group id would instead mark whichever group happens to
+     * hold a member exercise with the same id.
+     */
+    readonly selectedItemId = computed<number | undefined>(() => {
+        const selected = this.selectedRouteEntity();
+        return selected && selected.paramKey !== VARIANT_GROUP_ROUTE_PARAM ? selected.id : undefined;
     });
 
     /** Key of the time category holding the selected entity, if any. */
     private readonly groupKeyWithSelectedItem = computed<string | undefined>(() => {
-        const selectedId = this.selectedItemId();
+        const selected = this.selectedRouteEntity();
         const groupedData = this.groupedData();
-        if (selectedId === undefined || !groupedData) {
+        if (!selected || !groupedData) {
             return undefined;
         }
-        // A variant group is a single card whose members live in groupedItems, so the selected id may match either the
-        // card itself or one of its members (the direct URL / refresh case, where a variant is open without a card).
-        const matchesSelectedId = (item: SidebarCardElement): boolean => item.id === selectedId || !!item.groupedItems?.some((variant) => variant.id === selectedId);
-        return Object.entries(groupedData).find(([, group]) => group.entityData.some(matchesSelectedId))?.[0];
+        // Match only cards of the kind the route named, so an id shared by a group and an exercise cannot open the
+        // wrong category. A group route matches the group card itself; every other route matches a plain card or one
+        // of a group's members (the direct URL / refresh case, where a variant is open without a card).
+        const matchesSelected = (item: SidebarCardElement): boolean =>
+            selected.paramKey === VARIANT_GROUP_ROUTE_PARAM
+                ? isVariantGroupCard(item) && item.id === selected.id
+                : (!isVariantGroupCard(item) && item.id === selected.id) || !!item.groupedItems?.some((variant) => variant.id === selected.id);
+        return Object.entries(groupedData).find(([, group]) => group.entityData.some(matchesSelected))?.[0];
     });
 
     readonly faChevronRight = faChevronRight;
