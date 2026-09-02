@@ -126,6 +126,10 @@ test.describe('Responsive modeling editor tile', { tag: '@fast' }, () => {
         await expect.poll(async () => (await explanationSurface.boundingBox())?.height ?? 0).toBeGreaterThan(automaticSurfaceBox!.height + 70);
 
         await page.setViewportSize({ width: 640, height: 900 });
+        await expect(frame).toBeVisible();
+        await expect(explanationSurface).toBeVisible();
+        await expect(textarea).toBeVisible();
+        await expect(palette).toBeVisible();
         const [compactFrameBox, compactSurfaceBox, compactTextareaBox, compactPaletteBox] = await Promise.all([
             frame.boundingBox(),
             explanationSurface.boundingBox(),
