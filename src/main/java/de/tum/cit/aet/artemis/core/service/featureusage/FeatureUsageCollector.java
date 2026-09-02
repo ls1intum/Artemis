@@ -159,14 +159,21 @@ public class FeatureUsageCollector {
             long callCount = accumulator.callCount.sum();
             long errorCount = accumulator.errorCount.sum();
             long durationSumMs = accumulator.durationSumMs.sum();
+            // Read before the gate and reported from this snapshot, so the value that is written is exactly the value the
+            // watermark below then claims has been written. Re-reading it after the gate would let a concurrent update
+            // slip in between the two and be marked as reported without ever having been.
+            int durationMaxMs = accumulator.durationMaxMs.get();
             long callDelta = callCount - accumulator.flushedCallCount;
             long errorDelta = errorCount - accumulator.flushedErrorCount;
             long durationDelta = durationSumMs - accumulator.flushedDurationSumMs;
-            // Every counter is examined, not just the call counter. The four counters of one observation are incremented
-            // one after another, so a flush landing between them sees the call but not yet its error and duration. Gating
-            // on calls alone would then advance the watermarks past that call and skip the bucket on the next flush,
-            // because no new call arrived - the failure and the latency of that request would never be reported.
-            if (callDelta <= 0 && errorDelta <= 0 && durationDelta <= 0) {
+            boolean maximumRose = durationMaxMs > accumulator.flushedDurationMaxMs;
+            // All four counters are examined, not just the call counter. The counters of one observation are updated one
+            // after another, so a flush landing between them sees the call but not yet its error, its duration or its
+            // maximum. Gating on calls alone would then advance the watermarks past that call and skip the bucket on the
+            // next flush, because no new call arrived - and the failure, the latency and the slowest call of that request
+            // would never be reported. The maximum needs a watermark of its own for this: it is a running maximum rather
+            // than a sum, so there is no delta to notice it by.
+            if (callDelta <= 0 && errorDelta <= 0 && durationDelta <= 0 && !maximumRose) {
                 // A bucket of a day that is over and saw nothing since the last flush is finished with. Dropping it here
                 // is what keeps the map bounded over a long uptime instead of holding every day the process has seen.
                 if (key.usageDay().isBefore(today)) {
@@ -178,7 +185,8 @@ public class FeatureUsageCollector {
             accumulator.flushedCallCount = callCount;
             accumulator.flushedErrorCount = errorCount;
             accumulator.flushedDurationSumMs = durationSumMs;
-            deltas.add(new FeatureUsageDelta(key.featureId(), key.usageDay(), key.callerRole(), callDelta, errorDelta, durationDelta, accumulator.durationMaxMs.get()));
+            accumulator.flushedDurationMaxMs = durationMaxMs;
+            deltas.add(new FeatureUsageDelta(key.featureId(), key.usageDay(), key.callerRole(), callDelta, errorDelta, durationDelta, durationMaxMs));
         }
         return deltas;
     }
@@ -191,8 +199,10 @@ public class FeatureUsageCollector {
      * what is new. Without this, a write that failed - a transient database error, a lost connection - left its counts
      * behind the watermark and they were never reported again: the calls in that bucket were lost rather than retried.
      * <p>
-     * Only the additive counters are wound back. {@code durationMaxMs} is a maximum rather than a sum, so re-reporting
-     * it is harmless.
+     * The additive counters are wound back by the amount that was handed out. The maximum is wound back to zero instead,
+     * because the delta carries the running maximum rather than an increment and the previous watermark is not recoverable
+     * from it. Zero simply guarantees the next drain reports the maximum again, which is safe: the stored value is updated
+     * to the greater of the two, so reporting a maximum twice cannot corrupt it.
      * <p>
      * This makes a failed flush at-least-once rather than at-most-once. A write that reached the database but reported
      * failure afterwards would be counted twice on the retry. That is the deliberate trade: for usage statistics, an
@@ -210,6 +220,7 @@ public class FeatureUsageCollector {
         accumulator.flushedCallCount -= delta.callCount();
         accumulator.flushedErrorCount -= delta.errorCount();
         accumulator.flushedDurationSumMs -= delta.durationSumMs();
+        accumulator.flushedDurationMaxMs = 0;
     }
 
     /**
@@ -241,5 +252,7 @@ public class FeatureUsageCollector {
         private long flushedErrorCount;
 
         private long flushedDurationSumMs;
+
+        private int flushedDurationMaxMs;
     }
 }

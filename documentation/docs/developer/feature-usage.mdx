@@ -125,10 +125,12 @@ would race with concurrent recording and silently drop calls; a monotonic counte
 duration is reported as a running maximum rather than a delta, because the stored value is updated to the greater of the
 two and that is idempotent.
 
-A drain reports a bucket when **any** of its counters moved, not only its call count. The counters of one observation are
-incremented one after another, so a flush landing between them sees the call but not yet its error and its duration;
-gating on calls alone would advance the watermarks past that call and skip the bucket next time, losing the failure and
-the latency for good.
+A drain reports a bucket when **any** of its four counters moved, not only its call count. The counters of one
+observation are updated one after another, so a flush landing between them sees the call but not yet its error, its
+duration or its maximum; gating on calls alone would advance the watermarks past that call and skip the bucket next time,
+losing those for good. The maximum carries a watermark of its own, because it is a running maximum rather than a sum and
+there is no delta to notice it by. It is read before the gate and reported from that snapshot, so what is written is
+exactly what the watermark then claims was written.
 
 Buckets of a day that is over and whose counters have all been reported are dropped, which is what keeps the map bounded
 over a long uptime. Recording never propagates a failure: a usage counter must not be able to break the request it

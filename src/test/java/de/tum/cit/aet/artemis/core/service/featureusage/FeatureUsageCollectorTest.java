@@ -148,6 +148,51 @@ class FeatureUsageCollectorTest {
     }
 
     /**
+     * The maximum is the fourth counter of an observation and the last one {@code accumulate} updates, so a drain can
+     * consume the call, the error and the duration sum of a request and still read the maximum from before that request
+     * raised it. It needs a watermark of its own to be noticed: unlike the other three it is a running maximum, so there is
+     * no delta to compare.
+     */
+    @Test
+    void shouldReportALateMaximumEvenWhenNoOtherCounterMoved() {
+        collector.recordUsage(FEATURE_ID, Role.STUDENT, false, 100);
+        collector.drain(today());
+
+        // as if the previous drain had taken the additive counters but read the maximum before this request raised it
+        collector.reclaim(new FeatureUsageDelta(FEATURE_ID, today(), Role.STUDENT, 0, 0, 0, 0));
+
+        var deltas = collector.drain(today());
+        assertThat(deltas).hasSize(1);
+        assertThat(deltas.getFirst().callCount()).isZero();
+        assertThat(deltas.getFirst().durationMaxMs()).isEqualTo(100);
+    }
+
+    @Test
+    void shouldKeepAClosedDayBucketWhoseMaximumHasNotBeenReported() {
+        collector.recordUsage(FEATURE_ID, Role.STUDENT, false, 100);
+        collector.drain(today());
+        collector.reclaim(new FeatureUsageDelta(FEATURE_ID, today(), Role.STUDENT, 0, 0, 0, 0));
+
+        // the day is over, but the slowest call of that day has not reached the database yet
+        var deltas = collector.drain(today().plusDays(1));
+        assertThat(deltas).hasSize(1);
+        assertThat(deltas.getFirst().durationMaxMs()).isEqualTo(100);
+    }
+
+    @Test
+    void shouldReportTheMaximumAgainAfterAFailedWrite() {
+        collector.recordUsage(FEATURE_ID, Role.STUDENT, false, 100);
+        var failed = collector.drain(today()).getFirst();
+
+        collector.reclaim(failed);
+
+        var retry = collector.drain(today());
+        assertThat(retry).hasSize(1);
+        assertThat(retry.getFirst().callCount()).isEqualTo(1);
+        assertThat(retry.getFirst().durationMaxMs()).isEqualTo(100);
+    }
+
+    /**
      * Everything recorded has to come out of the drains exactly once, whatever the interleaving. Asserted as a conservation
      * law over a concurrent run rather than on one interleaving, because the window between the counter increments of a
      * single observation is a few nanoseconds wide and cannot be hit on purpose.
