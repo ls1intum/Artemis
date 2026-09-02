@@ -25,19 +25,6 @@
         }
 
         .p-datatable-header {
-            jhi-search-filter .p-iconfield {
-                display: flex;
-
-                .p-component.p-inputtext {
-                    flex-grow: 1;
-                }
-
-                p-inputicon:last-child {
-                    right: 0.5rem;
-                    left: auto;
-                }
-            }
-
             padding: 0 0 12px !important;
             border-bottom: none;
         }
