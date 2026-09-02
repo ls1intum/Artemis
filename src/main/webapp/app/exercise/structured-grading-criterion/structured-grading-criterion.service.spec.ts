@@ -107,6 +107,39 @@ describe('Structured Grading Criteria Service', () => {
             expect(selectionService.hasArmedInstruction()).toBe(false);
             expect(service.applyArmedInstructionToFeedback(feedback)).toBe(false);
         });
+
+        it('should not apply or consume an armed instruction when the drop payload is missing', () => {
+            const selectionService = TestBed.inject(GradingInstructionSelectionService);
+            const instruction = new GradingInstruction();
+            instruction.id = 9;
+            instruction.credits = 2.5;
+            selectionService.armInstruction(instruction);
+
+            const feedback = new Feedback();
+            feedback.credits = 0;
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, new Event('drop'));
+
+            expect(feedback.gradingInstruction).toBeUndefined();
+            expect(feedback.credits).toBe(0);
+            expect(selectionService.hasArmedInstruction()).toBe(true);
+        });
+
+        it('should apply a dropped instruction from a non-empty text/plain payload', () => {
+            const selectionService = TestBed.inject(GradingInstructionSelectionService);
+            selectionService.armInstruction({ id: 99, credits: 9 } as GradingInstruction);
+
+            const feedback = new Feedback();
+            const event = {
+                preventDefault() {},
+                dataTransfer: { getData: () => JSON.stringify({ id: 3, credits: 1 }) },
+            } as unknown as DragEvent;
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
+
+            expect(feedback.gradingInstruction).toEqual({ id: 3, credits: 1 });
+            expect(feedback.credits).toBe(1);
+            expect(selectionService.hasArmedInstruction()).toBe(true);
+        });
     });
 
     afterEach(() => {

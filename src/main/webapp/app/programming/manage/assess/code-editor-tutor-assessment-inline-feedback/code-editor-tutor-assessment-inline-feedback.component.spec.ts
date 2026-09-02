@@ -321,6 +321,20 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(pointsElement.nativeElement.textContent).toContain('1P');
     });
 
+    it('should show the linked-instruction pill from currentFeedback on a new draft', () => {
+        fixture.detectChanges();
+        const draft = new Feedback();
+        draft.gradingInstruction = { id: 1, credits: 2, feedback: 'ok', gradingScale: 'good', instructionDescription: 'desc', usageCount: 0 };
+        draft.credits = 2;
+        comp.currentFeedback.set(draft);
+        fixture.detectChanges();
+
+        const pointsElement = fixture.debugElement.query(By.css('.inline-feedback__points-pill'));
+        expect(pointsElement).not.toBeNull();
+        expect(pointsElement.nativeElement.textContent).toContain('2P');
+        expect(fixture.debugElement.query(By.css('jhi-grading-instruction-link-icon'))).not.toBeNull();
+    });
+
     it('should use the correct translation key for non-graded feedback', () => {
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.AUTOMATIC,

@@ -198,40 +198,42 @@ describe('TextblockAssessmentCardComponent', () => {
 
     it('should initialize feedback and apply an armed instruction via keyboard when feedback was undefined', () => {
         vi.useFakeTimers();
-        const instruction: GradingInstruction = {
-            id: 1,
-            credits: 2,
-            feedback: 'good',
-            gradingScale: 'good',
-            instructionDescription: 'desc',
-            usageCount: 0,
-        };
-        const textBlockRef = TextBlockRef.new();
-        textBlockRef.selectable = true;
-        expect(textBlockRef.feedback).toBeUndefined();
+        try {
+            const instruction: GradingInstruction = {
+                id: 1,
+                credits: 2,
+                feedback: 'good',
+                gradingScale: 'good',
+                instructionDescription: 'desc',
+                usageCount: 0,
+            };
+            const textBlockRef = TextBlockRef.new();
+            textBlockRef.selectable = true;
+            expect(textBlockRef.feedback).toBeUndefined();
 
-        fixture.componentRef.setInput('textBlockRef', textBlockRef);
-        fixture.componentRef.setInput('readOnly', false);
-        fixture.changeDetectorRef.detectChanges();
+            fixture.componentRef.setInput('textBlockRef', textBlockRef);
+            fixture.componentRef.setInput('readOnly', false);
+            fixture.changeDetectorRef.detectChanges();
 
-        TestBed.inject(GradingInstructionSelectionService).armInstruction(instruction);
-        const sgiService = TestBed.inject(StructuredGradingCriterionService);
-        const applySpy = vi.spyOn(sgiService, 'applyArmedInstructionToFeedback').mockImplementation((feedback) => {
-            feedback.gradingInstruction = instruction;
-            feedback.credits = instruction.credits;
-            return true;
-        });
-        const didChangeSpy = vi.spyOn(component.didChange, 'emit');
+            TestBed.inject(GradingInstructionSelectionService).armInstruction(instruction);
+            const sgiService = TestBed.inject(StructuredGradingCriterionService);
+            const applySpy = vi.spyOn(sgiService, 'applyArmedInstructionToFeedback').mockImplementation((feedback) => {
+                feedback.gradingInstruction = instruction;
+                feedback.credits = instruction.credits;
+                return true;
+            });
+            const didChangeSpy = vi.spyOn(component.didChange, 'emit');
 
-        component.onTextKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
+            component.onTextKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
 
-        expect(textBlockRef.feedback).toBeDefined();
-        expect(applySpy).toHaveBeenCalledWith(textBlockRef.feedback);
-        expect(textBlockRef.feedback!.gradingInstruction).toEqual(instruction);
-        expect(textBlockRef.feedback!.credits).toBe(2);
-        expect(didChangeSpy).toHaveBeenCalledWith(textBlockRef);
-
-        vi.clearAllTimers();
-        vi.useRealTimers();
+            expect(textBlockRef.feedback).toBeDefined();
+            expect(applySpy).toHaveBeenCalledWith(textBlockRef.feedback);
+            expect(textBlockRef.feedback!.gradingInstruction).toEqual(instruction);
+            expect(textBlockRef.feedback!.credits).toBe(2);
+            expect(didChangeSpy).toHaveBeenCalledWith(textBlockRef);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
     });
 });

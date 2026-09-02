@@ -14,8 +14,8 @@
                 @if (!Feedback.isNonGradedFeedbackSuggestion(feedback)) {
                     <tum-ui-tag
                         class="inline-feedback__points-pill"
-                        [severity]="pointsSeverity(feedback)"
-                        [value]="roundScoreSpecifiedByCourseSettings(feedback.credits, course()) + 'P'"
+                        [severity]="pointsSeverity(currentFeedback())"
+                        [value]="roundScoreSpecifiedByCourseSettings(currentFeedback().credits, course()) + 'P'"
                     />
                 }
             } @else {
@@ -68,7 +68,7 @@
                 } @else {
                     <!-- Only editable feedback offers to unlink its grading instruction. -->
                     @if (currentFeedback().gradingInstruction) {
-                        <jhi-grading-instruction-link-icon [feedback]="feedback" (linkRemoved)="onInstructionLinkRemoved()" />
+                        <jhi-grading-instruction-link-icon [feedback]="currentFeedback()" (linkRemoved)="onInstructionLinkRemoved()" />
                     }
                 }
                 @if (!readOnly() && feedback.type === MANUAL) {

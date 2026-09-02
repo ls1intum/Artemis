@@ -33,8 +33,10 @@ export class StructuredGradingCriterionService {
         event.preventDefault();
         try {
             const data = (event as DragEvent).dataTransfer?.getData('text/plain');
-            const instruction = data ? parseJson<GradingInstruction>(data) : this.selectionService.consumeArmedInstruction();
-            this.applyInstructionToFeedback(feedback, instruction);
+            if (!data) {
+                return;
+            }
+            this.applyInstructionToFeedback(feedback, parseJson<GradingInstruction>(data));
         } catch (err) {
             // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
             if (!(err instanceof SyntaxError)) {
