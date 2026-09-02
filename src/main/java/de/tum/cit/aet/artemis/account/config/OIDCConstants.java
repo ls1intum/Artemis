@@ -12,6 +12,10 @@ public final class OIDCConstants {
 
     public static final String VS_CODE_DEEP_LINK_BASE = "vscode://aet-tum.iris-thaumantias/auth-callback";
 
+    public static final String IOS_REDIRECT_TARGET = "ios";
+
+    public static final String IOS_CALLBACK_PATH = "/oauth-callback";
+
     private OIDCConstants() {
     }
 }
