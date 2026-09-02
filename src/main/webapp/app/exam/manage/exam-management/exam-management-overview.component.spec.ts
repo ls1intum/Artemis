@@ -1,16 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { signal } from '@angular/core';
 import { ExamManagementOverviewComponent } from 'app/exam/manage/exam-management/exam-management-overview.component';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { EventManager } from 'app/foundation/service/event-manager.service';
-import { AlertService } from 'app/foundation/service/alert.service';
+import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -22,10 +18,6 @@ import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-impo
 describe('ExamManagementOverviewComponent', () => {
     let comp: ExamManagementOverviewComponent;
     let fixture: ComponentFixture<ExamManagementOverviewComponent>;
-    let examManagementService: ExamManagementService;
-    let courseService: CourseManagementService;
-    let eventManager: EventManager;
-    let alertService: AlertService;
     let sortService: SortService;
     let dialogService: DialogService;
     let router: Router;
@@ -34,34 +26,31 @@ describe('ExamManagementOverviewComponent', () => {
     const exam1: Exam = { id: 1, title: 'Exam 1', testExam: false } as Exam;
     const exam2: Exam = { id: 2, title: 'Exam 2', testExam: true } as Exam;
 
-    const route = {
-        parent: {
-            snapshot: {
-                paramMap: convertToParamMap({ courseId: course.id }),
-            },
-        },
-    } as any as ActivatedRoute;
+    const courseSignal = signal<Course>(course);
+    const examsSignal = signal<Exam[]>([exam1, exam2]);
 
     beforeEach(async () => {
+        courseSignal.set(course);
+        examsSignal.set([exam1, exam2]);
+
         await TestBed.configureTestingModule({
             imports: [ExamManagementOverviewComponent],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: DialogService, useClass: MockDialogService },
                 { provide: Router, useClass: MockRouter },
-                { provide: ActivatedRoute, useValue: route },
-                EventManager,
+                {
+                    provide: ExamManagementComponent,
+                    useValue: {
+                        course: courseSignal,
+                        exams: examsSignal,
+                    },
+                },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExamManagementOverviewComponent);
         comp = fixture.componentInstance;
-        examManagementService = TestBed.inject(ExamManagementService);
-        courseService = TestBed.inject(CourseManagementService);
-        eventManager = TestBed.inject(EventManager);
-        alertService = TestBed.inject(AlertService);
         sortService = TestBed.inject(SortService);
         dialogService = TestBed.inject(DialogService);
         router = TestBed.inject(Router);
@@ -71,51 +60,9 @@ describe('ExamManagementOverviewComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize and load course and exams on ngOnInit', () => {
-        const courseResponse = { body: course } as HttpResponse<Course>;
-        const examsResponse = { body: [exam1, exam2] } as HttpResponse<Exam[]>;
-
-        vi.spyOn(courseService, 'find').mockReturnValue(of(courseResponse));
-        vi.spyOn(examManagementService, 'findAllExamsForCourse').mockReturnValue(of(examsResponse));
-
-        comp.ngOnInit();
-
-        expect(courseService.find).toHaveBeenCalledWith(course.id);
+    it('should read course and exams from parent ExamManagementComponent', () => {
         expect(comp.course()).toEqual(course);
-        expect(examManagementService.findAllExamsForCourse).toHaveBeenCalledWith(course.id);
         expect(comp.exams()).toEqual([exam1, exam2]);
-    });
-
-    it('should handle error when courseService.find fails', () => {
-        const errorResponse = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
-        vi.spyOn(courseService, 'find').mockReturnValue(throwError(() => errorResponse));
-        const alertSpy = vi.spyOn(alertService, 'error');
-
-        comp.ngOnInit();
-
-        expect(alertSpy).toHaveBeenCalled();
-    });
-
-    it('should handle error when loadAllExamsForCourse fails', () => {
-        const errorResponse = new HttpErrorResponse({ status: 404, statusText: 'Not Found' });
-        comp.course.set(course);
-        vi.spyOn(examManagementService, 'findAllExamsForCourse').mockReturnValue(throwError(() => errorResponse));
-        const alertSpy = vi.spyOn(alertService, 'error');
-
-        comp.loadAllExamsForCourse();
-
-        expect(alertSpy).toHaveBeenCalledWith('error.http.404');
-    });
-
-    it('should reload exams on examListModification event', () => {
-        comp.course.set(course);
-        const examsResponse = { body: [exam1] } as HttpResponse<Exam[]>;
-        const findAllSpy = vi.spyOn(examManagementService, 'findAllExamsForCourse').mockReturnValue(of(examsResponse));
-
-        comp.registerChangeInExams();
-        eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
-
-        expect(findAllSpy).toHaveBeenCalled();
     });
 
     it('should track exam by trackId', () => {
@@ -124,7 +71,6 @@ describe('ExamManagementOverviewComponent', () => {
     });
 
     it('should sort rows using sortService', () => {
-        comp.exams.set([exam2, exam1]);
         comp.predicate = 'id';
         comp.ascending = true;
 
@@ -132,12 +78,11 @@ describe('ExamManagementOverviewComponent', () => {
 
         comp.sortRows();
 
-        expect(sortSpy).toHaveBeenCalledWith([exam2, exam1], 'id', true);
+        expect(sortSpy).toHaveBeenCalledWith([exam1, exam2], 'id', true);
         expect(comp.exams()).toEqual([exam1, exam2]);
     });
 
     it('should open import modal and navigate when an exam is selected', () => {
-        comp.course.set(course);
         const selectedExam: Exam = { id: 99, title: 'Imported Exam' };
         const dialogRef = {
             onClose: of(selectedExam),
@@ -158,7 +103,6 @@ describe('ExamManagementOverviewComponent', () => {
     });
 
     it('should open import modal and not navigate when closed without selection', () => {
-        comp.course.set(course);
         const dialogRef = {
             onClose: of(undefined),
         } as unknown as DynamicDialogRef;
@@ -171,12 +115,11 @@ describe('ExamManagementOverviewComponent', () => {
         expect(navigateSpy).not.toHaveBeenCalled();
     });
 
-    it('should destroy event subscription on ngOnDestroy', () => {
-        const destroySpy = vi.spyOn(eventManager, 'destroy');
-        comp.eventSubscriber = eventManager.subscribe('examListModification', () => {});
+    it('should destroy dialogErrorSource on ngOnDestroy', () => {
+        const unsubscribeSpy = vi.spyOn((comp as any).dialogErrorSource, 'unsubscribe');
 
         comp.ngOnDestroy();
 
-        expect(destroySpy).toHaveBeenCalledWith(comp.eventSubscriber);
+        expect(unsubscribeSpy).toHaveBeenCalled();
     });
 });

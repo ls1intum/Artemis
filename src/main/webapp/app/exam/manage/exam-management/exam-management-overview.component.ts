@@ -1,16 +1,8 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { Component, OnDestroy, inject } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { Subject } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { onError } from 'app/foundation/util/global.utils';
-import { AlertService } from 'app/foundation/service/alert.service';
-import { Course } from 'app/course/shared/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SortService } from 'app/foundation/service/sort.service';
-import dayjs from 'dayjs/esm';
-import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faFileImport, faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
 import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,6 +15,7 @@ import { ExamStatusComponent } from '../exam-status/exam-status.component';
 import { TumUiButtonComponent, TumUiButtonDirective } from '@tumaet/ui-angular';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';
+import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
 
 @Component({
     selector: 'jhi-exam-management-overview',
@@ -41,26 +34,20 @@ import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mod
         ExamModeBadgeComponent,
     ],
 })
-export class ExamManagementOverviewComponent implements OnInit, OnDestroy {
-    private route = inject(ActivatedRoute);
-    private courseService = inject(CourseManagementService);
-    private examManagementService = inject(ExamManagementService);
-    private eventManager = inject(EventManager);
-    private alertService = inject(AlertService);
+export class ExamManagementOverviewComponent implements OnDestroy {
+    private examManagementComponent = inject(ExamManagementComponent);
     private sortService = inject(SortService);
     private dialogService = inject(DialogService);
     private translateService = inject(TranslateService);
     private router = inject(Router);
 
-    readonly course = signal<Course>(undefined!);
-    readonly exams = signal<Exam[]>(undefined!);
+    readonly course = this.examManagementComponent.course;
+    readonly exams = this.examManagementComponent.exams;
 
     predicate: string;
     ascending: boolean;
-    eventSubscriber?: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    currentTime = dayjs();
 
     // Icons
     faSort = faSort;
@@ -73,52 +60,10 @@ export class ExamManagementOverviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Initialize the course and all exams when this view is initialized.
-     * Subscribes to 'examListModification' event.
-     * @see registerChangeInExams
-     */
-    ngOnInit(): void {
-        this.courseService.find(Number(this.route.parent!.snapshot.paramMap.get('courseId'))).subscribe({
-            next: (res: HttpResponse<Course>) => {
-                this.course.set(res.body!);
-                this.loadAllExamsForCourse();
-                this.registerChangeInExams();
-                this.currentTime = dayjs();
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
-    }
-
-    /**
      * unsubscribe on component destruction
      */
     ngOnDestroy() {
-        if (this.eventSubscriber !== undefined) {
-            this.eventManager.destroy(this.eventSubscriber);
-        }
         this.dialogErrorSource.unsubscribe();
-    }
-
-    /**
-     * Load all exams for a course.
-     */
-    loadAllExamsForCourse() {
-        this.examManagementService.findAllExamsForCourse(this.course().id!).subscribe({
-            next: (res: HttpResponse<Exam[]>) => {
-                this.exams.set(res.body!);
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
-    }
-
-    /**
-     * Subscribes to 'examListModification' events
-     */
-    registerChangeInExams() {
-        this.eventSubscriber = this.eventManager.subscribe('examListModification', () => {
-            this.loadAllExamsForCourse();
-            this.currentTime = dayjs();
-        });
     }
 
     /**
