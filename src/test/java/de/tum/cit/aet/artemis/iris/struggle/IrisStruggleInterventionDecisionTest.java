@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -116,6 +117,9 @@ class IrisStruggleInterventionDecisionTest {
     private IrisSessionRepository irisSessionRepository;
 
     @Mock
+    private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
+
+    @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
     private IrisStruggleInterventionService service;
@@ -141,7 +145,7 @@ class IrisStruggleInterventionDecisionTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
@@ -231,7 +235,7 @@ class IrisStruggleInterventionDecisionTest {
         var session = exerciseSession(42L);
         when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(42L), any())).thenReturn(session);
         when(irisAmbientDecisionRepository.refreshIfUnconsumed(3L, 42L, "ep-123", "Re-check the logic.")).thenReturn(0);
-        when(irisAmbientDecisionRepository.save(any(IrisAmbientDecision.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
+        when(irisAmbientDecisionRepository.saveAndFlush(any(IrisAmbientDecision.class))).thenThrow(new DataIntegrityViolationException("duplicate"));
         var update = new PyrisStruggleInterventionStatusUpdateDTO("Re-check the logic.", "ambient", 0.7, null, PyrisRunState.FINISHED, null, List.of(), null, null, null, null,
                 null, null);
 

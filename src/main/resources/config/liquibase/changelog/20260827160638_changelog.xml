@@ -5,8 +5,8 @@
     <!--
     The complete schema for the Iris proactive struggle intervention (#350), in one migration.
 
-    Additive and non-destructive: four nullable columns plus an index on the existing iris_message table, and one
-    new table. No drops, no alters of existing columns, no data backfill. Existing iris_message rows get NULL.
+    Additive and non-destructive: four nullable columns plus an index on the existing iris_message table, and two
+    new tables. No drops, no alters of existing columns, no data backfill. Existing iris_message rows get NULL.
 
     iris_message gains:
       origin                 marks a row as proactive, so it can be excluded from the AI rate limit, included in
@@ -31,6 +31,9 @@
     NULL on purpose: a decision without an episode cannot be addressed by a reveal, so those are never recorded and
     no nullable column takes part in the uniqueness. Its width matches iris_message.proactive_episode_id, so an id
     that can be recorded can always be persisted on the message too.
+
+    iris_proactive_episode registers each episode when its trigger is accepted, so the episode has a row that can be
+    locked and a place to hold its terminal outcome even before its first message exists. Details on the changeSet.
 
     Every changeSet is precondition-guarded so a partially migrated database still gets the missing pieces.
     -->
@@ -182,6 +185,93 @@
             <column name="proactive_episode_id"/>
             <column name="proactive_exercise_id"/>
         </createIndex>
+    </changeSet>
+
+    <!--
+    The episode as a row of its own, so it has an identity that can be locked.
+
+    Every terminal decision used to be a check-then-act: a callback read whether the episode was already closed and
+    wrote its message in a separate statement, so a dismiss committing in between produced a hint the student had
+    already dismissed. There was nothing to serialize on. The chat session cannot serve as the mutex, because a
+    session is resolved as "the latest for (user, exercise)" with no uniqueness constraint, so an episode's existing
+    message and its next append can sit in different sessions and take different locks. The episode could not lock
+    itself either, since before its first message row it had no row at all.
+
+    A row is written when Artemis accepts a trigger, which is also what makes an outcome arriving before the first
+    message representable instead of deferred. outcome is the authoritative terminal state;
+    iris_message.proactive_outcome stays as a subordinate mirror for the history replayed to Pyris.
+
+    The unique key mirrors iris_ambient_decision: the same natural key, and NOT NULL on every column that takes part
+    in it. created_at is indexed for the retention of episodes whose callback never arrived. The foreign keys
+    cascade for the same reason as there, so an episode never outlives its user or its exercise; a deleted course
+    cascades through its exercises.
+    -->
+    <changeSet id="20260827160638-9-create-iris-proactive-episode" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="iris_proactive_episode"/></not>
+        </preConditions>
+        <createTable tableName="iris_proactive_episode">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="episode_id" type="varchar(64)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="outcome" type="varchar(32)"/>
+            <column name="created_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!--
+    The key and the index are their own changesets on purpose. Guarding them with the table's tableExists
+    precondition would mark them as run on a database that somehow holds a partial table, and the uniqueness this
+    design depends on would silently not exist.
+    -->
+    <changeSet id="20260827160638-10-add-iris-proactive-episode-unique-key" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><uniqueConstraintExists tableName="iris_proactive_episode" constraintName="ux_iris_proactive_episode_user_exercise_episode"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="iris_proactive_episode" columnNames="user_id, exercise_id, episode_id"
+                             constraintName="ux_iris_proactive_episode_user_exercise_episode"/>
+    </changeSet>
+
+    <changeSet id="20260827160638-11-index-iris-proactive-episode-created-at" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="iris_proactive_episode" indexName="idx_iris_proactive_episode_created_at"/></not>
+        </preConditions>
+        <createIndex tableName="iris_proactive_episode" indexName="idx_iris_proactive_episode_created_at">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260827160638-12-add-iris-proactive-episode-user-fk" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyName="fk_iris_proactive_episode_user_id" foreignKeyTableName="iris_proactive_episode"/></not>
+        </preConditions>
+        <delete tableName="iris_proactive_episode">
+            <where>NOT EXISTS (SELECT 1 FROM jhi_user u WHERE u.id = user_id)</where>
+        </delete>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="iris_proactive_episode" constraintName="fk_iris_proactive_episode_user_id"
+                                 referencedColumnNames="id" referencedTableName="jhi_user" onDelete="CASCADE" onUpdate="RESTRICT"/>
+    </changeSet>
+
+    <changeSet id="20260827160638-13-add-iris-proactive-episode-exercise-fk" author="liam-berger">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyName="fk_iris_proactive_episode_exercise_id" foreignKeyTableName="iris_proactive_episode"/></not>
+        </preConditions>
+        <delete tableName="iris_proactive_episode">
+            <where>NOT EXISTS (SELECT 1 FROM exercise e WHERE e.id = exercise_id)</where>
+        </delete>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_proactive_episode" constraintName="fk_iris_proactive_episode_exercise_id"
+                                 referencedColumnNames="id" referencedTableName="exercise" onDelete="CASCADE" onUpdate="RESTRICT"/>
     </changeSet>
 
 </databaseChangeLog>

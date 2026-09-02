@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -114,6 +115,9 @@ class IrisStruggleInterventionConfirmCloseTest {
     private IrisSessionRepository irisSessionRepository;
 
     @Mock
+    private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
+
+    @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
     private IrisStruggleInterventionService service;
@@ -133,7 +137,7 @@ class IrisStruggleInterventionConfirmCloseTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
         when(userRepository.findByIdElseThrow(3L)).thenReturn(user);
     }
 
@@ -162,11 +166,14 @@ class IrisStruggleInterventionConfirmCloseTest {
         verify(irisChatWebsocketService).sendStruggleEvent(any(),
                 argThat(e -> "confirm_close".equals(e.kind()) && Objects.equals(e.resolved(), true) && "You nailed it!".equals(e.closingSentence())
                         && "Challenge cleared".equals(e.episodeLabel()) && Objects.equals(e.messageId(), 201L) && Objects.equals(e.episodeId(), "ep-cc")));
-        // Outcome-last invariant: persist -> broadcast -> outcome write (a resolved=true close must never gate away its own row).
-        InOrder order = inOrder(irisMessageService, irisChatWebsocketService, irisMessageRepository);
+        // Persist -> outcome -> broadcast. Outcome-last still holds where it matters, inside the transaction: the row
+        // is inserted before its outcome is written, so a resolved=true close can never gate away its own row. What
+        // moved is the broadcast, which now trails both. Announcing the row while its outcome was still unwritten was
+        // exactly the window in which a concurrent dismiss could slip between the two.
+        InOrder order = inOrder(irisMessageService, irisMessageRepository, irisChatWebsocketService);
         order.verify(irisMessageService).saveMessage(any(), eq(session), eq(IrisMessageSender.LLM));
-        order.verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
         order.verify(irisMessageRepository).setProactiveOutcomeIfNull(anyLong(), eq(IrisProactiveOutcome.RECOVERED));
+        order.verify(irisChatWebsocketService).sendMessage(eq(session), any(), any(), any());
     }
 
     @Test

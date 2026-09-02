@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -106,6 +107,9 @@ class IrisStruggleInterventionPrimitivesTest {
     private IrisSessionRepository irisSessionRepository;
 
     @Mock
+    private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
+
+    @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
     private IrisStruggleInterventionService service;
@@ -123,7 +127,7 @@ class IrisStruggleInterventionPrimitivesTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
         ReflectionTestUtils.setField(service, "confidenceThreshold", 0.6);
     }
 
@@ -224,6 +228,10 @@ class IrisStruggleInterventionPrimitivesTest {
         firstReveal.setId(101L);
         firstReveal.setProactiveEpisodeId("ep-1");
         when(irisMessageRepository.findById(101L)).thenReturn(Optional.of(firstReveal));
+        // The session is resolved before the transaction now, so a replay resolves it too. It is the session the
+        // first reveal already wrote into, so this finds it and switches nothing.
+        var session = exerciseSession(EXERCISE_ID);
+        when(irisChatSessionService.getCurrentSessionOrCreateIfNotExists(eq(IrisChatMode.PROGRAMMING_EXERCISE_CHAT), eq(EXERCISE_ID), any())).thenReturn(session);
 
         var dto = service.revealAmbient(user, EXERCISE_ID, "ep-1");
 

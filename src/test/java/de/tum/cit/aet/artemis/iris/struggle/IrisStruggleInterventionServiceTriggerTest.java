@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
 import de.tum.cit.aet.artemis.iris.repository.IrisAmbientDecisionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisProactiveEpisodeRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
@@ -103,6 +104,9 @@ class IrisStruggleInterventionServiceTriggerTest {
     private IrisSessionRepository irisSessionRepository;
 
     @Mock
+    private IrisProactiveEpisodeRepository irisProactiveEpisodeRepository;
+
+    @Mock
     private UserAiPreferenceService userAiPreferenceService;
 
     private IrisStruggleInterventionService service;
@@ -131,7 +135,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         user.setLogin("student1");
         service = new IrisStruggleInterventionService(programmingExerciseRepository, authCheckService, irisSettingsService, irisChatSessionRepository, pyrisDTOService,
                 pyrisPipelineService, pyrisJobService, userRepository, irisChatSessionService, irisMessageService, irisChatWebsocketService, irisMessageRepository,
-                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository);
+                irisAmbientDecisionRepository, transactionManager, userAiPreferenceService, irisSessionRepository, irisProactiveEpisodeRepository);
         lenient().when(programmingExerciseRepository.findByIdElseThrow(EX)).thenReturn(exercise);
     }
 
