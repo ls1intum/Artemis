@@ -9,7 +9,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SortService } from 'app/foundation/service/sort.service';
-import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faFileImport, faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
@@ -107,15 +106,6 @@ export class ExamManagementOverviewComponent implements OnInit, OnDestroy {
         this.examManagementService.findAllExamsForCourse(this.course().id!).subscribe({
             next: (res: HttpResponse<Exam[]>) => {
                 this.exams.set(res.body!);
-                this.exams().forEach((exam) => {
-                    this.examManagementService
-                        .getLatestIndividualEndDateOfExam(this.course().id!, exam.id!)
-                        .subscribe((examInformationDTORes: HttpResponse<ExamInformationDTO>) => {
-                            exam.latestIndividualEndDate = examInformationDTORes.body!.latestIndividualEndDate;
-                            // Rebuild the array reference so the signal notifies and the (zoneless) view re-renders with the updated end date.
-                            this.exams.set([...this.exams()]);
-                        });
-                });
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

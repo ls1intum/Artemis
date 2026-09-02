@@ -6,7 +6,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import dayjs from 'dayjs/esm';
 import { ExamManagementOverviewComponent } from 'app/exam/manage/exam-management/exam-management-overview.component';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -15,7 +14,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -76,20 +74,16 @@ describe('ExamManagementOverviewComponent', () => {
     it('should initialize and load course and exams on ngOnInit', () => {
         const courseResponse = { body: course } as HttpResponse<Course>;
         const examsResponse = { body: [exam1, exam2] } as HttpResponse<Exam[]>;
-        const endDateDto: ExamInformationDTO = { latestIndividualEndDate: dayjs().add(2, 'hours') };
 
         vi.spyOn(courseService, 'find').mockReturnValue(of(courseResponse));
         vi.spyOn(examManagementService, 'findAllExamsForCourse').mockReturnValue(of(examsResponse));
-        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of({ body: endDateDto } as HttpResponse<ExamInformationDTO>));
 
         comp.ngOnInit();
 
         expect(courseService.find).toHaveBeenCalledWith(course.id);
         expect(comp.course()).toEqual(course);
         expect(examManagementService.findAllExamsForCourse).toHaveBeenCalledWith(course.id);
-        expect(examManagementService.getLatestIndividualEndDateOfExam).toHaveBeenCalledTimes(2);
-        expect(comp.exams()).toHaveLength(2);
-        expect(comp.exams()[0].latestIndividualEndDate).toEqual(endDateDto.latestIndividualEndDate);
+        expect(comp.exams()).toEqual([exam1, exam2]);
     });
 
     it('should handle error when courseService.find fails', () => {
@@ -117,7 +111,6 @@ describe('ExamManagementOverviewComponent', () => {
         comp.course.set(course);
         const examsResponse = { body: [exam1] } as HttpResponse<Exam[]>;
         const findAllSpy = vi.spyOn(examManagementService, 'findAllExamsForCourse').mockReturnValue(of(examsResponse));
-        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of({ body: {} } as HttpResponse<ExamInformationDTO>));
 
         comp.registerChangeInExams();
         eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
