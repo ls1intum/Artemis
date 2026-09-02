@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import java.io.Serializable;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
@@ -24,7 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record VariantGenerationRequestDTO(@Nullable DifficultyLevel targetDifficulty, @Nullable @Size(max = MAX_FREE_TEXT_LENGTH) String domainText,
-        @Nullable VariantNarrativeStyle narrativeStyle, @Nullable @Size(max = MAX_FREE_TEXT_LENGTH) String additionalInstructions, VariantPlacementDTO placement)
+        @Nullable VariantNarrativeStyle narrativeStyle, @Nullable @Size(max = MAX_FREE_TEXT_LENGTH) String additionalInstructions, @Valid VariantPlacementDTO placement)
         implements Serializable {
 
     // The two free-text fields flow verbatim into the planner prompt; cap their length to bound the prompt token

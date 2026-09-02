@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.hyperion.dto;
 
 import java.io.Serializable;
 
+import jakarta.validation.Valid;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -22,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
  *                            {@code required} entry instead; the resource validates presence per placement type.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record VariantPlacementDTO(PlacementType type, @Nullable Long existingGroupId, CreateExerciseVariantGroupDTO newGroup) implements Serializable {
+public record VariantPlacementDTO(PlacementType type, @Nullable Long existingGroupId, @Valid CreateExerciseVariantGroupDTO newGroup) implements Serializable {
 
     /**
      * EXISTING_GROUP(groupId) | NEW_GROUP(fields) | STANDALONE | SAME_EXAM_GROUP (implicit/forced for exam

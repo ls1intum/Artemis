@@ -566,6 +566,15 @@ class ExerciseVariantGenerationIntegrationTest extends AbstractSpringIntegration
         request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant",
                 domainChangeRequest(new VariantPlacementDTO(VariantPlacementDTO.PlacementType.EXISTING_GROUP, null, null)), VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);
 
+        // NEW_GROUP payloads are validated too — @Valid cascades into the nested group DTO.
+        request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant", domainChangeRequest(
+                new VariantPlacementDTO(VariantPlacementDTO.PlacementType.NEW_GROUP, null, new CreateExerciseVariantGroupDTO("a".repeat(256), 10.0, null, null, null, null, null))),
+                VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/hyperion/exercises/" + sourceQuiz.getId() + "/generate-variant",
+                domainChangeRequest(new VariantPlacementDTO(VariantPlacementDTO.PlacementType.NEW_GROUP, null,
+                        new CreateExerciseVariantGroupDTO("Cargo bay variants", -1.0, null, null, null, null, null))),
+                VariantJobStartDTO.class, HttpStatus.BAD_REQUEST);
+
         // Unsupported exercise type (no text adapters registered).
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2),
                 course);
