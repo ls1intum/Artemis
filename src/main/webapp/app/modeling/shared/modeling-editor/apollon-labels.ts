@@ -5,6 +5,26 @@ const APOLLON_TRANSLATION_PREFIX = 'artemisApp.modelingEditor.apollon';
 
 export type ApollonLabelTranslator = Pick<TranslateService, 'instant'>;
 
+const CALLBACK_PARAMETERS = {
+    zoomReadout: ['percent'],
+    scrollLockHint: ['modifier'],
+    deleteAssessmentFor: ['name'],
+    assessmentFor: ['type'],
+    editTagsFor: ['subject'],
+    removeTag: ['tag'],
+    deleteMessage: ['label'],
+    switchDirection: ['direction'],
+    switchDirectionFor: ['label', 'direction'],
+    messagePlaceholder: ['index'],
+    messageFallbackLabel: ['index'],
+    defaultLaneName: ['index'],
+    multiplicityLabel: ['name'],
+    roleLabel: ['name'],
+    editColorsFor: ['label'],
+    colorPicker: ['label'],
+    stereotypeToggleLabel: ['name'],
+} as const satisfies Partial<Record<keyof ApollonLabels, readonly string[]>>;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -14,17 +34,10 @@ function translate(translator: ApollonLabelTranslator, key: string, params?: Rec
     return typeof value === 'string' ? value : `${APOLLON_TRANSLATION_PREFIX}.${key}`;
 }
 
-function hasString(tree: Record<string, unknown>, key: string): boolean {
-    return typeof tree[key] === 'string';
+function createTranslatedCallback(translator: ApollonLabelTranslator, key: string, parameters: readonly string[]): (...values: unknown[]) => string {
+    return (...values) => translate(translator, key, Object.fromEntries(parameters.map((parameter, index) => [parameter, values[index]])));
 }
 
-function setTranslatedCallback(labels: Partial<ApollonLabels>, tree: Record<string, unknown>, key: keyof ApollonLabels, callback: unknown): void {
-    if (hasString(tree, key)) {
-        (labels as Record<string, unknown>)[key] = callback;
-    }
-}
-
-/** Builds localized overrides for Apollon's default labels. */
 export function createApollonLabels(translator: ApollonLabelTranslator): Partial<ApollonLabels> {
     const translationTree = translator.instant(APOLLON_TRANSLATION_PREFIX);
     if (!isRecord(translationTree)) {
@@ -38,15 +51,12 @@ export function createApollonLabels(translator: ApollonLabelTranslator): Partial
         }
     }
 
-    setTranslatedCallback(labels, translationTree, 'zoomReadout', (percent: number) => translate(translator, 'zoomReadout', { percent }));
-    setTranslatedCallback(labels, translationTree, 'deleteAssessmentFor', (name: string) => translate(translator, 'deleteAssessmentFor', { name }));
-    setTranslatedCallback(labels, translationTree, 'assessmentFor', (type: string) => translate(translator, 'assessmentFor', { type }));
-    if (hasString(translationTree, 'scrollLockHint')) {
-        // Apollon hands us the platform's zoom key already rendered as a cap
-        // ('⌘' or 'Ctrl'), so the sentence can put it wherever German wants it.
-        labels.scrollLockHint = (modifier) => translate(translator, 'scrollLockHint', { modifier });
+    for (const [key, parameters] of Object.entries(CALLBACK_PARAMETERS)) {
+        if (typeof translationTree[key] === 'string') {
+            (labels as Record<string, unknown>)[key] = createTranslatedCallback(translator, key, parameters);
+        }
     }
-    if (isRecord(translationTree.nodeTypes) && hasString(translationTree, 'node')) {
+    if (isRecord(translationTree.nodeTypes) && typeof translationTree.node === 'string') {
         labels.nodeTypeLabel = (nodeType) => {
             if (!nodeType) {
                 return translate(translator, 'node');
@@ -56,20 +66,7 @@ export function createApollonLabels(translator: ApollonLabelTranslator): Partial
             return translated === translationKey ? DEFAULT_LABELS.nodeTypeLabel(nodeType) : translated;
         };
     }
-    setTranslatedCallback(labels, translationTree, 'editTagsFor', (subject: string) => translate(translator, 'editTagsFor', { subject }));
-    setTranslatedCallback(labels, translationTree, 'removeTag', (tag: string) => translate(translator, 'removeTag', { tag }));
-    setTranslatedCallback(labels, translationTree, 'deleteMessage', (label: string) => translate(translator, 'deleteMessage', { label }));
-    setTranslatedCallback(labels, translationTree, 'switchDirection', (direction: string) => translate(translator, 'switchDirection', { direction }));
-    setTranslatedCallback(labels, translationTree, 'switchDirectionFor', (label: string, direction: string) => translate(translator, 'switchDirectionFor', { label, direction }));
-    setTranslatedCallback(labels, translationTree, 'messagePlaceholder', (index: number) => translate(translator, 'messagePlaceholder', { index }));
-    setTranslatedCallback(labels, translationTree, 'messageFallbackLabel', (index: number) => translate(translator, 'messageFallbackLabel', { index }));
-    setTranslatedCallback(labels, translationTree, 'defaultLaneName', (index: number) => translate(translator, 'defaultLaneName', { index }));
-    setTranslatedCallback(labels, translationTree, 'multiplicityLabel', (name: string) => translate(translator, 'multiplicityLabel', { name }));
-    setTranslatedCallback(labels, translationTree, 'roleLabel', (name: string) => translate(translator, 'roleLabel', { name }));
-    setTranslatedCallback(labels, translationTree, 'editColorsFor', (label: string) => translate(translator, 'editColorsFor', { label }));
-    setTranslatedCallback(labels, translationTree, 'colorPicker', (label: string) => translate(translator, 'colorPicker', { label }));
-    setTranslatedCallback(labels, translationTree, 'stereotypeToggleLabel', (name: string) => translate(translator, 'stereotypeToggleLabel', { name }));
-    if (hasString(translationTree, 'stereotypeToggleTooltip') && hasString(translationTree, 'show') && hasString(translationTree, 'hide')) {
+    if (['stereotypeToggleTooltip', 'show', 'hide'].every((key) => typeof translationTree[key] === 'string')) {
         labels.stereotypeToggleTooltip = (shown, name) =>
             translate(translator, 'stereotypeToggleTooltip', {
                 action: translate(translator, shown ? 'hide' : 'show'),
