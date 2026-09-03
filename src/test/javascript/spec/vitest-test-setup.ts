@@ -115,6 +115,13 @@ if (typeof Element.prototype.matches === 'undefined') {
     } as typeof Element.prototype.matches;
 }
 
+// Ensure Element.prototype.checkVisibility exists (jsdom does not implement it; every supported browser does)
+if (typeof Element.prototype.checkVisibility === 'undefined') {
+    Element.prototype.checkVisibility = function (this: Element): boolean {
+        return this.isConnected && this.getClientRects().length > 0;
+    } as typeof Element.prototype.checkVisibility;
+}
+
 // Mock getComputedStyle to handle CSS custom properties
 const originalGetComputedStyle = window.getComputedStyle;
 window.getComputedStyle = function (element: Element, pseudoElt?: string | null): CSSStyleDeclaration {

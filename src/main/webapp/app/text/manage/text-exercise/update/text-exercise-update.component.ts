@@ -27,7 +27,6 @@ import { Subscription } from 'rxjs';
 import { scrollToTopOfPage } from 'app/foundation/util/utils';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -66,7 +65,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
         CompetencySelectionComponent,
-        FormDateTimePickerComponent,
         ExerciseGroupTimelineLockComponent,
         IncludedInOverallScorePickerComponent,
         ExerciseUpdatePlagiarismComponent,
@@ -100,7 +98,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     editForm = viewChild<NgForm>('editForm');
     bonusPoints = viewChild<NgModel>('bonusPoints');
     points = viewChild<NgModel>('points');
-    solutionPublicationDateField = viewChild<FormDateTimePickerComponent>('solutionPublicationDate');
     exerciseUpdatePlagiarismComponent = viewChild(ExerciseUpdatePlagiarismComponent);
     exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     teamConfigFormGroupComponent = viewChild.required<TeamConfigFormGroupComponent>('teamConfigFormGroup');
@@ -263,15 +260,18 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 { title: 'artemisApp.exercise.sections.problem', valid: true, empty: !this.textExercise.problemStatement },
                 {
                     title: 'artemisApp.exercise.sections.solution',
-                    valid: Boolean(this.isExamMode() || (!this.textExercise.exampleSolutionPublicationDateError && this.solutionPublicationDateField()?.dateInput.valid)),
-                    empty: !this.textExercise.exampleSolution || (!this.isExamMode() && !this.textExercise.exampleSolutionPublicationDate),
+                    valid: true,
+                    empty: !this.textExercise.exampleSolution,
                 },
                 {
+                    // The example solution publication date lives in the timeline (as for programming exercises), so
+                    // its validity is part of the grading section.
                     title: 'artemisApp.exercise.sections.grading',
                     valid: Boolean(
                         this.points()?.valid &&
                         this.bonusPoints()?.valid &&
-                        (this.isExamMode() || (this.exerciseUpdatePlagiarismComponent()?.isFormValid() && this.timelineStatus().valid)),
+                        (this.isExamMode() ||
+                            (this.exerciseUpdatePlagiarismComponent()?.isFormValid() && this.timelineStatus().valid && !this.textExercise.exampleSolutionPublicationDateError)),
                     ),
                     empty: !this.isExamMode() && this.timelineStatus().empty,
                 },

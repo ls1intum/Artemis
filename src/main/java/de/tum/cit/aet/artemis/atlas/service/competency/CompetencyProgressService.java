@@ -94,7 +94,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectForParticipantAsync(LearningObject learningObject, @NonNull Participant participant) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
         updateProgressByLearningObjectSync(learningObject, participant.getParticipants());
     }
 
@@ -105,7 +105,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
         Set<Long> competencyIds = courseCompetencyRepository.findAllIdsByLearningObject(learningObject);
 
         for (long competencyId : competencyIds) {
@@ -129,7 +129,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressByCompetencyAsync(CourseCompetency competency) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
         Long competencyId;
         try {
             competencyId = competency.getId();
@@ -166,7 +166,7 @@ public class CompetencyProgressService {
      */
     @Async
     public void updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(Set<Long> originalCompetencyIds, @Nullable LearningObject updatedLearningObject) {
-        SecurityUtils.setAuthorizationObject(); // Required for async
+        SecurityUtils.setAuthorizationObject(); // Stands in only if no caller context reached this thread; a real user's identity is kept.
 
         Set<CourseCompetency> updatedCompetencies = updatedLearningObject != null
                 ? updatedLearningObject.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).collect(Collectors.toSet())

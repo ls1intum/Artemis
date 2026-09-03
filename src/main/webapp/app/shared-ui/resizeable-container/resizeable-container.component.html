@@ -8,7 +8,7 @@
                 <ng-content select="jhi-score-display[left-header]" />
             </div>
         }
-        <div class="left-body card-body" [class.p-0]="isExerciseParticipation()">
+        <div class="left-body card-body" [class.p-0]="leftBodyIsFlush()">
             <ng-content select="[left-body]" />
         </div>
     </div>
