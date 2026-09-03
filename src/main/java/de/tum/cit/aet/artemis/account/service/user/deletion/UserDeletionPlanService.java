@@ -73,6 +73,14 @@ public class UserDeletionPlanService {
                 categories);
     }
 
+    /**
+     * The combined impact of deleting several accounts, counted in one pass over the reference policies rather than
+     * once per account.
+     *
+     * @param users the accounts to preview
+     * @param mode  what the deletion is allowed to remove, which decides what counts as a blocker
+     * @return the per-account impacts together with the totals across all of them
+     */
     public BulkUserDeletionImpactDTO createBulkImpact(List<User> users, UserDeletionMode mode) {
         Map<Long, Map<UserDeletionReferencePolicy, Long>> countsByUserId = countReferences(users.stream().map(User::getId).toList());
         List<UserDeletionImpactDTO> impacts = users.stream().map(user -> createImpact(user, mode, countsByUserId.get(user.getId()))).toList();

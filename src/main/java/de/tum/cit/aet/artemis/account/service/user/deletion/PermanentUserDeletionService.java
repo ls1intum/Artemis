@@ -85,6 +85,14 @@ public class PermanentUserDeletionService {
         this.internalAdminUsername = internalAdminUsername;
     }
 
+    /**
+     * Deletes an account on an administrator's instruction, after confirming that the previewed impact still holds.
+     *
+     * @param userId              the account to delete
+     * @param expectedFingerprint the fingerprint of the impact the administrator confirmed
+     * @param actingAdministrator the login of the administrator, recorded in the audit event
+     * @return what happened: deleted, forbidden for a protected account or the caller themselves, or the plan changed
+     */
     public UserDeletionResultDTO deleteByAdmin(long userId, String expectedFingerprint, String actingAdministrator) {
         User user = loadUserForDeletion(userId);
         if (isAlwaysProtected(user) || user.getLogin().equals(actingAdministrator)) {
@@ -98,6 +106,14 @@ public class PermanentUserDeletionService {
         return result(user, UserDeletionResultStatus.DELETED, null);
     }
 
+    /**
+     * Deletes an account the retention policy selected, without an administrator confirming anything. Only an account
+     * whose remaining references are all deletable by policy is removed; the caller owns the policy conditions that put
+     * it in the batch and has to re-check them, because this method sees only authorities and reference counts.
+     *
+     * @param userId the account to delete
+     * @return what happened: deleted, forbidden for a protected or administrator account, or blocked by a reference
+     */
     public UserDeletionResultDTO deleteAutomatically(long userId) {
         User user = loadUserForDeletion(userId);
         if (isAlwaysProtected(user) || AuthorizationCheckService.isAdmin(user.getAuthorities())) {
@@ -111,6 +127,13 @@ public class PermanentUserDeletionService {
         return result(user, UserDeletionResultStatus.DELETED, null);
     }
 
+    /**
+     * Deletes a registration that was never completed. The account has to be unactivated when the destructive work
+     * starts, which is settled against the database rather than against the snapshot read here.
+     *
+     * @param userId the account to delete
+     * @return what happened: deleted, or blocked because the account was activated, already deleted or has references
+     */
     public UserDeletionResultDTO deleteProvisional(long userId) {
         User user = loadUserForDeletion(userId);
         if (user.getActivated() || user.isDeleted() || isAlwaysProtected(user)) {

@@ -406,6 +406,10 @@ public class AdminUserResource {
 
     /**
      * Permanently deletes a user after checking that the confirmed impact is still current.
+     *
+     * @param login   the login of the user to delete
+     * @param request the impact fingerprint the administrator confirmed
+     * @return the outcome of the deletion
      */
     @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
     public ResponseEntity<UserDeletionResultDTO> deleteUser(@PathVariable String login, @Valid @RequestBody PermanentUserDeletionRequestDTO request) {
