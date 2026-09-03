@@ -71,4 +71,11 @@
     &:focus-within .feedback-card > * {
         opacity: 1;
     }
+    /* A suggestion is rendered at full strength: it is there to be read and judged, and dimming it until the pointer
+   happens to be over it only made it harder to read. That it is not saved yet is already carried by the card's own
+   background, its badge, and its accept / discard buttons. */
+
+    .suggestion-action-buttons button {
+        width: fit-content;
+    }
 }

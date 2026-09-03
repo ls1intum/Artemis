@@ -1,5 +1,6 @@
 /* stylelint-disable */
 @use 'sass:meta';
+@use 'apollon';
 @use 'generate-css-vars';
 
 @import 'dark-variables';
@@ -36,6 +37,11 @@ html {
             background-color: $neutral-dark-l-10;
         }
     }
+}
+
+.artemis-apollon-theme {
+    @include generate-css-vars.generate-prefixed('dark-variables', 'apollon-');
+    @include apollon.component-overrides;
 }
 
 @import '../global';
