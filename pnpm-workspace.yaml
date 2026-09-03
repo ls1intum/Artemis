@@ -154,6 +154,12 @@ overrides:
   js-yaml: '4.3.1'
   jsdom: '30.0.1'
   katex: '0.18.4'
+  # less 4.9.0 drops the optional `image-size` dependency. Every published image-size release,
+  # including the current latest (2.0.2), carries unfixed infinite-loop DoS advisories
+  # (GHSA-5p2g-fcmc-qvqq, GHSA-w3rx-r6r6-pgpr), so there is no version to upgrade to.
+  # @angular/build pulls less in transitively and accepts ^4.2.0, so pinning the latest 4.x
+  # drops the package from the tree entirely instead.
+  less: '4.9.0'
   minimatch: '10.2.6'
   # Reached dev-side via postcss, whose range allows the patched 3.3.18
   # (GHSA: custom generators can loop indefinitely when size is zero).
@@ -161,11 +167,6 @@ overrides:
   piscina: '5.3.0'
   postcss: '8.5.26'
   punycode: '2.3.1'
-  # @tumaet/apollon's react/react-dom peer requires react 19. Artemis embeds
-  # Apollon but has no direct React code, so force the whole React subtree to 19
-  # (matches the version used in the documentation/ project).
-  react: '19.2.8'
-  react-dom: '19.2.8'
   semver: '7.8.5'
   serialize-javascript: '7.1.0'
   shell-quote: '1.10.0'
