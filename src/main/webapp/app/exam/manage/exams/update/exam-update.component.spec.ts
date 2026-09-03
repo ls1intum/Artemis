@@ -19,6 +19,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
 import { User } from 'app/account/user/user.model';
@@ -350,6 +351,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should update', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const calendarService = TestBed.inject(CalendarService);
             const refreshSpy = vi.spyOn(calendarService, 'reloadEvents');
 
@@ -373,6 +376,8 @@ describe('ExamUpdateComponent', () => {
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(component.isSaving()).toBe(false);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
@@ -494,6 +499,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should create', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const navigateSpy = vi.spyOn(router, 'navigate');
             examWithoutExercises.id = undefined;
             fixture.changeDetectorRef.detectChanges();
@@ -515,6 +522,8 @@ describe('ExamUpdateComponent', () => {
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(createSpy).toHaveBeenCalledOnce();
             expect(component.isSaving()).toBe(false);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
         });
 
         it('should correctly catch HTTPError when creating the examWithoutExercises', async () => {
@@ -1074,6 +1083,8 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should perform import of an examWithoutExercises with exercises successfully', async () => {
+            const eventManager = TestBed.inject(EventManager);
+            const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
             const alertSpy = vi.spyOn(alertService, 'error');
@@ -1092,6 +1103,8 @@ describe('ExamUpdateComponent', () => {
             expect(importSpy).toHaveBeenCalledWith(1, expectedExam, 'test-import-id');
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
+            expect(broadcastSpy).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
             expect(alertSpy).not.toHaveBeenCalled();
         });
 

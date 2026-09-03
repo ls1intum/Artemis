@@ -25,6 +25,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
@@ -193,6 +194,9 @@ describe('ExamDetailComponent', () => {
     });
 
     it('should delete an exam when delete exam is called', () => {
+        const eventManager = TestBed.inject(EventManager);
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+
         // GIVEN
         component.exam.set(exam);
         const responseFakeDelete = new HttpResponse<void>({ status: 200 });
@@ -206,6 +210,8 @@ describe('ExamDetailComponent', () => {
 
         // THEN
         expect(service.delete).toHaveBeenCalledOnce();
+        expect(broadcastSpy).toHaveBeenCalledOnce();
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'examListModification', content: 'dummy' });
         expect(router.navigate).toHaveBeenCalledOnce();
     });
 
