@@ -1,7 +1,85 @@
 import { describe, expect, it } from 'vitest';
-import { ApollonModelData, countModelElements, getModelEdges, getModelElementIds, getModelNodes, hasModelElements, isModelEmpty } from './apollon-model.util';
+import {
+    ApollonModelData,
+    countModelElements,
+    getModelEdges,
+    getModelElementIds,
+    getModelElementType,
+    getModelNodes,
+    hasModelElements,
+    isModelEmpty,
+    normalizeApollonModel,
+} from './apollon-model.util';
+import testClassDiagramV3 from 'test/helpers/sample/modeling/test-models/class-diagram.json';
+import testClassDiagramV4 from 'test/helpers/sample/modeling/test-models/class-diagram-v4.json';
+import { UMLDiagramType } from '@tumaet/apollon';
+const CURRENT_MODEL_VERSION = normalizeApollonModel({ version: '4.0.0', type: UMLDiagramType.ClassDiagram, nodes: [], edges: [] } as unknown as ApollonModelData).version;
 
 describe('apollon-model.util', () => {
+    describe('normalizeApollonModel', () => {
+        it('should clone and normalize a current model without mutating the input', () => {
+            const input = testClassDiagramV4 as unknown as ApollonModelData;
+            const original = structuredClone(input);
+
+            const normalized = normalizeApollonModel(input);
+
+            expect(input).toEqual(original);
+            expect(normalized).not.toBe(input);
+            expect(normalized.nodes).not.toBe(input.nodes);
+            expect(normalized).toMatchObject({
+                version: CURRENT_MODEL_VERSION,
+                type: testClassDiagramV4.type,
+                nodes: expect.arrayContaining([
+                    expect.objectContaining({ id: 'class-in-package', data: expect.objectContaining({ attributes: [expect.objectContaining({ id: 'attr-1' })] }) }),
+                ]),
+                edges: expect.arrayContaining([expect.objectContaining({ id: 'edge-1', source: 'connected-class', target: 'package-1' })]),
+            });
+            expect(normalized.nodes).toHaveLength(testClassDiagramV4.nodes.length);
+            expect(normalized.edges).toHaveLength(testClassDiagramV4.edges.length);
+        });
+
+        it('should convert persisted v3 data to the current model format without mutating the input', () => {
+            const input = testClassDiagramV3 as unknown as ApollonModelData;
+            const original = structuredClone(input);
+
+            const normalized = normalizeApollonModel(input);
+
+            expect(input).toEqual(original);
+            expect(normalized.version).toBe(CURRENT_MODEL_VERSION);
+            expect(normalized.type).toBe(testClassDiagramV3.type);
+            expect(normalized.nodes).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        id: 'ccac14e5-c828-4afb-ab97-0fb2a67e77d6',
+                        data: expect.objectContaining({ attributes: [expect.objectContaining({ id: '6f572312-066b-4678-9c03-5032f3ba9be9' })] }),
+                    }),
+                ]),
+            );
+            expect(normalized.edges).toEqual(
+                expect.arrayContaining([
+                    expect.objectContaining({
+                        id: '5a9a4eb3-8281-4de4-b0f2-3e2f164574bd',
+                        source: '2f67120e-b491-4222-beb1-79e87c2cf54d',
+                        target: 'b234e5cb-33e3-4957-ae04-f7990ce8571a',
+                    }),
+                ]),
+            );
+            expect(normalized.interactive).toEqual(testClassDiagramV3.interactive);
+        });
+
+        it('should distinguish an explicit empty quiz selection from an omitted selection', () => {
+            const source = testClassDiagramV3 as unknown as ApollonModelData;
+            const explicitEmpty = normalizeApollonModel({
+                ...source,
+                interactive: { elements: {}, relationships: {} },
+            });
+            const implicitAll = normalizeApollonModel({ ...source, interactive: undefined });
+
+            expect(explicitEmpty.interactive).toEqual({ elements: {}, relationships: {} });
+            expect(implicitAll.interactive).toBeUndefined();
+        });
+    });
+
     describe('getModelNodes', () => {
         it('should return empty array for undefined model', () => {
             expect(getModelNodes(undefined)).toEqual([]);
@@ -203,6 +281,46 @@ describe('apollon-model.util', () => {
             expect(hasModelElements(modelWithNodes)).toBe(!isModelEmpty(modelWithNodes));
             expect(hasModelElements(emptyModel)).toBe(!isModelEmpty(emptyModel));
             expect(hasModelElements(undefined)).toBe(!isModelEmpty(undefined));
+        });
+    });
+
+    describe('getModelElementType', () => {
+        it('should answer the UML type of a node, an edge and a nested member in v4 format', () => {
+            const model = {
+                version: '4.0.0',
+                nodes: [
+                    {
+                        id: 'node1',
+                        type: 'Class',
+                        width: 100,
+                        height: 50,
+                        position: { x: 0, y: 0 },
+                        data: { attributes: [{ id: 'attr1', type: 'ClassAttribute', name: '+ a: T' }] },
+                        measured: { width: 100, height: 50 },
+                    },
+                ],
+                edges: [{ id: 'edge1', source: 'node1', target: 'node1', type: 'ClassAggregation', sourceHandle: 'out', targetHandle: 'in', data: { points: [] } }],
+            } as any as ApollonModelData;
+
+            expect(getModelElementType(model, 'node1')).toBe('Class');
+            expect(getModelElementType(model, 'edge1')).toBe('ClassAggregation');
+            expect(getModelElementType(model, 'attr1')).toBe('ClassAttribute');
+        });
+
+        it('should answer the same type for a model still in v3 format', () => {
+            const model = {
+                version: '3.0.0',
+                elements: { elem1: { id: 'elem1', type: 'AbstractClass', name: 'Abstract' } },
+                relationships: { rel1: { id: 'rel1', type: 'ClassAssociation', name: '' } },
+            } as any as ApollonModelData;
+
+            expect(getModelElementType(model, 'elem1')).toBe('AbstractClass');
+            expect(getModelElementType(model, 'rel1')).toBe('ClassAssociation');
+        });
+
+        it('should answer undefined for an unknown element and for no model', () => {
+            expect(getModelElementType(undefined, 'node1')).toBeUndefined();
+            expect(getModelElementType({ version: '4.0.0', nodes: [], edges: [] } as any as ApollonModelData, 'gone')).toBeUndefined();
         });
     });
 

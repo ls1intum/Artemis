@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { firstValueFrom } from 'rxjs';
@@ -37,10 +37,21 @@ import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assess
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
+import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ModelingAssessmentComponent } from '../modeling-assessment.component';
-import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import {
+    FeedbackSuggestionsBannerComponent,
+    feedbackSuggestionsNotice as resolveFeedbackSuggestionsNotice,
+} from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
+import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/modeling-assessment-top-left.directive';
+import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
+import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } from 'app/modeling/manage/assess/modeling-assessment-legend/modeling-assessment-legend.component';
+import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
+import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
+import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
+import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
+import { TumUiButtonDirective, TumUiMessageComponent } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -48,13 +59,21 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
     styleUrls: ['./modeling-assessment-editor.component.scss'],
     imports: [
         AssessmentLayoutComponent,
+        ComplaintsForTutorComponent,
         TranslateDirective,
         ModelingAssessmentComponent,
-        CollapsableAssessmentInstructionsComponent,
+        AssessmentWorkspaceComponent,
+        AssessmentInstructionsComponent,
+        AssessmentNoteComponent,
         UnreferencedFeedbackComponent,
         RouterLink,
         FeedbackSuggestionsBannerComponent,
+        ModelingAssessmentTopLeftDirective,
+        ModelingAssessmentTopRightDirective,
+        ModelingAssessmentLegendComponent,
         AssessmentNotPossibleYetComponent,
+        TumUiButtonDirective,
+        TumUiMessageComponent,
     ],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
@@ -78,22 +97,40 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly model = signal<UMLModel | undefined>(undefined);
     readonly modelingExercise = signal<ModelingExercise | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
-    readonly result = signal<Result | undefined>(undefined);
+    /** Feedback is mutated in place, so equal references must still notify consumers. */
+    readonly result = signal<Result | undefined>(undefined, { equal: () => false });
     referencedFeedback: Feedback[] = [];
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     automaticFeedback: Feedback[] = [];
-    feedbackSuggestions: Feedback[] = []; // all pending Athena feedback suggestions (neither accepted nor rejected yet)
-    readonly highlightedElements = signal<Map<string, string>>(undefined!); // map elementId -> highlight color
+    feedbackSuggestions: Feedback[] = [];
+    readonly highlightedElements = signal<Map<string, string>>(undefined!);
     readonly highlightMissingFeedback = signal(false);
+
+    readonly legendHighlights = computed<ModelingAssessmentLegendHighlight[]>(() => {
+        const highlights: ModelingAssessmentLegendHighlight[] = [];
+        if (this.hasAutomaticFeedback() && !this.result()?.completionDate) {
+            highlights.push({
+                color: FeedbackHighlightColor.CYAN,
+                text: this.isFeedbackSuggestionsEnabled ? 'artemisApp.modelingAssessment.legend.aiFeedbackSuggestions' : 'artemisApp.modelingAssessment.legend.automaticAssessment',
+                info: this.isFeedbackSuggestionsEnabled
+                    ? 'artemisApp.assessment.feedbackSuggestions.generativeAIAssessmentInfo'
+                    : 'artemisApp.assessment.feedbackSuggestions.automaticAssessmentAvailable',
+            });
+        }
+        if (this.highlightMissingFeedback()) {
+            highlights.push({ color: FeedbackHighlightColor.RED, text: 'artemisApp.modelingAssessment.legend.missingAssessment' });
+        }
+        return highlights;
+    });
 
     readonly assessmentsAreValid = signal(false);
     readonly nextSubmissionBusy = signal<boolean>(false);
-    courseId!: number; // set in ngOnInit() from route paramMap
+    courseId!: number;
     examId = 0;
-    exerciseId!: number; // set in ngOnInit() from route paramMap
-    exerciseGroupId!: number; // set in ngOnInit() from route paramMap (exam mode)
+    exerciseId!: number;
+    exerciseGroupId!: number;
     readonly exerciseDashboardLink = signal<string[]>([]);
-    userId!: number; // set in ngOnInit() from accountService.identity()
+    userId!: number;
     readonly isAssessor = signal(false);
     readonly complaint = signal<Complaint>(undefined!);
     ComplaintType = ComplaintType;
@@ -103,23 +140,14 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     readonly hasAutomaticFeedback = signal(false);
     readonly hasAssessmentDueDatePassed = signal<boolean>(false);
     readonly correctionRound = signal(0);
-    /**
-     * The round the URL names right now. This component has no resolver, so the `correction-round` parameter can change
-     * without a submission being loaded for it. That value must not become the round of the page on its own: the round
-     * is sent to the server as the round to request and then indexes the results that come back, and those two may not
-     * disagree. It therefore only reaches {@link correctionRound} when a load starts.
-     */
     private correctionRoundFromUrl = 0;
     readonly resultId = signal<number>(0);
     readonly loadingInitialSubmission = signal(true);
-    // Set when the server refuses to open the assessment because the exam is not over yet: the submission exists, so the
-    // page explains the wait instead of showing its "submission not found" state.
     readonly assessmentNotPossibleYet = signal<AssessmentNotPossibleYetState | undefined>(undefined);
     highlightDifferences = false;
-    resizeOptions = { verticalResize: true };
     isApollonModelLoaded = false;
 
-    private cancelConfirmationText!: string; // set in constructor from translateService.get() subscription
+    private cancelConfirmationText!: string;
 
     constructor() {
         const translateService = this.translateService;
@@ -127,38 +155,42 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
-    /**
-     * Retrieve all feedback for the current exercise regardless of whether it is referenced or unreferenced
-     */
     private get feedback(): Feedback[] {
         return [...this.referencedFeedback, ...this.unreferencedFeedback()];
     }
 
-    /** Full assessment feedback for the unreferenced-feedback score summary. */
     allAssessmentFeedbacks(): Feedback[] {
         return this.feedback;
     }
 
     readonly getTotalMaxPoints = getTotalMaxPoints;
 
-    /**
-     * Retrieve unreferenced entries from the feedback suggestions loaded from Athena.
-     * The suggestions are displayed in cards underneath the modeling editor canvas.
-     */
+    onAssessmentNoteChange(assessmentNote: AssessmentNote): void {
+        const result = this.result();
+        if (result) {
+            result.assessmentNote = assessmentNote;
+        }
+    }
+
     get unreferencedFeedbackSuggestions(): Feedback[] {
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
-    /**
-     * Retrieve whether feedback suggestions are enabled based on whether a feedback suggestions module is set on the
-     * current modeling exercise.
-     */
     get isFeedbackSuggestionsEnabled(): boolean {
         return Boolean(this.modelingExercise()?.feedbackSuggestionModule);
     }
 
+    readonly feedbackSuggestionsNotice = computed(() =>
+        resolveFeedbackSuggestionsNotice({
+            isLoading: this.loadingFeedbackSuggestions(),
+            hasAutomaticFeedback: this.hasAutomaticFeedback(),
+            isAssessor: this.isAssessor(),
+            resultCompletionDate: this.result()?.completionDate,
+            isFeedbackSuggestionsEnabled: this.isFeedbackSuggestionsEnabled,
+        }),
+    );
+
     ngOnInit() {
-        // Used to check if the assessor is the current user
         void this.accountService.identity().then((user) => {
             this.userId = user!.id!;
         });
@@ -170,8 +202,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.correctionRoundFromUrl = parseCorrectionRound(queryParams.get('correction-round'));
         });
         this.route.paramMap.subscribe((params) => {
-            // this component is reused for param-only navigations (e.g. to the next submission), so a blocked state from
-            // the previous submission has to be cleared before loading the next one
             this.assessmentNotPossibleYet.set(undefined);
             this.courseId = Number(params.get('courseId'));
             this.exerciseId = Number(params.get('exerciseId'));
@@ -184,8 +214,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
             const submissionId = params.get('submissionId');
             this.resultId.set(Number(params.get('resultId')) || 0);
-            // Taken from the URL once per load, so that the round the submission is requested with is also the round
-            // its results are indexed by, even when the parameter has changed since the last load.
             this.correctionRound.set(this.correctionRoundFromUrl);
             if (submissionId === 'new') {
                 this.loadRandomSubmission(this.exerciseId);
@@ -195,11 +223,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Load the feedback suggestions for the current submission from Athena.
-     * @param exercise The current exercise
-     * @param submission The current submission
-     */
     private async loadFeedbackSuggestions(exercise: ModelingExercise, submission: Submission): Promise<Feedback[]> {
         try {
             return (await firstValueFrom(this.athenaService.getModelingFeedbackSuggestions(exercise, submission))) ?? [];
@@ -209,10 +232,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
     }
 
-    /**
-     * Load the modeling submission for a given ID
-     * @param submissionId The ID of the modeling submission that should be loaded
-     */
     private loadSubmission(submissionId: number): void {
         this.modelingSubmissionService.getSubmission(submissionId, this.correctionRound(), this.resultId()).subscribe({
             next: (submission: ModelingSubmission) => {
@@ -229,8 +248,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
                 if (!submission) {
-                    // there are no unassessed submissions — leave the loading state the request entered, so the page
-                    // says so instead of staying blank behind the loading flags
                     this.submission.set(undefined);
                     this.loadingInitialSubmission.set(false);
                     this.isLoading.set(false);
@@ -240,8 +257,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.handleReceivedSubmission(submission);
                 this.validateFeedback();
 
-                // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.submission()!.id}`);
+                const newUrl = this.location.path().replace('/submissions/new/', `/submissions/${this.submission()!.id}/`);
                 this.location.go(newUrl);
             },
             error: (error: HttpErrorResponse) => {
@@ -252,8 +268,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     private handleReceivedSubmission(submission: ModelingSubmission): void {
         this.loadingInitialSubmission.set(false);
-        // The component is reused when assessing the next submission. Clear all assessment-specific state before
-        // processing the new result, in particular when that result has no feedback and handleFeedback returns early.
         this.referencedFeedback = [];
         this.unreferencedFeedback.set([]);
         this.feedbackSuggestions = [];
@@ -266,7 +280,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.course.set(getCourseFromExercise(this.modelingExercise()));
         if (this.resultId() > 0) {
             this.result.set(getSubmissionResultById(submission, this.resultId()));
-            // Read off the result, not off its position in the results array.
             this.correctionRound.set(this.result()?.correctionRound ?? 0);
         } else {
             this.result.set(getSubmissionResultByCorrectionRound(this.submission(), this.correctionRound()));
@@ -296,6 +309,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.result.set(this.modelingAssessmentService.convertResult(this.result()!));
         } else if (this.result()) {
             this.result()!.feedbacks = [];
+            this.result.set(this.result());
         }
 
         this.handleFeedback(this.result()?.feedbacks);
@@ -309,9 +323,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         this.isLoading.set(false);
 
-        // Only load suggestions for new assessments, they don't make sense later.
-        // The assessment is new if it only contains automatic feedback.
-        // Load after isLoading=false so the page is interactive while AI suggestions fetch.
         const automaticFeedbackCount = this.result()?.feedbacks?.filter((feedback) => feedback.type === FeedbackType.AUTOMATIC).length ?? 0;
         if (this.modelingExercise()!.feedbackSuggestionModule && (this.result()?.feedbacks?.length ?? 0) === automaticFeedbackCount) {
             void this.fetchAndApplyFeedbackSuggestions();
@@ -330,6 +341,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.feedbackSuggestions = suggestions;
             if (this.result()) {
                 this.result()!.feedbacks = [...(this.result()?.feedbacks || []), ...this.feedbackSuggestions.filter((feedback) => Boolean(feedback.reference))];
+                this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);
         } finally {
@@ -339,10 +351,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
     }
 
-    /**
-     * Show a set of feedbacks and feedback suggestions in the Apollon modeling editor
-     * @param feedbacks The feedbacks to show in the editor
-     */
     private updateApollonEditorWithFeedback(feedbacks: Feedback[]): void {
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference);
 
@@ -372,12 +380,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Checks the given feedback list for unreferenced feedback. The remaining list is then assigned to the
-     * referencedFeedback variable containing only feedback elements with a reference and valid score.
-     * Additionally, it checks if the feedback list contains any automatic feedback elements and sets the hasAutomaticFeedback flag accordingly.
-     * Afterward, it triggers the highlighting of feedback elements, if necessary.
-     */
     private handleFeedback(feedback?: Feedback[]): void {
         if (!feedback || feedback.length === 0) {
             return;
@@ -400,38 +402,23 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isAssessor.set(this.result()?.assessor?.id === this.userId);
     }
 
-    /**
-     * Boolean which determines whether the user can override a result.
-     * If no exercise is loaded, for example during loading between exercises, we return false.
-     * Instructors can always override a result.
-     * Tutors can override their own results within the assessment due date, if there is no complaint about their assessment.
-     * They cannot override a result anymore, if there is a complaint. Another tutor must handle the complaint.
-     */
     get canOverride(): boolean {
         if (this.modelingExercise()) {
             if (this.modelingExercise()!.isAtLeastInstructor) {
-                // Instructors can override any assessment at any time.
                 return true;
             }
             if (this.complaint() && this.isAssessor()) {
-                // If there is a complaint, the original assessor cannot override the result anymore.
                 return false;
             }
             let isBeforeAssessmentDueDate = true;
-            // Add check as the assessmentDueDate must not be set for exercises
             if (this.modelingExercise()!.assessmentDueDate) {
                 isBeforeAssessmentDueDate = dayjs().isBefore(this.modelingExercise()!.assessmentDueDate);
             }
-            // tutors are allowed to override one of their assessments before the assessment due date.
             return this.isAssessor() && isBeforeAssessmentDueDate;
         }
         return false;
     }
 
-    /**
-     * Remove a feedback suggestion because it was accepted or discarded.
-     * @param feedback Feedback suggestion to remove
-     */
     removeSuggestion(feedback: Feedback) {
         this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
     }
@@ -449,8 +436,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
             this.navigateBack();
         } else if (assessmentNotPossibleYet) {
-            // The submission exists, the exam simply is not over yet. Keeping the explanation on the page (instead of in
-            // a toast that fades) replaces the "submission not found" state, which would contradict it.
             this.resetAssessmentState();
             this.assessmentNotPossibleYet.set(assessmentNotPossibleYet);
             this.alertService.closeAll();
@@ -500,7 +485,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         if ((this.model() && this.referencedFeedback.length < totalNumberOfElements) || !this.assessmentsAreValid()) {
             const confirmationMessage = this.translateService.instant('artemisApp.modelingAssessmentEditor.messages.confirmSubmission');
 
-            // if the assessment is before the assessment due date, don't show the confirm submission button
             const isBeforeAssessmentDueDate = this.modelingExercise()?.assessmentDueDate && dayjs().isBefore(this.modelingExercise()!.assessmentDueDate);
             if (isBeforeAssessmentDueDate) {
                 this.submitAssessment();
@@ -547,12 +531,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Sends the current (updated) assessment to the server to update the original assessment after a complaint was accepted.
-     * The corresponding complaint response is sent along with the updated assessment to prevent additional requests.
-     *
-     * @param assessmentAfterComplaint the response to the complaint that is sent to the server along with the assessment update along with onSuccess and onError callbacks
-     */
     onUpdateAssessmentAfterComplaint(assessmentAfterComplaint: AssessmentAfterComplaint): void {
         this.validateFeedback();
         if (!this.assessmentsAreValid()) {
@@ -584,9 +562,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Cancel the current assessment and navigate back to the exercise dashboard.
-     */
     onCancelAssessment() {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
@@ -596,11 +571,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         }
     }
 
-    /**
-     * On change handler for feedback changes coming from the Apollon modeling editor. Whenever an assessment is altered
-     * in the editor, this method is invoked and the assessment component updated to show the new entries.
-     * @param feedback The feedback present in the editor.
-     */
     onFeedbackChanged(feedback: Feedback[]) {
         this.updateApollonEditorWithFeedback(feedback);
     }
@@ -611,7 +581,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(this.modelingExercise()!.id!, true, this.correctionRound()).subscribe({
             next: (submission?: ModelingSubmission) => {
                 if (!submission) {
-                    // there are no unassessed submissions
                     this.submission.set(undefined);
                     return;
                 }
@@ -630,16 +599,10 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         });
     }
 
-    /**
-     * Validates the feedback:
-     *   - There must be any form of feedback, either unreferencing feedback or feedback referencing a model element or both
-     *   - Each reference feedback must have a score that is a valid number
-     */
     validateFeedback() {
         this.calculateTotalScore();
         const hasReferencedFeedback = Feedback.haveCredits(this.referencedFeedback);
         const hasUnreferencedFeedback = Feedback.haveCreditsAndComments(this.unreferencedFeedback());
-        // When unreferenced feedback is set, it has to be valid (score + detailed text)
         this.assessmentsAreValid.set((hasReferencedFeedback && this.unreferencedFeedback().length === 0) || hasUnreferencedFeedback);
         this.submissionService.handleFeedbackCorrectionRoundTag(this.correctionRound(), this.submission()!);
     }
@@ -648,10 +611,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         assessmentNavigateBack(this.location, this.router, this.modelingExercise(), this.submission(), this.isTestRun());
     }
 
-    /**
-     * Add all elements for which no corresponding feedback element exist to the map of highlighted elements. To make sure that we do not have outdated elements in the map, all
-     * elements with the corresponding "missing feedback color" get removed first.
-     */
     private highlightElementsWithMissingFeedback() {
         if (!this.model()) {
             return;
@@ -675,10 +634,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.highlightedElements.set(updatedHighlights);
     }
 
-    /**
-     * Add all automatic feedback elements to the map of highlighted elements. To make sure that we do not have outdated elements in the map, all elements with the corresponding
-     * "automatic feedback color" get removed first. The automatic feedback will not be highlighted anymore after the assessment has been completed.
-     */
     private highlightAutomaticFeedback() {
         if (this.result() && this.result()!.completionDate) {
             return;
@@ -696,31 +651,16 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.highlightedElements.set(updatedHighlights);
     }
 
-    /**
-     * Remove all elements with the given highlight color from the map of highlighted feedback elements.
-     *
-     * @param highlightedElements the map of highlighted feedback elements
-     * @param color the color of the elements that should be removed
-     */
     private removeHighlightedFeedbackOfColor(highlightedElements: Map<string, string>, color: string) {
         return new Map<string, string>([...highlightedElements].filter(([, value]) => value !== color));
     }
 
-    /**
-     * Calculates the total score of the current assessment.
-     * This function originally checked whether the total score is negative
-     * or greater than the max. score, but we decided to remove the restriction
-     * and instead set the score boundaries on the server.
-     */
     calculateTotalScore() {
         const maxPoints = getTotalMaxPoints(this.modelingExercise());
         const creditsTotalScore = this.structuredGradingCriterionService.computeTotalScore(this.feedback);
         this.totalScore.set(getPositiveAndCappedTotalScore(creditsTotalScore, maxPoints));
     }
 
-    /**
-     * Invokes exampleSubmissionService when useAsExampleSubmission is emitted in assessment-layout
-     */
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission() && this.modelingExercise()) {
             this.exampleSubmissionService.import(this.submission()!.id!, this.modelingExercise()!.id!).subscribe({

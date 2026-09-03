@@ -3,7 +3,7 @@
  * Verifies the component's behavior for creating, editing, and assessing example text submissions.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -446,8 +446,7 @@ describe('ExampleTextSubmissionComponent', () => {
             type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
         };
         const errorResponse = new HttpErrorResponse({
-            error: { title: JSON.stringify({ errors: [feedbackError] }) },
-            headers: new HttpHeaders().append('x-artemisapp-error', 'error.invalid_assessment'),
+            error: { errorKey: 'invalid_assessment', skipAlert: true, errors: [feedbackError] },
             status: 400,
         });
 
