@@ -66,6 +66,7 @@ import { ProgrammingExerciseSharingService } from '../services/programming-exerc
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 import { effectiveContainers, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -108,6 +109,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
     private sharingService = inject(ProgrammingExerciseSharingService);
+    private buildPhasesTemplateService = inject(BuildPhasesTemplateService);
 
     protected readonly dayjs = dayjs;
     protected readonly ActionType = ActionType;
@@ -198,6 +200,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly consistencyExercises = signal<ProgrammingExercise[]>([]);
 
     readonly exerciseDetailSections = signal<DetailOverviewSection[]>([]);
+    /** the Docker image of the exercise's language default; a build container without an image of its own is built with it */
+    readonly defaultDockerImage = signal<string | undefined>(undefined);
+    private defaultDockerImageSubscription?: Subscription;
 
     private diffRunId = 0;
     private lastUpdateTime = 0;
@@ -239,6 +244,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription?.unsubscribe();
         this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
+        this.defaultDockerImageSubscription?.unsubscribe();
     }
 
     /**
@@ -284,6 +290,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 }),
                 tap(() => {
                     this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
+                    if (this.localCIEnabled()) {
+                        this.loadDefaultDockerImage(programmingExercise);
+                    }
                     const profileInfo = this.profileService.getProfileInfo();
                     if (this.programmingExercise().projectKey && this.programmingExercise().templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
                         this.programmingExercise().templateParticipation!.buildPlanUrl = createBuildPlanUrl(
@@ -330,6 +339,35 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats.set(statistics);
         });
+    }
+
+    /**
+     * Resolves the Docker image of the exercise's language default, so that the build containers section can name
+     * the image a container without one of its own is built with. The details are rebuilt once the image is known,
+     * since they may already have been rendered by then.
+     *
+     * @param exercise the exercise whose language default is looked up
+     */
+    loadDefaultDockerImage(exercise: ProgrammingExercise): void {
+        if (!exercise.programmingLanguage) {
+            return;
+        }
+        this.defaultDockerImageSubscription?.unsubscribe();
+        this.defaultDockerImageSubscription = this.buildPhasesTemplateService
+            .getTemplate(this.isExamExercise(), exercise.programmingLanguage, exercise.projectType, exercise.staticCodeAnalysisEnabled, exercise.buildConfig?.sequentialTestRuns)
+            .subscribe({
+                next: (template) => {
+                    if (!template.dockerImage) {
+                        return;
+                    }
+                    this.defaultDockerImage.set(template.dockerImage);
+                    if (this.exerciseDetailSections().length > 0) {
+                        this.exerciseDetailSections.set(this.getExerciseDetails());
+                    }
+                },
+                // the section then falls back to naming the default without the image; not worth an alert
+                error: () => {},
+            });
     }
 
     private ensureExerciseDetailsInitialized() {
@@ -625,7 +663,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: DetailType.ProgrammingBuildContainers,
                         title: 'artemisApp.programmingExercise.buildContainersEditor.detailTitle',
                         titleHelpText: 'artemisApp.programmingExercise.buildContainersEditor.help',
-                        data: { containers: buildContainers, isExamMode: this.isExamExercise() },
+                        data: { containers: buildContainers, isExamMode: this.isExamExercise(), defaultDockerImage: this.defaultDockerImage() },
                     },
                 {
                     type: DetailType.Text,

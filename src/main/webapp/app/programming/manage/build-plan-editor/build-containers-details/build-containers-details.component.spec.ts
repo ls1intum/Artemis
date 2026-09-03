@@ -70,7 +70,16 @@ describe('BuildContainersDetailsComponent', () => {
         expect(addPhaseButtons.every((button) => (button.nativeElement as HTMLButtonElement).hidden)).toBe(true);
     });
 
-    it('should show the docker image, or that the container follows the language default', () => {
+    it('should name the language default image for a container without an image of its own', () => {
+        fixture.componentRef.setInput('defaultDockerImage', 'language-default:1');
+        fixture.detectChanges();
+
+        const images = getContainerCards().map((card) => card.query(By.css('.build-container-details-image')).nativeElement.textContent.trim());
+        // a container's own image wins; the other container is built with the default and shows it by name
+        expect(images).toEqual(['image-a:1', 'language-default:1']);
+    });
+
+    it('should show the docker image, or that the container follows the language default when that image is unknown', () => {
         const images = getContainerCards().map((card) => card.query(By.css('.build-container-details-image')));
         expect(images[0].nativeElement.textContent.trim()).toBe('image-a:1');
         // the second container has no image of its own: a translated placeholder text is shown instead

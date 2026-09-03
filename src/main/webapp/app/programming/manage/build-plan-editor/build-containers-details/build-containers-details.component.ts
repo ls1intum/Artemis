@@ -18,4 +18,6 @@ import { BuildContainer } from 'app/programming/shared/entities/build-plan-phase
 export class BuildContainersDetailsComponent {
     readonly containers = input.required<BuildContainer[]>();
     readonly isExamMode = input(false);
+    /** the image of the exercise's language default, which a container without an image of its own is built with */
+    readonly defaultDockerImage = input<string | undefined>();
 }

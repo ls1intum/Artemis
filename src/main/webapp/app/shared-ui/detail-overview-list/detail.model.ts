@@ -153,7 +153,7 @@ interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
 
 interface ProgrammingBuildContainersDetail extends DetailBase {
     type: DetailType.ProgrammingBuildContainers;
-    data: { containers: BuildContainer[]; isExamMode?: boolean };
+    data: { containers: BuildContainer[]; isExamMode?: boolean; defaultDockerImage?: string };
 }
 
 export interface ExerciseCategoriesDetail extends DetailBase {

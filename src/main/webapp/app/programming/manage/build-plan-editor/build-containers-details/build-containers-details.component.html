@@ -7,10 +7,10 @@
             </div>
             <div>
                 <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>:
-                @if (container.dockerImage) {
-                    <code class="build-container-details-image">{{ container.dockerImage }}</code>
+                <!-- an empty image means the container is built with the exercise's language default, so that image is shown by name -->
+                @if (container.dockerImage || defaultDockerImage(); as image) {
+                    <code class="build-container-details-image">{{ image }}</code>
                 } @else {
-                    <!-- an empty image means the container follows the exercise's language default at build time -->
                     <span class="build-container-details-image" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.defaultImage"></span>
                 }
             </div>

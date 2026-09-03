@@ -38,7 +38,8 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { BuildContainer } from 'app/programming/shared/entities/build-plan-phases.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -426,14 +427,43 @@ describe('ProgrammingExerciseDetailComponent', () => {
             ],
         });
         comp.localCIEnabled.set(true);
+        comp.defaultDockerImage.set('language-default:1');
 
         const section = comp.getExerciseDetailsLanguageSection(programmingExercise);
 
         const containersDetail = section.details.find((detail) => detail && detail.type === DetailType.ProgrammingBuildContainers);
         expect(containersDetail).toBeDefined();
-        const containers = (containersDetail as { data: { containers: BuildContainer[] } }).data.containers;
-        expect(containers.map((container) => container.name)).toEqual(['instructor_tests', 'student_tests']);
-        expect(containers.map((container) => container.phases.map((phase) => phase.name))).toEqual([['test'], ['check']]);
+        const data = (containersDetail as { data: { containers: BuildContainer[]; defaultDockerImage?: string } }).data;
+        expect(data.containers.map((container) => container.name)).toEqual(['instructor_tests', 'student_tests']);
+        expect(data.containers.map((container) => container.phases.map((phase) => phase.name))).toEqual([['test'], ['check']]);
+        // the container without an image is built with the language default, which the section names
+        expect(data.defaultDockerImage).toBe('language-default:1');
+    });
+
+    it('should resolve the language default image and rebuild the details with it', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+        programmingExercise.buildConfig.buildPlanConfiguration = JSON.stringify({
+            containers: [{ name: 'student_tests', phases: [{ name: 'check', script: 'echo check', condition: 'ALWAYS', forceRun: false, resultPaths: [] }] }],
+        });
+        comp.programmingExercise.set(programmingExercise);
+        // getExerciseDetails reads the build config from this field, not from the exercise
+        comp.programmingExerciseBuildConfig = programmingExercise.buildConfig;
+        comp.localCIEnabled.set(true);
+        comp.exerciseDetailSections.set(comp.getExerciseDetails());
+        const getTemplateStub = vi.spyOn(TestBed.inject(BuildPhasesTemplateService), 'getTemplate').mockReturnValue(of({ dockerImage: 'language-default:1', phases: [] }));
+
+        comp.loadDefaultDockerImage(programmingExercise);
+
+        expect(getTemplateStub).toHaveBeenCalledOnce();
+        expect(comp.defaultDockerImage()).toBe('language-default:1');
+        const containersDetail = comp
+            .exerciseDetailSections()
+            .flatMap((section) => section.details)
+            .find((detail) => detail && detail.type === DetailType.ProgrammingBuildContainers) as { data: { defaultDockerImage?: string } };
+        expect(containersDetail.data.defaultDockerImage).toBe('language-default:1');
     });
 
     it('should not list build containers when the build plan has none', () => {
