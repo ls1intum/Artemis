@@ -47,7 +47,6 @@ import { switchMap, take, tap } from 'rxjs/operators';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
 import { ModelingExerciseTimelineComponent } from 'app/modeling/manage/modeling-exercise-timeline/modeling-exercise-timeline.component';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
-import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { countModelElements } from 'app/modeling/shared/apollon-model.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateService } from '@ngx-translate/core';
@@ -81,7 +80,6 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
         FormFooterComponent,
         ArtemisTranslatePipe,
         ModelingExerciseTimelineComponent,
-        ExerciseFeedbackSuggestionOptionsComponent,
         TumUiConfirmDialogComponent,
         TumUiSelectComponent,
         ModelingMarkdownExplanationEditorComponent,

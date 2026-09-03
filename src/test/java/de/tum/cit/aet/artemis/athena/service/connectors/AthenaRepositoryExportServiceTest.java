@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.athena.service.AthenaRepositoryExportService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
@@ -75,6 +76,9 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         course.setAthenaConfig(athenaConfig);
         courseRepository.save(course);
         var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
+        // Athena grading feedback is only offered for manually assessed programming exercises; automatically
+        // assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
@@ -106,6 +110,9 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationLocalCI
         course.setAthenaConfig(athenaConfig);
         courseRepository.save(course);
         var programmingExercise = programmingExerciseRepository.findAllByCourseId(course.getId()).getFirst();
+        // Athena grading feedback is only offered for manually assessed programming exercises; automatically
+        // assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);

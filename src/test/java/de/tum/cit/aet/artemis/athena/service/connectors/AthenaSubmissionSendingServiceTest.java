@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.athena.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.athena.service.AthenaDTOConverterService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
@@ -83,6 +84,9 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingExercise.setCourse(course);
+        // Athena grading feedback is only offered for manually assessed programming exercises; automatically
+        // assessed ones rely on unit-test feedback.
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
     }
 
     @AfterEach
