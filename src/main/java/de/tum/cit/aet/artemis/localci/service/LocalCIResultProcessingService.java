@@ -337,8 +337,8 @@ public class LocalCIResultProcessingService {
      * Processes the result of one container of a multi-container build. The container's feedback is appended to the
      * submission's aggregated result, this container's build job is linked to that result, and the result is finalized
      * once every container has finished. The containers of one submission are serialized by a distributed lock on their
-     * grouping key (participation and commit hash), so they aggregate into the same result and count completion without
-     * racing, even when they are processed by several result-processing threads across several core nodes in parallel.
+     * participation, so they aggregate into the same result and count completion without racing, even when they are
+     * processed by several result-processing threads across several core nodes in parallel.
      *
      * @param participation the participation that was built
      * @param buildJob      the finished build job of the container
@@ -355,12 +355,18 @@ public class LocalCIResultProcessingService {
         // container's logs are preserved for the student alongside its siblings' results.
         final boolean logsOnlyOnQueueItem = !buildResult.hasLogs() && agentBuildLogs != null && !agentBuildLogs.isEmpty();
         final BuildResult effectiveBuildResult = logsOnlyOnQueueItem ? buildResult.withBuildLogs(agentBuildLogs) : buildResult;
-        // The containers of one submission are grouped by participation and commit hash, so a lock on that key serializes
-        // them. It is a distributed lock (backed by the same cluster as the queues), so it also holds across the several
-        // core nodes that process results in parallel, not only across the threads of one node. Without it, two nodes
-        // could each create a separate aggregated result for the same submission and neither would ever reach the
-        // expected container count.
-        String lockKey = participation.getId() + "-" + effectiveBuildResult.assignmentRepoCommitHash();
+        // The containers of one submission all aggregate under its participation, so locking on the participation
+        // serializes them. Adding the commit hash would look tighter without being so: the submission a container's
+        // result lands on is matched by commit hash in getSubmissionForBuildResult, which uses the hash of the TESTS
+        // repository for a solution build triggered by a tests push, so the two keys would not even agree; and where the
+        // build config carries no assignment hash the build agent resolves it per job, so two containers of one build
+        // could take different locks, which is the split this lock exists to prevent. One participation rarely builds two
+        // commits at the same moment, and serializing them when it does costs a few milliseconds.
+        // It is a distributed lock (backed by the same cluster as the queues), so it also holds across the several core
+        // nodes that process results in parallel, not only across the threads of one node. Without it, two nodes could
+        // each create a separate aggregated result for the same submission and neither would ever reach the expected
+        // container count.
+        String lockKey = String.valueOf(participation.getId());
         DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
         aggregationLocks.lock(lockKey);
         try {
