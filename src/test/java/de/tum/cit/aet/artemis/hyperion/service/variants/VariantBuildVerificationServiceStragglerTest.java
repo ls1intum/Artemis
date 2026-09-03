@@ -35,7 +35,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
  * triggered its own, the straggler falls inside the new wait's freshness window and — since results are matched by
  * participation and freshness, not by commit hash — would be accepted as the new round's result, reporting on the
  * repository as it was BEFORE the repair. These tests pin that the first result after a timed-out wait is
- * discarded, on both the single and the joint wait.
+ * discarded, on both the single and the joint wait — and that a straggler which already finished before the next
+ * build was triggered costs that round nothing, since the freshness bound has passed it over already.
  */
 class VariantBuildVerificationServiceStragglerTest {
 
@@ -51,8 +52,17 @@ class VariantBuildVerificationServiceStragglerTest {
 
     private ProgrammingExercise exercise;
 
+    /** When the earlier wait gave up; the abandoned build can only complete after it. */
+    private Instant waitAbandonedAt;
+
+    /** When this round triggered its own build — the freshness bound of the wait under test. */
+    private Instant roundTriggeredAt;
+
     @BeforeEach
     void setUp() {
+        waitAbandonedAt = Instant.now().minusSeconds(90);
+        roundTriggeredAt = roundTriggeredAt;
+
         TemplateProgrammingExerciseParticipationTestRepository templateRepository = mock(TemplateProgrammingExerciseParticipationTestRepository.class);
         SolutionProgrammingExerciseParticipationRepository solutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
         resultRepository = mock(ResultTestRepository.class);
@@ -71,7 +81,7 @@ class VariantBuildVerificationServiceStragglerTest {
                 mock(ContinuousIntegrationTriggerService.class), mock(ProgrammingExerciseParticipationService.class), mock(ProgrammingFeedbackSynthesizerService.class));
     }
 
-    /** A result completed {@code secondsAgo} ago — both are fresh against the trigger time used below. */
+    /** A result completed {@code secondsAgo} ago — fresh against {@link #roundTriggeredAt} unless stated otherwise. */
     private Result result(double score, int secondsAgo) {
         Result result = mock(Result.class);
         when(result.getScore()).thenReturn(score);
@@ -84,21 +94,21 @@ class VariantBuildVerificationServiceStragglerTest {
     void discardsTheStragglerOfAnAbandonedBuildAndWaitsForThisRoundsResult() throws Exception {
         // The abandoned build reports a passing solution; this round's own build does not. Accepting the straggler
         // would verify code that was never built.
-        service.noteAbandonedBuild(SOLUTION_PARTICIPATION_ID);
+        service.noteAbandonedBuild(SOLUTION_PARTICIPATION_ID, waitAbandonedAt);
         // Both results are built before the stubbing chain: building a mock inside when(...) breaks the stubbing.
         Result straggler = result(100.0, 10);
         Result thisRound = result(80.0, 0);
         when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(SOLUTION_PARTICIPATION_ID)).thenReturn(Optional.of(straggler))
                 .thenReturn(Optional.of(thisRound));
 
-        BuildResultOutcome outcome = service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, Instant.now().minusSeconds(60));
+        BuildResultOutcome outcome = service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, roundTriggeredAt);
 
         assertThat(outcome.state()).isEqualTo(BuildResultState.FAILED);
     }
 
     @Test
     void discardsTheStragglerInTheJointWaitToo() throws Exception {
-        service.noteAbandonedBuild(SOLUTION_PARTICIPATION_ID);
+        service.noteAbandonedBuild(SOLUTION_PARTICIPATION_ID, waitAbandonedAt);
         Result straggler = result(100.0, 10);
         Result thisRound = result(80.0, 0);
         Result templateResult = result(0.0, 0);
@@ -107,30 +117,67 @@ class VariantBuildVerificationServiceStragglerTest {
         // The template participation never timed out, so its first fresh result is accepted right away.
         when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(TEMPLATE_PARTICIPATION_ID)).thenReturn(Optional.of(templateResult));
 
-        Map<RepositoryType, PendingBuild> pending = new EnumMap<>(RepositoryType.class);
-        Instant triggeredAt = Instant.now().minusSeconds(60);
-        pending.put(RepositoryType.SOLUTION, new PendingBuild("solution-hash", triggeredAt));
-        pending.put(RepositoryType.TEMPLATE, new PendingBuild("template-hash", triggeredAt));
-
-        Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, pending);
+        Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, jointPending());
 
         assertThat(outcomes.get(RepositoryType.SOLUTION).state()).isEqualTo(BuildResultState.FAILED);
+        assertThat(outcomes.get(RepositoryType.TEMPLATE).state()).isEqualTo(BuildResultState.SUCCESS);
+    }
+
+    /** The solution and template builds of this round, both triggered at {@link #roundTriggeredAt}. */
+    private Map<RepositoryType, PendingBuild> jointPending() {
+        Map<RepositoryType, PendingBuild> pending = new EnumMap<>(RepositoryType.class);
+        pending.put(RepositoryType.SOLUTION, new PendingBuild("solution-hash", roundTriggeredAt));
+        pending.put(RepositoryType.TEMPLATE, new PendingBuild("template-hash", roundTriggeredAt));
+        return pending;
+    }
+
+    @Test
+    void keepsThisRoundsResultWhenTheStragglerLandedBeforeTheTrigger() throws Exception {
+        // The abandoned build finished during the repair round, before this round triggered its own build. The
+        // freshness bound already passes that result over, so discarding on top of it would throw away this round's
+        // own result and end a finished build as a timeout.
+        service.noteAbandonedBuild(SOLUTION_PARTICIPATION_ID, waitAbandonedAt);
+        Result straggler = result(100.0, 70);
+        Result thisRound = result(80.0, 0);
+        when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(SOLUTION_PARTICIPATION_ID)).thenReturn(Optional.of(straggler))
+                .thenReturn(Optional.of(thisRound));
+
+        BuildResultOutcome outcome = service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, roundTriggeredAt);
+
+        assertThat(outcome.state()).isEqualTo(BuildResultState.FAILED);
+        assertThat(outcome.result()).isSameAs(thisRound);
+    }
+
+    @Test
+    void keepsThisRoundsResultInTheJointWaitWhenTheStragglerLandedBeforeTheTrigger() throws Exception {
+        service.noteAbandonedBuild(SOLUTION_PARTICIPATION_ID, waitAbandonedAt);
+        Result straggler = result(100.0, 70);
+        Result thisRound = result(80.0, 0);
+        Result templateResult = result(0.0, 0);
+        when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(SOLUTION_PARTICIPATION_ID)).thenReturn(Optional.of(straggler))
+                .thenReturn(Optional.of(thisRound));
+        when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(TEMPLATE_PARTICIPATION_ID)).thenReturn(Optional.of(templateResult));
+
+        Map<RepositoryType, BuildResultOutcome> outcomes = service.waitForBuildResults(exercise, jointPending());
+
+        assertThat(outcomes.get(RepositoryType.SOLUTION).state()).isEqualTo(BuildResultState.FAILED);
+        assertThat(outcomes.get(RepositoryType.SOLUTION).result()).isSameAs(thisRound);
         assertThat(outcomes.get(RepositoryType.TEMPLATE).state()).isEqualTo(BuildResultState.SUCCESS);
     }
 
     @Test
     void acceptsTheFirstResultAgainOnceTheStragglerWasDiscarded() throws Exception {
         // The mark is consumed by the wait that discards a result, so the round after it polls normally again.
-        service.noteAbandonedBuild(SOLUTION_PARTICIPATION_ID);
+        service.noteAbandonedBuild(SOLUTION_PARTICIPATION_ID, waitAbandonedAt);
         Result straggler = result(100.0, 10);
         Result firstRound = result(80.0, 0);
         when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(SOLUTION_PARTICIPATION_ID)).thenReturn(Optional.of(straggler))
                 .thenReturn(Optional.of(firstRound));
-        service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, Instant.now().minusSeconds(60));
+        service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, roundTriggeredAt);
 
         Result nextRound = result(100.0, 0);
         when(resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(SOLUTION_PARTICIPATION_ID)).thenReturn(Optional.of(nextRound));
-        BuildResultOutcome outcome = service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, Instant.now().minusSeconds(60));
+        BuildResultOutcome outcome = service.waitForBuildResult(exercise, "solution-hash", RepositoryType.SOLUTION, roundTriggeredAt);
 
         assertThat(outcome.state()).isEqualTo(BuildResultState.SUCCESS);
     }
