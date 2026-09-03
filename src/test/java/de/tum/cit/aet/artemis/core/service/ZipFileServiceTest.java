@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -147,6 +148,40 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
         String prefix = contentDir.getFileName().toString() + "/";
         assertThat(unixModeOf(zipFilePath, prefix + "gradlew")).as("the executable bit of gradlew must survive the export").isEqualTo(0755);
         assertThat(unixModeOf(zipFilePath, prefix + "build.gradle")).as("a regular file must not become executable").isEqualTo(0644);
+    }
+
+    /**
+     * A course archive nests one ZIP per repository inside the archive it hands out. Deflating those again measured a
+     * 2.5% gain against 50% for the plain CSV files, so the outer pass compresses the entire payload for almost nothing.
+     * Already-compressed entries are therefore stored, and everything else stays deflated.
+     */
+    @Test
+    void testCreateZipFile_storesAlreadyCompressedEntriesInsteadOfDeflatingThemAgain() throws Exception {
+        Path sourceDir = tempFileUtilService.createTempDirectory("stored-src");
+        Path nestedZip = sourceDir.resolve("repository.zip");
+        FileUtils.writeByteArrayToFile(nestedZip.toFile(), ZipTestUtil.createTestZipFile(Map.of("src/Main.java", "public class Main {}")));
+        Path report = sourceDir.resolve("report.csv");
+        FileUtils.writeStringToFile(report.toFile(), "id,type\n1,ProgrammingExercise\n".repeat(50), StandardCharsets.UTF_8);
+
+        Path zipFilePath = tempFileUtilService.createTempDirectory("stored-out").resolve("archive.zip");
+        zipFileService.createZipFile(zipFilePath, List.of(nestedZip, report));
+
+        try (org.apache.commons.compress.archivers.zip.ZipFile zipFile = org.apache.commons.compress.archivers.zip.ZipFile.builder().setPath(zipFilePath).get()) {
+            ZipArchiveEntry nestedEntry = zipFile.getEntry("repository.zip");
+            assertThat(nestedEntry).isNotNull();
+            assertThat(nestedEntry.getMethod()).as("an already compressed entry must be stored, not deflated again").isEqualTo(ZipEntry.STORED);
+            assertThat(nestedEntry.getSize()).as("a stored entry still has to record its size").isEqualTo(Files.size(nestedZip));
+
+            ZipArchiveEntry reportEntry = zipFile.getEntry("report.csv");
+            assertThat(reportEntry).isNotNull();
+            assertThat(reportEntry.getMethod()).as("compressible content must still be deflated").isEqualTo(ZipEntry.DEFLATED);
+            assertThat(reportEntry.getCompressedSize()).as("the plain file must actually get smaller").isLessThan(reportEntry.getSize());
+
+            // Storing must not corrupt anything: the nested archive has to come back byte for byte.
+            try (var stream = zipFile.getInputStream(nestedEntry)) {
+                assertThat(stream.readAllBytes()).isEqualTo(Files.readAllBytes(nestedZip));
+            }
+        }
     }
 
     /**

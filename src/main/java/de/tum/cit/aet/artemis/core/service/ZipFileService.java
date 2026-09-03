@@ -59,7 +59,7 @@ public class ZipFileService {
      */
     public void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
         log.debug("Creating zip file at {} for paths: {}", zipFilePath, paths);
-        try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(Files.newOutputStream(zipFilePath))) {
+        try (ZipArchiveOutputStream zipOutputStream = new ZipArchiveOutputStream(zipFilePath.toFile())) {
             for (var path : paths) {
                 if (!Files.isReadable(path) || isIgnoredZipFileName(path)) {
                     continue;
@@ -116,6 +116,9 @@ public class ZipFileService {
     private static void addFileToZip(ZipArchiveOutputStream zipOutputStream, Path file, String entryName) throws IOException {
         ZipArchiveEntry entry = new ZipArchiveEntry(entryName);
         FileModeUtil.applyUnixMode(entry, file);
+        if (AlreadyCompressedFiles.matches(file)) {
+            entry.setMethod(ZipEntry.STORED);
+        }
         zipOutputStream.putArchiveEntry(entry);
         FileUtils.copyFile(file.toFile(), zipOutputStream);
         zipOutputStream.closeArchiveEntry();
