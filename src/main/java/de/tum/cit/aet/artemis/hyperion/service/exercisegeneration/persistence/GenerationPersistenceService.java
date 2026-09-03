@@ -879,7 +879,12 @@ public class GenerationPersistenceService {
         if (!plan.hiddenEntries().isEmpty() && exercise.getDueDate() == null) {
             throw new IllegalStateException("The verified test plan contains AFTER_DUE_DATE tests, but exercise " + exercise.getId() + " has no due date");
         }
+        // Active cases only. Artemis deactivates a test case that stops appearing in a build rather than deleting its
+        // row, so an exercise that was scaffolded before generation still carries the scaffold's tests as inactive
+        // history. Comparing the plan against those compares it against tests the verified build does not contain, and
+        // a from-scratch generation over a scaffolded exercise then fails to finalize for tests nobody can run.
         Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()
+                .filter(testCase -> Boolean.TRUE.equals(testCase.isActive()))
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, testCase -> testCase, (first, second) -> first));
         List<String> plannedStructuralNames = plan.tests().stream().map(GeneratedTestPlan.Entry::name).filter(byName::containsKey)
                 .filter(name -> byName.get(name).getType() == ProgrammingExerciseTestCaseType.STRUCTURAL).sorted().toList();

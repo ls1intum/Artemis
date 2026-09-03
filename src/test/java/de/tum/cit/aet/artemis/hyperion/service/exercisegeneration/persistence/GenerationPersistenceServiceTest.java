@@ -710,8 +710,8 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
-        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
+        ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0).active(true);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(buildGate, behaviour));
 
         service.persist(exercise, user, outcomeWith(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), ""));
@@ -726,9 +726,9 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
 
-        ProgrammingExerciseTestCase configure = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.TestConfigure").weight(1.0);
-        ProgrammingExerciseTestCase compileSort = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
-        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
+        ProgrammingExerciseTestCase configure = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.TestConfigure").weight(1.0).active(true);
+        ProgrammingExerciseTestCase compileSort = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0).active(true);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0).active(true);
         AtomicInteger matchingResultPolls = new AtomicInteger();
         when(programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any()))
                 .thenAnswer(invocation -> matchingResultPolls.incrementAndGet() >= 3);
@@ -748,7 +748,7 @@ class GenerationPersistenceServiceTest {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
         when(exercise.getDueDate()).thenReturn(ZonedDateTime.now().plusDays(1));
-        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
         String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
 
@@ -763,8 +763,8 @@ class GenerationPersistenceServiceTest {
     void persistKeepsServerSeededStructuralChecksVisibleAndZeroWeightWithoutAgentPlanEntries() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
-        ProgrammingExerciseTestCase structural = new ProgrammingExerciseTestCase().testName("testClass[Strategy]").weight(1.0).visibility(Visibility.AFTER_DUE_DATE);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
+        ProgrammingExerciseTestCase structural = new ProgrammingExerciseTestCase().testName("testClass[Strategy]").weight(1.0).visibility(Visibility.AFTER_DUE_DATE).active(true);
         structural.setType(ProgrammingExerciseTestCaseType.STRUCTURAL);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour, structural));
         String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
@@ -780,7 +780,7 @@ class GenerationPersistenceServiceTest {
     void persist_appliesVerifiedPlanEvenWhenTheTestsRepositoryHasNoNewCommit() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-template", "hash-solution", null);
-        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
         String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
@@ -795,7 +795,7 @@ class GenerationPersistenceServiceTest {
     void persist_failsFinalizationRatherThanPublishingAHiddenPlanWithoutADueDate() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
         String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
 
@@ -808,10 +808,31 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void persist_ignoresTheScaffoldTestsThatGenerationReplaced() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        ProgrammingExerciseTestCase generated = new ProgrammingExerciseTestCase().testName("verifiedTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
+        // Artemis deactivates a test case that stops appearing in a build rather than deleting its row, so an exercise
+        // created from the default scaffold still carries the scaffold's tests after generation replaced them. They
+        // describe tests the verified build does not contain, and failing finalization over them strands a run that
+        // verified perfectly.
+        ProgrammingExerciseTestCase scaffold = new ProgrammingExerciseTestCase().testName("testBubbleSort").weight(1.0).visibility(Visibility.ALWAYS).active(false);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(generated, scaffold));
+        String plan = "{\"tests\":[{\"name\":\"verifiedTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
+
+        service.persist(exercise, user, outcomeWithPlan(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "", plan));
+
+        // Finalization completes: the plan's weight tier is applied to the test the verified build produced.
+        assertThat(generated.getWeight()).isEqualTo(3.0);
+        // The inactive row is left exactly as it was; it is history, not part of the grading contract.
+        assertThat(scaffold.getWeight()).isEqualTo(1.0);
+    }
+
+    @Test
     void persist_failsFinalizationWhenSynchronizedTestsDoNotMatchTheVerifiedPlan() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        ProgrammingExerciseTestCase renamed = new ProgrammingExerciseTestCase().testName("renamedTest").weight(1.0).visibility(Visibility.ALWAYS);
+        ProgrammingExerciseTestCase renamed = new ProgrammingExerciseTestCase().testName("renamedTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(renamed));
         String plan = "{\"tests\":[{\"name\":\"verifiedTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
@@ -830,8 +851,8 @@ class GenerationPersistenceServiceTest {
 
         GenerationPersistenceService promptService = newService(Duration.ofSeconds(10));
 
-        ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0);
-        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0);
+        ProgrammingExerciseTestCase buildGate = new ProgrammingExerciseTestCase().testName("GBS-Tester-1.36.CompileSort").weight(1.0).active(true);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("sort-test.push_then_pop").weight(1.0).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(buildGate, behaviour));
         AtomicInteger matchingResultPolls = new AtomicInteger();
         when(programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any()))
