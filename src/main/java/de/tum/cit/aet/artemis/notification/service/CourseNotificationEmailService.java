@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
 
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -107,7 +108,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
     // Mockito's state and surfaces as a flaky UnfinishedStubbingException.
     @Async("mailTaskExecutor")
     @Override
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+    protected CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         recipients.forEach(recipient -> {
             String localeKey = recipient.langKey();
             if (localeKey == null) {
@@ -153,6 +154,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
             var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName(), null, null);
             mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true);
         });
+        return CompletableFuture.completedFuture(null);
     }
 
     /**

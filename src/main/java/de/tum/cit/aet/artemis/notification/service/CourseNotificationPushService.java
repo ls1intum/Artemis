@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -47,9 +48,10 @@ public class CourseNotificationPushService extends CourseNotificationBroadcastSe
      * @param recipients         A list of recipients who should receive the notification
      */
     @Override
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+    protected CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         var recipientSet = new HashSet<>(recipients);
         applePushNotificationService.sendCourseNotification(courseNotification, recipientSet);
         firebasePushNotificationService.sendCourseNotification(courseNotification, recipientSet);
+        return CompletableFuture.completedFuture(null);
     }
 }

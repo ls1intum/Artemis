@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.notification.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -63,7 +64,7 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
     @Async
     @Override
     @SuppressWarnings("deprecation")
-    protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
+    protected CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients) {
         recipients.forEach(recipient -> {
             websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
             websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
@@ -71,5 +72,6 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
             websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
             websocketMessagingService.sendMessageToUser(recipient.login(), LEGACY_WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
         });
+        return CompletableFuture.completedFuture(null);
     }
 }

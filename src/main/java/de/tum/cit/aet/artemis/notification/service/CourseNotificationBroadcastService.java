@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.notification.service;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
@@ -26,8 +27,13 @@ public abstract class CourseNotificationBroadcastService {
      * the notification content appropriately for the delivery channel.
      * </p>
      *
+     * Returns a future rather than nothing so that the caller can tell when delivery has actually finished, and whether
+     * it failed. Two of the implementations are {@code @Async}, so a caller that treats the return of this method as
+     * delivery is observing task submission and nothing more.
+     *
      * @param courseNotification The notification data to be sent
      * @param recipients         The list of recipients who should receive the notification
+     * @return completes when this channel has finished delivering, exceptionally if it failed
      */
-    protected abstract void sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients);
+    protected abstract CompletableFuture<Void> sendCourseNotification(CourseNotificationDTO courseNotification, List<CourseNotificationRecipientDTO> recipients);
 }

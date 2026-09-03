@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.notification.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +31,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.FeatureKind;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
@@ -78,6 +83,45 @@ class CourseNotificationServiceTest {
     void setUp() {
         courseNotificationService = new CourseNotificationService(courseNotificationRegistryService, courseNotificationSettingService, courseNotificationRepository,
                 courseNotificationParameterRepository, userCourseNotificationStatusService, webappService, pushService, emailService, featureUsageCollector);
+        // The channels report when delivery finished, so a mock has to hand back a completed one; lenient because most
+        // tests here exercise a single channel.
+        lenient().when(webappService.sendCourseNotification(any(CourseNotificationDTO.class), anyList())).thenReturn(CompletableFuture.completedFuture(null));
+        lenient().when(pushService.sendCourseNotification(any(CourseNotificationDTO.class), anyList())).thenReturn(CompletableFuture.completedFuture(null));
+        lenient().when(emailService.sendCourseNotification(any(CourseNotificationDTO.class), anyList())).thenReturn(CompletableFuture.completedFuture(null));
+    }
+
+    /**
+     * The webapp and email channels are {@code @Async}, so returning from their send method means the work was submitted
+     * and nothing more. Recording a success there reported every notification as delivered and held the error rate of
+     * those two features at zero however badly delivery was actually going, which is the opposite of what an error rate
+     * on a delivery channel is for.
+     */
+    @Test
+    void shouldRecordAFailedAsynchronousDeliveryAsAFailure() {
+        TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
+        List<User> recipients = List.of(createTestUser(1L));
+        when(courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP)).thenReturn(recipients);
+        when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
+        when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
+        when(webappService.sendCourseNotification(any(CourseNotificationDTO.class), anyList()))
+                .thenReturn(CompletableFuture.failedFuture(new IllegalStateException("broker down")));
+
+        courseNotificationService.sendCourseNotification(notification, recipients);
+
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(Role.ANONYMOUS), eq(true), anyLong());
+    }
+
+    @Test
+    void shouldRecordASuccessfulDeliveryAsASuccess() {
+        TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
+        List<User> recipients = List.of(createTestUser(1L));
+        when(courseNotificationSettingService.filterRecipientsBy(notification, recipients, NotificationChannelOption.WEBAPP)).thenReturn(recipients);
+        when(courseNotificationRepository.save(any())).thenReturn(createTestCourseNotificationEntity(1L));
+        when(courseNotificationRegistryService.getNotificationIdentifier(any())).thenReturn((short) 1);
+
+        courseNotificationService.sendCourseNotification(notification, recipients);
+
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     @Test

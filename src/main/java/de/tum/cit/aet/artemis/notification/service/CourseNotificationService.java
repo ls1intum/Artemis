@@ -98,13 +98,27 @@ public class CourseNotificationService {
             }
             var filteredRecipients = courseNotificationSettingService.filterRecipientsBy(courseNotification, recipients, supportedChannel);
             var recipientDTOs = filteredRecipients.stream().map(CourseNotificationRecipientDTO::from).toList();
-            service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
-
-            if (!filteredRecipients.isEmpty()) {
-                // One count per notification that actually reached somebody on this channel, which is what answers
-                // whether a channel is worth maintaining. Sends that every recipient has switched off are not usage.
-                featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, "course-notification/" + supportedChannel.name().toLowerCase(Locale.ROOT),
-                        Role.ANONYMOUS, false, 0);
+            // One count per notification that actually reached somebody on this channel, which is what answers whether a
+            // channel is worth maintaining. Sends that every recipient has switched off are not usage.
+            boolean anybodyToDeliverTo = !filteredRecipients.isEmpty();
+            String feature = "course-notification/" + supportedChannel.name().toLowerCase(Locale.ROOT);
+            long startNanos = System.nanoTime();
+            try {
+                var delivery = service.sendCourseNotification(convertToCourseNotificationDTO(courseNotification, UserCourseNotificationStatusType.UNSEEN), recipientDTOs);
+                if (anybodyToDeliverTo) {
+                    // Recorded when the channel finishes, not when it is handed the work. Two of the three channels are
+                    // @Async, so at this point nothing has been delivered yet and a failure inside them could never
+                    // reach this code: every send was reported as a success and the error rate of those two features
+                    // was zero however badly delivery was going.
+                    delivery.whenComplete((ignored, failure) -> recordChannelUsage(feature, failure != null, elapsedMillis(startNanos)));
+                }
+            }
+            catch (Exception e) {
+                // A synchronous channel that throws never completes a future, so it would otherwise go uncounted.
+                if (anybodyToDeliverTo) {
+                    recordChannelUsage(feature, true, elapsedMillis(startNanos));
+                }
+                throw e;
             }
 
             // We keep track of the notified users so that we only create notification status entries for them
@@ -112,6 +126,14 @@ public class CourseNotificationService {
         }
 
         userCourseNotificationStatusService.batchCreateStatusForUsers(setOfNotifiedUsers, courseNotificationEntityId, courseNotification.courseId);
+    }
+
+    private void recordChannelUsage(String feature, boolean failed, long durationMs) {
+        featureUsageCollector.recordUsage(FeatureKind.BACKGROUND, NOTIFICATION_MODULE, feature, Role.ANONYMOUS, failed, durationMs);
+    }
+
+    private static long elapsedMillis(long startNanos) {
+        return (System.nanoTime() - startNanos) / 1_000_000;
     }
 
     /**
