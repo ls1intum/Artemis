@@ -284,7 +284,7 @@ describe('UserManagementComponent', () => {
 
         const request = httpMock.expectOne('api/account/admin/users/deletion-impact');
         expect(request.request.method).toBe('POST');
-        expect(request.request.body).toEqual(['test']);
+        expect(request.request.body).toEqual({ logins: ['test'] });
         request.flush({
             users: [
                 {
@@ -349,7 +349,7 @@ describe('UserManagementComponent', () => {
 
         const refreshedImpactRequest = httpMock.expectOne('api/account/admin/users/deletion-impact');
         expect(refreshedImpactRequest.request.method).toBe('POST');
-        expect(refreshedImpactRequest.request.body).toEqual(['second']);
+        expect(refreshedImpactRequest.request.body).toEqual({ logins: ['second'] });
         refreshedImpactRequest.flush({
             users: [{ userId: 42, login: 'second', impactFingerprint: 'new-fingerprint', totalAffectedObjects: 3, categories: [] }],
             totalAffectedObjects: 3,
@@ -481,7 +481,7 @@ describe('UserManagementComponent', () => {
 
         const request = httpMock.expectOne('api/account/admin/users/deletion-impact');
         expect(request.request.method).toBe('POST');
-        expect(request.request.body).toEqual(['1', '2']);
+        expect(request.request.body).toEqual({ logins: ['1', '2'] });
         request.flush({ users: [], totalAffectedObjects: 0, categories: [] });
     });
 

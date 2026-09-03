@@ -54,7 +54,7 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
             if (userResponse.status() === 404) {
                 continue;
             }
-            const impactResponse = await page.request.post('/api/account/admin/users/deletion-impact', { data: [userLogin] });
+            const impactResponse = await page.request.post('/api/account/admin/users/deletion-impact', { data: { logins: [userLogin] } });
             if (!impactResponse.ok()) {
                 continue;
             }
@@ -202,7 +202,7 @@ test.describe('Retention-aware user deletion', { tag: '@fast' }, () => {
             { userId: expect.any(Number), login: firstLogin, status: 'DELETED', reason: null },
             { userId: expect.any(Number), login: secondLogin, status: 'PLAN_CHANGED', reason: 'impactChanged' },
         ]);
-        expect(refreshedImpact.request().postDataJSON()).toEqual([secondLogin]);
+        expect(refreshedImpact.request().postDataJSON()).toEqual({ logins: [secondLogin] });
         expect((await page.request.get(`/api/account/admin/users/${firstLogin}`)).status()).toBe(404);
         await expect(userRow(page, firstLogin)).toHaveCount(0);
         createdUsers.delete(firstLogin);
