@@ -2,6 +2,7 @@ import { Page, expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { admin } from '../../support/users';
 import { Commands } from '../../support/commands';
+import { dismissPasskeyReminderIfPresent } from '../../support/dismissPasskeyReminder';
 
 /**
  * End-to-end coverage of the built-in feature usage analysis.
@@ -28,6 +29,10 @@ test.describe('Feature usage analysis', { tag: '@fast' }, () => {
         page = await browser.newPage();
         await Commands.login(page, admin, '/admin/feature-usage');
         await page.waitForLoadState('domcontentloaded');
+        // The passkey setup reminder is a CDK overlay with a backdrop that swallows every click on the page behind it.
+        // Its absence locally and presence on the E2E stack, where passkeys are enabled, is what made this look like
+        // flakiness: the elements resolve and report visible and enabled, and only the click is intercepted.
+        await dismissPasskeyReminderIfPresent(page);
     });
 
     /**
@@ -76,6 +81,7 @@ test.describe('Feature usage analysis', { tag: '@fast' }, () => {
                 async () => {
                     await page.reload();
                     await page.waitForLoadState('domcontentloaded');
+                    await dismissPasskeyReminderIfPresent(page);
                     return headlineNumberOf('kpi-total-calls');
                 },
                 { timeout: 90000, intervals: [5000] },
