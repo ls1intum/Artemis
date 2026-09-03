@@ -63,7 +63,7 @@ export const appConfig: ApplicationConfig = {
         // can reach are warmed during idle (student tier first, then management, then admin) so later navigation
         // is instant; a pure student never downloads management/admin code. See RoleAwarePreloadingStrategy.
         provideRouter(routes, withRouterConfig({ onSameUrlNavigation: 'reload' }), withPreloading(RoleAwarePreloadingStrategy)),
-        // Ensure components are not reused when key route parameters (like examId) change
+        // Ensure components are not reused when key route parameters (like examId) change on routes configured with dontReuseOnParamChange
         { provide: RouteReuseStrategy, useClass: ArtemisRouteReuseStrategy },
         // This enables service worker (PWA)
         importProvidersFrom(ServiceWorkerModule.register('ngsw-worker.js', { enabled: true })),

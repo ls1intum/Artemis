@@ -19,6 +19,7 @@ export const examManagementRoutes: Routes = [
         data: {
             hasSidebar: true,
             authorities: IS_AT_LEAST_TUTOR,
+            dontReuseOnParamChange: true, // this fixes data not updating when comparing same pages between different exam
         },
         children: [
             {
