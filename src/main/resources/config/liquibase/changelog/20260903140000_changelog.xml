@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Add the build group of a build job. The containers of a multi-container build are scheduled as separate build jobs
+         that share a build group id, under which the result processing merges their results into one result. It is null
+         for a job that builds a submission on its own (the common case). The index serves the merge, which counts and
+         looks up the jobs of a group. -->
+    <changeSet id="20260903-01-add-build-group-id-to-build-job" author="greinwald">
+        <addColumn tableName="build_job">
+            <column name="build_group_id" type="varchar(255)"/>
+        </addColumn>
+        <createIndex indexName="idx_build_job_build_group_id" tableName="build_job">
+            <column name="build_group_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

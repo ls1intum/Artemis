@@ -2,8 +2,11 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -24,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -63,6 +67,12 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 public class LocalCIResultProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIResultProcessingService.class);
+
+    /**
+     * The statuses a build job ends in. A container of a multi-container build counts as reported once its job is in one
+     * of them, whether or not its result could be merged, so the group it belongs to can always complete.
+     */
+    static final Set<BuildStatus> FINISHED_BUILD_STATUSES = Set.of(BuildStatus.SUCCESSFUL, BuildStatus.FAILED, BuildStatus.ERROR, BuildStatus.CANCELLED, BuildStatus.TIMEOUT);
 
     private static final int BUILD_STATISTICS_UPDATE_THRESHOLD = 10;
 
@@ -252,8 +262,8 @@ public class LocalCIResultProcessingService {
                 }
 
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
-                if (buildJob.containerName() != null) {
-                    // One container of a multi-container build: aggregate its feedback into the submission's shared result.
+                if (buildJob.buildGroup() != null) {
+                    // One container of a multi-container build: merge its feedback into the result shared by its build group.
                     ContainerOutcome outcome = processContainerResult(participation, buildJob, buildResult, buildLogs, buildStatus, testsExpected);
                     if (outcome != null) {
                         result = outcome.result();
@@ -317,7 +327,7 @@ public class LocalCIResultProcessingService {
         // If the build job is a solution build of a test or auxiliary push, we need to trigger the build of the corresponding template repository.
         // A multi-container solution build reports one queue item per container; the template is rebuilt once, when the
         // container that completed the merged result comes through, not once per container.
-        boolean completedMergedResult = buildJob.containerName() == null || (result != null && result.getCompletionDate() != null);
+        boolean completedMergedResult = buildJob.buildGroup() == null || (result != null && result.getCompletionDate() != null);
         if (isSolutionBuildOfTestOrAuxPush(buildJob) && completedMergedResult) {
             log.info("Triggering build of template repository for solution build with id {}", buildJob.id());
             try {
@@ -341,9 +351,9 @@ public class LocalCIResultProcessingService {
     /**
      * Processes the result of one container of a multi-container build. The container's feedback is appended to the
      * submission's aggregated result, this container's build job is linked to that result, and the result is finalized
-     * once every container has finished. The containers of one submission are serialized by a distributed lock on their
-     * participation, so they aggregate into the same result and count completion without racing, even when they are
-     * processed by several result-processing threads across several core nodes in parallel.
+     * once every container has finished. The containers of one build form a build group and are serialized by a
+     * distributed lock on it, so they aggregate into the same result and count completion without racing, even when they
+     * are processed by several result-processing threads across several core nodes in parallel.
      *
      * @param participation the participation that was built
      * @param buildJob      the finished build job of the container
@@ -360,51 +370,103 @@ public class LocalCIResultProcessingService {
         // container's logs are preserved for the student alongside its siblings' results.
         final boolean logsOnlyOnQueueItem = !buildResult.hasLogs() && agentBuildLogs != null && !agentBuildLogs.isEmpty();
         final BuildResult effectiveBuildResult = logsOnlyOnQueueItem ? buildResult.withBuildLogs(agentBuildLogs) : buildResult;
-        // The containers of one submission all aggregate under its participation, so locking on the participation
-        // serializes them. Adding the commit hash would look tighter without being so: the submission a container's
-        // result lands on is matched by commit hash in getSubmissionForBuildResult, which uses the hash of the TESTS
-        // repository for a solution build triggered by a tests push, so the two keys would not even agree; and where the
-        // build config carries no assignment hash the build agent resolves it per job, so two containers of one build
-        // could take different locks, which is the split this lock exists to prevent. One participation rarely builds two
-        // commits at the same moment, and serializing them when it does costs a few milliseconds.
-        // It is a distributed lock (backed by the same cluster as the queues), so it also holds across the several core
-        // nodes that process results in parallel, not only across the threads of one node. Without it, two nodes could
-        // each create a separate aggregated result for the same submission and neither would ever reach the expected
-        // container count.
-        String lockKey = String.valueOf(participation.getId());
+        // The containers of one build form a build group: the jobs the trigger stamped with the same build group id (see
+        // BuildJobQueueItem#buildGroupId). The group is what the containers' results are merged under, so it is what the
+        // lock is taken on. It is a distributed lock (backed by the same cluster as the queues), so it also holds across
+        // the several core nodes that process results in parallel, not only across the threads of one node. Without it,
+        // two nodes could each create a separate aggregated result for the same group and neither would ever reach the
+        // expected container count.
+        // The caller only routes jobs with a membership here; the check makes a future edit of that routing fail loudly
+        // instead of locking on a null key.
+        final BuildJobQueueItem.BuildGroupMembership buildGroup = Objects.requireNonNull(buildJob.buildGroup(), "a container job must carry its build group");
+        final String buildGroupId = buildGroup.buildGroupId();
+        // The count this build waits for was fixed by the trigger when the build started and is read from the job, not
+        // from the build plan, which may have been edited since.
+        final int expectedContainerCount = buildGroup.expectedContainerCount();
         DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
-        aggregationLocks.lock(lockKey);
+        aggregationLocks.lock(buildGroupId);
         try {
-            // Append, link and finalize run in one programmatic transaction that commits before the lock is released, so
-            // the next container of the same submission sees the appended feedback and the linked build job atomically.
+            ContainerOutcome outcome = null;
+            try {
+                // Append, link and finalize run in one programmatic transaction that commits before the lock is released,
+                // so the next container of the group sees the appended feedback and the linked build job atomically.
+                outcome = transactionTemplate.execute(status -> {
+                    // The aggregate is found through the siblings that already merged into it, never through the
+                    // submission's results: a retry or a re-push of the same commit is a new group with an aggregate of
+                    // its own, and a tutor's draft assessment on the submission can never be mistaken for it.
+                    Long aggregatedResultId = findAggregatedResultId(buildGroupId);
+                    Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected,
+                            buildGroup.containerName(), aggregatedResultId);
+                    if (aggregatedResult == null) {
+                        return null;
+                    }
+                    // Link this container's build job to the shared result; the link is how the siblings that finish
+                    // after this one find the aggregate.
+                    BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
+                    Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
+                    return new ContainerOutcome(finalizedResult != null ? finalizedResult : aggregatedResult, savedContainerJob);
+                });
+            }
+            catch (RuntimeException e) {
+                log.error("Could not merge the result of container {} of build job {}", buildGroup.containerName(), buildJob.id(), e);
+            }
+            if (outcome != null) {
+                return outcome;
+            }
+            // This container's result could not be merged and the transaction above rolled back. Its job is still recorded
+            // as finished, only without a result link, so the group's completion count keeps advancing: if this was the
+            // last container, the aggregate its siblings built is finalized now, as failed, instead of staying open forever.
             return transactionTemplate.execute(status -> {
-                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, buildJob.containerName());
-                if (aggregatedResult == null) {
-                    return null;
-                }
-                // The trigger stamped every job of this commit with the number of jobs it scheduled, so the count this build
-                // waits for was fixed when the build started and is read from the job, not from the build plan, which may
-                // have been edited since. A job without the count is a single-container build.
-                int expectedContainerCount = buildJob.expectedContainerCount() != null ? buildJob.expectedContainerCount() : 1;
-
-                // Link this container's build job to the shared result so finished containers can be counted below.
-                BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
-
-                long completedContainers = buildJobRepository.countByResultId(aggregatedResult.getId());
-                if (completedContainers < expectedContainerCount) {
-                    return new ContainerOutcome(aggregatedResult, savedContainerJob);
-                }
-                // All containers are in. This service only knows how the jobs executed; whether the build itself
-                // succeeded is the grading service's call (see finalizeContainerResult).
-                boolean allJobsSucceeded = !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
-                Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allJobsSucceeded,
-                        effectiveBuildResult.buildRunDate());
+                BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
+                Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate());
                 return new ContainerOutcome(finalizedResult, savedContainerJob);
             });
         }
         finally {
-            aggregationLocks.unlock(lockKey);
+            aggregationLocks.unlock(buildGroupId);
         }
+    }
+
+    /**
+     * The id of the result the containers of a build group have merged into so far, found through the group's build jobs
+     * that already link to it.
+     *
+     * @param buildGroupId the id of the build group
+     * @return the id of the group's aggregated result, or null if no container of the group has merged one yet
+     */
+    private Long findAggregatedResultId(String buildGroupId) {
+        return buildJobRepository.findResultIdsOfBuildGroup(buildGroupId, PageRequest.of(0, 1)).stream().findFirst().orElse(null);
+    }
+
+    /**
+     * Finalizes the aggregated result of a build group once every job of the group has finished, whether it merged its
+     * result or not. Completion is counted over the group's build jobs by status, so a container whose merge failed
+     * still counts and cannot leave the group open; it does make the build unsuccessful, as does any job that did not
+     * finish successfully.
+     *
+     * @param buildGroupId           the id of the build group
+     * @param expectedContainerCount the number of jobs the trigger scheduled for the group
+     * @param participation          the participation that was built
+     * @param completionDate         the completion date to set on the finalized result
+     * @return the finalized result, or null if the group is not complete yet or none of its containers merged a result
+     */
+    private Result finalizeIfGroupComplete(String buildGroupId, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate) {
+        long finishedContainers = buildJobRepository.countByBuildGroupIdAndBuildStatusIn(buildGroupId, FINISHED_BUILD_STATUSES);
+        if (finishedContainers < expectedContainerCount) {
+            return null;
+        }
+        Long aggregatedResultId = findAggregatedResultId(buildGroupId);
+        if (aggregatedResultId == null) {
+            return null;
+        }
+        // This service only knows how the jobs executed; whether the build itself succeeded is the grading service's call
+        // (see finalizeContainerResult). A finished job without a result link is one whose merge failed. Both merge paths
+        // record such a job as ERROR, which the status check already catches; the null check covers the one remaining
+        // writer, the fallback save in processResult after even the recovery transaction failed, which keeps the status
+        // the agent reported: SUCCESSFUL for a job that ran fine and could not be merged.
+        boolean allJobsSucceeded = !buildJobRepository.existsByBuildGroupIdAndBuildStatusNot(buildGroupId, BuildStatus.SUCCESSFUL)
+                && !buildJobRepository.existsByBuildGroupIdAndResultIsNull(buildGroupId);
+        return programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, completionDate);
     }
 
     /**

@@ -273,11 +273,13 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // which behaves exactly as before (containerName stays null, the whole submission is built on its own).
         List<ContainerBuild> containerBuilds = resolveContainerBuilds(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
 
-        // Every job of a multi-container build carries the number of jobs scheduled for the commit. The result processing
-        // waits for that many container results before it finalizes the merged result, so the count is fixed at trigger
-        // time: a build plan edited while the containers are still running cannot change what a running build waits for.
-        // A single-container build carries none; it is merged and finalized by its one job alone.
-        Integer expectedContainerCount = containerBuilds.size() > 1 ? containerBuilds.size() : null;
+        // The jobs of a multi-container build carry their build group membership: the group under which the result
+        // processing merges their results, the number of jobs it waits for, and the container each job builds. The build's
+        // own id serves as the group id: it is unique to this trigger call, so a retry or a re-push of the same commit opens
+        // a new group instead of joining a build that is still merging. The count is fixed here as well, so a build plan
+        // edited while the containers are still running cannot change what a running build waits for. A single-container
+        // build carries no membership; it is merged and finalized by its one job alone.
+        boolean multiContainerBuild = containerBuilds.size() > 1;
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
         var buildJobQueue = distributedDataAccessService.getDistributedBuildJobQueue();
@@ -289,13 +291,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ContainerBuild containerBuild = containerBuilds.get(containerIndex);
             BuildConfig buildConfig = containerBuild.buildConfig();
             String containerName = containerBuild.containerName();
+            BuildJobQueueItem.BuildGroupMembership buildGroup = multiContainerBuild ? new BuildJobQueueItem.BuildGroupMembership(buildJobId, containerBuilds.size(), containerName)
+                    : null;
 
             // Provision only the repositories this container lists into it. This is what isolates untrusted student code
             // from the instructor's test files: a container that does not list the test repository never receives it.
             RepositoryInfo scopedRepositoryInfo = scopeRepositoryInfo(repositoryInfo, containerBuild.container());
 
             // Each container needs its own build job id; a single-container plan keeps the historical id unchanged.
-            String jobId = containerName == null ? buildJobId : buildJobId + "-" + containerIndex;
+            String jobId = multiContainerBuild ? buildJobId + "-" + containerIndex : buildJobId;
 
             // The credential the agent that claims this job will clone with. Scoped to this job's repositories and valid
             // only while the job is in the processing list, so it replaces the installation-wide build agent password
@@ -305,8 +309,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             // The containers of one commit are grouped at merge time via participation and commit hash (the submission does
             // not exist yet when the build is triggered), so the job carries no submission reference.
             BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(jobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
-                    programmingExercise.getId(), retryCount, priority, null, scopedRepositoryInfo, jobTimingInfo, buildConfig, null, expectedContainerCount, containerName,
-                    cloneToken);
+                    programmingExercise.getId(), retryCount, priority, null, scopedRepositoryInfo, jobTimingInfo, buildConfig, null, buildGroup, cloneToken);
 
             // Save the build job before adding it to the queue to ensure it exists in the database.
             // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,

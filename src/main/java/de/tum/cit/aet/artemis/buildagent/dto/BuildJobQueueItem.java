@@ -16,22 +16,25 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 // NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Hazelcast (or potentially Redis)
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
-// A submission's build plan can consist of several containers that are each scheduled as their own build job. Such jobs
-// identify their container by name (containerName) and carry the number of jobs the trigger scheduled for the commit
-// (expectedContainerCount), which is what the result processing waits for before it finalizes the merged result. For a
-// build plan without containers both are null, i.e. the job builds the whole submission on its own, as it did before
+// A submission's build plan can consist of several containers that are each scheduled as their own build job. Such a job
+// carries its build group membership (buildGroup): the group shared by the containers of one build, under which the
+// result processing merges their results into one result; the number of jobs the trigger scheduled for the group, which
+// is what the merge waits for before it finalizes the result; and the name of the container the job builds. For a build
+// plan without containers it is null, i.e. the job builds the whole submission on its own, as it did before
 // multi-container support.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNull BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount,
         int priority, @Nullable BuildStatus status, @NonNull RepositoryInfo repositoryInfo, @NonNull JobTimingInfo jobTimingInfo, @NonNull BuildConfig buildConfig,
-        @Nullable ResultDTO submissionResult, @Nullable Integer expectedContainerCount, @Nullable String containerName, @JsonIgnore @Nullable String cloneToken)
+        @Nullable ResultDTO submissionResult, @Nullable BuildGroupMembership buildGroup, @JsonIgnore @Nullable String cloneToken)
         implements BuildJobDTO, Serializable, Comparable<BuildJobQueueItem> {
 
     @Serial
-    // bumped from 1L: adding expectedContainerCount and containerName changes the serialized form, so old Hazelcast/Redis
-    // items must be cleared on upgrade (breaking change, communicate in the release notes)
-    private static final long serialVersionUID = 3L;
+    // bumped from 1L: adding the build group membership changes the serialized form, so old Hazelcast/Redis items must be
+    // cleared on upgrade (breaking change, communicate in the release notes). Bumped once more from 3L when the membership
+    // replaced the three loose fields of the unreleased first form, so that an item of that form fails to deserialize
+    // instead of arriving without a build group.
+    private static final long serialVersionUID = 4L;
 
     /**
      * Constructor for a build job that carries no clone token.
@@ -43,8 +46,7 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
      */
     public BuildJobQueueItem(String id, String name, BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount, int priority,
             @Nullable BuildStatus status, RepositoryInfo repositoryInfo, JobTimingInfo jobTimingInfo, BuildConfig buildConfig, @Nullable ResultDTO submissionResult) {
-        this(id, name, buildAgent, participationId, courseId, exerciseId, retryCount, priority, status, repositoryInfo, jobTimingInfo, buildConfig, submissionResult, null, null,
-                null);
+        this(id, name, buildAgent, participationId, courseId, exerciseId, retryCount, priority, status, repositoryInfo, jobTimingInfo, buildConfig, submissionResult, null, null);
     }
 
     /**
@@ -61,7 +63,7 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
                         queueItem.jobTimingInfo.estimatedCompletionDate(), queueItem.jobTimingInfo.estimatedDuration()),
                 // The job has finished, so it is about to leave the processing list and its token stops being accepted.
                 // Dropping it here keeps it out of every record of a completed build.
-                queueItem.buildConfig(), null, queueItem.expectedContainerCount(), queueItem.containerName(), null);
+                queueItem.buildConfig(), null, queueItem.buildGroup(), null);
     }
 
     /**
@@ -76,13 +78,13 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, estimatedCompletionDate, queueItem.jobTimingInfo.estimatedDuration()),
                 // Must be carried over: this is the entry that lands in the processing list, and that is where a core
                 // node looks the token up when the agent clones.
-                queueItem.buildConfig(), null, queueItem.expectedContainerCount(), queueItem.containerName(), queueItem.cloneToken());
+                queueItem.buildConfig(), null, queueItem.buildGroup(), queueItem.cloneToken());
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, ResultDTO submissionResult) {
         this(queueItem.id(), queueItem.name(), queueItem.buildAgent(), queueItem.participationId(), queueItem.courseId(), queueItem.exerciseId(), queueItem.retryCount(),
-                queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult,
-                queueItem.expectedContainerCount(), queueItem.containerName(), queueItem.cloneToken());
+                queueItem.priority(), queueItem.status(), queueItem.repositoryInfo(), queueItem.jobTimingInfo(), queueItem.buildConfig(), submissionResult, queueItem.buildGroup(),
+                queueItem.cloneToken());
     }
 
     public BuildJobQueueItem(BuildJobQueueItem queueItem, BuildAgentDTO buildAgent, int newRetryCount) {
@@ -90,7 +92,7 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
                 queueItem.repositoryInfo(),
                 new JobTimingInfo(queueItem.jobTimingInfo.submissionDate(), ZonedDateTime.now(), null, null, queueItem.jobTimingInfo().estimatedDuration()),
                 // A retry keeps the same job id, so the same token stays valid once the job is claimed again.
-                queueItem.buildConfig(), null, queueItem.expectedContainerCount(), queueItem.containerName(), queueItem.cloneToken());
+                queueItem.buildConfig(), null, queueItem.buildGroup(), queueItem.cloneToken());
     }
 
     @Override
@@ -117,5 +119,21 @@ public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNu
         return "BuildJobQueueItem[id=" + id + ", name=" + name + ", buildAgent=" + buildAgent + ", participationId=" + participationId + ", courseId=" + courseId + ", exerciseId="
                 + exerciseId + ", retryCount=" + retryCount + ", priority=" + priority + ", status=" + status + ", repositoryInfo=" + repositoryInfo + ", jobTimingInfo="
                 + jobTimingInfo + ", buildConfig=" + buildConfig + ", submissionResult=" + submissionResult + ", cloneToken=" + (cloneToken == null ? "null" : "***") + "]";
+    }
+
+    /**
+     * The membership of a build job in a build group. The containers of a multi-container build are scheduled as one job
+     * each, and their jobs share a group under which the result processing merges their results into one result.
+     *
+     * @param buildGroupId           the id of the build group, shared by every job of the same build
+     * @param expectedContainerCount the number of jobs the trigger scheduled for the group, which the merge waits for
+     *                                   before it finalizes the result; fixed at trigger time, so a build plan edited while
+     *                                   the containers are still running cannot change what a running build waits for
+     * @param containerName          the name of the container this job builds
+     */
+    public record BuildGroupMembership(@NonNull String buildGroupId, int expectedContainerCount, @NonNull String containerName) implements Serializable {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
     }
 }

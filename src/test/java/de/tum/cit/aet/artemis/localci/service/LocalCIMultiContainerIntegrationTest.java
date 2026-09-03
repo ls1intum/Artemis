@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -395,6 +396,91 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.isBuildFailed()).isFalse();
     }
 
+    /**
+     * A solution build generates the exercise's test cases. On a single container, a test removed from the solution is
+     * deactivated because that one result covers every test case; a multi-container build must reach the same outcome,
+     * but only once every container's feedback is merged: no single container may deactivate a test absent from it,
+     * because that absence is a sibling container's test, not a removal. This builds the solution twice; the second
+     * build omits one test from both containers, and that test, and only that test, becomes inactive.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionBuildDeactivatesATestRemovedFromEveryContainer() throws Exception {
+        String instructorImage = "mc-instructor:deactivate";
+        String studentImage = "mc-student:deactivate";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-deactivate");
+        mockContainerLifecycle(studentImage, "mc-student-deactivate");
+
+        // First solution build: every test case is registered across the two containers.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-deactivate", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-deactivate", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyGitRepoFile.toPath(), solutionRepository.workingCopyGitRepo);
+        solutionRepository.workingCopyGitRepo.push().call();
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+        ProgrammingSubmission firstSubmission = awaitFinalizedResult(solutionParticipation.getId(), 120);
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+
+        // Second build: the constructor test is removed from the solution, so it is reported by neither container.
+        Map<String, String> structuralWithoutConstructor = structuralResults().entrySet().stream().filter(entry -> !entry.getKey().contains("ConstructorTest"))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-deactivate", RESULTS_DIRECTORY_REGEX, structuralWithoutConstructor);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-deactivate", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+        awaitFinalizedResultAfter(solutionParticipation.getId(), firstSubmission.getLatestResult().getId(), 120);
+
+        // Only the removed test is deactivated; every other test case stays active. No single container deactivated it
+        // (each still passed false); the reconciliation at finalize did, once, against the union of both containers.
+        Set<String> remainingActive = new HashSet<>(union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES));
+        remainingActive.remove("testConstructors[Policy]");
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(remainingActive);
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), false)).extracting(testCase -> testCase.getTestName())
+                .contains("testConstructors[Policy]");
+    }
+
+    /**
+     * A container that failed to build reported none of its tests, so their absence from the merged feedback says nothing
+     * about the solution. The reconciliation at finalize is skipped for such a build: the registry keeps every test case
+     * of the last clean solution build instead of dropping a whole container's share from grading until the next clean
+     * build.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSolutionBuildWithACrashedContainerKeepsItsTestCasesActive() throws Exception {
+        String instructorImage = "mc-instructor:keep";
+        String studentImage = "mc-student:keep";
+        configureTwoContainerPlan(instructorImage, studentImage);
+        mockContainerLifecycle(instructorImage, "mc-instructor-keep");
+        mockContainerLifecycle(studentImage, "mc-student-keep");
+
+        // First solution build: every test case is registered across the two containers.
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-instructor-keep", RESULTS_DIRECTORY_REGEX, structuralResults());
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-keep", RESULTS_DIRECTORY_REGEX, behaviorResults());
+        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.commitFile(solutionRepository.workingCopyGitRepoFile.toPath(), solutionRepository.workingCopyGitRepo);
+        solutionRepository.workingCopyGitRepo.push().call();
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+        ProgrammingSubmission firstSubmission = awaitFinalizedResult(solutionParticipation.getId(), 120);
+        Set<String> allTestNames = union(STRUCTURAL_TEST_NAMES, BEHAVIOR_TEST_NAMES);
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(allTestNames);
+
+        // Second build: the student container crashes and reports no tests at all.
+        mockScriptExitCode("mc-student-keep", "mc-student-keep-exec", 1L);
+        mockMissingResults("mc-student-keep");
+        localCITriggerService.triggerBuild(solutionParticipation, false);
+        ProgrammingSubmission secondSubmission = awaitFinalizedResultAfter(solutionParticipation.getId(), firstSubmission.getLatestResult().getId(), 120);
+
+        // The build is failed, but no test case was deactivated: the behaviour tests are absent because their container
+        // crashed, not because they were removed from the solution.
+        assertThat(secondSubmission.isBuildFailed()).isTrue();
+        assertThat(testCaseRepository.findByExerciseIdAndActive(programmingExercise.getId(), true)).extracting(testCase -> testCase.getTestName())
+                .containsExactlyInAnyOrderElementsOf(allTestNames);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testContainerResultsMergeIntoOneFinalizedResultEndToEnd() throws Exception {
@@ -729,7 +815,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     private static Set<String> union(Set<String> first, Set<String> second) {
-        var union = new java.util.HashSet<>(first);
+        var union = new HashSet<>(first);
         union.addAll(second);
         return Set.copyOf(union);
     }

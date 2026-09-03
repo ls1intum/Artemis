@@ -44,9 +44,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
 
     /**
-     * Counts the build jobs that already contributed to the given result. When a submission is built by several
-     * containers, each container's build job is linked to the shared result, so this count is the number of containers
-     * that have finished for that result.
+     * Counts the build jobs linked to the given result. The containers of a multi-container build link their jobs to the
+     * result they merged into, so this is how many containers contributed to it.
      *
      * @param resultId the id of the aggregated result
      * @return the number of build jobs linked to the result
@@ -54,14 +53,51 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     long countByResultId(long resultId);
 
     /**
-     * Checks whether any build job linked to the given result did not finish successfully. Used to decide whether an
-     * aggregated multi-container result should be marked successful once all containers have finished.
+     * The ids of the results the jobs of a build group have merged into, oldest first. The containers of one build are
+     * scheduled as separate jobs that share a build group (see {@code BuildJobQueueItem#buildGroupId}) and all merge into
+     * one result, so the first id is the group's aggregated result.
      *
-     * @param resultId    the id of the aggregated result
-     * @param buildStatus the status that counts as successful
-     * @return true if at least one linked build job has a different status
+     * @param buildGroupId the id of the build group
+     * @param pageable     limits the query, typically to the first linked result
+     * @return the ids of the results linked to the group's jobs, oldest first
      */
-    boolean existsByResultIdAndBuildStatusNot(long resultId, BuildStatus buildStatus);
+    @Query("""
+            SELECT b.result.id
+            FROM BuildJob b
+            WHERE b.buildGroupId = :buildGroupId
+                AND b.result IS NOT NULL
+            ORDER BY b.id ASC
+            """)
+    List<Long> findResultIdsOfBuildGroup(@Param("buildGroupId") String buildGroupId, Pageable pageable);
+
+    /**
+     * Counts the jobs of a build group that are in one of the given statuses. Used with the finished statuses to tell
+     * when every container of a multi-container build has reported, whether or not its result could be merged.
+     *
+     * @param buildGroupId  the id of the build group
+     * @param buildStatuses the statuses to count
+     * @return the number of the group's jobs in one of the statuses
+     */
+    long countByBuildGroupIdAndBuildStatusIn(String buildGroupId, Collection<BuildStatus> buildStatuses);
+
+    /**
+     * Checks whether any job of a build group has a status other than the given one. Used to decide whether the group's
+     * aggregated result should be marked successful once every container has finished.
+     *
+     * @param buildGroupId the id of the build group
+     * @param buildStatus  the status that counts as successful
+     * @return true if at least one of the group's jobs has a different status
+     */
+    boolean existsByBuildGroupIdAndBuildStatusNot(String buildGroupId, BuildStatus buildStatus);
+
+    /**
+     * Checks whether any job of a build group is not linked to a result. Once every container has finished, such a job is
+     * one whose result could not be merged, which makes the group's build unsuccessful.
+     *
+     * @param buildGroupId the id of the build group
+     * @return true if at least one of the group's jobs has no result
+     */
+    boolean existsByBuildGroupIdAndResultIsNull(String buildGroupId);
 
     /**
      * Retrieves all build job ids that were submitted before the given date.

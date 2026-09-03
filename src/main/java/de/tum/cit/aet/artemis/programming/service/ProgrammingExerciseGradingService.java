@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission.cr
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -279,20 +278,22 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Appends the build result of one container of a multi-container build plan to the aggregated result shared by all
-     * containers of the same submission. Instead of creating a standalone result per container, every container's
-     * feedback is collected into a single in-progress result (its completion date stays null until every container has
-     * finished, see {@link #finalizeContainerResult}). The score is recomputed from the feedback gathered so far, so the
-     * result grows as containers finish. All containers of one commit map to the same submission via participation and
-     * commit hash, so no explicit grouping identity is needed.
+     * containers of the same build. Instead of creating a standalone result per container, every container's feedback is
+     * collected into a single in-progress result (its completion date stays null until every container has finished, see
+     * {@link #finalizeContainerResult}); the score is only computed then, over the feedback of all containers. Which
+     * containers belong together is the caller's knowledge: it passes the id of the result the earlier containers of the
+     * same build merged into, or null for the first container, which then starts the build's result.
      *
-     * @param participation the participation that was built
-     * @param requestBody   the raw build result of the container
-     * @param testsExpected whether tests were expected for this container
-     * @param containerName the name of the container that produced this result, used to label its build logs
+     * @param participation      the participation that was built
+     * @param requestBody        the raw build result of the container
+     * @param testsExpected      whether tests were expected for this container
+     * @param containerName      the name of the container that produced this result, used to label its build logs
+     * @param aggregatedResultId the id of the result the earlier containers of the same build merged into, or null if this
+     *                               is the first container of the build to report
      * @return the aggregated result with this container's feedback appended, or null if it could not be created
      */
-    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected,
-            @Nullable String containerName) {
+    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected, @Nullable String containerName,
+            @Nullable Long aggregatedResultId) {
         try {
             ProgrammingExercise exercise = participation.getProgrammingExercise();
             // This container reports only its own test cases; not deactivating the absent ones keeps a solution build
@@ -323,7 +324,7 @@ public class ProgrammingExerciseGradingService {
 
             // Resolving the attempt's in-progress result resets the submission's build-failed flag when it starts a fresh
             // attempt, so the flag below reflects this attempt only: any failing container marks the submission failed.
-            Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise);
+            Result aggregatedResult = getOrCreateAggregatedResult(submission, exercise, aggregatedResultId);
             if (containerFailed) {
                 submission.setBuildFailed(true);
             }
@@ -415,22 +416,21 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Returns the in-progress result the containers of a submission aggregate their feedback into, creating it on the
-     * first container. An in-progress result is recognized by a null completion date, so a finished result of an earlier
-     * build attempt is never reused.
+     * Returns the result the containers of one build aggregate their feedback into: the result the earlier containers
+     * merged into when the caller identified one, otherwise a new in-progress result, which marks the start of a build
+     * attempt. An attempt never joins the open result of an earlier attempt of the same submission, and never a tutor's
+     * draft assessment on it, because the result is identified by the caller through the build's jobs rather than found
+     * among the submission's results.
      *
-     * @param submission the submission shared by all containers
-     * @param exercise   the programming exercise
+     * @param submission         the submission shared by all containers of the build
+     * @param exercise           the programming exercise
+     * @param aggregatedResultId the id of the result the earlier containers merged into, or null for the first container
      * @return the aggregated result to append feedback to
      */
-    private Result getOrCreateAggregatedResult(ProgrammingSubmission submission, ProgrammingExercise exercise) {
-        // The in-progress aggregate is the newest AUTOMATIC result without a completion date. The assessment type matters:
-        // a tutor's draft manual assessment also has no completion date yet and must not receive container feedback.
-        var inProgressAggregate = submission.getResults().stream()
-                .filter(candidate -> candidate.getAssessmentType() == AssessmentType.AUTOMATIC && candidate.getCompletionDate() == null).max(Comparator.comparing(Result::getId));
-        if (inProgressAggregate.isPresent()) {
+    private Result getOrCreateAggregatedResult(ProgrammingSubmission submission, ProgrammingExercise exercise, @Nullable Long aggregatedResultId) {
+        if (aggregatedResultId != null) {
             // reload with the feedback appended by the earlier containers, so the next append does not drop it
-            return resultRepository.findByIdWithEagerFeedbacksElseThrow(inProgressAggregate.get().getId());
+            return resultRepository.findByIdWithEagerFeedbacksElseThrow(aggregatedResultId);
         }
         // A new in-progress result marks the start of a fresh build attempt, so clear a build-failed flag left over from
         // an earlier attempt of the same submission; the containers of this attempt set it again if any of them fails.
@@ -453,33 +453,52 @@ public class ProgrammingExerciseGradingService {
      * score over the feedback of all containers, marks the result successful only if every container succeeded, and sets
      * the completion date so the result is shown as complete.
      *
-     * @param result           the aggregated result to finalize
+     * @param resultId         the id of the aggregated result to finalize
      * @param participation    the participation that was built
-     * @param allJobsSucceeded whether every container's build job finished with a successful job status
+     * @param allJobsSucceeded whether every container's build job finished with a successful job status and merged its result
      * @param completionDate   the completion date to set on the finalized result
      * @return the finalized result
      */
-    public Result finalizeContainerResult(Result result, ProgrammingExerciseParticipation participation, boolean allJobsSucceeded, ZonedDateTime completionDate) {
-        Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(result.getId());
+    public Result finalizeContainerResult(long resultId, ProgrammingExerciseParticipation participation, boolean allJobsSucceeded, ZonedDateTime completionDate) {
+        Result aggregatedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         boolean isStudentParticipation = !(participation instanceof SolutionProgrammingExerciseParticipation)
                 && !(participation instanceof TemplateProgrammingExerciseParticipation);
-        calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
         // A job status only records how the job executed: a container whose build script crashed still completes as a
         // SUCCESSFUL job. The build outcome itself is the submission's build-failed flag, maintained per container in
         // appendContainerResult, so the result is successful only when both agree.
-        boolean anyContainerFailedToBuild = result.getSubmission() instanceof ProgrammingSubmission submission && submission.isBuildFailed();
+        boolean anyContainerFailedToBuild = aggregatedResult.getSubmission() instanceof ProgrammingSubmission submission && submission.isBuildFailed();
+        // A solution build generates the exercise's test cases, but each container of a multi-container build reported
+        // only its own share and could not deactivate a test removed from the solution (its absence there is a sibling's
+        // test, not a removal). Now that every container's feedback is merged, a test case no container reported is
+        // genuinely gone: reconcile the deactivations once, over the union. This must run before the score is calculated,
+        // which adds a "Test was not executed." placeholder for every registered test case and would otherwise both keep
+        // the stale test case active and count it against the students that are graded next. A container that failed to
+        // build reported none of its tests, so their absence says nothing about the solution: the reconciliation is
+        // skipped for such a build, and the registry keeps the state of the last clean solution build.
+        if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            if (anyContainerFailedToBuild) {
+                log.info("Skipping the test case reconciliation of exercise {}: a container of the solution build failed, so its test cases are absent without being removed",
+                        participation.getProgrammingExercise().getId());
+            }
+            else {
+                Set<String> presentTestCaseNames = aggregatedResult.getFeedbacks().stream().filter(feedback -> !feedback.isStaticCodeAnalysisFeedback()).map(this::testCaseNameOf)
+                        .filter(Objects::nonNull).collect(Collectors.toSet());
+                feedbackCreationService.deactivateSolutionTestCasesAbsentFromMergedResult(presentTestCaseNames, participation.getProgrammingExercise());
+            }
+        }
+        calculateScoreForResult(aggregatedResult, participation.getProgrammingExercise(), isStudentParticipation);
         aggregatedResult.setSuccessful(allJobsSucceeded && !anyContainerFailedToBuild);
         aggregatedResult.setCompletionDate(completionDate);
 
         Optional<Result> mergedIntoManualResult = Optional.empty();
-        if (isStudentParticipation && result.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
+        if (isStudentParticipation && aggregatedResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
             // The same student policies as after a single-container result. Unlike there, the aggregated result already
             // exists (the containers' build jobs link to it), so it stays; when the submission is under manual
             // assessment its feedback is additionally merged into that manual result, which is then the one to report.
             // Read through the repository, not the submission's lazy result collection: callers outside a transaction hold
             // a detached submission, whose collection cannot be initialized.
             Result latestOtherResult = resultRepository.findAllBySubmissionIdOrderByIdDesc(programmingSubmission.getId()).stream()
-                    .filter(candidate -> !candidate.getId().equals(result.getId())).findFirst().orElse(null);
+                    .filter(candidate -> !candidate.getId().equals(resultId)).findFirst().orElse(null);
             mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestOtherResult);
         }
         // Saved after the policies, as on the single-container path: the lock-repository policy marks the result unrated

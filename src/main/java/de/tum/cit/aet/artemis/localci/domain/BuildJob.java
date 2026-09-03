@@ -8,7 +8,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,6 +27,11 @@ public class BuildJob extends DomainObject {
     @Column(name = "build_job_id")
     private String buildJobId;
 
+    // The build group of a container job of a multi-container build: shared by every container job of the same build and
+    // what their results are merged under. Null for a job that builds a submission on its own.
+    @Column(name = "build_group_id")
+    private String buildGroupId;
+
     @Column(name = "name")
     private String name;
 
@@ -39,8 +44,10 @@ public class BuildJob extends DomainObject {
     @Column(name = "participation_id")
     private Long participationId;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(unique = true)
+    // The containers of a multi-container build all link their jobs to the one result they merged into, so several jobs
+    // can point at the same result. The schema's index on result_id is not unique either.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn
     private Result result;
 
     @Column(name = "build_agent_address")
@@ -104,6 +111,7 @@ public class BuildJob extends DomainObject {
         this.triggeredByPushTo = queueItem.repositoryInfo().triggeredByPushTo();
         this.buildStatus = buildStatus;
         this.dockerImage = queueItem.buildConfig().dockerImage();
+        this.buildGroupId = queueItem.buildGroup() != null ? queueItem.buildGroup().buildGroupId() : null;
     }
 
     public String getBuildJobId() {
@@ -112,6 +120,14 @@ public class BuildJob extends DomainObject {
 
     public void setBuildJobId(String buildJobId) {
         this.buildJobId = buildJobId;
+    }
+
+    public String getBuildGroupId() {
+        return buildGroupId;
+    }
+
+    public void setBuildGroupId(String buildGroupId) {
+        this.buildGroupId = buildGroupId;
     }
 
     public String getName() {

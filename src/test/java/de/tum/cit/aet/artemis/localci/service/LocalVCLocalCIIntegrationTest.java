@@ -537,13 +537,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             await().until(() -> queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).count() == 2);
 
             List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
-            assertThat(jobs).extracting(BuildJobQueueItem::containerName).containsExactlyInAnyOrder("container_a", "container_b");
+            assertThat(jobs).extracting(job -> job.buildGroup().containerName()).containsExactlyInAnyOrder("container_a", "container_b");
             assertThat(jobs).extracting(BuildJobQueueItem::id).doesNotHaveDuplicates();
             // every job carries the number of jobs scheduled for the commit; the result processing waits for that many
-            assertThat(jobs).extracting(BuildJobQueueItem::expectedContainerCount).containsOnly(2);
+            assertThat(jobs).extracting(job -> job.buildGroup().expectedContainerCount()).containsOnly(2);
+            // both jobs belong to the same build group, under which their results are merged
+            assertThat(jobs).extracting(job -> job.buildGroup().buildGroupId()).containsOnly(jobs.getFirst().buildGroup().buildGroupId());
 
-            BuildJobQueueItem jobA = jobs.stream().filter(job -> "container_a".equals(job.containerName())).findFirst().orElseThrow();
-            BuildJobQueueItem jobB = jobs.stream().filter(job -> "container_b".equals(job.containerName())).findFirst().orElseThrow();
+            BuildJobQueueItem jobA = jobs.stream().filter(job -> "container_a".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
+            BuildJobQueueItem jobB = jobs.stream().filter(job -> "container_b".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
             // each container keeps its own image and its own build script
             assertThat(jobA.buildConfig().dockerImage()).isEqualTo("image-a:1");
             assertThat(jobB.buildConfig().dockerImage()).isEqualTo("image-b:2");
@@ -562,8 +564,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
             List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
             assertThat(jobs).hasSize(1);
-            assertThat(jobs.getFirst().containerName()).isNull();
-            assertThat(jobs.getFirst().expectedContainerCount()).isNull();
+            assertThat(jobs.getFirst().buildGroup()).as("a single-container build carries no build group membership").isNull();
         }
 
         @Test
@@ -585,8 +586,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             await().until(() -> queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).count() == 2);
 
             List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
-            BuildJobQueueItem instructorJob = jobs.stream().filter(job -> "instructor_tests".equals(job.containerName())).findFirst().orElseThrow();
-            BuildJobQueueItem studentJob = jobs.stream().filter(job -> "student_tests".equals(job.containerName())).findFirst().orElseThrow();
+            BuildJobQueueItem instructorJob = jobs.stream().filter(job -> "instructor_tests".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
+            BuildJobQueueItem studentJob = jobs.stream().filter(job -> "student_tests".equals(job.buildGroup().containerName())).findFirst().orElseThrow();
 
             // both containers build the student's own submission, so both keep the assignment repository
             assertThat(instructorJob.repositoryInfo().assignmentRepositoryUri()).isNotNull();
