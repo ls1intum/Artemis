@@ -91,7 +91,7 @@
             @if (gradingScale.gradeType === GradeType.GRADE) {
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade"></span>
                 <select class="form-select" title="first passing grade" [ngModel]="firstPassingGrade()" (ngModelChange)="firstPassingGrade.set($event)">
-                    @for (gradeStep of gradeStepsWithNonemptyNames(); track gradeStep.id ?? gradeStep.gradeName) {
+                    @for (gradeStep of gradeStepsWithNonemptyNames(); track $index) {
                         <option [ngValue]="gradeStep.gradeName">
                             {{ gradeStep.gradeName }}
                         </option>
