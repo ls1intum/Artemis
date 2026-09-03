@@ -229,6 +229,10 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
+        String unreadable = unreadableInCurrentStage(safe);
+        if (unreadable != null) {
+            return unreadable;
+        }
         SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "cat", WORKSPACE + "/" + safe);
         if (!result.isSuccess()) {
             return screenObservation(safe, "ERROR: could not read '" + safe + "': " + result.combinedOutput());
@@ -625,6 +629,37 @@ public class SandboxAgentTools implements SubmitVetoAware {
     @Override
     public boolean isSandboxSessionTerminated() {
         return sandboxSessionTerminated;
+    }
+
+    /**
+     * Called by the orchestrator before each stage's bounded agent loop. Resetting the cache here is what stops a fresh stage, or a re-entry into the same stage after gate
+     * feedback, from reusing a pass computed before this call.
+     *
+     * @param stage the stage the orchestrator is about to run
+     */
+    /**
+     * Why a path may not be read in the stage now running, or null when it may.
+     *
+     * The specification stage receives its whole form contract in the system prompt, so
+     * {@code reference/} holds nothing it needs. Saying so in the prompt is not enough: the directory
+     * is still there and reading it is still cheap, and a stage budgeted for a handful of turns can
+     * spend all of them re-reading a guide it was already given, then fail its gate for a document it
+     * never wrote. The later stages have no inline contract and read the same directory legitimately,
+     * which is why this is scoped to one stage rather than removed from the workspace.
+     *
+     * The refusal names the alternative rather than only forbidding, so the model spends its next turn
+     * writing instead of retrying the same read.
+     *
+     * @param path a workspace-relative path that has already passed the path and secret policies
+     * @return the observation to return instead of the file contents, or null to allow the read
+     */
+    @Nullable
+    private String unreadableInCurrentStage(String path) {
+        if (currentStage != GenerationStage.SPEC || !path.startsWith("reference/")) {
+            return null;
+        }
+        return "REFUSED: '" + path + "' is not readable in the specification stage. The complete SPEC.md section and table contract is in your instructions, "
+                + "so this directory holds nothing you need here. Write /workspace/SPEC.md now.";
     }
 
     /**

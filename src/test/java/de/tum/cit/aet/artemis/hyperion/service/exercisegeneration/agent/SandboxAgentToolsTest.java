@@ -48,6 +48,39 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void readFile_inTheSpecificationStage_refusesTheStyleReferenceAndNothingElse() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        tools.enterStage(GenerationStage.SPEC);
+
+        // The stage carries its whole form contract inline. Left readable, it spends a budget sized for
+        // writing one document on re-reading a guide it already has, and then fails its gate for the
+        // document it never wrote.
+        String refused = tools.readFile("reference/style/spec.md");
+
+        assertThat(refused).startsWith("REFUSED").contains("Write /workspace/SPEC.md");
+        assertThat(sandbox.execCount()).isZero();
+
+        // Everything the stage legitimately consults stays readable, including the prior statement an
+        // adaptation starts from.
+        tools.readFile("problem-statement.md");
+        assertThat(sandbox.execCount()).isOne();
+    }
+
+    @Test
+    void readFile_outsideTheSpecificationStage_readsTheStyleReferenceItHasNoInlineContractFor() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+
+        tools.enterStage(GenerationStage.TESTS);
+        tools.readFile("reference/style/tests.md");
+        tools.enterStage(GenerationStage.STATEMENT);
+        tools.readFile("reference/style/final-statement.md");
+
+        assertThat(sandbox.execCount()).isEqualTo(2);
+    }
+
+    @Test
     void readFile_withUnsafePath_returnsErrorWithoutTouchingTheSandbox() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
