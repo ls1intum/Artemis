@@ -539,8 +539,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
         const buildContainers = effectiveContainers(parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration));
-        // a build plan can run several containers, each with its own image, so all of their images are listed here
-        const dockerImages = [...new Set(buildContainers.map((container) => container.dockerImage).filter(Boolean))].join(', ');
+        // the images themselves are shown per container in the build containers detail below; this only decides whether
+        // the legacy build script is still worth showing next to the structured plan
+        const hasDockerImage = buildContainers.some((container) => !!container.dockerImage);
         const diffReportDetail = this.getDiffReportDetail();
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
@@ -642,13 +643,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
                 },
                 diffReportDetail,
-                !!dockerImages && {
-                    type: DetailType.Text,
-                    title: 'artemisApp.programmingExercise.dockerImage',
-                    data: { text: dockerImages },
-                },
                 !!exercise.buildConfig?.buildScript &&
-                    !!dockerImages && {
+                    hasDockerImage && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.programmingExercise.script',
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
