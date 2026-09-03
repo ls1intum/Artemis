@@ -34,6 +34,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
@@ -101,8 +103,8 @@ public class JWTFilter extends GenericFilterBean {
      * users must not incur a database query in the authentication filter, while authorization services already verify it
      * through their existing {@code UserRepository} dependency when the override is requested.
      */
-    private Authentication restrictAdministratorAuthorities(Authentication authentication) {
-        if (!isPasskeyRequiredForAdministratorFeatures) {
+    private Authentication restrictAdministratorAuthorities(Authentication authentication, HttpServletRequest request) {
+        if (!isPasskeyRequiredForAdministratorFeatures || isExplicitAdministratorApiRequest(request)) {
             return authentication;
         }
 
@@ -118,11 +120,39 @@ public class JWTFilter extends GenericFilterBean {
             return authentication;
         }
 
-        var ordinaryAuthorities = authentication.getAuthorities().stream()
-                .filter(authority -> !Role.ADMIN.getAuthority().equals(authority.getAuthority()) && !Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority())).toList();
+        List<GrantedAuthority> ordinaryAuthorities = new ArrayList<>(authentication.getAuthorities());
+        ordinaryAuthorities.removeIf(authority -> Role.ADMIN.getAuthority().equals(authority.getAuthority()) || Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority()));
+        if (ordinaryAuthorities.stream().noneMatch(authority -> Role.STUDENT.getAuthority().equals(authority.getAuthority()))) {
+            ordinaryAuthorities.add(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
+        }
         var restrictedAuthentication = new UsernamePasswordAuthenticationToken(authentication.getPrincipal(), authentication.getCredentials(), ordinaryAuthorities);
         restrictedAuthentication.setDetails(authentication.getDetails());
         return restrictedAuthentication;
+    }
+
+    /**
+     * Explicit administrator APIs retain their administrator authority until method security runs. Their
+     * {@link de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin} or
+     * {@link de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin} annotation performs the persisted-role and
+     * passkey checks and produces the structured passkey error expected by the client. Normal endpoints must not retain the
+     * authority because their ordinary role checks deliberately do not invoke administrator endpoint security.
+     */
+    private boolean isExplicitAdministratorApiRequest(HttpServletRequest request) {
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        if (path.equals("/api/admin") || path.startsWith("/api/admin/")) {
+            return true;
+        }
+
+        String apiPrefix = "/api/";
+        if (!path.startsWith(apiPrefix)) {
+            return false;
+        }
+        int moduleEnd = path.indexOf('/', apiPrefix.length());
+        if (moduleEnd <= apiPrefix.length()) {
+            return false;
+        }
+        String modulePath = path.substring(moduleEnd);
+        return modulePath.equals("/admin") || modulePath.startsWith("/admin/");
     }
 
     /**
@@ -333,7 +363,7 @@ public class JWTFilter extends GenericFilterBean {
 
             // Set the security context if authentication succeeded
             if (authentication != null) {
-                SecurityContextHolder.getContext().setAuthentication(restrictAdministratorAuthorities(authentication));
+                SecurityContextHolder.getContext().setAuthentication(restrictAdministratorAuthorities(authentication, httpServletRequest));
             }
         }
 

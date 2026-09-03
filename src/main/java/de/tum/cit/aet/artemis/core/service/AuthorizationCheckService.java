@@ -261,7 +261,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastTeachingAssistantInCourse(String login, long courseId) {
-        return userRepository.isAtLeastTeachingAssistantInCourse(login, courseId);
+        return userRepository.isAtLeastTeachingAssistantInCourse(login, courseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**
@@ -739,7 +739,10 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isSuperAdmin() {
-        return SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority());
+        if (!SecurityUtils.isCurrentUserInRole(Role.SUPER_ADMIN.getAuthority())) {
+            return false;
+        }
+        return SecurityUtils.getCurrentUserLogin().filter(userRepository::isSuperAdmin).isPresent();
     }
 
     /**
@@ -909,7 +912,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isAtLeastEditorInExercise(String login, long exerciseId) {
-        return userRepository.isAtLeastEditorInExercise(login, exerciseId);
+        return userRepository.isAtLeastEditorInExercise(login, exerciseId) || hasCurrentUserAdminAccess(login);
     }
 
     /**

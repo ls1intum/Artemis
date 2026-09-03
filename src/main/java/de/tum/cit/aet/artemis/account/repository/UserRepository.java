@@ -203,9 +203,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * <ul>
      * <li>If the user has an administrator authority, they are assigned the role 'INSTRUCTOR'. This classifies arbitrary post authors and does not authorize the current
      * caller.</li>
-     * <li>If the user belongs to the course's instructor group, they are assigned the role 'INSTRUCTOR'.</li>
-     * <li>If the user belongs to the course's editor group or teaching assistant group, they are assigned the role 'TUTOR'.</li>
-     * <li>If the user belongs to the course's student group, they are assigned the role 'USER'.</li>
+     * <li>If the user has the course role INSTRUCTOR, they are assigned the role 'INSTRUCTOR'.</li>
+     * <li>If the user has the course role EDITOR or TEACHING_ASSISTANT, they are assigned the role 'TUTOR'.</li>
+     * <li>If the user has the course role STUDENT, they are assigned the role 'USER'.</li>
      * </ul>
      * </p>
      *
@@ -1443,10 +1443,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
-                    AND (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
-                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
                     AND user.activated = TRUE
                     AND user.deleted = FALSE
+                    AND (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                        OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
             """)
     boolean isAdmin(@Param("login") String login);
@@ -1455,9 +1455,9 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
-                    AND :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
                     AND user.activated = TRUE
                     AND user.deleted = FALSE
+                    AND :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             )
             """)
     boolean isSuperAdmin(@Param("login") String login);

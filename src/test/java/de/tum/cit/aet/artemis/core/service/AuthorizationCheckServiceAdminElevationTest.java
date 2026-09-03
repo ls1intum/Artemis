@@ -114,9 +114,11 @@ class AuthorizationCheckServiceAdminElevationTest {
 
         assertThat(authorizationCheckService.isAtLeastEditorInCourse("admin", course.getId())).isTrue();
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse("admin", course.getId())).isTrue();
+        assertThat(authorizationCheckService.isAtLeastTeachingAssistantInCourse("admin", course.getId())).isTrue();
         assertThat(authorizationCheckService.isAtLeastTeachingAssistantInExercise("admin", 3L)).isTrue();
+        assertThat(authorizationCheckService.isAtLeastEditorInExercise("admin", 3L)).isTrue();
         assertThat(authorizationCheckService.isAtLeastInstructorInExercise("admin", 3L)).isTrue();
-        verify(userRepository, times(4)).isAdmin("admin");
+        verify(userRepository, times(6)).isAdmin("admin");
     }
 
     @Test
@@ -125,7 +127,9 @@ class AuthorizationCheckServiceAdminElevationTest {
 
         assertThat(authorizationCheckService.isAtLeastEditorInCourse("other-user", course.getId())).isFalse();
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse("other-user", course.getId())).isFalse();
+        assertThat(authorizationCheckService.isAtLeastTeachingAssistantInCourse("other-user", course.getId())).isFalse();
         assertThat(authorizationCheckService.isAtLeastTeachingAssistantInExercise("other-user", 3L)).isFalse();
+        assertThat(authorizationCheckService.isAtLeastEditorInExercise("other-user", 3L)).isFalse();
         assertThat(authorizationCheckService.isAtLeastInstructorInExercise("other-user", 3L)).isFalse();
         verify(userRepository, never()).isAdmin("admin");
         verify(userRepository, never()).isAdmin("other-user");
@@ -137,6 +141,18 @@ class AuthorizationCheckServiceAdminElevationTest {
         when(userRepository.isAdmin("admin")).thenReturn(false);
 
         assertThat(authorizationCheckService.isAtLeastInstructorInCourse(course, admin)).isFalse();
+        verify(userRepository).isAdmin("admin");
+    }
+
+    @Test
+    void shouldRejectStaleSuperAdministratorAuthorityAfterDowngrade() {
+        authenticate("admin", Role.ADMIN, Role.SUPER_ADMIN);
+        when(userRepository.isSuperAdmin("admin")).thenReturn(false);
+        when(userRepository.isAdmin("admin")).thenReturn(true);
+
+        assertThat(authorizationCheckService.isAtLeastRoleInCourse(Role.SUPER_ADMIN, course.getId())).isFalse();
+        assertThat(authorizationCheckService.isAtLeastRoleInCourse(Role.ADMIN, course.getId())).isTrue();
+        verify(userRepository).isSuperAdmin("admin");
         verify(userRepository).isAdmin("admin");
     }
 

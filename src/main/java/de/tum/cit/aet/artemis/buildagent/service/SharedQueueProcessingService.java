@@ -768,7 +768,7 @@ public class SharedQueueProcessingService {
     private void processBuild(BuildJobQueueItem buildJob) {
         // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore, a mock auth object has to be created.
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setSystemAuthorizationObject();
 
         if (buildJob == null) {
             return;

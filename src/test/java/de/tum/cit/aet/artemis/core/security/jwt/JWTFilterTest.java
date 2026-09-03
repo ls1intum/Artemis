@@ -144,7 +144,8 @@ class JWTFilterTest {
         assertThat(filteredAuthentication).isNotNull();
         assertThat(filteredAuthentication.isAuthenticated()).isTrue();
         assertThat(filteredAuthentication.getName()).isEqualTo("admin");
-        assertThat(filteredAuthentication.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly(Role.INSTRUCTOR.getAuthority());
+        assertThat(filteredAuthentication.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactlyInAnyOrder(Role.INSTRUCTOR.getAuthority(),
+                Role.STUDENT.getAuthority());
     }
 
     @Test
@@ -156,7 +157,7 @@ class JWTFilterTest {
 
         assertThat(filteredAuthentication).isNotNull();
         assertThat(filteredAuthentication.isAuthenticated()).isTrue();
-        assertThat(filteredAuthentication.getAuthorities()).isEmpty();
+        assertThat(filteredAuthentication.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly(Role.STUDENT.getAuthority());
     }
 
     @Test
@@ -185,12 +186,33 @@ class JWTFilterTest {
         assertThat(filteredAuthentication.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactly(Role.ADMIN.getAuthority());
     }
 
+    @Test
+    void passwordAuthenticationKeepsAdministratorAuthorityForExplicitAdministratorApis() throws Exception {
+        var authentication = new UsernamePasswordAuthenticationToken("admin", "password",
+                List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority()), new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority())));
+        String jwt = tokenProvider.createToken(authentication, false);
+
+        for (String requestUri : List.of("/api/admin/test", "/api/core/admin/test")) {
+            Authentication filteredAuthentication = filterWithAdministratorPasskeyRequirement(jwt, true, requestUri);
+
+            assertThat(filteredAuthentication).isNotNull();
+            assertThat(filteredAuthentication.isAuthenticated()).isTrue();
+            assertThat(filteredAuthentication.getName()).isEqualTo("admin");
+            assertThat(filteredAuthentication.getAuthorities()).extracting(GrantedAuthority::getAuthority).containsExactlyInAnyOrder(Role.ADMIN.getAuthority(),
+                    Role.INSTRUCTOR.getAuthority());
+        }
+    }
+
     private Authentication filterWithAdministratorPasskeyRequirement(String jwt, boolean passkeyRequired) throws Exception {
+        return filterWithAdministratorPasskeyRequirement(jwt, passkeyRequired, "/api/core/test");
+    }
+
+    private Authentication filterWithAdministratorPasskeyRequirement(String jwt, boolean passkeyRequired, String requestUri) throws Exception {
         SecurityContextHolder.clearContext();
         JWTFilter filter = new JWTFilter(tokenProvider, jwtCookieServiceMock, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, passkeyRequired);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + jwt);
-        request.setRequestURI("/api/core/test");
+        request.setRequestURI(requestUri);
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilter(request, response, new MockFilterChain());
