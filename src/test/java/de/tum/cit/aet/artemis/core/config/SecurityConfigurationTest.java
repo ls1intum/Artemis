@@ -12,8 +12,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.filter.CorsFilter;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
@@ -53,8 +55,10 @@ class SecurityConfigurationTest {
      * @return the configuration, if the constructor accepts the lifetime
      */
     private SecurityConfiguration createSecurityConfiguration(long maxSessionLifetimeInSeconds) {
+        // Never resolved here: these tests only exercise the session lifetime validation in the constructor.
+        ObjectProvider<RequestMappingHandlerMapping> handlerMappings = mock();
         return new SecurityConfiguration(mock(CorsFilter.class), Optional.empty(), Optional.empty(), mock(PasswordService.class), mock(TokenProvider.class),
-                mock(JWTCookieService.class), mock(PasskeyTokenRenewalService.class), moduleFeatureService, maxSessionLifetimeInSeconds, false);
+                mock(JWTCookieService.class), mock(PasskeyTokenRenewalService.class), moduleFeatureService, handlerMappings, maxSessionLifetimeInSeconds, false);
     }
 
     @Test

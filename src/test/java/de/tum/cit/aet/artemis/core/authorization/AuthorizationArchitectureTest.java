@@ -77,6 +77,14 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
         noClasses().that().doNotHaveFullyQualifiedName(AuthorizationCheckService.class.getName()).and().doNotHaveFullyQualifiedName(ExamRegistrationService.class.getName())
                 .should().callMethod(AuthorizationCheckService.class, "isAdmin", User.class)
                 .because("isAdmin(User) classifies arbitrary accounts; current-caller authorization must use request-bound administrator elevation").check(productionClasses);
+
+        // The overload that reaches the database by login is the same account classification with a different argument.
+        // WebsocketConfiguration used it to authorize the admin build queue, job and agent topics, which let an
+        // administrator authenticated with a password subscribe even though the handshake had already removed their
+        // administrator authority. Callers that have no SecurityContext use ElevatedAccessService.isAdminElevationActive
+        // with the authentication their session carries instead.
+        noClasses().that().doNotHaveFullyQualifiedName(AuthorizationCheckService.class.getName()).should().callMethod(AuthorizationCheckService.class, "isAdmin", String.class)
+                .because("isAdmin(String) classifies an account; current-caller authorization must use request-bound administrator elevation").check(productionClasses);
     }
 
     @Test

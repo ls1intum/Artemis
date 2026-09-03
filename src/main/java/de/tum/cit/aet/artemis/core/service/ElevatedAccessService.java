@@ -4,9 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.lang.CheckReturnValue;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -93,6 +95,31 @@ public class ElevatedAccessService {
         catch (PasskeyAuthenticationException ignored) {
             return false;
         }
+    }
+
+    /**
+     * The same decision as {@link #isAdminElevationActive()} for a caller that has no request-bound
+     * {@code SecurityContext}, such as a WebSocket subscription arriving on the message channel.
+     *
+     * <p>
+     * The passkey requirement is already settled by the time this runs: the handshake went through {@code JWTFilter},
+     * which removes the administrator authorities unless the token proves it, and the resulting {@code Authentication}
+     * is what the STOMP session carries as its principal. Requiring the authority here is therefore the request-bound
+     * half of the check, and {@link #isCurrentUserAdministrator()}'s persisted lookup is the account half - it rejects
+     * a session whose administrator was deactivated, deleted or demoted after the handshake. An administrator who
+     * signed in with a password alone satisfies neither.
+     *
+     * @param authentication the authentication the session was established with
+     * @return true only for an active administrator whose session retained the administrator authority
+     */
+    @CheckReturnValue
+    public boolean isAdminElevationActive(@Nullable Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        boolean retainedAdministratorAuthority = authentication.getAuthorities().stream()
+                .anyMatch(authority -> Role.ADMIN.getAuthority().equals(authority.getAuthority()) || Role.SUPER_ADMIN.getAuthority().equals(authority.getAuthority()));
+        return retainedAdministratorAuthority && userRepository.isAdmin(authentication.getName());
     }
 
     private HttpServletRequest getCurrentRequest() {

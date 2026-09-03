@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,15 @@ class JWTFilterTest {
 
     private TokenProvider tokenProvider;
 
+    /**
+     * Request paths an administrator endpoint serves. The first two follow the {@code /api/<module>/admin/} convention;
+     * the rest are the annotated endpoints that do not, and that the previous path heuristic therefore missed.
+     */
+    private static final List<String> ADMINISTRATOR_REQUEST_URIS = List.of("/api/admin/test", "/api/core/admin/test", "/api/exam/rooms/admin/1",
+            "/api/account/passkeys/some-credential/approval", "/api/assessment/courses/1/exams/2/bonuses/calculate-raw");
+
+    private AdministratorEndpointMatcher administratorEndpointMatcher;
+
     private JWTFilter jwtFilter;
 
     private PasskeyTokenRenewalService passkeyTokenRenewalService;
@@ -80,7 +90,12 @@ class JWTFilterTest {
         when(passkeyTokenRenewalService.mayExtendPasskeySession(any())).thenReturn(true);
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
 
-        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, false);
+        // Stands in for the registered administrator mappings: the filter only asks whether one serves the request.
+        administratorEndpointMatcher = mock(AdministratorEndpointMatcher.class);
+        when(administratorEndpointMatcher.matches(any()))
+                .thenAnswer(invocation -> ADMINISTRATOR_REQUEST_URIS.contains(((HttpServletRequest) invocation.getArgument(0)).getRequestURI()));
+
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, false, administratorEndpointMatcher);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
@@ -192,7 +207,9 @@ class JWTFilterTest {
                 List.of(new SimpleGrantedAuthority(Role.ADMIN.getAuthority()), new SimpleGrantedAuthority(Role.INSTRUCTOR.getAuthority())));
         String jwt = tokenProvider.createToken(authentication, false);
 
-        for (String requestUri : List.of("/api/admin/test", "/api/core/admin/test")) {
+        // Includes the shapes the previous path heuristic missed: an /admin/ segment that is not the first one after
+        // the module, and two endpoints that carry the annotation without any /admin/ segment at all.
+        for (String requestUri : ADMINISTRATOR_REQUEST_URIS) {
             Authentication filteredAuthentication = filterWithAdministratorPasskeyRequirement(jwt, true, requestUri);
 
             assertThat(filteredAuthentication).isNotNull();
@@ -209,7 +226,8 @@ class JWTFilterTest {
 
     private Authentication filterWithAdministratorPasskeyRequirement(String jwt, boolean passkeyRequired, String requestUri) throws Exception {
         SecurityContextHolder.clearContext();
-        JWTFilter filter = new JWTFilter(tokenProvider, jwtCookieServiceMock, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, passkeyRequired);
+        JWTFilter filter = new JWTFilter(tokenProvider, jwtCookieServiceMock, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, passkeyRequired,
+                administratorEndpointMatcher);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + jwt);
         request.setRequestURI(requestUri);

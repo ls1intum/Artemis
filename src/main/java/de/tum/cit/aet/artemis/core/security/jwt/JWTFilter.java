@@ -86,14 +86,17 @@ public class JWTFilter extends GenericFilterBean {
 
     private final boolean isPasskeyRequiredForAdministratorFeatures;
 
+    private final AdministratorEndpointMatcher administratorEndpointMatcher;
+
     public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            long maxSessionLifetimeInSeconds, boolean isPasskeyRequiredForAdministratorFeatures) {
+            long maxSessionLifetimeInSeconds, boolean isPasskeyRequiredForAdministratorFeatures, AdministratorEndpointMatcher administratorEndpointMatcher) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
+        this.administratorEndpointMatcher = administratorEndpointMatcher;
     }
 
     /**
@@ -136,23 +139,13 @@ public class JWTFilter extends GenericFilterBean {
      * {@link de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin} annotation performs the persisted-role and
      * passkey checks and produces the structured passkey error expected by the client. Normal endpoints must not retain the
      * authority because their ordinary role checks deliberately do not invoke administrator endpoint security.
+     *
+     * <p>
+     * Which requests those are is answered from the mappings Spring registered rather than from the shape of the path;
+     * see {@link AdministratorEndpointMatcher} for why the path could not decide it.
      */
     private boolean isExplicitAdministratorApiRequest(HttpServletRequest request) {
-        String path = request.getRequestURI().substring(request.getContextPath().length());
-        if (path.equals("/api/admin") || path.startsWith("/api/admin/")) {
-            return true;
-        }
-
-        String apiPrefix = "/api/";
-        if (!path.startsWith(apiPrefix)) {
-            return false;
-        }
-        int moduleEnd = path.indexOf('/', apiPrefix.length());
-        if (moduleEnd <= apiPrefix.length()) {
-            return false;
-        }
-        String modulePath = path.substring(moduleEnd);
-        return modulePath.equals("/admin") || modulePath.startsWith("/admin/");
+        return administratorEndpointMatcher.matches(request);
     }
 
     /**

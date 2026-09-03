@@ -51,6 +51,7 @@ import org.springframework.messaging.tcp.reactor.ReactorNettyTcpClient;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.DelegatingWebSocketMessageBrokerConfiguration;
@@ -69,6 +70,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.ElevatedAccessService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -100,6 +102,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final ElevatedAccessService elevatedAccessService;
+
     private final ExerciseRepository exerciseRepository;
 
     private final Optional<ExamRepositoryApi> examRepositoryApi;
@@ -115,13 +119,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            Optional<ExamRepositoryApi> examRepositoryApi) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ElevatedAccessService elevatedAccessService,
+            ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.elevatedAccessService = elevatedAccessService;
         this.exerciseRepository = exerciseRepository;
         this.examRepositoryApi = examRepositoryApi;
     }
@@ -383,7 +388,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             final var login = principal.getName();
 
             if (isBuildQueueAdminDestination(destination) || isBuildAgentDestination(destination) || isBuildJobAdminDestination(destination)) {
-                return authorizationCheckService.isAdmin(login);
+                // Request-bound elevation rather than account classification: an administrator who signed in with a
+                // password had the administrator authority removed at the handshake, and must not reach the admin
+                // build queue, job and agent topics on the strength of their persisted role alone.
+                return principal instanceof Authentication authentication && elevatedAccessService.isAdminElevationActive(authentication);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);
