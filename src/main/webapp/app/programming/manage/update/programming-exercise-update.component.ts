@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
@@ -1257,14 +1258,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.alertService.addErrorAlert(undefined, 'artemisApp.exerciseVariantGroup.milestoneGroupRequired');
             return;
         }
-        // selectMilestoneGroupForUserStory populates exerciseVariantGroup client-side purely so the locked timeline
-        // display picks it up - it mirrors the server's read-only DTO shape (a bare id/title/dates reference), not
-        // the strict JPA ExerciseVariantGroup entity the field deserializes into server-side, so sending it back
-        // fails with "Failed to read request" (400). The group is already conveyed via the groupId path segment, so
-        // it isn't needed in the body anyway - strip it before sending.
-        const payload = cloneWith(this.programmingExercise, { exerciseVariantGroup: undefined });
-        this.exerciseVariantGroupService.createUserStoryExercise(this.courseId(), this.selectedMilestoneGroupId, payload).subscribe({
-            next: (exercise) => this.onSaveSuccess(exercise),
+        this.exerciseVariantGroupService.createUserStoryExercise(this.courseId(), this.selectedMilestoneGroupId, this.programmingExercise).subscribe({
+            // The response is the narrow UserStoryExerciseDTO, not an exercise: rebuild just what the forward navigation
+            // reads (id, type and the owning course) from it.
+            next: (created) => {
+                const course = new Course();
+                course.id = created.courseId;
+                this.onSaveSuccess(cloneWith(this.programmingExercise, { id: created.id, type: created.type ?? ExerciseType.USER_STORY, course }));
+            },
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }

@@ -16,11 +16,13 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseExercisesForOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.MilestoneExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.dto.CreateUserStoryExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.MilestoneExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.MilestoneStatusDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateMilestoneExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.UserStoryExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.MilestoneExerciseGroupRepository;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
@@ -225,6 +227,41 @@ class MilestoneExerciseGroupIntegrationTest extends AbstractProgrammingIntegrati
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void milestoneStatusRejectsAVariantGroup() throws Exception {
         request.get(milestoneGroupsUrl() + "/" + variantGroup.getId() + "/milestone-status", HttpStatus.NOT_FOUND, MilestoneStatusDTO.class);
+    }
+
+    private String userStoryExercisesUrl(long groupId) {
+        return milestoneGroupsUrl() + "/" + groupId + "/user-story-exercises";
+    }
+
+    private CreateUserStoryExerciseDTO userStoryPayload(String shortNameSuffix) {
+        return new CreateUserStoryExerciseDTO("User story", "us" + shortNameSuffix + TEST_PREFIX, null, "Implement the thing", null, null, null, 5.0, null, null, null, null, null,
+                null, null, null, null);
+    }
+
+    // The happy path is not covered here: creating a user story runs the whole programming-exercise creation pipeline,
+    // which needs the ProgrammingLanguageFeature and version control beans this independent context does not provide (the
+    // same reason the milestone group above is built through the repository). What the request contract itself
+    // guarantees - that a payload cannot carry the settings the group owns - is covered by CreateUserStoryExerciseDTOTest.
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void creatingAUserStoryExerciseRejectsABlankTitle() throws Exception {
+        CreateUserStoryExerciseDTO blankTitle = new CreateUserStoryExerciseDTO(" ", "us3" + TEST_PREFIX, null, null, null, null, null, 5.0, null, null, null, null, null, null,
+                null, null, null);
+
+        request.postWithResponseBody(userStoryExercisesUrl(milestoneGroup.getId()), blankTitle, UserStoryExerciseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void creatingAUserStoryExerciseRejectsAVariantGroup() throws Exception {
+        request.postWithResponseBody(userStoryExercisesUrl(variantGroup.getId()), userStoryPayload("4"), UserStoryExerciseDTO.class, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void aTutorMayNotCreateAUserStoryExercise() throws Exception {
+        request.postWithResponseBody(userStoryExercisesUrl(milestoneGroup.getId()), userStoryPayload("5"), UserStoryExerciseDTO.class, HttpStatus.FORBIDDEN);
     }
 
     /**

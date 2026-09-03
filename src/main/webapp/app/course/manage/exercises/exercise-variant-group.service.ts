@@ -5,7 +5,9 @@ import { map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -153,18 +155,12 @@ export class ExerciseVariantGroupService {
     }
 
     /**
-     * Creates a user story exercise in the given milestone exercise group. Its Language/Version-Control settings,
-     * repositories and timeline are ignored server-side and always taken from the group's milestone exercise; only
-     * title/short name/problem statement/grading settings from `userStoryExercise` are used.
+     * Creates a user story exercise in the given milestone exercise group. Only what a user story owns for itself is
+     * sent: its Language/Version-Control settings, repositories and timeline are the group's milestone exercise's and
+     * are applied server-side (see {@link toCreateUserStoryExercisePayload}).
      */
-    createUserStoryExercise(courseId: number, groupId: number, userStoryExercise: ProgrammingExercise): Observable<ProgrammingExercise> {
-        const copy = deepClone(userStoryExercise);
-        // `categories` arrives as ExerciseCategory objects from the form, but the server's Exercise#categories column
-        // is a Set<String> of JSON-encoded categories - every other create/update path stringifies them first (see
-        // ProgrammingExerciseService.automaticSetup); this endpoint sent the raw objects, which Jackson can't bind
-        // into a String and rejects with a 400 "Failed to read request".
-        ExerciseService.stringifyExerciseCategories(copy);
-        return this.http.post<ProgrammingExercise>(`${this.milestoneResourceUrl(courseId)}/${groupId}/user-story-exercises`, copy);
+    createUserStoryExercise(courseId: number, groupId: number, userStoryExercise: ProgrammingExercise): Observable<UserStoryExerciseDTO> {
+        return this.http.post<UserStoryExerciseDTO>(`${this.milestoneResourceUrl(courseId)}/${groupId}/user-story-exercises`, toCreateUserStoryExercisePayload(userStoryExercise));
     }
 
     /**
@@ -263,6 +259,96 @@ export function toCreateMilestoneGroupPayload(milestoneExercise: ProgrammingExer
         assessmentDueDate: milestoneExercise.assessmentDueDate,
         exampleSolutionPublicationDate: milestoneExercise.exampleSolutionPublicationDate,
         buildConfig: milestoneExercise.buildConfig,
+    };
+}
+
+/**
+ * Payload for creating a user story exercise in a milestone exercise group (mirrors the backend
+ * {@code CreateUserStoryExerciseDTO}). These are exactly the settings a user story owns for itself.
+ *
+ * Everything else a programming exercise has — the timeline, the Language/Version-Control settings, the build config,
+ * the repositories, static code analysis, test cases — belongs to the group's milestone exercise and is applied
+ * server-side, which is why none of it appears here. The same fields are hidden on the form (USER_STORY_HIDDEN_FIELDS).
+ */
+export interface CreateUserStoryExerciseDTO {
+    title?: string;
+    shortName?: string;
+    channelName?: string;
+    problemStatement?: string;
+    /** JSON-encoded categories, the shape `Exercise#categories` stores server-side. */
+    categories?: string[];
+    difficulty?: DifficultyLevel;
+    mode?: ExerciseMode;
+    maxPoints?: number;
+    bonusPoints?: number;
+    assessmentType?: AssessmentType;
+    allowComplaintsForAutomaticAssessments?: boolean;
+    allowFeedbackRequests?: boolean;
+    presentationScoreEnabled?: boolean;
+    secondCorrectionEnabled?: boolean;
+    gradingInstructions?: string;
+    gradingCriteria?: GradingCriterionDTO[];
+    competencyLinks?: CompetencyLinkDTO[];
+}
+
+/**
+ * A created user story exercise (mirrors the backend {@code UserStoryExerciseDTO}): enough to navigate to it and render
+ * it, without the exercise graph behind it. The timeline is the owning group's.
+ */
+export interface UserStoryExerciseDTO {
+    id: number;
+    title?: string;
+    shortName?: string;
+    /** The exercise type discriminator, always `'user-story'`. */
+    type?: ExerciseType;
+    courseId?: number;
+    milestoneGroupId?: number;
+    channelName?: string;
+    maxPoints?: number;
+    bonusPoints?: number;
+    difficulty?: DifficultyLevel;
+    problemStatement?: string;
+    releaseDate?: dayjs.Dayjs;
+    startDate?: dayjs.Dayjs;
+    dueDate?: dayjs.Dayjs;
+    assessmentDueDate?: dayjs.Dayjs;
+    exampleSolutionPublicationDate?: dayjs.Dayjs;
+}
+
+/**
+ * Narrows the full programming-exercise form model down to the user story create payload. The nested grading and
+ * competency shapes are the ones the update path already sends (see {@code toUpdateProgrammingExerciseDTO}).
+ */
+export function toCreateUserStoryExercisePayload(exercise: ProgrammingExercise): CreateUserStoryExerciseDTO {
+    return {
+        title: exercise.title,
+        shortName: exercise.shortName,
+        channelName: exercise.channelName,
+        problemStatement: exercise.problemStatement,
+        categories: ExerciseService.stringifyExerciseDTOCategories(exercise),
+        difficulty: exercise.difficulty,
+        mode: exercise.mode,
+        maxPoints: exercise.maxPoints,
+        bonusPoints: exercise.bonusPoints,
+        assessmentType: exercise.assessmentType,
+        allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments,
+        allowFeedbackRequests: exercise.allowFeedbackRequests,
+        presentationScoreEnabled: exercise.presentationScoreEnabled,
+        secondCorrectionEnabled: exercise.secondCorrectionEnabled,
+        gradingInstructions: exercise.gradingInstructions,
+        gradingCriteria: exercise.gradingCriteria?.map((criterion) => ({
+            id: criterion.id,
+            title: criterion.title,
+            structuredGradingInstructions: criterion.structuredGradingInstructions?.map((instruction) => ({
+                id: instruction.id,
+                credits: instruction.credits,
+                gradingScale: instruction.gradingScale,
+                instructionDescription: instruction.instructionDescription,
+                feedback: instruction.feedback,
+                usageCount: instruction.usageCount,
+            })),
+        })),
+        competencyLinks: exercise.competencyLinks?.map((link) => ({ competency: { id: link.competency!.id! }, weight: link.weight })),
     };
 }
 

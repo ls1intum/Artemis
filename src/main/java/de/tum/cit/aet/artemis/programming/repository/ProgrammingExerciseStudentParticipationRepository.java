@@ -169,6 +169,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
      * @param repositoryUri the repository URI to look up
      * @return the participation, or empty if none exists for that exercise/repository pair
      */
+    // Carries the same entity graph as findByRepositoryUri, and for the same reason: this is the git authorization
+    // path, which reads exercise, course and student right after resolving the participation.
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "exercise.course", "student" })
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndRepositoryUri(long exerciseId, String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findByExerciseIdAndRepositoryUriElseThrow(long exerciseId, String repositoryUri) {

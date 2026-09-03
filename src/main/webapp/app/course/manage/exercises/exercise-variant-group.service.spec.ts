@@ -8,12 +8,17 @@ import {
     ExerciseVariantGroupDTO,
     ExerciseVariantGroupService,
     PersistableGroup,
+    UserStoryExerciseDTO,
     isPersistableGroup,
     toCourseExerciseGroup,
     toCreateGroupPayload,
+    toCreateUserStoryExercisePayload,
     toUpdateGroupPayload,
 } from 'app/course/manage/exercises/exercise-variant-group.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 describe('ExerciseVariantGroupService', () => {
     let service: ExerciseVariantGroupService;
@@ -173,6 +178,70 @@ describe('ExerciseVariantGroupService', () => {
             expect(mapped.dueDate).toBe(dto.dueDate);
             // Unknown ids (999) are dropped instead of producing holes.
             expect(mapped.exercises).toEqual([one]);
+        });
+    });
+    describe('createUserStoryExercise', () => {
+        const userStoryFormModel = (): ProgrammingExercise => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.title = 'Render the board';
+            exercise.shortName = 'board';
+            exercise.problemStatement = 'Draw it';
+            exercise.maxPoints = 5;
+            exercise.categories = [{ category: 'ui', color: '#691b0b' } as ExerciseCategory];
+            // Everything below belongs to the group's milestone exercise and must not reach the server.
+            exercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            exercise.buildConfig = new ProgrammingExerciseBuildConfig();
+            exercise.testRepositoryUri = 'https://example.org/tests.git';
+            exercise.staticCodeAnalysisEnabled = true;
+            exercise.dueDate = dayjs('2026-06-15T10:00:00Z');
+            exercise.exerciseVariantGroup = { id: 7, title: 'Sprint 1' };
+            return exercise;
+        };
+
+        it('should POST only the settings a user story owns for itself', () => {
+            let created: UserStoryExerciseDTO | undefined;
+
+            service.createUserStoryExercise(courseId, 7, userStoryFormModel()).subscribe((exercise) => (created = exercise));
+
+            const req = httpMock.expectOne(`${milestoneBaseUrl}/7/user-story-exercises`);
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body.title).toBe('Render the board');
+            expect(req.request.body.shortName).toBe('board');
+            expect(req.request.body.maxPoints).toBe(5);
+            // Categories go over the wire as the JSON-encoded strings Exercise#categories stores.
+            expect(req.request.body.categories).toEqual([JSON.stringify({ category: 'ui', color: '#691b0b' })]);
+            // The group owns these, so the payload does not carry them at all.
+            expect(req.request.body.programmingLanguage).toBeUndefined();
+            expect(req.request.body.buildConfig).toBeUndefined();
+            expect(req.request.body.testRepositoryUri).toBeUndefined();
+            expect(req.request.body.staticCodeAnalysisEnabled).toBeUndefined();
+            expect(req.request.body.dueDate).toBeUndefined();
+            expect(req.request.body.exerciseVariantGroup).toBeUndefined();
+
+            req.flush({ id: 11, title: 'Render the board', type: ExerciseType.USER_STORY, courseId, milestoneGroupId: 7 });
+
+            expect(created!.id).toBe(11);
+            expect(created!.courseId).toBe(courseId);
+        });
+
+        it('should map grading criteria and competency links to their DTO shape', () => {
+            const exercise = userStoryFormModel();
+            exercise.gradingInstructions = 'Be fair';
+            exercise.gradingCriteria = [{ id: 3, title: 'Style', structuredGradingInstructions: [{ id: 9, credits: 1, feedback: 'ok' }] }];
+            exercise.competencyLinks = [{ competency: { id: 4, title: 'Rendering' }, weight: 0.5 }];
+
+            const payload = toCreateUserStoryExercisePayload(exercise);
+
+            expect(payload.gradingInstructions).toBe('Be fair');
+            expect(payload.gradingCriteria).toEqual([
+                {
+                    id: 3,
+                    title: 'Style',
+                    structuredGradingInstructions: [{ id: 9, credits: 1, feedback: 'ok', gradingScale: undefined, instructionDescription: undefined, usageCount: undefined }],
+                },
+            ]);
+            // Only the competency's id is sent; the server resolves the managed competency itself.
+            expect(payload.competencyLinks).toEqual([{ competency: { id: 4 }, weight: 0.5 }]);
         });
     });
 });

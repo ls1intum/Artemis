@@ -23,9 +23,11 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.MilestoneExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateMilestoneExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.CreateUserStoryExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.MilestoneStatusDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateMilestoneExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exercise.repository.MilestoneExerciseGroupRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.MilestoneExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
 /**
@@ -89,13 +92,18 @@ public class MilestoneExerciseService {
 
     private final MilestoneExercisePointsService milestoneExercisePointsService;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public MilestoneExerciseService(CourseRepository courseRepository, MilestoneExerciseGroupRepository milestoneExerciseGroupRepository,
             ExerciseVariantGroupService exerciseVariantGroupService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, StaticCodeAnalysisService staticCodeAnalysisService,
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseDeletionService programmingExerciseDeletionService, UserStoryExerciseService userStoryExerciseService,
             ChannelService channelService, ParticipationService participationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ResultRepository resultRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            MilestoneExercisePointsService milestoneExercisePointsService) {
+            MilestoneExercisePointsService milestoneExercisePointsService, CompetencyExerciseLinkService competencyExerciseLinkService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.courseRepository = courseRepository;
         this.milestoneExerciseGroupRepository = milestoneExerciseGroupRepository;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
@@ -111,6 +119,8 @@ public class MilestoneExerciseService {
         this.resultRepository = resultRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.milestoneExercisePointsService = milestoneExercisePointsService;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -202,20 +212,21 @@ public class MilestoneExerciseService {
     /**
      * Creates a user story exercise in the given milestone group.
      * <p>
-     * Its Language/Version-Control settings, repositories and timeline are silently overwritten from the group's
-     * {@link MilestoneExercise} regardless of what the request carries for them - a user story is never independently
-     * configured on any of these - only its title/short name/problem statement/grading settings are taken from the request.
+     * Its Language/Version-Control settings, repositories and timeline come from the group's {@link MilestoneExercise} - a
+     * user story is never independently configured on any of these, which is why {@link CreateUserStoryExerciseDTO}
+     * carries none of them; only its title/short name/problem statement/grading settings are taken from the request.
      *
-     * @param userStoryExercise the settings of the user story exercise to create
-     * @param groupId           the id of the milestone group that will own the exercise
-     * @param courseId          the id of the course the group belongs to
+     * @param createDTO the settings of the user story exercise to create
+     * @param groupId   the id of the milestone group that will own the exercise
+     * @param courseId  the id of the course the group belongs to
      * @return the created user story exercise
      */
-    public UserStoryExercise createUserStoryExercise(UserStoryExercise userStoryExercise, Long groupId, Long courseId) {
+    public UserStoryExercise createUserStoryExercise(CreateUserStoryExerciseDTO createDTO, Long groupId, Long courseId) {
         MilestoneExerciseGroup milestoneGroup = milestoneExerciseGroupRepository.findByIdAndCourseIdWithDetailsElseThrow(groupId, courseId);
         if (milestoneGroup.getMilestoneExercise() == null) {
             throw new BadRequestAlertException("A user story exercise can only be created in a milestone exercise group", VARIANT_GROUP_ENTITY_NAME, "milestoneGroupRequired");
         }
+        UserStoryExercise userStoryExercise = createDTO.toUserStoryExercise();
         Course course = courseRepository.findByIdElseThrow(courseId);
         userStoryExercise.setCourse(course);
         userStoryExercise.setExerciseGroup(null);
@@ -232,17 +243,27 @@ public class MilestoneExerciseService {
         userStoryExercise.setAssessmentDueDate(milestoneGroup.getAssessmentDueDate());
         userStoryExercise.setExampleSolutionPublicationDate(milestoneGroup.getExampleSolutionPublicationDate());
 
+        // Needs the course, which the competency's own course is checked against; the links themselves are only persistable
+        // once the exercise has an id, so they are taken back off before the save below and restored after it.
+        competencyExerciseLinkService.updateCompetencyLinks(createDTO, userStoryExercise);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(userStoryExercise);
+
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(userStoryExercise, course);
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(userStoryExercise, VARIANT_GROUP_ENTITY_NAME);
 
         // applyMilestoneConfig above attaches a fresh, still-transient buildConfig (copied from the milestone exercise)
         // and template/solution participations - none of which cascade PERSIST, so they need their own save dance.
         UserStoryExercise created = programmingExerciseCreationUpdateService.saveNewExerciseWithOwnAssociations(userStoryExercise);
+        competencyExerciseLinkService.addCompetencyLinksForCreation(created, competencyLinks);
+        if (!created.getCompetencyLinks().isEmpty()) {
+            // The links cascade from the exercise, and nothing else on this path saves it again.
+            programmingExerciseRepository.save(created);
+        }
         // Unlike the generic programming-exercise creation flow (ProgrammingExerciseCreationUpdateService.createProgrammingExercise),
         // saveNewExerciseWithOwnAssociations above is a narrow "persist this exercise plus its own build config/participations"
         // helper and does not create a communication channel - without this, students saw no channel at all under the
         // exercise's Communication tab.
-        channelService.createExerciseChannel(created, Optional.ofNullable(userStoryExercise.getChannelName()));
+        channelService.createExerciseChannel(created, Optional.ofNullable(createDTO.channelName()));
         // Test cases can only be duplicated onto the new exercise once it has an id (applyMilestoneConfig above
         // skipped this for the same reason); the initial relevance derivation runs against a still-empty problem
         // statement, but re-runs on every later update - see the corresponding TODO on the (not yet implemented)

@@ -682,8 +682,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
     private UpdateFileUploadExerciseDTO createDtoWithTargetIds(UpdateFileUploadExerciseDTO original, Long courseId, Long exerciseGroupId) {
         return new UpdateFileUploadExerciseDTO(original.id(), original.title(), original.channelName(), original.shortName(), original.problemStatement(), original.categories(),
                 original.difficulty(), original.maxPoints(), original.bonusPoints(), original.includedInOverallScore(), original.allowComplaintsForAutomaticAssessments(),
-                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.feedbackSuggestionModule(),
-                original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
+                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.allowTutorScoreRowActions(), original.secondCorrectionEnabled(),
+                original.feedbackSuggestionModule(), original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
                 original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(), courseId, exerciseGroupId, original.gradingCriteria(),
                 original.competencyLinks());
     }
@@ -933,8 +933,8 @@ class FileUploadExerciseIntegrationTest extends AbstractFileUploadIntegrationTes
         UpdateFileUploadExerciseDTO original = UpdateFileUploadExerciseDTO.of(exercise);
         return new UpdateFileUploadExerciseDTO(customId, original.title(), original.channelName(), original.shortName(), original.problemStatement(), original.categories(),
                 original.difficulty(), original.maxPoints(), original.bonusPoints(), original.includedInOverallScore(), original.allowComplaintsForAutomaticAssessments(),
-                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.secondCorrectionEnabled(), original.feedbackSuggestionModule(),
-                original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
+                original.allowFeedbackRequests(), original.presentationScoreEnabled(), original.allowTutorScoreRowActions(), original.secondCorrectionEnabled(),
+                original.feedbackSuggestionModule(), original.gradingInstructions(), original.releaseDate(), original.startDate(), original.dueDate(), original.assessmentDueDate(),
                 original.exampleSolutionPublicationDate(), original.exampleSolution(), original.filePattern(), original.courseId(), original.exerciseGroupId(),
                 original.gradingCriteria(), original.competencyLinks());
     }

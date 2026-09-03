@@ -36,9 +36,11 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.MilestoneExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateMilestoneExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.CreateUserStoryExerciseDTO;
 import de.tum.cit.aet.artemis.exercise.dto.MilestoneExerciseGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.MilestoneStatusDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateMilestoneExerciseGroupDTO;
+import de.tum.cit.aet.artemis.exercise.dto.UserStoryExerciseDTO;
 import de.tum.cit.aet.artemis.programming.domain.MilestoneExercise;
 import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
@@ -179,25 +181,25 @@ public class MilestoneExerciseGroupResource {
      * POST /courses/:courseId/milestone-exercise-groups/:groupId/user-story-exercises : Create a new user story exercise
      * in the given milestone exercise group.
      * <p>
-     * Its Language/Version-Control settings, repositories and timeline are silently overwritten from the group's
-     * {@link MilestoneExercise} regardless of what the request body carries for them — a user story is never
-     * independently configured on any of these — only its title/short name/problem statement/grading settings and the
-     * target group are taken from the request.
+     * Its Language/Version-Control settings, repositories and timeline are the group's {@link MilestoneExercise}'s — a
+     * user story is never independently configured on any of these — so {@link CreateUserStoryExerciseDTO} carries none
+     * of them: only what a user story owns for itself (title, short name, problem statement and grading settings) is
+     * taken from the request, and the target group from the path.
      *
-     * @param userStoryExercise the settings of the user story exercise to create
-     * @param groupId           the id of the milestone exercise group that will own the exercise
-     * @param courseId          the id of the course the group belongs to
+     * @param createDTO the settings of the user story exercise to create
+     * @param groupId   the id of the milestone exercise group that will own the exercise
+     * @param courseId  the id of the course the group belongs to
      * @return the ResponseEntity with status 201 (Created) and the created exercise in the body
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/milestone-exercise-groups/{groupId}/user-story-exercises")
     @EnforceAtLeastEditorInCourse
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<UserStoryExercise> createUserStoryExercise(@RequestBody UserStoryExercise userStoryExercise, @PathVariable Long groupId, @PathVariable Long courseId)
-            throws URISyntaxException {
+    public ResponseEntity<UserStoryExerciseDTO> createUserStoryExercise(@Valid @RequestBody CreateUserStoryExerciseDTO createDTO, @PathVariable Long groupId,
+            @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to create UserStoryExercise in milestone exercise group {} of course {}", groupId, courseId);
-        UserStoryExercise created = milestoneExerciseService.createUserStoryExercise(userStoryExercise, groupId, courseId);
-        return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + created.getId())).body(created);
+        UserStoryExercise created = milestoneExerciseService.createUserStoryExercise(createDTO, groupId, courseId);
+        return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + created.getId())).body(new UserStoryExerciseDTO(created));
     }
 
     /**

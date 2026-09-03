@@ -17,9 +17,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
-import de.tum.cit.aet.artemis.assessment.domain.Feedback;
-import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -131,7 +131,27 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
         return participationUtilService.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
     }
 
-    private Result buildSourceResult(ProgrammingExerciseStudentParticipation participation, String commitHash, List<Feedback> feedbacks) {
+    /** Builds an unsaved automatic test-case feedback row, as the build-result processing would. */
+    private static TestCaseFeedback testCaseFeedback(ProgrammingExerciseTestCase testCase, Boolean positive) {
+        TestCaseFeedback feedback = new TestCaseFeedback();
+        feedback.setTestCase(testCase);
+        feedback.setPositive(positive);
+        return feedback;
+    }
+
+    /**
+     * Attaches one static-code-analysis issue to the result. Only the tool and its own category are set: that pair is
+     * what {@code ProgrammingExerciseFeedbackCreationService.categorizeScaFeedback} resolves to the exercise's Artemis
+     * category and penalty - the remaining columns (file, lines, message) play no role in grading.
+     */
+    private static void addScaFeedback(Result result, StaticCodeAnalysisTool tool, String toolCategory) {
+        ScaFeedback scaFeedback = new ScaFeedback();
+        scaFeedback.setTool(tool);
+        scaFeedback.setToolCategory(toolCategory);
+        result.addScaFeedback(scaFeedback);
+    }
+
+    private Result buildSourceResult(ProgrammingExerciseStudentParticipation participation, String commitHash, List<TestCaseFeedback> testCaseFeedbacks) {
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission.setParticipation(participation);
         submission.setCommitHash(commitHash);
@@ -146,8 +166,22 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
         result.setSuccessful(true);
         result.setExerciseId(participation.getExercise().getId());
         result.setSubmission(submission);
-        result.setFeedbacks(feedbacks);
+        result.setTestCaseFeedbacks(testCaseFeedbacks);
         return resultRepository.save(result);
+    }
+
+    /**
+     * Re-reads the participation's latest result with its typed automatic feedback hydrated. The entity graph behind
+     * {@code findLatestResultWithFeedbacksForParticipation} only fetches the generic {@code feedbacks} and the
+     * submission, so the two typed collections would come back as uninitialized lazy collections - the same two
+     * queries the production path runs in {@code ProgrammingExerciseGradingService.hydrateTypedFeedback}. Fetching the
+     * test cases along with the rows matters because the fan-out matches them by name.
+     */
+    private Result reloadWithTypedFeedback(ProgrammingExerciseStudentParticipation participation) {
+        Result result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), true).orElseThrow();
+        result.setTestCaseFeedbacks(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(result.getId())));
+        result.setScaFeedbacks(scaFeedbackRepository.findByResultIds(List.of(result.getId())));
+        return result;
     }
 
     /**
@@ -156,21 +190,18 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
      * and writes its penalty into the feedback's credits. That side effect is the single evaluation the whole design
      * rests on, so the tests deliberately go through it rather than hand-setting credits.
      */
-    private Result buildGradedMilestoneResult(ProgrammingExerciseStudentParticipation milestoneParticipation, String commitHash, List<Feedback> testFeedbacks) {
-        List<Feedback> feedbacks = new ArrayList<>(testFeedbacks);
+    private Result buildGradedMilestoneResult(ProgrammingExerciseStudentParticipation milestoneParticipation, String commitHash, List<TestCaseFeedback> testFeedbacks) {
+        List<TestCaseFeedback> feedbacks = new ArrayList<>(testFeedbacks);
         // The grading path only reaches the penalty calculation when the result carries test case feedback at all -
         // without any, it is indistinguishable from a build failure and is returned unscored. So always give it one.
-        feedbacks.add(new Feedback().testCase(createTestCase(milestoneExercise, "scaAnchorTest")).positive(true).type(FeedbackType.AUTOMATIC));
-        feedbacks.add(new Feedback().text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference(StaticCodeAnalysisTool.SPOTBUGS.name())
-                .detailText("{\"category\": \"BAD_PRACTICE\", \"rule\": \"Rule\", \"message\": \"Message\"}").type(FeedbackType.AUTOMATIC).positive(false));
+        feedbacks.add(testCaseFeedback(createTestCase(milestoneExercise, "scaAnchorTest"), true));
 
         Result result = buildSourceResult(milestoneParticipation, commitHash, feedbacks);
         result.setRated(true);
+        addScaFeedback(result, StaticCodeAnalysisTool.SPOTBUGS, "BAD_PRACTICE");
         MilestoneExercise freshMilestone = (MilestoneExercise) programmingExerciseRepository.findByIdElseThrow(milestoneExercise.getId());
         resultRepository.save(gradingService.calculateScoreForResult(result, freshMilestone, true));
-        // Re-read with feedbacks and their test cases fetched: the saved instance hands back detached lazy test case
-        // proxies, which the fan-out reads by name.
-        return resultRepository.findLatestResultWithFeedbacksForParticipation(milestoneParticipation.getId(), true).orElseThrow();
+        return reloadWithTypedFeedback(milestoneParticipation);
     }
 
     /** Persists a rated result of the given percentage for a user story participation, as a fan-out or a tutor would. */
@@ -229,8 +260,7 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
         ProgrammingExerciseStudentParticipation participation1 = participationFor(userStory1);
         ProgrammingExerciseStudentParticipation participation2 = participationFor(userStory2);
 
-        Result milestoneResult = buildGradedMilestoneResult(milestoneParticipation, "commit-1",
-                List.of(new Feedback().testCase(milestoneTestA).positive(true).type(FeedbackType.AUTOMATIC)));
+        Result milestoneResult = buildGradedMilestoneResult(milestoneParticipation, "commit-1", List.of(testCaseFeedback(milestoneTestA, true)));
         assertThat(milestoneResult.getScaFeedbacks()).isNotEmpty();
 
         Result us1Result = gradingService.fanOutResultToUserStoryExercise(milestoneResult, userStory1, participation1);
@@ -321,8 +351,7 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
         ProgrammingExerciseStudentParticipation participation1 = participationFor(userStory1);
         ProgrammingExerciseStudentParticipation participation2 = participationFor(userStory2);
 
-        Result milestoneResult = buildGradedMilestoneResult(milestoneParticipation, "commit-1",
-                List.of(new Feedback().testCase(milestoneTestA).positive(true).type(FeedbackType.AUTOMATIC)));
+        Result milestoneResult = buildGradedMilestoneResult(milestoneParticipation, "commit-1", List.of(testCaseFeedback(milestoneTestA, true)));
 
         // The service only starts accepting work after the startup delay, which is why every other test in this class
         // runs with it switched off - and why nothing here caught that saving a story result fires ResultListener into a
@@ -364,9 +393,7 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
         ProgrammingExerciseStudentParticipation participation1 = participationFor(userStory1);
         ProgrammingExerciseStudentParticipation participation2 = participationFor(userStory2);
 
-        List<Feedback> sourceFeedbacks = List.of(new Feedback().testCase(milestoneTestA).positive(true).type(FeedbackType.AUTOMATIC),
-                new Feedback().testCase(milestoneTestB).positive(true).type(FeedbackType.AUTOMATIC),
-                new Feedback().testCase(milestoneTestC).positive(false).type(FeedbackType.AUTOMATIC));
+        List<TestCaseFeedback> sourceFeedbacks = List.of(testCaseFeedback(milestoneTestA, true), testCaseFeedback(milestoneTestB, true), testCaseFeedback(milestoneTestC, false));
         Result sourceResult = buildSourceResult(milestoneParticipation, "commit-1", sourceFeedbacks);
 
         Result us1Result = gradingService.fanOutResultToUserStoryExercise(sourceResult, userStory1, participation1);
@@ -374,14 +401,14 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
 
         // US1 only knows testA/testB, both positive -> full score; testC feedback isn't even attached (not its test case).
         assertThat(us1Result.getScore()).isEqualTo(100.0);
-        assertThat(us1Result.getFeedbacks()).hasSize(2).allSatisfy(feedback -> assertThat(feedback.getTestCase().getExercise().getId()).isEqualTo(userStory1.getId()));
+        assertThat(us1Result.getTestCaseFeedbacks()).hasSize(2).allSatisfy(feedback -> assertThat(feedback.getTestCase().getExercise().getId()).isEqualTo(userStory1.getId()));
         assertThat(((ProgrammingSubmission) us1Result.getSubmission()).getCommitHash()).isEqualTo("commit-1");
         assertThat(us1Result.getSubmission().getParticipation().getId()).isEqualTo(participation1.getId());
         assertThat(us1Result.getSubmission().getId()).isNotEqualTo(sourceResult.getSubmission().getId());
 
         // US2 knows testB (positive) and testC (negative) -> half score; testA feedback isn't attached.
         assertThat(us2Result.getScore()).isEqualTo(50.0);
-        assertThat(us2Result.getFeedbacks()).hasSize(2).allSatisfy(feedback -> assertThat(feedback.getTestCase().getExercise().getId()).isEqualTo(userStory2.getId()));
+        assertThat(us2Result.getTestCaseFeedbacks()).hasSize(2).allSatisfy(feedback -> assertThat(feedback.getTestCase().getExercise().getId()).isEqualTo(userStory2.getId()));
 
         // Both results are actually persisted, not just returned in-memory.
         assertThat(resultRepository.findById(us1Result.getId())).isPresent();
@@ -399,17 +426,15 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
         createTestCase(userStory, "testA");
 
         // A dynamic/parameterized test JUnit couldn't even generate against a missing class is reported with
-        // positive=null and credits=0 (not the same as an executed-and-failed test, which has positive=false) -
-        // feedbackService.copyFeedback's setPositiveViaCredits() fallback (credits >= 0) must not turn that into a pass.
-        Feedback neverExecuted = new Feedback().testCase(milestoneTestA).type(FeedbackType.AUTOMATIC);
-        neverExecuted.setPositive(null);
-        neverExecuted.setCredits(0.0);
-        Result sourceResult = buildSourceResult(milestoneParticipation, "commit-1", List.of(neverExecuted));
+        // positive=null (not the same as an executed-and-failed test, which has positive=false). That tri-state has to
+        // survive feedbackService.copyTestCaseFeedback unchanged - anything that collapses it to a boolean would score
+        // the never-executed test as a pass.
+        Result sourceResult = buildSourceResult(milestoneParticipation, "commit-1", List.of(testCaseFeedback(milestoneTestA, null)));
 
         Result fannedOutResult = gradingService.fanOutResultToUserStoryExercise(sourceResult, userStory, participation);
 
         assertThat(fannedOutResult.getScore()).isZero();
-        assertThat(fannedOutResult.getFeedbacks()).singleElement().satisfies(feedback -> assertThat(feedback.isPositive()).isNull());
+        assertThat(fannedOutResult.getTestCaseFeedbacks()).singleElement().satisfies(feedback -> assertThat(feedback.isPositive()).isNull());
     }
 
     @Test
@@ -449,7 +474,7 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
         ProgrammingExerciseStudentParticipation milestoneParticipation = participationFor(milestoneExercise);
         ProgrammingExerciseStudentParticipation participation = participationFor(userStory);
 
-        Result sourceResult = buildSourceResult(milestoneParticipation, "commit-1", List.of(new Feedback().testCase(milestoneTestA).positive(true).type(FeedbackType.AUTOMATIC)));
+        Result sourceResult = buildSourceResult(milestoneParticipation, "commit-1", List.of(testCaseFeedback(milestoneTestA, true)));
         // Simulates the real push-time flow: a pending submission is created for the sibling first, before the
         // build (and therefore the result) exists.
         gradingService.provisionPendingSubmissionsForUserStoryExercises((ProgrammingSubmission) sourceResult.getSubmission(), milestoneExercise, milestoneParticipation);
@@ -472,7 +497,7 @@ class UserStoryExerciseGradingFanOutTest extends AbstractProgrammingIntegrationI
         ProgrammingExerciseStudentParticipation milestoneParticipation = participationFor(milestoneExercise);
         participationFor(existingUserStory);
 
-        Result sourceResult = buildSourceResult(milestoneParticipation, "commit-1", List.of(new Feedback().testCase(milestoneTestA).positive(true).type(FeedbackType.AUTOMATIC)));
+        Result sourceResult = buildSourceResult(milestoneParticipation, "commit-1", List.of(testCaseFeedback(milestoneTestA, true)));
 
         // A student story added to the group AFTER the student already started it via the milestone.
         UserStoryExercise newUserStory = createUserStoryExercise("new");
