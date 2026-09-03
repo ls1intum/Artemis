@@ -1,5 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
+import { TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineStubComponent } from 'test/helpers/stubs/exercise/timeline-stub.component';
 
 import { ProgrammingExerciseReadonlyTimelineComponent } from './programming-exercise-readonly-timeline.component';
 
@@ -11,11 +14,19 @@ describe('ProgrammingExerciseTimelineComponent', () => {
         await TestBed.configureTestingModule({
             imports: [ProgrammingExerciseReadonlyTimelineComponent],
         })
-            .overrideComponent(ProgrammingExerciseReadonlyTimelineComponent, { set: { template: '' } })
+            .overrideComponent(ProgrammingExerciseReadonlyTimelineComponent, { set: { imports: [TimelineStubComponent] } })
             .compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseReadonlyTimelineComponent);
         component = fixture.componentInstance;
+    });
+
+    it('should use strict sequential validation', () => {
+        fixture.detectChanges();
+
+        const timeline = fixture.debugElement.query(By.directive(TimelineStubComponent)).componentInstance as TimelineStubComponent;
+
+        expect(timeline.validationMode()).toBe(TimelineValidationMode.SEQUENTIALLY_STRICT);
     });
 
     it('should only expose timeline items with defined dates', () => {
