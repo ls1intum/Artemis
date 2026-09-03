@@ -35,6 +35,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import type { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
@@ -555,12 +556,17 @@ export class ExerciseAPIRequests {
      * @param exerciseID - The ID of the modeling exercise for which the submission is made.
      * @param participation - The participation data for the submission.
      */
-    async makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
+    /**
+     * @param overrides fields to layer onto the submission template, e.g. an `explanationText` for views that render
+     *                  the student's explanation, or a `model` carrying relationships.
+     */
+    async makeModelingExerciseSubmission(exerciseID: number, participation: Participation, overrides: Partial<ModelingSubmission> = {}) {
         return this.page.request.put(`api/modeling/exercises/${exerciseID}/modeling-submissions`, {
             data: {
                 ...modelingExerciseSubmissionTemplate,
                 id: participation.submissions![0].id,
                 participation,
+                ...overrides,
             },
         });
     }

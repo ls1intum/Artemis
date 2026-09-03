@@ -487,6 +487,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         var validationResult = validateParticipation(participationId);
         var studentParticipation = validationResult.studentParticipation;
+        Comparator<Result> resultsByMostRecentCompletion = Comparator.comparing(Result::getCompletionDate, Comparator.nullsFirst(Comparator.naturalOrder())).reversed();
 
         // Get the submissions associated with the participation
         Set<Submission> submissions = studentParticipation.getSubmissions();
@@ -509,8 +510,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                 else {
                     return true; // Tutors and above can see all results
                 }
-            }).peek(Result::filterSensitiveInformation).sorted(Comparator.comparing(Result::getCompletionDate, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-                    .toList();
+            }).peek(Result::filterSensitiveInformation).sorted(resultsByMostRecentCompletion).toList();
 
             // Set filtered results back into the submission if any results remain after filtering
             if (!filteredResults.isEmpty()) {
