@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Objects;
 
@@ -163,13 +162,14 @@ public class GitRepositoryExportService {
         Path partialPath = targetDirectory.resolve(repositoryPath.getFileName() + PARTIAL_EXPORT_SUFFIX);
 
         try {
+            // A staging directory an earlier run left behind would be written into rather than replaced, and
+            // DirectoryRepositoryContentSink only creates and overwrites the entries of the current repository, so a
+            // file that is no longer in it would survive and be published by the move below.
+            FileUtils.deleteDirectory(partialPath.toFile());
             try (Repository bareRepository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false)) {
                 InMemoryRepositoryBuilder.writeToDirectory(bareRepository, partialPath);
             }
-            // An atomic rename, not FileUtils.moveDirectory: that one falls back to copying and deleting when the rename fails,
-            // and a copy that fails halfway leaves an incomplete repositoryPath behind that the cleanup below does not cover.
-            // Both paths are siblings in targetDirectory, so they always share a file store and the rename is supported.
-            Files.move(partialPath, repositoryPath, StandardCopyOption.ATOMIC_MOVE);
+            FileUtil.publishAtomically(partialPath, repositoryPath);
         }
         finally {
             if (Files.exists(partialPath) && !FileUtils.deleteQuietly(partialPath.toFile())) {
@@ -218,7 +218,7 @@ public class GitRepositoryExportService {
             catch (GitAPIException e) {
                 throw new IOException("Could not archive the repository " + repositoryUri, e);
             }
-            Files.move(partialFilePath, zipFilePath, StandardCopyOption.ATOMIC_MOVE);
+            FileUtil.publishAtomically(partialFilePath, zipFilePath);
         }
         finally {
             if (!FileUtils.deleteQuietly(partialFilePath.toFile()) && Files.exists(partialFilePath)) {
