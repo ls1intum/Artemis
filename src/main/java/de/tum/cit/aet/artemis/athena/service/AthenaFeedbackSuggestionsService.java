@@ -326,21 +326,22 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Counts one successful feedback suggestion request for the feature usage analysis.
+     * Counts one completed feedback suggestion request for the feature usage analysis, successful or not.
      * <p>
      * Split by exercise type and by graded, because those are different features in practice: graded suggestions support
      * a tutor assessing, non-graded ones give a student preliminary feedback, and a deployment can easily use one and not
      * the other.
      * <p>
-     * Only successes are counted here. A failing Athena call propagates to the REST endpoint that asked for it, and that
-     * endpoint's own error count already records it.
+     * Failures are counted here rather than being left to the REST endpoint that asked for the suggestions. That endpoint
+     * does record its own error, but it aggregates every exercise type and both graded and non-graded into one row, so it
+     * cannot say which of these features is failing. Athena being unreachable is exactly what an error rate on this
+     * feature exists to show, and recording only successes made it zero by construction.
      *
      * @param exercise   the exercise the suggestions were requested for
      * @param isGraded   whether grade suggestions were requested
      * @param durationMs how long the call to Athena took
-     * @param failed     whether the request to Athena failed. Recorded from a finally block rather than after a
-     *                       successful response, because Athena being unreachable is precisely the thing an error rate on
-     *                       this feature should show, and recording only successes made it structurally invisible.
+     * @param failed     whether the request failed, passed from a finally block so that a request which threw is counted
+     *                       as a failure rather than not counted at all
      */
     private void recordFeedbackSuggestionUsage(Exercise exercise, boolean isGraded, long durationMs, boolean failed) {
         String identifier = "feedback-suggestions/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT) + (isGraded ? "/graded" : "/non-graded");

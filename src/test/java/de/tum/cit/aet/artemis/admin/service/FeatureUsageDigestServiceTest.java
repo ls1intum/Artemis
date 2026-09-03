@@ -221,6 +221,27 @@ class FeatureUsageDigestServiceTest {
         assertThat(digest.retiredFeatures()).isEqualTo(1);
     }
 
+    /**
+     * A label that covers both a live and a removed endpoint is the case where "does the feature still exist" and "what
+     * did it get used for" have different answers. The label is still offered while one endpoint remains, but the removed
+     * endpoint's calls must not be counted, because the previous window is queried with retired rows filtered out one by
+     * one. Counting them on only one side reports a week-over-week change that never happened.
+     */
+    @Test
+    void shouldExcludeARetiredEndpointOfAStillOfferedFeatureFromItsCounters() {
+        givenOverview(labelledEntry("programming", "authoring/exercise-management", 150, 1, false), labelledEntry("programming", "authoring/exercise-management", 400, 9, true));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        // one endpoint remains, so this is one still-offered feature rather than a retired one
+        assertThat(digest.trackedFeatures()).isEqualTo(1);
+        assertThat(digest.retiredFeatures()).isZero();
+        // but the endpoint this version no longer offers contributes neither its calls nor its errors
+        assertThat(digest.totalCalls()).isEqualTo(150);
+        assertThat(moduleOf(digest, "programming").callCount()).isEqualTo(150);
+        assertThat(moduleOf(digest, "programming").errorCount()).isEqualTo(1);
+    }
+
     @Test
     void shouldAskForThePreviousWindowWithTheSameRetirementCutoffAsTheReport() {
         givenOverview(entry("programming", 150, 0, false));

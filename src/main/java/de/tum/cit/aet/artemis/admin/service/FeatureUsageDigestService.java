@@ -113,9 +113,10 @@ public class FeatureUsageDigestService {
      * admin page lists and therefore what the digest has to count.
      * <p>
      * The key and the merge deliberately mirror the page: rows are grouped by module and label, falling back to the
-     * identifier when a row carries no label, counts are summed, and a feature counts as retired only once every
-     * endpoint behind it is gone - while one remains, the feature still exists. Diverging from the page here would
-     * reintroduce the contradiction from the other side.
+     * identifier when a row carries no label, and a feature counts as retired only once every endpoint behind it is
+     * gone - while one remains, the feature still exists. Counters are summed over the endpoints this version still
+     * offers, so a label that covers both live and removed endpoints reports only what is still reachable. Diverging
+     * from the page here would reintroduce the contradiction from the other side.
      *
      * @param entries the inventory rows from the overview
      * @return one entry per logical feature
@@ -124,7 +125,15 @@ public class FeatureUsageDigestService {
         Map<String, LogicalFeature> byKey = new LinkedHashMap<>();
         for (FeatureUsageEntryDTO entry : entries) {
             String label = StringUtils.hasText(entry.featureLabel()) ? entry.featureLabel() : entry.identifier();
-            byKey.merge(entry.module() + "/" + label, new LogicalFeature(entry.module(), entry.callCount(), entry.errorCount(), entry.retired()),
+            // A retired endpoint contributes to whether the feature still exists, but not to its counters. Those two are
+            // different questions for a label that covers both live and removed endpoints: the label is still offered
+            // while one endpoint remains, yet the removed endpoint's calls must not be counted, because the previous
+            // window is queried with the retired rows filtered out individually. Counting them on one side only produced
+            // a week-over-week change that never happened, and contradicted the email's claim that retired entries are
+            // excluded.
+            long callCount = entry.retired() ? 0 : entry.callCount();
+            long errorCount = entry.retired() ? 0 : entry.errorCount();
+            byKey.merge(entry.module() + "/" + label, new LogicalFeature(entry.module(), callCount, errorCount, entry.retired()),
                     (existing, added) -> new LogicalFeature(existing.module(), existing.callCount() + added.callCount(), existing.errorCount() + added.errorCount(),
                             existing.retired() && added.retired()));
         }
