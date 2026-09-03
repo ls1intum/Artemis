@@ -76,9 +76,6 @@ public class FeatureUsageFlushService {
      */
     @PreDestroy
     public void flushOnShutdown() {
-        // Recording is asynchronous, so the queue has to be applied before the counters are read. Called here as well as
-        // from the collector's own @PreDestroy because bean destruction order is not guaranteed, and it is idempotent.
-        collector.applyPendingObservations();
         flush();
     }
 
@@ -96,12 +93,6 @@ public class FeatureUsageFlushService {
                 // never be reported again - a failed write would lose the bucket rather than retry it.
                 collector.reclaim(delta);
             }
-        }
-        long discarded = collector.consumeDiscardedObservationCount();
-        if (discarded > 0) {
-            // The counters are then a lower bound rather than a count, which is worth a line: the alternative to
-            // dropping was making requests wait for a statistics queue.
-            log.warn("Discarded {} feature usage observations since the previous flush because the recording queue was full", discarded);
         }
         if (written < deltas.size()) {
             log.warn("Flushed feature usage for {} of {} buckets; the rest were returned to the collector and are retried on the next flush", written, deltas.size());

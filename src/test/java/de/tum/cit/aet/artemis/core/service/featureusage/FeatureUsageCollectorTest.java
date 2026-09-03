@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.featureusage;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -13,7 +12,6 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
@@ -287,69 +285,6 @@ class FeatureUsageCollectorTest {
         assertThat(collector.drain(today())).isEmpty();
     }
 
-    /**
-     * The production collector hands every observation to a recording thread, so that nothing about counting a request
-     * can lengthen or interfere with it. Recording therefore has to have actually happened by the time a flush reads the
-     * counters, and on shutdown the queue has to be applied rather than dropped on top of the interval the design
-     * already accepts losing.
-     */
-    @Test
-    void shouldApplyObservationsHandedToTheRecordingThread() {
-        var asyncCollector = new FeatureUsageCollector(enabledProperties(), contextReturningRegistry());
-
-        asyncCollector.recordUsage(FEATURE_ID, Role.STUDENT, true, 40);
-        asyncCollector.recordUsage(FEATURE_ID, Role.STUDENT, false, 60);
-
-        // the point of the handoff: the caller returned before the work was done, so it has to be waited for here
-        assertThat(asyncCollector.applyPendingObservations()).isTrue();
-
-        var deltas = asyncCollector.drain(today());
-        assertThat(deltas).hasSize(1);
-        assertThat(deltas.getFirst().callCount()).isEqualTo(2);
-        assertThat(deltas.getFirst().errorCount()).isEqualTo(1);
-        assertThat(deltas.getFirst().durationSumMs()).isEqualTo(100);
-        assertThat(deltas.getFirst().durationMaxMs()).isEqualTo(60);
-    }
-
-    /**
-     * Recording is deferred, so reading the clock where an observation is applied rather than where it happened would
-     * attribute a request made just before midnight to the following day.
-     */
-    @Test
-    void shouldAttributeAnObservationToTheDayItHappenedOn() {
-        collector.recordUsage(FEATURE_ID, Role.STUDENT, false, 1);
-
-        // draining as if the day had rolled over still finds the bucket under today, which only holds if the day
-        // travelled with the observation instead of being read at accumulation time
-        var deltas = collector.drain(today().plusDays(1));
-
-        assertThat(deltas).hasSize(1);
-        assertThat(deltas.getFirst().usageDay()).isEqualTo(today());
-    }
-
-    @Test
-    void shouldNotPropagateAFailureOfTheRecordingThreadIntoTheCaller() {
-        var rejecting = new FeatureUsageCollector(enabledProperties(), contextReturningRegistry(), runnable -> {
-            throw new RejectedExecutionException("the recorder is saturated");
-        });
-
-        // a counter must never surface to the operation it measures, not even when the queue is gone
-        assertThatCode(() -> rejecting.recordUsage(FEATURE_ID, Role.STUDENT, false, 1)).doesNotThrowAnyException();
-        assertThat(rejecting.consumeDiscardedObservationCount()).isEqualTo(1);
-        // consumed, so the next flush does not report the same drop again
-        assertThat(rejecting.consumeDiscardedObservationCount()).isZero();
-    }
-
-    private static FeatureUsageProperties enabledProperties() {
-        return new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of()));
-    }
-
-    private ApplicationContext contextReturningRegistry() {
-        var applicationContext = mock(ApplicationContext.class);
-        when(applicationContext.getBean(FeatureUsageRegistry.class)).thenReturn(registry);
-        return applicationContext;
-    }
-
     private static LocalDate today() {
         return LocalDate.now(ZoneOffset.UTC);
     }
@@ -361,10 +296,7 @@ class FeatureUsageCollectorTest {
     private FeatureUsageCollector newCollector(FeatureUsageProperties properties) {
         var applicationContext = mock(ApplicationContext.class);
         when(applicationContext.getBean(FeatureUsageRegistry.class)).thenReturn(registry);
-        // Recording is asynchronous in production. Applied inline here so a test can drain straight after recording:
-        // the concurrency between recording and draining is what the conservation test covers on purpose, and every
-        // other test here is about the watermark protocol, not the handoff.
-        return new FeatureUsageCollector(properties, applicationContext, Runnable::run);
+        return new FeatureUsageCollector(properties, applicationContext);
     }
 
 }

@@ -2,28 +2,18 @@ package de.tum.cit.aet.artemis.core.service.featureusage;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.lang.reflect.Method;
-import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Supplier;
-
-import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -67,70 +57,9 @@ public class FeatureUsageCollector {
 
     private final Map<UsageKey, UsageAccumulator> buckets = new ConcurrentHashMap<>();
 
-    /**
-     * How many observations may wait to be applied. One observation is a handful of primitives, so this costs tens of
-     * kilobytes at most, and it is far more than a flush interval of traffic on a busy node.
-     */
-    private static final int PENDING_OBSERVATION_CAPACITY = 20_000;
-
-    private static final Duration SHUTDOWN_GRACE = Duration.ofSeconds(5);
-
-    /**
-     * Applies observations away from the thread that produced them, so that nothing about counting a request can lengthen
-     * or interfere with it.
-     * <p>
-     * A dedicated single thread rather than the shared application executor: usage tracking must neither compete with
-     * application work for threads nor be starved by it. One thread is enough, because applying an observation is a map
-     * lookup and four counter updates, and a single applier removes all contention between recorders.
-     * <p>
-     * The queue is bounded and full means discard. That is the point rather than a limitation: a counter must never apply
-     * back-pressure to a request, so losing statistics is strictly preferable to making somebody wait. Discards are
-     * counted and reported by the flush.
-     * <p>
-     * {@link LinkedBlockingQueue} rather than {@link java.util.concurrent.ArrayBlockingQueue} deliberately: the array
-     * variant guards the whole queue with one lock, so every request thread handing over an observation would contend
-     * with the recording thread taking one off. The linked variant holds separate put and take locks, so producers never
-     * contend with the consumer - which is the property that matters when the producers are request threads. It allocates
-     * a node per observation, and that is the right trade here.
-     */
-    private final Executor recorder;
-
-    private final LongAdder discardedObservations = new LongAdder();
-
-    /**
-     * Annotated because the package-private constructor below gives this class two candidates, which Spring will not
-     * choose between on its own.
-     */
-    @Autowired
     public FeatureUsageCollector(FeatureUsageProperties properties, ApplicationContext applicationContext) {
         this.properties = properties;
         this.applicationContext = applicationContext;
-        this.recorder = boundedSingleThreadRecorder();
-    }
-
-    /**
-     * Package-private so a test can apply observations on the calling thread and stay deterministic. Handing recording to
-     * another thread is exactly what production needs and exactly what a unit test must not have to wait for.
-     *
-     * @param properties         the feature usage configuration
-     * @param applicationContext used to resolve the registry on first use
-     * @param recorder           applies observations; production hands them off, tests run them inline
-     */
-    FeatureUsageCollector(FeatureUsageProperties properties, ApplicationContext applicationContext, Executor recorder) {
-        this.properties = properties;
-        this.applicationContext = applicationContext;
-        this.recorder = recorder;
-    }
-
-    private Executor boundedSingleThreadRecorder() {
-        // Silence on a discard would be worse than the loss: the page would under-report without saying so.
-        RejectedExecutionHandler discardAndCount = (runnable, executor) -> discardedObservations.increment();
-        return new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(PENDING_OBSERVATION_CAPACITY), runnable -> {
-            var thread = new Thread(runnable, "feature-usage-recorder");
-            // a statistics thread must never hold up JVM shutdown
-            thread.setDaemon(true);
-            return thread;
-        }, discardAndCount);
     }
 
     private FeatureUsageRegistry registry() {
@@ -164,34 +93,12 @@ public class FeatureUsageCollector {
         if (!isEnabled()) {
             return;
         }
-        long usageDay = currentUtcEpochDay();
-        submit(() -> accumulate(featureId, usageDay, callerRole, failed, durationMs), () -> "feature " + featureId);
-    }
-
-    /**
-     * Records one REST call, resolving the feature from its handler method.
-     * <p>
-     * The resolution happens on the recording thread rather than at the call site, so the request path never touches the
-     * registry - including the one-off cost of creating that bean, and everything behind it, on the first request.
-     *
-     * @param handlerMethod the handler method that served the request
-     * @param callerRole    the caller's highest global role
-     * @param failed        whether the call failed
-     * @param durationMs    how long the call took
-     */
-    public void recordRestUsage(Method handlerMethod, Role callerRole, boolean failed, long durationMs) {
-        if (!isEnabled()) {
-            return;
+        try {
+            accumulate(featureId, callerRole, failed, durationMs);
         }
-        long usageDay = currentUtcEpochDay();
-        submit(() -> {
-            Long featureId = registry().restFeatureId(handlerMethod);
-            if (featureId == null) {
-                // not part of the inventory, for instance a handler registered after the startup pass
-                return;
-            }
-            accumulate(featureId, usageDay, callerRole, failed, durationMs);
-        }, () -> "handler " + handlerMethod);
+        catch (Exception e) {
+            log.debug("Failed to record usage of feature {}", featureId, e);
+        }
     }
 
     /**
@@ -208,50 +115,20 @@ public class FeatureUsageCollector {
         if (!isEnabled()) {
             return;
         }
-        long usageDay = currentUtcEpochDay();
-        submit(() -> {
+        try {
             Long featureId = registry().featureId(featureKind, module, identifier);
             if (featureId == null) {
                 return;
             }
-            accumulate(featureId, usageDay, callerRole, failed, durationMs);
-        }, () -> featureKind + " feature " + identifier);
-    }
-
-    /**
-     * Hands one observation to the recording thread. Never throws and never blocks: a full queue discards, so a counter
-     * cannot make its caller wait, and a rejected or failing observation costs statistics rather than an operation.
-     */
-    private void submit(Runnable observation, Supplier<String> describe) {
-        try {
-            recorder.execute(() -> {
-                try {
-                    observation.run();
-                }
-                catch (Exception e) {
-                    log.debug("Failed to record usage of {}", describe.get(), e);
-                }
-            });
+            accumulate(featureId, callerRole, failed, durationMs);
         }
         catch (Exception e) {
-            // a saturated or shut down recorder must not surface to the caller
-            discardedObservations.increment();
+            log.debug("Failed to record usage of {} feature {}", featureKind, identifier, e);
         }
     }
 
-    /**
-     * The UTC day is read where the observation happens, not where it is applied.
-     * <p>
-     * Recording is deferred, so reading the clock on the recording thread would attribute a request made just before
-     * midnight to the following day. Computed as an epoch day rather than a {@link LocalDate} to keep the call site free
-     * of allocation.
-     */
-    private static long currentUtcEpochDay() {
-        return Math.floorDiv(System.currentTimeMillis(), TimeUnit.DAYS.toMillis(1));
-    }
-
-    private void accumulate(long featureId, long usageDay, Role callerRole, boolean failed, long durationMs) {
-        UsageKey key = new UsageKey(featureId, LocalDate.ofEpochDay(usageDay), callerRole);
+    private void accumulate(long featureId, Role callerRole, boolean failed, long durationMs) {
+        UsageKey key = new UsageKey(featureId, LocalDate.now(ZoneOffset.UTC), callerRole);
         UsageAccumulator accumulator = buckets.computeIfAbsent(key, ignored -> new UsageAccumulator());
         accumulator.callCount.increment();
         if (failed) {
@@ -260,49 +137,6 @@ public class FeatureUsageCollector {
         int cappedDurationMs = (int) Math.min(Integer.MAX_VALUE, Math.max(0, durationMs));
         accumulator.durationSumMs.add(cappedDurationMs);
         accumulator.durationMaxMs.accumulateAndGet(cappedDurationMs, Math::max);
-    }
-
-    /**
-     * Applies everything still queued, so a flush can see it.
-     * <p>
-     * Called before the flush on shutdown: recording is asynchronous, so without this a graceful restart would drop
-     * whatever had not been applied yet, on top of the interval the design already accepts losing. Idempotent, and it
-     * waits only a few seconds - a shutdown must not be held up by statistics either.
-     *
-     * @return true if everything queued was applied, false on timeout or interruption
-     */
-    public boolean applyPendingObservations() {
-        if (!(recorder instanceof ThreadPoolExecutor pool)) {
-            // an inline recorder has nothing pending by construction
-            return true;
-        }
-        pool.shutdown();
-        try {
-            return pool.awaitTermination(SHUTDOWN_GRACE.toMillis(), TimeUnit.MILLISECONDS);
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
-    }
-
-    @PreDestroy
-    void applyPendingObservationsOnShutdown() {
-        if (!applyPendingObservations()) {
-            log.warn("Feature usage recording did not finish within {}; some observations were not persisted", SHUTDOWN_GRACE);
-        }
-    }
-
-    /**
-     * How many observations were dropped because the recording queue was full, reset to zero by this call.
-     * <p>
-     * Reported by the flush rather than logged per drop: under the load that fills the queue, a line per discard would be
-     * its own problem.
-     *
-     * @return the number of observations discarded since the previous call
-     */
-    public long consumeDiscardedObservationCount() {
-        return discardedObservations.sumThenReset();
     }
 
     /**

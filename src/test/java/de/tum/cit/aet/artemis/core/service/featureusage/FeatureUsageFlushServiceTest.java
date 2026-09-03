@@ -175,9 +175,7 @@ class FeatureUsageFlushServiceTest {
     private FeatureUsageCollector newCollector(FeatureUsageProperties properties) {
         var applicationContext = mock(ApplicationContext.class);
         when(applicationContext.getBean(FeatureUsageRegistry.class)).thenReturn(mock(FeatureUsageRegistry.class));
-        // Applied inline: every test here is about the write and retry protocol, not the handoff to the recording
-        // thread, which FeatureUsageCollectorTest covers with a real one.
-        return new FeatureUsageCollector(properties, applicationContext, Runnable::run);
+        return new FeatureUsageCollector(properties, applicationContext);
     }
 
 }
