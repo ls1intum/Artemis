@@ -48,6 +48,13 @@ class DirectoryRepositoryContentSink implements RepositoryContentSink {
             }
 
             @Override
+            public void flush() throws IOException {
+                // Without this, OutputStream.flush() would silently do nothing, and a writer that flushes instead of
+                // closing would lose whatever the file stream still holds.
+                outputStream.flush();
+            }
+
+            @Override
             public void close() throws IOException {
                 outputStream.close();
                 applyPermissions(target, unixMode);

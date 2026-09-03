@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -21,6 +22,7 @@ import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -137,6 +139,8 @@ class InMemoryRepositoryBuilderTest {
      */
     @Test
     void shouldMaterializeAUsableRepositoryIntoADirectoryWithoutCloning() throws Exception {
+        // Windows has no POSIX view, so the file system cannot carry the executable bit this test asserts on.
+        Assumptions.assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "The file system does not support POSIX permissions");
         Path source = tempDir.resolve("directory-source");
         ObjectId secondCommit;
         try (Git git = Git.init().setDirectory(source.toFile()).setInitialBranch(BRANCH).call()) {

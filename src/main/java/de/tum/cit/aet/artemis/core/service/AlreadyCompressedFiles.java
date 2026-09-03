@@ -15,7 +15,7 @@ import org.apache.commons.io.FilenameUtils;
  * 50% on the plain CSV files in the same archive, so the outer pass spends CPU on the entire payload for almost
  * nothing. Storing them keeps the archive a normal ZIP that any tool can open, and skips that work.
  */
-public final class AlreadyCompressedFiles {
+final class AlreadyCompressedFiles {
 
     /**
      * Extensions whose content carries its own compression. Deliberately limited to what Artemis actually nests plus
@@ -31,7 +31,7 @@ public final class AlreadyCompressedFiles {
      * @param path the file to inspect; only its name is read, never its content
      * @return true if the file is already compressed and should be stored in a ZIP rather than deflated
      */
-    public static boolean matches(Path path) {
+    static boolean matches(Path path) {
         return EXTENSIONS.contains(FilenameUtils.getExtension(path.getFileName().toString()).toLowerCase(Locale.ROOT));
     }
 }

@@ -637,8 +637,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * <p>
      * Unless the export options require a checkout, the repository is streamed straight from its bare repository into
      * the output directory - as a ZIP for a snapshot, as a directory when the history is wanted: no clone, no working
-     * copy and no temporary directory. Student repositories are
-     * exported without their history in that case, matching what the single-repository student download already does.
+     * copy and no temporary directory.
      *
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
@@ -648,8 +647,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param outputDir               The directory where the exported repository is stored
      * @param content                 how much of the repository the caller asked for
      * @return The exported repository as a zip file, or as a directory when the history is wanted or an option rewrites
-     *         the repository, or null if the
-     *         participation was skipped
+     *         the repository, or null if the participation was skipped
      * @throws IOException if zip file creation failed
      */
     @Nullable
