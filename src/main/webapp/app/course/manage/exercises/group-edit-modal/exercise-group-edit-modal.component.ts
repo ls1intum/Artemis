@@ -5,7 +5,7 @@ import { faCircleInfo, faCircleXmark, faTriangleExclamation } from '@fortawesome
 import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
-import { TimelineComponent, TimelineItem, TimelineStatus, TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
@@ -37,7 +37,6 @@ export class ExerciseGroupEditModalComponent {
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly faCircleXmark = faCircleXmark;
     protected readonly MAX_TITLE_LENGTH = MAX_TITLE_LENGTH;
-    protected readonly TimelineValidationMode = TimelineValidationMode;
 
     /** Two-way visibility, driven by the parent. */
     readonly visible = model<boolean>(false);

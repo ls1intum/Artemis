@@ -149,7 +149,6 @@
             "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "dates": "Termine",
             "dateNotSet": "Kein Datum gesetzt",
-            "timelineDateOrderTooltip": "Dieses Datum muss nach oder zeitgleich mit allen vorhergehenden Daten liegen.",
             "timelineDateStrictOrderTooltip": "Dieses Datum muss nach allen vorhergehenden Daten liegen.",
             "timelineDateRequiredTooltip": "Dieses Datum ist erforderlich.",
             "timelineDateInvalidTooltip": "Das eingegebene Datum ist ungültig. Bitte das Format TT.MM.JJJJ HH:mm verwenden.",

@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { DatePicker } from 'primeng/datepicker';
 import { vi } from 'vitest';
 
-import { TimelineComponent, TimelineItem, TimelineValidationMode } from './timeline.component';
+import { TimelineComponent, TimelineItem } from './timeline.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -52,7 +52,7 @@ describe('ExerciseTimeline', () => {
             internalDate: dueDate.toDate(),
             hasInvalidDateOrder: true,
             isInputRequiredButUndefined: false,
-            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
+            tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
         });
         expect(internalTimelineItems[2]).toMatchObject({
             kind: 'required',
@@ -94,18 +94,13 @@ describe('ExerciseTimeline', () => {
         expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
     });
 
-    it('should allow equal dates by default and reject them in sequentially strict mode', () => {
+    it('should reject equal dates', () => {
         const date = dayjs('2026-01-01T10:00:00Z');
         const timelineItems: TimelineItem[] = [
             { kind: 'optional', labelStringKey: 'release', date: signal(date) },
             { kind: 'optional', labelStringKey: 'start', date: signal(date) },
         ];
         fixture.componentRef.setInput('timelineItems', timelineItems);
-
-        expect(component.internalTimelineItems()[1]).toMatchObject({ hasInvalidDateOrder: false, tooltip: undefined });
-        expect(component.timelineStatus().valid).toBe(true);
-
-        fixture.componentRef.setInput('validationMode', TimelineValidationMode.SEQUENTIALLY_STRICT);
 
         expect(component.internalTimelineItems()[1]).toMatchObject({
             hasInvalidDateOrder: true,
@@ -291,7 +286,7 @@ describe('ExerciseTimeline', () => {
         expect(component.internalTimelineItems()[1]).toMatchObject({
             hasInvalidDateOrder: true,
             hasWarning: false,
-            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
+            tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
         });
         expect(component.timelineStatus().valid).toBe(false);
 
@@ -345,7 +340,7 @@ describe('ExerciseTimeline', () => {
         expect(component.internalTimelineItems()[1]).toMatchObject({
             hasInvalidDateOrder: true,
             hasExternalError: true,
-            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
+            tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
         });
     });
 });

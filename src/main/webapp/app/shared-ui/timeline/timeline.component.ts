@@ -32,11 +32,6 @@ type InternalTimelineItem = TimelineItem & {
     tooltip: string | undefined;
 };
 
-export enum TimelineValidationMode {
-    SEQUENTIALLY_STRICT = 'SEQUENTIALLY_STRICT',
-    SEQUENTIALLY_ALLOW_EQUAL = 'SEQUENTIALLY_ALLOW_EQUAL',
-}
-
 @Component({
     selector: 'jhi-timeline',
     imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective],
@@ -53,7 +48,6 @@ export class TimelineComponent {
     private invalidInputKeys = signal<Set<string>>(new Set());
 
     timelineItems = input.required<TimelineItem[]>();
-    validationMode = input<TimelineValidationMode>(TimelineValidationMode.SEQUENTIALLY_ALLOW_EQUAL);
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
     timelineStatus = computed<TimelineStatus>(() => this.computeExerciseTimelineStatus());
     timelineStatusChange = output<TimelineStatus>();
@@ -132,7 +126,7 @@ export class TimelineComponent {
                 date !== undefined &&
                 items.slice(0, index).some((previousItem) => {
                     const previousDate = previousItem.date();
-                    return previousDate !== undefined && this.isDateOrderInvalid(date, previousDate);
+                    return previousDate !== undefined && !date.isAfter(previousDate);
                 });
             const isInputRequiredButUndefined = item.kind === 'required' && date === undefined;
             const isInvalidInput = invalidInputKeys.has(item.labelStringKey);
@@ -146,11 +140,7 @@ export class TimelineComponent {
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
             } else if (hasInvalidDateOrder) {
-                const tooltipKey =
-                    this.validationMode() === TimelineValidationMode.SEQUENTIALLY_STRICT
-                        ? 'artemisApp.exercise.timelineDateStrictOrderTooltip'
-                        : 'artemisApp.exercise.timelineDateOrderTooltip';
-                tooltip = this.translateService.instant(tooltipKey);
+                tooltip = this.translateService.instant('artemisApp.exercise.timelineDateStrictOrderTooltip');
             } else if (isInputRequiredButUndefined) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateRequiredTooltip');
             } else if (errorStringKey !== undefined) {
@@ -173,13 +163,6 @@ export class TimelineComponent {
                 tooltip,
             };
         });
-    }
-
-    private isDateOrderInvalid(date: Dayjs, previousDate: Dayjs): boolean {
-        if (this.validationMode() === TimelineValidationMode.SEQUENTIALLY_STRICT) {
-            return !date.isAfter(previousDate);
-        }
-        return date.isBefore(previousDate);
     }
 
     private computeExerciseTimelineStatus(): TimelineStatus {

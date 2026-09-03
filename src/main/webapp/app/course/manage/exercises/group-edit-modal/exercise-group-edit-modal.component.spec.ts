@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
@@ -13,7 +12,6 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
 
 describe('ExerciseGroupEditModalComponent', () => {
     let fixture: ComponentFixture<ExerciseGroupEditModalComponent>;
@@ -119,16 +117,6 @@ describe('ExerciseGroupEditModalComponent', () => {
             fixture.detectChanges();
             expect(component.timelineItems().map((item) => item.labelStringKey)).not.toContain('artemisApp.exercise.dateForRunningTestsAfterDueDate');
         }
-    });
-
-    it('uses strict sequential validation for all group dates', () => {
-        fixture.componentRef.setInput('group', buildGroup());
-        fixture.componentRef.setInput('visible', true);
-        fixture.detectChanges();
-
-        const timeline = fixture.debugElement.query(By.directive(TimelineStubComponent)).componentInstance as TimelineStubComponent;
-
-        expect(timeline.validationMode()).toBe(TimelineValidationMode.SEQUENTIALLY_STRICT);
     });
 
     it('requires a due date when an assessment due date is set', () => {

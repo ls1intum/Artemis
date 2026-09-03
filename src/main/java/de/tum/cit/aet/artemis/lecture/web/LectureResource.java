@@ -144,6 +144,7 @@ public class LectureResource {
         if (newLectureDto.id() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
+        validateLectureDates(newLectureDto.startDate(), newLectureDto.endDate());
         Course course = courseRepository.findByIdElseThrow(newLectureDto.course.id());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
@@ -208,6 +209,7 @@ public class LectureResource {
     }
 
     private Lecture createLectureUsing(LectureSeriesCreateLectureDTO lectureDTO, Course course) {
+        validateLectureDates(lectureDTO.startDate(), lectureDTO.endDate());
         Lecture lecture = new Lecture();
         lecture.setCourse(course);
         lecture.setTitle(lectureDTO.title());
@@ -240,6 +242,7 @@ public class LectureResource {
         if (updatedLectureDto.course == null || !course.getId().equals(updatedLectureDto.course.id())) {
             throw new BadRequestAlertException("Lecture does not belong to the specified course", ENTITY_NAME, "courseMismatch");
         }
+        validateLectureDates(updatedLectureDto.startDate(), updatedLectureDto.endDate());
         updateLectureAttributesFromDTO(originalLecture, updatedLectureDto);
 
         channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
@@ -256,6 +259,12 @@ public class LectureResource {
         lecture.setStartDate(lectureDTO.startDate());
         lecture.setEndDate(lectureDTO.endDate());
         lecture.setIsTutorialLecture(lectureDTO.isTutorialLecture());
+    }
+
+    private static void validateLectureDates(@Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate) {
+        if (startDate != null && endDate != null && !startDate.isBefore(endDate)) {
+            throw new BadRequestAlertException("Lecture start date must be before end date", ENTITY_NAME, "invalidDateRange");
+        }
     }
 
     /**

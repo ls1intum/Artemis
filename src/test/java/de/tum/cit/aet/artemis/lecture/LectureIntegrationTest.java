@@ -233,6 +233,18 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(channel.getName()).isEqualTo("lecture-loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLecture_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(this.course1.getId());
+        ZonedDateTime startDate = ZonedDateTime.now();
+        LectureResource.SimpleLectureDTO lecture = new LectureResource.SimpleLectureDTO(null, "Invalid dates", null, startDate, startDate.plusHours(endDateOffsetHours), false,
+                null, LectureResource.SimpleLectureDTO.CourseDTO.from(course));
+
+        request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.BAD_REQUEST);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createLecture_alreadyId_shouldReturnBadRequest() throws Exception {
@@ -246,9 +258,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
     void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
         Lecture originalLecture = lectureRepository.findById(lecture1.getId()).orElseThrow();
         String editedChannelName = "edited-lecture-channel";
-        var updatedDate = ZonedDateTime.now().plusMonths(3);
+        var updatedStartDate = ZonedDateTime.now().plusMonths(3);
+        var updatedEndDate = updatedStartDate.plusHours(1);
         conversationUtilService.createCourseWideChannel(originalLecture.getCourse(), editedChannelName);
-        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Updated", "Updated", updatedDate, updatedDate, false,
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Updated", "Updated", updatedStartDate, updatedEndDate, false,
                 editedChannelName, LectureResource.SimpleLectureDTO.CourseDTO.from(originalLecture.getCourse()));
 
         // create channel with same name
@@ -262,8 +275,20 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(channel.getName()).isEqualTo(editedChannelName);
         assertThat(updatedLecture.title()).isEqualTo("Updated");
         assertThat(updatedLecture.description()).isEqualTo("Updated");
-        assertThat(updatedLecture.startDate()).isEqualTo(updatedDate);
-        assertThat(updatedLecture.endDate()).isEqualTo(updatedDate);
+        assertThat(updatedLecture.startDate()).isEqualTo(updatedStartDate);
+        assertThat(updatedLecture.endDate()).isEqualTo(updatedEndDate);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLecture_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        Lecture originalLecture = lectureRepository.findByIdElseThrow(lecture1.getId());
+        ZonedDateTime startDate = ZonedDateTime.now().plusMonths(3);
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(originalLecture.getId(), "Invalid dates", null, startDate,
+                startDate.plusHours(endDateOffsetHours), false, null, LectureResource.SimpleLectureDTO.CourseDTO.from(originalLecture.getCourse()));
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -653,6 +678,16 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         LectureSeriesCreateLectureDTO dto1 = new LectureSeriesCreateLectureDTO(titleLecture1, startLecture1, endLecture1);
 
         request.postWithoutResponseBody("/api/lecture/courses/-1/lectures", List.of(dto1), HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -1 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLectureSeries_nonStrictDateSequence_shouldReturnBadRequest(int endDateOffsetHours) throws Exception {
+        ZonedDateTime startDate = ZonedDateTime.now();
+        LectureSeriesCreateLectureDTO lecture = new LectureSeriesCreateLectureDTO("Invalid dates", startDate, startDate.plusHours(endDateOffsetHours));
+
+        request.postWithoutResponseBody("/api/lecture/courses/" + course1.getId() + "/lectures", List.of(lecture), HttpStatus.BAD_REQUEST);
     }
 
     @Test

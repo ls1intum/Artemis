@@ -43,7 +43,7 @@
             <tum-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2">
                 <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesOverrideWarning"></span>
             </tum-ui-message>
-            <jhi-timeline [timelineItems]="timelineItems()" [validationMode]="TimelineValidationMode.SEQUENTIALLY_STRICT" (timelineStatusChange)="timelineStatus.set($event)" />
+            <jhi-timeline [timelineItems]="timelineItems()" (timelineStatusChange)="timelineStatus.set($event)" />
             @if (!timelineStatus().valid) {
                 <tum-ui-message severity="error" [icon]="faCircleXmark" class="mt-2">
                     <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.datesInvalidOrder"></span>

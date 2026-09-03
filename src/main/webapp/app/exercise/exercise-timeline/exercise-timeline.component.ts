@@ -1,6 +1,6 @@
 import { Component, computed, input, model, output } from '@angular/core';
 import { Dayjs } from 'dayjs/esm';
-import { TimelineComponent, TimelineItem, TimelineStatus, TimelineValidationMode } from 'app/shared-ui/timeline/timeline.component';
+import { TimelineComponent, TimelineItem, TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
     selector: 'jhi-exercise-timeline',
@@ -8,8 +8,6 @@ import { TimelineComponent, TimelineItem, TimelineStatus, TimelineValidationMode
     templateUrl: './exercise-timeline.component.html',
 })
 export class ExerciseTimelineComponent {
-    protected readonly TimelineValidationMode = TimelineValidationMode;
-
     readonly releaseDate = model<Dayjs | undefined>();
     readonly startDate = model<Dayjs | undefined>();
     readonly dueDate = model<Dayjs | undefined>();
