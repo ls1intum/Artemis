@@ -253,7 +253,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
                 return true;
             }
         }
-        return this.communicationRouteLoaded() || !!activeRoute.data?.hasSidebar;
+        return this.communicationRouteLoaded();
     }
 
     protected handleComponentActivation(componentRef: unknown): void {
