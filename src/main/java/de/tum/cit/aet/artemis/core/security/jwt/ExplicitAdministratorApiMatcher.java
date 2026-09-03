@@ -34,9 +34,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
  * ordinary neighbours as well. Matching the registered patterns has neither problem, and an administrator endpoint
  * added later is covered without anyone remembering this class exists.
  */
-public class AdministratorEndpointMatcher {
+public class ExplicitAdministratorApiMatcher {
 
-    private static final Logger log = LoggerFactory.getLogger(AdministratorEndpointMatcher.class);
+    private static final Logger log = LoggerFactory.getLogger(ExplicitAdministratorApiMatcher.class);
 
     private final ObjectProvider<RequestMappingHandlerMapping> handlerMappings;
 
@@ -47,7 +47,7 @@ public class AdministratorEndpointMatcher {
      */
     private volatile List<PathPattern> administratorPatterns;
 
-    public AdministratorEndpointMatcher(ObjectProvider<RequestMappingHandlerMapping> handlerMappings) {
+    public ExplicitAdministratorApiMatcher(ObjectProvider<RequestMappingHandlerMapping> handlerMappings) {
         this.handlerMappings = handlerMappings;
     }
 

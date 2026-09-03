@@ -26,6 +26,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -102,7 +103,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ElevatedAccessService elevatedAccessService;
+    /**
+     * Resolved when a subscription arrives rather than injected: this class is eager, and reaching for the service
+     * directly pulled it and its passkey collaborator into the startup graph, past the bean-count and dependency-chain
+     * budgets. Nothing here needs administrator elevation until somebody subscribes, which is long after startup.
+     */
+    private final ObjectProvider<ElevatedAccessService> elevatedAccessService;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -119,8 +125,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private String brokerPassword;
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ElevatedAccessService elevatedAccessService,
-            ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
+            ObjectProvider<ElevatedAccessService> elevatedAccessService, ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -391,7 +397,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 // Request-bound elevation rather than account classification: an administrator who signed in with a
                 // password had the administrator authority removed at the handshake, and must not reach the admin
                 // build queue, job and agent topics on the strength of their persisted role alone.
-                return principal instanceof Authentication authentication && elevatedAccessService.isAdminElevationActive(authentication);
+                return principal instanceof Authentication authentication && elevatedAccessService.getObject().isAdminElevationActive(authentication);
             }
 
             Optional<Long> courseId = isBuildQueueCourseDestination(destination);

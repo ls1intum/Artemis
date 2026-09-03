@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.account.security.passkey.ArtemisPasskeyWebAuthnCon
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
-import de.tum.cit.aet.artemis.core.security.jwt.AdministratorEndpointMatcher;
+import de.tum.cit.aet.artemis.core.security.jwt.ExplicitAdministratorApiMatcher;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
@@ -114,7 +114,7 @@ public class SecurityConfiguration {
 
     private final ModuleFeatureService moduleFeatureService;
 
-    private final AdministratorEndpointMatcher administratorEndpointMatcher;
+    private final ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher;
 
     @Value("${artemis.user-management.passkey.token-validity-in-seconds-for-passkey:15552000}")
     private long tokenValidityInSecondsForPasskey;
@@ -153,7 +153,7 @@ public class SecurityConfiguration {
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
         // An ObjectProvider rather than the mapping itself: the security filter chain is built before the handler
         // mappings exist, so resolving one here would either fail or force them into existence too early.
-        this.administratorEndpointMatcher = new AdministratorEndpointMatcher(requestMappingHandlerMappings);
+        this.explicitAdministratorApiMatcher = new ExplicitAdministratorApiMatcher(requestMappingHandlerMappings);
     }
 
     /**
@@ -434,7 +434,7 @@ public class SecurityConfiguration {
      */
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds,
-                isPasskeyRequiredForAdministratorFeatures, administratorEndpointMatcher);
+                isPasskeyRequiredForAdministratorFeatures, explicitAdministratorApiMatcher);
     }
 
 }

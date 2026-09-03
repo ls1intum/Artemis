@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
  * {@link de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin} without any {@code /admin/} segment at all. The
  * negative cases are their immediate neighbours, which a prefix wide enough to cover them would have exempted too.
  */
-class AdministratorEndpointMatcherTest extends AbstractSpringIntegrationIndependentTest {
+class ExplicitAdministratorApiMatcherTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ObjectProvider<RequestMappingHandlerMapping> handlerMappings;
@@ -32,7 +32,7 @@ class AdministratorEndpointMatcherTest extends AbstractSpringIntegrationIndepend
     private boolean matches(String requestUri) {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI(requestUri);
-        return new AdministratorEndpointMatcher(handlerMappings).matches(request);
+        return new ExplicitAdministratorApiMatcher(handlerMappings).matches(request);
     }
 
     @ParameterizedTest
@@ -56,7 +56,7 @@ class AdministratorEndpointMatcherTest extends AbstractSpringIntegrationIndepend
     void testFindsTheAdministratorEndpointsOfTheWholeApplication() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRequestURI("/api/admin/audits");
-        var matcher = new AdministratorEndpointMatcher(handlerMappings);
+        var matcher = new ExplicitAdministratorApiMatcher(handlerMappings);
 
         assertThat(matcher.matches(request)).isTrue();
         assertThat(List.of("/api/admin/audits", "/api/admin/audits/1")).allMatch(this::matches);

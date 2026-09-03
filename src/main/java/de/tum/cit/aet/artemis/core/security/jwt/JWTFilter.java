@@ -86,17 +86,17 @@ public class JWTFilter extends GenericFilterBean {
 
     private final boolean isPasskeyRequiredForAdministratorFeatures;
 
-    private final AdministratorEndpointMatcher administratorEndpointMatcher;
+    private final ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher;
 
     public JWTFilter(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey, PasskeyTokenRenewalService passkeyTokenRenewalService,
-            long maxSessionLifetimeInSeconds, boolean isPasskeyRequiredForAdministratorFeatures, AdministratorEndpointMatcher administratorEndpointMatcher) {
+            long maxSessionLifetimeInSeconds, boolean isPasskeyRequiredForAdministratorFeatures, ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
-        this.administratorEndpointMatcher = administratorEndpointMatcher;
+        this.explicitAdministratorApiMatcher = explicitAdministratorApiMatcher;
     }
 
     /**
@@ -142,10 +142,10 @@ public class JWTFilter extends GenericFilterBean {
      *
      * <p>
      * Which requests those are is answered from the mappings Spring registered rather than from the shape of the path;
-     * see {@link AdministratorEndpointMatcher} for why the path could not decide it.
+     * see {@link ExplicitAdministratorApiMatcher} for why the path could not decide it.
      */
     private boolean isExplicitAdministratorApiRequest(HttpServletRequest request) {
-        return administratorEndpointMatcher.matches(request);
+        return explicitAdministratorApiMatcher.matches(request);
     }
 
     /**

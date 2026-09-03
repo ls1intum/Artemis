@@ -57,7 +57,7 @@ class JWTFilterTest {
     private static final List<String> ADMINISTRATOR_REQUEST_URIS = List.of("/api/admin/test", "/api/core/admin/test", "/api/exam/rooms/admin/1",
             "/api/account/passkeys/some-credential/approval", "/api/assessment/courses/1/exams/2/bonuses/calculate-raw");
 
-    private AdministratorEndpointMatcher administratorEndpointMatcher;
+    private ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher;
 
     private JWTFilter jwtFilter;
 
@@ -91,11 +91,11 @@ class JWTFilterTest {
         when(passkeyTokenRenewalService.mayExtendSessionForAccount(any(), any())).thenReturn(true);
 
         // Stands in for the registered administrator mappings: the filter only asks whether one serves the request.
-        administratorEndpointMatcher = mock(AdministratorEndpointMatcher.class);
-        when(administratorEndpointMatcher.matches(any()))
+        explicitAdministratorApiMatcher = mock(ExplicitAdministratorApiMatcher.class);
+        when(explicitAdministratorApiMatcher.matches(any()))
                 .thenAnswer(invocation -> ADMINISTRATOR_REQUEST_URIS.contains(((HttpServletRequest) invocation.getArgument(0)).getRequestURI()));
 
-        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, false, administratorEndpointMatcher);
+        jwtFilter = new JWTFilter(tokenProvider, jwtCookieService, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, false, explicitAdministratorApiMatcher);
         SecurityContextHolder.getContext().setAuthentication(null);
     }
 
@@ -227,7 +227,7 @@ class JWTFilterTest {
     private Authentication filterWithAdministratorPasskeyRequirement(String jwt, boolean passkeyRequired, String requestUri) throws Exception {
         SecurityContextHolder.clearContext();
         JWTFilter filter = new JWTFilter(tokenProvider, jwtCookieServiceMock, 15552000, passkeyTokenRenewalService, MAX_SESSION_LIFETIME_IN_SECONDS, passkeyRequired,
-                administratorEndpointMatcher);
+                explicitAdministratorApiMatcher);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + jwt);
         request.setRequestURI(requestUri);

@@ -24,7 +24,7 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
 
     private final boolean isPasskeyRequiredForAdministratorFeatures;
 
-    private final AdministratorEndpointMatcher administratorEndpointMatcher;
+    private final ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher;
 
     /**
      * Constructs a JWTConfigurer with a specified token provider.
@@ -35,14 +35,14 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
      */
     public JWTConfigurer(TokenProvider tokenProvider, JWTCookieService jwtCookieService, long tokenValidityInSecondsForPasskey,
             PasskeyTokenRenewalService passkeyTokenRenewalService, long maxSessionLifetimeInSeconds, boolean isPasskeyRequiredForAdministratorFeatures,
-            AdministratorEndpointMatcher administratorEndpointMatcher) {
+            ExplicitAdministratorApiMatcher explicitAdministratorApiMatcher) {
         this.tokenProvider = tokenProvider;
         this.jwtCookieService = jwtCookieService;
         this.tokenValidityInSecondsForPasskey = tokenValidityInSecondsForPasskey;
         this.passkeyTokenRenewalService = passkeyTokenRenewalService;
         this.maxSessionLifetimeInSeconds = maxSessionLifetimeInSeconds;
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
-        this.administratorEndpointMatcher = administratorEndpointMatcher;
+        this.explicitAdministratorApiMatcher = explicitAdministratorApiMatcher;
     }
 
     /**
@@ -55,7 +55,7 @@ public class JWTConfigurer extends AbstractHttpConfigurer<JWTConfigurer, HttpSec
     @Override
     public void configure(HttpSecurity http) {
         JWTFilter customFilter = new JWTFilter(tokenProvider, jwtCookieService, tokenValidityInSecondsForPasskey, passkeyTokenRenewalService, maxSessionLifetimeInSeconds,
-                isPasskeyRequiredForAdministratorFeatures, administratorEndpointMatcher);
+                isPasskeyRequiredForAdministratorFeatures, explicitAdministratorApiMatcher);
         // Adds the JWTFilter to the security chain before the UsernamePasswordAuthenticationFilter.
         // This ensures that the JWTFilter processes the request first to extract and validate JWTs.
         http.addFilterBefore(customFilter, UsernamePasswordAuthenticationFilter.class);
