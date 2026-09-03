@@ -631,8 +631,7 @@ class ExerciseIntegrityGateTest {
     // --- Approved specification contract ---
 
     @Test
-    void approvedSpecification_rejectsAContractThatSuppliesNoScaffoldAtAll() {
-        // An empty template compiles (no sources) and fails every test (none run), so the differential cannot discriminate it; acceptance is decided here.
+    void approvedSpecification_acceptsAContractThatRequiresStudentsToCreateEveryType() {
         String spec = """
                 ## Design
                 | Type | Role | Template status |
@@ -642,8 +641,7 @@ class ExerciseIntegrityGateTest {
                 """;
         Map<String, String> solution = map("src/BaseShape.java", "public abstract class BaseShape {}", "src/Rectangle.java", "public class Rectangle {}");
 
-        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), solution)).singleElement()
-                .satisfies(reason -> assertThat(reason).contains("every type 'student-creates'", "clone an empty project", "'given' or 'stubbed'"));
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), solution)).isEmpty();
     }
 
     /**

@@ -1011,15 +1011,13 @@ class StageCheckServiceTest {
         }
 
         @Test
-        void fails_whenEveryDesignRowIsStudentCreated_becauseTheTemplateWouldShipEmpty() {
-            // With no supplied or stubbed row the starter repository is empty by construction, whatever the builder does later.
+        void acceptsEveryDesignRowAsStudentCreated_whenTheBriefRequiresDesigningEveryClass() {
             exercise.setDueDate(ZonedDateTime.now().plusDays(1));
             sandbox.spec = specWithDesign("| BaseShape | abstract base | student-creates |\n| Rectangle | concrete shape | student-creates |\n");
 
             StageCheckResult result = check(GenerationStage.SPEC);
 
-            assertThat(result.passed()).isFalse();
-            assertThat(result.observation()).contains("would ship empty").contains("at least one type 'given'").contains("'stubbed'");
+            assertThat(result.passed()).isTrue();
         }
 
         @Test

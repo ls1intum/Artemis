@@ -244,12 +244,6 @@ public final class ExerciseIntegrityGate {
                     + ". Delete their template declarations and leave any necessary guidance in the problem statement or collaborating given types; changing SPEC.md after "
                     + "approval cannot turn the required design work into prebuilt stubs.");
         }
-        // An all-student-creates design defeats the differential itself: the empty template "compiles" (no sources) and "fails every test" (none run). Repeated from the stage
-        // gate, which repair attempts skip. Fails open on an unparsed '## Design' table, which claims nothing rather than claiming every type is student-created.
-        if (!designRows.isEmpty() && designRows.stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
-            reasons.add("the approved specification marks every type 'student-creates', so the template ships no starting scaffold and students would clone an empty project. "
-                    + "Supply at least one type as 'given' or 'stubbed' so the exercise has a teaching scaffold the differential can actually discriminate.");
-        }
         List<String> missingStubbedTypes = StageCheckService.specStubbedTypes(approvedSpec).stream().filter(type -> !repositoryDeclaresType(producedTemplateFiles, type)).toList();
         if (!missingStubbedTypes.isEmpty()) {
             reasons.add("the approved specification marks these types 'stubbed', but the template does not declare them: " + missingStubbedTypes

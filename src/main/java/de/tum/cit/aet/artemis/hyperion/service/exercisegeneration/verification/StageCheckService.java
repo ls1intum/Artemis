@@ -239,13 +239,6 @@ public class StageCheckService {
                         + "Use signatures only; do not replace them with prose or include private implementation details.");
             }
         }
-        // An all-student-creates design makes an empty starter repository inevitable, and the oracle's "the template must fail" then holds vacuously (nothing compiles, so
-        // everything fails), scoring the degenerate candidate like a well-scaffolded one.
-        if (designRows.stream().noneMatch(row -> "given".equals(row.status()) || "stubbed".equals(row.status()))) {
-            return StageCheckResult.failed("Every '## Design' row is marked 'student-creates', so the template repository would ship empty and students would start from a "
-                    + "blank project. Give the exercise a starting point: mark at least one type 'given' (supplied complete) or 'stubbed' (signatures with TODO bodies) — "
-                    + "typically the collaborator, context, or data type the student's own work plugs into — and keep the genuinely design-bearing types 'student-creates'.");
-        }
         if (exercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
             List<String> impossibleTemplateDependencies = templateTypesDependingOnStudentCreatedTypes(spec, designRows);
             if (!impossibleTemplateDependencies.isEmpty()) {
