@@ -26,6 +26,7 @@ const sidebars: SidebarsConfig = {
             ],
         },
         'hyperion',
+        'deimos',
         'adaptive-learning',
         'user-registration',
         'user-email-uniqueness',

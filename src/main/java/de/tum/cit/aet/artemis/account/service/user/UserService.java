@@ -173,8 +173,8 @@ public class UserService {
     public void applicationReady() {
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
-                // authenticate so that db queries are possible
-                SecurityUtils.setAuthorizationObject();
+                // Startup work with nobody logged in, so db queries need the system principal.
+                SecurityUtils.setSystemAuthorizationObject();
                 ensureInternalAdminExists(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
             }
         }

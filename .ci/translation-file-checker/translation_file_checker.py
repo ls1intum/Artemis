@@ -15,6 +15,7 @@ class Config:
     are_files: bool
     german_translations: Path
     english_translations: Path
+    ignored_german_only_prefixes: tuple[tuple[str, str], ...]
 
 
 @dataclass
@@ -63,10 +64,16 @@ def main(argv: list[str] | None = None) -> int:
     config = _config_from_args(argv)
 
     if config.are_files:
-        diff = _compare_files(config.german_translations, config.english_translations)
+        diff = _compare_files(
+            config.german_translations,
+            config.english_translations,
+            config.ignored_german_only_prefixes,
+        )
     else:
         diff = _compare_directories(
-            config.german_translations, config.english_translations
+            config.german_translations,
+            config.english_translations,
+            config.ignored_german_only_prefixes,
         )
 
     if len(diff) > 0:
@@ -103,7 +110,15 @@ def _config_from_args(argv: list[str]) -> Config:
         are_files=are_files,
         german_translations=german_translations,
         english_translations=english_translations,
+        ignored_german_only_prefixes=tuple(args.ignore_german_only_prefix),
     )
+
+
+def _file_scoped_prefix(value: str) -> tuple[str, str]:
+    filename, separator, prefix = value.partition(":")
+    if not separator or not filename or not prefix:
+        raise argparse.ArgumentTypeError("expected FILE:PREFIX")
+    return filename, prefix
 
 
 def _build_arg_parser() -> argparse.ArgumentParser:
@@ -121,11 +136,21 @@ def _build_arg_parser() -> argparse.ArgumentParser:
         required=True,
         help="Directory containing the English translation files.",
     )
+    parser.add_argument(
+        "--ignore-german-only-prefix",
+        action="append",
+        type=_file_scoped_prefix,
+        default=[],
+        metavar="FILE:PREFIX",
+        help="German-only translation-key prefix to ignore, scoped to one translation filename.",
+    )
 
     return parser
 
 
-def _compare_directories(german_dir: Path, english_dir: Path) -> Diff:
+def _compare_directories(
+    german_dir: Path, english_dir: Path, ignored_german_only_prefixes: tuple[tuple[str, str], ...]
+) -> Diff:
     def json_files(directory: Path) -> set[Path]:
         return {
             file
@@ -145,7 +170,10 @@ def _compare_directories(german_dir: Path, english_dir: Path) -> Diff:
 
     return reduce(
         lambda d1, d2: d1 + d2,
-        (_compare_files(german, english) for german, english in file_pairs),
+        (
+            _compare_files(german, english, ignored_german_only_prefixes)
+            for german, english in file_pairs
+        ),
     )
 
 
@@ -170,8 +198,12 @@ def _find_file_pairs(
     return list(v for v in pairs.values() if v[0] is not None and v[1] is not None)
 
 
-def _compare_files(german: Path, english: Path) -> Diff:
-    german_keys = _flat_json_keys(german)
+def _compare_files(
+    german: Path, english: Path, ignored_german_only_prefixes: tuple[tuple[str, str], ...]
+) -> Diff:
+    german_keys = _without_ignored_german_only_prefixes(
+        _flat_json_keys(german), german.name, ignored_german_only_prefixes
+    )
     english_keys = _flat_json_keys(english)
 
     return Diff(
@@ -180,6 +212,13 @@ def _compare_files(german: Path, english: Path) -> Diff:
         all_english_keys=list(english_keys),
         only_english=english_keys - german_keys,
     )
+
+
+def _without_ignored_german_only_prefixes(
+    keys: set[str], filename: str, ignored_prefixes: tuple[tuple[str, str], ...]
+) -> set[str]:
+    prefixes = tuple(prefix for ignored_filename, prefix in ignored_prefixes if ignored_filename == filename)
+    return {key for key in keys if not any(key == prefix or key.startswith(f"{prefix}.") for prefix in prefixes)}
 
 
 def _flat_json_keys(json_file: Path) -> set[str]:

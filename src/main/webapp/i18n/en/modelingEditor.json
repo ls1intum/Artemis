@@ -16,6 +16,7 @@
                 "exitButtonText": "Exit Fullscreen",
                 "tooltip": "Fullscreen"
             },
+            "editorActions": "Editor actions",
             "autoSubmit": "The exercise has ended. You may no longer edit your diagram.",
             "newAssessment": "A new assessment for your submission is available.",
             "error": "An error occurred. Please try again later.",
@@ -29,45 +30,81 @@
             "helpModal": {
                 "help": "Help",
                 "title": "How to use the modeling editor",
+                "walkthrough": "Walkthrough",
+                "basicsTitle": "Build a diagram",
+                "intro": "Start with the six core interactions below. The editor keeps controls close to the canvas so you can stay focused on the model.",
+                "refineTitle": "Refine your work",
+                "refineDescription": "Once the structure is in place, use these interactions to arrange, correct, and reuse parts of your diagram.",
+                "shortcuts": {
+                    "title": "Keyboard shortcuts",
+                    "description": "Shortcuts work while the canvas has focus. Browser shortcuts keep working when focus is outside the editor or in an explanation field.",
+                    "or": "or",
+                    "groups": {
+                        "editing": "Editing",
+                        "selection": "Selection",
+                        "view": "View"
+                    },
+                    "keys": {
+                        "delete": "Del",
+                        "backspace": "Backspace"
+                    },
+                    "actions": {
+                        "select-all": "Select all",
+                        "clear-selection": "Clear selection",
+                        "delete": "Delete",
+                        "copy": "Copy",
+                        "cut": "Cut",
+                        "paste": "Paste",
+                        "duplicate": "Duplicate",
+                        "move-selection": "Move selection",
+                        "undo": "Undo",
+                        "redo": "Redo",
+                        "zoom-in": "Zoom in",
+                        "zoom-out": "Zoom out",
+                        "reset-zoom": "Reset zoom",
+                        "fit-view": "Fit diagram",
+                        "zoom-to-selection": "Zoom to selection"
+                    }
+                },
                 "createElement": {
-                    "title": "Add Elements",
-                    "text": "To add an element, simply drag and drop one of the elements from the right side into the editor area on the left side."
+                    "title": "Add elements",
+                    "text": "Drag an element from the palette onto the canvas. On a touch device, select it in the palette and then tap its position on the canvas."
                 },
                 "createRelationship": {
-                    "title": "Add Relationships",
-                    "text": "To add a relationship, select the source class with a single click and you will see four blue semicircles. Those are the possible connection points for relationships. Click and hold on one of those and drag it to another blue semicircle to create a relationship."
+                    "title": "Connect elements",
+                    "text": "Select the source element to reveal its connection handles, then drag from a handle to the target element. Release when the target handle is highlighted."
                 },
                 "updateElement": {
-                    "title": "Edit Elements/Relationships",
-                    "text": "To edit an element or relationship, double click it and a popup will open up in which you can edit its properties, e.g. name, type, attributes, methods, etc."
+                    "title": "Edit details",
+                    "text": "Double-click an element or relationship to open its editor. Update its name, type, content, and other available properties, then close the popover to continue."
                 },
                 "deleteElement": {
-                    "title": "Delete Elements/Relationships",
-                    "text": "To delete an element or relationship, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard."
+                    "title": "Remove items",
+                    "text": "Select one or more elements or relationships, then press <code>Delete</code> or <code>Backspace</code>."
                 },
                 "moveElement": {
-                    "title": "Move Elements",
-                    "text": "To move an element, either select it with a single click and use your keyboard arrow keys or drag and drop it."
+                    "title": "Arrange the diagram",
+                    "text": "Drag elements into place, or select them and use the arrow keys for precise adjustments. Pan the canvas to make room as the diagram grows."
                 },
                 "resizeElement": {
-                    "title": "Resize Elements",
-                    "text": "To resize an element, drag and drop the right bottom corner of the element."
+                    "title": "Resize elements",
+                    "text": "Select an element and drag one of its resize handles. Keep labels readable and leave enough space for relationships."
                 },
                 "reconnectRelationship": {
-                    "title": "Move Relationships",
-                    "text": "To move a relationship, drag and drop one of its line ends."
+                    "title": "Reconnect relationships",
+                    "text": "Select a relationship, then drag either endpoint to a different connection handle."
                 },
                 "select": {
-                    "title": "Multi-Selection",
-                    "text": "When selecting elements or relationships, you can keep your <code>Shift</code> button pressed to add the element to your current selection. With <code>Ctrl + A</code> you can select all available elements."
+                    "title": "Work with a selection",
+                    "text": "Hold <code>Shift</code> while selecting to build a multi-selection. Use the platform shortcut shown in the Keyboard shortcuts tab to select everything."
                 },
                 "duplicate": {
-                    "title": "Duplicate Elements",
-                    "text": "With <code>Ctrl + C</code> you can copy the currently selected elements with all their properties. <code>Ctrl + V</code> creates a copy of previously copied elements."
+                    "title": "Reuse existing elements",
+                    "text": "Copy and paste a selection to duplicate it with its properties. The Keyboard shortcuts tab shows the correct keys for your platform."
                 },
                 "undo": {
-                    "title": "Undo & Redo",
-                    "text": "With <code>Ctrl + Z</code> and <code>Ctrl + Shift + Z</code> you can undo and redo your changes."
+                    "title": "Recover from mistakes",
+                    "text": "Undo or redo recent changes at any time. You can find both platform-specific key combinations in the Keyboard shortcuts tab."
                 }
             }
         }
