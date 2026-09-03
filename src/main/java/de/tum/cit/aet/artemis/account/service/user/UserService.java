@@ -218,6 +218,7 @@ public class UserService {
                 internalAdmin.setInternal(true);
             }
             internalAdmin.setActivated(true);
+            applyConfiguredInternalAdminEmail(internalAdmin);
             // The configured password is applied on every startup, so it is compared rather than written blindly: stamping
             // credentialsChangedDate unconditionally would end every admin session on every restart, while never stamping it
             // leaves sessions from before a rotated configured password renewable past the renewal checkpoint.
@@ -247,6 +248,34 @@ public class UserService {
             }
             userCreationService.createUser(managedUserVM);
         }
+    }
+
+    /**
+     * Gives the existing internal admin the configured address once that address is free.
+     *
+     * <p>
+     * The creation path below drops a configured address that already belongs to someone else and tells the operator to
+     * point the setting at an unused one. That advice only means something if a later startup acts on it, which is what
+     * this does: the address is applied on every startup the way the password is, and an address that is still taken is
+     * reported again rather than silently ignored. Nothing is cleared when the setting is removed - an admin that lost
+     * its address would lose the password reset with it, and unsetting a property should not do that.
+     *
+     * @param internalAdmin the existing internal admin account
+     */
+    private void applyConfiguredInternalAdminEmail(User internalAdmin) {
+        String configuredEmail = User.canonicalEmail(artemisInternalAdminEmail.orElse(null));
+        if (configuredEmail == null || configuredEmail.equalsIgnoreCase(internalAdmin.getEmail())) {
+            return;
+        }
+        if (userRepository.existsByEmailIgnoreCaseAndIdNot(configuredEmail, internalAdmin.getId())) {
+            log.warn(
+                    "The email address {} configured for the internal admin belongs to another account, so {} keeps {}. Point "
+                            + "artemis.user-management.internal-admin.email at an unused address.",
+                    configuredEmail, internalAdmin.getLogin(), internalAdmin.getEmail() == null ? "no email address" : internalAdmin.getEmail());
+            return;
+        }
+        log.info("Assigning the configured email address {} to the internal admin {}", configuredEmail, internalAdmin.getLogin());
+        internalAdmin.setEmail(configuredEmail);
     }
 
     private ManagedUserVM createManagedUserVm(String login, String password) {
