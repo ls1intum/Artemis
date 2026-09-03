@@ -512,7 +512,9 @@ public class AgentSystemPromptService {
                     WORKSPACE
                     - SPEC.md: the only writable artifact in this stage
                     - problem-statement.md: placeholder or prior context, never authority over the instructor brief
-                    - reference/style/: nothing here is needed in this stage. The SPEC form contract is stated above in full, so opening these costs turns and adds nothing
+
+                    reference/ is closed in this stage: read_file and search both refuse it. The SPEC form contract is stated above in full, so there is nothing in there to
+                    find and every attempt costs a turn.
 
                     Programming language: %s
                     Package: %s

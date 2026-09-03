@@ -68,6 +68,29 @@ class SandboxAgentToolsTest {
     }
 
     @Test
+    void search_inTheSpecificationStage_cannotReachTheReferenceThatReadFileRefuses() {
+        FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
+        SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");
+        tools.enterStage(GenerationStage.SPEC);
+
+        // Refusing the read but not the grep leaves the boundary only as strong as the model's choice of
+        // tool: `search` returns the reference exercise's own lines, which is the content being withheld.
+        String refused = tools.search("reference/style/spec.md", "public");
+
+        assertThat(refused).startsWith("REFUSED");
+        assertThat(sandbox.execCount()).isZero();
+
+        // A root search stays available, because it is legitimate in every stage; the closed directory
+        // drops out of it rather than the search itself being refused.
+        tools.search("", "public");
+        assertThat(sandbox.executedCommands().getLast()).contains("--exclude-dir=reference");
+
+        tools.enterStage(GenerationStage.TESTS);
+        tools.search("", "public");
+        assertThat(sandbox.executedCommands().getLast()).doesNotContain("--exclude-dir=reference");
+    }
+
+    @Test
     void readFile_outsideTheSpecificationStage_readsTheStyleReferenceItHasNoInlineContractFor() {
         FakeInteractiveSandbox sandbox = new FakeInteractiveSandbox();
         SandboxAgentTools tools = new SandboxAgentTools(sandbox, "s");

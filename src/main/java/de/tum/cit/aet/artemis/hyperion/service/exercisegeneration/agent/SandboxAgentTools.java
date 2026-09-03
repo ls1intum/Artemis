@@ -263,10 +263,18 @@ public class SandboxAgentTools implements SubmitVetoAware {
         if (!pathAssessment.isSafe()) {
             return SECRET_MATERIAL_POLICY.blockedObservation(pathAssessment);
         }
+        String unreadable = searchWorkspaceRoot ? null : unreadableInCurrentStage(safe);
+        if (unreadable != null) {
+            return unreadable;
+        }
         String target = searchWorkspaceRoot ? WORKSPACE : WORKSPACE + "/" + safe;
         String label = searchWorkspaceRoot ? "the workspace root" : safe;
-        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, "grep", "-RInFH", "--exclude-dir=.git", "--exclude-dir=target",
-                "--exclude-dir=build", "--exclude-dir=node_modules", "--", query, target);
+        // A root search is legitimate in every stage, so the closed directory is excluded from it rather than the search refused. Without this, grep returns the reference
+        // exercise's own lines and the stage boundary is only as strong as the model's choice of tool.
+        Stream<String> stageExclusions = currentStage == GenerationStage.SPEC ? Stream.of("--exclude-dir=reference") : Stream.of();
+        String[] arguments = Stream.of(Stream.of("grep", "-RInFH", "--exclude-dir=.git", "--exclude-dir=target", "--exclude-dir=build", "--exclude-dir=node_modules"),
+                stageExclusions, Stream.of("--", query, target)).flatMap(argument -> argument).toArray(String[]::new);
+        SandboxExecResultDTO result = sandbox.exec(sessionId, GenerationWorkspaceService.SANDBOX_READ_TIMEOUT, arguments);
         if (result.exitCode() == 1 && result.stdout().isBlank()) {
             return "No matches in " + label + ".";
         }
