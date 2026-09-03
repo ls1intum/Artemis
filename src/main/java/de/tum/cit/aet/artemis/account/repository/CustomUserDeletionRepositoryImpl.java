@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.account.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -14,6 +16,8 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
@@ -22,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.account.domain.User;
 
 /** Spring Data implementation of the permanent user deletion repository fragment. */
+@Profile(PROFILE_CORE)
+@Lazy
 @Repository
 public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepository {
 
