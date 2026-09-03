@@ -453,8 +453,8 @@ public class ProgrammingExerciseGradingService {
         boolean anyContainerFailedToBuild = result.getSubmission() instanceof ProgrammingSubmission submission && submission.isBuildFailed();
         aggregatedResult.setSuccessful(allJobsSucceeded && !anyContainerFailedToBuild);
         aggregatedResult.setCompletionDate(completionDate);
-        aggregatedResult = resultRepository.save(aggregatedResult);
 
+        Optional<Result> mergedIntoManualResult = Optional.empty();
         if (isStudentParticipation && result.getSubmission() instanceof ProgrammingSubmission programmingSubmission) {
             // The same student policies as after a single-container result. Unlike there, the aggregated result already
             // exists (the containers' build jobs link to it), so it stays; when the submission is under manual
@@ -463,12 +463,12 @@ public class ProgrammingExerciseGradingService {
             // a detached submission, whose collection cannot be initialized.
             Result latestOtherResult = resultRepository.findAllBySubmissionIdOrderByIdDesc(programmingSubmission.getId()).stream()
                     .filter(candidate -> !candidate.getId().equals(result.getId())).findFirst().orElse(null);
-            var mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestOtherResult);
-            if (mergedIntoManualResult.isPresent()) {
-                return mergedIntoManualResult.get();
-            }
+            mergedIntoManualResult = applyStudentResultPolicies(participation, aggregatedResult, programmingSubmission, latestOtherResult);
         }
-        return aggregatedResult;
+        // Saved after the policies, as on the single-container path: the lock-repository policy marks the result unrated
+        // without saving it, so saving earlier would leave that flag to the caller's transaction (and lose it outside one).
+        aggregatedResult = resultRepository.save(aggregatedResult);
+        return mergedIntoManualResult.orElse(aggregatedResult);
     }
 
     /**

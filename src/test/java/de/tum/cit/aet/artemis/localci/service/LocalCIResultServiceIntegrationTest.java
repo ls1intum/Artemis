@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
@@ -117,6 +119,55 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultAgain, participation, true, ZonedDateTime.now());
         assertThat(finalizedResult.getCompletionDate()).isNotNull();
         assertThat(finalizedResult.isSuccessful()).isTrue();
+    }
+
+    /**
+     * The lock-repository policy's result-time step only flips the rated flag on the result object; it is the save in
+     * {@code finalizeContainerResult} that persists it. This suite calls finalize OUTSIDE a transaction on purpose: if the
+     * save ran before the policies, the flag would only reach the database through the caller's dirty checking, and a
+     * caller like this one would silently lose it.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFinalizePersistsTheUnratedFlagOfTheLockRepositoryPolicyWithoutATransaction() {
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // A limit of one, already exceeded: an earlier submission of this participation has a result of its own.
+        LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
+        lockRepositoryPolicy.setSubmissionLimit(1);
+        lockRepositoryPolicy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+        ProgrammingSubmission earlierSubmission = new ProgrammingSubmission();
+        earlierSubmission.setCommitHash("0000000000000000000000000000000000000001");
+        earlierSubmission.setSubmissionDate(ZonedDateTime.now().minusMinutes(5));
+        earlierSubmission.setType(SubmissionType.MANUAL);
+        earlierSubmission.setParticipation(participation);
+        earlierSubmission = programmingSubmissionRepository.save(earlierSubmission);
+        Result earlierResult = new Result();
+        earlierResult.setAssessmentType(AssessmentType.AUTOMATIC);
+        earlierResult.setCompletionDate(ZonedDateTime.now().minusMinutes(4));
+        earlierResult.setSubmission(earlierSubmission);
+        earlierResult.setExerciseId(programmingExercise.getId());
+        resultRepository.save(earlierResult);
+
+        // The submission being built now, with its single container appended and linked.
+        String commitHash = "0000000000000000000000000000000000000002";
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now());
+        submission.setType(SubmissionType.MANUAL);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepository.save(submission);
+        BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, false, 1, "container_a");
+        buildJobRepository.save(new BuildJob(buildJobFor("job-rated", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
+
+        Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, true, ZonedDateTime.now());
+
+        // Persisted, not merely set on the returned object.
+        Result persistedResult = resultRepository.findById(finalizedResult.getId()).orElseThrow();
+        assertThat(persistedResult.getCompletionDate()).isNotNull();
+        assertThat(persistedResult.isRated()).isFalse();
     }
 
     /**
