@@ -488,7 +488,6 @@
             }
         },
         "examManagement": {
-            "overview": "Übersicht",
             "reviewDatesInvalidWarning": "Das Ende der Klausureinsicht ist falsch definiert oder fehlt",
             "reviewDatesInvalidExplanation": "Ist ein Beginn der Klausureinsicht definiert, muss auch ein Ende definiert werden. Zusätzlich muss das Ende der Klausureinsicht immer nach dem Beginn datiert sein.",
             "titleMissingOrNotValid": "'Titel' fehlt/ungültig",
