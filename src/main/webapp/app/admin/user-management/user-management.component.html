@@ -404,7 +404,7 @@
     [(visible)]="deletionDialogVisible"
     size="large"
     [header]="'artemisApp.userManagement.permanentDeletion.title' | artemisTranslate"
-    (onHide)="closePermanentDeletionDialog()"
+    (hidden)="closePermanentDeletionDialog()"
 >
     @if (deletionImpact(); as impact) {
         <div class="flex flex-col gap-4">

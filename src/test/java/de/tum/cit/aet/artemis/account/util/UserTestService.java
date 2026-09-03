@@ -27,6 +27,11 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactDTO;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.PermanentUserDeletionRequestDTO;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionConfirmationDTO;
+import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactDTO;
 import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
@@ -228,17 +233,32 @@ public class UserTestService {
         student.setImageUrl("images/user/profiles-pictures/image.jpg");
         userTestRepository.save(student);
 
-        request.delete("/api/account/admin/users/" + student.getLogin(), HttpStatus.OK);
+        deletePermanently(student.getLogin());
 
-        final var deletedUser = userTestRepository.findById(student.getId()).orElseThrow();
-        assertThatUserWasSoftDeleted(student, deletedUser);
+        // Permanent rather than soft deletion: the row itself is gone, so there is nothing left to anonymize.
+        assertThat(userTestRepository.findById(student.getId())).isEmpty();
+    }
+
+    /**
+     * Deletes a user the way the client does: read the impact, then confirm it by its fingerprint. The endpoint rejects
+     * a deletion that carries no fingerprint or a stale one, so the read is part of the call rather than a convenience.
+     *
+     * @param login the user to delete
+     */
+    private void deletePermanently(String login) throws Exception {
+        var impact = request.get("/api/account/admin/users/" + login + "/deletion-impact", HttpStatus.OK, UserDeletionImpactDTO.class);
+        request.delete("/api/account/admin/users/" + login, HttpStatus.OK, new PermanentUserDeletionRequestDTO(impact.impactFingerprint()));
     }
 
     // Test
     public void deleteSelf_isNotSuccessful(String currentUserLogin) throws Exception {
-        request.delete("/api/account/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST);
-        final var deletedUser = userTestRepository.findById(student.getId()).orElseThrow();
-        assertThatUserWasNotSoftDeleted(student, deletedUser);
+        // A valid fingerprint, so the rejection can only come from the rule that an administrator may not delete
+        // themselves rather than from the request body being incomplete.
+        var impact = request.get("/api/account/admin/users/" + currentUserLogin + "/deletion-impact", HttpStatus.OK, UserDeletionImpactDTO.class);
+        request.delete("/api/account/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST, new PermanentUserDeletionRequestDTO(impact.impactFingerprint()));
+
+        final var untouchedUser = userTestRepository.findById(student.getId()).orElseThrow();
+        assertThatUserWasNotSoftDeleted(student, untouchedUser);
     }
 
     // Test
@@ -254,16 +274,17 @@ public class UserTestService {
                 .collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
-        request.delete("/api/account/admin/users", HttpStatus.OK, logins);
+        var bulkImpact = request.postWithResponseBody("/api/account/admin/users/deletion-impact", logins, BulkUserDeletionImpactDTO.class, HttpStatus.OK);
+        var confirmations = bulkImpact.users().stream().map(impact -> new UserDeletionConfirmationDTO(impact.login(), impact.impactFingerprint())).toList();
+        request.delete("/api/account/admin/users", HttpStatus.OK, new BulkUserDeletionRequestDTO(confirmations));
 
         for (var user : users) {
-            final var deletedUser = userTestRepository.findById(user.getId()).orElseThrow();
-
-            if (deletedUser.getLogin().equals(currentUserLogin)) {
-                assertThatUserWasNotSoftDeleted(user, deletedUser);
+            if (user.getLogin().equals(currentUserLogin)) {
+                final var untouchedUser = userTestRepository.findById(user.getId()).orElseThrow();
+                assertThatUserWasNotSoftDeleted(user, untouchedUser);
             }
             else {
-                assertThatUserWasSoftDeleted(user, deletedUser);
+                assertThat(userTestRepository.findById(user.getId())).isEmpty();
             }
         }
     }
