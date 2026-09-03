@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.admin.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -56,9 +57,12 @@ public class FeatureUsageDigestService {
         FeatureUsageOverviewDTO overview = featureUsageQueryService.getOverview(DIGEST_WINDOW_IN_DAYS, null);
         LocalDate to = LocalDate.now(ZoneOffset.UTC);
         LocalDate from = overview.from();
-        // the equally long window immediately before this one, so the comparison is like for like
-        Map<String, Long> previousCallsByModule = featureUsageStatisticsRepository.findModuleCallsBetween(from.minusDays(DIGEST_WINDOW_IN_DAYS), from.minusDays(1)).stream()
-                .collect(Collectors.toMap(FeatureUsageModuleCallsDTO::module, FeatureUsageModuleCallsDTO::callCount));
+        // The equally long window immediately before this one, so the comparison is like for like - which means the same
+        // set of features as well as the same number of days. Both windows exclude what this version no longer offers,
+        // otherwise an endpoint removed in between would still count towards the earlier window and read as a drop.
+        Instant retiredBefore = FeatureUsageQueryService.retirementCutoff(overview.inventoryRefreshedAt());
+        Map<String, Long> previousCallsByModule = featureUsageStatisticsRepository.findModuleCallsBetween(from.minusDays(DIGEST_WINDOW_IN_DAYS), from.minusDays(1), retiredBefore)
+                .stream().collect(Collectors.toMap(FeatureUsageModuleCallsDTO::module, FeatureUsageModuleCallsDTO::callCount));
 
         // Group before counting anything. The overview counts inventory rows, which are endpoints, while the page
         // collapses endpoints that share a @FeatureUsage label into one feature row. Reporting the row counts next to
@@ -71,14 +75,19 @@ public class FeatureUsageDigestService {
         // Only the names: what matters about a module nobody touched is that it is on the list, not its row of zeros.
         List<String> quietModules = summaries.stream().filter(summary -> summary.callCount() == 0).map(FeatureUsageModuleSummaryDTO::module).sorted().toList();
 
+        // Taken from the same set as the module rows rather than from overview.totalCalls(), which counts every inventory
+        // row including the retired ones. The email states that retired entries are excluded from these counts, and the
+        // headline disagreeing with the sum of the rows below it is exactly the kind of contradiction that makes a summary
+        // worth less than no summary.
+        long totalCalls = logicalFeatures.stream().filter(feature -> !feature.retired()).mapToLong(LogicalFeature::callCount).sum();
         long usedFeatures = logicalFeatures.stream().filter(feature -> !feature.retired() && feature.callCount() > 0).count();
         long stillOffered = logicalFeatures.stream().filter(feature -> !feature.retired()).count();
         // Derived here rather than taken from the overview, which counts endpoints
         long unusedFeatures = logicalFeatures.stream().filter(feature -> !feature.retired() && feature.callCount() == 0).count();
         long retiredFeatures = logicalFeatures.stream().filter(LogicalFeature::retired).count();
 
-        return new FeatureUsageDigestDTO(DIGEST_WINDOW_IN_DAYS, from, to, overview.totalCalls(), previousCallsByModule.values().stream().mapToLong(Long::longValue).sum(),
-                stillOffered, usedFeatures, unusedFeatures, retiredFeatures, overview.recordingSince(), activeModules, quietModules);
+        return new FeatureUsageDigestDTO(DIGEST_WINDOW_IN_DAYS, from, to, totalCalls, previousCallsByModule.values().stream().mapToLong(Long::longValue).sum(), stillOffered,
+                usedFeatures, unusedFeatures, retiredFeatures, overview.recordingSince(), activeModules, quietModules);
     }
 
     /**

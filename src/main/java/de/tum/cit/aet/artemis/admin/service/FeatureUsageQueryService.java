@@ -56,6 +56,19 @@ public class FeatureUsageQueryService {
     private static final Duration REGISTRATION_TOLERANCE = Duration.ofDays(1);
 
     /**
+     * The moment before which a REST registration counts as retired, given the newest registration in the inventory.
+     * <p>
+     * Exposed because the weekly digest has to apply exactly the same cutoff. Deriving it twice from separate constants is
+     * how the email and the page would drift apart, and the email states that retired entries are excluded from its counts.
+     *
+     * @param inventoryRefreshedAt the newest REST registration timestamp
+     * @return the cutoff to compare a feature's {@code lastRegisteredAt} against
+     */
+    public static Instant retirementCutoff(Instant inventoryRefreshedAt) {
+        return inventoryRefreshedAt.minus(REGISTRATION_TOLERANCE);
+    }
+
+    /**
      * Builds the report for the last {@code days} days.
      *
      * @param days       the length of the window
@@ -71,7 +84,7 @@ public class FeatureUsageQueryService {
                 .toList();
 
         Instant inventoryRefreshedAt = featureUsageStatisticsRepository.findInventoryRefreshedAt().orElse(Instant.EPOCH);
-        Instant retiredBefore = inventoryRefreshedAt.minus(REGISTRATION_TOLERANCE);
+        Instant retiredBefore = retirementCutoff(inventoryRefreshedAt);
         List<FeatureUsageEntryDTO> annotated = features.stream().map(feature -> feature.withRetired(isRetired(feature, retiredBefore))).toList();
 
         long retiredFeatures = annotated.stream().filter(FeatureUsageEntryDTO::retired).count();

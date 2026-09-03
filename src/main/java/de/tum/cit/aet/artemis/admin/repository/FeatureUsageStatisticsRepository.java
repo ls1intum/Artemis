@@ -185,15 +185,20 @@ public interface FeatureUsageStatisticsRepository extends ArtemisJpaRepository<T
     List<FeatureUsageRoleShareDTO> findRoleDistributionSince(@Param("from") LocalDate from);
 
     /**
-     * Totals calls per module over a closed day range.
+     * Totals calls per module over a closed day range, excluding the features this version no longer offers.
      * <p>
      * Used by the weekly digest to compare the window against the one before it. An inner join is right here, unlike in the
      * report: this only supplies the comparison figure, and a module with no calls in the earlier window simply has nothing
      * to compare against.
+     * <p>
+     * Retired features are excluded because the digest's current-window figures exclude them and the email says so. An
+     * endpoint removed between the two windows would otherwise still contribute to the earlier one and show up as a drop in
+     * usage that never happened. Only {@code REST} features can retire, so the other kinds are always kept.
      *
-     * @param from the first day to include
-     * @param to   the last day to include
-     * @return one entry per module that saw at least one call in the range
+     * @param from          the first day to include
+     * @param to            the last day to include
+     * @param retiredBefore a REST feature last registered before this counts as no longer offered
+     * @return one entry per still-offered module that saw at least one call in the range
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.admin.dto.FeatureUsageModuleCallsDTO(feature.module, SUM(bucket.callCount))
@@ -201,9 +206,10 @@ public interface FeatureUsageStatisticsRepository extends ArtemisJpaRepository<T
                 JOIN FeatureUsageDaily bucket ON bucket.featureId = feature.id
             WHERE bucket.usageDay >= :from
                 AND bucket.usageDay <= :to
+                AND (feature.featureKind <> de.tum.cit.aet.artemis.core.domain.FeatureKind.REST OR feature.lastRegisteredAt >= :retiredBefore)
             GROUP BY feature.module
             """)
-    List<FeatureUsageModuleCallsDTO> findModuleCallsBetween(@Param("from") LocalDate from, @Param("to") LocalDate to);
+    List<FeatureUsageModuleCallsDTO> findModuleCallsBetween(@Param("from") LocalDate from, @Param("to") LocalDate to, @Param("retiredBefore") Instant retiredBefore);
 
     /**
      * Returns the daily calls of a single feature, for the trend chart. Days without usage are absent.

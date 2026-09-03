@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.admin.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -13,6 +15,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageEntryDTO;
@@ -33,6 +36,9 @@ class FeatureUsageDigestServiceTest {
 
     private static final LocalDate FROM = LocalDate.now(ZoneOffset.UTC).minusDays(6);
 
+    /** Fixed rather than read per call, so a test can assert the exact retirement cutoff derived from it. */
+    private static final Instant INVENTORY_REFRESHED_AT = Instant.now();
+
     private FeatureUsageQueryService queryService;
 
     private FeatureUsageStatisticsRepository repository;
@@ -44,7 +50,7 @@ class FeatureUsageDigestServiceTest {
         queryService = mock(FeatureUsageQueryService.class);
         repository = mock(FeatureUsageStatisticsRepository.class);
         service = new FeatureUsageDigestService(queryService, repository);
-        when(repository.findModuleCallsBetween(any(), any())).thenReturn(List.of());
+        when(repository.findModuleCallsBetween(any(), any(), any())).thenReturn(List.of());
     }
 
     @Test
@@ -151,7 +157,7 @@ class FeatureUsageDigestServiceTest {
     @Test
     void shouldCompareAgainstTheEquallyLongWindowBefore() {
         givenOverview(entry("programming", 150, 0, false));
-        when(repository.findModuleCallsBetween(FROM.minusDays(7), FROM.minusDays(1))).thenReturn(List.of(new FeatureUsageModuleCallsDTO("programming", 100)));
+        when(repository.findModuleCallsBetween(eq(FROM.minusDays(7)), eq(FROM.minusDays(1)), any())).thenReturn(List.of(new FeatureUsageModuleCallsDTO("programming", 100)));
 
         FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
 
@@ -171,7 +177,7 @@ class FeatureUsageDigestServiceTest {
     @Test
     void shouldReportADrop() {
         givenOverview(entry("exam", 20, 0, false));
-        when(repository.findModuleCallsBetween(any(), any())).thenReturn(List.of(new FeatureUsageModuleCallsDTO("exam", 100)));
+        when(repository.findModuleCallsBetween(any(), any(), any())).thenReturn(List.of(new FeatureUsageModuleCallsDTO("exam", 100)));
 
         assertThat(moduleOf(service.buildWeeklyDigest(), "exam").changePercent()).isEqualTo(-80);
     }
@@ -197,13 +203,43 @@ class FeatureUsageDigestServiceTest {
         assertThat(digest.to()).isEqualTo(LocalDate.now(ZoneOffset.UTC));
     }
 
+    /**
+     * The email states that entries this version no longer offers are excluded from its counts, so both the headline and
+     * the comparison have to be taken over the same still-offered set as the module rows. Otherwise a feature removed
+     * between the two windows keeps contributing to the earlier one and reads as a usage drop that never happened, and the
+     * headline disagrees with the sum of the rows beneath it.
+     */
+    @Test
+    void shouldExcludeRetiredFeaturesFromTheHeadlineAndTheComparison() {
+        givenOverview(entry("programming", 150, 0, false), entry("programming", 400, 0, true));
+
+        FeatureUsageDigestDTO digest = service.buildWeeklyDigest();
+
+        // 400 belongs to an endpoint this version no longer offers, so it counts towards neither the headline nor the row
+        assertThat(digest.totalCalls()).isEqualTo(150);
+        assertThat(moduleOf(digest, "programming").callCount()).isEqualTo(150);
+        assertThat(digest.retiredFeatures()).isEqualTo(1);
+    }
+
+    @Test
+    void shouldAskForThePreviousWindowWithTheSameRetirementCutoffAsTheReport() {
+        givenOverview(entry("programming", 150, 0, false));
+
+        service.buildWeeklyDigest();
+
+        var cutoff = ArgumentCaptor.forClass(Instant.class);
+        verify(repository).findModuleCallsBetween(eq(FROM.minusDays(7)), eq(FROM.minusDays(1)), cutoff.capture());
+        // the same cutoff the report applies, so the two windows and the page cannot classify a feature differently
+        assertThat(cutoff.getValue()).isEqualTo(FeatureUsageQueryService.retirementCutoff(INVENTORY_REFRESHED_AT));
+    }
+
     private void givenOverview(FeatureUsageEntryDTO... entries) {
         List<FeatureUsageEntryDTO> features = List.of(entries);
         long unused = features.stream().filter(feature -> !feature.retired() && feature.callCount() == 0).count();
         long retired = features.stream().filter(FeatureUsageEntryDTO::retired).count();
         long total = features.stream().mapToLong(FeatureUsageEntryDTO::callCount).sum();
-        when(queryService.getOverview(anyInt(), any()))
-                .thenReturn(new FeatureUsageOverviewDTO(7, FROM, null, features.size(), unused, retired, total, Instant.now(), Instant.now(), features, List.of(), List.of()));
+        when(queryService.getOverview(anyInt(), any())).thenReturn(new FeatureUsageOverviewDTO(7, FROM, null, features.size(), unused, retired, total, INVENTORY_REFRESHED_AT,
+                INVENTORY_REFRESHED_AT, features, List.of(), List.of()));
     }
 
     private static FeatureUsageEntryDTO labelledEntry(String module, String featureLabel, long callCount, long errorCount, boolean retired) {

@@ -348,6 +348,11 @@ export class FeatureUsageComponent implements OnInit {
 
     private load(): void {
         this.overviewSubscription?.unsubscribe();
+        // Discarded rather than left on screen. The window and role signals have already changed by the time this runs, so
+        // keeping the previous report would show the old selection's numbers under the new controls with nothing marking
+        // them as stale, and would leave them there indefinitely if the request fails - the page would go on presenting a
+        // 30 day report as if it answered the 7 day question.
+        this.overview.set(undefined);
         this.loading.set(true);
         const callerRole = this.selectedCallerRole();
         this.overviewSubscription = this.featureUsageService.getOverview(this.selectedWindow(), callerRole === ALL_ROLES ? undefined : callerRole).subscribe({

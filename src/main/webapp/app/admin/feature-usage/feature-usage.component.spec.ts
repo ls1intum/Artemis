@@ -498,6 +498,34 @@ describe('FeatureUsageComponent', () => {
         expect(roles).toEqual(expect.arrayContaining(['SUPER_ADMIN', 'ADMIN', 'INSTRUCTOR', 'EDITOR', 'TEACHING_ASSISTANT', 'STUDENT', 'ANONYMOUS']));
     });
 
+    it('should not show the previous report while a new window is still loading', () => {
+        component.ngOnInit();
+        expect(component.overview()).toEqual(overview);
+        const pending = new Subject<FeatureUsageOverview>();
+        vi.spyOn(featureUsageService, 'getOverview').mockReturnValue(pending);
+
+        component.onWindowChanged(7);
+
+        // the controls already say 7 days, so leaving the 30 day numbers up would present them as the answer to a
+        // question they were not the answer to
+        expect(component.overview()).toBeUndefined();
+        expect(component.loading()).toBeTruthy();
+    });
+
+    it('should not keep the previous report when the reload fails', () => {
+        component.ngOnInit();
+        expect(component.overview()).toEqual(overview);
+        vi.spyOn(featureUsageService, 'getOverview').mockReturnValue(throwError(() => new Error('server down')));
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.onCallerRoleChanged('STUDENT');
+
+        // otherwise the stale report stays on screen for good, indistinguishable from a current one
+        expect(component.overview()).toBeUndefined();
+        expect(component.loading()).toBeFalsy();
+        expect(errorSpy).toHaveBeenCalled();
+    });
+
     it('should ignore an overview response that a newer window has superseded', () => {
         component.ngOnInit();
         const slowFirst = new Subject<FeatureUsageOverview>();
