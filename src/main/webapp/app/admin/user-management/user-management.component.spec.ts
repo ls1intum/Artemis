@@ -313,6 +313,69 @@ describe('UserManagementComponent', () => {
         expect(component.deletionImpact()?.totalAffectedObjects).toBe(2);
     });
 
+    it('should clear the dialog state when the deletion dialog is closed', () => {
+        component.deletionDialogVisible.set(true);
+        component.deletionImpact.set({ users: [], totalAffectedObjects: 0, categories: [] });
+        component.deletionConfirmation.set('typed');
+
+        component.closePermanentDeletionDialog();
+
+        expect(component.deletionDialogVisible()).toBeFalsy();
+        expect(component.deletionImpact()).toBeUndefined();
+        expect(component.deletionConfirmation()).toBe('');
+    });
+
+    it('should deactivate every previewed user instead of deleting them', () => {
+        const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
+        component.deletionDialogVisible.set(true);
+        component.deletionImpact.set({
+            users: [
+                {
+                    userId: 1,
+                    login: 'first',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 0,
+                    impactFingerprint: 'a',
+                    categories: [],
+                },
+                {
+                    userId: 2,
+                    login: 'second',
+                    automaticEligible: true,
+                    legacyDeleted: false,
+                    retentionOverrideRequired: false,
+                    totalAffectedObjects: 0,
+                    impactFingerprint: 'b',
+                    categories: [],
+                },
+            ],
+            totalAffectedObjects: 0,
+            categories: [],
+        });
+
+        component.deactivateInstead();
+
+        // One request per previewed user, and the dialog only closes once all of them answered.
+        httpMock.expectOne({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' }).flush({});
+        httpMock.expectOne({ method: 'PATCH', url: 'api/account/admin/users/2/deactivate' }).flush({});
+
+        expect(component.deletionLoading()).toBeFalsy();
+        expect(component.deletionDialogVisible()).toBeFalsy();
+        expect(component.selectedUsers()).toEqual([]);
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'userListModification', content: 'Deactivated users' });
+    });
+
+    it('should do nothing when deactivating without a previewed user', () => {
+        component.deletionImpact.set(undefined);
+
+        component.deactivateInstead();
+
+        expect(component.deletionLoading()).toBeFalsy();
+        httpMock.expectNone({ method: 'PATCH', url: 'api/account/admin/users/1/deactivate' });
+    });
+
     it('should re-preview only users that were not already deleted when one deletion plan changed', () => {
         const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
         const firstUser = new User();
