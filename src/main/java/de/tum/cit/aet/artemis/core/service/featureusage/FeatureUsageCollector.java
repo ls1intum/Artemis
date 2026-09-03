@@ -250,7 +250,20 @@ public class FeatureUsageCollector {
         return Math.floorDiv(System.currentTimeMillis(), TimeUnit.DAYS.toMillis(1));
     }
 
-    private void accumulate(long featureId, long usageDay, Role callerRole, boolean failed, long durationMs) {
+    /**
+     * Synchronized on the same monitor as {@link #drain} and {@link #reclaim}, so that looking a bucket up and updating
+     * its counters cannot interleave with a flush removing that bucket.
+     * <p>
+     * Without it, the recorder can take an accumulator out of the map, a flush can decide the same bucket is a closed day
+     * with nothing new and drop it, and the increments then land on a detached object and are lost. Deferring recording
+     * widened that window from nanoseconds to however long an observation waits in the queue, which can easily cross the
+     * UTC midnight that makes a bucket removable in the first place.
+     * <p>
+     * Affordable only because recording is deferred: this lock is taken by the single recording thread and the flush, and
+     * never by a request thread. Synchronizing here while requests still accumulated inline would have serialised every
+     * request in the application behind one monitor.
+     */
+    private synchronized void accumulate(long featureId, long usageDay, Role callerRole, boolean failed, long durationMs) {
         UsageKey key = new UsageKey(featureId, LocalDate.ofEpochDay(usageDay), callerRole);
         UsageAccumulator accumulator = buckets.computeIfAbsent(key, ignored -> new UsageAccumulator());
         accumulator.callCount.increment();

@@ -340,6 +340,44 @@ class FeatureUsageCollectorTest {
         assertThat(rejecting.consumeDiscardedObservationCount()).isZero();
     }
 
+    /**
+     * A flush drops a bucket whose day is over and which saw nothing new. If that removal can interleave with an
+     * observation being applied to the same bucket, the increments land on an object no longer in the map and are gone
+     * for good.
+     * <p>
+     * Driven as a conservation law under a drainer that is continuously eligible to remove: draining as if the day had
+     * already rolled over makes every bucket a closed one, so the removal path runs against live accumulation on every
+     * pass. Nothing recorded may go missing whatever the interleaving.
+     */
+    @Test
+    void shouldNotLoseObservationsToTheRemovalOfAClosedDayBucket() throws InterruptedException {
+        int observations = 20_000;
+        var asyncCollector = new FeatureUsageCollector(enabledProperties(), contextReturningRegistry());
+        var applied = new LongAdder();
+        var recording = new AtomicBoolean(true);
+
+        var flusher = new Thread(() -> {
+            boolean lastRound = false;
+            while (!lastRound) {
+                lastRound = !recording.get();
+                // "tomorrow", so every bucket counts as a closed day and is a candidate for removal
+                for (var delta : asyncCollector.drain(today().plusDays(1))) {
+                    applied.add(delta.callCount());
+                }
+            }
+        });
+        flusher.start();
+
+        for (int i = 0; i < observations; i++) {
+            asyncCollector.recordUsage(FEATURE_ID, Role.STUDENT, false, 1);
+        }
+        assertThat(asyncCollector.applyPendingObservations()).isTrue();
+        recording.set(false);
+        flusher.join();
+
+        assertThat(applied.sum()).isEqualTo(observations);
+    }
+
     private static FeatureUsageProperties enabledProperties() {
         return new FeatureUsageProperties(true, 400, new FeatureUsageProperties.Digest(false, List.of()));
     }
