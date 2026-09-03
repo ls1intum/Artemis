@@ -61,7 +61,7 @@ class VariantBuildVerificationServiceStragglerTest {
     @BeforeEach
     void setUp() {
         waitAbandonedAt = Instant.now().minusSeconds(90);
-        roundTriggeredAt = roundTriggeredAt;
+        roundTriggeredAt = Instant.now().minusSeconds(60);
 
         TemplateProgrammingExerciseParticipationTestRepository templateRepository = mock(TemplateProgrammingExerciseParticipationTestRepository.class);
         SolutionProgrammingExerciseParticipationRepository solutionRepository = mock(SolutionProgrammingExerciseParticipationRepository.class);
