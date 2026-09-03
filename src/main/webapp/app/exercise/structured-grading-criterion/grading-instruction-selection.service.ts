@@ -39,8 +39,8 @@ export class GradingInstructionSelectionService {
     private readonly host = signal<GradingInstructionSelectionHost | undefined>(undefined);
 
     /**
-     * Instruction armed by keyboard (Enter/Space) when no feedback-list host is registered. Consumed by the next
-     * feedback target that accepts it (drop or keyboard), the drag-and-drop stand-in without a checkbox host.
+     * Instruction armed by keyboard (Enter/Space) for the next feedback target without a checkbox host. Consumed by
+     * the next target that accepts it (drop or keyboard), the drag-and-drop stand-in without a checkbox host.
      */
     private readonly armedInstruction = signal<GradingInstruction | undefined>(undefined);
 
@@ -107,17 +107,21 @@ export class GradingInstructionSelectionService {
     }
 
     /**
-     * Arms an instruction for the next feedback drop or keyboard apply when no host is registered.
+     * Arms an instruction for the next feedback drop or keyboard apply.
      */
     armInstruction(instruction: GradingInstruction): void {
         this.armedInstruction.set(instruction);
     }
 
-    /** Takes and clears the keyboard-armed instruction, if any. */
+    /** Takes and clears the keyboard-armed instruction when its live usage limit still allows an application. */
     consumeArmedInstruction(): GradingInstruction | undefined {
         const instruction = this.armedInstruction();
         this.armedInstruction.set(undefined);
-        return instruction;
+        if (!instruction) {
+            return undefined;
+        }
+        const usageLimit = instruction.usageCount ?? 0;
+        return usageLimit > 0 && this.applicationCount(instruction) >= usageLimit ? undefined : instruction;
     }
 
     /** Drops an unconsumed armed instruction (assessment teardown / new host registration). */

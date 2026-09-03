@@ -51,6 +51,7 @@ import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/m
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { FullscreenPresentationService } from 'app/modeling/shared/fullscreen/fullscreen-presentation.service';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -75,6 +76,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     private readonly fullscreenPresentation = inject(FullscreenPresentationService);
     private readonly contentObserver = inject(ContentObserver);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly structuredGradingCriterionService = inject(StructuredGradingCriterionService);
 
     private readonly assessmentFrame = viewChild<ElementRef<HTMLElement>>('assessmentFrame');
     private readonly fullscreenSupported = document.fullscreenEnabled;
@@ -115,6 +117,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private modelChangeSubscription?: number;
     private assessmentSelectionSubscription?: number;
+    private armedInstructionSelectionSubscription?: number;
     private topLeftRegionMounted = false;
     private topRightRegionMounted = false;
     private bottomCenterRegionMounted = false;
@@ -244,6 +247,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 editor.unsubscribe(this.assessmentSelectionSubscription);
                 this.assessmentSelectionSubscription = undefined;
             }
+            if (this.armedInstructionSelectionSubscription !== undefined) {
+                editor.unsubscribe(this.armedInstructionSelectionSubscription);
+                this.armedInstructionSelectionSubscription = undefined;
+            }
             this.apollonEditor = undefined;
             editor.destroy();
         }
@@ -289,6 +296,49 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             editor.unsubscribe(this.assessmentSelectionSubscription);
             this.assessmentSelectionSubscription = undefined;
         }
+        if (!readOnly && this.armedInstructionSelectionSubscription === undefined) {
+            this.armedInstructionSelectionSubscription = editor.subscribeToSelectionChange((selections) => this.applyArmedInstructionToSelection(selections));
+        } else if (readOnly && this.armedInstructionSelectionSubscription !== undefined) {
+            editor.unsubscribe(this.armedInstructionSelectionSubscription);
+            this.armedInstructionSelectionSubscription = undefined;
+        }
+    }
+
+    private applyArmedInstructionToSelection(selectedElementIds: string[]): void {
+        if (selectedElementIds.length !== 1) {
+            return;
+        }
+
+        const elementId = selectedElementIds[0];
+        const editor = this.apollonEditor;
+        if (!editor) {
+            return;
+        }
+
+        let feedback = this.elementFeedback.get(elementId);
+        let isNewFeedback = false;
+        if (!feedback) {
+            const assessment = editor.model.assessments[elementId];
+            feedback = Feedback.forModeling(assessment?.score ?? 0, assessment?.feedback, elementId, assessment?.elementType ?? getModelElementType(this.umlModel(), elementId));
+            isNewFeedback = true;
+        }
+        if (!this.structuredGradingCriterionService.applyArmedInstructionToFeedback(feedback)) {
+            return;
+        }
+        if (isNewFeedback) {
+            this.elementFeedback.set(elementId, feedback);
+        }
+
+        const feedbacks = [...this.referencedFeedbacks];
+        const index = feedbacks.findIndex((current) => current.referenceId === elementId);
+        if (index < 0) {
+            feedbacks.push(feedback);
+        } else {
+            feedbacks[index] = feedback;
+        }
+        this.referencedFeedbacks = feedbacks;
+        this.updateApollonAssessments(feedbacks);
+        this.feedbackChanged.emit(feedbacks);
     }
 
     private mountHostChrome(): void {
