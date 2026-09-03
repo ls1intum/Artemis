@@ -4,6 +4,27 @@ import { EXAM_DASHBOARD_TIMEOUT } from '../../timeouts';
 import { setMonacoEditorContentByLocator } from '../../utils';
 
 /**
+ * Navigates to a specific subpage of an exam via the exam management navigation sidebar.
+ *
+ * @param page The Playwright page instance
+ * @param subpage The name of the subpage (e.g. 'exercise-groups', 'students', 'test-runs', 'grading', 'scores', 'edit')
+ * @param examId Optional exam ID. If not provided, it is extracted from the current URL.
+ */
+export async function navigateToExamSubpage(page: Page, subpage: string, examId?: number) {
+    const id = examId ?? page.url().match(/\/exams\/(\d+)/)?.[1];
+    if (!id) {
+        throw new Error(`Cannot navigate to exam subpage '${subpage}': exam ID was not provided and could not be determined from the current URL (${page.url()}).`);
+    }
+    const panel = page.locator(`#exam-${id}`);
+    await panel.waitFor({ state: 'visible', timeout: 30_000 });
+    const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
+    if (await toggler.isVisible()) {
+        await toggler.click();
+    }
+    await panel.locator(`#exam-${id}-${subpage}`).click();
+}
+
+/**
  * A class which encapsulates UI selectors and actions for the exam management page.
  */
 export class ExamManagementPage {
@@ -11,6 +32,10 @@ export class ExamManagementPage {
 
     constructor(page: Page) {
         this.page = page;
+    }
+
+    private async navigateToSubpage(subpage: string, examId?: number) {
+        await navigateToExamSubpage(this.page, subpage, examId);
     }
 
     /**
@@ -47,36 +72,14 @@ export class ExamManagementPage {
      * Opens the exercise groups page.
      */
     async openExerciseGroups(examId?: number) {
-        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
-        if (id) {
-            const panel = this.page.locator(`#exam-${id}`);
-            await panel.waitFor({ state: 'visible', timeout: 30_000 });
-            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
-            if (await toggler.isVisible()) {
-                await toggler.click();
-            }
-            await panel.locator(`#exam-${id}-exercise-groups`).click();
-        } else {
-            await this.page.locator('[data-testid="sidebar-subpage-exercise-groups"]').first().click();
-        }
+        await this.navigateToSubpage('exercise-groups', examId);
     }
 
     /**
      * Opens the student registration page.
      */
     async openStudentRegistration(examId?: number) {
-        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
-        if (id) {
-            const panel = this.page.locator(`#exam-${id}`);
-            await panel.waitFor({ state: 'visible', timeout: 30_000 });
-            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
-            if (await toggler.isVisible()) {
-                await toggler.click();
-            }
-            await panel.locator(`#exam-${id}-students`).click();
-        } else {
-            await this.page.locator('[data-testid="sidebar-subpage-students"]').first().click();
-        }
+        await this.navigateToSubpage('students', examId);
     }
 
     /**
@@ -112,54 +115,21 @@ export class ExamManagementPage {
      * Opens the test run page.
      */
     async openTestRun(examId?: number) {
-        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
-        if (id) {
-            const panel = this.page.locator(`#exam-${id}`);
-            await panel.waitFor({ state: 'visible', timeout: 30_000 });
-            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
-            if (await toggler.isVisible()) {
-                await toggler.click();
-            }
-            await panel.locator(`#exam-${id}-test-runs`).click();
-        } else {
-            await this.page.locator('[data-testid="sidebar-subpage-test-runs"]').first().click();
-        }
+        await this.navigateToSubpage('test-runs', examId);
     }
 
     /**
      * Opens the exam grading system page.
      */
     async openGradingKey(examId?: number) {
-        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
-        if (id) {
-            const panel = this.page.locator(`#exam-${id}`);
-            await panel.waitFor({ state: 'visible', timeout: 30_000 });
-            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
-            if (await toggler.isVisible()) {
-                await toggler.click();
-            }
-            await panel.locator(`#exam-${id}-grading`).click();
-        } else {
-            await this.page.locator('[data-testid="sidebar-subpage-grading"]').first().click();
-        }
+        await this.navigateToSubpage('grading', examId);
     }
 
     /**
      * Opens the exam scores page.
      */
     async openScoresPage(examId?: number) {
-        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
-        if (id) {
-            const panel = this.page.locator(`#exam-${id}`);
-            await panel.waitFor({ state: 'visible', timeout: 30_000 });
-            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
-            if (await toggler.isVisible()) {
-                await toggler.click();
-            }
-            await panel.locator(`#exam-${id}-scores`).click();
-        } else {
-            await this.page.locator('[data-testid="sidebar-subpage-scores"]').first().click();
-        }
+        await this.navigateToSubpage('scores', examId);
     }
 
     async verifySubmitted(courseID: number, examID: number, username: string) {
@@ -250,18 +220,7 @@ export class ExamManagementPage {
     }
 
     async clickEdit(examId?: number) {
-        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
-        if (id) {
-            const panel = this.page.locator(`#exam-${id}`);
-            await panel.waitFor({ state: 'visible', timeout: 30_000 });
-            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
-            if (await toggler.isVisible()) {
-                await toggler.click();
-            }
-            await panel.locator(`#exam-${id}-edit`).click();
-        } else {
-            await this.page.locator('[data-testid="sidebar-subpage-edit"]').first().click();
-        }
+        await this.navigateToSubpage('edit', examId);
     }
 
     /*

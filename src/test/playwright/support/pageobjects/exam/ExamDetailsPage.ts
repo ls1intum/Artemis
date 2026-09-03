@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { navigateToExamSubpage } from './ExamManagementPage';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.
@@ -11,18 +12,7 @@ export class ExamDetailsPage {
     }
 
     async openExerciseGroups(examId?: number) {
-        const id = examId ?? this.page.url().match(/\/exams\/(\d+)/)?.[1];
-        if (id) {
-            const panel = this.page.locator(`#exam-${id}`);
-            await panel.waitFor({ state: 'visible', timeout: 30_000 });
-            const toggler = panel.locator('.tum-ui-panel-toggler[aria-expanded="false"]');
-            if (await toggler.isVisible()) {
-                await toggler.click();
-            }
-            await panel.locator(`#exam-${id}-exercise-groups`).click();
-        } else {
-            await this.page.locator('[data-testid="sidebar-subpage-exercise-groups"]').first().click();
-        }
+        await navigateToExamSubpage(this.page, 'exercise-groups', examId);
     }
 
     async checkItemChecked(checklistItem: ExamChecklistItem) {

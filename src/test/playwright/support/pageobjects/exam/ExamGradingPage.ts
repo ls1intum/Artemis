@@ -35,7 +35,7 @@ export class ExamGradingPage {
     }
 
     async generateDefaultGrading() {
-        await this.page.locator('button', { hasText: 'Generate Default Grading Key' }).click();
+        await this.page.locator('button', { hasText: 'Set Default Grading Key' }).click();
     }
 
     async saveGradingKey() {
