@@ -236,11 +236,18 @@ public class AthenaFeedbackSuggestionsService {
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission),
                 LearnerProfileDTO.of(extractLearnerProfile(submission)), isGraded, extractSelectedLLMUsage(user, isGraded), latestSubmissionDTO, competencies);
         final long startNanos = System.nanoTime();
-        ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
-        recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000);
-        return response.data.stream().toList();
+        // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
+        boolean failed = true;
+        try {
+            ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+            log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+            storeTokenUsage(exercise, submission, response.meta, !isGraded);
+            failed = false;
+            return response.data.stream().toList();
+        }
+        finally {
+            recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
     }
 
     /**
@@ -264,11 +271,18 @@ public class AthenaFeedbackSuggestionsService {
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         final long startNanos = System.nanoTime();
-        ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
-        recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000);
-        return response.data.stream().toList();
+        // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
+        boolean failed = true;
+        try {
+            ResponseDTOProgramming response = programmingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+            log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+            storeTokenUsage(exercise, submission, response.meta, !isGraded);
+            failed = false;
+            return response.data.stream().toList();
+        }
+        finally {
+            recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
     }
 
     /**
@@ -297,11 +311,18 @@ public class AthenaFeedbackSuggestionsService {
         final RequestDTO request = new RequestDTO(athenaDTOConverterService.ofExercise(exercise), athenaDTOConverterService.ofSubmission(exercise.getId(), submission), null,
                 isGraded, extractSelectedLLMUsage(user, isGraded), null, null);
         final long startNanos = System.nanoTime();
-        ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
-        log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
-        storeTokenUsage(exercise, submission, response.meta, !isGraded);
-        recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000);
-        return response.data;
+        // stays true if the call to Athena throws, so a failed request is recorded as a failure rather than not at all
+        boolean failed = true;
+        try {
+            ResponseDTOModeling response = modelingAthenaConnector.invokeWithRetry(athenaModuleService.getAthenaModuleUrl(exercise) + "/feedback_suggestions", request, 0);
+            log.info("Athena responded to '{}' feedback suggestions request: {}", isGraded ? "Graded" : "Non Graded", response.data);
+            storeTokenUsage(exercise, submission, response.meta, !isGraded);
+            failed = false;
+            return response.data;
+        }
+        finally {
+            recordFeedbackSuggestionUsage(exercise, isGraded, (System.nanoTime() - startNanos) / 1_000_000, failed);
+        }
     }
 
     /**
@@ -317,10 +338,13 @@ public class AthenaFeedbackSuggestionsService {
      * @param exercise   the exercise the suggestions were requested for
      * @param isGraded   whether grade suggestions were requested
      * @param durationMs how long the call to Athena took
+     * @param failed     whether the request to Athena failed. Recorded from a finally block rather than after a
+     *                       successful response, because Athena being unreachable is precisely the thing an error rate on
+     *                       this feature should show, and recording only successes made it structurally invisible.
      */
-    private void recordFeedbackSuggestionUsage(Exercise exercise, boolean isGraded, long durationMs) {
+    private void recordFeedbackSuggestionUsage(Exercise exercise, boolean isGraded, long durationMs, boolean failed) {
         String identifier = "feedback-suggestions/" + exercise.getExerciseType().name().toLowerCase(Locale.ROOT) + (isGraded ? "/graded" : "/non-graded");
-        featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, Role.ANONYMOUS, false, durationMs));
+        featureUsageCollector.ifPresent(collector -> collector.recordUsage(FeatureKind.BACKGROUND, ATHENA_MODULE, identifier, Role.ANONYMOUS, failed, durationMs));
     }
 
     /**
