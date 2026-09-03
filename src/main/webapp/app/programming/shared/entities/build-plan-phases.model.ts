@@ -1,3 +1,4 @@
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { parseJson } from 'app/foundation/util/json.util';
 
 /**
@@ -40,12 +41,12 @@ export type BuildContainerRepositoryType = keyof typeof BUILD_CONTAINER_REPOSITO
 
 /**
  * A repository that is checked out into a build container. Where a repository is checked out stays configured per
- * exercise; a container only selects which of the exercise's repositories are provisioned into it.
+ * exercise; a container only selects which of the exercise's repositories are provisioned into it. A repository is
+ * identified by its type alone, so AUXILIARY selects every auxiliary repository of the exercise at once.
  * Note: Matches BuildContainerRepositoryDTO.java
  */
 export interface BuildContainerRepository {
     type: BuildContainerRepositoryType;
-    name?: string;
 }
 
 /**
@@ -117,24 +118,19 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
     if (!isBuildPlanPhases(data)) {
         return undefined;
     }
-    return {
-        ...data,
+    return cloneWith(data, {
         phases: data.phases?.map(withPhaseDefaults),
-        containers: data.containers?.map((container: BuildContainer) => ({
-            ...container,
-            phases: (container.phases ?? []).map(withPhaseDefaults),
-        })),
-    };
+        containers: data.containers?.map((container: BuildContainer) => cloneWith(container, { phases: (container.phases ?? []).map(withPhaseDefaults) })),
+    });
 }
 
 function withPhaseDefaults(parsed: BuildPhase): BuildPhase {
-    return {
-        ...parsed,
+    return cloneWith(parsed, {
         script: parsed.script ?? '',
         condition: parsed.condition ?? 'ALWAYS',
         forceRun: parsed.forceRun ?? false,
         resultPaths: parsed.resultPaths ?? [],
-    };
+    });
 }
 
 function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
