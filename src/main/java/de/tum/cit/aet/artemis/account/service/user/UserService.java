@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -173,8 +174,8 @@ public class UserService {
     public void applicationReady() {
         try {
             if (artemisInternalAdminUsername.isPresent() && artemisInternalAdminPassword.isPresent()) {
-                // authenticate so that db queries are possible
-                SecurityUtils.setAuthorizationObject();
+                // Startup work with nobody logged in, so db queries need the system principal.
+                SecurityUtils.setSystemAuthorizationObject();
                 ensureInternalAdminExists(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
             }
         }
@@ -421,7 +422,9 @@ public class UserService {
         // The user has the same login and email, but the account is not activated.
         // Return the existing non-activated user so that Artemis can re-send the
         // activation link.
-        if (existingUser.getEmail().equals(newUser.getEmail())) {
+        // Null-safe since canonicalEmail turns a blank address into null: an account registered without one must
+        // still get its activation link resent rather than a NullPointerException.
+        if (Objects.equals(existingUser.getEmail(), newUser.getEmail())) {
             // Update the existing user and VCS
             newUser.setId(existingUser.getId());
             User updatedExistingUser = userRepository.save(newUser);

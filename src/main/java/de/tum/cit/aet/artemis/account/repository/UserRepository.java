@@ -1446,6 +1446,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
+                    AND user.activated = TRUE
+                    AND user.deleted = FALSE
                     AND (:#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                         OR :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities)
             )
@@ -1456,6 +1458,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT EXISTS (
                 FROM User user
                 WHERE user.login = :login
+                    AND user.activated = TRUE
+                    AND user.deleted = FALSE
                     AND :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
             )
             """)
@@ -1616,6 +1620,23 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE store.token = :token
             """)
     Optional<User> findOneWithAuthoritiesByCalendarSubscriptionToken(@Param("token") String token);
+
+    /**
+     * Get the IDs of all users flagged as test users.
+     * <p>
+     * Statistics that count active users have to ignore test users. Joining {@code jhi_user} into those aggregations
+     * only to evaluate the flag makes the optimizer abandon the selective {@code submission_date} range scan, so the
+     * (small) set of test user ids is fetched separately and applied in Java instead. Soft-deleted test users are
+     * included: they must never be counted as active either.
+     *
+     * @return the ids of all users whose {@code isTestUser} flag is set
+     */
+    @Query("""
+            SELECT u.id
+            FROM User u
+            WHERE u.isTestUser = TRUE
+            """)
+    Set<Long> findAllTestUserIds();
 
     /**
      * Get the IDs of users who have submitted at least one submission since the given date.
