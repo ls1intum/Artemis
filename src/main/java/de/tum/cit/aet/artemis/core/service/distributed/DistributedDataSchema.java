@@ -21,6 +21,11 @@ import java.util.List;
 public final class DistributedDataSchema {
 
     /**
+     * The unversioned key layout used before distributed-data schemas were introduced.
+     */
+    public static final int LEGACY_VERSION = 0;
+
+    /**
      * The version of the distributed data written by this build. See the class documentation for when to bump it.
      */
     public static final int VERSION = 1;
@@ -46,7 +51,7 @@ public final class DistributedDataSchema {
      * The kinds of structure a migration knows how to move, which is what decides how its entries are drained.
      */
     public enum StructureKind {
-        MAP, QUEUE, PRIORITY_QUEUE, SET
+        MAP, EXPIRING_MAP, QUEUE, PRIORITY_QUEUE, SET
     }
 
     /**
@@ -67,7 +72,7 @@ public final class DistributedDataSchema {
      * The bar for adding an entry is that the data is expensive or impossible to reconstruct. Build agent
      * registrations, websocket presence and caches all rebuild themselves within seconds and are deliberately absent.
      */
-    public static final List<CarriedOverStructure> CARRIED_OVER_STRUCTURES = List.of(
+    public static final List<CarriedOverStructure> LEGACY_TO_V1_STRUCTURES = List.of(
             // Queued student builds. Nothing else knows they were requested.
             new CarriedOverStructure("buildJobQueue", StructureKind.PRIORITY_QUEUE),
             // Builds already running on an agent. SharedQueueManagementService reads this map to decide what to
@@ -79,7 +84,7 @@ public final class DistributedDataSchema {
             // startup. A toggle an admin flipped at runtime exists only here, so it has to be moved.
             new CarriedOverStructure("features", StructureKind.MAP),
             // Iris jobs waiting for a Pyris callback.
-            new CarriedOverStructure("pyris-job-map", StructureKind.MAP));
+            new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }
@@ -89,7 +94,25 @@ public final class DistributedDataSchema {
      * @return the key prefix every structure of that version lives under, for example {@code artemis:v1:}
      */
     public static String namespaceFor(int version) {
+        if (version <= LEGACY_VERSION) {
+            throw new IllegalArgumentException("Only versioned distributed-data schemas have a namespace");
+        }
         return "artemis:v" + version + ":";
+    }
+
+    /**
+     * Builds the physical Redis key for a logical distributed structure. The hash tag keeps all auxiliary keys and
+     * migration markers for one logical structure in the same Redis Cluster slot.
+     *
+     * @param version the schema version, or {@link #LEGACY_VERSION} for the former unversioned layout
+     * @param name    the logical structure name
+     * @return the physical Redis key
+     */
+    public static String keyFor(int version, String name) {
+        if (version == LEGACY_VERSION) {
+            return name;
+        }
+        return namespaceFor(version) + "{" + name + "}";
     }
 
     /**
@@ -97,5 +120,13 @@ public final class DistributedDataSchema {
      */
     public static String currentNamespace() {
         return namespaceFor(VERSION);
+    }
+
+    /**
+     * @param name the logical structure name
+     * @return the physical Redis key in the current schema namespace
+     */
+    public static String currentKey(String name) {
+        return keyFor(VERSION, name);
     }
 }

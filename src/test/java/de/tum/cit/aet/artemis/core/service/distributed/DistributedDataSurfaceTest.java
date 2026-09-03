@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.service.distributed;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.ObjectStreamClass;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +28,13 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
  * Fails when the shape of a type stored in the distributed store changes, so that the change is a decision rather than
@@ -42,7 +51,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
  * <b>When this test fails</b>, decide whether the change is one an older build could still read:
  * <ul>
  * <li>It cannot (a component added, removed, reordered or retyped): bump {@link DistributedDataSchema#VERSION}, decide
- * in {@link DistributedDataSchema#CARRIED_OVER_STRUCTURES} whether the affected structure survives the bump, and then
+ * in the explicit migration step whether the affected structure survives the bump, and then
  * update the recorded surface.</li>
  * <li>It can (a comment, a method, an annotation that does not reach the encoding): update the recorded surface
  * alone.</li>
@@ -65,9 +74,11 @@ class DistributedDataSurfaceTest {
     /**
      * The types stored in the distributed structures. Everything they reach is walked, so this only has to name the
      * roots: a build job and its result as they travel through the queues and the processing map, the agent record
-     * whose change caused #12137, and the key type of the feature toggles.
+     * whose change caused #12137, the key type of the feature toggles, and every concrete Pyris job stored through the
+     * polymorphic PyrisJob interface.
      */
-    private static final List<Class<?>> ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class);
+    private static final List<Class<?>> ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class, AutonomousTutorJob.class,
+            ChatJob.class, CompetencyExtractionJob.class, FaqIngestionWebhookJob.class, GlobalSearchAnswerJob.class, LectureIngestionWebhookJob.class, TutorSuggestionJob.class);
 
     /**
      * Types whose shape Artemis does not control and cannot change, so walking into them adds noise rather than
@@ -92,7 +103,7 @@ class DistributedDataSurfaceTest {
 
                 Decide whether an older build could still read it. If it could not, because a component was added, \
                 removed, reordered or retyped, bump DistributedDataSchema.VERSION and check whether the affected \
-                structure is listed in CARRIED_OVER_STRUCTURES. If it could, only the record below needs updating.
+                structure is handled by an explicit migration step. If it could, only the record below needs updating.
 
                 What was found has been written to %s. Review the diff against %s, then replace it.
                 """.formatted(ACTUAL_SURFACE, RECORDED_SURFACE)).isEqualTo(recorded);
@@ -156,34 +167,28 @@ class DistributedDataSurfaceTest {
     /**
      * @param type a stored type
      * @return its encoded shape: what it is, the serialVersionUID an older build would compare against, and the
-     *         components or fields in declaration order, since Kryo encodes them positionally
+     *         components or fields in the stable order used for the compatibility surface
      */
     private static String describe(Class<?> type) {
         String kind = type.isRecord() ? "record" : type.isEnum() ? "enum" : type.isInterface() ? "interface" : "class";
         String members;
         if (type.isEnum()) {
             // Constant order is part of the encoding: Kryo writes an enum by ordinal.
-            members = Arrays.stream(type.getEnumConstants()).map(Object::toString).collect(Collectors.joining(","));
+            members = Arrays.stream(type.getEnumConstants()).map(constant -> ((Enum<?>) constant).name()).collect(Collectors.joining(","));
         }
         else if (type.isRecord()) {
             members = Arrays.stream(type.getRecordComponents()).map(component -> component.getGenericType().getTypeName() + " " + component.getName())
                     .collect(Collectors.joining(", "));
         }
         else {
-            members = Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers()))
+            members = Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers())).sorted(Comparator.comparing(Field::getName))
                     .map(field -> field.getGenericType().getTypeName() + " " + field.getName()).collect(Collectors.joining(", "));
         }
         return "%s %s serialVersionUID=%s serializable=%s [%s]".formatted(kind, type.getName(), serialVersionUidOf(type), Serializable.class.isAssignableFrom(type), members);
     }
 
     private static String serialVersionUidOf(Class<?> type) {
-        try {
-            Field field = type.getDeclaredField("serialVersionUID");
-            field.setAccessible(true);
-            return String.valueOf(field.get(null));
-        }
-        catch (ReflectiveOperationException e) {
-            return "none";
-        }
+        ObjectStreamClass descriptor = ObjectStreamClass.lookup(type);
+        return descriptor == null ? "none" : String.valueOf(descriptor.getSerialVersionUID());
     }
 }

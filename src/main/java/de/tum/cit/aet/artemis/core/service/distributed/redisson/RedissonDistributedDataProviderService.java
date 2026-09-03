@@ -121,7 +121,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
      * @return the Redis key it lives under
      */
     private static String key(String name) {
-        return DistributedDataSchema.currentNamespace() + name;
+        return DistributedDataSchema.currentKey(name);
     }
 
     @Override
@@ -170,7 +170,9 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     @Override
     public DistributedLock getLock(String name) {
-        return new RedissonDistributedLock(redissonClient.getLock(key(name)));
+        // Locks coordinate work across application releases and must therefore remain in the stable, unversioned
+        // namespace. Versioning them would let both generations acquire what callers expect to be the same mutex.
+        return new RedissonDistributedLock(redissonClient.getLock(name));
     }
 
     @Override
