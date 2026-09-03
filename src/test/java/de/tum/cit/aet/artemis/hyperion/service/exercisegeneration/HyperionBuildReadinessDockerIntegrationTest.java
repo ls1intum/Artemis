@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -37,7 +36,6 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /** Executes the pre-provider readiness probe against the supported real Java build harnesses. */
-@EnabledIf("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.HyperionMockedLlmE2eSupport#isReadinessMatrixConfigured")
 @Execution(ExecutionMode.SAME_THREAD)
 @Isolated
 class HyperionBuildReadinessDockerIntegrationTest extends AbstractHyperionMockedLlmEndToEndTest {

@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.doReturn;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.FileUtils;
@@ -36,7 +38,11 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
 
-/** Shared setup for deterministic mocked-model generation and adaptation tests that run the sandbox, builds, and verifier against Docker. */
+/**
+ * Shared setup for deterministic mocked-model generation and adaptation tests that run the sandbox, builds, and verifier against Docker. Every test here builds a real exercise
+ * inside the network-isolated generation sandbox, so each is skipped individually — with the reason — when this machine cannot provide that; see
+ * {@link HyperionMockedLlmE2eSupport#sandboxSkipReason()}.
+ */
 abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     @Autowired
@@ -69,8 +75,18 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
     @Nullable
     private String replacedJavaBuildImage;
 
+    /**
+     * JUnit runs {@code @AfterEach} even when {@code @BeforeEach} aborted on the assumption, and tearing down build-agent services that were never re-opened would corrupt the
+     * shared context for the other LocalCI tests using it.
+     */
+    private boolean sandboxPrepared;
+
     @BeforeEach
     void switchToRealDockerClientAndOverrideBuildImage() {
+        // Reported per test rather than as a class-level @EnabledIf so every parameterisation shows up as an explicit skip instead of vanishing from the report.
+        Optional<String> skipReason = HyperionMockedLlmE2eSupport.sandboxSkipReason();
+        assumeTrue(skipReason.isEmpty(), () -> "Hyperion generation sandbox unavailable: " + skipReason.orElseThrow());
+
         // The shared test profile configures a placeholder image; the sandbox and verifier need the real Java build image.
         replacedJavaBuildImage = HyperionMockedLlmE2eSupport.useProductionJavaBuildImage(programmingLanguageConfiguration);
 
@@ -100,10 +116,15 @@ abstract class AbstractHyperionMockedLlmEndToEndTest extends AbstractProgramming
 
         // The interactive sandbox creates its container from this image without ever pulling it.
         ensureDockerImageAvailable(HyperionMockedLlmE2eSupport.JAVA_BUILD_IMAGE);
+        sandboxPrepared = true;
     }
 
     @AfterEach
     void tearDownRealDockerClient() {
+        if (!sandboxPrepared) {
+            return;
+        }
+        sandboxPrepared = false;
         interactiveSandboxRelayHandler.shutdown();
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();

@@ -13,8 +13,6 @@
     /* Something arrives. */
     --tumaet-ui-duration-enter: 200ms;
 
-    /* Something leaves. Deliberately shorter than the enter. */
-    --tumaet-ui-duration-exit: 140ms;
 
     /* A region resizes and takes its neighbours with it. */
     --tumaet-ui-duration-expand: 240ms;

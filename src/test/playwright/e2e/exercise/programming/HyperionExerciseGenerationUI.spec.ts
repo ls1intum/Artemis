@@ -583,7 +583,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         const { jobId } = await startResponsePromise;
 
         const activity = page.getByTestId('hyperion-generation-activity');
-        await expect(activity.getByTestId('hyperion-generation-file-static')).toContainText('VerifierRejected.java', { timeout: 120_000 });
+        await expect(activity.getByTestId('hyperion-file-row')).toContainText('VerifierRejected.java', { timeout: 120_000 });
         await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Not saved — failed', { timeout: 240_000 });
         await expect(activity.getByTestId('hyperion-generation-terminal-message')).toContainText('did not pass mechanical verification');
         await expect
@@ -645,14 +645,14 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         });
 
         const activity = page.getByTestId('hyperion-generation-activity');
-        await expect(activity.getByTestId('hyperion-generation-file-static')).toContainText('HyperionDiagnostic.java', { timeout: 120_000 });
+        await expect(activity.getByTestId('hyperion-file-row')).toContainText('HyperionDiagnostic.java', { timeout: 120_000 });
         await expect.poll(() => getPendingLateFailureCount(page)).toBe(1);
 
         await page.reload();
         await openHyperionTab(page);
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
         await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
-        await expect(activity.getByTestId('hyperion-generation-file-static')).toContainText('HyperionDiagnostic.java');
+        await expect(activity.getByTestId('hyperion-file-row')).toContainText('HyperionDiagnostic.java');
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeVisible();
         await expectEditorActionsLockedDuringGeneration(page);
         await page.getByTestId('hyperion-ai-menu').click();
@@ -705,7 +705,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             await openHyperionTab(freshPage);
             const recovered = freshPage.getByTestId('hyperion-generation-activity');
             await expect(recovered.getByTestId('hyperion-generation-persistence-state')).toContainText('Not saved — failed');
-            await expect(recovered.getByTestId('hyperion-generation-file-static')).toContainText('HyperionDiagnostic.java');
+            await expect(recovered.getByTestId('hyperion-file-row')).toContainText('HyperionDiagnostic.java');
             const runAgainButton = recovered.getByTestId('hyperion-generation-run-again');
             await expect(runAgainButton).toBeVisible();
 
@@ -852,7 +852,7 @@ async function openHyperionTab(page: Page) {
 async function expectFileChangeNavigationDisabled(page: Page, fileName: string) {
     // The file activity is no longer behind a disclosure: it sits under the progress ladder in the panel itself.
     const activity = page.getByTestId('hyperion-generation-activity');
-    const fileRow = activity.getByTestId('hyperion-generation-file-static').filter({ hasText: fileName });
+    const fileRow = activity.getByTestId('hyperion-file-row').filter({ hasText: fileName });
     await expect(fileRow).toBeVisible();
     await expect(activity.getByRole('button', { name: fileName })).toHaveCount(0);
 }

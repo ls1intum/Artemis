@@ -9,7 +9,6 @@ import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -35,7 +34,6 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
  * Deterministic end-to-end test of agentic exercise generation. The LLM is scripted, but the agent loop, Docker sandbox, structured verify tool, and differential verifier are
  * real.
  */
-@EnabledIf("de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.HyperionMockedLlmE2eSupport#dockerGateEnabled")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
 @Isolated
