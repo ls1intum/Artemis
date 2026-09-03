@@ -176,33 +176,15 @@ public class ProgrammingExerciseGradingService {
         log.debug("Received new build result (NEW) for participation {}", participation.getId());
 
         try {
-            ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
-            var buildResult = ciResultService.convertBuildResult(requestBody);
-
-            checkCorrectBranchElseThrow(participation, buildResult);
-            checkHasCommitHashElseThrow(buildResult);
-
             ProgrammingExercise exercise = participation.getProgrammingExercise();
+            // A single-container build reports every test case of the exercise, so a solution build may deactivate the
+            // ones missing from its result.
+            ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, true);
+            var buildResult = parsed.buildResult();
+            Result newResult = parsed.result();
+            var latestSubmission = parsed.submission();
+            final boolean buildFailed = parsed.buildFailed();
 
-            // Find out which test cases were executed and calculate the score according to their status and weight.
-            // This needs to be done as some test cases might not have been executed.
-            // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
-            if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise);
-            }
-
-            Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
-
-            // Fetch submission or create a fallback
-            var latestSubmission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-
-            // Determine if the build failed based on whether tests were expected.
-            // When tests are expected: build failed if all feedbacks are SCA (no test results at all).
-            // When tests are NOT expected (compile-only phase): build failed if the script exited with non-zero.
-            final boolean noTestFeedbacks = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
-            final Integer exitCode = buildResult.buildScriptExitCode();
-            final boolean scriptFailed = exitCode != null && exitCode != 0;
-            final var buildFailed = testsExpected ? noTestFeedbacks : scriptFailed;
             if (latestSubmission.isBuildFailed() != buildFailed) {
                 // Written directly. This is one boolean on a row that already exists, and it used to reach the database
                 // only through saving the whole submission at the end of this method.
@@ -241,6 +223,61 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
+     * Parses a raw build result and resolves what both result paths need from it: the feedback it reports, the submission
+     * it belongs to, and whether the build failed. What follows differs between the two: a single-container build turns
+     * the result into the submission's result, while one container of a multi-container build appends its feedback to the
+     * result shared by its siblings.
+     *
+     * @param participation             the participation that was built
+     * @param requestBody               the raw build result
+     * @param testsExpected             whether test results are expected from this build (false for compile-only phases)
+     * @param deactivateAbsentTestCases whether a solution build may deactivate the test cases that are missing from this
+     *                                      result, which only holds for a result covering every test case of the exercise
+     * @return the parsed build result
+     */
+    private ParsedBuildResult parseBuildResult(ProgrammingExerciseParticipation participation, Object requestBody, boolean testsExpected, boolean deactivateAbsentTestCases) {
+        ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
+        var buildResult = ciResultService.convertBuildResult(requestBody);
+
+        checkCorrectBranchElseThrow(participation, buildResult);
+        checkHasCommitHashElseThrow(buildResult);
+
+        // When the result is from a solution participation, extract the feedback items (= test cases) and store them in
+        // our database. This finds out which test cases were executed, as some of them might not have been.
+        if (participation instanceof SolutionProgrammingExerciseParticipation) {
+            feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, participation.getProgrammingExercise(), deactivateAbsentTestCases);
+        }
+
+        Result result = ciResultService.createResultFromBuildResult(buildResult, participation);
+
+        // The submission may already have been created by the push flow, otherwise a fallback is created. A matched
+        // submission comes back as a detached skeleton (see BuildResultSubmissionDTO#toDetachedSubmission), which is
+        // enough to read from; a caller that mutates and saves it has to load the real entity itself.
+        var submission = getSubmissionForBuildResult(participation, buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+
+        // Determine if the build failed based on whether tests were expected.
+        // When tests are expected: build failed if all feedbacks are SCA (no test results at all).
+        // When tests are NOT expected (compile-only phase): build failed if the script exited with non-zero.
+        final boolean noTestFeedbacks = result.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
+        final Integer exitCode = buildResult.buildScriptExitCode();
+        final boolean scriptFailed = exitCode != null && exitCode != 0;
+        final boolean buildFailed = testsExpected ? noTestFeedbacks : scriptFailed;
+
+        return new ParsedBuildResult(buildResult, result, submission, buildFailed);
+    }
+
+    /**
+     * What both result paths read out of a raw build result before they diverge.
+     *
+     * @param buildResult the converted build result
+     * @param result      the result carrying the feedback this build reported, not saved yet
+     * @param submission  the submission the build belongs to, detached unless it was created as a fallback
+     * @param buildFailed whether the build failed, judged by the feedback and the script's exit code
+     */
+    private record ParsedBuildResult(BuildResultNotification buildResult, Result result, ProgrammingSubmission submission, boolean buildFailed) {
+    }
+
+    /**
      * Appends the build result of one container of a multi-container build plan to the aggregated result shared by all
      * containers of the same submission. Instead of creating a standalone result per container, every container's
      * feedback is collected into a single in-progress result (its completion date stays null until every container has
@@ -257,38 +294,22 @@ public class ProgrammingExerciseGradingService {
     public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected,
             @Nullable String containerName) {
         try {
-            ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
-            var buildResult = ciResultService.convertBuildResult(requestBody);
-
-            checkCorrectBranchElseThrow(participation, buildResult);
-            checkHasCommitHashElseThrow(buildResult);
-
             ProgrammingExercise exercise = participation.getProgrammingExercise();
-            if (participation instanceof SolutionProgrammingExerciseParticipation) {
-                // This container reports only its own test cases; passing false keeps it from deactivating the test cases
-                // of its sibling containers, which each report their own share of the solution's tests separately.
-                feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise, false);
-            }
-
-            // The feedback produced by this container, extracted via a throwaway result.
-            Result containerResult = ciResultService.createResultFromBuildResult(buildResult, participation);
-
-            // The submission is shared by all containers of the same commit; it may already have been created by the push flow.
-            // getSubmissionForBuildResult returns a detached skeleton (its result carries only the id and completion date,
-            // see BuildResultSubmissionDTO#toDetachedSubmission). The single-container path only reads from it, but this
-            // path mutates and saves the submission and appends to its result, so the real entity has to be loaded here;
-            // saving the skeleton would cascade a result whose exerciseId was never populated over the stored row.
-            var submission = getSubmissionForBuildResult(participation, buildResult)
-                    .flatMap(detached -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksById(detached.getId())).map(loaded -> {
-                        loaded.setParticipation((Participation) participation);
-                        return loaded;
-                    }).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-
+            // This container reports only its own test cases; not deactivating the absent ones keeps a solution build
+            // from deactivating the test cases of its sibling containers, which each report their own share.
+            ParsedBuildResult parsed = parseBuildResult(participation, requestBody, testsExpected, false);
+            var buildResult = parsed.buildResult();
             // Whether this container failed to build; applied to the submission once the attempt's result is resolved below.
-            final boolean noTestFeedbacks = containerResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
-            final Integer exitCode = buildResult.buildScriptExitCode();
-            final boolean scriptFailed = exitCode != null && exitCode != 0;
-            final boolean containerFailed = testsExpected ? noTestFeedbacks : scriptFailed;
+            final boolean containerFailed = parsed.buildFailed();
+
+            // The submission is shared by all containers of the same commit. This path mutates and saves it and appends
+            // to its result, so the real entity has to be loaded: saving the detached skeleton that parseBuildResult
+            // hands back would cascade a result whose exerciseId was never populated over the stored row. A submission
+            // that was created as a fallback is already saved, so it reloads here like any other.
+            ProgrammingSubmission submission = programmingSubmissionRepository.findWithEagerResultsAndFeedbacksById(parsed.submission().getId()).map(loaded -> {
+                loaded.setParticipation((Participation) participation);
+                return loaded;
+            }).orElse(parsed.submission());
 
             // Preserve the build logs of a failed container, labeled by its name and saved next to the logs of the other
             // containers, so a crashed container's logs survive alongside its siblings' (as for a single-container build,
@@ -311,7 +332,7 @@ public class ProgrammingExerciseGradingService {
             // reports the same test case in each, but a test name is unique per exercise: without this, the merged
             // result would hold that test case several times, which the scoring treats as a duplicate and zeroes the
             // score. The test cases proper are partitioned across containers, so this only ever removes such repeats.
-            var deduplicatedFeedbacks = containerResult.getFeedbacks().stream().filter(distinctNewTestCaseFeedback(aggregatedResult))
+            var deduplicatedFeedbacks = parsed.result().getFeedbacks().stream().filter(distinctNewTestCaseFeedback(aggregatedResult))
                     .collect(Collectors.toCollection(ArrayList::new));
             if (!deduplicatedFeedbacks.isEmpty()) {
                 // Only append the feedback here; the score is not recomputed until every container has finished
