@@ -147,7 +147,17 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
             execution.created = true;
             append(buildJob.id(), "Created Kubernetes Job " + properties.namespace() + "/" + jobName);
 
-            Pod pod = waitForPod(jobName, properties.podStartTimeoutSeconds());
+            // Everything up to a running Pod is scheduling and image pulling, bounded by podStartTimeoutSeconds rather
+            // than by the exercise's build timeout. Marking it keeps that phase out of the build budget, the way the
+            // Docker runner keeps its image pull out of it.
+            execution.startingPod = true;
+            Pod pod;
+            try {
+                pod = waitForPod(jobName, properties.podStartTimeoutSeconds());
+            }
+            finally {
+                execution.startingPod = false;
+            }
             execution.podName = pod.getMetadata().getName();
             append(buildJob.id(), "Kubernetes build Pod " + execution.podName + " is running");
 
@@ -421,6 +431,20 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * True while the Pod is being scheduled and its images pulled. Kubernetes bounds that phase with
+     * {@code podStartTimeoutSeconds}, so counting it against the exercise's build timeout would report a build as
+     * {@code TIMEOUT} before its script ever ran, on nothing worse than a cold image on a fresh node.
+     */
+    @Override
+    public boolean isFetchingImage(String buildJobId) {
+        ActiveExecution execution = activeExecutions.get(buildJobId);
+        return execution != null && execution.startingPod;
+    }
+
     @Override
     public boolean isActive(String buildJobId) {
         if (activeExecutions.containsKey(buildJobId)) {
@@ -609,6 +633,9 @@ public class KubernetesBuildJobRunner implements BuildJobRunner {
         private final String jobName;
 
         private volatile boolean created;
+
+        /** True while the Pod is being scheduled and its images pulled, which the build budget does not pay for. */
+        private volatile boolean startingPod;
 
         private volatile String podName;
 
