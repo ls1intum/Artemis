@@ -38,22 +38,37 @@
              API surface a feature covers but are not what a decision is made about. -->
         <tum-ui-card data-testid="kpi-tracked-features">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.trackedFeatures"></div>
-            <div class="text-3xl font-semibold">{{ trackedFeatureCount() }}</div>
-            <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail" [translateValues]="{ count: overview()?.trackedFeatures ?? 0 }"></div>
+            <div class="text-3xl font-semibold" data-testid="kpi-value">{{ trackedFeatureCount() }}</div>
+            <div
+                class="text-xs text-muted-color"
+                data-testid="kpi-endpoints"
+                jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail"
+                [translateValues]="{ count: overview()?.trackedFeatures ?? 0 }"
+            ></div>
         </tum-ui-card>
         <tum-ui-card data-testid="kpi-unused-features">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.unusedFeatures"></div>
-            <div class="text-3xl font-semibold" [class.text-state-warning]="unusedRows().length > 0">{{ unusedRows().length }}</div>
-            <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail" [translateValues]="{ count: overview()?.unusedFeatures ?? 0 }"></div>
+            <div class="text-3xl font-semibold" data-testid="kpi-value" [class.text-state-warning]="unusedRows().length > 0">{{ unusedRows().length }}</div>
+            <div
+                class="text-xs text-muted-color"
+                data-testid="kpi-endpoints"
+                jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail"
+                [translateValues]="{ count: overview()?.unusedFeatures ?? 0 }"
+            ></div>
         </tum-ui-card>
         <tum-ui-card data-testid="kpi-retired-features">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.retiredFeatures"></div>
-            <div class="text-3xl font-semibold">{{ retiredFeatureCount() }}</div>
-            <div class="text-xs text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail" [translateValues]="{ count: overview()?.retiredFeatures ?? 0 }"></div>
+            <div class="text-3xl font-semibold" data-testid="kpi-value">{{ retiredFeatureCount() }}</div>
+            <div
+                class="text-xs text-muted-color"
+                data-testid="kpi-endpoints"
+                jhiTranslate="artemisApp.featureUsage.kpi.endpointDetail"
+                [translateValues]="{ count: overview()?.retiredFeatures ?? 0 }"
+            ></div>
         </tum-ui-card>
         <tum-ui-card data-testid="kpi-total-calls">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.totalCalls"></div>
-            <div class="text-3xl font-semibold">{{ overview()?.totalCalls ?? 0 }}</div>
+            <div class="text-3xl font-semibold" data-testid="kpi-value">{{ overview()?.totalCalls ?? 0 }}</div>
         </tum-ui-card>
         <tum-ui-card data-testid="kpi-recording-since">
             <div class="text-sm text-muted-color" jhiTranslate="artemisApp.featureUsage.kpi.recordingSince"></div>
@@ -88,10 +103,10 @@
 
     <tum-ui-tabs [value]="activeTab()" (valueChange)="activeTab.set($any($event))">
         <tum-ui-tab-list>
-            <tum-ui-tab [value]="0" jhiTranslate="artemisApp.featureUsage.tab.tree" />
-            <tum-ui-tab [value]="1" jhiTranslate="artemisApp.featureUsage.tab.allFeatures" />
-            <tum-ui-tab [value]="2" jhiTranslate="artemisApp.featureUsage.tab.unused" />
-            <tum-ui-tab [value]="3" jhiTranslate="artemisApp.featureUsage.tab.adoption" />
+            <tum-ui-tab [value]="0" jhiTranslate="artemisApp.featureUsage.tab.tree" data-testid="tab-tree" />
+            <tum-ui-tab [value]="1" jhiTranslate="artemisApp.featureUsage.tab.allFeatures" data-testid="tab-all-features" />
+            <tum-ui-tab [value]="2" jhiTranslate="artemisApp.featureUsage.tab.unused" data-testid="tab-unused" />
+            <tum-ui-tab [value]="3" jhiTranslate="artemisApp.featureUsage.tab.adoption" data-testid="tab-adoption" />
         </tum-ui-tab-list>
     </tum-ui-tabs>
 

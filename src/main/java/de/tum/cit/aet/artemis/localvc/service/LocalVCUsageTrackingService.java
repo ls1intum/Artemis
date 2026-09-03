@@ -88,17 +88,29 @@ public class LocalVCUsageTrackingService {
         record(request, PUSH_OPERATION, durationMs, failed);
     }
 
+    /**
+     * Guarded as a whole, and not only in its parts, because both callers invoke this from a {@code finally} block around
+     * the git transfer itself. Recording is synchronous on the git request thread, so anything thrown here would surface to
+     * the client as a failed clone or push - and an exception thrown out of a {@code finally} also discards whatever the
+     * transfer was already failing with. A usage counter must never be able to break the operation it measures, least of
+     * all one a student is waiting on.
+     */
     private void record(HttpServletRequest request, String operation, long durationMs, boolean failed) {
-        if (featureUsageCollector.isEmpty() || !featureUsageCollector.get().isEnabled()) {
-            return;
+        try {
+            if (featureUsageCollector.isEmpty() || !featureUsageCollector.get().isEnabled()) {
+                return;
+            }
+            if (!HttpMethod.POST.name().equals(request.getMethod())) {
+                return;
+            }
+            // The role of a git caller is not available here: LocalVC authenticates the request itself and never populates
+            // the security context, so it is recorded as ANONYMOUS and the admin page shows no role for git features. The
+            // interesting distinction, staff repository against student repository, is in the identifier instead.
+            featureUsageCollector.get().recordUsage(FeatureKind.GIT, MODULE, operation + '/' + repositoryKind(request), Role.ANONYMOUS, failed, durationMs);
         }
-        if (!HttpMethod.POST.name().equals(request.getMethod())) {
-            return;
+        catch (Exception e) {
+            log.warn("Failed to record git {} usage for {}", operation, request.getRequestURI(), e);
         }
-        // The role of a git caller is not available here: LocalVC authenticates the request itself and never populates
-        // the security context, so it is recorded as ANONYMOUS and the admin page shows no role for git features. The
-        // interesting distinction, staff repository against student repository, is in the identifier instead.
-        featureUsageCollector.get().recordUsage(FeatureKind.GIT, MODULE, operation + '/' + repositoryKind(request), Role.ANONYMOUS, failed, durationMs);
     }
 
     private String repositoryKind(HttpServletRequest request) {

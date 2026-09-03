@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.service.featureusage;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -11,6 +13,8 @@ import java.lang.reflect.Method;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -162,6 +166,21 @@ class FeatureUsageInterceptorTest {
 
         assertThat(request.getAttribute(START_NANOS_ATTRIBUTE)).isEqualTo(startOfTheFirstDispatch);
         assertThat(collector.drain(LocalDate.now(ZoneOffset.UTC)).getFirst().callerRole()).isEqualTo(Role.INSTRUCTOR);
+    }
+
+    /**
+     * The other half of "recording never propagates a failure". {@code preHandle} runs synchronously on the request
+     * thread and before the handler, so a throw here would fail the request outright rather than after its work was
+     * already done.
+     */
+    @Test
+    void shouldNotLetAFailingMeasurementStartBreakTheRequest() {
+        var request = mock(HttpServletRequest.class);
+        when(request.getAttribute(START_NANOS_ATTRIBUTE)).thenReturn(null);
+        doThrow(new IllegalStateException("no attributes on this request")).when(request).setAttribute(anyString(), any());
+
+        assertThatCode(() -> interceptor.preHandle(request, new MockHttpServletResponse(), handlerMethod)).doesNotThrowAnyException();
+        assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), handlerMethod)).isTrue();
     }
 
     @Test
