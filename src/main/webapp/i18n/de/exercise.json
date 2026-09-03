@@ -94,6 +94,7 @@
             "instructions": "Anweisungen",
             "exampleSolution": "Beispiellösung",
             "emptyExampleSolution": "(Keine Beispiellösung)",
+            "exampleSolutionPublicationDateRequiresExampleSolution": "Füge eine Beispiellösung hinzu oder entferne ihr Veröffentlichungsdatum.",
             "assessmentCriterion": "Bewertungskriterium",
             "assessmentInstructions": "Bewertungsanweisungen",
             "assessmentInstruction": "Bewertungsanweisung: ",

@@ -326,4 +326,51 @@ describe('ExerciseTimeline', () => {
         expect(secondDatePicker.inputStyle?.['border-color']).toBeUndefined();
         expect(infoIcon.classList.contains('warning')).toBe(false);
     });
+
+    it('should display a reactive external error and invalidate the timeline', () => {
+        const errorStringKey = signal<string | undefined>('timeline.externalError');
+        const timelineItem: TimelineItem = {
+            kind: 'optional',
+            labelStringKey: 'release',
+            date: signal(dayjs('2026-01-01T10:00:00Z')),
+            errorStringKey,
+        };
+        fixture.componentRef.setInput('timelineItems', [timelineItem]);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({
+            hasExternalError: true,
+            tooltip: 'timeline.externalError',
+        });
+        expect(component.timelineStatus()).toEqual({ valid: false, empty: false });
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).not.toBeNull();
+
+        errorStringKey.set(undefined);
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({
+            hasExternalError: false,
+            tooltip: undefined,
+        });
+        expect(component.timelineStatus()).toEqual({ valid: true, empty: false });
+    });
+
+    it('should let an internal validation error supersede an external error', () => {
+        const timelineItems: TimelineItem[] = [
+            { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-10T10:00:00Z')) },
+            {
+                kind: 'optional',
+                labelStringKey: 'due',
+                date: signal(dayjs('2026-01-05T10:00:00Z')),
+                errorStringKey: signal('timeline.externalError'),
+            },
+        ];
+        fixture.componentRef.setInput('timelineItems', timelineItems);
+
+        expect(component.internalTimelineItems()[1]).toMatchObject({
+            hasInvalidDateOrder: true,
+            hasExternalError: true,
+            tooltip: 'artemisApp.exercise.timelineDateOrderTooltip',
+        });
+    });
 });

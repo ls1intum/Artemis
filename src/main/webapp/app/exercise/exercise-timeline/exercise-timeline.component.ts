@@ -15,6 +15,7 @@ export class ExerciseTimelineComponent {
     readonly dueDate = model<Dayjs | undefined>();
     readonly assessmentDueDate = model<Dayjs | undefined>();
     readonly exampleSolutionPublicationDate = model<Dayjs | undefined>();
+    readonly exampleSolutionPublicationDateErrorStringKey = input<string | undefined>();
     readonly exercisePartOfExerciseGroup = input(false);
     readonly isImport = input(false);
     readonly timelineStatus = output<TimelineStatus>();
@@ -53,6 +54,7 @@ export class ExerciseTimelineComponent {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.exampleSolutionPublicationDate',
                 date: this.exampleSolutionPublicationDate,
+                errorStringKey: this.exampleSolutionPublicationDateErrorStringKey,
                 disabled: exercisePartOfExerciseGroup || this.isImport(),
             },
         ];

@@ -54,6 +54,14 @@ describe('ExerciseTimelineComponent', () => {
         expect(component.timelineItems().every((item) => item.disabled)).toBe(true);
     });
 
+    it('should pass an external error to the example solution publication date', () => {
+        fixture.componentRef.setInput('exampleSolutionPublicationDateErrorStringKey', 'timeline.externalError');
+
+        const publicationDateItem = component.timelineItems()[4];
+
+        expect(publicationDateItem.errorStringKey?.()).toBe('timeline.externalError');
+    });
+
     it('should forward timeline status changes', () => {
         fixture.detectChanges();
         const timelineStatus = { valid: false, empty: true };

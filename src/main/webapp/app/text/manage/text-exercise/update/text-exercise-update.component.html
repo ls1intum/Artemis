@@ -77,6 +77,11 @@
                     [(dueDate)]="textExercise.dueDate"
                     [(assessmentDueDate)]="textExercise.assessmentDueDate"
                     [(exampleSolutionPublicationDate)]="textExercise.exampleSolutionPublicationDate"
+                    [exampleSolutionPublicationDateErrorStringKey]="
+                        textExercise.exampleSolutionPublicationDate && !textExercise.exampleSolution
+                            ? 'artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution'
+                            : undefined
+                    "
                     [exercisePartOfExerciseGroup]="variantLock.locked()"
                     [isImport]="isImport()"
                     (timelineStatus)="timelineStatus.set($event)"

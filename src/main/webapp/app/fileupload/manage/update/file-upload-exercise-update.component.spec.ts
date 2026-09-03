@@ -328,6 +328,11 @@ describe('FileUploadExerciseUpdateComponent', () => {
             expect(timeline.dueDate()).toBe(exercise.dueDate);
             expect(timeline.assessmentDueDate()).toBe(exercise.assessmentDueDate);
             expect(timeline.exampleSolutionPublicationDate()).toBe(exercise.exampleSolutionPublicationDate);
+            expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution');
+
+            exercise.exampleSolution = 'Example solution';
+            fixture.detectChanges();
+            expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBeUndefined();
         });
 
         it('should render the group date notice first in the grading controls', async () => {

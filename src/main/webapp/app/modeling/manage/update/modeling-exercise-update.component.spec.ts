@@ -461,6 +461,12 @@ describe('ModelingExerciseUpdateComponent', () => {
         expect(timeline.dueDate()).toBe(modelingExercise.dueDate);
         expect(timeline.assessmentDueDate()).toBe(modelingExercise.assessmentDueDate);
         expect(timeline.exampleSolutionPublicationDate()).toBe(modelingExercise.exampleSolutionPublicationDate);
+        expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBe('artemisApp.exercise.exampleSolutionPublicationDateRequiresExampleSolution');
+
+        modelingExercise.exampleSolutionExplanation = 'Example solution explanation';
+        await comp.calculateFormSectionStatus();
+        fixture.detectChanges();
+        expect(timeline.exampleSolutionPublicationDateErrorStringKey()).toBeUndefined();
     });
 
     it('should render the group date notice first in the grading controls', async () => {

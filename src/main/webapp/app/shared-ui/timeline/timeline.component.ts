@@ -12,6 +12,7 @@ export interface TimelineItem {
     labelStringKey: string;
     date: WritableSignal<Dayjs | undefined>;
     warningStringKey?: Signal<string | undefined>;
+    errorStringKey?: Signal<string | undefined>;
     otherRequiredItem?: TimelineItem;
     disabled?: boolean;
 }
@@ -28,6 +29,7 @@ type InternalTimelineItem = TimelineItem & {
     isOtherRequiredItemDateUndefined: boolean;
     isInvalidInput: boolean;
     isDisabled: boolean;
+    hasExternalError: boolean;
     hasWarning: boolean;
     tooltip: string | undefined;
 };
@@ -139,9 +141,11 @@ export class TimelineComponent {
             const isOtherRequiredItemDateUndefined = date !== undefined && otherRequiredItem !== undefined && otherRequiredItem.date() === undefined;
             const isInvalidInput = invalidInputKeys.has(item.labelStringKey);
             const isDisabled = item.disabled ?? false;
-            const hasError = isInvalidInput || hasInvalidDateOrder || isInputRequiredButUndefined || isOtherRequiredItemDateUndefined;
+            const hasInternalError = isInvalidInput || hasInvalidDateOrder || isInputRequiredButUndefined || isOtherRequiredItemDateUndefined;
+            const errorStringKey = item.errorStringKey?.();
+            const hasExternalError = errorStringKey !== undefined;
             const warningStringKey = item.warningStringKey?.();
-            const hasWarning = !hasError && warningStringKey !== undefined;
+            const hasWarning = !hasInternalError && !hasExternalError && warningStringKey !== undefined;
             let tooltip: string | undefined;
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
@@ -156,6 +160,8 @@ export class TimelineComponent {
             } else if (isOtherRequiredItemDateUndefined && otherRequiredItem) {
                 const otherInputName = this.translateService.instant(otherRequiredItem.labelStringKey);
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineOtherRequiredDateTooltip', { otherInputName });
+            } else if (errorStringKey !== undefined) {
+                tooltip = this.translateService.instant(errorStringKey);
             } else if (warningStringKey !== undefined) {
                 tooltip = this.translateService.instant(warningStringKey);
             }
@@ -171,6 +177,7 @@ export class TimelineComponent {
                 isOtherRequiredItemDateUndefined,
                 isInvalidInput,
                 isDisabled,
+                hasExternalError,
                 hasWarning,
                 tooltip,
             };
@@ -187,7 +194,10 @@ export class TimelineComponent {
     private computeExerciseTimelineStatus(): TimelineStatus {
         const items = this.internalTimelineItems();
         return {
-            valid: items.every((item) => !item.hasInvalidDateOrder && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput),
+            valid: items.every(
+                (item) =>
+                    !item.hasInvalidDateOrder && !item.isInputRequiredButUndefined && !item.isOtherRequiredItemDateUndefined && !item.isInvalidInput && !item.hasExternalError,
+            ),
             empty: items.some((item) => item.date() === undefined),
         };
     }

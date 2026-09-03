@@ -119,6 +119,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     readonly bonusPoints = viewChild<NgModel>('bonusPoints');
     readonly points = viewChild<NgModel>('points');
     readonly editFormEl = viewChild<ElementRef<HTMLFormElement>>('editForm');
+    protected readonly hasExampleSolution = signal(false);
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly documentationType: DocumentationType = 'Model';
     protected readonly diagramTypes = [
@@ -277,6 +278,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         // Before Apollon has mounted, fall back to the model imported from the exercise so the example solution is recognized on the first render.
         const currentModel = (modelingEditor?.isApollonEditorMounted ? modelingEditor.getCurrentModel() : undefined) ?? this.exampleSolution();
         const hasExampleSolutionDiagram = !isEmpty(currentModel?.nodes);
+        this.hasExampleSolution.set(hasExampleSolutionDiagram || !!this.modelingExercise.exampleSolutionExplanation);
 
         this.formSectionStatus.set([
             {
