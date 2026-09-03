@@ -24,8 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseAthenaConfig;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -51,16 +49,11 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
-    @Autowired
-    private ModelingExerciseUtilService modelingExerciseUtilService;
-
     private Course course;
 
     private ProgrammingExercise programmingExercise;
 
     private TextExercise textExercise;
-
-    private ModelingExercise modelingExercise;
 
     @BeforeEach
     void setUp() {
@@ -70,8 +63,6 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         textExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(3),
                 ZonedDateTime.now().plusDays(5));
-        modelingExercise = modelingExerciseUtilService.addModelingExercise(course, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().minusDays(1),
-                ZonedDateTime.now().plusDays(3), ZonedDateTime.now().plusDays(5));
 
         // Exercise creation above may already interact with the spy; isolate assertions to the update call under test.
         reset(instanceMessageSendService);
@@ -121,7 +112,6 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isTrue();
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService).sendTextExerciseSchedule(textExercise.getId());
-        verify(instanceMessageSendService).sendModelingExerciseSchedule(modelingExercise.getId());
     }
 
     @Test
@@ -142,7 +132,6 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         assertThat(updated.get("athenaGradingFeedbackEnabled").asBoolean()).isFalse();
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService).sendTextExerciseSchedule(textExercise.getId());
-        verify(instanceMessageSendService).sendModelingExerciseSchedule(modelingExercise.getId());
     }
 
     @Test
@@ -161,6 +150,5 @@ class CourseAthenaSchedulingUpdateIntegrationTest extends AbstractSpringIntegrat
         assertThat(updated.get("description").asText()).isEqualTo("Unrelated description change");
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(programmingExercise.getId());
         verify(instanceMessageSendService, never()).sendTextExerciseSchedule(textExercise.getId());
-        verify(instanceMessageSendService, never()).sendModelingExerciseSchedule(modelingExercise.getId());
     }
 }

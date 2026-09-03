@@ -45,11 +45,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendModelingExerciseSchedule(Long exerciseId) {
-        instanceMessageReceiveService.processSchedulePotentialAthenaExercise(exerciseId);
-    }
-
-    @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         instanceMessageReceiveService.processRemoveNonActivatedUser(userId);
     }

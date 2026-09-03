@@ -105,10 +105,6 @@ public class InstanceMessageReceiveService {
                 processPotentialAthenaExerciseScheduleCancel(payload);
             });
         });
-        distributedDataProvider.<Long>getReliableTopic(MessageTopic.MODELING_EXERCISE_SCHEDULE.toString()).addMessageListener(payload -> {
-            SecurityUtils.setAuthorizationObject();
-            processSchedulePotentialAthenaExercise(payload);
-        });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS.toString()).addMessageListener(payload -> {
             SecurityUtils.runAsSystem(() -> {
                 processRemoveNonActivatedUser((payload));

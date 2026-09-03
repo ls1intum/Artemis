@@ -78,12 +78,6 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendModelingExerciseSchedule(Long exerciseId) {
-        log.info("Sending schedule for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_SCHEDULE, exerciseId);
-    }
-
-    @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending remove non-activated user {} to broker.", userId);
         sendMessageDelayed(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS, userId);

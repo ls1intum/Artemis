@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
@@ -419,6 +421,49 @@ class StudentExamAthenaFeedbackIntegrationTest extends AbstractAthenaTest {
 
             AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
             assertThat(usage.used()).isZero();
+        }
+
+        @Test
+        void requestAthenaFeedback_shouldRejectAndNotConsumeCapSlotWhenAthenaIsDisabled() {
+            Exam testExam = examUtilService.addTestExam(course);
+            testExam.setVisibleDate(ZonedDateTime.now().minusHours(2));
+            testExam.setStartDate(ZonedDateTime.now().minusHours(1));
+            testExam.setEndDate(ZonedDateTime.now().plusHours(1));
+            testExam = examRepository.save(testExam);
+            TextExercise textExercise = addTextExerciseToExam(testExam);
+            enableAthenaForCourse();
+
+            StudentExam studentExam = examUtilService.addStudentExamForTestExam(testExam, student);
+            studentExam.addExercise(textExercise);
+
+            StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, student.getLogin());
+            addTextSubmission(participation, "Meaningful text answer from the student.");
+
+            studentExam.getStudentParticipations().add(participation);
+            studentExam = studentExamRepository.save(studentExam);
+
+            studentExam.setSubmitted(true);
+            studentExam.setSubmissionDate(ZonedDateTime.now());
+            studentExamRepository.submitStudentExam(studentExam.getId(), ZonedDateTime.now());
+
+            detachExerciseParticipationsCollection(studentExam);
+
+            // The type-specific feedback APIs (text/modeling) are wired independently of the Athena profile, so they
+            // stay present even when Athena itself is disabled. Only AthenaFeedbackApi is gated on the Athena
+            // profile - simulate that here to reproduce the case where the guard must reject before reserving a slot.
+            Object originalAthenaFeedbackApi = ReflectionTestUtils.getField(studentExamAthenaFeedbackService, "athenaFeedbackApi");
+            ReflectionTestUtils.setField(studentExamAthenaFeedbackService, "athenaFeedbackApi", Optional.empty());
+            try {
+                StudentExam finalStudentExam = studentExam;
+                assertThatExceptionOfType(BadRequestAlertException.class)
+                        .isThrownBy(() -> studentExamAthenaFeedbackService.requestAthenaFeedbackForTestExam(finalStudentExam, student));
+
+                AthenaFeedbackUsageDTO usage = studentExamAthenaFeedbackService.getAthenaFeedbackUsage(student.getId(), testExam.getId());
+                assertThat(usage.used()).isZero();
+            }
+            finally {
+                ReflectionTestUtils.setField(studentExamAthenaFeedbackService, "athenaFeedbackApi", originalAthenaFeedbackApi);
+            }
         }
     }
 

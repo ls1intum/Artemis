@@ -91,7 +91,7 @@ public class StudentExamAthenaFeedbackService {
         if (!studentExam.isTestExam()) {
             throw new BadRequestAlertException("Athena feedback is only available for test exams", "StudentExam", "notTestExam");
         }
-        if (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty()) {
+        if (athenaFeedbackApi.isEmpty() || (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty())) {
             throw new BadRequestAlertException("Athena feedback is not available", "StudentExam", "athenaNotAvailable");
         }
 
