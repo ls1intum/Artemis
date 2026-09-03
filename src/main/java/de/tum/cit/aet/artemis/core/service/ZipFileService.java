@@ -53,6 +53,10 @@ public class ZipFileService {
     /**
      * Create a zip file of the given paths and save it in the zipFilePath
      *
+     * <p>
+     * Files whose content is already compressed are stored rather than deflated again (see
+     * {@link AlreadyCompressedFiles}), and each entry keeps the POSIX permissions of the file it came from.
+     *
      * @param zipFilePath path where the zip file should be saved
      * @param paths       multiple paths that should be zipped
      * @throws IOException if an error occurred while zipping

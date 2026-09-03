@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 /**
- * Service for exporting Git repositories to ZIPs, read straight from the bare repository on disk.
+ * Service for exporting Git repositories, read straight from the bare repository on disk.
  *
  * <p>
  * Supports two export modes:
@@ -47,8 +47,10 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  *
  * <p>
  * Neither mode clones or checks out anything. Controllers get an
- * {@link org.springframework.core.io.InputStreamResource} so they can stream a response without a temporary file, and
- * bulk exports get {@link #exportRepositoryToZipFile}, which writes the archive straight into their output directory.
+ * {@link org.springframework.core.io.InputStreamResource} so they can stream a response without a temporary file. Bulk
+ * exports write straight into their output directory, either as one ZIP per repository
+ * ({@link #exportRepositoryToZipFile}) or as a directory per repository ({@link #exportRepositoryToDirectory}) for the
+ * callers whose layout is a directory.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -77,8 +79,9 @@ public class GitRepositoryExportService {
      * Copies a checked out participation repository into the given directory, under a name derived from the participation.
      *
      * <p>
-     * Only the export options that rewrite a repository still reach this method; every faithful export is streamed with
-     * {@link #exportRepositoryToZipFile} instead and never produces a working copy to copy from.
+     * Only the export options that rewrite a repository still reach this method. Every faithful export is streamed
+     * straight from the bare repository instead - to a ZIP with {@link #exportRepositoryToZipFile} or to a directory
+     * with {@link #exportRepositoryToDirectory} - and never produces a working copy to copy from.
      *
      * @param repo            Local Repository Object.
      * @param repositoryDir   path where the copy should be placed
@@ -239,8 +242,8 @@ public class GitRepositoryExportService {
 
     /**
      * Exports a repository with full history including the .git directory directly to memory.
-     * This method uses JGit's ArchiveCommand to create a zip of the working tree and combines it
-     * with the .git directory for full history, all done in memory without disk checkout.
+     * The archive is assembled by {@link InMemoryRepositoryBuilder} from the bare repository's objects, so nothing is
+     * cloned or checked out.
      *
      * @param repositoryUri the URI of the repository to export
      * @param filename      the desired filename for the export (without extension)

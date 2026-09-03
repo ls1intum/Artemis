@@ -36,9 +36,10 @@ import org.slf4j.LoggerFactory;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 
 /**
- * Builds a checkout-ready Git repository as a single ZIP archive, straight from a bare repository on disk.
+ * Builds a checkout-ready Git repository straight from a bare repository on disk, either as a single ZIP archive or
+ * as a directory.
  * <p>
- * The ZIP contains the working tree at the root and a synthetic {@code .git/}
+ * The result contains the working tree at the root and a synthetic {@code .git/}
  * directory with minimal refs, config, and a packed object store. Nothing is checked out.
  * <p>
  * Thread-safety: all methods are stateless and thread-safe.

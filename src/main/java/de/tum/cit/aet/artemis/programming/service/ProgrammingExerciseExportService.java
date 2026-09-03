@@ -496,10 +496,12 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param outputDir                 The directory the exported repositories are placed in
      * @param exportErrors              A list of errors that occurred during export (populated by this function)
      * @param repositoryExportOptions   the options that should be used for the export (e.g. anonymization)
-     * @param content                   whether the caller needs the history of the repositories. Only a caller that does
-     *                                      not can be served from the bare repository; everyone else keeps the checkout,
-     *                                      which is what produces the directory-with-{@code .git} layout they expect.
-     * @return List of paths to the exported repositories, either zip files or, for the rewriting options, directories
+     * @param content                   whether the caller needs the history of the repositories. Both answers are served
+     *                                      from the bare repository: a caller that wants a snapshot gets one ZIP per
+     *                                      repository, a caller that wants the history gets a directory holding the
+     *                                      repository, which is the layout those callers expect.
+     * @return List of paths to the exported repositories, either zip files or directories, depending on {@code content}
+     *         and the export options
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NonNull Collection<ProgrammingExerciseStudentParticipation> participations,
             Map<Long, String> participationCommitHashes, Path outputDir, List<String> exportErrors, RepositoryExportOptionsDTO repositoryExportOptions,
@@ -633,8 +635,9 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * Exports the repository of the given participation into the output directory and returns the path it was written to.
      *
      * <p>
-     * Unless the export options require a checkout, the repository is streamed straight from its bare repository into a
-     * zip in the output directory: no clone, no working copy and no temporary directory. Student repositories are
+     * Unless the export options require a checkout, the repository is streamed straight from its bare repository into
+     * the output directory - as a ZIP for a snapshot, as a directory when the history is wanted: no clone, no working
+     * copy and no temporary directory. Student repositories are
      * exported without their history in that case, matching what the single-repository student download already does.
      *
      * @param programmingExercise     The programming exercise for the participation
@@ -644,7 +647,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @param checkoutDir             The directory used to clone the repository, only needed for the rewriting options
      * @param outputDir               The directory where the exported repository is stored
      * @param content                 how much of the repository the caller asked for
-     * @return The exported repository as a zip file, or as a directory for the rewriting options, or null if the
+     * @return The exported repository as a zip file, or as a directory when the history is wanted or an option rewrites
+     *         the repository, or null if the
      *         participation was skipped
      * @throws IOException if zip file creation failed
      */
