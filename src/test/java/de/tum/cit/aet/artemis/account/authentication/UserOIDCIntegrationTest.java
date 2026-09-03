@@ -41,6 +41,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.TemplateEngine;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
@@ -500,10 +501,27 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         assertThat(session.isInvalid()).isTrue();
     }
 
+    /**
+     * Creates an OIDCAuthenticationSuccessHandler fixture with a mocked UserRepository
+     * to avoid persisting users to the database for focused handler unit tests.
+     */
+    private OIDCAuthenticationSuccessHandler createHandlerWithMockedUser() {
+        UserRepository mockUserRepository = mock(UserRepository.class);
+        User mockUser = new User();
+        mockUser.setLogin(STUDENT_NAME);
+        mockUser.setPassword(STUDENT_PASSWORD);
+        mockUser.setAuthorities(Set.of());
+        when(mockUserRepository.findOneWithAuthoritiesByLogin(STUDENT_NAME)).thenReturn(Optional.of(mockUser));
+
+        OIDCAuthenticationSuccessHandler handler = new OIDCAuthenticationSuccessHandler(jwtCookieService, mockUserRepository, artemisSuccessfulLoginService,
+                oidcExchangeCodeService, templateEngine);
+        ReflectionTestUtils.setField(handler, "usernameClaimKey", "preferred_username");
+        return handler;
+    }
+
     @Test
     void testOidcLogin_withRedirectIOS_generatesExchangeCodeAndRedirectsToIOS() throws Exception {
-        assertStudentNotExists();
-        createUser(STUDENT_NAME + "@artemis.local");
+        OIDCAuthenticationSuccessHandler handler = createHandlerWithMockedUser();
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -519,17 +537,17 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         when(oidcExchangeCodeService.storeJwtAndGenerateCode(anyString(), anyString())).thenReturn(expectedCode);
 
         Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
-        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", FIXED_TIMESTAMP, FIXED_TIMESTAMP.plusSeconds(3600), claims);
         OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
         var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
 
-        successHandler.onAuthenticationSuccess(request, response, auth);
+        handler.onAuthenticationSuccess(request, response, auth);
 
-        // 1. Check the redirect to /oauth-callback with a code
+        // 1. Verify redirect URL
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
         assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?code=" + expectedCode);
 
-        // 2. Check the arguments for jwt token exchange
+        // 2. Verify exact JWT token and challenge passed to exchange-code service
         ArgumentCaptor<String> jwtCaptor = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> challengeCaptor = ArgumentCaptor.forClass(String.class);
         verify(oidcExchangeCodeService, times(1)).storeJwtAndGenerateCode(jwtCaptor.capture(), challengeCaptor.capture());
@@ -538,28 +556,28 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         assertThat(response.getHeader(HttpHeaders.SET_COOKIE)).contains(storedJwt);
         assertThat(challengeCaptor.getValue()).isEqualTo(expectedChallenge);
 
+        // 3. Verify session invalidation
         assertThat(session.isInvalid()).isTrue();
     }
 
     @Test
     void testOidcLogin_withRedirectIOS_missingCodeChallenge_redirectsWithInvalidRequestError() throws Exception {
-        assertStudentNotExists();
-        createUser(STUDENT_NAME + "@artemis.local");
+        OIDCAuthenticationSuccessHandler handler = createHandlerWithMockedUser();
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("OIDC_REDIRECT", "ios");
-        // OIDC_CODE_CHALLENGE is missing
+        // No OIDC_CODE_CHALLENGE set in session
         request.setSession(session);
 
         Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
-        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", FIXED_TIMESTAMP, FIXED_TIMESTAMP.plusSeconds(3600), claims);
         OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
         var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
 
-        successHandler.onAuthenticationSuccess(request, response, auth);
+        handler.onAuthenticationSuccess(request, response, auth);
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
         assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=invalid_request");
@@ -568,8 +586,7 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     @Test
     void testOidcLogin_withRedirectIOS_storeJwtFails_redirectsWithServerError() throws Exception {
-        assertStudentNotExists();
-        createUser(STUDENT_NAME + "@artemis.local");
+        OIDCAuthenticationSuccessHandler handler = createHandlerWithMockedUser();
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -584,11 +601,11 @@ class UserOIDCIntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
         when(oidcExchangeCodeService.storeJwtAndGenerateCode(anyString(), anyString())).thenReturn(null);
 
         Map<String, Object> claims = createClaimsMap(STUDENT_REGISTRATION_NUMBER, "FirstName", "LastName");
-        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", Instant.now(), Instant.now().plusSeconds(3600), claims);
+        OidcIdToken idToken = new OidcIdToken("mock-raw-id-token-string", FIXED_TIMESTAMP, FIXED_TIMESTAMP.plusSeconds(3600), claims);
         OidcUser oidcUser = new DefaultOidcUser(Set.of(new SimpleGrantedAuthority("ROLE_USER")), idToken, "preferred_username");
         var auth = new OAuth2AuthenticationToken(oidcUser, oidcUser.getAuthorities(), "oidc");
 
-        successHandler.onAuthenticationSuccess(request, response, auth);
+        handler.onAuthenticationSuccess(request, response, auth);
 
         assertThat(response.getStatus()).isEqualTo(HttpStatus.FOUND.value());
         assertThat(response.getRedirectedUrl()).isEqualTo("/oauth-callback?error=server_error");
