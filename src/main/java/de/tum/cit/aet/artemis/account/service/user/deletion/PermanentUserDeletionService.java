@@ -120,6 +120,13 @@ public class PermanentUserDeletionService {
         if (!impact.automaticEligible()) {
             return result(user, UserDeletionResultStatus.BLOCKED, "remainingReferences");
         }
+        // The check above reads a snapshot, and activation is a separate statement that can land between it and the
+        // destructive work below. Claiming the row conditionally settles the race in the database: if the account was
+        // activated in the meantime nothing is claimed and nothing is destroyed, and once it is claimed the activation
+        // query refuses it, because that one already requires an account that is not flagged as deleted.
+        if (userDeletionRepository.claimUnactivatedUserForDeletion(user.getId()) != 1) {
+            return result(user, UserDeletionResultStatus.BLOCKED, "registrationStateChanged");
+        }
         delete(user, impact, UserDeletionMode.PROVISIONAL, "system");
         return result(user, UserDeletionResultStatus.DELETED, null);
     }
@@ -159,9 +166,7 @@ public class PermanentUserDeletionService {
             if (userDeletionPlanService.isTableAvailable("participation")) {
                 cleanupParticipations(userId);
             }
-            if (userDeletionPlanService.isTableAvailable("student_exam") || userDeletionPlanService.isTableAvailable("exam_user")) {
-                cleanupStudentExams(userId, filesToDelete);
-            }
+            cleanupStudentExams(userId, filesToDelete);
             if (userDeletionPlanService.isTableAvailable("complaint")) {
                 cleanupComplaints(userId);
             }
@@ -220,8 +225,19 @@ public class PermanentUserDeletionService {
         participationIds.forEach(participationId -> participationDeletionService.delete(participationId, true));
     }
 
+    /**
+     * The two halves are guarded separately and each by every table it touches. They are different table groups, and a
+     * single deletion runs as one statement batch, so one absent table would otherwise roll back the other half as
+     * well.
+     */
     private void cleanupStudentExams(long userId, List<Path> filesToDeleteAfterCommit) {
-        userDeletionRepository.deleteStudentExams(userId);
+        if (userDeletionPlanService.isTableAvailable("student_exam") && userDeletionPlanService.isTableAvailable("student_exam_exercise")
+                && userDeletionPlanService.isTableAvailable("exam_session")) {
+            userDeletionRepository.deleteStudentExams(userId);
+        }
+        if (!userDeletionPlanService.isTableAvailable("exam_user")) {
+            return;
+        }
         if (examUserApi.isPresent()) {
             filesToDeleteAfterCommit.addAll(examUserApi.orElseThrow().deleteAllForUser(userId));
         }

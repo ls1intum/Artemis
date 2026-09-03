@@ -118,7 +118,7 @@ export class AdminUserService {
      * Preview and aggregate the exact impact of permanently deleting multiple users.
      */
     getBulkDeletionImpact(logins: string[]): Observable<HttpResponse<BulkUserDeletionImpact>> {
-        return this.http.post<BulkUserDeletionImpact>(`${this.resourceUrl}/deletion-impact`, logins, { observe: 'response' });
+        return this.http.post<BulkUserDeletionImpact>(`${this.resourceUrl}/deletion-impact`, { logins }, { observe: 'response' });
     }
 
     /**

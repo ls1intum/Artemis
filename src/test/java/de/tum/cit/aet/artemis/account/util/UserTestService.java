@@ -28,6 +28,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.account.domain.Authority;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactDTO;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactRequestDTO;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionRequestDTO;
 import de.tum.cit.aet.artemis.account.dto.PermanentUserDeletionRequestDTO;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionConfirmationDTO;
@@ -274,7 +275,8 @@ public class UserTestService {
                 .collect(Collectors.toSet());
 
         var logins = users.stream().map(User::getLogin).toList();
-        var bulkImpact = request.postWithResponseBody("/api/account/admin/users/deletion-impact", logins, BulkUserDeletionImpactDTO.class, HttpStatus.OK);
+        var bulkImpact = request.postWithResponseBody("/api/account/admin/users/deletion-impact", new BulkUserDeletionImpactRequestDTO(logins), BulkUserDeletionImpactDTO.class,
+                HttpStatus.OK);
         var confirmations = bulkImpact.users().stream().map(impact -> new UserDeletionConfirmationDTO(impact.login(), impact.impactFingerprint())).toList();
         request.delete("/api/account/admin/users", HttpStatus.OK, new BulkUserDeletionRequestDTO(confirmations));
 

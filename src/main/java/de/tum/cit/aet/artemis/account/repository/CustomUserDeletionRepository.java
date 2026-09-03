@@ -30,6 +30,12 @@ public interface CustomUserDeletionRepository {
 
     int deleteUserRow(long userId);
 
+    /**
+     * @param userId the account to claim for provisional deletion
+     * @return 1 if the account was still unactivated and is now claimed, 0 otherwise
+     */
+    int claimUnactivatedUserForDeletion(long userId);
+
     Set<String> findAvailableTableNames();
 
     List<Long> findLegacyDeletedUserIds();

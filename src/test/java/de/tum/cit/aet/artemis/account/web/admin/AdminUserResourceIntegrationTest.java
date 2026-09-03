@@ -74,6 +74,17 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    /**
+     * The administrator annotations resolve the caller against the database, so a {@code @WithMockUser} authority alone
+     * no longer authorizes anything. Tests that act as the unprefixed "admin" and "superadmin" need those accounts to
+     * exist with the matching authorities, and a JUnit outer setup runs before every nested class as well.
+     */
+    @BeforeEach
+    void ensureUnprefixedAdministratorCallersExist() {
+        userUtilService.addAdmin("");
+        userUtilService.addSuperAdmin("");
+    }
+
     @Nested
     class AdminTryingToEscalatePrivilegesUpdateUser {
 
@@ -917,7 +928,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
         User changedUser = userUtilService.createAndSaveUser(TEST_PREFIX + "bulkchanged");
         List<String> logins = List.of(unchangedUser.getLogin(), changedUser.getLogin());
         String impactResponse = mockMvc
-                .perform(post("/api/account/admin/users/deletion-impact").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(logins)))
+                .perform(
+                        post("/api/account/admin/users/deletion-impact").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("logins", logins))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         var impacts = objectMapper.readTree(impactResponse).path("users");
         assertThat(impacts).hasSize(2);
@@ -978,7 +990,8 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
 
     private void permanentlyDeleteUsers(List<String> logins) throws Exception {
         String impactResponse = mockMvc
-                .perform(post("/api/account/admin/users/deletion-impact").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(logins)))
+                .perform(
+                        post("/api/account/admin/users/deletion-impact").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(Map.of("logins", logins))))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         List<Map<String, String>> confirmations = new ArrayList<>();
         for (var userImpact : objectMapper.readTree(impactResponse).path("users")) {

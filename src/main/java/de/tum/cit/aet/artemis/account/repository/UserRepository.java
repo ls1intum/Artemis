@@ -83,6 +83,30 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @org.springframework.data.jpa.repository.Query(value = "DELETE FROM jhi_user WHERE id = :userId", nativeQuery = true)
     int deleteUserRow(@org.springframework.data.repository.query.Param("userId") long userId);
 
+    /**
+     * Claims an account that has never been activated for provisional deletion, in one atomic step.
+     *
+     * <p>
+     * Provisional cleanup removes registrations that were never completed, so the account must still be unactivated
+     * when the destructive work starts. Reading the flag and deleting afterwards is not enough: activation is a
+     * separate statement, and an account that completes it in between would be permanently deleted. Marking the row
+     * first closes that window in the other direction as well, because {@link #storeInitialPasswordAndActivate}
+     * already refuses a row that is flagged as deleted.
+     *
+     * @param userId the account to claim
+     * @return 1 if the account was claimed, 0 if it was activated, already claimed, or no longer exists
+     */
+    @Transactional // ok because of modifying query
+    @org.springframework.data.jpa.repository.Modifying(clearAutomatically = true, flushAutomatically = true)
+    @org.springframework.data.jpa.repository.Query("""
+            UPDATE User user
+            SET user.deleted = TRUE
+            WHERE user.id = :userId
+                AND user.activated = FALSE
+                AND user.deleted = FALSE
+            """)
+    int claimUnactivatedUserForDeletion(@org.springframework.data.repository.query.Param("userId") long userId);
+
     String FILTER_INTERNAL = "INTERNAL";
 
     String FILTER_EXTERNAL = "EXTERNAL";
@@ -1024,6 +1048,30 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             ORDER BY user.login
             """)
     List<String> findNotEnrolledUserLoginsToDelete(@Param("warnedBefore") Instant warnedBefore);
+
+    /**
+     * The same condition as {@link #findNotEnrolledUserLoginsToDelete(Instant)} for a single login, so that the answer
+     * can be taken again immediately before the account is destroyed. A login that arrives after the batch was
+     * resolved updates {@code lastLoginDate} without clearing the warning, and the deletion service itself only checks
+     * authorities and reference counts, so without this a user who has just come back would still be deleted.
+     *
+     * @param login        the account to re-check
+     * @param warnedBefore only a warning sent strictly before this counts as elapsed
+     * @return 1 if the account is still due for deletion, 0 otherwise
+     */
+    @Query("""
+            SELECT COUNT(user)
+            FROM User user
+                LEFT JOIN UserActivity activity ON activity.userId = user.id
+            WHERE user.login = :login
+                AND NOT EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user) AND NOT user.deleted
+                AND activity.deletionWarningSentDate IS NOT NULL
+                AND activity.deletionWarningSentDate < :warnedBefore
+                AND (activity.lastLoginDate IS NULL OR activity.lastLoginDate < activity.deletionWarningSentDate)
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+                AND NOT :#{T(de.tum.cit.aet.artemis.account.domain.Authority).SUPER_ADMIN_AUTHORITY} MEMBER OF user.authorities
+            """)
+    long countNotEnrolledUserStillDueForDeletion(@Param("login") String login, @Param("warnedBefore") Instant warnedBefore);
 
     /**
      * Get all managed users

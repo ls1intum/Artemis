@@ -55,6 +55,11 @@ public class CustomUserDeletionRepositoryImpl implements CustomUserDeletionRepos
     }
 
     @Override
+    public int claimUnactivatedUserForDeletion(long userId) {
+        return userRepository.claimUnactivatedUserForDeletion(userId);
+    }
+
+    @Override
     public Set<String> findAvailableTableNames() {
         Set<String> cached = availableTableNames;
         if (cached != null) {

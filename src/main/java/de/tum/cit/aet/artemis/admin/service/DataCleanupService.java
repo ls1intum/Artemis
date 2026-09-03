@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -516,11 +518,16 @@ public class DataCleanupService {
             var inactiveBefore = ZonedDateTime.now().minusMonths(dataCleanupProperties.notEnrolledUsersInactivityMonths()).toInstant();
             List<User> usersToWarn = userRepository.findNotEnrolledUsersToWarn(inactiveBefore).stream().filter(user -> !user.isBot()).toList();
             Map<String, Object> contextVariables = Map.of("gracePeriodDays", dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays());
+            // Counted once for the whole batch rather than per user: createImpact walks every reference policy, so the
+            // per-user call repeated that count for every candidate.
+            List<User> warnableUsers = usersToWarn.stream().filter(user -> user.getActivated() && user.getEmail() != null).toList();
+            Set<Long> eligibleUserIds = userDeletionPlanService.createBulkImpact(warnableUsers, UserDeletionMode.AUTOMATIC).users().stream()
+                    .filter(UserDeletionImpactDTO::automaticEligible).map(UserDeletionImpactDTO::userId).collect(Collectors.toSet());
             for (User user : usersToWarn) {
                 if (!user.getActivated() || user.getEmail() == null) {
                     continue; // cannot warn this user, so do not schedule their account for deletion
                 }
-                if (!userDeletionPlanService.createImpact(user, UserDeletionMode.AUTOMATIC).automaticEligible()) {
+                if (!eligibleUserIds.contains(user.getId())) {
                     continue;
                 }
                 try {
@@ -567,6 +574,7 @@ public class DataCleanupService {
      */
     public CleanupServiceExecutionRecordDTO deleteNotEnrolledUsers() {
         userActivityService.clearDeletionWarningForReturnedUsers();
+        var warnedBefore = ZonedDateTime.now().minusDays(dataCleanupProperties.notEnrolledUsersWarningGracePeriodDays()).toInstant();
         List<String> logins = notEnrolledUserLoginsToDelete();
         int deleted = 0;
         int blocked = 0;
@@ -574,6 +582,14 @@ public class DataCleanupService {
             try {
                 Optional<User> user = userRepository.findOneByLogin(login);
                 if (user.isEmpty()) {
+                    continue;
+                }
+                // Deleting a batch takes time, and a login that arrives while it runs updates lastLoginDate without
+                // clearing the warning. The deletion service checks authorities and reference counts only, so the
+                // condition that put this account in the batch is re-asked here, as late as possible.
+                if (userRepository.countNotEnrolledUserStillDueForDeletion(login, warnedBefore) != 1) {
+                    log.debug("Sparing {}: the account is no longer due for deletion", login);
+                    blocked++;
                     continue;
                 }
                 var result = permanentUserDeletionService.deleteAutomatically(user.get().getId());

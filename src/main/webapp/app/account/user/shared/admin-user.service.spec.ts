@@ -239,7 +239,7 @@ describe('AdminUserService', () => {
             adminService.getBulkDeletionImpact(['user1', 'user2']).subscribe();
 
             const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/deletion-impact` });
-            expect(req.request.body).toEqual(['user1', 'user2']);
+            expect(req.request.body).toEqual({ logins: ['user1', 'user2'] });
             req.flush({ users: [], categories: [], totalAffectedObjects: 0 });
         });
     });

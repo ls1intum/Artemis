@@ -38,6 +38,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.account.config.AccountLegacyRestPaths;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactDTO;
+import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionImpactRequestDTO;
 import de.tum.cit.aet.artemis.account.dto.BulkUserDeletionRequestDTO;
 import de.tum.cit.aet.artemis.account.dto.PermanentUserDeletionRequestDTO;
 import de.tum.cit.aet.artemis.account.dto.UserDeletionImpactDTO;
@@ -398,8 +399,8 @@ public class AdminUserResource {
     }
 
     @PostMapping("users/deletion-impact")
-    public ResponseEntity<BulkUserDeletionImpactDTO> getBulkUserDeletionImpact(@RequestBody List<String> logins) {
-        List<User> targets = loadDeletionTargets(logins);
+    public ResponseEntity<BulkUserDeletionImpactDTO> getBulkUserDeletionImpact(@Valid @RequestBody BulkUserDeletionImpactRequestDTO request) {
+        List<User> targets = loadDeletionTargets(request.logins());
         return ResponseEntity.ok(userDeletionPlanService.createBulkImpact(targets, UserDeletionMode.ADMIN_FORCED));
     }
 
