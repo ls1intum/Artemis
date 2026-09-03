@@ -19,15 +19,12 @@ export class ExerciseTimelineComponent {
     readonly exercisePartOfExerciseGroup = input(false);
     readonly isImport = input(false);
     readonly timelineStatus = output<TimelineStatus>();
+    private readonly assessmentDueDateErrorStringKey = computed(() =>
+        this.assessmentDueDate() !== undefined && this.dueDate() === undefined ? 'artemisApp.exercise.assessmentDueDateRequiresDueDate' : undefined,
+    );
 
     readonly timelineItems = computed<TimelineItem[]>(() => {
         const exercisePartOfExerciseGroup = this.exercisePartOfExerciseGroup();
-        const dueDateItem: TimelineItem = {
-            kind: 'optional',
-            labelStringKey: 'artemisApp.exercise.dueDate',
-            date: this.dueDate,
-            disabled: exercisePartOfExerciseGroup,
-        };
 
         return [
             {
@@ -42,12 +39,17 @@ export class ExerciseTimelineComponent {
                 date: this.startDate,
                 disabled: exercisePartOfExerciseGroup,
             },
-            dueDateItem,
+            {
+                kind: 'optional',
+                labelStringKey: 'artemisApp.exercise.dueDate',
+                date: this.dueDate,
+                disabled: exercisePartOfExerciseGroup,
+            },
             {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.assessmentDueDate',
                 date: this.assessmentDueDate,
-                otherRequiredItem: dueDateItem,
+                errorStringKey: this.assessmentDueDateErrorStringKey,
                 disabled: exercisePartOfExerciseGroup,
             },
             {

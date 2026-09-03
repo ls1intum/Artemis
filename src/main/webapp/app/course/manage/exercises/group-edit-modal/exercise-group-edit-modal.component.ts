@@ -57,6 +57,9 @@ export class ExerciseGroupEditModalComponent {
     readonly draftExampleSolutionPublicationDate = signal<dayjs.Dayjs | undefined>(undefined);
 
     readonly headerStringKey = computed(() => (this.isNew() ? 'artemisApp.exerciseManagement.groupEdit.createHeader' : 'artemisApp.exerciseManagement.groupEdit.header'));
+    private readonly assessmentDueDateErrorStringKey = computed(() =>
+        this.draftAssessmentDueDate() !== undefined && this.draftDueDate() === undefined ? 'artemisApp.exercise.assessmentDueDateRequiresDueDate' : undefined,
+    );
 
     readonly timelineItems = computed<TimelineItem[]>(() => this.computeTimelineItems());
 
@@ -119,21 +122,15 @@ export class ExerciseGroupEditModalComponent {
     }
 
     private computeTimelineItems(): TimelineItem[] {
-        const dueDateItem: TimelineItem = {
-            kind: 'optional',
-            labelStringKey: 'artemisApp.exercise.dueDate',
-            date: this.draftDueDate,
-        };
-
         return [
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: this.draftReleaseDate },
             { kind: 'optional', labelStringKey: 'artemisApp.exercise.startDate', date: this.draftStartDate },
-            dueDateItem,
+            { kind: 'optional', labelStringKey: 'artemisApp.exercise.dueDate', date: this.draftDueDate },
             {
                 kind: 'optional',
                 labelStringKey: 'artemisApp.exercise.assessmentDueDate',
                 date: this.draftAssessmentDueDate,
-                otherRequiredItem: dueDateItem,
+                errorStringKey: this.assessmentDueDateErrorStringKey,
             },
             {
                 kind: 'optional',

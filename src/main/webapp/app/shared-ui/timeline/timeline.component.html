@@ -2,11 +2,7 @@
     @for (internalItem of internalTimelineItems(); track $index; let index = $index) {
         <div class="timeline-item-row">
             @let isInvalid =
-                internalItem.isInvalidInput ||
-                internalItem.hasInvalidDateOrder ||
-                internalItem.isOtherRequiredItemDateUndefined ||
-                internalItem.hasExternalError ||
-                (dateModel.touched && internalItem.isInputRequiredButUndefined);
+                internalItem.isInvalidInput || internalItem.hasInvalidDateOrder || internalItem.hasExternalError || (dateModel.touched && internalItem.isInputRequiredButUndefined);
             <div class="timeline-graphic">
                 <div class="timeline-graphic-line"></div>
                 <div

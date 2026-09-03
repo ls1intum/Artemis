@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import dayjs from 'dayjs/esm';
 import { describe, expect, it, vi } from 'vitest';
 import { TimelineStubComponent } from 'test/helpers/stubs/exercise/timeline-stub.component';
 
@@ -42,8 +43,7 @@ describe('ExerciseTimelineComponent', () => {
             component.exampleSolutionPublicationDate,
         ]);
         expect(timelineItems.every((item) => item.kind === 'optional')).toBe(true);
-        expect(timelineItems[3].otherRequiredItem).toBe(timelineItems[2]);
-        expect(timelineItems[4].otherRequiredItem).toBeUndefined();
+        expect(timelineItems[3].errorStringKey?.()).toBeUndefined();
         expect(timelineItems.every((item) => !item.disabled)).toBe(true);
     });
 
@@ -60,6 +60,16 @@ describe('ExerciseTimelineComponent', () => {
         const publicationDateItem = component.timelineItems()[4];
 
         expect(publicationDateItem.errorStringKey?.()).toBe('timeline.externalError');
+    });
+
+    it('should require a due date when an assessment due date is set', () => {
+        component.assessmentDueDate.set(dayjs('2026-01-10T10:00:00Z'));
+
+        expect(component.timelineItems()[3].errorStringKey?.()).toBe('artemisApp.exercise.assessmentDueDateRequiresDueDate');
+
+        component.dueDate.set(dayjs('2026-01-09T10:00:00Z'));
+
+        expect(component.timelineItems()[3].errorStringKey?.()).toBeUndefined();
     });
 
     it('should forward timeline status changes', () => {

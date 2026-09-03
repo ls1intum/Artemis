@@ -131,6 +131,17 @@ describe('ExerciseGroupEditModalComponent', () => {
         expect(timeline.validationMode()).toBe(TimelineValidationMode.SEQUENTIALLY_STRICT);
     });
 
+    it('requires a due date when an assessment due date is set', () => {
+        fixture.componentRef.setInput('group', buildGroup({ dueDate: undefined }));
+        fixture.detectChanges();
+
+        const assessmentDueDateItem = component.timelineItems().find((item) => item.labelStringKey === 'artemisApp.exercise.assessmentDueDate');
+        expect(assessmentDueDateItem?.errorStringKey?.()).toBe('artemisApp.exercise.assessmentDueDateRequiresDueDate');
+
+        component.draftDueDate.set(dayjs('2026-01-10T00:00:00Z'));
+        expect(assessmentDueDateItem?.errorStringKey?.()).toBeUndefined();
+    });
+
     it('closes without emitting saved when saving without any changes', () => {
         fixture.componentRef.setInput('group', buildGroup());
         fixture.componentRef.setInput('visible', true);

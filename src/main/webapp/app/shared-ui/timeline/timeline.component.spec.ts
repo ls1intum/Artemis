@@ -94,31 +94,6 @@ describe('ExerciseTimeline', () => {
         expect(emittedStatuses.at(-1)).toEqual({ valid: false, empty: true });
     });
 
-    it('should require another timeline item only when the dependent date is set', () => {
-        const dueDateItem: TimelineItem = { kind: 'optional', labelStringKey: 'due', date: signal(undefined) };
-        const assessmentDateItem: TimelineItem = {
-            kind: 'optional',
-            labelStringKey: 'assessment',
-            date: signal(undefined),
-            otherRequiredItem: dueDateItem,
-        };
-        fixture.componentRef.setInput('timelineItems', [dueDateItem, assessmentDateItem]);
-
-        expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemDateUndefined: false,
-            tooltip: undefined,
-        });
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: true });
-
-        assessmentDateItem.date.set(dayjs('2026-01-10T10:00:00Z'));
-
-        expect(component.internalTimelineItems()[1]).toMatchObject({
-            isOtherRequiredItemDateUndefined: true,
-            tooltip: 'artemisApp.exercise.timelineOtherRequiredDateTooltip',
-        });
-        expect(component.timelineStatus()).toEqual({ valid: false, empty: true });
-    });
-
     it('should allow equal dates by default and reject them in sequentially strict mode', () => {
         const date = dayjs('2026-01-01T10:00:00Z');
         const timelineItems: TimelineItem[] = [
