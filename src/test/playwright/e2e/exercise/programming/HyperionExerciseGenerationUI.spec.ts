@@ -201,7 +201,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             expect(startResponse.status()).toBe(202);
             const { jobId } = await readResponseJson<{ jobId: string }>(startResponse);
             await expectRunningGenerationStatus(page, exercise.id!, jobId, 'GENERATE');
-            await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
+            await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Draft in progress — nothing saved to your exercise yet');
             await expectSuccessfulGenerationStatus(page, exercise.id!, jobId, 'GENERATE', 3, 'NEEDS_REVIEW');
             await expectExerciseProblemStatement(page, exercise.id!, 'TemperatureClassifier.classify');
             const solution = await getRepositoryFiles(page, `api/programming/programming-exercises/${exercise.id}/solution-files-content?omitBinaries=true`);
@@ -288,7 +288,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
 
         expect(request).toEqual({ mode: 'GENERATE' });
         const activity = page.getByTestId('hyperion-generation-activity');
-        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
+        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Draft in progress — nothing saved to your exercise yet');
         await expectHyperionTabSelected(page);
         await expect(page.getByTestId('hyperion-ai-menu')).toBeEnabled();
         await expectEditorActionsLockedDuringGeneration(page);
@@ -376,7 +376,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
             expect(cancelResponse.ok()).toBeTruthy();
             await expectTerminalGenerationStatus(controllerPage, exercise!.id!, jobId, 'CANCELLED');
             await expect(page.getByTestId('hyperion-generation-cancel')).toBeVisible();
-            await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
+            await expect(page.getByTestId('hyperion-generation-persistence-state')).toContainText('Draft in progress — nothing saved to your exercise yet');
             const terminalStatus = await getGenerationStatus(controllerPage, exercise!.id!);
             const versionCount = await getExerciseVersionCount(controllerPage, exercise!.id!);
             await releaseHeldProviderResponseIfPresent(controllerPage);
@@ -651,7 +651,7 @@ test.describe('Hyperion exercise generation browser UI', { tag: ['@slow', '@hype
         await page.reload();
         await openHyperionTab(page);
         await expectRunningGenerationStatus(page, exercise!.id!, jobId, 'ADAPT');
-        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Agent working copy — not saved');
+        await expect(activity.getByTestId('hyperion-generation-persistence-state')).toContainText('Draft in progress — nothing saved to your exercise yet');
         await expect(activity.getByTestId('hyperion-file-row')).toContainText('HyperionDiagnostic.java');
         await expect(page.getByTestId('hyperion-generation-cancel')).toBeVisible();
         await expectEditorActionsLockedDuringGeneration(page);
@@ -773,6 +773,7 @@ async function openEditor(page: Page, login: (credentials: UserCredentials, url?
     expect(repositoryId).toBeDefined();
     await login(instructor, `/course-management/${course.id}/programming-exercises/${exerciseId}/code-editor/TEMPLATE/${repositoryId}`);
     await expect(page.getByTestId('hyperion-ai-menu')).toBeVisible({ timeout: 60_000 });
+    await openHyperionTab(page);
     await expect(page.getByTestId('hyperion-generation-empty')).toHaveCount(1, { timeout: 60_000 });
 }
 

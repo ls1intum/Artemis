@@ -408,8 +408,8 @@ class AgentSystemPromptServiceTest {
         // Listing reference/style/ as "form guidance" in the same prompt contradicts that, and the contradiction is
         // expensive: the stage is budgeted for a handful of turns, and reading the directory can consume all of them
         // before SPEC.md is written, which fails the gate for a run that had nothing wrong with it.
-        assertThat(prompt).contains("reference/style/").doesNotContain("reference/style/: form guidance only");
-        assertThat(prompt).containsIgnoringCase("nothing here is needed in this stage");
+        assertThat(prompt).doesNotContain("reference/style/").doesNotContain("reference/style/: form guidance only");
+        assertThat(prompt).contains("reference/ is closed in this stage");
 
         // The stages that genuinely have no inline contract still point at their reference.
         assertThat(systemPromptService.buildStage(exercise, GenerationStage.TESTS)).contains("reference/style/tests.md");
