@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Objects;
 
@@ -165,7 +166,10 @@ public class GitRepositoryExportService {
             try (Repository bareRepository = gitService.getBareRepository(new LocalVCRepositoryUri(repositoryUri.toString()), false)) {
                 InMemoryRepositoryBuilder.writeToDirectory(bareRepository, partialPath);
             }
-            FileUtils.moveDirectory(partialPath.toFile(), repositoryPath.toFile());
+            // An atomic rename, not FileUtils.moveDirectory: that one falls back to copying and deleting when the rename fails,
+            // and a copy that fails halfway leaves an incomplete repositoryPath behind that the cleanup below does not cover.
+            // Both paths are siblings in targetDirectory, so they always share a file store and the rename is supported.
+            Files.move(partialPath, repositoryPath, StandardCopyOption.ATOMIC_MOVE);
         }
         finally {
             if (Files.exists(partialPath) && !FileUtils.deleteQuietly(partialPath.toFile())) {
@@ -214,7 +218,7 @@ public class GitRepositoryExportService {
             catch (GitAPIException e) {
                 throw new IOException("Could not archive the repository " + repositoryUri, e);
             }
-            FileUtils.moveFile(partialFilePath.toFile(), zipFilePath.toFile());
+            Files.move(partialFilePath, zipFilePath, StandardCopyOption.ATOMIC_MOVE);
         }
         finally {
             if (!FileUtils.deleteQuietly(partialFilePath.toFile()) && Files.exists(partialFilePath)) {

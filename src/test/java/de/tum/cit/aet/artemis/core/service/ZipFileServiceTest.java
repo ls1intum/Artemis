@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -19,6 +20,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -134,6 +136,8 @@ class ZipFileServiceTest extends AbstractSpringIntegrationIndependentTest {
      */
     @Test
     void testCreateZipFile_keepsTheExecutableBit() throws IOException {
+        // Windows has no POSIX view, so the file system cannot carry the permissions this test is about.
+        Assumptions.assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"), "The file system does not support POSIX permissions");
         Path contentDir = tempFileUtilService.createTempDirectory("executable-content");
         Path executableFile = contentDir.resolve("gradlew");
         FileUtils.writeStringToFile(executableFile.toFile(), "#!/bin/sh\n", StandardCharsets.UTF_8);

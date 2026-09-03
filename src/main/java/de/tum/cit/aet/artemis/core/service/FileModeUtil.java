@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * repositories: git tracks the executable bit, so an extracted repository whose {@code gradlew} lost it reports a
  * modification before anyone has touched the working tree, and the script cannot be run without a {@code chmod}.
  */
-public final class FileModeUtil {
+final class FileModeUtil {
 
     private static final Logger log = LoggerFactory.getLogger(FileModeUtil.class);
 
@@ -45,7 +45,7 @@ public final class FileModeUtil {
      * @param entry the ZIP entry to annotate
      * @param path  the file or directory the entry was created from
      */
-    public static void applyUnixMode(ZipArchiveEntry entry, Path path) {
+    static void applyUnixMode(ZipArchiveEntry entry, Path path) {
         try {
             entry.setUnixMode(toUnixMode(Files.getPosixFilePermissions(path)));
         }
