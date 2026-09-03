@@ -232,11 +232,12 @@ public class LocalCIResultProcessingService {
         if (buildResult == null) {
             return;
         }
-        BuildJob savedBuildJob = null;
         Result result = null;
-        // A container of a multi-container build persists its own build job (linked to the shared result) inside the
-        // synchronized aggregation below, so the fallback save in the finally block is skipped for it.
-        boolean buildJobPersisted = false;
+        // A container of a multi-container build persists its own build job inside the locked aggregation below, because
+        // that is what counts the finished containers, and hands it back here; every other path saves it in the finally
+        // block. The status is resolved once for both, since it only depends on the job and the exception.
+        BuildJob savedBuildJob = null;
+        BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
 
         SecurityUtils.setAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
@@ -253,8 +254,11 @@ public class LocalCIResultProcessingService {
                 boolean testsExpected = buildJob.buildConfig().areTestsExpected();
                 if (buildJob.containerName() != null) {
                     // One container of a multi-container build: aggregate its feedback into the submission's shared result.
-                    result = processContainerResult(participation, buildJob, buildResult, buildLogs, buildException, testsExpected);
-                    buildJobPersisted = result != null;
+                    ContainerOutcome outcome = processContainerResult(participation, buildJob, buildResult, buildLogs, buildStatus, testsExpected);
+                    if (outcome != null) {
+                        result = outcome.result();
+                        savedBuildJob = outcome.savedBuildJob();
+                    }
                 }
                 else {
                     result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult, testsExpected);
@@ -273,15 +277,11 @@ public class LocalCIResultProcessingService {
                 programmingExerciseParticipation.setProgrammingExercise(exercise);
             }
 
-            // save build job to database (the multi-container path already persisted it linked to the aggregated result)
-            if (buildJobPersisted) {
-                savedBuildJob = buildJobRepository.findByBuildJobId(buildJob.id()).orElse(null);
+            if (buildStatus == BuildStatus.FAILED) {
+                log.error("Error while processing build job: {}", buildJob, buildException);
             }
-            else {
-                BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
-                if (buildStatus == BuildStatus.FAILED) {
-                    log.error("Error while processing build job: {}", buildJob, buildException);
-                }
+            // Save the build job to the database, unless the container path already saved it linked to the aggregated result.
+            if (savedBuildJob == null) {
                 savedBuildJob = saveFinishedBuildJob(buildJob, buildStatus, result);
             }
             if (buildException == null && programmingExerciseParticipation != null) {
@@ -340,15 +340,16 @@ public class LocalCIResultProcessingService {
      * grouping key (participation and commit hash), so they aggregate into the same result and count completion without
      * racing, even when they are processed by several result-processing threads across several core nodes in parallel.
      *
-     * @param participation  the participation that was built
-     * @param buildJob       the finished build job of the container
-     * @param buildResult    the build result of the container
-     * @param buildException the exception that occurred during the build, if any
-     * @param testsExpected  whether tests were expected for this container
-     * @return the aggregated result (finalized once every container finished), or null if it could not be processed
+     * @param participation the participation that was built
+     * @param buildJob      the finished build job of the container
+     * @param buildResult   the build result of the container
+     * @param buildStatus   the status the container's build job finished with
+     * @param testsExpected whether tests were expected for this container
+     * @return the aggregated result together with the build job saved for this container, or null if the container's
+     *         result could not be processed
      */
-    private Result processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult, List<BuildLogDTO> agentBuildLogs,
-            Throwable buildException, boolean testsExpected) {
+    private ContainerOutcome processContainerResult(ProgrammingExerciseParticipation participation, BuildJobQueueItem buildJob, BuildResult buildResult,
+            List<BuildLogDTO> agentBuildLogs, BuildStatus buildStatus, boolean testsExpected) {
         // A container whose build script failed still completes as a normal job, and on that path the agent reports the
         // build logs only on the result queue item, not inside the build result. Carry them over so a crashed
         // container's logs are preserved for the student alongside its siblings' results.
@@ -375,23 +376,35 @@ public class LocalCIResultProcessingService {
                 // have been edited since. A job without the count is a single-container build.
                 int expectedContainerCount = buildJob.expectedContainerCount() != null ? buildJob.expectedContainerCount() : 1;
 
-                BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
                 // Link this container's build job to the shared result so finished containers can be counted below.
-                saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
+                BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, aggregatedResult);
 
                 long completedContainers = buildJobRepository.countByResultId(aggregatedResult.getId());
                 if (completedContainers < expectedContainerCount) {
-                    return aggregatedResult;
+                    return new ContainerOutcome(aggregatedResult, savedContainerJob);
                 }
                 // All containers are in. This service only knows how the jobs executed; whether the build itself
                 // succeeded is the grading service's call (see finalizeContainerResult).
                 boolean allJobsSucceeded = !buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResult.getId(), BuildStatus.SUCCESSFUL);
-                return programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allJobsSucceeded, effectiveBuildResult.buildRunDate());
+                Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, allJobsSucceeded,
+                        effectiveBuildResult.buildRunDate());
+                return new ContainerOutcome(finalizedResult, savedContainerJob);
             });
         }
         finally {
             aggregationLocks.unlock(lockKey);
         }
+    }
+
+    /**
+     * What processing one container of a multi-container build produced: the shared result its feedback was appended to,
+     * and the build job saved for the container. The job is carried out of the locked transaction because the caller
+     * needs it to write the log file, and re-reading it there would be a second query for a row just written.
+     *
+     * @param result        the aggregated result of the submission, finalized once every container has finished
+     * @param savedBuildJob the persisted build job of this container, linked to that result
+     */
+    private record ContainerOutcome(Result result, BuildJob savedBuildJob) {
     }
 
     /**
