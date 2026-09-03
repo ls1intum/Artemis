@@ -38,6 +38,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
+import { Signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
 import { BuildContainer } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -433,14 +434,14 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         const containersDetail = section.details.find((detail) => detail && detail.type === DetailType.ProgrammingBuildContainers);
         expect(containersDetail).toBeDefined();
-        const data = (containersDetail as { data: { containers: BuildContainer[]; defaultDockerImage?: string } }).data;
+        const data = (containersDetail as { data: { containers: BuildContainer[]; defaultDockerImage: Signal<string | undefined> } }).data;
         expect(data.containers.map((container) => container.name)).toEqual(['instructor_tests', 'student_tests']);
         expect(data.containers.map((container) => container.phases.map((phase) => phase.name))).toEqual([['test'], ['check']]);
         // the container without an image is built with the language default, which the section names
-        expect(data.defaultDockerImage).toBe('language-default:1');
+        expect(data.defaultDockerImage()).toBe('language-default:1');
     });
 
-    it('should resolve the language default image and rebuild the details with it', () => {
+    it('should resolve the language default image without rebuilding the rendered sections', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
@@ -453,17 +454,21 @@ describe('ProgrammingExerciseDetailComponent', () => {
         comp.programmingExerciseBuildConfig = programmingExercise.buildConfig;
         comp.localCIEnabled.set(true);
         comp.exerciseDetailSections.set(comp.getExerciseDetails());
+        const renderedSections = comp.exerciseDetailSections();
+        const containersDetail = renderedSections.flatMap((section) => section.details).find((detail) => detail && detail.type === DetailType.ProgrammingBuildContainers) as {
+            data: { defaultDockerImage: Signal<string | undefined> };
+        };
+        expect(containersDetail.data.defaultDockerImage()).toBeUndefined();
         const getTemplateStub = vi.spyOn(TestBed.inject(BuildPhasesTemplateService), 'getTemplate').mockReturnValue(of({ dockerImage: 'language-default:1', phases: [] }));
 
         comp.loadDefaultDockerImage(programmingExercise);
 
         expect(getTemplateStub).toHaveBeenCalledOnce();
         expect(comp.defaultDockerImage()).toBe('language-default:1');
-        const containersDetail = comp
-            .exerciseDetailSections()
-            .flatMap((section) => section.details)
-            .find((detail) => detail && detail.type === DetailType.ProgrammingBuildContainers) as { data: { defaultDockerImage?: string } };
-        expect(containersDetail.data.defaultDockerImage).toBe('language-default:1');
+        // the same detail object now reports the image: the list tracks sections by identity, so rebuilding them
+        // to deliver one string would re-create every section and re-run every deferred block on the page
+        expect(comp.exerciseDetailSections()).toBe(renderedSections);
+        expect(containersDetail.data.defaultDockerImage()).toBe('language-default:1');
     });
 
     it('should not list build containers when the build plan has none', () => {

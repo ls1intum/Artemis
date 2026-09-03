@@ -153,7 +153,15 @@ interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {
 
 interface ProgrammingBuildContainersDetail extends DetailBase {
     type: DetailType.ProgrammingBuildContainers;
-    data: { containers: BuildContainer[]; isExamMode?: boolean; defaultDockerImage?: string };
+    data: {
+        containers: BuildContainer[];
+        isExamMode?: boolean;
+        // Signal-backed for the same reason as the diff report below: the language default is fetched
+        // asynchronously and arrives after the sections have rendered. Passing its value instead would mean
+        // rebuilding the sections to show it, and the list tracks sections by identity, so that re-creates
+        // every section and re-runs every deferred block on the page.
+        defaultDockerImage: Signal<string | undefined>;
+    };
 }
 
 export interface ExerciseCategoriesDetail extends DetailBase {

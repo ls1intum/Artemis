@@ -343,8 +343,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     /**
      * Resolves the Docker image of the exercise's language default, so that the build containers section can name
-     * the image a container without one of its own is built with. The details are rebuilt once the image is known,
-     * since they may already have been rendered by then.
+     * the image a container without one of its own is built with. The section reads the signal this writes, so a
+     * late answer updates that one binding rather than rebuilding the already rendered sections.
      *
      * @param exercise the exercise whose language default is looked up
      */
@@ -361,9 +361,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         return;
                     }
                     this.defaultDockerImage.set(template.dockerImage);
-                    if (this.exerciseDetailSections().length > 0) {
-                        this.exerciseDetailSections.set(this.getExerciseDetails());
-                    }
                 },
                 // the section then falls back to naming the default without the image; not worth an alert
                 error: () => {},
@@ -663,7 +660,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         type: DetailType.ProgrammingBuildContainers,
                         title: 'artemisApp.programmingExercise.buildContainersEditor.detailTitle',
                         titleHelpText: 'artemisApp.programmingExercise.buildContainersEditor.help',
-                        data: { containers: buildContainers, isExamMode: this.isExamExercise(), defaultDockerImage: this.defaultDockerImage() },
+                        data: { containers: buildContainers, isExamMode: this.isExamExercise(), defaultDockerImage: this.defaultDockerImage },
                     },
                 {
                     type: DetailType.Text,

@@ -108,7 +108,7 @@
                                 <jhi-build-containers-details
                                     [containers]="detail.data.containers"
                                     [isExamMode]="detail.data.isExamMode ?? false"
-                                    [defaultDockerImage]="detail.data.defaultDockerImage"
+                                    [defaultDockerImage]="detail.data.defaultDockerImage()"
                                 />
                             </dd>
                         } @placeholder {
