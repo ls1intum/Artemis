@@ -23,6 +23,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -210,7 +211,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         Result rebuiltResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(rebuiltSubmission.getLatestResult().getId());
         assertThat(rebuiltResult.getId()).isNotEqualTo(manualDraft.getId());
         assertThat(rebuiltResult.getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
-        String jobStatuses = buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == participation.getId())
+        String jobStatuses = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId()))
                 .map(job -> job.getBuildJobId() + ":" + job.getBuildStatus()).toList().toString();
         assertThat(rebuiltResult.isSuccessful()).as("jobs %s, submission buildFailed=%s", jobStatuses, rebuiltSubmission.isBuildFailed()).isTrue();
         assertThat(rebuiltSubmission.isBuildFailed()).isFalse();
@@ -346,7 +347,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         awaitFinalizedResult(templateParticipation.getId(), 120);
 
         // Exactly one template build: two container jobs, not two per solution container.
-        var templateJobs = buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == templateParticipation.getId()).toList();
+        var templateJobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), templateParticipation.getId())).toList();
         assertThat(templateJobs).hasSize(2);
     }
 
@@ -432,7 +433,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
         // One build job per container, both linked to the shared result.
         assertThat(buildJobRepository.countByResultId(result.getId())).isEqualTo(2);
-        var jobs = buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == participation.getId()).toList();
+        var jobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId())).toList();
         assertThat(jobs).hasSize(2);
         assertThat(jobs).allSatisfy(job -> assertThat(job.getBuildStatus()).isEqualTo(BuildStatus.SUCCESSFUL));
         assertThat(jobs).extracting(job -> job.getDockerImage()).containsExactlyInAnyOrder(instructorImage, studentImage);
@@ -515,7 +516,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
             // The timed-out job is recorded as such; the sibling job is untouched by the timeout.
             assertThat(buildJobRepository.countByResultId(result.getId())).isEqualTo(2);
-            var jobs = buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == participation.getId()).toList();
+            var jobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId())).toList();
             assertThat(jobs).hasSize(2);
             assertThat(statusOfJobWithImage(jobs, studentImage)).isEqualTo(BuildStatus.TIMEOUT);
             assertThat(statusOfJobWithImage(jobs, instructorImage)).isEqualTo(BuildStatus.SUCCESSFUL);
@@ -541,7 +542,7 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.isBuildFailed()).isTrue();
 
         assertThat(buildJobRepository.countByResultId(result.getId())).isEqualTo(2);
-        var jobs = buildJobRepository.findAll().stream().filter(job -> job.getParticipationId() == participation.getId()).toList();
+        var jobs = buildJobRepository.findAll().stream().filter(job -> Objects.equals(job.getParticipationId(), participation.getId())).toList();
         assertThat(jobs).hasSize(2);
         assertThat(jobs).extracting(job -> job.getDockerImage()).containsExactlyInAnyOrder(instructorImage, studentImage);
 
