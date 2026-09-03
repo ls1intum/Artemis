@@ -109,7 +109,7 @@ class DistributedDataSurfaceTest {
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AssignableTypeFilter(PyrisJob.class));
         return scanner.findCandidateComponents(PYRIS_JOB_PACKAGE).stream().map(BeanDefinition::getBeanClassName).map(DistributedDataSurfaceTest::loadClass)
-                .sorted(Comparator.comparing(Class::getName)).collect(Collectors.toList());
+                .sorted(Comparator.comparing(Class::getName)).toList();
     }
 
     private static Class<?> loadClass(String name) {
