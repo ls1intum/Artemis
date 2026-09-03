@@ -223,8 +223,14 @@ export class FileUploadExerciseUpdateComponent implements AfterViewInit, OnInit 
                 empty: !exercise.exampleSolution,
             },
             {
+                // The example solution publication date lives in the timeline (as for programming exercises), so its
+                // validity is part of the grading section.
                 title: 'artemisApp.exercise.sections.grading',
-                valid: Boolean((this.points()?.valid ?? true) && (this.bonusPoints()?.valid ?? true) && (this.isExamMode() || this.timelineStatus().valid)),
+                valid: Boolean(
+                    (this.points()?.valid ?? true) &&
+                    (this.bonusPoints()?.valid ?? true) &&
+                    (this.isExamMode() || (this.timelineStatus().valid && !exercise.exampleSolutionPublicationDateError)),
+                ),
                 empty: !this.isExamMode() && this.timelineStatus().empty,
             },
         ]);

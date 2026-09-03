@@ -264,11 +264,14 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                     empty: !this.textExercise.exampleSolution,
                 },
                 {
+                    // The example solution publication date lives in the timeline (as for programming exercises), so
+                    // its validity is part of the grading section.
                     title: 'artemisApp.exercise.sections.grading',
                     valid: Boolean(
                         this.points()?.valid &&
                         this.bonusPoints()?.valid &&
-                        (this.isExamMode() || (this.exerciseUpdatePlagiarismComponent()?.isFormValid() && this.timelineStatus().valid)),
+                        (this.isExamMode() ||
+                            (this.exerciseUpdatePlagiarismComponent()?.isFormValid() && this.timelineStatus().valid && !this.textExercise.exampleSolutionPublicationDateError)),
                     ),
                     empty: !this.isExamMode() && this.timelineStatus().empty,
                 },

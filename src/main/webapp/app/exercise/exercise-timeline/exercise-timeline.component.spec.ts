@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { describe, expect, it, vi } from 'vitest';
-import { TimelineStubComponent } from 'test/helpers/stubs/modeling/timeline-stub.component';
+import { TimelineStubComponent } from 'test/helpers/stubs/exercise/timeline-stub.component';
 
 import { ExerciseTimelineComponent } from './exercise-timeline.component';
 
