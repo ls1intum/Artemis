@@ -156,7 +156,19 @@ belongs with the existing ArchUnit rules.
 | Stored version lower, migration path declared | run steps under lock, log what was carried over and what was dropped, start |
 | Stored version lower, no path declared | refuse to start with an actionable message naming the versions, following `DatabaseMigration` |
 | Stored version higher (rollback) | refuse to start, pointing at the roll-forward rule; note the old namespace no longer exists |
-| No stored version (fresh store) | write the current version, start |
+| No stored version, carried-over structures present under plain names | treat the store as version `0`, drain it into the current namespace, start |
+| No stored version, no such structures (genuinely fresh store) | write the current version, start |
+
+The last two rows are one situation split in two, and getting the split wrong is the expensive mistake. Every Redis
+deployment running today has data under unprefixed keys and no version key. Reading "no version key" as "fresh store"
+would claim the store for the current version and then read only `artemis:vN:*`, leaving every queued build, unwritten
+result and runtime feature toggle stranded under a key nothing looks at again. The absent version therefore means
+version `0`, whose namespace is the empty prefix, and it is told apart from an empty store by probing for the
+carried-over structures under their plain names.
+
+Version `0` is the one namespace whose remainder cannot be swept: it *is* the whole keyspace, so a pattern delete over
+it would take the new namespace, the version key, and anything else sharing that Redis. Its uncarried keys are left
+where they are. They are never read again, and an operator can drop them at leisure.
 
 A build agent that reaches Redis before the core node has migrated must not write into the new namespace prematurely.
 It reads the same version key and waits, rather than registering. This is the failure #12137 describes in its final
