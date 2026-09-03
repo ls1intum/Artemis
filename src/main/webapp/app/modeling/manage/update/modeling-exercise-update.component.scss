@@ -1,0 +1,43 @@
+.modeling-exercise-editor-snap-target {
+    scroll-snap-align: center;
+    scroll-snap-stop: normal;
+}
+
+.modeling-exercise-diagram-type {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: var(--apollon-chrome-gap);
+
+    label {
+        margin: 0;
+        color: var(--apollon-chrome-text-muted);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    tum-ui-select {
+        display: block;
+        width: auto;
+        min-width: 15rem;
+    }
+}
+
+.modeling-exercise-example-explanation {
+    width: var(--modeling-editor-explanation-panel-width, min(44rem, 100%));
+    max-width: 100%;
+}
+
+@container (max-width: 34rem) {
+    .modeling-exercise-diagram-type {
+        label {
+            display: none;
+        }
+
+        tum-ui-select {
+            min-width: 0;
+            max-width: 100%;
+        }
+    }
+}
