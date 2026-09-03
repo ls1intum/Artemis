@@ -62,6 +62,12 @@ class RedissonDistributedDataMigrator {
      */
     private static final long LOCK_LEASE_MINUTES = 30;
 
+    /** What {@code RMapCache.remainTimeToLive} answers for an entry that exists but never expires. */
+    private static final long NO_EXPIRY = -1;
+
+    /** What {@code RMapCache.remainTimeToLive} answers for an entry that is no longer there. */
+    private static final long ENTRY_DOES_NOT_EXIST = -2;
+
     private final RedissonClient redissonClient;
 
     private final String artemisVersion;
@@ -209,8 +215,8 @@ class RedissonDistributedDataMigrator {
         String from = namespaceFor(fromVersion) + structure.name();
         String to = namespaceFor(targetVersion) + structure.name();
         return switch (structure.kind()) {
-            case QUEUE -> drainQueue(redissonClient.getQueue(from, ByteArrayCodec.INSTANCE), to);
-            case PRIORITY_QUEUE -> drainQueue(redissonClient.getPriorityQueue(from, ByteArrayCodec.INSTANCE), to);
+            // Both list-backed, and both drained through the plain queue view; see drainQueue.
+            case QUEUE, PRIORITY_QUEUE -> drainQueue(redissonClient.getQueue(from, ByteArrayCodec.INSTANCE), redissonClient.getQueue(to, ByteArrayCodec.INSTANCE));
             case MAP -> drainMap(redissonClient.getMap(from, ByteArrayCodec.INSTANCE), redissonClient.getMap(to, ByteArrayCodec.INSTANCE));
             case EXPIRING_MAP -> drainExpiringMap(redissonClient.getMapCache(from, ByteArrayCodec.INSTANCE), redissonClient.getMapCache(to, ByteArrayCodec.INSTANCE));
             case SET -> drainSet(redissonClient.getSet(from, ByteArrayCodec.INSTANCE), redissonClient.getSet(to, ByteArrayCodec.INSTANCE));
@@ -218,17 +224,31 @@ class RedissonDistributedDataMigrator {
     }
 
     /**
-     * Moves a list-backed structure one entry at a time with {@code RPOPLPUSH}, which takes from the tail of the
-     * source and prepends to the head of the target in a single server-side step. The entry is therefore in exactly
-     * one of the two at any moment, and repeating the transfer preserves the order the source held.
+     * Moves a list-backed structure one entry at a time, head first, so the target ends up in the order the source
+     * held. Each entry is written to the target before it is removed from the source, so a node that dies between the
+     * two leaves a duplicate the rerun cannot tell from a real entry - a build that runs twice - rather than one that
+     * exists nowhere.
      *
-     * @param from      the queue to empty
-     * @param toKeyName the Redis key of the queue to fill
+     * <p>
+     * Not {@code RPOPLPUSH}, tempting as a single atomic step is: the two keys sit in different hash slots, and a
+     * Redis Cluster answers {@code CROSSSLOT} for every entry, so the very first migration would fail to start Artemis
+     * on a supported topology.
+     *
+     * <p>
+     * A priority queue is drained through this same plain-list view. Redisson keeps it as a list that is already
+     * sorted, and appending its entries in order reproduces that, which a client-side {@code add} could not do here
+     * because the entries are opaque bytes with no comparator.
+     *
+     * @param from the queue to empty
+     * @param to   the queue to fill
      * @return how many entries were moved
      */
-    private long drainQueue(RQueue<byte[]> from, String toKeyName) {
+    private long drainQueue(RQueue<byte[]> from, RQueue<byte[]> to) {
         long moved = 0;
-        while (from.pollLastAndOfferFirstTo(toKeyName) != null) {
+        byte[] entry;
+        while ((entry = from.peek()) != null) {
+            to.add(entry);
+            from.poll();
             moved++;
         }
         return moved;
@@ -265,20 +285,33 @@ class RedissonDistributedDataMigrator {
             if (value == null) {
                 continue;
             }
-            // remainTimeToLive answers -1 for an entry without a deadline and -2 for one that vanished between the
-            // read above and this call. Zero is what put() takes for "no deadline", so both collapse to it: an entry
-            // that is already gone is about to be dropped by the remove below anyway.
-            long remainingTimeToLive = Math.max(source.remainTimeToLive(key), 0);
-            target.put(key, value, remainingTimeToLive, TimeUnit.MILLISECONDS);
+            long remainingTimeToLive = source.remainTimeToLive(key);
+            if (remainingTimeToLive == ENTRY_DOES_NOT_EXIST) {
+                // The entry expired between the read above and this call. Writing it would resurrect it in the new
+                // namespace, and without a deadline at that, since put() reads zero as "no expiry".
+                continue;
+            }
+            // -1 means the entry never expires, which put() expresses as zero.
+            target.put(key, value, remainingTimeToLive == NO_EXPIRY ? 0 : remainingTimeToLive, TimeUnit.MILLISECONDS);
             source.remove(key);
             moved++;
         }
         return moved;
     }
 
+    /**
+     * Iterates rather than reading the set into memory, so a large carried-over set does not have to fit in the heap
+     * of the node that happens to run the migration. Redisson's iterator scans in batches, which may hand back a
+     * member twice while entries are being removed underneath it; adding the same member to a set again changes
+     * nothing, so that costs a round trip and no correctness.
+     *
+     * @param source the set to empty
+     * @param target the set to fill
+     * @return how many members were moved
+     */
     private long drainSet(RSet<byte[]> source, RSet<byte[]> target) {
         long moved = 0;
-        for (byte[] element : source.readAll()) {
+        for (byte[] element : source) {
             target.add(element);
             source.remove(element);
             moved++;

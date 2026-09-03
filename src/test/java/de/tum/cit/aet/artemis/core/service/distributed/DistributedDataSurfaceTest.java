@@ -27,10 +27,14 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
+import de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService;
+import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
@@ -71,9 +75,12 @@ class DistributedDataSurfaceTest {
     /**
      * The types stored in the distributed structures. Everything they reach is walked, so this only has to name the
      * roots: a build job and its result as they travel through the queues and the processing map, the agent record
-     * whose change caused #12137, and the key type of the feature toggles.
+     * whose change caused #12137, the key type of the feature toggles, the two records the cluster keeps about its own
+     * nodes, and the entries the Hyperion, OIDC and Atlas agent caches hold.
      */
-    private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class);
+    private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
+            BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
+            AtlasAgentSessionCacheService.MessagePreviewData.class);
 
     /**
      * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
