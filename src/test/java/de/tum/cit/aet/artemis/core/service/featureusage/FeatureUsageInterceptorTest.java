@@ -262,7 +262,8 @@ class FeatureUsageInterceptorTest {
     private FeatureUsageCollector newCollector(FeatureUsageProperties properties) {
         var applicationContext = mock(ApplicationContext.class);
         when(applicationContext.getBean(FeatureUsageRegistry.class)).thenReturn(registry);
-        return new FeatureUsageCollector(properties, applicationContext);
+        // applied inline, so the assertions do not have to wait for the recording thread
+        return new FeatureUsageCollector(properties, applicationContext, Runnable::run);
     }
 
 }

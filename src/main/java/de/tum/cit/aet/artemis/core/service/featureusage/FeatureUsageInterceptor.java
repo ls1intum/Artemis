@@ -49,32 +49,21 @@ public class FeatureUsageInterceptor implements HandlerInterceptor {
     private final FeatureUsageProperties properties;
 
     /**
-     * The registry and the collector are resolved on first use rather than injected.
+     * The collector is resolved on first use rather than injected.
      * <p>
      * {@code WebConfigurer} constructor-injects this interceptor and has to exist before the web server does, so injecting
-     * the registry here would put it, its repository and the whole JPA infrastructure behind it on the startup dependency
-     * path. That pushed the longest startup chain past the limit the bean instantiation check enforces. Marking the
+     * the collector here would put it and everything behind it on the startup dependency path. That pushed the longest startup chain past the limit the bean instantiation check
+     * enforces. Marking the
      * parameter {@code @Lazy} is not an option either, forbidden by
      * {@code ArchitectureTest.ensureLazyAnnotationNotUsedOnParameters}.
      */
     private final ApplicationContext applicationContext;
-
-    private volatile FeatureUsageRegistry registry;
 
     private volatile FeatureUsageCollector collector;
 
     public FeatureUsageInterceptor(FeatureUsageProperties properties, ApplicationContext applicationContext) {
         this.properties = properties;
         this.applicationContext = applicationContext;
-    }
-
-    private FeatureUsageRegistry registry() {
-        FeatureUsageRegistry resolved = registry;
-        if (resolved == null) {
-            resolved = applicationContext.getBean(FeatureUsageRegistry.class);
-            registry = resolved;
-        }
-        return resolved;
     }
 
     private FeatureUsageCollector collector() {
@@ -117,17 +106,14 @@ public class FeatureUsageInterceptor implements HandlerInterceptor {
         if (!(request.getAttribute(START_NANOS_ATTRIBUTE) instanceof Long startNanos)) {
             return;
         }
-        // Recording is not allowed to affect the request it measures. The collector guards its own accumulation, but
-        // resolving the two beans on the first request happens out here, so the whole block is guarded.
+        // Nothing here may affect the request it measures. Everything read from the request or the response is read on
+        // this thread, because a container may recycle both the moment the request completes; everything else, including
+        // resolving the feature from its handler method, happens on the recording thread. The block stays guarded
+        // because resolving the collector bean on the very first request happens out here.
         try {
-            Long featureId = registry().restFeatureId(handlerMethod.getMethod());
-            if (featureId == null) {
-                // not part of the inventory, for instance a handler registered after the startup pass
-                return;
-            }
             Role callerRole = request.getAttribute(CALLER_ROLE_ATTRIBUTE) instanceof Role role ? role : Role.ANONYMOUS;
             boolean failed = ex != null || response.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
-            collector().recordUsage(featureId, callerRole, failed, (System.nanoTime() - startNanos) / 1_000_000);
+            collector().recordRestUsage(handlerMethod.getMethod(), callerRole, failed, (System.nanoTime() - startNanos) / 1_000_000);
         }
         catch (Exception e) {
             log.debug("Failed to record usage of {}", handlerMethod.getMethod(), e);
