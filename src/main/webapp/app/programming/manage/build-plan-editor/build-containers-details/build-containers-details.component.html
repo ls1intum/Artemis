@@ -1,0 +1,36 @@
+@for (container of containers(); track container.name) {
+    <div class="border rounded p-3 mb-3 build-container-details">
+        <div class="flex flex-wrap gap-4 mb-2">
+            <div>
+                <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.containerName"></span>:
+                <code class="build-container-details-name">{{ container.name }}</code>
+            </div>
+            <div>
+                <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.dockerImage"></span>:
+                @if (container.dockerImage) {
+                    <code class="build-container-details-image">{{ container.dockerImage }}</code>
+                } @else {
+                    <!-- an empty image means the container follows the exercise's language default at build time -->
+                    <span class="build-container-details-image" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.defaultImage"></span>
+                }
+            </div>
+            <div>
+                <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.repositories"></span>:
+                @if (container.repositories) {
+                    <!-- a container that scopes its repositories checks out only the ones listed here -->
+                    @for (repository of container.repositories; track repository.type) {
+                        <span class="badge bg-secondary me-1 build-container-details-repository">
+                            {{ 'artemisApp.programmingExercise.buildContainersEditor.repositoryTypes.' + repository.type | artemisTranslate }}
+                        </span>
+                    } @empty {
+                        <span class="build-container-details-repository">&ndash;</span>
+                    }
+                } @else {
+                    <span class="build-container-details-repository" jhiTranslate="artemisApp.programmingExercise.buildContainersEditor.exerciseRepositories"></span>
+                }
+            </div>
+        </div>
+        <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.title"></label>
+        <jhi-build-phases-editor [phases]="container.phases" [readonly]="true" [isExamMode]="isExamMode()" />
+    </div>
+}

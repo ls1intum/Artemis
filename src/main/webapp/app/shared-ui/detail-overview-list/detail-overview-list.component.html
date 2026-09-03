@@ -102,10 +102,10 @@
                             <dd class="detail-defer-placeholder"></dd>
                         }
                     }
-                    @case (DetailType.ProgrammingBuildPhases) {
+                    @case (DetailType.ProgrammingBuildContainers) {
                         @defer (on idle) {
                             <dd id="detail-value-{{ detail.title }}">
-                                <jhi-build-phases-editor [phases]="detail.data.phases" [readonly]="true" [isExamMode]="detail.data.isExamMode ?? false" />
+                                <jhi-build-containers-details [containers]="detail.data.containers" [isExamMode]="detail.data.isExamMode ?? false" />
                             </dd>
                         } @placeholder {
                             <dd class="detail-defer-placeholder"></dd>

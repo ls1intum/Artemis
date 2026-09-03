@@ -65,7 +65,7 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
-import { allPhases, effectiveContainers, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { effectiveContainers, parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -503,16 +503,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
-        const buildPlanPhases = parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration);
+        const buildContainers = effectiveContainers(parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration));
         // a build plan can run several containers, each with its own image, so all of their images are listed here
-        const dockerImages = [
-            ...new Set(
-                effectiveContainers(buildPlanPhases)
-                    .map((container) => container.dockerImage)
-                    .filter(Boolean),
-            ),
-        ].join(', ');
-        const buildPhases = allPhases(buildPlanPhases);
+        const dockerImages = [...new Set(buildContainers.map((container) => container.dockerImage).filter(Boolean))].join(', ');
         const diffReportDetail = this.getDiffReportDetail();
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
@@ -626,11 +619,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         titleHelpText: 'artemisApp.programmingExercise.revertToTemplateBuildPlan',
                         data: { innerHtml: this.artemisMarkdown.safeHtmlForMarkdown('```bash\n' + exercise.buildConfig?.buildScript + '\n```') },
                     },
+                // the containers of the build plan, each with its phases; a plan without containers is shown as one container
                 this.localCIEnabled() &&
-                    !!buildPhases.length && {
-                        type: DetailType.ProgrammingBuildPhases,
-                        title: 'artemisApp.programmingExercise.buildPhasesEditor.title',
-                        data: { phases: buildPhases, isExamMode: this.isExamExercise() },
+                    !!buildContainers.length && {
+                        type: DetailType.ProgrammingBuildContainers,
+                        title: 'artemisApp.programmingExercise.buildContainersEditor.detailTitle',
+                        titleHelpText: 'artemisApp.programmingExercise.buildContainersEditor.help',
+                        data: { containers: buildContainers, isExamMode: this.isExamExercise() },
                     },
                 {
                     type: DetailType.Text,

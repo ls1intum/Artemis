@@ -39,6 +39,9 @@ import { SessionStorageService } from 'app/foundation/service/session-storage.se
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/detail/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { BuildContainer } from 'app/programming/shared/entities/build-plan-phases.model';
+import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/course/shared/entities/course.model';
 import { provideTranslateService } from '@ngx-translate/core';
@@ -410,6 +413,38 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
             expect(comp.canAccessParticipationsAndScores()).toBe(true);
         });
+    });
+
+    it('should list the containers of the build plan with their phases in the language section', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+        programmingExercise.buildConfig.buildPlanConfiguration = JSON.stringify({
+            containers: [
+                { name: 'instructor_tests', dockerImage: 'image-a:1', phases: [{ name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }] },
+                { name: 'student_tests', phases: [{ name: 'check', script: 'echo check', condition: 'ALWAYS', forceRun: false, resultPaths: [] }] },
+            ],
+        });
+        comp.localCIEnabled.set(true);
+
+        const section = comp.getExerciseDetailsLanguageSection(programmingExercise);
+
+        const containersDetail = section.details.find((detail) => detail && detail.type === DetailType.ProgrammingBuildContainers);
+        expect(containersDetail).toBeDefined();
+        const containers = (containersDetail as { data: { containers: BuildContainer[] } }).data.containers;
+        expect(containers.map((container) => container.name)).toEqual(['instructor_tests', 'student_tests']);
+        expect(containers.map((container) => container.phases.map((phase) => phase.name))).toEqual([['test'], ['check']]);
+    });
+
+    it('should not list build containers when the build plan has none', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+        comp.localCIEnabled.set(true);
+
+        const section = comp.getExerciseDetailsLanguageSection(programmingExercise);
+
+        expect(section.details.some((detail) => detail && detail.type === DetailType.ProgrammingBuildContainers)).toBe(false);
     });
 
     it('should create details', () => {
