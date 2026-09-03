@@ -1,6 +1,6 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { DialogService } from 'primeng/dynamicdialog';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { CsvExportOptions, ExportDialogCloseResult, ExportModalComponent, isExportDialogCancelledResult } from 'app/shared-ui/export/modal/export-modal.component';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
@@ -10,7 +10,7 @@ import { TumUiButtonDirective, TumUiButtonSize } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-csv-export-button',
-    template: ` <button type="button" tumUiButton severity="secondary" variant="outlined" [size]="getTumUiSize()" [disabled]="disabled()" (click)="openExportModal($event)">
+    template: ` <button type="button" tumUiButton severity="secondary" variant="outlined" [size]="tumUiSize()" [disabled]="disabled()" (click)="openExportModal($event)">
         @if (icon()) {
             <fa-icon [icon]="icon()!" />
         }
@@ -23,7 +23,6 @@ import { TumUiButtonDirective, TumUiButtonSize } from '@tumaet/ui-angular';
 export class ExportButtonComponent {
     private dialogService = inject(DialogService);
 
-    ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
     title = input<string>('');
@@ -33,7 +32,7 @@ export class ExportButtonComponent {
 
     onExport = output<CsvExportOptions | undefined>();
 
-    getTumUiSize(): TumUiButtonSize {
+    tumUiSize = computed<TumUiButtonSize>(() => {
         switch (this.buttonSize()) {
             case ButtonSize.SMALL:
                 return 'small';
@@ -42,7 +41,7 @@ export class ExportButtonComponent {
             default:
                 return 'default';
         }
-    }
+    });
 
     /**
      * Open up export option modal

@@ -140,7 +140,7 @@ describe('ExamManagementNavigationSidebarComponent', () => {
         expect(component.expandedExams().has(2)).toBe(true);
 
         vi.advanceTimersByTime(100);
-        expect(dummyElement.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'start' });
+        expect(dummyElement.scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest' });
 
         document.body.removeChild(dummyElement);
         vi.useRealTimers();
