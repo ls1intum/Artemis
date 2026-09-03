@@ -100,18 +100,37 @@ public final class DistributedDataSchema {
     }
 
     /**
-     * @param version the schema version to build a prefix for
-     * @return the key prefix every structure of that version lives under, for example {@code artemis:v1:}
+     * The Redis key a structure lives under, for example {@code artemis:v1:{buildJobQueue}}.
+     *
+     * <p>
+     * The braces are a Redis Cluster hash tag, and they are what makes the name rather than the version decide the
+     * slot. Every version of one structure therefore lands on the same cluster node, which is what lets the migration
+     * move an entry with a single server-side {@code RPOPLPUSH} instead of a read and a write that a crash can fall
+     * between. It holds for the unversioned store too: a plain {@code buildJobQueue} hashes over the whole key, which
+     * is exactly the text inside the tag. Different structures still hash apart, so nothing is concentrated.
+     *
+     * @param version the schema version
+     * @param name    the logical structure name
+     * @return the key it lives under
      */
-    public static String namespaceFor(int version) {
-        // The unversioned store has no prefix: its keys are the plain structure names.
-        return version == UNVERSIONED ? "" : "artemis:v" + version + ":";
+    public static String keyFor(int version, String name) {
+        // The unversioned store has no prefix and no tag: its keys are the plain structure names.
+        return version == UNVERSIONED ? name : "artemis:v" + version + ":{" + name + "}";
     }
 
     /**
-     * @return the key prefix this build reads and writes
+     * @param version the schema version
+     * @return a pattern matching every key of that version, for deleting what a migration left behind
      */
-    public static String currentNamespace() {
-        return namespaceFor(VERSION);
+    public static String keyPatternFor(int version) {
+        return "artemis:v" + version + ":*";
+    }
+
+    /**
+     * @param name the logical structure name
+     * @return the key this build reads and writes it under
+     */
+    public static String currentKeyFor(String name) {
+        return keyFor(VERSION, name);
     }
 }

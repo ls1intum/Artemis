@@ -27,7 +27,9 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
+import de.tum.cit.aet.artemis.account.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 import de.tum.cit.aet.artemis.account.service.OIDCExchangeCodeService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.ContentChangeAccumulator;
 import de.tum.cit.aet.artemis.atlas.service.AtlasAgentSessionCacheService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -80,7 +82,7 @@ class DistributedDataSurfaceTest {
      */
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
-            AtlasAgentSessionCacheService.MessagePreviewData.class);
+            AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class);
 
     /**
      * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
@@ -91,10 +93,16 @@ class DistributedDataSurfaceTest {
     private static final String PYRIS_JOB_PACKAGE = "de.tum.cit.aet.artemis.iris.service.pyris.job";
 
     /**
+     * Stored types this package cannot name directly, because they are package-private where they are declared.
+     * Loaded by name so that they are still covered rather than quietly left out.
+     */
+    private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo");
+
+    /**
      * @return every type stored in a distributed structure, including the concrete jobs reached only polymorphically
      */
     private static List<Class<?>> roots() {
-        return Stream.concat(DECLARED_ROOTS.stream(), storedPyrisJobs().stream()).toList();
+        return Stream.of(DECLARED_ROOTS.stream(), ROOTS_BY_NAME.stream().map(DistributedDataSurfaceTest::loadClass), storedPyrisJobs().stream()).flatMap(types -> types).toList();
     }
 
     private static List<Class<?>> storedPyrisJobs() {

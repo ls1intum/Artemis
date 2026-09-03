@@ -1,13 +1,17 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.RELEASE_KEY;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.UNVERSIONED;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
-import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.namespaceFor;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyPatternFor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
@@ -18,8 +22,10 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.redisson.Redisson;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.ByteArrayCodec;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.config.Config;
+import org.redisson.connection.CRC16;
 import org.testcontainers.DockerClientFactory;
 
 import com.redis.testcontainers.RedisStackContainer;
@@ -103,11 +109,11 @@ class RedissonDistributedDataMigratorTest {
     @Test
     void testDoesNothingWhenTheStoreIsAlreadyCurrent() {
         redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(VERSION));
-        redissonClient.getMap(namespaceFor(VERSION) + "processingJobs").put("job", "value");
+        redissonClient.getMap(keyFor(VERSION, "processingJobs")).put("job", "value");
 
         migrationService().migrateToCurrentVersion();
 
-        assertThat(redissonClient.getMap(namespaceFor(VERSION) + "processingJobs").get("job")).isEqualTo("value");
+        assertThat(redissonClient.getMap(keyFor(VERSION, "processingJobs")).get("job")).isEqualTo("value");
     }
 
     @Test
@@ -126,28 +132,28 @@ class RedissonDistributedDataMigratorTest {
 
     @Test
     void testCarriesOverTheDeclaredStructuresAndDiscardsTheRest() {
-        String old = namespaceFor(OLD_VERSION);
+        int old = OLD_VERSION;
         redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(OLD_VERSION));
-        redissonClient.getQueue(old + "buildResultQueue").add("result-1");
-        redissonClient.getPriorityQueue(old + "buildJobQueue").add("job-1");
-        redissonClient.getMap(old + "processingJobs").put("running", "agent-1");
-        redissonClient.getMap(old + "features").put("Science", Boolean.FALSE);
-        redissonClient.getMapCache(old + "pyris-job-map").put("job-1", "session-1");
+        redissonClient.getQueue(keyFor(old, "buildResultQueue")).add("result-1");
+        redissonClient.getPriorityQueue(keyFor(old, "buildJobQueue")).add("job-1");
+        redissonClient.getMap(keyFor(old, "processingJobs")).put("running", "agent-1");
+        redissonClient.getMap(keyFor(old, "features")).put("Science", Boolean.FALSE);
+        redissonClient.getMapCache(keyFor(old, "pyris-job-map")).put("job-1", "session-1");
         // Not carried over: build agents re-register on startup.
-        redissonClient.getMap(old + "buildAgentInformation").put("agent-1", "details");
+        redissonClient.getMap(keyFor(old, "buildAgentInformation")).put("agent-1", "details");
 
         migrationServiceFor(NEW_VERSION).migrateToCurrentVersion();
 
-        String current = namespaceFor(NEW_VERSION);
-        assertThat(redissonClient.getQueue(current + "buildResultQueue").readAll()).containsExactly("result-1");
-        assertThat(redissonClient.getPriorityQueue(current + "buildJobQueue").readAll()).containsExactly("job-1");
-        assertThat(redissonClient.getMap(current + "processingJobs").get("running")).isEqualTo("agent-1");
+        int current = NEW_VERSION;
+        assertThat(redissonClient.getQueue(keyFor(current, "buildResultQueue")).readAll()).containsExactly("result-1");
+        assertThat(redissonClient.getPriorityQueue(keyFor(current, "buildJobQueue")).readAll()).containsExactly("job-1");
+        assertThat(redissonClient.getMap(keyFor(current, "processingJobs")).get("running")).isEqualTo("agent-1");
         // A toggle an admin turned off stays off, which is the reason this map is carried over at all.
-        assertThat(redissonClient.getMap(current + "features").get("Science")).isEqualTo(Boolean.FALSE);
-        assertThat(redissonClient.getMapCache(current + "pyris-job-map").get("job-1")).isEqualTo("session-1");
-        assertThat(redissonClient.getMap(current + "buildAgentInformation").isEmpty()).isTrue();
+        assertThat(redissonClient.getMap(keyFor(current, "features")).get("Science")).isEqualTo(Boolean.FALSE);
+        assertThat(redissonClient.getMapCache(keyFor(current, "pyris-job-map")).get("job-1")).isEqualTo("session-1");
+        assertThat(redissonClient.getMap(keyFor(current, "buildAgentInformation")).isEmpty()).isTrue();
 
-        assertThat(redissonClient.getKeys().getKeysByPattern(old + "*")).isEmpty();
+        assertThat(redissonClient.getKeys().getKeysByPattern(keyPatternFor(old))).isEmpty();
         assertThat(storedVersion()).isEqualTo(String.valueOf(NEW_VERSION));
     }
 
@@ -163,10 +169,10 @@ class RedissonDistributedDataMigratorTest {
 
         migrationService().migrateToCurrentVersion();
 
-        String current = namespaceFor(VERSION);
-        assertThat(redissonClient.getQueue(current + "buildResultQueue").readAll()).containsExactly("result-1");
-        assertThat(redissonClient.getPriorityQueue(current + "buildJobQueue").readAll()).containsExactly("job-1");
-        assertThat(redissonClient.getMap(current + "features").get("Science")).isEqualTo(Boolean.FALSE);
+        int current = VERSION;
+        assertThat(redissonClient.getQueue(keyFor(current, "buildResultQueue")).readAll()).containsExactly("result-1");
+        assertThat(redissonClient.getPriorityQueue(keyFor(current, "buildJobQueue")).readAll()).containsExactly("job-1");
+        assertThat(redissonClient.getMap(keyFor(current, "features")).get("Science")).isEqualTo(Boolean.FALSE);
         // Drained rather than copied, so the plain keys are gone even though no pattern delete ran over them.
         assertThat(redissonClient.getQueue("buildResultQueue").isEmpty()).isTrue();
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
@@ -184,7 +190,7 @@ class RedissonDistributedDataMigratorTest {
         migrationService().migrateToCurrentVersion();
 
         assertThat(redissonClient.getMap("buildAgentInformation").get("agent-1")).isEqualTo("details");
-        assertThat(redissonClient.getMap(namespaceFor(VERSION) + "buildAgentInformation").isEmpty()).isTrue();
+        assertThat(redissonClient.getMap(keyFor(VERSION, "buildAgentInformation")).isEmpty()).isTrue();
         assertThat(storedVersion()).isEqualTo(String.valueOf(VERSION));
     }
 
@@ -194,7 +200,7 @@ class RedissonDistributedDataMigratorTest {
 
         migrationService().migrateToCurrentVersion();
 
-        RMapCache<Object, Object> migrated = redissonClient.getMapCache(namespaceFor(VERSION) + "pyris-job-map");
+        RMapCache<Object, Object> migrated = redissonClient.getMapCache(keyFor(VERSION, "pyris-job-map"));
         assertThat(migrated.get("job-1")).isEqualTo("session-1");
         // Carried over rather than reset: an entry that was minutes from expiring must not become permanent.
         assertThat(migrated.remainTimeToLive("job-1")).isPositive().isLessThanOrEqualTo(Duration.ofHours(1).toMillis());
@@ -202,9 +208,9 @@ class RedissonDistributedDataMigratorTest {
 
     @Test
     void testLeavesTheOldVersionInPlaceUntilTheMigrationCompletes() {
-        String old = namespaceFor(OLD_VERSION);
+        int old = OLD_VERSION;
         redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(OLD_VERSION));
-        redissonClient.getQueue(old + "buildResultQueue").add("result-1");
+        redissonClient.getQueue(keyFor(old, "buildResultQueue")).add("result-1");
 
         // A node that dies here has moved nothing and written no version, so the store still reads as the old one and
         // a rerun starts over rather than resuming into a half-filled namespace.
@@ -217,17 +223,67 @@ class RedissonDistributedDataMigratorTest {
 
     @Test
     void testARerunAfterAPartialDrainNeitherLosesNorDuplicatesEntries() {
-        String old = namespaceFor(OLD_VERSION);
-        String current = namespaceFor(NEW_VERSION);
+        int old = OLD_VERSION;
+        int current = NEW_VERSION;
         redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(OLD_VERSION));
         // Simulates a crash part way through: one entry already moved, one still waiting.
-        redissonClient.getQueue(current + "buildResultQueue").add("already-moved");
-        redissonClient.getQueue(old + "buildResultQueue").add("still-waiting");
+        redissonClient.getQueue(keyFor(current, "buildResultQueue")).add("already-moved");
+        redissonClient.getQueue(keyFor(old, "buildResultQueue")).add("still-waiting");
 
         migrationServiceFor(NEW_VERSION).migrateToCurrentVersion();
 
-        assertThat(redissonClient.getQueue(current + "buildResultQueue").readAll()).containsExactlyInAnyOrder("already-moved", "still-waiting");
-        assertThat(redissonClient.getKeys().getKeysByPattern(old + "*")).isEmpty();
+        assertThat(redissonClient.getQueue(keyFor(current, "buildResultQueue")).readAll()).containsExactlyInAnyOrder("already-moved", "still-waiting");
+        assertThat(redissonClient.getKeys().getKeysByPattern(keyPatternFor(old))).isEmpty();
+    }
+
+    /**
+     * A queue entry moves in one server-side step, so a rerun over a partly drained queue can neither lose an entry nor
+     * append one twice. It matters for queues specifically: the consumers of a build job and of a build result are not
+     * idempotent, so unlike a map or a set they cannot absorb a repeat.
+     */
+    @Test
+    void testARerunOverAPartlyDrainedQueueDoesNotDuplicateEntries() {
+        redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(OLD_VERSION));
+        redissonClient.getQueue(keyFor(OLD_VERSION, "buildResultQueue")).addAll(List.of("first", "second", "third"));
+
+        // Drains "first" and "second" the way the migrator does, then stops as if the node had died.
+        var partiallyDrained = redissonClient.getQueue(keyFor(OLD_VERSION, "buildResultQueue"), ByteArrayCodec.INSTANCE);
+        String targetKey = keyFor(NEW_VERSION, "buildResultQueue");
+        assertThat(partiallyDrained.pollLastAndOfferFirstTo(targetKey)).isNotNull();
+        assertThat(partiallyDrained.pollLastAndOfferFirstTo(targetKey)).isNotNull();
+
+        migrationServiceFor(NEW_VERSION).migrateToCurrentVersion();
+
+        assertThat(redissonClient.getQueue(targetKey).readAll()).as("every entry exactly once, in the order the source held").containsExactly("first", "second", "third");
+    }
+
+    /**
+     * Both namespaces of a structure have to land in the same Redis Cluster slot, which is what lets the drain move an
+     * entry in one step. A plain unversioned key hashes over its whole name, so the versioned key has to carry that
+     * same name as its hash tag.
+     */
+    @Test
+    void testEveryVersionOfAStructureSharesOneClusterSlot() {
+        assertThat(clusterSlotOf(keyFor(UNVERSIONED, "buildJobQueue"))).isEqualTo(clusterSlotOf(keyFor(VERSION, "buildJobQueue")))
+                .isEqualTo(clusterSlotOf(keyFor(NEW_VERSION, "buildJobQueue")));
+        assertThat(clusterSlotOf(keyFor(VERSION, "buildJobQueue"))).as("different structures still hash apart").isNotEqualTo(clusterSlotOf(keyFor(VERSION, "buildResultQueue")));
+        // The notification topic of a queue has to travel with it, or a cluster splits the two across nodes.
+        assertThat(clusterSlotOf(keyFor(VERSION, "buildJobQueue") + ":queue_notification")).isEqualTo(clusterSlotOf(keyFor(VERSION, "buildJobQueue")));
+    }
+
+    /**
+     * The Redis Cluster key-hashing rule: when a key contains a non-empty {@code {...}}, only what is inside decides
+     * the slot, otherwise the whole key does. Written out rather than taken from Redisson, so the assertion is against
+     * the specification the cluster follows.
+     *
+     * @param key the Redis key
+     * @return the hash slot it lands in
+     */
+    private static int clusterSlotOf(String key) {
+        int start = key.indexOf('{');
+        int end = start < 0 ? -1 : key.indexOf('}', start + 1);
+        String hashed = end > start + 1 ? key.substring(start + 1, end) : key;
+        return CRC16.crc16(hashed.getBytes(StandardCharsets.UTF_8)) % 16384;
     }
 
     /**
@@ -236,25 +292,25 @@ class RedissonDistributedDataMigratorTest {
      */
     @Test
     void testARerunOverAnAlreadyMovedMapEntryDoesNotDuplicateIt() {
-        String old = namespaceFor(OLD_VERSION);
-        String current = namespaceFor(NEW_VERSION);
+        int old = OLD_VERSION;
+        int current = NEW_VERSION;
         redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(OLD_VERSION));
-        redissonClient.getMap(old + "processingJobs").put("running", "agent-1");
-        redissonClient.getMap(current + "processingJobs").put("running", "agent-1");
+        redissonClient.getMap(keyFor(old, "processingJobs")).put("running", "agent-1");
+        redissonClient.getMap(keyFor(current, "processingJobs")).put("running", "agent-1");
 
         migrationServiceFor(NEW_VERSION).migrateToCurrentVersion();
 
-        assertThat(redissonClient.getMap(current + "processingJobs")).hasSize(1).containsEntry("running", "agent-1");
+        assertThat(redissonClient.getMap(keyFor(current, "processingJobs"))).hasSize(1).containsEntry("running", "agent-1");
     }
 
     @Test
     void testIsIdempotent() {
         redissonClient.getBucket(VERSION_KEY, StringCodec.INSTANCE).set(String.valueOf(OLD_VERSION));
-        redissonClient.getQueue(namespaceFor(OLD_VERSION) + "buildResultQueue").add("result-1");
+        redissonClient.getQueue(keyFor(OLD_VERSION, "buildResultQueue")).add("result-1");
 
         migrationServiceFor(NEW_VERSION).migrateToCurrentVersion();
         migrationServiceFor(NEW_VERSION).migrateToCurrentVersion();
 
-        assertThat(redissonClient.getQueue(namespaceFor(NEW_VERSION) + "buildResultQueue").readAll()).containsExactly("result-1");
+        assertThat(redissonClient.getQueue(keyFor(NEW_VERSION, "buildResultQueue")).readAll()).containsExactly("result-1");
     }
 }

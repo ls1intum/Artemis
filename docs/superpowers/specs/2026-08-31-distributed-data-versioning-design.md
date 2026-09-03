@@ -74,9 +74,12 @@ deploy, which is the behaviour this design exists to avoid.
 `RedissonDistributedDataProviderService` prefixes every name it passes to Redisson:
 
 ```text
-artemis:v7:buildJobQueue
-artemis:v7:buildJobQueue:queue_notification
+artemis:v7:{buildJobQueue}
+artemis:v7:{buildJobQueue}:queue_notification
 ```
+
+The braces are a Redis Cluster hash tag: they make the structure name rather than the version decide the slot, so all
+versions of one structure share a node and a migration can move an entry between them in a single command.
 
 One unprefixed key, `artemis:distributed-data-schema`, records the current version and the release that wrote it. It is
 the analogue of the `artemis_version` table.

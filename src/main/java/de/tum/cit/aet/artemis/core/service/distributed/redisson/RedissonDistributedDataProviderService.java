@@ -121,7 +121,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
      * @return the Redis key it lives under
      */
     private static String key(String name) {
-        return DistributedDataSchema.currentNamespace() + name;
+        return DistributedDataSchema.currentKeyFor(name);
     }
 
     @Override

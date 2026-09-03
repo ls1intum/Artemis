@@ -121,7 +121,7 @@ topic messages and map keys are encoded positionally by Kryo, which carries no s
 release that walks into the wrong layout gets a `KryoBufferUnderflowException` or, worse, a plausible-looking value
 built from the wrong bytes. That is what issue #12137 was.
 
-Every key is therefore prefixed with `DistributedDataSchema.VERSION`, for example `artemis:v1:buildJobQueue`, so a
+Every key is therefore prefixed with `DistributedDataSchema.VERSION`, for example `artemis:v1:{buildJobQueue}`, so a
 release only ever reads what a compatible build wrote. Two things follow for anybody changing a stored type.
 
 **Bump the version when the change is not readable by the previous build.** Adding, removing, reordering or retyping a
@@ -151,6 +151,11 @@ Two consequences are easy to get wrong:
   needed. That is also why `CARRIED_OVER_STRUCTURES` is a decision taken *per bump*. When the bump is caused by a
   change to a type on that list, the affected structure has to leave the list for that release; carrying it over would
   move bytes into a namespace whose readers cannot parse them.
+* **The structure name is a Redis Cluster hash tag.** The braces in `artemis:v1:{buildJobQueue}` make the name rather
+  than the version decide the slot, so every version of one structure - including the unversioned `buildJobQueue`,
+  which hashes over its whole name - lands on the same node. That is what lets the migration move a queue entry with a
+  single `RPOPLPUSH` rather than a read and a write a crash can fall between, and it keeps a queue's notification topic
+  on the node its queue is on. Different structures still hash apart, so nothing is concentrated.
 * **Locks are not namespaced.** `getLock` passes the plain name through. A lock carries no encoded payload, so a
   version prefix would buy nothing and would cost mutual exclusion during a rolling upgrade, where a node of the old
   and a node of the new version would otherwise take different mutexes and both enter the same guarded section.

@@ -5,7 +5,8 @@ import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSch
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.RELEASE_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.UNVERSIONED;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
-import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.namespaceFor;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyPatternFor;
 
 import java.util.concurrent.TimeUnit;
 
@@ -175,7 +176,7 @@ class RedissonDistributedDataMigrator {
             log.info("Left the structures of the unversioned store in place; they are no longer read, and no pattern deletes them without taking the new namespace too");
             return;
         }
-        long removed = redissonClient.getKeys().deleteByPattern(namespaceFor(migratedVersion) + "*");
+        long removed = redissonClient.getKeys().deleteByPattern(keyPatternFor(migratedVersion));
         log.info("Discarded {} remaining keys of schema version {}; structures that are not carried over start empty", removed, migratedVersion);
     }
 
@@ -212,11 +213,11 @@ class RedissonDistributedDataMigrator {
      * @return how many entries were moved
      */
     private long drain(int fromVersion, CarriedOverStructure structure) {
-        String from = namespaceFor(fromVersion) + structure.name();
-        String to = namespaceFor(targetVersion) + structure.name();
+        String from = keyFor(fromVersion, structure.name());
+        String to = keyFor(targetVersion, structure.name());
         return switch (structure.kind()) {
             // Both list-backed, and both drained through the plain queue view; see drainQueue.
-            case QUEUE, PRIORITY_QUEUE -> drainQueue(redissonClient.getQueue(from, ByteArrayCodec.INSTANCE), redissonClient.getQueue(to, ByteArrayCodec.INSTANCE));
+            case QUEUE, PRIORITY_QUEUE -> drainQueue(redissonClient.getQueue(from, ByteArrayCodec.INSTANCE), to);
             case MAP -> drainMap(redissonClient.getMap(from, ByteArrayCodec.INSTANCE), redissonClient.getMap(to, ByteArrayCodec.INSTANCE));
             case EXPIRING_MAP -> drainExpiringMap(redissonClient.getMapCache(from, ByteArrayCodec.INSTANCE), redissonClient.getMapCache(to, ByteArrayCodec.INSTANCE));
             case SET -> drainSet(redissonClient.getSet(from, ByteArrayCodec.INSTANCE), redissonClient.getSet(to, ByteArrayCodec.INSTANCE));
@@ -224,31 +225,27 @@ class RedissonDistributedDataMigrator {
     }
 
     /**
-     * Moves a list-backed structure one entry at a time, head first, so the target ends up in the order the source
-     * held. Each entry is written to the target before it is removed from the source, so a node that dies between the
-     * two leaves a duplicate the rerun cannot tell from a real entry - a build that runs twice - rather than one that
-     * exists nowhere.
+     * Moves a list-backed structure one entry at a time with {@code RPOPLPUSH}, which takes from the tail of the
+     * source and prepends to the head of the target in a single server-side step. The entry is therefore in exactly
+     * one of the two at every moment - neither lost nor duplicated, which matters because the consumers of a build job
+     * and of a build result are not idempotent - and repeating the transfer preserves the order the source held.
      *
      * <p>
-     * Not {@code RPOPLPUSH}, tempting as a single atomic step is: the two keys sit in different hash slots, and a
-     * Redis Cluster answers {@code CROSSSLOT} for every entry, so the very first migration would fail to start Artemis
-     * on a supported topology.
+     * A single command across two keys is only possible because both carry the same Redis Cluster hash tag; see
+     * {@link DistributedDataSchema#keyFor}. Without it a cluster would answer {@code CROSSSLOT} for every entry.
      *
      * <p>
      * A priority queue is drained through this same plain-list view. Redisson keeps it as a list that is already
-     * sorted, and appending its entries in order reproduces that, which a client-side {@code add} could not do here
-     * because the entries are opaque bytes with no comparator.
+     * sorted, and moving its entries preserves that, which a client-side {@code add} could not do here because the
+     * entries are opaque bytes with no comparator.
      *
-     * @param from the queue to empty
-     * @param to   the queue to fill
+     * @param from      the queue to empty
+     * @param toKeyName the Redis key of the queue to fill
      * @return how many entries were moved
      */
-    private long drainQueue(RQueue<byte[]> from, RQueue<byte[]> to) {
+    private long drainQueue(RQueue<byte[]> from, String toKeyName) {
         long moved = 0;
-        byte[] entry;
-        while ((entry = from.peek()) != null) {
-            to.add(entry);
-            from.poll();
+        while (from.pollLastAndOfferFirstTo(toKeyName) != null) {
             moved++;
         }
         return moved;
