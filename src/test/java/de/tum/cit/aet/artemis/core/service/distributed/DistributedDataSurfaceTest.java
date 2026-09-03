@@ -13,19 +13,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AssignableTypeFilter;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
  * Fails when the shape of a type stored in the distributed store changes, so that the change is a decision rather than
@@ -67,7 +73,38 @@ class DistributedDataSurfaceTest {
      * roots: a build job and its result as they travel through the queues and the processing map, the agent record
      * whose change caused #12137, and the key type of the feature toggles.
      */
-    private static final List<Class<?>> ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class);
+    private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class);
+
+    /**
+     * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
+     * walk cannot reach them from a declared type: the map is typed by the interface, and the shape that is encoded is
+     * the concrete record's. They are discovered rather than listed so that a job added later is covered without
+     * anyone remembering to come back here.
+     */
+    private static final String PYRIS_JOB_PACKAGE = "de.tum.cit.aet.artemis.iris.service.pyris.job";
+
+    /**
+     * @return every type stored in a distributed structure, including the concrete jobs reached only polymorphically
+     */
+    private static List<Class<?>> roots() {
+        return Stream.concat(DECLARED_ROOTS.stream(), storedPyrisJobs().stream()).toList();
+    }
+
+    private static List<Class<?>> storedPyrisJobs() {
+        var scanner = new ClassPathScanningCandidateComponentProvider(false);
+        scanner.addIncludeFilter(new AssignableTypeFilter(PyrisJob.class));
+        return scanner.findCandidateComponents(PYRIS_JOB_PACKAGE).stream().map(BeanDefinition::getBeanClassName).map(DistributedDataSurfaceTest::loadClass)
+                .sorted(Comparator.comparing(Class::getName)).collect(Collectors.toList());
+    }
+
+    private static Class<?> loadClass(String name) {
+        try {
+            return Class.forName(name);
+        }
+        catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Found " + name + " on the class path but could not load it", e);
+        }
+    }
 
     /**
      * Types whose shape Artemis does not control and cannot change, so walking into them adds noise rather than
@@ -105,7 +142,7 @@ class DistributedDataSurfaceTest {
      */
     private static String renderSurface() {
         Set<Class<?>> visited = new LinkedHashSet<>();
-        ROOTS.forEach(root -> collect(root, visited));
+        roots().forEach(root -> collect(root, visited));
 
         var byName = new TreeMap<String, String>();
         for (Class<?> type : visited) {
@@ -155,22 +192,27 @@ class DistributedDataSurfaceTest {
 
     /**
      * @param type a stored type
-     * @return its encoded shape: what it is, the serialVersionUID an older build would compare against, and the
-     *         components or fields in declaration order, since Kryo encodes them positionally
+     * @return its encoded shape: what it is, the serialVersionUID an older build would compare against, and its
+     *         record components or enum constants in declaration order, since Kryo encodes them positionally
      */
     private static String describe(Class<?> type) {
         String kind = type.isRecord() ? "record" : type.isEnum() ? "enum" : type.isInterface() ? "interface" : "class";
         String members;
         if (type.isEnum()) {
-            // Constant order is part of the encoding: Kryo writes an enum by ordinal.
-            members = Arrays.stream(type.getEnumConstants()).map(Object::toString).collect(Collectors.joining(","));
+            // Constant order is part of the encoding: Kryo writes an enum by ordinal. The constant name rather than
+            // toString(), so that renaming a constant is caught and overriding toString() is not.
+            members = Arrays.stream(type.getEnumConstants()).map(constant -> ((Enum<?>) constant).name()).collect(Collectors.joining(","));
         }
         else if (type.isRecord()) {
             members = Arrays.stream(type.getRecordComponents()).map(component -> component.getGenericType().getTypeName() + " " + component.getName())
                     .collect(Collectors.joining(", "));
         }
         else {
-            members = Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers()))
+            // Sorted by name, because getDeclaredFields() has no specified order and recording it would make the gate
+            // depend on the compiler that built the class rather than on the class. The cost is that a plain class
+            // stored in the distributed store has its field order unobserved here; every root today is a record or an
+            // enum, whose order is specified, and a class root would need a check of its own.
+            members = Arrays.stream(type.getDeclaredFields()).filter(field -> !Modifier.isStatic(field.getModifiers())).sorted(Comparator.comparing(Field::getName))
                     .map(field -> field.getGenericType().getTypeName() + " " + field.getName()).collect(Collectors.joining(", "));
         }
         return "%s %s serialVersionUID=%s serializable=%s [%s]".formatted(kind, type.getName(), serialVersionUidOf(type), Serializable.class.isAssignableFrom(type), members);

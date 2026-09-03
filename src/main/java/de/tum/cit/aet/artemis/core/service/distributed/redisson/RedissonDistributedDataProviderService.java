@@ -101,7 +101,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
      */
     @PostConstruct
     public void migrateDistributedData() {
-        new RedissonDistributedDataMigrator(redissonClient, artemisVersion).migrateToCurrentVersion();
+        new RedissonDistributedDataMigrator(redissonClient, artemisVersion, DistributedDataSchema.VERSION).migrateToCurrentVersion();
     }
 
     /**
@@ -168,9 +168,18 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         return new RedissonDistributedSet<>(redissonClient.getSet(key(name)));
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * Deliberately not namespaced. A lock carries no encoded payload, so a version prefix buys nothing, and it costs
+     * the only thing a lock is for: during a rolling upgrade a node of the old and a node of the new schema version
+     * would take different mutexes and both enter a section {@link DistributedLock} promises is cluster-wide, which is
+     * how a scheduled digest or alert gets sent twice.
+     */
     @Override
     public DistributedLock getLock(String name) {
-        return new RedissonDistributedLock(redissonClient.getLock(key(name)));
+        return new RedissonDistributedLock(redissonClient.getLock(name));
     }
 
     @Override

@@ -143,6 +143,24 @@ copying them, so peak memory stays flat. The old namespace is deleted once it co
 release leaves it with an empty namespace**, which matches the forward-only rule
 `RedissonCodecConfiguration` already documents. Say so in the release notes of any release that bumps the version.
 
+Two consequences are easy to get wrong:
+
+* **Entries move as bytes, never as objects.** Every structure is drained under `ByteArrayCodec`, so the migration
+  never decodes a payload. It could not: the condition that requires a bump is exactly the one under which the current
+  codec cannot read what the previous release wrote, so a migration that decoded would fail precisely when it is
+  needed. That is also why `CARRIED_OVER_STRUCTURES` is a decision taken *per bump*. When the bump is caused by a
+  change to a type on that list, the affected structure has to leave the list for that release; carrying it over would
+  move bytes into a namespace whose readers cannot parse them.
+* **Locks are not namespaced.** `getLock` passes the plain name through. A lock carries no encoded payload, so a
+  version prefix would buy nothing and would cost mutual exclusion during a rolling upgrade, where a node of the old
+  and a node of the new version would otherwise take different mutexes and both enter the same guarded section.
+
+The first deployment of a release that carries this scheme meets a store with no version key at all. That is not an
+empty store: it is version `0`, with every structure under its plain, unprefixed name. The migration recognises it by
+the structures it holds and drains them into `artemis:v1:`. What it cannot do there is sweep the remainder, because
+the unversioned namespace is the whole keyspace and no pattern reaches only its leftovers. Those keys are never read
+again and can be dropped by hand at leisure.
+
 ## Testing
 
 * `AbstractDistributedDataTest` is the contract suite; `LocalDataTest`, `HazelcastDistributedDataTest` and

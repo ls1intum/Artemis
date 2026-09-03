@@ -26,6 +26,13 @@ public final class DistributedDataSchema {
     public static final int VERSION = 1;
 
     /**
+     * The store as it was before schema versions existed, with every structure under its plain name. A deployment that
+     * has been running Redis so far is at this version, even though nothing ever wrote it down, which is why a missing
+     * {@link #VERSION_KEY} next to existing structures is read as version {@code 0} rather than as an empty store.
+     */
+    public static final int UNVERSIONED = 0;
+
+    /**
      * Holds the version the store currently contains. Deliberately outside any namespace, since it is the key that
      * says which namespace to look in, and it is written as a plain string so an operator can read it with
      * {@code redis-cli GET}.
@@ -46,7 +53,7 @@ public final class DistributedDataSchema {
      * The kinds of structure a migration knows how to move, which is what decides how its entries are drained.
      */
     public enum StructureKind {
-        MAP, QUEUE, PRIORITY_QUEUE, SET
+        MAP, EXPIRING_MAP, QUEUE, PRIORITY_QUEUE, SET
     }
 
     /**
@@ -66,6 +73,13 @@ public final class DistributedDataSchema {
      * <p>
      * The bar for adding an entry is that the data is expensive or impossible to reconstruct. Build agent
      * registrations, websocket presence and caches all rebuild themselves within seconds and are deliberately absent.
+     *
+     * <p>
+     * <b>This list is a decision taken per bump, not once.</b> Entries are moved as the bytes they already are, so a
+     * structure survives a bump only while the release doing the bump can still decode what the previous one wrote.
+     * When a bump is caused by a change to a type <em>this</em> list stores, the affected structure has to leave the
+     * list for that release: carrying it over would move bytes into a namespace whose readers cannot parse them, which
+     * is worse than starting empty because the failure surfaces later and further away.
      */
     public static final List<CarriedOverStructure> CARRIED_OVER_STRUCTURES = List.of(
             // Queued student builds. Nothing else knows they were requested.
@@ -78,8 +92,9 @@ public final class DistributedDataSchema {
             // Feature toggles are deliberately not database backed: the defaults come from yml and are seeded at
             // startup. A toggle an admin flipped at runtime exists only here, so it has to be moved.
             new CarriedOverStructure("features", StructureKind.MAP),
-            // Iris jobs waiting for a Pyris callback.
-            new CarriedOverStructure("pyris-job-map", StructureKind.MAP));
+            // Iris jobs waiting for a Pyris callback. Obtained as an expiring map, so its entries have to move with
+            // their remaining lifetime or a job whose callback never arrives would sit in the new namespace forever.
+            new CarriedOverStructure("pyris-job-map", StructureKind.EXPIRING_MAP));
 
     private DistributedDataSchema() {
     }
@@ -89,7 +104,8 @@ public final class DistributedDataSchema {
      * @return the key prefix every structure of that version lives under, for example {@code artemis:v1:}
      */
     public static String namespaceFor(int version) {
-        return "artemis:v" + version + ":";
+        // The unversioned store has no prefix: its keys are the plain structure names.
+        return version == UNVERSIONED ? "" : "artemis:v" + version + ":";
     }
 
     /**

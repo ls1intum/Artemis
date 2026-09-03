@@ -13,7 +13,7 @@ bytes an older release wrote, with nothing in between to check whether it still 
 
 Issue #12137 is what that looks like in production. Upgrading 8.7.3 to 8.8.1 produced:
 
-```
+```text
 com.esotericsoftware.kryo.io.KryoBufferUnderflowException: Buffer underflow.
 Serialization trace:
 lastBuildDate (de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO)
@@ -73,7 +73,7 @@ deploy, which is the behaviour this design exists to avoid.
 
 `RedissonDistributedDataProviderService` prefixes every name it passes to Redisson:
 
-```
+```text
 artemis:v7:buildJobQueue
 artemis:v7:buildJobQueue:queue_notification
 ```
