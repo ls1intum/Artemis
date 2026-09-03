@@ -37,6 +37,10 @@ export enum ExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+    /** A ProgrammingExercise subtype; never rendered as an exercise in its own right — see MilestoneExerciseGroup. */
+    MILESTONE = 'milestone',
+    /** A ProgrammingExercise subtype that always belongs to a milestone exercise group. */
+    USER_STORY = 'user-story',
 }
 
 export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;
@@ -66,6 +70,22 @@ export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
 
 export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
 
+/**
+ * The type an exercise behaves as wherever the client groups, filters or buckets by kind.
+ * <p>
+ * `UserStoryExercise` and `MilestoneExercise` are `ProgrammingExercise` subtypes, and the server keeps counting them as
+ * programming for scoring (see `ExerciseType.getExerciseTypeFromClass` server-side) even though the payload names them
+ * by their real discriminator. Anything that has to line up with those buckets - the type filter, the statistics chart
+ * groups - must therefore normalise first, or a user story lands in a bucket the scores never mention. Code that
+ * genuinely needs to tell a user story apart (its effort estimate, the milestone group view) reads `type` directly.
+ *
+ * @param exerciseType the exercise's own type
+ * @return the programming type for the milestone subtypes, the type itself otherwise
+ */
+export function baseExerciseType(exerciseType?: ExerciseType): ExerciseType | undefined {
+    return exerciseType === ExerciseType.USER_STORY || exerciseType === ExerciseType.MILESTONE ? ExerciseType.PROGRAMMING : exerciseType;
+}
+
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
 export enum IncludedInOverallScore {
     INCLUDED_COMPLETELY = 'INCLUDED_COMPLETELY',
@@ -80,6 +100,10 @@ export enum IncludedInOverallScore {
 export interface ExerciseVariantGroupReference {
     id?: number;
     title?: string;
+    /** `'variant'` (a plain ExerciseVariantGroup) or `'milestone'` (a MilestoneExerciseGroup). */
+    type?: 'variant' | 'milestone';
+    /** Only set when {@link type} is `'milestone'` — the id of the group's anchor MilestoneExercise. */
+    milestoneExerciseId?: number;
     maxPoints?: number;
     releaseDate?: dayjs.Dayjs;
     startDate?: dayjs.Dayjs;
@@ -103,6 +127,8 @@ export abstract class Exercise implements BaseEntity {
     public assessmentType?: AssessmentType;
     public allowComplaintsForAutomaticAssessments?: boolean;
     public allowFeedbackRequests?: boolean;
+    /** When enabled, users who are at least tutor (not only instructors) see the per-row actions on the exercise-scores page. */
+    public allowTutorScoreRowActions?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
@@ -179,6 +205,7 @@ export abstract class Exercise implements BaseEntity {
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
         this.allowFeedbackRequests = false; // default value;
+        this.allowTutorScoreRowActions = false; // default value;
     }
 
     /**
@@ -208,6 +235,8 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.QUIZ]: faCheckDouble,
         [ExerciseType.TEXT]: faFont,
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
+        [ExerciseType.USER_STORY]: faKeyboard,
+        [ExerciseType.MILESTONE]: faKeyboard,
     };
 
     return icons[exerciseType] ?? faQuestion;
@@ -217,12 +246,14 @@ export function getIconTooltip(exerciseType?: ExerciseType): string {
     if (!exerciseType) {
         return '';
     }
-    const tooltips = {
+    const tooltips: Record<string, string> = {
         [ExerciseType.PROGRAMMING]: 'artemisApp.exercise.isProgramming',
         [ExerciseType.MODELING]: 'artemisApp.exercise.isModeling',
         [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
         [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
         [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
+        [ExerciseType.USER_STORY]: 'artemisApp.exercise.isProgramming',
+        [ExerciseType.MILESTONE]: 'artemisApp.exercise.isProgramming',
     };
 
     return tooltips[exerciseType];
@@ -269,6 +300,12 @@ export function declareExerciseType(exerciseInfo: ExerciseInfo): ExerciseType | 
 
 /**
  * Get the url segment for different types of exercises.
+ * <p>
+ * `UserStoryExercise` and `MilestoneExercise` are both `ProgrammingExercise` variants under the hood (a milestone
+ * group's real anchor exercise, and a member exercise sharing its repository) but carry their own `type`
+ * discriminator ('user-story'/'milestone'). No `{type}-exercises/...` course-management route is registered for
+ * either - only `programming-exercises/...` is - so they route through the same segment as a plain programming
+ * exercise; anything else would silently match no route.
  * @param exerciseType The type of the exercise
  * @return The url segment for the exercise type
  */
@@ -279,6 +316,8 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
         case ExerciseType.MODELING:
             return 'modeling-exercises';
         case ExerciseType.PROGRAMMING:
+        case ExerciseType.USER_STORY:
+        case ExerciseType.MILESTONE:
             return 'programming-exercises';
         case ExerciseType.FILE_UPLOAD:
             return 'file-upload-exercises';
@@ -287,6 +326,18 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
         default:
             throw Error('Unexpected exercise type: ' + exerciseType);
     }
+}
+
+/**
+ * {@link getExerciseUrlSegment} for view code that may render before its exercise has loaded. An unknown type yields an
+ * empty segment - a dead link, exactly as concatenating an undefined type used to produce - rather than throwing and
+ * taking the whole page down with it.
+ *
+ * @param exerciseType The type of the exercise, possibly not known yet
+ * @return The url segment for the exercise type, or an empty string when there is no type
+ */
+export function getExerciseUrlSegmentOrEmpty(exerciseType?: ExerciseType): string {
+    return exerciseType ? getExerciseUrlSegment(exerciseType) : '';
 }
 
 export function resetForImport(exercise: Exercise) {
@@ -299,6 +350,7 @@ export function resetForImport(exercise: Exercise) {
     // without dates set, they can only be false
     exercise.allowComplaintsForAutomaticAssessments = false;
     exercise.allowFeedbackRequests = false;
+    exercise.allowTutorScoreRowActions = false;
 
     exercise.competencyLinks = [];
 }

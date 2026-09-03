@@ -14,6 +14,7 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-c
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
+import { TutorScoreRowActionsCheckboxComponent } from 'app/exercise/tutor-score-actions/tutor-score-row-actions-checkbox.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -67,6 +68,7 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
         FormDateTimePickerComponent,
         IncludedInOverallScorePickerComponent,
         PresentationScoreComponent,
+        TutorScoreRowActionsCheckboxComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,

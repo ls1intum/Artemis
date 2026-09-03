@@ -21,6 +21,7 @@ describe('ExerciseVariantGroupService', () => {
 
     const courseId = 42;
     const baseUrl = `api/exercise/courses/${courseId}/exercise-variant-groups`;
+    const milestoneBaseUrl = `api/exercise/courses/${courseId}/milestone-exercise-groups`;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -40,9 +41,11 @@ describe('ExerciseVariantGroupService', () => {
 
         service.getGroupsForCourse(courseId).subscribe((groups) => (received = groups));
 
+        // The two types live on separate resources server-side, so this is two requests, not one.
         const req = httpMock.expectOne(baseUrl);
         expect(req.request.method).toBe('GET');
         req.flush(serverGroups);
+        httpMock.expectOne(milestoneBaseUrl).flush([]);
 
         expect(received).toHaveLength(1);
         expect(dayjs.isDayjs(received![0].dueDate)).toBe(true);
@@ -115,7 +118,8 @@ describe('ExerciseVariantGroupService', () => {
         };
         let received: ExerciseVariantGroupDTO | undefined;
 
-        service.getGroupsForCourse(courseId).subscribe((groups) => (received = groups[0]));
+        // The single-type getter, so this stays a focused date-conversion test rather than a two-request merge test.
+        service.getVariantGroupsForCourse(courseId).subscribe((groups) => (received = groups[0]));
         httpMock.expectOne(baseUrl).flush([serverGroup]);
 
         for (const field of ['releaseDate', 'startDate', 'dueDate', 'assessmentDueDate', 'exampleSolutionPublicationDate'] as const) {

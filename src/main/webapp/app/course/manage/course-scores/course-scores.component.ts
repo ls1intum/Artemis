@@ -243,7 +243,11 @@ export class CourseScoresComponent implements OnInit {
             .exercises!.filter((exercise) => {
                 const isReleasedExercise = !exercise.releaseDate || exercise.releaseDate.isBefore(dayjs());
                 const isExerciseThatCounts = exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED;
-                return isReleasedExercise && isExerciseThatCounts;
+                // A milestone group's points are carried by its milestone exercise, which is in this list in its own
+                // right; its user stories would contribute the same points a second time. Mirrors the server's
+                // CourseScoreCalculator.includeIntoScoreCalculation.
+                const isCountedThroughItsGroup = exercise.exerciseVariantGroup?.type === 'milestone';
+                return isReleasedExercise && isExerciseThatCounts && !isCountedThroughItsGroup;
             })
             .sort(CourseScoresComponent.compareExercises);
     }

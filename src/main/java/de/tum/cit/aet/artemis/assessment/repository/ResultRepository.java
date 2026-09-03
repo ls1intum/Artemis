@@ -808,6 +808,20 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
+     * Get the latest <em>rated</em> result of a participation together with its feedback items.
+     * <p>
+     * Two queries rather than one: the ordering is done on a plain (non-fetching) query so {@code LIMIT} applies to
+     * results rather than to the joined feedback rows, then the feedbacks are fetched by id - the same two-step shape
+     * {@link #findFirstWithSubmissionAndFeedbacksAndTestCasesByParticipationIdOrderByCompletionDateDesc} uses.
+     *
+     * @param participationId the id of the participation to load the result for
+     * @return the latest rated result with its feedbacks, or empty if the participation has none
+     */
+    default Optional<Result> findLatestRatedResultWithFeedbacksForParticipation(long participationId) {
+        return findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true).map(Result::getId).flatMap(this::findByIdWithEagerFeedbacks);
+    }
+
+    /**
      * Get the latest result from the database by participation id together with the list of feedback items.
      *
      * @param participationId the id of the participation to load from the database

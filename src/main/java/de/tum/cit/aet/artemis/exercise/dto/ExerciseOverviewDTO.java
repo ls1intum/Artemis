@@ -12,7 +12,6 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -26,7 +25,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * analysis) — and that tail grows with how richly an exercise is configured. Measured on a course of ten programming and
  * ten text exercises, a third of the exercise payload was fields nothing rendered.
  *
- * @param type                          the exercise kind; the client discriminates on this and picks the icon from it
+ * @param type                          the exercise kind, as the wire discriminator the client branches on - the same value
+ *                                          {@code Exercise#getType()} serializes, so {@code "user-story"} and {@code "milestone"}
+ *                                          arrive as themselves rather than flattened into {@code "programming"}
  * @param id                            the id of the exercise
  * @param title                         the title shown on the card
  * @param maxPoints                     the attainable points, used by the card filter and the statistics charts
@@ -56,7 +57,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  * @param studentParticipations         the user's participations with their submissions and results
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Double maxPoints, Double bonusPoints, ZonedDateTime releaseDate, ZonedDateTime startDate,
+public record ExerciseOverviewDTO(String type, Long id, String title, Double maxPoints, Double bonusPoints, ZonedDateTime releaseDate, ZonedDateTime startDate,
         ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, AssessmentType assessmentType, DifficultyLevel difficulty, ExerciseMode mode, boolean teamMode,
         IncludedInOverallScore includedInOverallScore, Set<String> categories, Boolean presentationScoreEnabled, boolean allowFeedbackRequests, Boolean allowOnlineEditor,
         Boolean allowOfflineIde, Boolean staticCodeAnalysisEnabled, Boolean quizEnded, Set<QuizBatchOverviewDTO> quizBatches, Long studentAssignedTeamId,
@@ -73,11 +74,10 @@ public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Doub
         QuizExercise quizExercise = exercise instanceof QuizExercise quiz ? quiz : null;
         Set<QuizBatchOverviewDTO> quizBatches = quizExercise != null && Hibernate.isInitialized(quizExercise.getQuizBatches()) && quizExercise.getQuizBatches() != null
                 && quizExercise.getQuizBatches().stream().anyMatch(batch -> batch.isStarted()) ? Set.of(QuizBatchOverviewDTO.STARTED) : Set.of();
-        return new ExerciseOverviewDTO(exercise.getExerciseType(), exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(),
-                exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getAssessmentType(), exercise.getDifficulty(),
-                exercise.getMode(), exercise.isTeamMode(), exercise.getIncludedInOverallScore(), exercise.getCategories(), exercise.getPresentationScoreEnabled(),
-                exercise.getAllowFeedbackRequests(), programmingExercise == null ? null : programmingExercise.isAllowOnlineEditor(),
-                programmingExercise == null ? null : programmingExercise.isAllowOfflineIde(),
+        return new ExerciseOverviewDTO(exercise.getType(), exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getReleaseDate(),
+                exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getAssessmentType(), exercise.getDifficulty(), exercise.getMode(),
+                exercise.isTeamMode(), exercise.getIncludedInOverallScore(), exercise.getCategories(), exercise.getPresentationScoreEnabled(), exercise.getAllowFeedbackRequests(),
+                programmingExercise == null ? null : programmingExercise.isAllowOnlineEditor(), programmingExercise == null ? null : programmingExercise.isAllowOfflineIde(),
                 programmingExercise == null ? null : programmingExercise.isStaticCodeAnalysisEnabled(), quizExercise == null ? null : quizExercise.isQuizEnded(), quizBatches,
                 exercise.getStudentAssignedTeamId(), exercise.isStudentAssignedTeamIdComputed(), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
                 ParticipationOverviewDTO.of(exercise.getStudentParticipations()));

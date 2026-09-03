@@ -45,6 +45,30 @@
                     <fa-icon [icon]="faArrowRight" class="ms-1" />
                 </span>
             </button>
+            <button class="exercise-card" data-testid="create-milestone-group" (click)="navigateToCreateMilestoneGroup()" type="button">
+                <div class="card-icon-wrapper">
+                    <fa-icon [icon]="faFlagCheckered" />
+                </div>
+                <h6 jhiTranslate="artemisApp.exerciseManagement.addModal.milestoneGroup.title"></h6>
+                <p jhiTranslate="artemisApp.exerciseManagement.addModal.milestoneGroup.createDescription"></p>
+                <span class="card-cta">
+                    <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
+                    <fa-icon [icon]="faArrowRight" class="ms-1" />
+                </span>
+            </button>
+            <span [tumUiTooltip]="hasMilestoneGroup() ? '' : ('artemisApp.exerciseManagement.addModal.userStory.disabledTooltip' | artemisTranslate)" tumUiTooltipPlacement="top">
+                <button class="exercise-card" data-testid="create-user-story-exercise" [disabled]="!hasMilestoneGroup()" (click)="navigateToCreateUserStory()" type="button">
+                    <div class="card-icon-wrapper">
+                        <fa-icon [icon]="faKeyboard" />
+                    </div>
+                    <h6 jhiTranslate="artemisApp.exerciseManagement.addModal.userStory.title"></h6>
+                    <p jhiTranslate="artemisApp.exerciseManagement.addModal.userStory.createDescription"></p>
+                    <span class="card-cta">
+                        <span jhiTranslate="artemisApp.exerciseManagement.addModal.cta.create"></span>
+                        <fa-icon [icon]="faArrowRight" class="ms-1" />
+                    </span>
+                </button>
+            </span>
         </div>
     }
 

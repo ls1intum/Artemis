@@ -1,0 +1,20 @@
+@if (editing()) {
+    <!-- Stops the box's own click handler from re-entering edit mode while the student is typing in it. -->
+    <span class="d-flex align-items-center gap-1" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
+        <input
+            class="user-story-effort-input"
+            type="number"
+            tumUiInput
+            min="0"
+            step="0.25"
+            [ngModel]="draft()"
+            (ngModelChange)="draft.set($event)"
+            (keydown.enter)="save()"
+            (keydown.escape)="cancel()"
+            name="effort"
+        />
+        <button type="button" tumUiButton size="small" (click)="save()">{{ 'artemisApp.userStoryEffort.save' | artemisTranslate }}</button>
+    </span>
+} @else {
+    <span>{{ displayValue() ?? ('artemisApp.userStoryEffort.notReported' | artemisTranslate) }}</span>
+}

@@ -142,6 +142,14 @@ describe('ParticipationComponent', () => {
     });
 
     describe('Navigation', () => {
+        it('should route a user story exercise to the programming scores page', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.USER_STORY });
+
+            // A UserStoryExercise has no route of its own; `user-story-exercises/...` would match nothing.
+            expect(component.scoresRoute()).toContain('programming-exercises');
+            expect(component.scoresRoute()).not.toContain('user-story-exercises');
+        });
+
         it('should return correct participation link for non-exam exercise', () => {
             expect(component.getParticipationLink(42)).toEqual(['42', 'submissions']);
         });

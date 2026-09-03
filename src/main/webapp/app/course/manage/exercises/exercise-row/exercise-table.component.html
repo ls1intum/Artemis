@@ -124,7 +124,7 @@
                             <td>
                                 <span [tumUiTooltip]="row.nonIndividualQuizTooltip ?? ''" tumUiTooltipPlacement="top">
                                     <tum-ui-select
-                                        [options]="groupOptions()"
+                                        [options]="row.groupOptions"
                                         [ngModel]="row.owningGroupId ?? NO_GROUP_OPTION_VALUE"
                                         (ngModelChange)="onGroupSelect(row.exercise, $event)"
                                         optionLabel="label"

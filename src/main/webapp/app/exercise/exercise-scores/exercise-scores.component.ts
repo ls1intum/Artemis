@@ -12,7 +12,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getExerciseUrlSegment, getExerciseUrlSegmentOrEmpty } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
@@ -100,6 +100,8 @@ export enum FilterProp {
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
+    protected readonly exerciseUrlSegment = computed(() => getExerciseUrlSegmentOrEmpty(this.exercise()?.type));
+
     protected readonly faDownload = faDownload;
     protected readonly faSync = faSync;
     protected readonly faFolderOpen = faFolderOpen;
@@ -169,6 +171,16 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                     return true;
             }
         });
+    });
+
+    /**
+     * Row actions on the scores page are shown to instructors, and to tutors when the exercise opts in via
+     * {@link Exercise#allowTutorScoreRowActions}. The route already requires at least tutor, so `isAtLeastTutor` is a
+     * defensive lower bound rather than a strict gate here.
+     */
+    readonly showRowActions = computed<boolean>(() => {
+        const ex = this.exercise();
+        return !!ex && (!!ex.isAtLeastInstructor || (!!ex.allowTutorScoreRowActions && !!ex.isAtLeastTutor));
     });
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
@@ -351,12 +363,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   ex.exerciseGroup.exam!.id!.toString(),
                   'exercise-groups',
                   ex.exerciseGroup.id!.toString(),
-                  ex.type + '-exercises',
+                  getExerciseUrlSegment(ex.type),
                   ex.id!.toString(),
                   'participations',
                   participationId.toString(),
               ]
-            : ['/course-management', course.id!.toString(), ex.type + '-exercises', ex.id!.toString(), 'participations', participationId.toString(), 'submissions'];
+            : ['/course-management', course.id!.toString(), getExerciseUrlSegment(ex.type), ex.id!.toString(), 'participations', participationId.toString(), 'submissions'];
     }
 
     updateParticipationFilter(newValue: string) {

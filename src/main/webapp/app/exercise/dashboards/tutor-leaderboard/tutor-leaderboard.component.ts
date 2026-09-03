@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, getCourseFromExercise, getExerciseUrlSegmentOrEmpty } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
@@ -25,6 +25,12 @@ export class TutorLeaderboardComponent {
     readonly tutorsData = input<TutorLeaderboardElement[]>([]);
     readonly courseInput = input<Course | undefined>(undefined, { alias: 'course' }); // eslint-disable-line @angular-eslint/no-input-rename
     readonly exercise = input<Exercise | undefined>();
+
+    /**
+     * The route segment the exercise is reachable under. Not `exercise.type + '-exercises'`: a UserStoryExercise and a
+     * MilestoneExercise carry their own type discriminator but have no route of their own (see getExerciseUrlSegment).
+     */
+    protected readonly exerciseUrlSegment = computed(() => getExerciseUrlSegmentOrEmpty(this.exercise()?.type));
     readonly exam = input<Exam | undefined>();
 
     /** Resolved course: derived from the exercise when available, otherwise falls back to the input course. */

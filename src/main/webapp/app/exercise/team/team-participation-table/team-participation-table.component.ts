@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewEncapsulation, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getExerciseUrlSegmentOrEmpty } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -54,6 +54,14 @@ export class TeamParticipationTableComponent implements OnInit {
 
     readonly team = input.required<Team>();
     readonly course = input.required<Course>();
+
+    /**
+     * The route segment one row's exercise is reachable under. Not `type + '-exercises'`: a UserStoryExercise and a
+     * MilestoneExercise carry their own type discriminator but have no route of their own (see getExerciseUrlSegment).
+     */
+    protected exerciseUrlSegment(exerciseType?: ExerciseType): string {
+        return getExerciseUrlSegmentOrEmpty(exerciseType);
+    }
     readonly exercise = input.required<Exercise>();
     readonly isAdmin = input(false);
     readonly isTeamOwner = input(false);

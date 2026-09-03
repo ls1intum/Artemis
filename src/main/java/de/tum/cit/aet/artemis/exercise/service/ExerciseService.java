@@ -62,9 +62,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamLiveEventsApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.MilestoneExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.MilestoneExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -98,6 +100,8 @@ public class ExerciseService {
     private final AuditEventRepository auditEventRepository;
 
     private final ExerciseRepository exerciseRepository;
+
+    private final MilestoneExerciseGroupRepository milestoneExerciseGroupRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
 
@@ -148,9 +152,10 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService, Optional<ExamLiveEventsApi> examLiveEventsApi,
             GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService, TestCasePointsService testCasePointsService,
+            ParticipationFilterService participationFilterService, MilestoneExerciseGroupRepository milestoneExerciseGroupRepository, TestCasePointsService testCasePointsService,
             ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.exerciseRepository = exerciseRepository;
+        this.milestoneExerciseGroupRepository = milestoneExerciseGroupRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
         this.auditEventRepository = auditEventRepository;
@@ -529,6 +534,13 @@ public class ExerciseService {
      */
     public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
         var exercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+        // That query fetches the exercise's variant group but not a MilestoneExerciseGroup's own milestoneExercise, which
+        // it cannot reach without a TREAT that would null the association for every other group (see its comment). The
+        // group's timeline getters delegate to that anchor and open-in-view is off, so hydrate it with a second,
+        // type-specific query - the same two-step ProgrammingExerciseRetrievalResource.getProgrammingExercise does.
+        if (exercise.getExerciseVariantGroup() instanceof MilestoneExerciseGroup milestoneGroup) {
+            milestoneExerciseGroupRepository.findMilestoneExerciseByGroupId(milestoneGroup.getId()).ifPresent(milestoneGroup::setMilestoneExercise);
+        }
         setAssignedTeamIdForExerciseAndUser(exercise, user);
         return exercise;
     }

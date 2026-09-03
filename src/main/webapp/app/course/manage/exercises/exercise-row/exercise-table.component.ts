@@ -73,6 +73,8 @@ interface ExerciseRow {
     hasCategories: boolean;
     /** True when the row has neither categories nor any quiz badge, so the "none" placeholder is shown instead. */
     showNoCategoriesPlaceholder: boolean;
+    /** This row's own group-dropdown options — see {@link ExerciseTableComponent.groupOptionsFor}. */
+    groupOptions: { label: string; value: number }[];
 }
 
 @Component({
@@ -197,6 +199,7 @@ export class ExerciseTableComponent {
                 quizModeKey: quiz?.quizMode ? this.quizModeKey(quiz) : undefined,
                 hasCategories,
                 showNoCategoriesPlaceholder: !hasCategories && !quiz?.quizMode && !quizStatusLabel,
+                groupOptions: this.groupOptionsFor(exercise),
             };
         });
     });
@@ -245,17 +248,38 @@ export class ExerciseTableComponent {
         return map;
     });
 
-    readonly groupOptions = computed(() => {
-        // The labels are translated strings, so rebuild the options on a language switch.
-        this.languageChange();
-        return [
-            { label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: NO_GROUP_OPTION_VALUE },
-            ...this.groups().map((g) => ({
+    /**
+     * The group-dropdown options for one exercise, filtered by what it may actually target (mirrors the server-side
+     * guards in `ExerciseVariantGroupResource.setExerciseVariantGroup`):
+     * - a `UserStoryExercise` may only move between milestone groups, and can never be ungrouped (it always belongs
+     *   to one — see `MilestoneExerciseGroup`), so "no group" is omitted for it;
+     * - a plain `ProgrammingExercise` may never join a milestone group (it has no relevant task/test-case wiring to
+     *   one), so those are excluded for it;
+     * - every other type (quiz/text/modeling/file-upload) may join either kind of group.
+     */
+    private groupOptionsFor(exercise: Exercise): { label: string; value: number }[] {
+        const isUserStory = exercise.type === ExerciseType.USER_STORY;
+        const isPlainProgramming = exercise.type === ExerciseType.PROGRAMMING;
+        const eligibleGroups = this.groups().filter((group) => {
+            if (isUserStory) {
+                return group.type === 'milestone';
+            }
+            if (isPlainProgramming) {
+                return group.type !== 'milestone';
+            }
+            return true;
+        });
+        const groupOptions = eligibleGroups
+            .filter((g): g is CourseExerciseGroup & { id: number } => g.id !== undefined)
+            .map((g) => ({
                 label: g.title ?? this.translateService.instant('artemisApp.exerciseManagement.card.group', { id: g.id }),
                 value: g.id,
-            })),
-        ];
-    });
+            }));
+        if (isUserStory) {
+            return groupOptions;
+        }
+        return [{ label: this.translateService.instant('artemisApp.exerciseManagement.table.noGroup'), value: NO_GROUP_OPTION_VALUE }, ...groupOptions];
+    }
 
     sortBy(col: SortColumn): void {
         if (this.sortColumn() === col) {

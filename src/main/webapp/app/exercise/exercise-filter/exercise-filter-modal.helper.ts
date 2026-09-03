@@ -1,4 +1,4 @@
-import { DifficultyLevel, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, ExerciseType, baseExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { FilterDetails, RangeFilter } from 'app/foundation/types/exercise-filter';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
@@ -23,7 +23,9 @@ export function satisfiesTypeFilter(sidebarElement: SidebarCardElement, searched
         return false;
     }
 
-    return searchedTypes.includes(sidebarElement.exercise.type);
+    // The filter only offers the five base types (see `exerciseTypes`), so a user story has to match under the
+    // programming option it belongs to rather than dropping out of every filtered list.
+    return searchedTypes.includes(baseExerciseType(sidebarElement.exercise.type)!);
 }
 
 export function satisfiesCategoryFilter(sidebarElement: SidebarCardElement, selectedCategories: ExerciseCategory[]): boolean {

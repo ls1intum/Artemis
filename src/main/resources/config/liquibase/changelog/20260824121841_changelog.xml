@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- When enabled, users who are at least tutor (not only instructors) can see the per-row actions on the
+         exercise-scores page. Configured per exercise from the exercise edit form. -->
+    <changeSet id="20260824121841-1" author="markus">
+        <addColumn tableName="exercise">
+            <column name="allow_tutor_score_row_actions" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

@@ -58,6 +58,8 @@ import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/servic
 import { ProblemStatementSyncService } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import { DialogService } from 'primeng/dynamicdialog';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { EXERCISE_MANAGEMENT_VIEW_STORAGE_KEY } from 'app/course/manage/exercises/course-exercise-cards';
 
 vi.mock('y-monaco', () => ({
     // Use a real `function` (not an arrow) so the production code can invoke it with `new`.
@@ -389,6 +391,73 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
                 fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
+            });
+        });
+    });
+
+    describe('save milestone group', () => {
+        let exerciseVariantGroupService: ExerciseVariantGroupService;
+        let router: MockRouter;
+
+        beforeEach(() => {
+            exerciseVariantGroupService = TestBed.inject(ExerciseVariantGroupService);
+            router = TestBed.inject(Router) as unknown as MockRouter;
+            comp.isMilestoneMode = true;
+            comp.courseId.set(courseId);
+            comp.backupExercise = {} as ProgrammingExercise;
+        });
+
+        it('should create the group and return to the exercise overview in the group view', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            comp.programmingExercise = entity;
+            const createSpy = vi.spyOn(exerciseVariantGroupService, 'createMilestoneGroup').mockReturnValue(of({ id: 7, type: 'milestone', milestoneExerciseId: 42 }));
+            const findSpy = vi.spyOn(programmingExerciseService, 'find');
+            const storeSpy = vi.spyOn(localStorageService, 'store');
+
+            comp.save();
+
+            expect(createSpy).toHaveBeenCalledWith(courseId, entity);
+            // The overview is the destination, so the created milestone exercise itself is never re-fetched.
+            expect(findSpy).not.toHaveBeenCalled();
+            expect(storeSpy).toHaveBeenCalledWith(EXERCISE_MANAGEMENT_VIEW_STORAGE_KEY, 'group');
+            expect(router.navigate).toHaveBeenCalledWith(['/course-management', courseId, 'exercises']);
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should update an existing milestone and return to the same destination', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.id = 42;
+            entity.releaseDate = dayjs();
+            comp.programmingExercise = entity;
+            const updateSpy = vi.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const storeSpy = vi.spyOn(localStorageService, 'store');
+
+            comp.save();
+
+            expect(updateSpy).toHaveBeenCalledWith(entity, {});
+            expect(storeSpy).toHaveBeenCalledWith(EXERCISE_MANAGEMENT_VIEW_STORAGE_KEY, 'group');
+            expect(router.navigate).toHaveBeenCalledWith(['/course-management', courseId, 'exercises']);
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('should stay on the form and alert when the group creation fails', () => {
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.releaseDate = dayjs();
+            comp.programmingExercise = entity;
+            vi.spyOn(exerciseVariantGroupService, 'createMilestoneGroup').mockReturnValue(
+                throwError(() => new HttpResponse({ headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }) })),
+            );
+            const alertSpy = vi.spyOn(alertService, 'addAlert');
+
+            comp.save();
+
+            expect(router.navigate).not.toHaveBeenCalled();
+            expect(comp.isSaving()).toBe(false);
+            expect(alertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'error-message',
+                disableTranslation: true,
             });
         });
     });
@@ -1339,6 +1408,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateKey: 'artemisApp.exercise.form.points.customMax',
                 translateValues: {},
             });
+        });
+
+        it('should not report points reasons for a milestone, whose points fields are hidden', () => {
+            // A MilestoneExercise hides Points and BonusPoints (MILESTONE_HIDDEN_FIELDS) while staying
+            // INCLUDED_COMPLETELY, and its maxPoints is the sum of its user stories' - 0 for a group with no members
+            // yet. Neither reason has a control on screen to clear it, so neither may be reported.
+            comp.isMilestoneMode = true;
+            comp.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            comp.programmingExercise.maxPoints = 0;
+            comp.programmingExercise.bonusPoints = undefined;
+
+            const reasons = comp.getInvalidReasons();
+
+            expect(reasons).not.toContainEqual({ translateKey: 'artemisApp.exercise.form.points.customMin', translateValues: {} });
+            expect(reasons).not.toContainEqual({ translateKey: 'artemisApp.exercise.form.bonusPoints.undefined', translateValues: {} });
+            expect(reasons).not.toContainEqual({ translateKey: 'artemisApp.programmingExercise.gradingSection.invalidReason', translateValues: {} });
         });
 
         it('Check that no package name related validation error occurs for language C', () => {

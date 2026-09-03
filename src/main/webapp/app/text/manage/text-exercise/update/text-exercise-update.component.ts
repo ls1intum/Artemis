@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
+import { TutorScoreRowActionsCheckboxComponent } from 'app/exercise/tutor-score-actions/tutor-score-row-actions-checkbox.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { TextExerciseService } from '../service/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -70,6 +71,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         IncludedInOverallScorePickerComponent,
         ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
+        TutorScoreRowActionsCheckboxComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,

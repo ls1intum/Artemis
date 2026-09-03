@@ -99,7 +99,7 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
 
                 this.subscribeForNewResults();
                 // Currently submissions are only used for programming exercises to visualize the build process.
-                if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
+                if (this.exercise()?.type === ExerciseType.PROGRAMMING || this.exercise()?.type === ExerciseType.USER_STORY) {
                     this.subscribeForNewSubmissions();
                 }
 

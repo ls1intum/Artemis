@@ -39,7 +39,7 @@ class CourseScoreCalculatorTest {
         ExerciseCourseScoreDTO bonus = exercise(2L, IncludedInOverallScore.INCLUDED_AS_BONUS, 5.0, null, null);
         ExerciseCourseScoreDTO notIncluded = exercise(3L, IncludedInOverallScore.NOT_INCLUDED, 20.0, null, null);
         ExerciseCourseScoreDTO future = new ExerciseCourseScoreDTO(4L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL,
-                CALCULATION_TIME.plusDays(1), CALCULATION_TIME.plusDays(2), null, 30.0, 0.0, COURSE_ID, null, null);
+                CALCULATION_TIME.plusDays(1), CALCULATION_TIME.plusDays(2), null, 30.0, 0.0, COURSE_ID, null, null, false);
         ExerciseCourseScoreDTO unrated = exercise(5L, IncludedInOverallScore.INCLUDED_COMPLETELY, 2.0, null, null);
         CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(completelyIncluded, bonus, notIncluded, future, unrated), CALCULATION_TIME);
 
@@ -101,7 +101,7 @@ class CourseScoreCalculatorTest {
     @Test
     void shouldUseTheProvidedCalculationTimeForAutomaticAssessment() {
         ExerciseCourseScoreDTO exercise = new ExerciseCourseScoreDTO(1L, ExerciseType.PROGRAMMING, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC,
-                CALCULATION_TIME.minusDays(1), CALCULATION_TIME.minusHours(1), CALCULATION_TIME.plusMinutes(1), 10.0, 0.0, COURSE_ID, null, null);
+                CALCULATION_TIME.minusDays(1), CALCULATION_TIME.minusHours(1), CALCULATION_TIME.plusMinutes(1), 10.0, 0.0, COURSE_ID, null, null, false);
 
         CourseScoreContextDTO beforeFinalBuild = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME);
         CourseScoreContextDTO afterFinalBuild = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME.plusMinutes(2));
@@ -252,6 +252,46 @@ class CourseScoreCalculatorTest {
         assertThat(typeInput.basicPresentationScoreCount()).isEqualTo(2);
     }
 
+    @Test
+    void shouldCountAMilestoneGroupOnceRatherThanOncePerUserStory() {
+        // The group's points are carried by its MilestoneExercise; its user stories hold the same points again, so
+        // counting both would double the whole group. The stories stay INCLUDED_COMPLETELY on purpose (their points do
+        // count - through the group), which is exactly why membership rather than that flag has to do the excluding.
+        ExerciseCourseScoreDTO milestone = scoreExercise(1L, ExerciseType.PROGRAMMING, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC,
+                CALCULATION_TIME.minusDays(2), CALCULATION_TIME.minusDays(1), null, 4.0, null, null, false);
+        ExerciseCourseScoreDTO story1 = scoreExercise(2L, ExerciseType.PROGRAMMING, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC,
+                CALCULATION_TIME.minusDays(2), CALCULATION_TIME.minusDays(1), null, 2.0, 9L, null, true);
+        ExerciseCourseScoreDTO story2 = scoreExercise(3L, ExerciseType.PROGRAMMING, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC,
+                CALCULATION_TIME.minusDays(2), CALCULATION_TIME.minusDays(1), null, 2.0, 9L, null, true);
+
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(milestone, story1, story2), CALCULATION_TIME);
+
+        // 4.0 from the milestone alone, not 8.0.
+        assertThat(context.maxAndReachablePoints().maxPoints()).isEqualTo(4.0);
+
+        StudentScoresDTO scores = CourseScoreCalculator.calculateCourseScoreForStudent(context,
+                input(List.of(grade(1L, 100.0, true), grade(2L, 100.0, true), grade(3L, 100.0, true)), List.of(), 0.0, 0));
+
+        assertThat(scores.absoluteScore()).isEqualTo(4.0);
+        assertThat(scores.relativeScore()).isEqualTo(100.0);
+    }
+
+    @Test
+    void shouldStillReportPointsAchievedWithinAMilestoneGroup() {
+        // The per-group breakdown must keep seeing the stories even though the course score reaches them through the
+        // milestone - it is what the group detail page shows a student.
+        ExerciseCourseScoreDTO story1 = scoreExercise(2L, ExerciseType.PROGRAMMING, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC,
+                CALCULATION_TIME.minusDays(2), CALCULATION_TIME.minusDays(1), null, 2.0, 9L, null, true);
+        ExerciseCourseScoreDTO story2 = scoreExercise(3L, ExerciseType.PROGRAMMING, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC,
+                CALCULATION_TIME.minusDays(2), CALCULATION_TIME.minusDays(1), null, 2.0, 9L, null, true);
+
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(story1, story2), CALCULATION_TIME);
+        var achievedPerGroup = CourseScoreCalculator.calculateAchievedPointsPerVariantGroup(context,
+                input(List.of(grade(2L, 100.0, true), grade(3L, 50.0, true)), List.of(), 0.0, 0));
+
+        assertThat(achievedPerGroup).containsEntry(9L, 3.0);
+    }
+
     private static ExerciseCourseScoreDTO exercise(long id, IncludedInOverallScore includedInOverallScore, double maxPoints, Long variantGroupId, Double variantGroupMaxPoints) {
         return scoreExercise(id, ExerciseType.TEXT, includedInOverallScore, AssessmentType.MANUAL, CALCULATION_TIME.minusDays(2), CALCULATION_TIME.minusDays(1), null, maxPoints,
                 variantGroupId, variantGroupMaxPoints);
@@ -259,8 +299,14 @@ class CourseScoreCalculatorTest {
 
     private static ExerciseCourseScoreDTO scoreExercise(long id, ExerciseType type, IncludedInOverallScore includedInOverallScore, AssessmentType assessmentType,
             ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime finalBuildDate, double maxPoints, Long variantGroupId, Double variantGroupMaxPoints) {
+        return scoreExercise(id, type, includedInOverallScore, assessmentType, dueDate, assessmentDueDate, finalBuildDate, maxPoints, variantGroupId, variantGroupMaxPoints, false);
+    }
+
+    private static ExerciseCourseScoreDTO scoreExercise(long id, ExerciseType type, IncludedInOverallScore includedInOverallScore, AssessmentType assessmentType,
+            ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime finalBuildDate, double maxPoints, Long variantGroupId, Double variantGroupMaxPoints,
+            boolean memberOfMilestoneGroup) {
         return new ExerciseCourseScoreDTO(id, type, includedInOverallScore, assessmentType, dueDate, assessmentDueDate, finalBuildDate, maxPoints, 0.0, COURSE_ID, variantGroupId,
-                variantGroupMaxPoints);
+                variantGroupMaxPoints, memberOfMilestoneGroup);
     }
 
     private static CourseGradeScoreDTO grade(long exerciseId, double score, boolean rated) {

@@ -73,12 +73,14 @@
                   class="me-2"
                 />
               }
-              <jhi-programming-exercise-student-trigger-build-button
-                class="me-2"
-                [exercise]="exercise()"
-                [participation]="participation()"
-                [btnSize]="ButtonSize.MEDIUM"
-              />
+              @if (exercise().type !== USER_STORY) {
+                <jhi-programming-exercise-student-trigger-build-button
+                  class="me-2"
+                  [exercise]="exercise()"
+                  [participation]="participation()"
+                  [btnSize]="ButtonSize.MEDIUM"
+                />
+              }
             </div>
             <jhi-programming-exercise-instructions
                 [class.d-none]="lightweight()"

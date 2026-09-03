@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
@@ -64,11 +64,11 @@ export class ArtemisNavigationUtilService {
                 exercise.exerciseGroup.exam.id!,
                 'exercise-groups',
                 exercise.exerciseGroup.id!,
-                exercise.type! + '-exercises',
+                getExerciseUrlSegment(exercise.type),
                 exercise.id,
             ]);
         } else if (exercise?.course?.id) {
-            void this.router.navigate(['course-management', exercise.course.id, exercise.type! + '-exercises', exercise.id]);
+            void this.router.navigate(['course-management', exercise.course.id, getExerciseUrlSegment(exercise.type), exercise.id]);
         } else {
             // Fallback
             this.navigateBack();
@@ -135,7 +135,7 @@ export const getLinkToSubmissionAssessment = (
             examId.toString(),
             'exercise-groups',
             exerciseGroupId.toString(),
-            exerciseType + '-exercises',
+            getExerciseUrlSegment(exerciseType),
             exerciseId.toString(),
             'submissions',
             submissionId.toString(),
@@ -147,7 +147,9 @@ export const getLinkToSubmissionAssessment = (
         }
         return route;
     } else {
-        return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
+        // Not `exerciseType + '-exercises'`: a UserStoryExercise/MilestoneExercise carries its own type discriminator but
+        // has no course-management route of its own, so the raw type matches nothing (see getExerciseUrlSegment).
+        return ['/course-management', courseId.toString(), getExerciseUrlSegment(exerciseType), exerciseId.toString(), 'submissions', submissionId.toString(), 'assessment'];
     }
 };
 
@@ -191,7 +193,17 @@ export const navigateToExamExercise = (
     subPage: string,
 ): void => {
     setTimeout(() => {
-        navigationUtilService.routeInNewTab(['course-management', courseId, 'exams', examId, 'exercise-groups', exerciseGroupId, `${exerciseType}-exercises`, exerciseId, subPage]);
+        navigationUtilService.routeInNewTab([
+            'course-management',
+            courseId,
+            'exams',
+            examId,
+            'exercise-groups',
+            exerciseGroupId,
+            getExerciseUrlSegment(exerciseType),
+            exerciseId,
+            subPage,
+        ]);
     }, 1000);
 };
 

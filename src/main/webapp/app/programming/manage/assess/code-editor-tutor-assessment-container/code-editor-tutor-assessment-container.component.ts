@@ -43,6 +43,7 @@ import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exerc
 import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
@@ -51,6 +52,8 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { UserStoryEffortService } from 'app/programming/shared/services/user-story-effort.service';
+import { UserStoryEffort } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -69,10 +72,12 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         UnreferencedFeedbackComponent,
         FeedbackSuggestionsBannerComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
     private manualResultService = inject(ProgrammingAssessmentManualResultService);
+    private readonly userStoryEffortService = inject(UserStoryEffortService);
     private router = inject(Router);
     private location = inject(Location);
     private accountService = inject(AccountService);
@@ -92,6 +97,14 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly USER_STORY = ExerciseType.USER_STORY;
+
+    /**
+     * The effort the assessed participant reported for a user story. Fetched for the participation being assessed rather
+     * than read off it: serializing the pair with every participation cost a query per participation and broke the
+     * dashboard payload, so it is not part of the participation any more.
+     */
+    readonly reportedEffort = signal<UserStoryEffort | undefined>(undefined);
 
     readonly diffMatchPatch = new DiffMatchPatch();
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -335,6 +348,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.participation.set(participation);
         const exercise = participation.exercise as ProgrammingExercise;
         this.exercise.set(exercise);
+        this.loadReportedEffort(exercise, participation.id);
         /**
          * CARE: Setting access rights for exercises should not happen this way and is a workaround.
          *       The access rights should always be set when loading the exercise/course in the service!
@@ -815,6 +829,21 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private calculateTotalScoreOfFeedbacks(feedbacks: Feedback[]): number {
         // Shared with the score summary of the feedback list, so both can never disagree.
         return this.structuredGradingCriterionService.computeAssessmentScore(feedbacks, getTotalMaxPoints(this.exercise()), true).total;
+    }
+
+    /**
+     * Loads the effort the participant reported, for a user story exercise only - nothing else has one. Failures are
+     * swallowed: an unavailable effort must not stop a tutor from assessing, the view simply reads "not reported".
+     */
+    private loadReportedEffort(exercise: ProgrammingExercise, participationId: number | undefined): void {
+        this.reportedEffort.set(undefined);
+        if (exercise?.type !== ExerciseType.USER_STORY || participationId === undefined) {
+            return;
+        }
+        this.userStoryEffortService.getEffortForParticipation(participationId).subscribe({
+            next: (effort) => this.reportedEffort.set(effort),
+            error: () => this.reportedEffort.set(undefined),
+        });
     }
 }
 

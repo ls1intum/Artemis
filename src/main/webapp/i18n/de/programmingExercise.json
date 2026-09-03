@@ -442,6 +442,7 @@
                     "title": "Quelltext-Analyse-Kategorien",
                     "notGraded": "Nicht bewertet.",
                     "noFeedback": "Ohne sichtbares Feedback.",
+                    "blocking": "Setzt die Punktzahl auf 0.",
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
                     "couldNotBeUpdated": "Die folgenden Kategorien konnten nicht gespeichert werden: {{categories}}.",
                     "resetSuccessful": "Die Kategorien wurden erfolgreich zurückgesetzt.",

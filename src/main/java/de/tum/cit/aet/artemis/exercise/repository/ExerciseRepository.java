@@ -67,6 +67,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @param userLogin         the requesting user's login for the LTI-launch check
      * @return the projected exercise details
      */
+    // MilestoneExercise is excluded unconditionally: it's the anchor a MilestoneExerciseGroup's user story exercises share
+    // repositories/build plan with, never something anyone works on directly, and its own javadoc says it must never be
+    // rendered - see MilestoneExercise.isVisibleToStudents(), the corresponding gate for direct per-exercise access.
     @Query("""
             SELECT NEW de.tum.cit.aet.artemis.exercise.dto.ExerciseForCourseOverviewDTO(
                 TYPE(exercise),
@@ -90,6 +93,10 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 programmingExercise.buildAndTestStudentSubmissionsAfterDueDate,
                 variantGroup.id,
                 variantGroup.title,
+                CASE WHEN variantGroup.id IS NULL THEN NULL
+                     WHEN EXISTS (SELECT 1 FROM MilestoneExerciseGroup mg WHERE mg.id = variantGroup.id) THEN 'milestone'
+                     ELSE 'variant' END,
+                (SELECT anchorGroup.milestoneExercise.id FROM MilestoneExerciseGroup anchorGroup WHERE anchorGroup.id = variantGroup.id),
                 variantGroup.maxPoints,
                 variantGroup.releaseDate,
                 variantGroup.startDate,
@@ -100,6 +107,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
                 LEFT JOIN ProgrammingExercise programmingExercise ON exercise.id = programmingExercise.id
                 LEFT JOIN exercise.exerciseVariantGroup variantGroup
             WHERE exercise.course.id = :courseId
+                AND TYPE(exercise) <> MilestoneExercise
                 AND (:includeUnreleased = TRUE OR exercise.releaseDate IS NULL OR exercise.releaseDate <= :calculationTime)
                 AND (:requireLtiLaunch = FALSE OR EXISTS (
                     SELECT launch
@@ -542,6 +550,13 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithEagerExampleSubmissions(@Param("exerciseId") Long exerciseId);
 
+    // A MilestoneExerciseGroup member's group.milestoneExercise (a LAZY @OneToOne) is deliberately NOT fetched here, even
+    // though GET .../exercises/{id}/details serializes the returned entity directly (ExerciseDetailsDTO wraps it as-is: a
+    // member exercise carries its group, and the group carries this anchor exercise) with spring.jpa.open-in-view
+    // disabled. Reaching that subtype association from the base type needs TREAT(evg AS MilestoneExerciseGroup), which
+    // restricts the fetch join to that subtype instead of only the join - so every exercise in an ordinary variant group
+    // came back with a null exerciseVariantGroup. ExerciseService.findOneWithDetailsForStudents hydrates the anchor in a
+    // second, type-specific query instead (see MilestoneExerciseGroupRepository).
     @Query("""
             SELECT DISTINCT e
             FROM Exercise e
@@ -841,7 +856,8 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
     Set<NonQuizExerciseCalendarEventDTO> getNonQuizExerciseCalendarEventsDTOsForCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id, evg.id, evg.maxPoints)
+            SELECT DISTINCT NEW de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO(e.id, TYPE(e), e.includedInOverallScore, e.assessmentType, e.dueDate, e.assessmentDueDate, p.buildAndTestStudentSubmissionsAfterDueDate, e.maxPoints, e.bonusPoints, e.course.id, evg.id, evg.maxPoints,
+                CASE WHEN evg.id IS NOT NULL AND EXISTS (SELECT 1 FROM MilestoneExerciseGroup mg WHERE mg.id = evg.id) THEN TRUE ELSE FALSE END)
             FROM Exercise e
                 LEFT JOIN ProgrammingExercise p ON e.id = p.id
                 LEFT JOIN e.exerciseVariantGroup evg

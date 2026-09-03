@@ -72,6 +72,26 @@ public interface InstanceMessageSendService {
     void sendParticipantScoreSchedule(Long exerciseId, Long participantId, Long resultIdToBeDeleted);
 
     /**
+     * Send a message to the main server that schedules to recompute a student's aggregated score on the milestone
+     * exercise owning the given user story (the sum of their user story points minus the group's static code analysis
+     * penalty). The owning milestone is resolved on the receiving side, so that the recomputation can be debounced per
+     * milestone rather than per story - one build changes every story of a group at once.
+     *
+     * @param userStoryExerciseId the id of the user story exercise whose result changed
+     * @param studentId           the id of the student
+     */
+    void sendMilestoneScoreSchedule(Long userStoryExerciseId, Long studentId);
+
+    /**
+     * Send a message to the main server that schedules to recompute the aggregated milestone score of <em>every</em>
+     * student of a milestone group - needed when the milestone's own {@code maxPoints} changed, since each student's
+     * score is a percentage of it.
+     *
+     * @param milestoneExerciseId the id of the milestone exercise whose group to recompute
+     */
+    void sendMilestoneScoreScheduleForGroup(Long milestoneExerciseId);
+
+    /**
      * Send a message to the main server that a quiz exercise was created or updated and a (re-)scheduling has to be performed
      *
      * @param quizExerciseId the id of the quiz exercise that should be scheduled

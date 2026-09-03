@@ -6,8 +6,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { faArrowLeft, faArrowRight, faCheckDouble, faFileUpload, faFlagCheckered, faFont, faKeyboard, faLayerGroup, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { TumUiDialogComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseImportComponent, ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
@@ -68,13 +68,15 @@ const EXERCISE_TYPE_CARDS: ExerciseTypeCard[] = [
     selector: 'jhi-exercise-add-modal',
     templateUrl: './exercise-add-modal.component.html',
     styleUrl: './exercise-add-modal.component.scss',
-    imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [TumUiDialogComponent, TumUiTooltipDirective, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseAddModalComponent {
     readonly visible = input<boolean>(false);
     readonly mode = input<AddModalMode>('create');
     readonly courseId = input<number | undefined>(undefined);
+    /** Whether the course has at least one milestone exercise group — gates the "Create user story" card. */
+    readonly hasMilestoneGroup = input<boolean>(false);
 
     readonly visibleChange = output<boolean>();
     readonly groupCreate = output<void>();
@@ -112,6 +114,8 @@ export class ExerciseAddModalComponent {
     protected readonly faArrowRight = faArrowRight;
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faLayerGroup = faLayerGroup;
+    protected readonly faFlagCheckered = faFlagCheckered;
+    protected readonly faKeyboard = faKeyboard;
 
     private readonly router = inject(Router);
     private readonly dialogService = inject(DialogService);
@@ -214,6 +218,25 @@ export class ExerciseAddModalComponent {
 
     createGroup(): void {
         this.groupCreate.emit();
+        this.close();
+    }
+
+    navigateToCreateMilestoneGroup(): void {
+        const id = this.courseId();
+        if (id !== undefined) {
+            void this.router.navigate(['/course-management', id, 'milestone-exercise-groups', 'new']);
+        }
+        this.close();
+    }
+
+    navigateToCreateUserStory(): void {
+        if (!this.hasMilestoneGroup()) {
+            return;
+        }
+        const id = this.courseId();
+        if (id !== undefined) {
+            void this.router.navigate(['/course-management', id, 'user-story-exercises', 'new']);
+        }
         this.close();
     }
 }

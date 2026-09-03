@@ -8,6 +8,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
+import { TutorScoreRowActionsCheckboxComponent } from 'app/exercise/tutor-score-actions/tutor-score-row-actions-checkbox.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { Subject, Subscription } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
@@ -36,6 +37,7 @@ import { Message } from 'primeng/message';
         ProgrammingExerciseUpdateTimelineComponent,
         GradingInstructionsDetailsComponent,
         PresentationScoreComponent,
+        TutorScoreRowActionsCheckboxComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
         Message,
@@ -99,13 +101,31 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
         const maxScoreMissingAndOptional =
             programmingExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED &&
             (programmingExercise.maxPoints === undefined || programmingExercise.maxPoints === null);
-        const maxScoreValidOrOptional = this.maxScoreField()?.valid || maxScoreMissingAndOptional;
-        // Bonus points are only entered (and the field only rendered) when the exercise is INCLUDED_COMPLETELY,
-        // so its validity must not block the form in the other modes (the field is hidden via [hidden]).
-        const bonusPointsValidOrHidden = this.bonusPointsField()?.valid || programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
+        // Points is hidden entirely for a MilestoneExercise (see MILESTONE_HIDDEN_FIELDS), so maxScoreField() is never
+        // rendered and stays undefined - and neither fallback below it holds for a milestone: a milestone is
+        // INCLUDED_COMPLETELY (it carries the sum of its user stories' points, see MilestoneExercisePointsService),
+        // and Exercise#validateScoreSettings() normalizes a null maxPoints to 0.0 server-side on create, so a
+        // re-loaded 0 no longer counts as "missing" either. Bypass val`idation entirely once the field isn't shown;
+        // there's no control left for the user to fix it with.
+        const maxScoreValidOrOptional = !this.isEditFieldDisplayedRecord().points || this.maxScoreField()?.valid || maxScoreMissingAndOptional;
+        // Same bypass as for Points above, for the same reason: BonusPoints is in MILESTONE_HIDDEN_FIELDS, so for a
+        // milestone the field is never rendered and the INCLUDED_COMPLETELY fallback below can't stand in for it.
+        // That fallback still covers the plain-exercise case, where bonus points are only entered (and the field only
+        // rendered, via [hidden]) when the exercise is INCLUDED_COMPLETELY.
+        const bonusPointsValidOrHidden =
+            !this.isEditFieldDisplayedRecord().bonusPoints ||
+            this.bonusPointsField()?.valid ||
+            programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY;
         const maxPenaltyValidOrDisabled = this.maxPenaltyField()?.valid || !programmingExercise.staticCodeAnalysisEnabled;
         const scoreFieldsValid = maxScoreValidOrOptional && bonusPointsValidOrHidden && maxPenaltyValidOrDisabled;
-        const dependentComponentsValid = !this.submissionPolicyUpdateComponent()?.invalid && this.lifecycleComponent()?.formValid;
+        // `?? false` / `?? true`, not a bare `?.`: for a MilestoneExercise, Points/BonusPoints are hidden (see above),
+        // so nothing in this section ever re-fires calculateFormStatus() after the very first automatic call (from
+        // the timeline's own initial status emission in its constructor effect, before ngAfterViewInit's own
+        // subscriptions are even wired up). If either child's own validity hasn't resolved by then, `?.invalid`/
+        // `?.formValid` reads as `undefined`, and a bare `!undefined && undefined` permanently evaluates to `false`
+        // with no later re-computation to recover from it - unlike a normal programming exercise, where the always-
+        // visible Points field's own typing/blur naturally re-triggers this method once children have settled.
+        const dependentComponentsValid = !(this.submissionPolicyUpdateComponent()?.invalid ?? false) && (this.lifecycleComponent()?.formValid ?? true);
         const newFormValidValue = Boolean(scoreFieldsValid && dependentComponentsValid);
 
         this.formValidSignal.set(newFormValidValue);

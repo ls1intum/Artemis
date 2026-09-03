@@ -70,6 +70,16 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
+    public void sendMilestoneScoreSchedule(Long userStoryExerciseId, Long studentId) {
+        instanceMessageReceiveService.processScheduleMilestoneScore(userStoryExerciseId, studentId);
+    }
+
+    @Override
+    public void sendMilestoneScoreScheduleForGroup(Long milestoneExerciseId) {
+        instanceMessageReceiveService.processScheduleMilestoneScoreForGroup(milestoneExerciseId);
+    }
+
+    @Override
     public void sendQuizExerciseStartSchedule(Long exerciseId) {
         instanceMessageReceiveService.processScheduleQuizStart(exerciseId);
     }

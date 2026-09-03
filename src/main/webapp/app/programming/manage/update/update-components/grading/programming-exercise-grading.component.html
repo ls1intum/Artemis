@@ -151,6 +151,7 @@
     }
     @if (isEditFieldDisplayedRecord().presentationScore) {
         <jhi-presentation-score-checkbox [exercise]="programmingExercise()" />
+        <jhi-tutor-score-row-actions-checkbox [exercise]="programmingExercise()" />
     }
     @if (programmingExerciseCreationConfig().showSummary) {
         <h6>{{ getGradingSummary() }}</h6>

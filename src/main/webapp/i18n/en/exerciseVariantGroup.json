@@ -3,16 +3,28 @@
         "exerciseVariantGroup": {
             "detail": {
                 "variants": "Variants",
+                "milestoneVariants": "Items",
                 "pointsTooltip": "The variants in this group total {{ total }} pts, but only {{ cap }} pts count toward your course score.",
                 "noProblemStatement": "No problem statement configured.",
                 "callout": {
                     "heading": "Choose a variant to work on",
                     "body": "This group has {{ count }} variants. You can work on any or all of them.",
                     "cappedScore": " Your combined score for this group is capped at {{ maxPoints }} points."
-                }
+                },
+                "startMilestone": "Start exercise",
+                "milestoneStarted": "Started",
+                "retryMilestoneStatus": "Retry",
+                "milestoneStatusLoadFailed": "Could not load the milestone status. The start action is unavailable until it loads.",
+                "instructorActions": "Instructor actions"
             },
             "edit": "Edit group",
             "delete": "Delete group",
+            "milestoneGroup": "Milestone group",
+            "milestoneGroupCreateLabel": "Create Milestone",
+            "milestoneGroupEditLabel": "Edit Milestone",
+            "milestoneGroupRequired": "Please select a milestone group.",
+            "userStoryCreateLabel": "Create User Story",
+            "userStoryEditLabel": "Edit User Story",
             "timelineLocked": {
                 "tooltip": "These dates are managed by the exercise group. Click to edit the group's timeline."
             },

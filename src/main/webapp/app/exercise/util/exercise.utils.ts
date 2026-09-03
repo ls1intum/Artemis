@@ -146,7 +146,7 @@ export function getExerciseDueDate(exercise: Exercise, participation?: Participa
  * @param participation the potentially existing participation
  */
 export const isStartExerciseAvailable = (exercise: Exercise, participation?: StudentParticipation): boolean => {
-    const isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING;
+    const isProgrammingExercise = exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.USER_STORY;
 
     const isBeforeDueDate = !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
     if (!isProgrammingExercise) {

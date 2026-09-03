@@ -65,10 +65,68 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { BuildPhasesTemplateService } from 'app/programming/shared/services/build-phases-template.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { ExerciseVariantGroupService, toCourseExerciseGroup } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { EXERCISE_MANAGEMENT_VIEW_STORAGE_KEY } from 'app/course/manage/exercises/course-exercise-cards';
+import { CourseExerciseGroup } from 'app/exercise/shared/entities/exercise/course-exercise-group.model';
+import { TumUiSelectComponent } from '@tumaet/ui-angular';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
+
+/** Fields forced hidden for a MilestoneExercise - see isEditFieldDisplayedRecord. */
+const MILESTONE_HIDDEN_FIELDS: ProgrammingExerciseInputField[] = [
+    ProgrammingExerciseInputField.LINKED_COMPETENCIES,
+    ProgrammingExerciseInputField.POINTS,
+    ProgrammingExerciseInputField.BONUS_POINTS,
+    ProgrammingExerciseInputField.INCLUDE_EXERCISE_IN_COURSE_SCORE_CALCULATION,
+    ProgrammingExerciseInputField.ASSESSMENT_DUE_DATE,
+    ProgrammingExerciseInputField.COMPLAINT_ON_AUTOMATIC_ASSESSMENT,
+    ProgrammingExerciseInputField.MANUAL_FEEDBACK_REQUESTS,
+    ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS,
+    ProgrammingExerciseInputField.PRESENTATION_SCORE,
+    ProgrammingExerciseInputField.PLAGIARISM_CONTROL,
+    ProgrammingExerciseInputField.EXAMPLE_SOLUTION_PUBLICATION_DATE,
+];
+
+/**
+ * Fields forced hidden for a UserStoryExercise - the mirror image of MILESTONE_HIDDEN_FIELDS. Language/Version-Control/
+ * build-config/IDE/timeline settings are owned by the group's MilestoneExercise (see
+ * UserStoryExerciseService.applyMilestoneConfig, which copies them onto every member) and are read-only here; only
+ * title/short name/categories/difficulty and Problem Statement/Points/Assessment stay independently editable per
+ * UserStoryExercise. See isEditFieldDisplayedRecord.
+ */
+const USER_STORY_HIDDEN_FIELDS: ProgrammingExerciseInputField[] = [
+    ProgrammingExerciseInputField.EDIT_REPOSITORIES_CHECKOUT_PATH,
+    ProgrammingExerciseInputField.ADD_AUXILIARY_REPOSITORY,
+    ProgrammingExerciseInputField.ALLOW_OFFLINE_IDE,
+    ProgrammingExerciseInputField.ALLOW_ONLINE_CODE_EDITOR,
+    ProgrammingExerciseInputField.ALLOW_ONLINE_IDE,
+    ProgrammingExerciseInputField.PROGRAMMING_LANGUAGE,
+    ProgrammingExerciseInputField.PROJECT_TYPE,
+    ProgrammingExerciseInputField.WITH_EXEMPLARY_DEPENDENCY,
+    ProgrammingExerciseInputField.PACKAGE_NAME,
+    ProgrammingExerciseInputField.ENABLE_STATIC_CODE_ANALYSIS,
+    ProgrammingExerciseInputField.SEQUENTIAL_TEST_RUNS,
+    ProgrammingExerciseInputField.CUSTOMIZE_BUILD_SCRIPT,
+    ProgrammingExerciseInputField.ALLOW_BRANCHING,
+    ProgrammingExerciseInputField.SUBMISSION_POLICY,
+    ProgrammingExerciseInputField.RUN_TESTS_AFTER_DUE_DATE,
+    ProgrammingExerciseInputField.SHOW_TEST_NAMES_TO_STUDENTS,
+    ProgrammingExerciseInputField.INCLUDE_TESTS_INTO_EXAMPLE_SOLUTION,
+    // A user story's points count through its milestone group, so its inclusion is not a per-story decision: it stays
+    // INCLUDED_COMPLETELY and the score calculation skips group members instead (see UserStoryExercise server-side).
+    ProgrammingExerciseInputField.INCLUDE_EXERCISE_IN_COURSE_SCORE_CALCULATION,
+];
+// TIMELINE/RELEASE_DATE/START_DATE/DUE_DATE are deliberately NOT hidden here (unlike for a MilestoneExercise): the
+// "Grading" section's timeline block (jhi-programming-exercise-update-timeline) bundles the date pickers together
+// with assessment checkboxes (manual assessment, complaints, feedback requests, ...) that must stay visible/editable
+// per UserStoryExercise, and TIMELINE is that block's only outer @if gate in programming-exercise-grading.component.html
+// - hiding it would have taken those checkboxes down with it. The date pickers themselves are made read-only instead,
+// the same way an existing group member's dates already are, via ExerciseGroupTimelineLockComponent/lockedToGroup
+// (see programming-exercise-update.component.html's [lockedToGroup]="variantLock.locked()") - locked() keys off
+// programmingExercise.exerciseVariantGroup being set, which selectMilestoneGroupForUserStory below also does at
+// creation time so the lock applies immediately, not just after the exercise is saved and re-loaded.
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -89,6 +147,7 @@ const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerati
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
         FeatureOverlayComponent,
+        TumUiSelectComponent,
     ],
     providers: [BuildPhasesTemplateService],
 })
@@ -113,6 +172,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
     private readonly buildPhasesTemplateService = inject(BuildPhasesTemplateService);
+    private readonly exerciseVariantGroupService = inject(ExerciseVariantGroupService);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -154,6 +214,30 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
         }
 
+        // A MilestoneExercise is configured on this page like a plain programming exercise, minus Problem Statement,
+        // Points, and Assessment settings - those stay independently configured per UserStoryExercise member (see
+        // UserStoryExerciseService.applyMilestoneConfig, which propagates everything else shown here). Forced after
+        // the simple/advanced computation above so it applies regardless of mode.
+        // Read via the signal, not the plain `isMilestoneMode` getter: this is a computed(), so it only re-evaluates
+        // when a signal it actually reads changes - reading the getter registers no dependency at all, meaning this
+        // record would keep whatever it computed on its very first evaluation (typically "not milestone mode", since
+        // isMilestoneMode is normally set slightly later during route-data handling) for the rest of the component's
+        // lifetime, permanently leaving Points/BonusPoints/etc. shown - and therefore validated - for a milestone.
+        if (this.isMilestoneModeSignal()) {
+            for (const field of MILESTONE_HIDDEN_FIELDS) {
+                isEditFieldDisplayedMapping[field] = false;
+            }
+        }
+
+        // A UserStoryExercise is configured on this same page, minus everything the group's MilestoneExercise
+        // already owns (see USER_STORY_HIDDEN_FIELDS) - the mirror image of the milestone case above, same reason
+        // for reading the signal instead of the isUserStoryMode getter.
+        if (this.isUserStoryModeSignal()) {
+            for (const field of USER_STORY_HIDDEN_FIELDS) {
+                isEditFieldDisplayedMapping[field] = false;
+            }
+        }
+
         return isEditFieldDisplayedMapping as Record<ProgrammingExerciseInputField, boolean>;
     });
 
@@ -171,9 +255,36 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private isImportFromExistingExerciseValue = false;
     private isImportFromFileValue = false;
     private isImportFromSharingValue = false;
+    private isMilestoneModeValue = false;
+    private isUserStoryModeValue = false;
     isImportFromExistingExerciseForAi = signal<boolean>(false);
     isImportFromFileForAi = signal<boolean>(false);
     isImportFromSharingForAi = signal<boolean>(false);
+    // Gives the getter/setter facade below a change-detection trigger under zoneless (see
+    // localRules/prefer-signal-template-state) - isMilestoneMode is read in the template (@if (isMilestoneMode)) same
+    // as isImportFromExistingExercise/isImportFromFile/isImportFromSharing - and is also read directly by
+    // isEditFieldDisplayedRecord above, so that computed() properly re-evaluates once milestone mode is set.
+    private readonly isMilestoneModeSignal = signal<boolean>(false);
+    // Same rationale as isMilestoneModeSignal above - isUserStoryMode is read in the template (@if (isUserStoryMode))
+    // and directly by isEditFieldDisplayedRecord.
+    private readonly isUserStoryModeSignal = signal<boolean>(false);
+    /** Milestone groups available to assign a newly-created UserStoryExercise to (see isUserStoryMode && isCreate). */
+    userStoryMilestoneGroups = signal<CourseExerciseGroup[]>([]);
+    userStoryMilestoneGroupOptions = computed(() => this.userStoryMilestoneGroups().map((group) => ({ label: group.title, value: group.id })));
+    private selectedMilestoneGroupIdValue?: number;
+    // Written from selectMilestoneGroupForUserStory, which is also reached from loadUserStoryMilestoneGroups's async
+    // subscribe callback (auto-selecting a course's only milestone group) - needs the signal facade per
+    // localRules/prefer-signal-template-state, same rationale as isMilestoneModeSignal above.
+    private readonly selectedMilestoneGroupIdSignal = signal<number | undefined>(undefined);
+
+    get selectedMilestoneGroupId(): number | undefined {
+        return this.selectedMilestoneGroupIdValue;
+    }
+
+    set selectedMilestoneGroupId(value: number | undefined) {
+        this.selectedMilestoneGroupIdValue = value;
+        this.selectedMilestoneGroupIdSignal.set(value);
+    }
 
     get isImportFromExistingExercise(): boolean {
         return this.isImportFromExistingExerciseValue;
@@ -200,6 +311,38 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     set isImportFromSharing(value: boolean) {
         this.isImportFromSharingValue = value;
         this.isImportFromSharingForAi.set(value);
+    }
+
+    /**
+     * Whether this page is configuring a MilestoneExercise rather than a plain programming exercise - set from the URL
+     * (see the 'milestone-exercise-groups' segment check in ngOnInit), matching how isImportFromExistingExercise/isEdit/
+     * isCreate are already detected here. A MilestoneExercise is configured on this same page/layout as a plain
+     * programming exercise, minus Points/Assessment (see isEditFieldDisplayedRecord/MILESTONE_HIDDEN_FIELDS) - those stay
+     * independently configured per UserStoryExercise member. Its Problem Statement stays editable: it doubles as the
+     * milestone group's description in the student group view (see CourseExerciseGroupDetailComponent).
+     */
+    get isMilestoneMode(): boolean {
+        return this.isMilestoneModeValue;
+    }
+
+    set isMilestoneMode(value: boolean) {
+        this.isMilestoneModeValue = value;
+        this.isMilestoneModeSignal.set(value);
+    }
+
+    /**
+     * Whether this page is configuring a UserStoryExercise rather than a plain programming exercise - the mirror
+     * image of isMilestoneMode. Set from the URL at creation ('user-story-exercises' segment) and from the resolved
+     * exercise's own type at edit time (the generic 'programming-exercises/:exerciseId/edit' route has no dedicated
+     * segment for a UserStoryExercise, unlike milestone create/edit).
+     */
+    get isUserStoryMode(): boolean {
+        return this.isUserStoryModeValue;
+    }
+
+    set isUserStoryMode(value: boolean) {
+        this.isUserStoryModeValue = value;
+        this.isUserStoryModeSignal.set(value);
     }
 
     isEdit = false;
@@ -552,6 +695,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             this.backupExercise = deepClone(this.programmingExercise);
+            // getExerciseUrlSegment() routes both UserStoryExercise and MilestoneExercise edit links through the
+            // generic 'programming-exercises/:exerciseId/edit' path (see its doc comment) - neither has a dedicated
+            // URL segment on edit, even though milestone create/new does. So detect edit mode from the resolved
+            // exercise's own type instead; the URL-segment check below still covers the create case, before an
+            // exercise (and its type) exists.
+            if (this.programmingExercise.type === ExerciseType.USER_STORY) {
+                this.isUserStoryMode = true;
+            }
+            if (this.programmingExercise.type === ExerciseType.MILESTONE) {
+                this.isMilestoneMode = true;
+            }
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_MAVEN;
@@ -572,6 +726,14 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         this.isImportFromSharing = segments.some((segment) => segment.path === 'import-from-sharing');
                         this.isEdit = segments.some((segment) => segment.path === 'edit');
                         this.isCreate = segments.some((segment) => segment.path === 'new');
+                        // OR'd rather than assigned outright: the activatedRoute.data subscription above already set
+                        // this to true when editing an existing MilestoneExercise (detected from its resolved type,
+                        // since the generic 'programming-exercises/:exerciseId/edit' route has no dedicated segment
+                        // for it) - a plain overwrite here would clobber that back to false, since that edit route
+                        // never contains a 'milestone-exercise-groups' segment.
+                        this.isMilestoneMode = this.isMilestoneMode || segments.some((segment) => segment.path === 'milestone-exercise-groups');
+                        // Same reasoning for UserStoryExercise.
+                        this.isUserStoryMode = this.isUserStoryMode || segments.some((segment) => segment.path === 'user-story-exercises');
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
@@ -614,6 +776,27 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
                                     this.loadCourseExerciseCategories(this.programmingExercise.course.id);
                                 });
+                                if (this.isMilestoneMode && this.isCreate) {
+                                    // The resolver hands back a plain new ProgrammingExercise (type 'programming'); the
+                                    // milestone-group create endpoint deserializes its @RequestBody polymorphically via
+                                    // this discriminator, so it must read 'milestone' or Jackson binds the wrong subtype.
+                                    this.programmingExercise.type = ExerciseType.MILESTONE;
+                                    // A milestone is the only scored exercise of its group: it carries the sum of its
+                                    // UserStoryExercise members' points, which are NOT_INCLUDED so nothing double-counts.
+                                    // Set explicitly rather than left to the client default only to keep this form's model
+                                    // in step with what an immediate re-edit loads back - CreateMilestoneExerciseGroupDTO
+                                    // hardcodes the same value server-side regardless of what is sent. The Points/
+                                    // BonusPoints fields stay hidden (see MILESTONE_HIDDEN_FIELDS) and are excluded from
+                                    // validation on visibility, not on this value (see getInvalidReasons and
+                                    // ProgrammingExerciseGradingComponent.calculateFormStatus).
+                                    this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+                                }
+                                if (this.isUserStoryMode && this.isCreate) {
+                                    // Same polymorphic-deserialization reasoning as the milestone branch above -
+                                    // the resolver's plain new ProgrammingExercise must carry the right discriminator.
+                                    this.programmingExercise.type = ExerciseType.USER_STORY;
+                                    this.loadUserStoryMilestoneGroups(this.courseId());
+                                }
                             }
                         }
                     }),
@@ -942,7 +1125,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
             });
         }
-        if (this.isImportFromFile) {
+        if (this.isMilestoneMode) {
+            this.saveMilestone();
+        } else if (this.isUserStoryMode && this.programmingExercise.id === undefined) {
+            this.saveUserStoryCreate();
+        } else if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId()));
         } else if (this.isImportFromSharing) {
             this.programmingExerciseSharingService.setUpFromSharingImport(this.programmingExercise, this.courseId(), this.sharingInfo).subscribe({
@@ -965,6 +1152,121 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
+    }
+
+    /**
+     * Dispatches a milestone create/edit, bypassing the import/auxiliary-repository/AI branches below that don't apply
+     * to a milestone. Edit reuses the generic update endpoint unchanged - it has no exercise-type restriction and
+     * already works for a MilestoneExercise. Create goes through the milestone-group endpoint instead (it provisions
+     * real repositories/build plan and wraps the exercise into a MilestoneExerciseGroup in one call - the generic
+     * automatic-setup endpoint doesn't know about that wrapping). Both branches end in onMilestoneSaveSuccess, which
+     * navigates back to the group overview rather than to the saved exercise - so neither needs the response body.
+     */
+    private saveMilestone(): void {
+        if (this.programmingExercise.id !== undefined) {
+            const requestOptions: { notificationText?: string } = {};
+            if (this.notificationText) {
+                requestOptions.notificationText = this.notificationText;
+            }
+            this.programmingExerciseService.update(this.programmingExercise, requestOptions).subscribe({
+                next: () => this.onMilestoneSaveSuccess(),
+                error: (error: HttpErrorResponse) => this.onSaveError(error),
+            });
+            return;
+        }
+        this.exerciseVariantGroupService.createMilestoneGroup(this.courseId(), this.programmingExercise).subscribe({
+            next: () => this.onMilestoneSaveSuccess(),
+            error: (error: HttpErrorResponse) => this.onSaveError(error),
+        });
+    }
+
+    /**
+     * Mirrors {@link onSaveSuccess} for a milestone, but returns to the course's exercise management page instead of a
+     * MilestoneExercise detail page: the milestone exercise is only the group's internal anchor and is never listed as
+     * an exercise of its own (see CourseManagementExercisesComponent.loadCourseExercises) - what was just configured is
+     * the group. The Group view is pre-selected the same way CourseManagementExercisesComponent.onAddModalGroupCreate
+     * does it, so the group's card is on screen on arrival.
+     */
+    private onMilestoneSaveSuccess(): void {
+        this.isSaving.set(false);
+        this.calendarService.reloadEvents();
+        this.localStorageService.store(EXERCISE_MANAGEMENT_VIEW_STORAGE_KEY, 'group');
+        void this.router.navigate(['/course-management', this.courseId(), 'exercises']);
+    }
+
+    /** Loads the course's milestone groups so a new UserStoryExercise can be assigned to one (see isUserStoryMode && isCreate). */
+    private loadUserStoryMilestoneGroups(courseId: number): void {
+        // The milestone endpoint returns exactly this page's candidates, so no client-side type filter is needed.
+        this.exerciseVariantGroupService.getMilestoneGroupsForCourse(courseId).subscribe({
+            next: (dtos) => {
+                const milestoneGroups = dtos.map((dto) => toCourseExerciseGroup(dto, new Map()));
+                this.userStoryMilestoneGroups.set(milestoneGroups);
+                if (milestoneGroups.length === 1 && milestoneGroups[0].id !== undefined) {
+                    this.selectMilestoneGroupForUserStory(milestoneGroups[0].id);
+                }
+            },
+            error: (error: HttpErrorResponse) => this.onSaveError(error),
+        });
+    }
+
+    /**
+     * Selects the milestone group a new UserStoryExercise will be created in, and mirrors it onto
+     * programmingExercise.exerciseVariantGroup so ExerciseGroupTimelineLockComponent (see [lockedToGroup]="variantLock.locked()"
+     * in the template) shows the group's timeline read-only immediately, before the exercise itself is ever saved -
+     * the same lock that already applies once an existing UserStoryExercise is loaded for editing.
+     */
+    protected selectMilestoneGroupForUserStory(groupId: number | undefined): void {
+        this.selectedMilestoneGroupId = groupId;
+        const group = this.userStoryMilestoneGroups().find((candidate) => candidate.id === groupId);
+        this.programmingExercise = cloneWith(this.programmingExercise, {
+            exerciseVariantGroup: group
+                ? {
+                      id: group.id,
+                      title: group.title,
+                      type: group.type,
+                      milestoneExerciseId: group.milestoneExerciseId,
+                      maxPoints: group.maxPoints,
+                      releaseDate: group.releaseDate,
+                      startDate: group.startDate,
+                      dueDate: group.dueDate,
+                      assessmentDueDate: group.assessmentDueDate,
+                      exampleSolutionPublicationDate: group.exampleSolutionPublicationDate,
+                  }
+                : undefined,
+            // The locked timeline pickers (see [lockedToGroup]="variantLock.locked()") read their values from the
+            // exercise's own date fields, not from exerciseVariantGroup - populate them too so the group's actual
+            // dates show immediately instead of a locked-but-empty picker. Server-side these are overwritten again
+            // from the group on save regardless (see ExerciseVariantGroupService.applyOwningGroupTimeline), so this
+            // is purely a display convenience.
+            releaseDate: group?.releaseDate,
+            startDate: group?.startDate,
+            dueDate: group?.dueDate,
+            assessmentDueDate: group?.assessmentDueDate,
+            exampleSolutionPublicationDate: group?.exampleSolutionPublicationDate,
+        });
+    }
+
+    /**
+     * Creates a new UserStoryExercise in the selected milestone group. Its Language/Version-Control/build/timeline
+     * settings are ignored server-side and always taken from the group's milestone exercise (see
+     * ExerciseVariantGroupService.createUserStoryExercise) - only what's still shown for isUserStoryMode (title/short
+     * name/categories/difficulty/Problem Statement/Points/Assessment) is actually used.
+     */
+    private saveUserStoryCreate(): void {
+        if (this.selectedMilestoneGroupId === undefined) {
+            this.alertService.addErrorAlert(undefined, 'artemisApp.exerciseVariantGroup.milestoneGroupRequired');
+            return;
+        }
+        // selectMilestoneGroupForUserStory populates exerciseVariantGroup client-side purely so the locked timeline
+        // display picks it up - it mirrors the server's read-only DTO shape (a bare id/title/dates reference), not
+        // the strict JPA ExerciseVariantGroup entity the field deserializes into server-side, so sending it back
+        // fails with "Failed to read request" (400). The group is already conveyed via the groupId path segment, so
+        // it isn't needed in the body anyway - strip it before sending.
+        const payload = cloneWith(this.programmingExercise, { exerciseVariantGroup: undefined });
+        this.exerciseVariantGroupService.createUserStoryExercise(this.courseId(), this.selectedMilestoneGroupId, payload).subscribe({
+            next: (exercise) => this.onSaveSuccess(exercise),
+            error: (error: HttpErrorResponse) => this.onSaveError(error),
+        });
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
@@ -1245,21 +1547,36 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseTitle(validationErrorReasons);
         this.validateExerciseChannelName(validationErrorReasons);
         this.validateExerciseShortName(validationErrorReasons);
-        this.validateExerciseAuxiliaryRepositories(validationErrorReasons);
-        this.validateExercisePackageName(validationErrorReasons);
-        this.validateExerciseIdeSelection(validationErrorReasons);
-        this.validateExerciseOnlineIdeSelection(validationErrorReasons);
-        this.validateExercisePoints(validationErrorReasons);
-        this.validateExerciseBonusPoints(validationErrorReasons);
+        // Gated on the same record that drives rendering: a hidden field must never produce a reason, since a reason
+        // disables Save (see FormFooterComponent) with no control on screen to clear it. Points/BonusPoints are hidden
+        // for a MilestoneExercise (see MILESTONE_HIDDEN_FIELDS) - its points are the sum of its user stories', kept in
+        // sync server-side by MilestoneExercisePointsService, so a group with no members yet legitimately sits at 0.
+        if (this.isEditFieldDisplayedRecord().points) {
+            this.validateExercisePoints(validationErrorReasons);
+        }
+        if (this.isEditFieldDisplayedRecord().bonusPoints) {
+            this.validateExerciseBonusPoints(validationErrorReasons);
+        }
         this.validateProblemStatementLength(validationErrorReasons);
-        this.validateExerciseSCAMaxPenalty(validationErrorReasons);
-        this.validateExerciseSubmissionLimit(validationErrorReasons);
-        this.validateTimeout(validationErrorReasons);
-        this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
         this.validateGradingSection(validationErrorReasons);
-        this.validateBuildPhaseNames(validationErrorReasons);
-        this.validateBuildConfigSize(validationErrorReasons);
+
+        // Language/Version-Control/build-config fields are hidden for a UserStoryExercise (owned by the group's
+        // MilestoneExercise instead, see USER_STORY_HIDDEN_FIELDS) - validating them here would block Save on
+        // requirements the user can't see or fix on this page (e.g. a required package name with no package name
+        // input rendered).
+        if (!this.isUserStoryMode) {
+            this.validateExerciseAuxiliaryRepositories(validationErrorReasons);
+            this.validateExercisePackageName(validationErrorReasons);
+            this.validateExerciseIdeSelection(validationErrorReasons);
+            this.validateExerciseOnlineIdeSelection(validationErrorReasons);
+            this.validateExerciseSCAMaxPenalty(validationErrorReasons);
+            this.validateExerciseSubmissionLimit(validationErrorReasons);
+            this.validateTimeout(validationErrorReasons);
+            this.validateCheckoutPaths(validationErrorReasons);
+            this.validateBuildPhaseNames(validationErrorReasons);
+            this.validateBuildConfigSize(validationErrorReasons);
+        }
 
         return validationErrorReasons;
     }

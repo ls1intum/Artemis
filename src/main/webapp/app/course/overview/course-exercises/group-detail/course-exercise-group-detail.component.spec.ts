@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { EMPTY, Observable, of, throwError } from 'rxjs';
@@ -13,7 +13,8 @@ import { CourseExerciseGroupDetailComponent } from 'app/course/overview/course-e
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
-import { ExerciseProblemStatementDTO, ExerciseVariantGroupService } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { ExerciseProblemStatementDTO, ExerciseVariantGroupService, MilestoneStatusDTO } from 'app/course/manage/exercises/exercise-variant-group.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -21,6 +22,7 @@ import { ScoresStorageService } from 'app/course/manage/course-scores/scores-sto
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 
 describe('CourseExerciseGroupDetailComponent', () => {
@@ -61,7 +63,16 @@ describe('CourseExerciseGroupDetailComponent', () => {
         return { id: 3, type: ExerciseType.TEXT, maxPoints: 10, includedInOverallScore, exerciseVariantGroup: reference, problemStatement: 'c' } as unknown as Exercise;
     }
 
-    async function setup(exercises: Exercise[], options?: { getProblemStatements?: () => Observable<ExerciseProblemStatementDTO[]> }): Promise<void> {
+    /** A milestone group member, so the component's milestone-status effect actually runs. */
+    function milestoneGroupMember(): Exercise {
+        const reference = { id: GROUP_ID, title: 'Sprint 1', type: 'milestone' as const };
+        return { id: 1, type: ExerciseType.PROGRAMMING, maxPoints: 10, exerciseVariantGroup: reference, problemStatement: 'a' } as unknown as Exercise;
+    }
+
+    async function setup(
+        exercises: Exercise[],
+        options?: { getProblemStatements?: () => Observable<ExerciseProblemStatementDTO[]>; getMilestoneStatus?: () => Observable<MilestoneStatusDTO> },
+    ): Promise<void> {
         const course = { id: 1, exercises } as Course;
         const route = {
             params: of({ groupId: String(GROUP_ID) }),
@@ -74,7 +85,14 @@ describe('CourseExerciseGroupDetailComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(CourseOverviewExercisesService, { loadIfNeeded: () => of({ exercises } as CourseExercisesForOverviewDTO) }),
                 MockProvider(CourseStorageService, { getCourse: () => course, subscribeToCourseUpdates: () => EMPTY }),
-                MockProvider(ExerciseVariantGroupService, { getProblemStatements: (options?.getProblemStatements ?? (() => EMPTY)) as never }),
+                MockProvider(ExerciseVariantGroupService, {
+                    getProblemStatements: (options?.getProblemStatements ?? (() => EMPTY)) as never,
+                    getMilestoneStatus: (options?.getMilestoneStatus ?? (() => EMPTY)) as never,
+                }),
+                MockProvider(AlertService),
+                // The component injects CourseExerciseService for startMilestone(); the real one pulls in
+                // ParticipationWebsocketService -> AccountService -> TranslateService, none of which this spec provides.
+                MockProvider(CourseExerciseService),
                 MockProvider(EntityTitleService),
                 MockProvider(ProgrammingExercisePlantUmlExtensionWrapper, {
                     subscribeForInjectableElementsFound: () => EMPTY,
@@ -332,6 +350,81 @@ describe('CourseExerciseGroupDetailComponent', () => {
             exercises[0].studentParticipations = [{ id: 201, testRun: true } as StudentParticipation, { id: 101 } as StudentParticipation];
             await setup(exercises);
             expect(comp().exerciseParticipation(comp().exercises()[0])?.id).toBe(101);
+        });
+    });
+    describe('milestone status', () => {
+        /** Access to the protected milestone-status state under test. */
+        function milestone(): {
+            milestoneStatus: () => MilestoneStatusDTO | undefined;
+            milestoneStatusFailed: () => boolean;
+            isLoadingMilestoneStatus: () => boolean;
+            retryMilestoneStatus: () => void;
+        } {
+            return fixture.componentInstance as never;
+        }
+
+        it('loads the milestone status for a milestone group', async () => {
+            const status = { milestoneExerciseId: 99, started: false } as MilestoneStatusDTO;
+            const statusSpy = vi.fn(() => of(status));
+            await setup([milestoneGroupMember()], { getMilestoneStatus: statusSpy });
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(statusSpy).toHaveBeenCalled();
+            expect(milestone().milestoneStatus()).toBe(status);
+            expect(milestone().milestoneStatusFailed()).toBe(false);
+        });
+
+        it('surfaces a failed status request instead of silently rendering nothing', async () => {
+            // A 404 here is suppressed by the global alert handler, so without this the whole header - start button
+            // included - simply disappears, which is exactly how the missing "Start exercise" button was reported.
+            const statusSpy = vi.fn(() => throwError(() => new HttpErrorResponse({ status: 404 })));
+            await setup([milestoneGroupMember()], { getMilestoneStatus: statusSpy });
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(statusSpy).toHaveBeenCalled();
+            expect(milestone().milestoneStatus()).toBeUndefined();
+            expect(milestone().milestoneStatusFailed()).toBe(true);
+            expect(alertSpy).toHaveBeenCalledWith('artemisApp.exerciseVariantGroup.detail.milestoneStatusLoadFailed');
+            const requested = (fixture.componentInstance as unknown as { requestedMilestoneStatusGroupIds: Set<number> })['requestedMilestoneStatusGroupIds'];
+            expect(requested.has(GROUP_ID)).toBe(false);
+        });
+
+        it('does not add its own alert when the global handler already shows one', async () => {
+            const statusSpy = vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500, error: { title: 'boom' } })));
+            await setup([milestoneGroupMember()], { getMilestoneStatus: statusSpy });
+            const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(milestone().milestoneStatusFailed()).toBe(true);
+            expect(alertSpy).not.toHaveBeenCalled();
+        });
+
+        it('retries the status request after a failure', async () => {
+            const status = { milestoneExerciseId: 99, started: false } as MilestoneStatusDTO;
+            let firstCall = true;
+            const statusSpy = vi.fn(() => {
+                if (firstCall) {
+                    firstCall = false;
+                    return throwError(() => new HttpErrorResponse({ status: 404 }));
+                }
+                return of(status);
+            });
+            await setup([milestoneGroupMember()], { getMilestoneStatus: statusSpy as never });
+            fixture.detectChanges();
+            await fixture.whenStable();
+            expect(milestone().milestoneStatusFailed()).toBe(true);
+
+            milestone().retryMilestoneStatus();
+            await fixture.whenStable();
+
+            expect(statusSpy).toHaveBeenCalledTimes(2);
+            expect(milestone().milestoneStatus()).toBe(status);
+            expect(milestone().milestoneStatusFailed()).toBe(false);
+            expect(milestone().isLoadingMilestoneStatus()).toBe(false);
         });
     });
 });

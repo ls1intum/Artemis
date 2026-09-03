@@ -196,8 +196,10 @@ export class ExerciseActionsComponent {
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
         }
-        // Programming-only actions stay visible but go inert while the feature toggle is off.
-        const programmingDisabled = ex.type === ExerciseType.PROGRAMMING && !this.programmingEnabled();
+        // Programming-only actions stay visible but go inert while the feature toggle is off. UserStoryExercise/MilestoneExercise
+        // are ProgrammingExercise variants under the hood (see getExerciseUrlSegment) and are gated by the same toggle server-side.
+        const programmingDisabled =
+            (ex.type === ExerciseType.PROGRAMMING || ex.type === ExerciseType.USER_STORY || ex.type === ExerciseType.MILESTONE) && !this.programmingEnabled();
         // Editing requires editor rights, so tutors must not see the edit controls.
         if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastEditor) {
             items.push({
@@ -335,6 +337,10 @@ export class ExerciseActionsComponent {
                 finish(this.modelingExerciseService.delete(exerciseId), 'modelingExerciseListModification');
                 break;
             case ExerciseType.PROGRAMMING:
+            case ExerciseType.USER_STORY:
+            case ExerciseType.MILESTONE:
+                // Both are ProgrammingExercise variants under the hood (see getExerciseUrlSegment) and are deleted
+                // through the same programming-exercise endpoint.
                 finish(
                     this.programmingExerciseService.delete(exerciseId, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans),
                     'programmingExerciseListModification',

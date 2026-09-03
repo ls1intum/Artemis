@@ -1308,6 +1308,27 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         testResultScores(participations, expectedScores, expectedFeedbackSize);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldZeroTheScoreWhenAStaticCodeAnalysisCategoryIsBlocking() {
+        // Every participation below reports exactly one CORRECTNESS issue, which maps to "Potential Bugs". Turning that
+        // category into an all-or-nothing gate must cost every participation everything, however many tests it passed
+        // and whatever the other categories would have charged. Feedback is still shown, only the score is gone - the
+        // category was already non-inactive, so nothing is filtered out that was not filtered out before.
+        var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
+        categories.stream().filter(category -> "Potential Bugs".equals(category.getName())).forEach(category -> category.setState(CategoryState.BLOCKING));
+        staticCodeAnalysisCategoryRepository.saveAll(categories);
+
+        activateAllTestCases(false);
+
+        var participations = createTestParticipationsWithResults();
+
+        double[] expectedScores = { 0, 0, 0, 0, 0 };
+        int[] expectedFeedbackSize = { 5, 7, 10, 9, 14 };
+
+        testResultScores(participations, expectedScores, expectedFeedbackSize);
+    }
+
     private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize) {
         testResultScores(participations, expectedScores, expectedFeedbackSize, AssessmentType.AUTOMATIC);
     }

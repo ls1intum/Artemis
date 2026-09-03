@@ -58,9 +58,12 @@ export interface UpdateProgrammingExerciseDTO {
     allowComplaintsForAutomaticAssessments?: boolean;
     allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
+    allowTutorScoreRowActions?: boolean;
     secondCorrectionEnabled?: boolean;
     feedbackSuggestionModule?: string;
     gradingInstructions?: string;
+    /** MilestoneExercise-only: shown in the "choose a variant" banner on the student group-detail page. */
+    description?: string;
 
     // Timeline fields
     releaseDate?: string;
@@ -181,6 +184,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments,
         allowFeedbackRequests: exercise.allowFeedbackRequests,
         presentationScoreEnabled: exercise.presentationScoreEnabled,
+        allowTutorScoreRowActions: exercise.allowTutorScoreRowActions,
         secondCorrectionEnabled: exercise.secondCorrectionEnabled,
         feedbackSuggestionModule: exercise.feedbackSuggestionModule,
         gradingInstructions: exercise.gradingInstructions,

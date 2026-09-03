@@ -282,6 +282,36 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertModelingExerciseExistsInWeaviate(weaviateService, modelingExerciseTestRepository.findById(returnedModelingExercise.id()).orElseThrow());
     }
 
+    /**
+     * Regression test: the scores-page opt-in must survive create and a create → read → edit → save round trip.
+     * The response DTO used to drop it, so the edit form always rendered the checkbox unchecked and the next save
+     * silently cleared the persisted flag. Mirrors {@code TextExerciseIntegrationTest#updateTextExercise_asInstructor}.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateAndUpdateModelingExercise_roundTripsAllowTutorScoreRowActions() throws Exception {
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
+        // opt in to showing the scores-page row actions to tutors
+        modelingExercise.setAllowTutorScoreRowActions(true);
+
+        ModelingExerciseResponseDTO created = request.postWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.CREATED);
+        assertThat(created.allowTutorScoreRowActions()).as("allowTutorScoreRowActions was returned by the create response").isTrue();
+        assertThat(modelingExerciseTestRepository.findByIdElseThrow(created.id()).isAllowTutorScoreRowActions()).as("allowTutorScoreRowActions was persisted on create").isTrue();
+
+        // The GET is what the edit form loads; rebuilding the update request from it is what the client does, so a flag
+        // missing from the response DTO would come back as a destructive `false` on the very next save.
+        ModelingExerciseResponseDTO loaded = request.get("/api/modeling/modeling-exercises/" + created.id(), HttpStatus.OK, ModelingExerciseResponseDTO.class);
+        assertThat(loaded.allowTutorScoreRowActions()).as("allowTutorScoreRowActions was returned by the single-exercise GET").isTrue();
+
+        modelingExercise.setId(created.id());
+        ModelingExerciseResponseDTO updated = request.putWithResponseBody("/api/modeling/modeling-exercises", UpdateModelingExerciseDTO.of(modelingExercise),
+                ModelingExerciseResponseDTO.class, HttpStatus.OK);
+        assertThat(updated.allowTutorScoreRowActions()).as("allowTutorScoreRowActions was returned by the update response").isTrue();
+        assertThat(modelingExerciseTestRepository.findByIdElseThrow(updated.id()).isAllowTutorScoreRowActions()).as("allowTutorScoreRowActions survived the update").isTrue();
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExerciseWrongCourseId_asInstructor() throws Exception {
@@ -539,6 +569,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         body.setAssessmentDueDate(null);
         body.setCourse(target);
         body.setChannelName("edited-import-" + UUID.randomUUID().toString().substring(0, 8));
+        // The import form offers the scores-page opt-in like the create form does, so the import DTO has to carry it -
+        // copyExerciseBasis deliberately does not backfill booleans with non-null defaults from the source exercise.
+        body.setAllowTutorScoreRowActions(true);
 
         // The import endpoint consumes the flat ImportModelingExerciseDTO (matching the migrated Angular client), so the
         // edited entity is mapped to the DTO shape the client would send.
@@ -552,6 +585,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         assertThat(imported.getReleaseDate()).as("cleared release date should stay cleared").isNull();
         assertThat(imported.getDueDate()).as("cleared due date should stay cleared").isNull();
         assertThat(imported.getAssessmentDueDate()).as("cleared assessment due date should stay cleared").isNull();
+        assertThat(imported.isAllowTutorScoreRowActions()).as("allowTutorScoreRowActions should survive the standalone import").isTrue();
     }
 
     @Test
@@ -1721,11 +1755,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         // Build the exam-edit request the way the client does (from the flattened response): courseId absent, exerciseGroupId present.
         UpdateModelingExerciseDTO editDto = new UpdateModelingExerciseDTO(response.id(), response.title(), response.channelName(), response.shortName(),
                 response.problemStatement(), response.categories(), response.difficulty(), response.maxPoints(), response.bonusPoints(), response.includedInOverallScore(),
-                response.allowComplaintsForAutomaticAssessments(), response.allowFeedbackRequests(), response.presentationScoreEnabled(), response.secondCorrectionEnabled(),
-                response.feedbackSuggestionModule(), response.gradingInstructions(), response.releaseDate(), response.startDate(), response.dueDate(), response.assessmentDueDate(),
-                response.exampleSolutionPublicationDate(), response.diagramType(), response.exampleSolutionModel(), response.exampleSolutionExplanation(), response.courseId(),
-                response.exerciseGroupId(), response.mode(), response.teamAssignmentConfig(), response.plagiarismDetectionConfig(), response.gradingCriteria(),
-                response.competencyLinks());
+                response.allowComplaintsForAutomaticAssessments(), response.allowFeedbackRequests(), response.presentationScoreEnabled(), response.allowTutorScoreRowActions(),
+                response.secondCorrectionEnabled(), response.feedbackSuggestionModule(), response.gradingInstructions(), response.releaseDate(), response.startDate(),
+                response.dueDate(), response.assessmentDueDate(), response.exampleSolutionPublicationDate(), response.diagramType(), response.exampleSolutionModel(),
+                response.exampleSolutionExplanation(), response.courseId(), response.exerciseGroupId(), response.mode(), response.teamAssignmentConfig(),
+                response.plagiarismDetectionConfig(), response.gradingCriteria(), response.competencyLinks());
 
         ModelingExerciseResponseDTO updated = request.putWithResponseBody("/api/modeling/modeling-exercises", editDto, ModelingExerciseResponseDTO.class, HttpStatus.OK);
 

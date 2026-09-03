@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -71,8 +72,10 @@ import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
+import de.tum.cit.aet.artemis.programming.domain.MilestoneExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -83,6 +86,8 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
+import de.tum.cit.aet.artemis.programming.service.MilestoneEffortGateService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
@@ -114,6 +119,8 @@ public class LocalVCServletService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final MilestoneEffortGateService milestoneEffortGateService;
+
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     private final ContinuousIntegrationTriggerService ciTriggerService;
@@ -121,6 +128,8 @@ public class LocalVCServletService {
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
+
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
@@ -189,8 +198,9 @@ public class LocalVCServletService {
 
     public LocalVCServletService(AuthenticationManager authenticationManager, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
+            MilestoneEffortGateService milestoneEffortGateService, AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService,
+            ProgrammingSubmissionService programmingSubmissionService, ProgrammingSubmissionMessagingService programmingSubmissionMessagingService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
             ExerciseVersionService exerciseVersionService, UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
@@ -205,10 +215,12 @@ public class LocalVCServletService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.milestoneEffortGateService = milestoneEffortGateService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.ciTriggerService = ciTriggerService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.repositoryVCSAccessTokenRepository = repositoryVCSAccessTokenRepository;
@@ -1369,6 +1381,34 @@ public class LocalVCServletService {
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
+    /**
+     * Whether the milestone effort gate refuses this write, and why.
+     * <p>
+     * Lives here because the resolution from an on-disk repository to its exercise and participation does; the decision
+     * itself is {@link MilestoneEffortGateService}'s. Called from {@link LocalVCPrePushHook} for git pushes; the online
+     * code editor consults the gate service directly, since it already knows the participation.
+     *
+     * @param repository the repository being written to
+     * @param user       the user performing the write
+     * @return the message to reject the push with, or empty when nothing blocks it
+     */
+    public Optional<String> findMilestoneEffortRejectionReason(Repository repository, User user) {
+        try {
+            LocalVCRepositoryUri localVCRepositoryUri = getLocalVCRepositoryUri(repository.getDirectory().toPath());
+            ProgrammingExercise exercise = getProgrammingExercise(localVCRepositoryUri.getProjectKey());
+            ProgrammingExerciseParticipation participation = programmingExerciseParticipationService
+                    .fetchParticipationByRepository(localVCRepositoryUri.getRepositoryTypeOrUserName(), localVCRepositoryUri.toString(), exercise);
+            List<String> blockingStoryTitles = milestoneEffortGateService.findStoriesBlockingWrite(exercise, participation, user);
+            return blockingStoryTitles.isEmpty() ? Optional.empty() : Optional.of(milestoneEffortGateService.buildRejectionMessage(blockingStoryTitles));
+        }
+        catch (Exception e) {
+            // Fail open, for the same reason the gate service does: a repository that cannot be resolved here (a
+            // template, solution or test repository, say) must not have its pushes refused.
+            log.debug("Could not evaluate the milestone effort gate for a push by {}; allowing the push", user.getLogin(), e);
+            return Optional.empty();
+        }
+    }
+
     private ProgrammingExerciseParticipation retrieveSolutionParticipation(ProgrammingExercise exercise) {
         return programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
     }
@@ -1557,6 +1597,15 @@ public class LocalVCServletService {
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
         programmingSubmissionMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
+
+        if (participation.getExercise() instanceof MilestoneExercise milestoneExercise && participation instanceof ProgrammingExerciseStudentParticipation milestoneParticipation) {
+            // Every UserStoryExercise sibling shares this same push (see ParticipationService.startUserStoryExercise)
+            // and needs its own "building..." indicator right now, not only once ProgrammingExerciseGradingService's
+            // result fan-out runs after the build completes - otherwise a sibling's status box has nothing to show
+            // for the entire duration of the build and jumps straight from "-" to the final score.
+            // TODO: verify that this is still the right service to call
+            programmingExerciseGradingService.provisionPendingSubmissionsForUserStoryExercises(submission, milestoneExercise, milestoneParticipation);
+        }
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException, VersionControlException {

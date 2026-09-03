@@ -131,9 +131,15 @@ export class ExerciseSplitPanelComponent {
         return !!course && (isCommunicationEnabled(course) || isMessagingEnabled(course));
     });
 
+    /** A UserStoryExercise is a ProgrammingExercise (shares its group's repositories/code editor), so it follows the same student-facing behavior wherever this file branches on ExerciseType.PROGRAMMING. */
+    private static isProgrammingLike(type: ExerciseType | undefined): boolean {
+        return type === ExerciseType.PROGRAMMING || type === ExerciseType.USER_STORY;
+    }
+
     private static getChatMode(type: ExerciseType): ChatServiceMode | undefined {
         switch (type) {
             case ExerciseType.PROGRAMMING:
+            case ExerciseType.USER_STORY:
                 return ChatServiceMode.PROGRAMMING_EXERCISE;
             case ExerciseType.TEXT:
                 return ChatServiceMode.TEXT_EXERCISE;
@@ -151,16 +157,18 @@ export class ExerciseSplitPanelComponent {
         () => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI && this.showIris() && !this.showEditorPanel(),
     );
 
+    protected readonly isProgrammingLikeExercise = computed(() => ExerciseSplitPanelComponent.isProgrammingLike(this.exercise().type));
+
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor;
+        return ExerciseSplitPanelComponent.isProgrammingLike(exercise.type) && (exercise as ProgrammingExercise).allowOnlineEditor;
     });
 
     readonly showEditorPanel = computed(() => {
         const type = this.exercise().type;
         if (type === ExerciseType.QUIZ) return true;
         if (!this.studentParticipation()) return false;
-        if (type === ExerciseType.PROGRAMMING) {
+        if (ExerciseSplitPanelComponent.isProgrammingLike(type)) {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
         }
         return true;
@@ -169,6 +177,7 @@ export class ExerciseSplitPanelComponent {
     readonly editorLabelKey = computed(() => {
         switch (this.exercise().type) {
             case ExerciseType.PROGRAMMING:
+            case ExerciseType.USER_STORY:
                 return 'artemisApp.courseOverview.exerciseDetails.codeEditor';
             case ExerciseType.TEXT:
                 return 'artemisApp.courseOverview.exerciseDetails.textEditor';
@@ -192,7 +201,7 @@ export class ExerciseSplitPanelComponent {
         const exercise = this.exercise();
         const result = this.latestRatedResult();
         return (
-            exercise.type === ExerciseType.PROGRAMMING &&
+            ExerciseSplitPanelComponent.isProgrammingLike(exercise.type) &&
             !!this.gradedStudentParticipation() &&
             !!result &&
             (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC || this.allowComplaintsForAutomaticAssessments())
@@ -202,7 +211,7 @@ export class ExerciseSplitPanelComponent {
     readonly showRating = computed(() => {
         const result = this.latestRatedResult();
         return (
-            this.exercise().type === ExerciseType.PROGRAMMING &&
+            ExerciseSplitPanelComponent.isProgrammingLike(this.exercise().type) &&
             !!this.gradedStudentParticipation() &&
             !!result &&
             (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC)
@@ -284,7 +293,7 @@ export class ExerciseSplitPanelComponent {
             return quizBatchStarted || quizHasStarted;
         }
         if (!studentParticipation) return false;
-        if (type === ExerciseType.PROGRAMMING) {
+        if (ExerciseSplitPanelComponent.isProgrammingLike(type)) {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
         }
         return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD;

@@ -696,6 +696,9 @@ public class ModelingExerciseResource {
         if (updateModelingExerciseDTO.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(updateModelingExerciseDTO.presentationScoreEnabled());
         }
+        if (updateModelingExerciseDTO.allowTutorScoreRowActions() != null) {
+            exercise.setAllowTutorScoreRowActions(updateModelingExerciseDTO.allowTutorScoreRowActions());
+        }
         if (updateModelingExerciseDTO.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(updateModelingExerciseDTO.secondCorrectionEnabled());
         }
@@ -776,6 +779,9 @@ public class ModelingExerciseResource {
         }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.allowTutorScoreRowActions() != null) {
+            exercise.setAllowTutorScoreRowActions(dto.allowTutorScoreRowActions());
         }
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
@@ -861,6 +867,9 @@ public class ModelingExerciseResource {
         }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.allowTutorScoreRowActions() != null) {
+            exercise.setAllowTutorScoreRowActions(dto.allowTutorScoreRowActions());
         }
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());

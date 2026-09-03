@@ -1199,7 +1199,7 @@ public class CourseTestService {
         assertThat(projectedProgrammingExercise.studentParticipations()).filteredOn(participation -> Boolean.TRUE.equals(participation.testRun())).singleElement()
                 .satisfies(participation -> assertThat(participation.repositoryUri()).as("practice repository is not confused with the graded repository").isNull());
 
-        var projectedQuizExercise = exercises.exercises().stream().filter(exercise -> exercise.type() == ExerciseType.QUIZ).findFirst().orElseThrow();
+        var projectedQuizExercise = exercises.exercises().stream().filter(exercise -> ExerciseType.QUIZ.getValue().equals(exercise.type())).findFirst().orElseThrow();
         assertThat(projectedQuizExercise.quizEnded()).as("past quiz is marked as ended").isTrue();
         assertThat(projectedQuizExercise.quizBatches()).as("the requesting student's synchronized quiz batch is represented by one minimal marker").singleElement()
                 .satisfies(batch -> assertThat(batch.started()).isTrue());

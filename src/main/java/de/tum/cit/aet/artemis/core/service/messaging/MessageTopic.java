@@ -17,6 +17,8 @@ public enum MessageTopic {
     EXAM_RESCHEDULE_DURING_CONDUCTION("exam-reschedule-during-conduction"),
     STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION("student-exam-reschedule-during-conduction"),
     PARTICIPANT_SCORE_SCHEDULE("participant-score-schedule"),
+    MILESTONE_SCORE_SCHEDULE("milestone-score-schedule"),
+    MILESTONE_SCORE_GROUP_SCHEDULE("milestone-score-group-schedule"),
     QUIZ_EXERCISE_START_SCHEDULE("quiz-exercise-start-schedule"),
     QUIZ_EXERCISE_START_CANCEL("quiz-exercise-start-cancel"),
     SLIDE_UNHIDE_SCHEDULE("slide-unhide-schedule"),

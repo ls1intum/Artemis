@@ -69,7 +69,7 @@
             (click)="onContinueExercise()!()"
         ></button>
     }
-    @switch (exercise().type) {
+    @switch (switchExerciseType()) {
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {
             <div class="btn-group">

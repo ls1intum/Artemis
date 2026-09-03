@@ -108,6 +108,18 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
+    public void sendMilestoneScoreSchedule(Long userStoryExerciseId, Long studentId) {
+        log.info("Sending schedule milestone score update for user story exercise {} and student {}.", userStoryExerciseId, studentId);
+        sendMessageDelayed(MessageTopic.MILESTONE_SCORE_SCHEDULE, userStoryExerciseId, studentId);
+    }
+
+    @Override
+    public void sendMilestoneScoreScheduleForGroup(Long milestoneExerciseId) {
+        log.info("Sending schedule milestone score update for the whole group of milestone exercise {}.", milestoneExerciseId);
+        sendMessageDelayed(MessageTopic.MILESTONE_SCORE_GROUP_SCHEDULE, milestoneExerciseId);
+    }
+
+    @Override
     public void sendQuizExerciseStartSchedule(Long quizExerciseId) {
         log.info("Sending schedule for quiz exercise {} to broker.", quizExerciseId);
         sendMessageDelayed(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE, quizExerciseId);

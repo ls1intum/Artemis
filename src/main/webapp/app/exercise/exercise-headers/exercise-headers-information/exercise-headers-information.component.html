@@ -41,6 +41,27 @@
                         </span>
                     </jhi-information-box>
                 </div>
+            } @else if (informationBoxItem.content.type === 'userStoryEffort') {
+                @let effortField = informationBoxItem.content.value;
+                <!-- The whole box is the target, so a student does not have to hit the number itself to start editing. -->
+                <div
+                    class="user-story-effort-box"
+                    [attr.role]="isEffortEditable() ? 'button' : undefined"
+                    [attr.tabindex]="isEffortEditable() ? 0 : undefined"
+                    (click)="startEditingEffort(effortField)"
+                    (keydown.enter)="startEditingEffort(effortField)"
+                    (keydown.space)="startEditingEffort(effortField)"
+                >
+                    <jhi-information-box [informationBoxData]="informationBoxItem">
+                        <jhi-user-story-effort-field
+                            contentComponent
+                            [value]="effortField === 'estimatedEffort' ? reportedEffort()?.estimatedEffort : reportedEffort()?.actualEffort"
+                            [editing]="editingEffortField() === effortField"
+                            (valueChange)="saveReportedEffort(effortField, $event)"
+                            (cancelled)="editingEffortField.set(undefined)"
+                        />
+                    </jhi-information-box>
+                </div>
             } @else {
                 <jhi-information-box [informationBoxData]="informationBoxItem">
                     @switch (informationBoxItem.content.type) {

@@ -110,6 +110,7 @@
         "courseIdUndefined": "The course ID is undefined. Please make sure the course exists.",
         "notAllowedInExam": "This operation is not allowed in an exam.",
         "quizNotIndividual": "Only individual-mode quizzes can be added to an exercise group.",
+        "userStoryHasStudentParticipations": "This user story exercise cannot be moved to another milestone because students have already started it.",
         "timelineManagedByVariantGroup": "This exercise belongs to a variant group, which manages the shared timeline. Please change the dates on the variant group instead.",
         "profilePictureFilesizeTooBig": "The file size of your image is too big, please upload a smaller one.",
         "profilePictureFileFormatNotSupported": "The file format is not supported, please make sure to upload a .png or .jpg file.",

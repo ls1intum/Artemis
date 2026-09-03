@@ -36,6 +36,7 @@ export interface UpdateTextExerciseDTO {
     gradingInstructions?: string;
     categories?: string[];
     presentationScoreEnabled?: boolean;
+    allowTutorScoreRowActions?: boolean;
     secondCorrectionEnabled?: boolean;
     feedbackSuggestionModule?: string;
     allowComplaintsForAutomaticAssessments?: boolean;
@@ -126,6 +127,7 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         gradingInstructions: textExercise.gradingInstructions,
         categories,
         presentationScoreEnabled: textExercise.presentationScoreEnabled,
+        allowTutorScoreRowActions: textExercise.allowTutorScoreRowActions,
         secondCorrectionEnabled: textExercise.secondCorrectionEnabled,
         feedbackSuggestionModule: textExercise.feedbackSuggestionModule,
         allowComplaintsForAutomaticAssessments: textExercise.allowComplaintsForAutomaticAssessments,

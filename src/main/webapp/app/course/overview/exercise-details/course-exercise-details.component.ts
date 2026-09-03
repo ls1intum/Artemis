@@ -10,7 +10,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getExerciseUrlSegmentOrEmpty, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 
@@ -357,7 +357,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this._isAfterAssessmentDueDate.set(!this.exercise?.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate));
         this._allowComplaintsForAutomaticAssessments.set(false);
         this._plagiarismCaseInfo.set(newExerciseDetails.plagiarismCaseInfo);
-        if (this.exercise?.type === ExerciseType.PROGRAMMING) {
+        if (this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.USER_STORY) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
                 !this.exercise.dueDate ||
@@ -368,7 +368,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._submissionPolicy.set(programmingExercise.submissionPolicy);
         }
 
-        if ((this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.TEXT) && !this.exercise.exerciseGroup && this.courseId) {
+        if (
+            (this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.USER_STORY || this.exercise?.type === ExerciseType.TEXT) &&
+            !this.exercise.exerciseGroup &&
+            this.courseId
+        ) {
             this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
             if (this.irisEnabled()) {
                 this.irisSettingsService
@@ -384,7 +388,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.subscribeForNewResults();
         void this.subscribeToTeamAssignmentUpdates();
 
-        this._baseResource.set(`/course-management/${this.courseId}/${this.exercise?.type}-exercises/${this.exercise?.id}/`);
+        // Not `${type}-exercises`: a UserStoryExercise/MilestoneExercise has no route of its own, so the instructor
+        // actions built from this would point nowhere (see getExerciseUrlSegment).
+        this._baseResource.set(`/course-management/${this.courseId}/${getExerciseUrlSegmentOrEmpty(this.exercise?.type)}/${this.exercise?.id}/`);
         if (this.exercise?.type) {
             this._exerciseIcon.set(getIcon(this.exercise.type));
         }

@@ -27,15 +27,23 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 @Repository
 public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<ExerciseVariantGroup, Long> {
 
+    // Milestone groups are excluded here and served by MilestoneExerciseGroupRepository instead. Fetching a
+    // MilestoneExerciseGroup's milestoneExercise from this base-type query would need
+    // TREAT(evg AS MilestoneExerciseGroup).milestoneExercise, which restricts the whole query to that subtype rather than
+    // only the join - even inside a LEFT JOIN FETCH - so every other group silently vanished from the result. Returning
+    // milestone groups here without that fetch is no better: their timeline getters delegate to the unfetched anchor and
+    // would read as "no dates".
     @Query("""
             SELECT DISTINCT evg
             FROM Course c
                 JOIN c.exerciseVariantGroups evg
                 LEFT JOIN FETCH evg.exercises
             WHERE c.id = :courseId
+                AND TYPE(evg) <> MilestoneExerciseGroup
             """)
     List<ExerciseVariantGroup> findAllByCourseId(@Param("courseId") Long courseId);
 
+    // Milestone groups are excluded - see the comment on findAllByCourseId.
     @Query("""
             SELECT DISTINCT evg
             FROM Course c
@@ -43,6 +51,7 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
                 LEFT JOIN FETCH evg.exercises
             WHERE c.id = :courseId
                 AND evg.id = :groupId
+                AND TYPE(evg) <> MilestoneExerciseGroup
             """)
     Optional<ExerciseVariantGroup> findByIdAndCourseId(@Param("groupId") Long groupId, @Param("courseId") Long courseId);
 
@@ -89,4 +98,36 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
             WHERE e.id = :exerciseId
             """)
     Optional<ExerciseVariantGroup> findByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Like {@link #findByExerciseId}, but also eagerly fetches the group's {@code exercises} - needed by the
+     * milestone-test-suite-changed fan-out ({@code UserStoryExerciseService.syncAllMembersTestCases}), which iterates
+     * every member, run from {@code ProgrammingExerciseGradingService} outside of any request-scoped transaction.
+     *
+     * @param exerciseId the id of the (potential) member exercise, typically a {@code MilestoneExercise}
+     * @return the owning group with its exercises initialized, or empty if the exercise has none
+     */
+    @Query("""
+            SELECT DISTINCT g
+            FROM Exercise e
+                JOIN e.exerciseVariantGroup g
+                LEFT JOIN FETCH g.exercises
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ExerciseVariantGroup> findByExerciseIdWithExercises(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Counts the group's {@code exercises} members without loading them, used by the "cannot delete a non-empty
+     * {@code MilestoneExerciseGroup}" guard. The group's own {@code milestoneExercise} is never itself a member of that
+     * collection (see {@link de.tum.cit.aet.artemis.exercise.domain.MilestoneExerciseGroup}), so no exclusion is needed here.
+     *
+     * @param groupId the id of the group whose members to count
+     * @return the number of exercises currently assigned to the group
+     */
+    @Query("""
+            SELECT COUNT(e)
+            FROM Exercise e
+            WHERE e.exerciseVariantGroup.id = :groupId
+            """)
+    long countExercisesByGroupId(@Param("groupId") Long groupId);
 }

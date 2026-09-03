@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 
 /**
@@ -92,14 +93,18 @@ public class LocalCIEventListenerService {
 
     private final MailService mailService;
 
+    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+
     public LocalCIEventListenerService(DistributedDataAccessService distributedDataAccessService, LocalCIQueueWebsocketService localCIQueueWebsocketService,
-            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService) {
+            BuildJobRepository buildJobRepository, ProgrammingMessagingService programmingMessagingService, UserService userService, MailService mailService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService) {
         this.distributedDataAccessService = distributedDataAccessService;
         this.localCIQueueWebsocketService = localCIQueueWebsocketService;
         this.buildJobRepository = buildJobRepository;
         this.programmingMessagingService = programmingMessagingService;
         this.userService = userService;
         this.mailService = mailService;
+        this.programmingExerciseGradingService = programmingExerciseGradingService;
     }
 
     /**
@@ -189,6 +194,11 @@ public class LocalCIEventListenerService {
             buildJobRepository.updateBuildJobStatusWithBuildStartDate(job.id(), BuildStatus.BUILDING, job.jobTimingInfo().buildStartDate());
             notifyUserAboutBuildProcessing(job.exerciseId(), job.participationId(), job.buildConfig().assignmentCommitHash(), job.jobTimingInfo().submissionDate(),
                     job.jobTimingInfo().buildStartDate(), job.jobTimingInfo().estimatedCompletionDate());
+            // Only the milestone's participation ever has a real build job - without this, a UserStoryExercise
+            // sibling's progress bar has nothing to move it from "queued" to "building" and jumps straight to the
+            // final result once the build completes (see ProgrammingExerciseGradingService.fanOutBuildProcessingToUserStoryExercises).
+            programmingExerciseGradingService.fanOutBuildProcessingToUserStoryExercises(job.exerciseId(), job.participationId(), job.buildConfig().assignmentCommitHash(),
+                    job.jobTimingInfo().submissionDate(), job.jobTimingInfo().buildStartDate(), job.jobTimingInfo().estimatedCompletionDate());
         }
 
         @Override

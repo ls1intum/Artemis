@@ -140,6 +140,29 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', 1, 'code-editor', 6], expect.anything());
     });
 
+    it('navigates a user story exercise to the same code editor route as a programming exercise', () => {
+        const navigateSpy = vi.mocked(TestBed.inject(Router).navigate);
+
+        // A UserStoryExercise shares its milestone group's repository, so it is edited in the code editor under the
+        // `programming-exercises` segment. Without this the outlet is never activated: the panel shows an empty editor
+        // next to an enabled Submit button, and submitting does nothing.
+        fixture.componentRef.setInput('exercise', { id: 7, type: ExerciseType.USER_STORY, allowOnlineEditor: true } as unknown as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 11 } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(navigateSpy).toHaveBeenCalledWith(['programming-exercises', 7, 'code-editor', 11], expect.anything());
+    });
+
+    it('does not navigate a user story exercise whose online editor is disabled', () => {
+        const navigateSpy = vi.mocked(TestBed.inject(Router).navigate);
+
+        fixture.componentRef.setInput('exercise', { id: 7, type: ExerciseType.USER_STORY, allowOnlineEditor: false } as unknown as Exercise);
+        fixture.componentRef.setInput('studentParticipation', { id: 11 } as StudentParticipation);
+        fixture.detectChanges();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
     it('should keep the problem statement open for users who opted out of AI when an editor panel is shown', () => {
         accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.NO_AI } as User);
         fixture.componentRef.setInput('studentParticipation', { id: 1 } as StudentParticipation);

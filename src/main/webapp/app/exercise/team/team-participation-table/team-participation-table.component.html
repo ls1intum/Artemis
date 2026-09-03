@@ -31,7 +31,17 @@
     @if (cell.data.participation) {
         @if (exercise().isAtLeastInstructor) {
             <div>
-                <a [routerLink]="['/course-management', course().id, cell.data.type + '-exercises', cell.data.id, 'participations', cell.data.participation.id, 'submissions']">
+                <a
+                    [routerLink]="[
+                        '/course-management',
+                        course().id,
+                        exerciseUrlSegment(cell.data.type),
+                        cell.data.id,
+                        'participations',
+                        cell.data.participation.id,
+                        'submissions',
+                    ]"
+                >
                     {{ cell.data.participation.id }}
                 </a>
             </div>

@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.lecture.api.SlideUnhideScheduleApi;
 import de.tum.cit.aet.artemis.notification.service.NotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.MilestoneScoreScheduleService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
 import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
 
@@ -45,6 +46,8 @@ public class InstanceMessageReceiveService {
 
     private final ParticipantScoreScheduleService participantScoreScheduleService;
 
+    private final MilestoneScoreScheduleService milestoneScoreScheduleService;
+
     private final Optional<AthenaApi> athenaApi;
 
     private final UserScheduleService userScheduleService;
@@ -64,7 +67,7 @@ public class InstanceMessageReceiveService {
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, DistributedDataProvider distributedDataProvider, UserRepository userRepository,
             UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService, ParticipantScoreScheduleService participantScoreScheduleService,
-            QuizScheduleService quizScheduleService, Optional<SlideUnhideScheduleApi> slideUnhideScheduleApi) {
+            QuizScheduleService quizScheduleService, Optional<SlideUnhideScheduleApi> slideUnhideScheduleApi, MilestoneScoreScheduleService milestoneScoreScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
@@ -73,6 +76,7 @@ public class InstanceMessageReceiveService {
         this.userScheduleService = userScheduleService;
         this.notificationScheduleService = notificationScheduleService;
         this.participantScoreScheduleService = participantScoreScheduleService;
+        this.milestoneScoreScheduleService = milestoneScoreScheduleService;
         this.distributedDataProvider = distributedDataProvider;
         this.quizScheduleService = quizScheduleService;
         this.slideUnhideScheduleApi = slideUnhideScheduleApi;
@@ -120,6 +124,14 @@ public class InstanceMessageReceiveService {
         distributedDataProvider.<Long[]>getReliableTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(payload -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleParticipantScore(payload[0], payload[1], payload[2]);
+        });
+        distributedDataProvider.<Long[]>getReliableTopic(MessageTopic.MILESTONE_SCORE_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleMilestoneScore(payload[0], payload[1]);
+        });
+        distributedDataProvider.<Long>getReliableTopic(MessageTopic.MILESTONE_SCORE_GROUP_SCHEDULE.toString()).addMessageListener(payload -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleMilestoneScoreForGroup(payload);
         });
         distributedDataProvider.<Long>getReliableTopic(MessageTopic.QUIZ_EXERCISE_START_SCHEDULE.toString()).addMessageListener(payload -> {
             SecurityUtils.setAuthorizationObject();
@@ -192,6 +204,16 @@ public class InstanceMessageReceiveService {
     public void processScheduleParticipantScore(Long exerciseId, Long participantId, Long resultIdToBeDeleted) {
         log.debug("Received schedule participant score for exercise {} and participant {} (result to be deleted: {})", exerciseId, participantId, resultIdToBeDeleted);
         participantScoreScheduleService.scheduleTask(exerciseId, participantId, resultIdToBeDeleted);
+    }
+
+    public void processScheduleMilestoneScore(Long userStoryExerciseId, Long studentId) {
+        log.debug("Received schedule milestone score for user story exercise {} and student {}", userStoryExerciseId, studentId);
+        milestoneScoreScheduleService.scheduleForUserStory(userStoryExerciseId, studentId);
+    }
+
+    public void processScheduleMilestoneScoreForGroup(Long milestoneExerciseId) {
+        log.debug("Received schedule milestone score for the whole group of milestone exercise {}", milestoneExerciseId);
+        milestoneScoreScheduleService.scheduleForGroup(milestoneExerciseId);
     }
 
     public void processScheduleQuizStart(Long exerciseId) {

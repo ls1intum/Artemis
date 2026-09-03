@@ -67,7 +67,7 @@
             }
         </div>
     }
-    @if (programmingExercise().shortName && isShortNameFieldValid()) {
+    @if (programmingExercise().shortName && isShortNameFieldValid() && isEditFieldDisplayedRecord().programmingLanguage) {
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>

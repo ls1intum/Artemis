@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, baseExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     IconDefinition,
@@ -133,7 +133,7 @@ export class ExerciseHeaderActionsComponent {
 
     private readonly baseResource = computed(() => {
         const exercise = this.exercise();
-        return `/course-management/${this.courseId()}/${exercise.type}-exercises/${exercise.id}/`;
+        return `/course-management/${this.courseId()}/${getExerciseUrlSegment(exercise.type)}/${exercise.id}/`;
     });
 
     private readonly quizExerciseStatus = computed(() => {
@@ -209,6 +209,14 @@ export class ExerciseHeaderActionsComponent {
         return !exercise.dueDate || !hasExerciseDueDatePassed(exercise, this._gradedParticipation());
     });
 
+    // A UserStoryExercise/MilestoneExercise is a ProgrammingExercise variant under the hood (a UserStoryExercise shares
+    // a milestone group's repo; the MilestoneExercise is that group's real anchor exercise) but carries its own `type`
+    // discriminator ('user-story'/'milestone'). It needs the same start/resume/code-button actions and editor items as
+    // a plain programming exercise, so the template's `@switch` and the editor-actions check are keyed off this
+    // normalized type rather than the exercise's own. (URL building uses `getExerciseUrlSegment` instead, which
+    // normalizes the same two types to the same route segment - see `baseResource`.)
+    readonly switchExerciseType = computed(() => baseExerciseType(this.exercise().type));
+
     constructor() {
         effect(() => {
             const exercise = this.exercise();
@@ -247,7 +255,7 @@ export class ExerciseHeaderActionsComponent {
             const quizExercise = exercise as QuizExercise;
             this._uninitializedQuiz.set(ArtemisQuizService.isUninitialized(quizExercise));
             this._quizNotStarted.set(ArtemisQuizService.notStarted(quizExercise));
-        } else if (exercise.type === ExerciseType.PROGRAMMING) {
+        } else if (exercise.type === ExerciseType.PROGRAMMING || exercise.type === ExerciseType.USER_STORY) {
             this._programmingExercise.set(exercise);
         } else if (exercise.type === ExerciseType.MODELING) {
             this._editorLabel.set('openModelingEditor');
@@ -448,7 +456,7 @@ export class ExerciseHeaderActionsComponent {
             }
         } else if (exercise.type === ExerciseType.MODELING) {
             editorItems.push(this.getStatisticItem('exercise-statistics'));
-        } else if (exercise.type === ExerciseType.PROGRAMMING) {
+        } else if (this.switchExerciseType() === ExerciseType.PROGRAMMING) {
             editorItems.push(this.getGradingItem());
         }
         return editorItems;

@@ -6,7 +6,7 @@ import { Submission, SubmissionExerciseType } from 'app/exercise/shared/entities
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getExerciseUrlSegmentOrEmpty, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
@@ -26,6 +26,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [TranslateDirective, FaIconComponent, NgbTooltip, RouterLink, ArtemisDatePipe, ArtemisTranslatePipe],
 })
 export class AssessmentLocksComponent implements OnInit {
+    protected exerciseUrlSegment(exerciseType?: ExerciseType): string {
+        return getExerciseUrlSegmentOrEmpty(exerciseType);
+    }
+
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private modelingAssessmentService = inject(ModelingAssessmentService);

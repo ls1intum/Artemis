@@ -32,10 +32,14 @@ export class ProblemStatementComponent implements OnInit {
     readonly exercise = computed(() => this.exerciseInput() ?? this.fetchedExercise());
     readonly participation = computed(() => this.participationInput() ?? this.fetchedParticipation());
 
-    /** Returns the exercise as ProgrammingExercise if it's a programming exercise, undefined otherwise */
+    /**
+     * Returns the exercise as ProgrammingExercise if it's a programming exercise (or one of its subtypes, e.g. a
+     * UserStoryExercise - its students work through the same task-list/test-progress instructions as a plain
+     * programming exercise), undefined otherwise.
+     */
     readonly programmingExercise = computed(() => {
         const ex = this.exercise();
-        return ex?.type === ExerciseType.PROGRAMMING ? ex : undefined;
+        return ex?.type === ExerciseType.PROGRAMMING || ex?.type === ExerciseType.USER_STORY ? ex : undefined;
     });
 
     readonly isStandalone = signal(false);

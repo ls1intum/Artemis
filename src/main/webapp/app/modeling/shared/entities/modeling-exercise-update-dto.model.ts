@@ -28,6 +28,7 @@ export interface UpdateModelingExerciseDTO {
     allowComplaintsForAutomaticAssessments?: boolean;
     allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
+    allowTutorScoreRowActions?: boolean;
     secondCorrectionEnabled?: boolean;
 
     releaseDate?: string;
@@ -82,6 +83,7 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         allowComplaintsForAutomaticAssessments: modelingExercise.allowComplaintsForAutomaticAssessments ?? false,
         allowFeedbackRequests: modelingExercise.allowFeedbackRequests ?? false,
         presentationScoreEnabled: modelingExercise.presentationScoreEnabled ?? false,
+        allowTutorScoreRowActions: modelingExercise.allowTutorScoreRowActions ?? false,
         secondCorrectionEnabled: modelingExercise.secondCorrectionEnabled ?? false,
         releaseDate: convertDateFromClient(modelingExercise.releaseDate),
         startDate: convertDateFromClient(modelingExercise.startDate),

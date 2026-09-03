@@ -40,6 +40,8 @@
             "groupMeta": {
                 "maxPoints": "Maximale Punkte:",
                 "maxPointsTooltip": "Begrenzt die Gesamtpunkte, die diese Gruppe zur Kursnote beiträgt.",
+                "sumOfPoints": "Summe der Punkte:",
+                "sumOfPointsTooltip": "Die Gesamtpunktzahl aller User-Story-Aufgaben in dieser Meilenstein-Gruppe.",
                 "none": "keine"
             },
             "table": {
@@ -69,6 +71,15 @@
                     "createDescription": "Eine Reihe von Aufgabenvarianten zum selben Thema. Studierende können beliebig viele Varianten bearbeiten.",
                     "importDescription": "Importiere eine Gruppe von Aufgabenvarianten aus einem anderen Kurs, einschließlich aller enthaltenen Aufgaben."
                 },
+                "milestoneGroup": {
+                    "title": "Meilenstein-Gruppe",
+                    "createDescription": "Ein Scrum-artiger Meilenstein: ein gemeinsames Repository und eine gemeinsame Testsuite, auf denen alle User-Story-Aufgaben aufbauen."
+                },
+                "userStory": {
+                    "title": "User-Story-Aufgabe",
+                    "createDescription": "Eine Programmieraufgabe innerhalb einer Meilenstein-Gruppe, die sich Repository und Testsuite teilt, aber eigenständig bewertet wird.",
+                    "disabledTooltip": "Lege zuerst eine Meilenstein-Gruppe an — eine User-Story-Aufgabe gehört immer zu einer solchen."
+                },
                 "import": {
                     "groupHeader": "Aufgabengruppe importieren",
                     "groupHint": "Wähle Gruppen zum Importieren aus. Alle Aufgaben der Gruppe werden eingeschlossen.",
@@ -92,6 +103,8 @@
                 "maxPoints": "Maximale Punkte",
                 "maxPointsTooltip": "Begrenzt die Gesamtpunkte, die diese Gruppe zur Kursnote beiträgt. Studierende erhalten höchstens diesen Wert aus der Gruppe, unabhängig davon, welche Variante sie abschließen.",
                 "maxPointsPlaceholder": "Keine Begrenzung",
+                "sumOfPoints": "Summe der Punkte",
+                "sumOfPointsTooltip": "Die Gesamtpunktzahl aller User-Story-Aufgaben in dieser Meilenstein-Gruppe — hier nicht bearbeitbar; füge eine User-Story-Aufgabe hinzu oder bearbeite sie, um den Wert zu ändern.",
                 "dates": "Termine",
                 "datesOverrideWarning": "Gruppentermine überschreiben die Termine einzelner Aufgaben.",
                 "datesInvalidOrder": "Die Termine sind nicht in einer gültigen Reihenfolge."

@@ -40,4 +40,12 @@ describe('ExerciseCategoriesComponent', () => {
 
         expect(fixture.nativeElement.textContent).toContain('Algorithms');
     });
+
+    it('should render the included-in-score badge for an ordinary optional exercise', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, includedInOverallScore: IncludedInOverallScore.NOT_INCLUDED } as Exercise);
+        fixture.componentRef.setInput('showTags', { includedInScore: true });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-included-in-score-badge')).not.toBeNull();
+    });
 });

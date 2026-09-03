@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -46,14 +47,19 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.MilestoneExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
+import de.tum.cit.aet.artemis.exercise.repository.MilestoneExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationResultService;
 import de.tum.cit.aet.artemis.notification.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.programming.domain.MilestoneExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -62,6 +68,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
@@ -70,8 +77,10 @@ import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionCommitHashDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyValuesDTO;
+import de.tum.cit.aet.artemis.programming.dto.SubmissionProcessingDTO;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -128,6 +137,12 @@ public class ProgrammingExerciseGradingService {
 
     private final MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService;
 
+    private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
+
+    private final MilestoneExerciseGroupRepository milestoneExerciseGroupRepository;
+
+    private final UserStoryExerciseService userStoryExerciseService;
+
     private final FeedbackMessageService feedbackMessageService;
 
     private final TestCaseFeedbackRepository testCaseFeedbackRepository;
@@ -138,6 +153,12 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
+
+    private final ProgrammingMessagingService programmingMessagingService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, FeedbackService feedbackService,
@@ -147,7 +168,10 @@ public class ProgrammingExerciseGradingService {
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
             MavenCentralRateLimitNotificationService mavenCentralRateLimitNotificationService, FeedbackMessageService feedbackMessageService,
             TestCaseFeedbackRepository testCaseFeedbackRepository, ScaFeedbackRepository scaFeedbackRepository, TestCasePointsService testCasePointsService,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, ExerciseVariantGroupRepository exerciseVariantGroupRepository,
+            MilestoneExerciseGroupRepository milestoneExerciseGroupRepository, UserStoryExerciseService userStoryExerciseService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingMessagingService programmingMessagingService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
@@ -171,6 +195,12 @@ public class ProgrammingExerciseGradingService {
         this.scaFeedbackRepository = scaFeedbackRepository;
         this.testCasePointsService = testCasePointsService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+        this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
+        this.milestoneExerciseGroupRepository = milestoneExerciseGroupRepository;
+        this.userStoryExerciseService = userStoryExerciseService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
@@ -215,6 +245,12 @@ public class ProgrammingExerciseGradingService {
             // When the result is from a solution participation, extract the feedback items (= test cases) and store them in our database.
             if (participation instanceof SolutionProgrammingExerciseParticipation) {
                 feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise);
+                if (exercise instanceof MilestoneExercise milestoneExercise) {
+                    // The milestone's test suite just (potentially) changed: duplicate the new set onto every
+                    // UserStoryExercise sibling and re-derive which of them are relevant per sibling, so their
+                    // grading stays current without requiring an edit to each sibling itself.
+                    syncMilestoneGroupTestCases(milestoneExercise);
+                }
             }
 
             Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
@@ -267,6 +303,18 @@ public class ProgrammingExerciseGradingService {
             log.error("Result for participation {} could not be created", participation.getId(), ex);
             return null;
         }
+    }
+
+    /**
+     * Propagates a {@link MilestoneExercise}'s just-(re)extracted test suite onto every {@code UserStoryExercise}
+     * member of its {@link MilestoneExerciseGroup} - a no-op if the milestone isn't grouped (should not normally
+     * happen, but a defensive check here is cheap and this is the one path that runs for every milestone build).
+     *
+     * @param milestoneExercise the milestone whose solution build just extracted (possibly changed) test cases
+     */
+    private void syncMilestoneGroupTestCases(MilestoneExercise milestoneExercise) {
+        milestoneExerciseGroupRepository.findByMilestoneExerciseIdWithExercises(milestoneExercise.getId())
+                .ifPresent(milestoneGroup -> userStoryExerciseService.syncAllMembersTestCases(milestoneGroup, milestoneExercise));
     }
 
     /**
@@ -399,6 +447,214 @@ public class ProgrammingExerciseGradingService {
         programmingSubmission.addResult(processedResult);
         processedResult.setSubmission(programmingSubmission);
         processedResult = resultRepository.save(processedResult);
+
+        if (isStudentParticipation && programmingExercise instanceof MilestoneExercise milestoneExercise
+                && participation instanceof ProgrammingExerciseStudentParticipation milestoneParticipation && !milestoneParticipation.isPracticeMode()) {
+            // This push landed on the group's shared repository (see ParticipationService.startUserStoryExercise), so
+            // every UserStoryExercise sibling needs its own graded Result from the very same build - no CI rerun needed,
+            // since the milestone's test suite already covers every sibling's tests.
+            fanOutResultToUserStoryExercises(processedResult, milestoneExercise, milestoneParticipation);
+        }
+
+        return processedResult;
+    }
+
+    /**
+     * Creates a pending (resultless) {@link ProgrammingSubmission} for every {@code UserStoryExercise} sibling the
+     * student has already started, and notifies each one, at the same moment the milestone's own canonical push is
+     * notified - not later, once the build finishes and {@link #fanOutResultToUserStoryExercise} runs. Without this,
+     * a sibling's "building..." / queued progress indicator (which is driven purely by a submission existing without
+     * a result yet, see {@code ProgrammingSubmissionService}) never appears at all: the result-only fan-out only
+     * lets a sibling jump straight from "-" to the final score once the build is already done, since the client
+     * never learns a build started in the first place.
+     *
+     * @param sourceSubmission       the canonical participation's just-created submission for the real push
+     * @param milestoneExercise      the milestone exercise the push landed on
+     * @param milestoneParticipation the student's milestone participation the push was made to
+     */
+    public void provisionPendingSubmissionsForUserStoryExercises(ProgrammingSubmission sourceSubmission, MilestoneExercise milestoneExercise,
+            ProgrammingExerciseStudentParticipation milestoneParticipation) {
+        Optional<User> student = milestoneParticipation.getStudent();
+        if (student.isEmpty()) {
+            return;
+        }
+        String studentLogin = student.get().getLogin();
+
+        milestoneExerciseGroupRepository.findByMilestoneExerciseIdWithExercises(milestoneExercise.getId()).ifPresent(group -> {
+            for (Exercise member : group.getExercises()) {
+                if (!(member instanceof UserStoryExercise userStoryExercise)) {
+                    continue;
+                }
+                programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(userStoryExercise.getId(), studentLogin).ifPresent(targetParticipation -> {
+                    ProgrammingSubmission pendingSubmission = new ProgrammingSubmission();
+                    pendingSubmission.setParticipation(targetParticipation);
+                    pendingSubmission.setSubmitted(true);
+                    pendingSubmission.setType(sourceSubmission.getType());
+                    pendingSubmission.setCommitHash(sourceSubmission.getCommitHash());
+                    pendingSubmission.setSubmissionDate(sourceSubmission.getSubmissionDate());
+                    pendingSubmission = programmingSubmissionRepository.save(pendingSubmission);
+                    programmingSubmissionMessagingService.notifyUserAboutSubmission(pendingSubmission, userStoryExercise.getId());
+                });
+            }
+        });
+    }
+
+    /**
+     * Fans out the "build actually started" notification (the queued -&gt; building transition the progress bar
+     * shows) from the milestone's own build job to every {@code UserStoryExercise} sibling the student has already
+     * started. Only the milestone's participation ever has a real build job (see
+     * {@code ParticipationService.startUserStoryExercise}), so this event is only ever raised for it -
+     * without fanning it out, a sibling's progress bar has nothing to move it past "queued": it jumps straight from
+     * "queued" to the final result once {@link #fanOutResultToUserStoryExercises} runs, skipping the building phase
+     * entirely (unlike {@link #provisionPendingSubmissionsForUserStoryExercises}, which only covers the earlier
+     * "queued" transition, this covers the next one).
+     *
+     * @param exerciseId              the id of the milestone exercise the build job belongs to (a no-op if this
+     *                                    isn't actually a {@code MilestoneExercise})
+     * @param participationId         the id of the milestone's canonical participation the build job belongs to
+     * @param commitHash              the commit hash being built
+     * @param submissionDate          when the submission was made
+     * @param buildStartDate          when the build actually started executing
+     * @param estimatedCompletionDate the estimated completion time shown by the progress bar
+     */
+    public void fanOutBuildProcessingToUserStoryExercises(long exerciseId, long participationId, String commitHash, ZonedDateTime submissionDate, ZonedDateTime buildStartDate,
+            ZonedDateTime estimatedCompletionDate) {
+        programmingExerciseRepository.findById(exerciseId).filter(MilestoneExercise.class::isInstance).map(MilestoneExercise.class::cast)
+                .ifPresent(milestoneExercise -> programmingExerciseStudentParticipationRepository.findById(participationId).ifPresent(milestoneParticipation -> {
+                    Optional<User> student = milestoneParticipation.getStudent();
+                    if (student.isEmpty()) {
+                        return;
+                    }
+                    String studentLogin = student.get().getLogin();
+                    milestoneExerciseGroupRepository.findByMilestoneExerciseIdWithExercises(milestoneExercise.getId()).ifPresent(group -> {
+                        for (Exercise member : group.getExercises()) {
+                            if (!(member instanceof UserStoryExercise userStoryExercise)) {
+                                continue;
+                            }
+                            programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(userStoryExercise.getId(), studentLogin)
+                                    .ifPresent(targetParticipation -> {
+                                        var submissionProcessingDTO = new SubmissionProcessingDTO(userStoryExercise.getId(), targetParticipation.getId(), commitHash,
+                                                submissionDate, buildStartDate, estimatedCompletionDate);
+                                        programmingMessagingService.notifyUserAboutSubmissionProcessing(submissionProcessingDTO, userStoryExercise.getId(),
+                                                targetParticipation.getId());
+                                    });
+                        }
+                    });
+                }));
+    }
+
+    /**
+     * Fans out a graded {@link Result} from the milestone's own (canonical) student participation to every
+     * {@code UserStoryExercise} sibling in its group that the same student has already started.
+     *
+     * @param milestoneResult        the just-processed, already-saved result of the milestone's canonical participation
+     * @param milestoneExercise      the milestone exercise the result belongs to
+     * @param milestoneParticipation the student's milestone participation the result belongs to
+     */
+    private void fanOutResultToUserStoryExercises(Result milestoneResult, MilestoneExercise milestoneExercise, ProgrammingExerciseStudentParticipation milestoneParticipation) {
+        Optional<User> student = milestoneParticipation.getStudent();
+        if (student.isEmpty()) {
+            // Team-mode milestones aren't part of the repository-sharing scheme (see ParticipationService) - nothing to fan out to.
+            return;
+        }
+        String studentLogin = student.get().getLogin();
+
+        milestoneExerciseGroupRepository.findByMilestoneExerciseIdWithExercises(milestoneExercise.getId()).ifPresent(group -> {
+            for (Exercise member : group.getExercises()) {
+                if (!(member instanceof UserStoryExercise userStoryExercise)) {
+                    continue;
+                }
+                programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(userStoryExercise.getId(), studentLogin)
+                        .ifPresent(targetParticipation -> fanOutResultToUserStoryExercise(milestoneResult, userStoryExercise, targetParticipation));
+            }
+        });
+    }
+
+    /**
+     * Duplicates {@code sourceResult} (and its submission) onto {@code targetParticipation} as its own
+     * {@link ProgrammingSubmission}/{@link Result}: test feedback is matched to {@code targetExercise}'s own
+     * {@link ProgrammingExerciseTestCase} rows by test name (the same matching {@link UserStoryExerciseService} already
+     * uses to duplicate the test-case rows themselves), then scored with the existing {@link #calculateScoreForResult}
+     * using only {@code targetExercise}'s own active test cases - no CI rerun required, since the source build already
+     * ran every test in the shared suite.
+     *
+     * @param sourceResult        the already-graded result to derive a sibling result from (the milestone's, or an
+     *                                existing sibling's latest result when backfilling a newly created UserStoryExercise)
+     * @param targetExercise      the UserStoryExercise the new result is being created for
+     * @param targetParticipation the target exercise's participation for the same student
+     * @return the newly saved, scored result for {@code targetParticipation}
+     */
+    public Result fanOutResultToUserStoryExercise(Result sourceResult, UserStoryExercise targetExercise, ProgrammingExerciseStudentParticipation targetParticipation) {
+        ProgrammingSubmission sourceSubmission = (ProgrammingSubmission) sourceResult.getSubmission();
+
+        // provisionPendingSubmissionsForUserStoryExercises already created (and notified) a pending submission for
+        // this exact commit at push time, so the client's "building..." tracking has something to attach the result
+        // to - reuse that same row instead of creating a second one the client never learned about (which would
+        // leave the original pending submission stuck "building" forever, since it never receives its own result).
+        // Only the backfill path (a UserStoryExercise added after the fact, deriving from an old result whose push
+        // never touched this exercise) legitimately has no pending submission yet and needs a fresh one.
+        ProgrammingSubmission targetSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(targetParticipation.getId(), sourceSubmission.getCommitHash());
+        boolean isNewSubmission = targetSubmission == null;
+        if (isNewSubmission) {
+            targetSubmission = new ProgrammingSubmission();
+            targetSubmission.setParticipation(targetParticipation);
+            targetSubmission.setSubmitted(true);
+            targetSubmission.setType(sourceSubmission.getType());
+            targetSubmission.setCommitHash(sourceSubmission.getCommitHash());
+            targetSubmission.setSubmissionDate(sourceSubmission.getSubmissionDate());
+        }
+        targetSubmission.setBuildFailed(sourceSubmission.isBuildFailed());
+        targetSubmission = programmingSubmissionRepository.save(targetSubmission);
+        if (isNewSubmission) {
+            // The client's build-status box is keyed off the participation id on the submission/result payload, not
+            // off the exercise or the pushed-to repo - without this, a sibling's box would stay stuck on "-" forever,
+            // even though its Submission/Result rows already exist (see LocalVCServletService.processNewPushToRepository,
+            // which sends the equivalent notification for the canonical participation that was actually pushed to).
+            // Skipped when reusing an existing pending submission: that one was already notified at push time.
+            programmingSubmissionMessagingService.notifyUserAboutSubmission(targetSubmission, targetExercise.getId());
+        }
+
+        Map<String, ProgrammingExerciseTestCase> targetTestCasesByName = testCaseRepository.findByExerciseId(targetExercise.getId()).stream()
+                .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, Function.identity(), (first, second) -> first));
+
+        Result targetResult = new Result();
+        targetResult.setAssessmentType(sourceResult.getAssessmentType());
+        targetResult.setCompletionDate(sourceResult.getCompletionDate());
+        targetResult.setSuccessful(sourceResult.isSuccessful());
+        targetResult.setExerciseId(targetExercise.getId());
+        targetResult.setSubmission(targetSubmission);
+        targetResult.setRatedIfNotAfterDueDate();
+
+        // only copy test case feedback here, all other feedbacks must be evaluated in the milestone..
+        // TODO: rather use the same test case for all US?!?!
+        for (TestCaseFeedback testFeedback : sourceResult.getTestCaseFeedbacks()) {
+            ProgrammingExerciseTestCase matchedTestCase = testFeedback.getTestCase() == null ? null : targetTestCasesByName.get(testFeedback.getTestCase().getTestName());
+            if (matchedTestCase == null) {
+                // This test case doesn't exist (yet) for the target exercise - nothing to score it against.
+                continue;
+            }
+            TestCaseFeedback copiedFeedback = feedbackService.copyTestCaseFeedback(testFeedback);
+            // we have to explicitly set the test case since MS and US do not share test cases..
+            copiedFeedback.setTestCase(matchedTestCase);
+            targetResult.addTestCaseFeedback(copiedFeedback);
+        }
+
+        Result processedResult = calculateScoreForResult(targetResult, targetExercise, true);
+
+        // One insert, exactly like the canonical path in processNewProgrammingExerciseResult: the result owns a non-null
+        // foreign key to its submission (Result#submission is @JoinColumn(nullable = false) since #13581), so it has to
+        // be set when the row is written. Clearing it first and repairing the association afterwards is the pre-#13581
+        // pattern, where the submission's cascade filled the column in with a follow-up update; it now fails Hibernate's
+        // not-null check on every flush. The submission row itself was already written above and did not change since,
+        // so it is deliberately not saved again - that would only cascade a pointless merge of the result just inserted.
+        targetSubmission.addResult(processedResult);
+        processedResult.setSubmission(targetSubmission);
+        processedResult = resultRepository.save(processedResult);
+
+        // Mirrors the normal path's LocalCIResultProcessingService.notifyUserAboutNewResult call - without this the
+        // sibling's result badge never appears client-side even though the Result row is already persisted.
+        programmingMessagingService.notifyUserAboutNewResult(processedResult, targetParticipation);
 
         return processedResult;
     }
@@ -914,6 +1170,14 @@ public class ProgrammingExerciseGradingService {
     private double calculateScore(ScoreCalculationData scoreCalculationData, boolean applySubmissionPolicy) {
 
         double points = calculateSuccessfulTestPoints(scoreCalculationData);
+
+        if (applyBlockingStaticCodeAnalysisDeduction(scoreCalculationData, points)) {
+            // A blocking category is an all-or-nothing gate rather than a price list: the tests are not re-priced, the
+            // whole achieved amount is taken away. On a MilestoneExercise this result's score is then replaced by the
+            // group aggregate (see MilestoneScoreService), which applies the very same rule to the group's points.
+            return 0.0;
+        }
+
         points -= calculateTotalPenalty(scoreCalculationData, applySubmissionPolicy);
 
         points = Math.max(0, points);
@@ -998,6 +1262,55 @@ public class ProgrammingExerciseGradingService {
         }
 
         return penalty;
+    }
+
+    /**
+     * Returns the static code analysis feedback of the given result that falls into a category the instructor marked
+     * {@link CategoryState#BLOCKING} - a category that zeroes the score of the exercise whose configuration declared it,
+     * instead of charging a price per issue.
+     * <p>
+     * Public because {@code MilestoneScoreService} applies the identical rule one level up: a milestone's static code
+     * analysis configuration governs a whole group of user stories, so one blocking violation in the shared codebase
+     * zeroes the group's aggregated points. Sharing the lookup keeps "blocking" from meaning two different things.
+     *
+     * @param programmingExercise        the exercise whose static code analysis configuration decides what blocks
+     * @param staticCodeAnalysisFeedback the already categorized static code analysis feedback to inspect
+     * @return the blocking feedback, empty if the exercise has no blocking category or none of them was violated
+     */
+    public List<ScaFeedback> findBlockingStaticCodeAnalysisFeedback(ProgrammingExercise programmingExercise, Collection<ScaFeedback> staticCodeAnalysisFeedback) {
+        if (!Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
+            return List.of();
+        }
+        Set<String> blockingCategoryNames = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId()).stream()
+                .filter(category -> category.getState() == CategoryState.BLOCKING).map(StaticCodeAnalysisCategory::getName).collect(Collectors.toSet());
+        if (blockingCategoryNames.isEmpty()) {
+            return List.of();
+        }
+        return staticCodeAnalysisFeedback.stream().filter(feedback -> blockingCategoryNames.contains(feedback.getCategory())).toList();
+    }
+
+    /**
+     * Takes the whole achieved amount away when a blocking category was violated, by writing it as negative credits on
+     * the blocking feedback.
+     * <p>
+     * Writing the deduction into the credits rather than only into the score is what keeps the two agreeing: several
+     * consumers re-derive a programming result's points by summing feedback credits instead of reading the score
+     * ({@link Result#calculateTotalPointsForProgrammingExercises()}, used for manual and semi-automatic results). If the
+     * zero lived only in the score, the first such re-derivation would hand the points straight back. It is the same
+     * reason {@link #calculateStaticCodeAnalysisPenalty} writes its per-issue penalties into the credits.
+     *
+     * @param scoreCalculationData the data of the result being scored
+     * @param achievedTestPoints   the points the result's tests earned, already capped at the exercise's maximum
+     * @return true if a blocking violation was found and the deduction was applied
+     */
+    private boolean applyBlockingStaticCodeAnalysisDeduction(ScoreCalculationData scoreCalculationData, double achievedTestPoints) {
+        List<ScaFeedback> blockingFeedback = findBlockingStaticCodeAnalysisFeedback(scoreCalculationData.exercise(), scoreCalculationData.staticCodeAnalysisFeedback());
+        if (blockingFeedback.isEmpty()) {
+            return false;
+        }
+        double perFeedbackDeduction = achievedTestPoints / blockingFeedback.size();
+        blockingFeedback.forEach(feedback -> feedback.setPenalty(perFeedbackDeduction));
+        return true;
     }
 
     /**

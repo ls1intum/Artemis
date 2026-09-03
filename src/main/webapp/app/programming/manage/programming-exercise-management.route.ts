@@ -12,6 +12,50 @@ import {
 
 export const routes: Routes = [
     {
+        // Milestone create/edit reuses the same programming-exercise update page as a normal exercise (see
+        // ProgrammingExerciseUpdateComponent.isMilestoneMode), so the milestone's settings (language, package,
+        // build config, static code analysis, ...) can be configured exactly like a programming exercise, minus
+        // Problem Statement/Points/Assessment - those stay independently configured per UserStoryExercise.
+        path: 'milestone-exercise-groups/new',
+        loadComponent: () => import('app/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.exerciseManagement.addModal.milestoneGroup.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'milestone-exercise-groups/:exerciseId/edit',
+        loadComponent: () => import('app/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.exerciseManagement.addModal.milestoneGroup.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        // UserStory create reuses the same programming-exercise update page as a normal exercise (see
+        // ProgrammingExerciseUpdateComponent.isUserStoryMode), minus everything the milestone group already owns
+        // (language, package, build config, static code analysis, timeline, ...) - only title/short name/categories/
+        // difficulty and Problem Statement/Points/Assessment are configured here.
+        path: 'user-story-exercises/new',
+        loadComponent: () => import('app/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.exerciseManagement.addModal.userStory.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'programming-exercises/new',
         loadComponent: () => import('app/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
         resolve: {

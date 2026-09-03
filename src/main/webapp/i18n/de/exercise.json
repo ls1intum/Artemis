@@ -285,6 +285,10 @@
                 "title": "Präsentation",
                 "description": "Wenn das Präsentationsergebnis aktiviert ist, dann können Tutor:innen auf der Seite \"Teilnahmen\" dieser Übung einen Punkt für Präsentation von Studierenden eintragen."
             },
+            "allowTutorScoreRowActions": {
+                "title": "Tutor:innen Aktionen auf der Bewertungsseite erlauben",
+                "description": "Wenn aktiviert, können Nutzer:innen mit mindestens Tutor:innen-Rolle (nicht nur Lehrende) die zeilenbezogenen Aktionen auf der Bewertungsseite der Übung sehen und nutzen."
+            },
             "codeEditorSync": {
                 "newCommitAlert": "Neuer Commit erkannt — Ein neuer Commit wurde in dieses Repository gepusht. Speichere und übermittle zuerst deine Änderungen, dann lade die Seite neu, um die neueste Version zu laden."
             },

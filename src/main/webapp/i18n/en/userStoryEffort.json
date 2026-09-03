@@ -1,0 +1,17 @@
+{
+    "artemisApp": {
+        "userStoryEffort": {
+            "title": "Effort",
+            "estimatedEffort": "Estimated effort (hours)",
+            "actualEffort": "Actual effort (hours)",
+            "estimatedEffortShort": "Estimated effort",
+            "actualEffortShort": "Actual effort",
+            "save": "Save",
+            "saved": "Effort saved.",
+            "estimateRequired": "Enter an estimated effort before pushing to the repository.",
+            "afterDueDate": "The effort can no longer be changed after the due date.",
+            "notReported": "–",
+            "effortMissing": "Effort missing"
+        }
+    }
+}

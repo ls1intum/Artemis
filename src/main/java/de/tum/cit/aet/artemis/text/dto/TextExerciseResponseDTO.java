@@ -35,12 +35,12 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 public record TextExerciseResponseDTO(Long id, String title, String shortName, String type, ExerciseType exerciseType, DifficultyLevel difficulty, ExerciseMode mode,
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, AssessmentType assessmentType, boolean secondCorrectionEnabled,
-        Boolean presentationScoreEnabled, String problemStatement, String exampleSolution, String gradingInstructions, Set<String> categories, String channelName,
-        String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId, Double courseAccuracyOfScores,
-        CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate, TeamAssignmentConfigDTO teamAssignmentConfig,
-        Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
-        boolean gradingInstructionFeedbackUsed, Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode, TextExerciseExamGroupDTO exerciseGroup,
-        ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
+        Boolean presentationScoreEnabled, Boolean allowTutorScoreRowActions, String problemStatement, String exampleSolution, String gradingInstructions, Set<String> categories,
+        String channelName, String feedbackSuggestionModule, boolean allowComplaintsForAutomaticAssessments, boolean allowFeedbackRequests, Long courseId,
+        Double courseAccuracyOfScores, CourseForQuizExerciseDTO course, Long exerciseGroupId, Long examId, ZonedDateTime examPublishResultsDate,
+        TeamAssignmentConfigDTO teamAssignmentConfig, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
+        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, boolean gradingInstructionFeedbackUsed, Set<ExampleSubmissionDTO> exampleSubmissions, Boolean teamMode,
+        TextExerciseExamGroupDTO exerciseGroup, ExerciseVariantGroupReferenceDTO exerciseVariantGroup) implements Serializable {
 
     /**
      * Creates a {@link TextExerciseResponseDTO} from the given {@link TextExercise}.
@@ -128,8 +128,8 @@ public record TextExerciseResponseDTO(Long id, String title, String shortName, S
         return new TextExerciseResponseDTO(exercise.getId(), exercise.getTitle(), exercise.getShortName(), exercise.getType(), exercise.getExerciseType(), exercise.getDifficulty(),
                 exercise.getMode(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.getReleaseDate(), exercise.getStartDate(),
                 exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getAssessmentType(),
-                exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.getProblemStatement(), exercise.getExampleSolution(),
-                exercise.getGradingInstructions(), categories, exercise.getChannelName(), exercise.getFeedbackSuggestionModule(),
+                exercise.getSecondCorrectionEnabled(), exercise.getPresentationScoreEnabled(), exercise.isAllowTutorScoreRowActions(), exercise.getProblemStatement(),
+                exercise.getExampleSolution(), exercise.getGradingInstructions(), categories, exercise.getChannelName(), exercise.getFeedbackSuggestionModule(),
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getAllowFeedbackRequests(), courseId, courseAccuracyOfScores, course, exerciseGroupId, examId,
                 examPublishResultsDate, teamAssignmentConfigDTO, gradingCriterionDTOs, competencyLinkDTOs, plagiarismDetectionConfigDTO,
                 exercise.isGradingInstructionFeedbackUsed(), exampleSubmissionDTOs, exercise.getMode() == ExerciseMode.TEAM, exerciseGroup, exerciseVariantGroupDTO);

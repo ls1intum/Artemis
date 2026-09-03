@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
 import de.tum.cit.aet.artemis.programming.dto.ConsistencyErrorDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -83,7 +84,14 @@ public class ConsistencyCheckService {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
 
         VersionControlService versionControl = versionControlService.orElseThrow();
-        if (!versionControl.checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getProjectName())) {
+        // A UserStoryExercise shares its MilestoneExerciseGroup's repositories instead of owning its own (see
+        // ParticipationService.startUserStoryExercise) - its own project key was therefore never provisioned
+        // in the VCS, so checkIfProjectExists would always (correctly, but misleadingly) report VCS_PROJECT_MISSING.
+        // Its template/test/solution URIs are copied from the milestone at creation time
+        // (UserStoryExerciseService.applyMilestoneConfig) and already point at the milestone's real, shared
+        // repositories, so those are still checked directly, just without the project-existence gate.
+        boolean isUserStoryExercise = programmingExercise instanceof UserStoryExercise;
+        if (!isUserStoryExercise && !versionControl.checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getProjectName())) {
             result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
         }
         else {
@@ -127,6 +135,14 @@ public class ConsistencyCheckService {
      */
     private List<ConsistencyErrorDTO> checkCIConsistency(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
+
+        // A UserStoryExercise never gets its own build plan - only the milestone's build plan is ever triggered for
+        // the shared repository (see ParticipationService.provisionUserStoryParticipationsForGroup /
+        // startUserStoryExercise), so its own template/solution build plan ids are always null by design.
+        // Checking for them would always (correctly, but misleadingly) report them missing.
+        if (programmingExercise instanceof UserStoryExercise) {
+            return result;
+        }
 
         ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
         if (!continuousIntegration.checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())) {

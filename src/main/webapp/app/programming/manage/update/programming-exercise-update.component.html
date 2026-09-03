@@ -1,6 +1,14 @@
 <div>
     <div class="d-flex align-items-center gap-2">
-        @if (!isImportFromExistingExercise && !(isImportFromFile || isImportFromSharing) && !programmingExercise.id) {
+        @if (isMilestoneMode && !programmingExercise.id) {
+            <h2 id="jhi-programming-exercise-heading-milestone-create" jhiTranslate="artemisApp.exerciseVariantGroup.milestoneGroupCreateLabel"></h2>
+        } @else if (isMilestoneMode && programmingExercise.id) {
+            <h2 id="jhi-programming-exercise-heading-milestone-edit" jhiTranslate="artemisApp.exerciseVariantGroup.milestoneGroupEditLabel"></h2>
+        } @else if (isUserStoryMode && !programmingExercise.id) {
+            <h2 id="jhi-programming-exercise-heading-user-story-create" jhiTranslate="artemisApp.exerciseVariantGroup.userStoryCreateLabel"></h2>
+        } @else if (isUserStoryMode && programmingExercise.id) {
+            <h2 id="jhi-programming-exercise-heading-user-story-edit" jhiTranslate="artemisApp.exerciseVariantGroup.userStoryEditLabel"></h2>
+        } @else if (!isImportFromExistingExercise && !(isImportFromFile || isImportFromSharing) && !programmingExercise.id) {
             <h2 id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel"></h2>
         } @else if (!isImportFromExistingExercise && programmingExercise.id) {
             <h2 id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel"></h2>
@@ -12,6 +20,21 @@
     <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">
         <jhi-exercise-group-timeline-lock #variantLock [exercise]="programmingExercise" [courseId]="courseId()" (exerciseChange)="programmingExercise = $event" />
+        @if (isUserStoryMode && !programmingExercise.id) {
+            <div class="mb-3">
+                <label for="jhi-user-story-milestone-group" jhiTranslate="artemisApp.exerciseVariantGroup.milestoneGroup"></label>
+                <tum-ui-select
+                    inputId="jhi-user-story-milestone-group"
+                    [options]="userStoryMilestoneGroupOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="selectedMilestoneGroupId"
+                    (ngModelChange)="selectMilestoneGroupForUserStory($event)"
+                    name="userStoryMilestoneGroupId"
+                    class="w-full"
+                />
+            </div>
+        }
         <div class="update-programming-exercise">
             <jhi-programming-exercise-info
                 [programmingExercise]="programmingExercise"
@@ -36,13 +59,15 @@
                 />
                 <hr class="mb-5" />
             }
-            <jhi-programming-exercise-language
-                [programmingExercise]="programmingExercise"
-                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
-            />
-            <hr class="mb-5" />
-            @if (!isSimpleMode()) {
+            @if (!isUserStoryMode) {
+                <jhi-programming-exercise-language
+                    [programmingExercise]="programmingExercise"
+                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                    [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+                />
+                <hr class="mb-5" />
+            }
+            @if (!isSimpleMode() && !isUserStoryMode) {
                 <jhi-programming-exercise-version-control [programmingExercise]="programmingExercise" [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()" />
                 <hr class="mb-5" />
             }

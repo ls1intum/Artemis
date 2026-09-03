@@ -225,7 +225,7 @@
                         [buttonLoading]="isLoading()"
                         [smallButton]="smallButtons()"
                         [hideLabelMobile]="false"
-                        [routerLink]="['/courses', courseId(), 'exercises', exercise().type + '-exercises', exercise().id, 'participate', gradedParticipation()!.id]"
+                        [routerLink]="['/courses', courseId(), 'exercises', exerciseUrlSegment(), exercise().id, 'participate', gradedParticipation()!.id]"
                     ></button>
                     @if (
                         exercise().allowFeedbackRequests && athenaEnabled && (exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) && beforeDueDate()

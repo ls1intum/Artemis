@@ -88,11 +88,62 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
+    /**
+     * Resolves a student's non-test-run participation in an exercise by the student's id rather than their login. Used by
+     * {@code MilestoneScoreService}, which is driven by result events carrying a participant id (see
+     * {@code ResultListener}) and would otherwise have to load the user just to read their login back out.
+     * <p>
+     * Milestone groups are individual-participation only (team milestones are not part of the repository-sharing scheme,
+     * see {@code ParticipationService}), so a student has at most one such participation per exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @param studentId  the id of the student
+     * @return the participation, or empty if the student has not started the exercise
+     */
+    @Query("""
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+            WHERE p.exercise.id = :exerciseId
+                AND p.student.id = :studentId
+                AND p.testRun = FALSE
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
+
+    /**
+     * All non-test-run participations of the given exercise that already have a real repository - used to find every
+     * student who already shares a {@code MilestoneExerciseGroup}'s repository (via its {@code MilestoneExercise}'s
+     * participations), so a newly created {@code UserStoryExercise} can backfill a participation for each of them (see
+     * {@code ParticipationService.provisionParticipationsForNewUserStoryExercise}).
+     *
+     * @param exerciseId the id of the exercise (typically the group's {@code MilestoneExercise})
+     * @return the matching participations
+     */
+    List<ProgrammingExerciseStudentParticipation> findAllByExerciseIdAndRepositoryUriIsNotNullAndTestRunFalse(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByRepositoryUri(String repositoryUri);
 
     default ProgrammingExerciseStudentParticipation findWithSubmissionsByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findWithSubmissionsByRepositoryUri(repositoryUri));
+    }
+
+    /**
+     * Like {@link #findWithSubmissionsByRepositoryUri}, but also scoped to a specific exercise - needed for the exact
+     * same reason as {@link #findByExerciseIdAndRepositoryUri}: a {@code UserStoryExercise} participation can share its
+     * {@code MilestoneExerciseGroup}'s repository, so multiple participations of different exercises can legitimately
+     * have the exact same {@code repositoryUri}. Used by the online code editor's "commit" push-processing path
+     * ({@code ProgrammingExerciseParticipationService.fetchParticipationWithSubmissionsByRepository}), which - unlike a
+     * real git push - already knows which participation (and therefore which exercise) the user committed through.
+     *
+     * @param exerciseId    the id of the exercise the participation belongs to
+     * @param repositoryUri the repository URI to look up
+     * @return the participation, or empty if none exists for that exercise/repository pair
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndRepositoryUri(long exerciseId, String repositoryUri);
+
+    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndRepositoryUriElseThrow(long exerciseId, String repositoryUri) {
+        return getValueElseThrow(findWithSubmissionsByExerciseIdAndRepositoryUri(exerciseId, repositoryUri));
     }
 
     // exercise and student are eager @ManyToOne associations, so without fetching them here Hibernate issues a secondary
@@ -103,6 +154,25 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
 
     default ProgrammingExerciseStudentParticipation findByRepositoryUriElseThrow(String repositoryUri) {
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
+    }
+
+    /**
+     * Like {@link #findByRepositoryUri}, but also scoped to a specific exercise - needed because a {@code UserStoryExercise}
+     * participation can share its {@code MilestoneExerciseGroup}'s repository (see {@code ParticipationService.startUserStoryExercise}
+     * / {@code provisionUserStoryParticipationsForGroup}), so multiple participations of different exercises can
+     * legitimately have the exact same {@code repositoryUri}; {@link #findByRepositoryUri} alone would then throw
+     * {@code NonUniqueResultException}. Git fetch/push access to such a repository always resolves the exercise from the
+     * repository's project key first (which is always the milestone's, since siblings physically live under it), so
+     * scoping by that already-known exercise id disambiguates cleanly.
+     *
+     * @param exerciseId    the id of the exercise the participation belongs to
+     * @param repositoryUri the repository URI to look up
+     * @return the participation, or empty if none exists for that exercise/repository pair
+     */
+    Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndRepositoryUri(long exerciseId, String repositoryUri);
+
+    default ProgrammingExerciseStudentParticipation findByExerciseIdAndRepositoryUriElseThrow(long exerciseId, String repositoryUri) {
+        return getValueElseThrow(findByExerciseIdAndRepositoryUri(exerciseId, repositoryUri));
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "team.students" })
@@ -291,6 +361,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             WHERE p.exercise.id = :exerciseId
             """)
     Set<ProgrammingExerciseStudentParticipation> findByExerciseId(@Param("exerciseId") long exerciseId);
+
+    boolean existsByExerciseId(long exerciseId);
 
     @Query("""
             SELECT p

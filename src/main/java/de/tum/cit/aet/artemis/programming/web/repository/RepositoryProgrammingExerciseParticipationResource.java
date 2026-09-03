@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.MilestoneEffortGateService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
@@ -89,12 +90,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final RepositoryParticipationService repositoryParticipationService;
 
+    private final MilestoneEffortGateService milestoneEffortGateService;
+
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService,
-            RepositoryParticipationService repositoryParticipationService) {
+            RepositoryParticipationService repositoryParticipationService, MilestoneEffortGateService milestoneEffortGateService) {
         super(userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
@@ -103,6 +106,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.participationRepository = participationRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.repositoryParticipationService = repositoryParticipationService;
+        this.milestoneEffortGateService = milestoneEffortGateService;
     }
 
     /**
@@ -409,7 +413,36 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @FeatureToggle(Feature.ProgrammingExercises)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> commitChanges(@PathVariable Long participationId) {
+        // The online editor commits without ever reaching a git hook, so the milestone effort gate that
+        // LocalVCPrePushHook applies to pushes has to be applied again here - otherwise it is bypassed by editing in the
+        // browser. See MilestoneEffortGateService.
+        rejectIfMilestoneEffortIsMissing(participationId);
         return super.commitChanges(participationId);
+    }
+
+    /**
+     * Refuses a commit while the participant still owes a time estimate on a user story they have started, mirroring what
+     * {@code LocalVCPrePushHook} does for git pushes.
+     *
+     * @param participationId the participation being committed to
+     */
+    private void rejectIfMilestoneEffortIsMissing(Long participationId) {
+        // Loaded with its exercise: the gate's staff exemption reads the exercise's course, which an unfetched proxy
+        // cannot supply once the session has closed (open-in-view is off) - and the gate fails open, so that would
+        // silently disable it here rather than surface as an error.
+        Participation participation = participationRepository.findWithProgrammingExerciseWithBuildConfigById(participationId).orElse(null);
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation programmingParticipation)) {
+            return;
+        }
+        ProgrammingExercise exercise = programmingParticipation.getProgrammingExercise();
+        if (exercise == null) {
+            return;
+        }
+        User user = userRepository.getUser();
+        List<String> blockingStoryTitles = milestoneEffortGateService.findStoriesBlockingWrite(exercise, programmingParticipation, user);
+        if (!blockingStoryTitles.isEmpty()) {
+            throw new BadRequestAlertException(milestoneEffortGateService.buildRejectionMessage(blockingStoryTitles), "userStoryEffort", "milestoneEffortMissing");
+        }
     }
 
     @Override

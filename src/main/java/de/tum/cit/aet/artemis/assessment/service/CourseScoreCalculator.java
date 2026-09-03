@@ -195,7 +195,7 @@ public final class CourseScoreCalculator {
         Map<Long, CourseGradeScoreDTO> gradeScorePerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
 
         var achievedPointsPerGroup = new VariantGroupCappedSum();
-        context.exercises().stream().filter(exercise -> exercise.variantGroupId() != null).filter(exercise -> includeIntoScoreCalculation(exercise, context.calculationTime()))
+        context.exercises().stream().filter(exercise -> exercise.variantGroupId() != null).filter(exercise -> hasCountablePoints(exercise, context.calculationTime()))
                 .forEach(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id()))
                         .ifPresent(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
                                 calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), context.settings()))));
@@ -308,6 +308,25 @@ public final class CourseScoreCalculator {
      * @return true if the exercise counts towards the course score
      */
     public static boolean includeIntoScoreCalculation(ExerciseCourseScoreDTO exercise, ZonedDateTime calculationTime) {
+        // A milestone group's points are carried by its MilestoneExercise, which counts here in its own right; counting
+        // its user stories as well would count the whole group twice. Their own includedInOverallScore stays
+        // INCLUDED_COMPLETELY on purpose (see UserStoryExercise) - membership, not that flag, is what excludes them.
+        return !exercise.memberOfMilestoneGroup() && hasCountablePoints(exercise, calculationTime);
+    }
+
+    /**
+     * Whether the exercise's points are earned and countable at this instant - the inclusion setting plus the timing
+     * rules of {@link #includeIntoScoreCalculation}, without asking whether the course counts this exercise directly or
+     * through its group.
+     * <p>
+     * {@link #calculateAchievedPointsPerVariantGroup} needs exactly this: it reports what a student earned *within* a
+     * group, so it must see the group's members even though the course score reaches them through their milestone.
+     *
+     * @param exercise        the exercise whose points are being considered
+     * @param calculationTime the instant at which the score is calculated
+     * @return true if the exercise's points are countable
+     */
+    private static boolean hasCountablePoints(ExerciseCourseScoreDTO exercise, ZonedDateTime calculationTime) {
         boolean isExerciseIncluded = exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
         boolean isExerciseFinished = !isAssessedAutomatically(exercise) && (exercise.dueDate() == null || exercise.dueDate().isBefore(calculationTime));
 

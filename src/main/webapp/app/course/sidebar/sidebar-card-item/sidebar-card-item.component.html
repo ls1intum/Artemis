@@ -125,6 +125,11 @@
                     }
                     {{ item.subtitleLeft }}
                 </small>
+                <!-- A started user story whose estimate is still missing. It blocks pushing to the milestone group's
+                     shared repository, so it is surfaced next to the exercise rather than only on its details page. -->
+                @if (item.effortMissing) {
+                    <small class="text-state-warning text-truncate d-inline me-2" jhiTranslate="artemisApp.userStoryEffort.effortMissing"></small>
+                }
                 <small class="text-truncate d-inline">
                     @if (sidebarType() === 'exercise' && item.exercise) {
                         <jhi-submission-result-status

@@ -15,26 +15,41 @@
                     [tumUiInputInvalid]="!isTitleValid()"
                 />
             </div>
-            <div>
-                <label class="d-flex align-items-center gap-1 fw-semibold mb-1" for="group-edit-max-points">
-                    <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.maxPoints"></span>
-                    <fa-icon
-                        [icon]="faCircleInfo"
-                        [tumUiTooltip]="'artemisApp.exerciseManagement.groupEdit.maxPointsTooltip' | artemisTranslate"
-                        tumUiTooltipPlacement="top"
-                        class="text-muted"
+            @if (group().type === 'milestone') {
+                <div>
+                    <label class="d-flex align-items-center gap-1 fw-semibold mb-1">
+                        <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.sumOfPoints"></span>
+                        <fa-icon
+                            [icon]="faCircleInfo"
+                            [tumUiTooltip]="'artemisApp.exerciseManagement.groupEdit.sumOfPointsTooltip' | artemisTranslate"
+                            tumUiTooltipPlacement="top"
+                            class="text-muted"
+                        />
+                    </label>
+                    <div class="form-control-plaintext">{{ draftMaxPoints() ?? 0 }}</div>
+                </div>
+            } @else {
+                <div>
+                    <label class="d-flex align-items-center gap-1 fw-semibold mb-1" for="group-edit-max-points">
+                        <span jhiTranslate="artemisApp.exerciseManagement.groupEdit.maxPoints"></span>
+                        <fa-icon
+                            [icon]="faCircleInfo"
+                            [tumUiTooltip]="'artemisApp.exerciseManagement.groupEdit.maxPointsTooltip' | artemisTranslate"
+                            tumUiTooltipPlacement="top"
+                            class="text-muted"
+                        />
+                    </label>
+                    <tum-ui-input-number
+                        inputId="group-edit-max-points"
+                        [ngModel]="draftMaxPoints()"
+                        (ngModelChange)="draftMaxPoints.set($event)"
+                        [min]="0"
+                        [maxFractionDigits]="1"
+                        [showButtons]="true"
+                        [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
                     />
-                </label>
-                <tum-ui-input-number
-                    inputId="group-edit-max-points"
-                    [ngModel]="draftMaxPoints()"
-                    (ngModelChange)="draftMaxPoints.set($event)"
-                    [min]="0"
-                    [maxFractionDigits]="1"
-                    [showButtons]="true"
-                    [placeholder]="'artemisApp.exerciseManagement.groupEdit.maxPointsPlaceholder' | artemisTranslate"
-                />
-            </div>
+                </div>
+            }
         </div>
 
         <!-- Dates -->

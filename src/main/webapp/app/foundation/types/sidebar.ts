@@ -106,6 +106,11 @@ export interface SidebarCardElement {
      */
     studentParticipation?: StudentParticipation;
     /**
+     * Set for a user story the student has started but not yet estimated. Supplied by the exercise overview, which reads
+     * the course's reported efforts in one request - the pair is not part of the serialized participation.
+     */
+    effortMissing?: boolean;
+    /**
      * Set for Exercises. Will be removed after refactoring
      */
     exercise?: Exercise;

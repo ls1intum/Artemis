@@ -65,7 +65,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
+import de.tum.cit.aet.artemis.programming.domain.MilestoneExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -86,7 +88,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
     @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
     @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
     @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
-    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload")
+    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"),
+    @JsonSubTypes.Type(value = MilestoneExercise.class, name = "milestone"),
+    @JsonSubTypes.Type(value = UserStoryExercise.class, name = "user-story")
 })
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -94,6 +98,10 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
+
+    // When enabled, users who are at least tutor (not only instructors) can see the per-row actions on the exercise-scores page.
+    @Column(name = "allow_tutor_score_row_actions")
+    private boolean allowTutorScoreRowActions;
 
     // TODO: rename in a follow up
     @Column(name = "allow_manual_feedback_requests")
@@ -143,9 +151,16 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @ManyToOne
     private ExerciseGroup exerciseGroup;
 
+    // "milestoneExercise" is ignored here for the same reason as "exercises": when the group is a MilestoneExerciseGroup,
+    // its milestoneExercise is a LAZY @OneToOne that most queries loading an Exercise (e.g. the plain instructor
+    // exercise-detail fetch, ProgrammingExerciseRepository#findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesCompetenciesAndBuildConfigById)
+    // never fetch-join - serializing it would hit an uninitialized proxy after the session has closed
+    // (spring.jpa.open-in-view is disabled) and throw LazyInitializationException. Nothing on the client reads it off
+    // a nested exercise's exerciseVariantGroup; dedicated endpoints (e.g. ExerciseVariantGroupResource.getMilestoneStatus)
+    // expose the milestone-specific fields a caller actually needs through their own DTOs instead.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exercise_variant_group_id")
-    @JsonIgnoreProperties("exercises")
+    @JsonIgnoreProperties({ "exercises", "milestoneExercise" })
     private ExerciseVariantGroup exerciseVariantGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -260,6 +275,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setAllowComplaintsForAutomaticAssessments(boolean allowComplaintsForAutomaticAssessments) {
         this.allowComplaintsForAutomaticAssessments = allowComplaintsForAutomaticAssessments;
+    }
+
+    public boolean isAllowTutorScoreRowActions() {
+        return allowTutorScoreRowActions;
+    }
+
+    public void setAllowTutorScoreRowActions(boolean allowTutorScoreRowActions) {
+        this.allowTutorScoreRowActions = allowTutorScoreRowActions;
     }
 
     public String getProblemStatement() {
@@ -878,7 +901,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     /**
      * Validates score settings
-     * 1. The maxScore needs to be greater than 0, except for not included programming exercises
+     * 1. The maxScore needs to be greater than 0, except for not included programming exercises and milestone exercises
      * 2. If the specified amount of bonus points is valid depending on the IncludedInOverallScore value
      */
     public void validateScoreSettings() {
@@ -887,7 +910,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             throw new BadRequestAlertException("The IncludedInOverallScore-property must be set", "Exercise", "includedInOverallScoreNotSet");
         }
 
-        if (this instanceof ProgrammingExercise && getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED) {
+        if (this instanceof ProgrammingExercise && (getIncludedInOverallScore() == IncludedInOverallScore.NOT_INCLUDED || this instanceof MilestoneExercise)) {
             if (getMaxPoints() == null) {
                 setMaxPoints(0.0);
             }

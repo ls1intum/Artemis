@@ -451,6 +451,7 @@ public class ExerciseVersionService {
         addIfChanged(changedFields, "categories", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::categories);
         addIfChanged(changedFields, "teamAssignmentConfig", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::teamAssignmentConfig);
         addIfChanged(changedFields, "presentationScoreEnabled", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::presentationScoreEnabled);
+        addIfChanged(changedFields, "allowTutorScoreRowActions", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::allowTutorScoreRowActions);
         addIfChanged(changedFields, "secondCorrectionEnabled", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::secondCorrectionEnabled);
         addIfChanged(changedFields, "feedbackSuggestionModule", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::feedbackSuggestionModule);
         addIfChanged(changedFields, "gradingCriteria", newSnapshot, previousSnapshot, ExerciseSnapshotDTO::gradingCriteria);

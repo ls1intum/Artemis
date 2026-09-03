@@ -193,6 +193,24 @@ describe('Exercise Scores Component', () => {
     });
 
     describe('Navigation links', () => {
+        it('should route a user story exercise to the programming assessment link', () => {
+            component.course.set(course);
+            component.exercise.set({ ...exercise, type: ExerciseType.USER_STORY });
+
+            const returnedLink = component.getExerciseParticipationsLink(1);
+
+            // A UserStoryExercise has no route of its own; `user-story-exercises/...` would match nothing and the
+            // assessment button would go nowhere.
+            expect(returnedLink).toContain('programming-exercises');
+            expect(returnedLink).not.toContain('user-story-exercises');
+        });
+
+        it('should expose the programming route segment for a user story exercise', () => {
+            component.exercise.set({ ...exercise, type: ExerciseType.USER_STORY });
+
+            expect(component['exerciseUrlSegment']()).toBe('programming-exercises');
+        });
+
         it('should get exercise participation link for exercise without an exercise group', () => {
             const expectedLink = ['/course-management', course.id!.toString(), 'programming-exercises', exercise.id!.toString(), 'participations', '1', 'submissions'];
             component.course.set(course);
@@ -259,6 +277,26 @@ describe('Exercise Scores Component', () => {
                 expect(component.relevantFilters().includes(filter)).toBe(expected);
             },
         );
+    });
+
+    describe('showRowActions', () => {
+        it.each([
+            // instructors always see the row actions, regardless of the flag
+            [{ isAtLeastInstructor: true, isAtLeastTutor: true, allowTutorScoreRowActions: false }, true],
+            // tutors see them only when the exercise opts in
+            [{ isAtLeastInstructor: false, isAtLeastTutor: true, allowTutorScoreRowActions: true }, true],
+            [{ isAtLeastInstructor: false, isAtLeastTutor: true, allowTutorScoreRowActions: false }, false],
+            // the flag alone is not enough without at least the tutor role
+            [{ isAtLeastInstructor: false, isAtLeastTutor: false, allowTutorScoreRowActions: true }, false],
+        ])('should gate row actions on instructor role or the tutor opt-in flag', (ex: Partial<Exercise>, expected: boolean) => {
+            component.exercise.set(ex as Exercise);
+            expect(component.showRowActions()).toBe(expected);
+        });
+
+        it('should be false when no exercise is loaded', () => {
+            component.exercise.set(undefined);
+            expect(component.showRowActions()).toBe(false);
+        });
     });
 
     describe('getBuildPlanUrl', () => {

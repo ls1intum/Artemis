@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Introduce MilestoneExerciseGroup, a MilestoneExercise-anchored subtype of ExerciseVariantGroup, plus the
+         MilestoneExercise/UserStoryExercise ProgrammingExercise subtypes (discriminator values "MS"/"US" on the
+         existing "exercise" table discriminator column - no schema change needed there). -->
+    <changeSet id="20260819120000-1" author="nschmitz">
+        <addColumn tableName="exercise_variant_group">
+            <column name="discriminator" type="varchar(31)" defaultValue="V">
+                <constraints nullable="false"/>
+            </column>
+            <column name="milestone_exercise_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260819120000-2" author="nschmitz">
+        <createIndex indexName="UC_EXERCISE_VARIANT_GROUPMILESTONE_EXERCISE_ID_COL" tableName="exercise_variant_group" unique="true">
+            <column name="milestone_exercise_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260819120000-3" author="nschmitz">
+        <!-- RESTRICT: the owning exercise_variant_group row is always deleted first (app-managed cascade, see
+             MilestoneExerciseGroup's @OneToOne(cascade = ALL, orphanRemoval = true)), so the FK is never in the
+             way - mirrors exercise.submission_policy_id's fk_exercise_submission_policy. -->
+        <addForeignKeyConstraint baseColumnNames="milestone_exercise_id" baseTableName="exercise_variant_group"
+                                 constraintName="fk_exercise_variant_group_milestone_exercise" deferrable="false" initiallyDeferred="false"
+                                 onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

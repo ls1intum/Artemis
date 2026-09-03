@@ -442,6 +442,7 @@
                     "title": "Code Analysis Categories",
                     "notGraded": "Not graded.",
                     "noFeedback": "No visible feedback.",
+                    "blocking": "Zeroes the score.",
                     "updated": "The categories were updated successfully.",
                     "couldNotBeUpdated": "The following categories could not be updated: {{categories}}.",
                     "resetSuccessful": "The categories were reset successfully.",

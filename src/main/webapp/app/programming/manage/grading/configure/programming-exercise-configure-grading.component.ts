@@ -724,9 +724,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     // Arrow functions so `this` is captured correctly when the references are
     // passed to ColumnDef.sortComparator.
 
-    /** Maps a category state to a numeric rank: Inactive(0) < Feedback(1) < Graded(2). */
+    /** Maps a category state to a numeric rank: Inactive(0) < Feedback(1) < Graded(2) < Blocking(3). */
     private readonly valForState = (s: StaticCodeAnalysisCategoryState): number =>
-        s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : 2;
+        s === StaticCodeAnalysisCategoryState.Inactive ? 0 : s === StaticCodeAnalysisCategoryState.Feedback ? 1 : s === StaticCodeAnalysisCategoryState.Graded ? 2 : 3;
 
     /** Sorts by semantic state order instead of alphabetical string value. */
     private readonly compareCategoryState = (rowA: StaticCodeAnalysisCategory, rowB: StaticCodeAnalysisCategory): number =>

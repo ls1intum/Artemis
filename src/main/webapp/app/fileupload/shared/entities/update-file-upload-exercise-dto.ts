@@ -21,6 +21,7 @@ export interface UpdateFileUploadExerciseDto {
     allowComplaintsForAutomaticAssessments?: boolean;
     allowFeedbackRequests?: boolean;
     presentationScoreEnabled?: boolean;
+    allowTutorScoreRowActions?: boolean;
     secondCorrectionEnabled?: boolean;
 
     releaseDate?: string;
@@ -61,6 +62,7 @@ export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExer
         allowComplaintsForAutomaticAssessments: fileUploadExercise.allowComplaintsForAutomaticAssessments ?? false,
         allowFeedbackRequests: fileUploadExercise.allowFeedbackRequests ?? false,
         presentationScoreEnabled: fileUploadExercise.presentationScoreEnabled ?? false,
+        allowTutorScoreRowActions: fileUploadExercise.allowTutorScoreRowActions ?? false,
         secondCorrectionEnabled: fileUploadExercise.secondCorrectionEnabled ?? false,
         releaseDate: convertDateFromClient(fileUploadExercise.releaseDate),
         startDate: convertDateFromClient(fileUploadExercise.startDate),

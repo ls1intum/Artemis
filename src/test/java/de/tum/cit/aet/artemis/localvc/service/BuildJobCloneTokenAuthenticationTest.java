@@ -95,9 +95,9 @@ class BuildJobCloneTokenAuthenticationTest {
         rateLimitService = mock(RateLimitService.class);
         // The default for a caller with budget left; the tests that care set it to false explicitly
         when(rateLimitService.hasRemainingBudget(any(), any())).thenReturn(true);
-        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, rateLimitService, null,
-                null, Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService), Optional.of(new BuildJobCloneTokenService()),
-                policyAllowingEverything());
+        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null,
+                rateLimitService, null, null, Optional.of(distributedDataAccessService), Optional.of(buildAgentAddressRegistryService),
+                Optional.of(new BuildJobCloneTokenService()), policyAllowingEverything());
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 
         // Build the expected URIs the same way the production code derives them from the request path, rather than
@@ -312,8 +312,8 @@ class BuildJobCloneTokenAuthenticationTest {
      */
     @Test
     void shouldDeclineWhenTheNodeHasNoLocalCi() {
-        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null, null,
-                Optional.empty(), Optional.empty(), Optional.empty(), policyAllowingEverything());
+        localVCServletService = new LocalVCServletService(null, null, null, null, null, null, null, null, null, null, null, null, null, null, Optional.empty(), null, null, null,
+                null, Optional.empty(), Optional.empty(), Optional.empty(), policyAllowingEverything());
         ReflectionTestUtils.setField(localVCServletService, "localVCBaseUri", URI.create(BASE_URI));
 
         assertThat(authenticate(request(AGENT_NAME, CLONE_TOKEN, "/git/TESTEXERCISE/testexercise-student1.git", AGENT_ADDRESS))).isFalse();

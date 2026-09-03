@@ -22,13 +22,18 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
+import de.tum.cit.aet.artemis.exercise.domain.MilestoneExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
+import de.tum.cit.aet.artemis.exercise.repository.MilestoneExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
+import de.tum.cit.aet.artemis.programming.service.MilestoneExercisePointsService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
+import de.tum.cit.aet.artemis.programming.service.UserStoryExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -62,12 +67,19 @@ public class ExerciseVariantGroupService {
 
     private final QuizExerciseService quizExerciseService;
 
+    private final UserStoryExerciseService userStoryExerciseService;
+
     private final Optional<SlideApi> slideApi;
+
+    private final MilestoneExerciseGroupRepository milestoneExerciseGroupRepository;
+
+    private final MilestoneExercisePointsService milestoneExercisePointsService;
 
     public ExerciseVariantGroupService(ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             ExerciseVersionService exerciseVersionService, InstanceMessageSendService instanceMessageSendService, QuizExerciseService quizExerciseService,
-            Optional<SlideApi> slideApi) {
+            UserStoryExerciseService userStoryExerciseService, Optional<SlideApi> slideApi, MilestoneExerciseGroupRepository milestoneExerciseGroupRepository,
+            MilestoneExercisePointsService milestoneExercisePointsService) {
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
@@ -76,7 +88,10 @@ public class ExerciseVariantGroupService {
         this.exerciseVersionService = exerciseVersionService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizExerciseService = quizExerciseService;
+        this.userStoryExerciseService = userStoryExerciseService;
         this.slideApi = slideApi;
+        this.milestoneExerciseGroupRepository = milestoneExerciseGroupRepository;
+        this.milestoneExercisePointsService = milestoneExercisePointsService;
     }
 
     /**
@@ -126,12 +141,25 @@ public class ExerciseVariantGroupService {
      * @param group    the target group, or {@code null} to remove the exercise from its current group
      */
     public void assignToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group) {
+        // Captured before the move: leaving a milestone group makes that group worth less, and its milestone exercise
+        // carries the group's total. Read through the repository rather than the lazy association, which a plain
+        // ExerciseRepository lookup would not have initialized.
+        Optional<Long> previousMilestoneExerciseId = exercise.getId() == null ? Optional.empty()
+                : milestoneExerciseGroupRepository.findMilestoneExerciseIdByUserStoryExerciseId(exercise.getId());
         if (group != null) {
             // Joining stamps the group's timeline onto the exercise, so a started/ended quiz can't be added at all — there
             // is no "no-op" case to allow through here, unlike a group update.
             rejectIfQuizMemberNotEditable(exercise);
             // Let a brand-new, empty group adopt its first exercise's dates instead of forcing everything to null.
             adoptMissingDatesFromExercise(group, exercise);
+        }
+        if (group instanceof MilestoneExerciseGroup milestoneGroup && milestoneGroup.getMilestoneExercise() != null && exercise instanceof UserStoryExercise) {
+            // Moving between milestone groups re-syncs Language/Version-Control and the (shared) repository URIs, same
+            // as the timeline below - a user story is never independently configured on any of these. The passed-in
+            // exercise never eagerly loads templateParticipation/solutionParticipation/buildConfig (it's typically a
+            // generic ExerciseRepository lookup), so continue with the fresh, fully-loaded instance this returns
+            // instead - see its doc comment.
+            exercise = userStoryExerciseService.applyMilestoneConfigFreshFromDatabase(exercise.getId(), milestoneGroup.getMilestoneExercise());
         }
         // Joining changes the dates as much as a group edit, so snapshot here too; unassignment makes the side effects no-ops.
         TimelineSnapshot snapshot = TimelineSnapshot.of(exercise);
@@ -144,6 +172,7 @@ public class ExerciseVariantGroupService {
             validateDates(programmingExercise);
             exerciseRepository.save(programmingExercise);
             runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(programmingExercise, group));
+            syncMilestonePointsAfterMove(previousMilestoneExerciseId, group);
             return;
         }
         if (group != null) {
@@ -152,6 +181,25 @@ public class ExerciseVariantGroupService {
         validateDates(exercise);
         Exercise saved = exerciseRepository.save(exercise);
         runPostTimelineUpdateSideEffects(saved, snapshot);
+        syncMilestonePointsAfterMove(previousMilestoneExerciseId, group);
+    }
+
+    /**
+     * Re-derives the points of the milestone group(s) a user story just left and/or joined. A milestone's
+     * {@code maxPoints} is the sum of its stories' points (see {@link MilestoneExercisePointsService}), so a move
+     * changes both ends.
+     *
+     * @param previousMilestoneExerciseId the milestone the exercise belonged to before the move, if any
+     * @param group                       the group it now belongs to, or {@code null} if it was unassigned
+     */
+    private void syncMilestonePointsAfterMove(Optional<Long> previousMilestoneExerciseId, @Nullable ExerciseVariantGroup group) {
+        previousMilestoneExerciseId.ifPresent(milestoneExercisePointsService::syncMaxPoints);
+        if (group instanceof MilestoneExerciseGroup milestoneGroup && milestoneGroup.getMilestoneExercise() != null) {
+            long newMilestoneExerciseId = milestoneGroup.getMilestoneExercise().getId();
+            if (!previousMilestoneExerciseId.filter(previous -> previous == newMilestoneExerciseId).isPresent()) {
+                milestoneExercisePointsService.syncMaxPoints(newMilestoneExerciseId);
+            }
+        }
     }
 
     /**

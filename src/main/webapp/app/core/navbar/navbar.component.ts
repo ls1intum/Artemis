@@ -20,7 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, getExerciseUrlSegmentOrEmpty } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Title } from '@angular/platform-browser';
@@ -680,7 +680,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.removeBreadcrumb(crumb);
                 } else {
                     // If all data is there, overwrite the breadcrumb with the correct link
-                    this.setBreadcrumb(currentPath.replace('/exercises/', `/${response.body.type}-exercises/`), response.body.title, false, this.breadcrumbs().indexOf(crumb));
+                    // getExerciseUrlSegment, not the raw type: a UserStoryExercise/MilestoneExercise has no route of its own,
+                    // so the breadcrumb would link nowhere.
+                    this.setBreadcrumb(
+                        currentPath.replace('/exercises/', `/${getExerciseUrlSegmentOrEmpty(response.body.type)}/`),
+                        response.body.title,
+                        false,
+                        this.breadcrumbs().indexOf(crumb),
+                    );
                 }
             },
             // Same as if data isn't available

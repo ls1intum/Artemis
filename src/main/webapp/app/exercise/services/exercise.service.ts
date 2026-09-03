@@ -648,6 +648,7 @@ export class ExerciseService {
                 }
                 break;
             case ExerciseType.PROGRAMMING:
+            case ExerciseType.USER_STORY:
                 programmingExercise = exercise;
                 break;
         }

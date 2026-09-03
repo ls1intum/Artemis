@@ -1,0 +1,10 @@
+artemis:
+    user-management:
+        use-external: false
+    version-control:
+        url: http://localhost:8080
+        repository-authentication-mechanisms: token,ssh,password
+eureka:
+    client:
+        register-with-eureka: false
+        fetch-registry: false

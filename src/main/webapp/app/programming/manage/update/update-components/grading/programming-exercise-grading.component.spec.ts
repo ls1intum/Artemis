@@ -256,6 +256,30 @@ describe('ProgrammingExerciseGradingComponent', () => {
         expect(programmingExercise.bonusPoints).toBe(0);
     });
 
+    it('should stay valid for a milestone, whose hidden points fields it cannot fix', () => {
+        // A MilestoneExercise hides Points and BonusPoints (see MILESTONE_HIDDEN_FIELDS) while staying
+        // INCLUDED_COMPLETELY - it carries the sum of its user stories' points. Neither NgModel is rendered, so their
+        // validity must not gate the section: there would be no control on screen to clear the resulting reason with,
+        // which is what left Save permanently disabled on the milestone edit route.
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        exercise.maxPoints = 0;
+        exercise.bonusPoints = 0;
+        exercise.staticCodeAnalysisEnabled = false;
+        fixture.componentRef.setInput('programmingExercise', Object.assign(new ProgrammingExercise(undefined, undefined), exercise));
+        fixture.componentRef.setInput('isEditFieldDisplayedRecord', { ...editFieldRecord, points: false, bonusPoints: false });
+        fixture.detectChanges(false);
+
+        expect(fixture.debugElement.nativeElement.querySelector('#field_points')).toBeNull();
+        expect(fixture.debugElement.nativeElement.querySelector('#field_bonusPoints')).toBeNull();
+
+        vi.spyOn(internals(comp), 'submissionPolicyUpdateComponent').mockReturnValue({ invalid: false } as SubmissionPolicyUpdateComponent);
+        vi.spyOn(internals(comp), 'lifecycleComponent').mockReturnValue({ formValid: true, formEmpty: false } as ProgrammingExerciseUpdateTimelineComponent);
+
+        comp.calculateFormStatus();
+
+        expect(comp.formValid).toBe(true);
+    });
+
     it('should restore the minimum valid points when exercise is included again', () => {
         exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
         exercise.maxPoints = 0;

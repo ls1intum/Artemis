@@ -61,6 +61,12 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy, E
 
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
+    /**
+     * A UserStoryExercise participation never has a build plan of its own: it shares its milestone group's
+     * repository, and only the anchor MilestoneExercise's build ever runs (see `ParticipationService.startUserStoryExercise`).
+     * Its results are fanned out from that build, so re-triggering one from here has nothing to re-run.
+     */
+    readonly USER_STORY = ExerciseType.USER_STORY;
 
     paramSub?: Subscription;
     // Template-read state written in async callbacks (route params subscription + HTTP loads) must be

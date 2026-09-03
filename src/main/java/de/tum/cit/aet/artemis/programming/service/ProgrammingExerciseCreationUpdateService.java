@@ -289,6 +289,53 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setSolutionParticipation(solutionParticipation);
     }
 
+    /**
+     * Saves a brand-new programming exercise that already carries a fresh (transient) {@code buildConfig} and/or
+     * template/solution participations - e.g. a {@code UserStoryExercise} copying its milestone's build config - without
+     * provisioning any repositories or build plans for it (unlike {@link #createProgrammingExercise}, which those
+     * associations normally get wired up as part of; here the exercise reuses repositories that already exist
+     * elsewhere).
+     * <p>
+     * None of {@code buildConfig}, {@code templateParticipation} or {@code solutionParticipation} cascade
+     * {@code PERSIST} (only {@code REMOVE}, so deleting the exercise still cleans them up), and each also holds an
+     * inverse {@code programmingExercise} back-reference - so each must be saved via its own repository only once the
+     * exercise itself has an id, exactly mirroring the equivalent steps in {@link #createProgrammingExercise}.
+     *
+     * @param exercise the new exercise, with its buildConfig/templateParticipation/solutionParticipation already set
+     * @param <T>      the concrete programming exercise subtype, preserved through to the return value
+     * @return the saved exercise, with its associations pointing at their now-persisted, managed instances - this is
+     *         deliberately the same in-memory instance passed through {@code saved} throughout, not a later save()'s
+     *         return value: since these associations are LAZY, merging a detached instance can hand back a copy with
+     *         an uninitialized proxy in their place, which then serializes as {@code null} once the session closes
+     */
+    public <T extends ProgrammingExercise> T saveNewExerciseWithOwnAssociations(T exercise) {
+        var buildConfig = exercise.getBuildConfig();
+        var templateParticipation = exercise.getTemplateParticipation();
+        var solutionParticipation = exercise.getSolutionParticipation();
+        exercise.setBuildConfig(null);
+        exercise.setTemplateParticipation(null);
+        exercise.setSolutionParticipation(null);
+
+        T saved = programmingExerciseRepository.save(exercise);
+
+        if (buildConfig != null) {
+            buildConfig = programmingExerciseBuildConfigRepository.save(buildConfig);
+            saved.setBuildConfig(buildConfig);
+            programmingExerciseRepository.save(saved);
+            buildConfig.setProgrammingExercise(saved);
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+        }
+
+        if (templateParticipation != null && solutionParticipation != null) {
+            saved.setTemplateParticipation(templateParticipation);
+            saved.setSolutionParticipation(solutionParticipation);
+            connectBaseParticipationsToExerciseAndSave(saved);
+            programmingExerciseRepository.save(saved);
+        }
+
+        return saved;
+    }
+
     private void connectAuxiliaryRepositoriesToExercise(ProgrammingExercise exercise) {
         List<AuxiliaryRepository> savedRepositories = new ArrayList<>(exercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() != null).toList());
         exercise.getAuxiliaryRepositories().stream().filter(repository -> repository.getId() == null).forEach(repository -> {

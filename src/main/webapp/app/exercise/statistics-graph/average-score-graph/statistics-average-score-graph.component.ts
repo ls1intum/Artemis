@@ -162,6 +162,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
             } else if (type === 'file_upload') {
                 type = 'file-upload';
             }
+            // Safe as the raw type here: the statistics entry carries the server-side ExerciseType, which classifies a
+            // UserStoryExercise/MilestoneExercise as PROGRAMMING already (see ExerciseType.getExerciseTypeFromClass).
             route[2] = type + '-exercises';
             this.navigationUtilService.routeInNewTab(route);
         }

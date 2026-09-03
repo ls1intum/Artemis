@@ -10,6 +10,11 @@ export class CourseExerciseGroup {
     id?: number;
     title?: string;
 
+    /** `'variant'` (a plain ExerciseVariantGroup) or `'milestone'` (a MilestoneExerciseGroup). */
+    type?: 'variant' | 'milestone';
+    /** Only set when {@link type} is `'milestone'` — the id of the group's anchor MilestoneExercise. */
+    milestoneExerciseId?: number;
+
     /** Explicit display order within the course (drives drag-and-drop reordering). */
     order?: number;
 
@@ -48,6 +53,8 @@ export function buildGroupsFromExercises(exercises: Exercise[]): CourseExerciseG
             group = {
                 id: reference.id,
                 title: reference.title,
+                type: reference.type,
+                milestoneExerciseId: reference.milestoneExerciseId,
                 maxPoints: reference.maxPoints,
                 releaseDate: convertDateFromServer(reference.releaseDate),
                 startDate: convertDateFromServer(reference.startDate),

@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.lecture.api.SlideUnhideScheduleApi;
 import de.tum.cit.aet.artemis.notification.service.NotificationScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.MilestoneScoreScheduleService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
@@ -88,6 +89,8 @@ class InstanceMessageReceiveServiceTest {
 
     private ParticipantScoreScheduleService participantScoreScheduleService;
 
+    private MilestoneScoreScheduleService milestoneScoreScheduleService;
+
     private QuizScheduleService quizScheduleService;
 
     private SlideUnhideScheduleApi slideUnhideScheduleApi;
@@ -115,10 +118,11 @@ class InstanceMessageReceiveServiceTest {
         participantScoreScheduleService = mock(ParticipantScoreScheduleService.class);
         quizScheduleService = mock(QuizScheduleService.class);
         slideUnhideScheduleApi = mock(SlideUnhideScheduleApi.class);
+        milestoneScoreScheduleService = mock(MilestoneScoreScheduleService.class);
 
         InstanceMessageReceiveService service = new InstanceMessageReceiveService(programmingExerciseRepository, programmingExerciseScheduleService, exerciseRepository,
                 Optional.of(athenaApi), distributedDataProvider, userRepository, userScheduleService, notificationScheduleService, participantScoreScheduleService,
-                quizScheduleService, Optional.of(slideUnhideScheduleApi));
+                quizScheduleService, Optional.of(slideUnhideScheduleApi), milestoneScoreScheduleService);
         service.init();
     }
 

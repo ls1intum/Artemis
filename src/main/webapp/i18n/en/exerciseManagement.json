@@ -40,6 +40,8 @@
             "groupMeta": {
                 "maxPoints": "Max points:",
                 "maxPointsTooltip": "Caps the total points this group contributes to the course score.",
+                "sumOfPoints": "Sum of points:",
+                "sumOfPointsTooltip": "The total points of all user story exercises in this milestone group.",
                 "none": "none"
             },
             "table": {
@@ -69,6 +71,15 @@
                     "createDescription": "A set of variant exercises on the same topic. Students can work on any or all variants.",
                     "importDescription": "Import a group of variant exercises from another course, including all its exercises."
                 },
+                "milestoneGroup": {
+                    "title": "Milestone Group",
+                    "createDescription": "A Scrum-style milestone: a shared repository and test suite that its user story exercises all work against."
+                },
+                "userStory": {
+                    "title": "User Story Exercise",
+                    "createDescription": "A programming exercise inside a milestone group, sharing its repository and test suite but graded on its own.",
+                    "disabledTooltip": "Create a milestone group first — a user story exercise always belongs to one."
+                },
                 "import": {
                     "groupHeader": "Import Exercise Group",
                     "groupHint": "Select groups to import. All exercises in the group are included.",
@@ -92,6 +103,8 @@
                 "maxPoints": "Max points",
                 "maxPointsTooltip": "Caps the total points this group contributes to the course score. Students earn at most this value from the group, regardless of which variant they complete.",
                 "maxPointsPlaceholder": "No cap",
+                "sumOfPoints": "Sum of points",
+                "sumOfPointsTooltip": "The total points of all user story exercises in this milestone group — not editable here; add or edit a user story exercise to change it.",
                 "dates": "Dates",
                 "datesOverrideWarning": "Group dates override individual exercise dates.",
                 "datesInvalidOrder": "The dates are not in a valid order."

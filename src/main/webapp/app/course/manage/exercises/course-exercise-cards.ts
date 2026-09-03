@@ -6,6 +6,13 @@ import { CourseExerciseGroup, effectiveDate } from 'app/exercise/shared/entities
 /** The available layouts of the exercise management page. */
 export type ExerciseManagementView = 'type' | 'week' | 'group' | 'list';
 
+/**
+ * Local-storage key under which the last-selected view is remembered, so returning to the page restores it. Shared,
+ * because pages that navigate back here pre-select the view they want the user to arrive in (see
+ * CourseManagementExercisesComponent.onAddModalGroupCreate and ProgrammingExerciseUpdateComponent.onMilestoneSaveSuccess).
+ */
+export const EXERCISE_MANAGEMENT_VIEW_STORAGE_KEY = 'artemis.exerciseManagement.view';
+
 /** One collapsible panel of the exercise management page: a titled slice of the course's exercises. */
 export interface CourseExerciseCard {
     id: string;

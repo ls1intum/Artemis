@@ -1,0 +1,17 @@
+{
+    "artemisApp": {
+        "userStoryEffort": {
+            "title": "Aufwand",
+            "estimatedEffort": "Geschätzter Aufwand (Stunden)",
+            "actualEffort": "Tatsächlicher Aufwand (Stunden)",
+            "estimatedEffortShort": "Geschätzter Aufwand",
+            "actualEffortShort": "Tatsächlicher Aufwand",
+            "save": "Speichern",
+            "saved": "Aufwand gespeichert.",
+            "estimateRequired": "Gib einen geschätzten Aufwand an, bevor du in das Repository pushst.",
+            "afterDueDate": "Der Aufwand kann nach dem Abgabedatum nicht mehr geändert werden.",
+            "notReported": "–",
+            "effortMissing": "Aufwand fehlt"
+        }
+    }
+}

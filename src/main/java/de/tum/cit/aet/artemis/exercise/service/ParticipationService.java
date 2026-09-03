@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -49,6 +50,8 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
+import de.tum.cit.aet.artemis.exercise.repository.MilestoneExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -59,10 +62,12 @@ import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.programming.domain.MilestoneExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
@@ -110,11 +115,16 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
+
+    private final MilestoneExerciseGroupRepository milestoneExerciseGroupRepository;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ExerciseVariantGroupRepository exerciseVariantGroupRepository, MilestoneExerciseGroupRepository milestoneExerciseGroupRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -127,6 +137,8 @@ public class ParticipationService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
+        this.milestoneExerciseGroupRepository = milestoneExerciseGroupRepository;
     }
 
     /**
@@ -326,6 +338,9 @@ public class ParticipationService {
      * @return started participation
      */
     private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+        if (exercise instanceof UserStoryExercise userStoryExercise) {
+            return startUserStoryExercise(userStoryExercise, participation);
+        }
         // The template participation and the build config are only needed to resolve the source repository and its branch,
         // and copyRepository skips both entirely once the participation has its own repository. Loading them lazily keeps
         // the common path free of a query it never reads: exam participations are prepared up front, so every student who
@@ -337,7 +352,207 @@ public class ParticipationService {
         participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateAndBuildConfig.get()),
                 () -> branchOf(exerciseWithTemplateAndBuildConfig.get()), participation);
 
-        return startProgrammingParticipation(participation);
+        StudentParticipation startedParticipation = startProgrammingParticipation(participation);
+
+        if (exercise instanceof MilestoneExercise && startedParticipation instanceof ProgrammingExerciseStudentParticipation startedProgrammingParticipation) {
+            // As soon as the milestone itself has a real repository, every UserStoryExercise member of its group can
+            // share it right away, instead of only lazily once each one is individually started - this is what lets
+            // the group detail view's member cards show "started" immediately after the milestone's own "Start
+            // exercise" button is used.
+            provisionUserStoryParticipationsForGroup(startedProgrammingParticipation, null);
+        }
+
+        return startedParticipation;
+    }
+
+    /**
+     * Starts a {@code UserStoryExercise}. Every {@code UserStoryExercise}/{@code MilestoneExercise} of a
+     * {@code MilestoneExerciseGroup} shares one physical repository per student, and that repository always lives
+     * under the {@code MilestoneExercise}'s own project key and build plan - regardless of which member the student
+     * happens to click "Start" on first. If the student has no milestone participation with a repository yet, one is
+     * created transparently here (exactly as if they had started the milestone directly), and every other
+     * not-yet-started {@code UserStoryExercise} sibling is provisioned the same way - so starting any one member of
+     * the group starts all of them.
+     * <p>
+     * Restricted to individual (non-team) participants for now - team-mode sharing (assignment consistency across
+     * sibling exercises) is a separate concern this doesn't attempt to solve.
+     *
+     * @param exercise      the user story exercise being started
+     * @param participation the not-yet-initialized participation to configure in place
+     * @return the configured, already-{@link InitializationState#INITIALIZED} participation
+     */
+    private StudentParticipation startUserStoryExercise(UserStoryExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+        var group = exercise.getExerciseVariantGroup();
+        Optional<User> student = participation.getStudent();
+        if (group == null || student.isEmpty()) {
+            // Team participants and misconfigured exercises without a group aren't part of the sharing scheme -
+            // fall back to the normal "create everything for this exercise" flow.
+            Supplier<ProgrammingExercise> exerciseWithTemplateAndBuildConfig = memoize(
+                    () -> programmingExerciseRepository.findByIdWithTemplateParticipationAndBuildConfigElseThrow(exercise.getId()));
+            ProgrammingExerciseStudentParticipation copiedParticipation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateAndBuildConfig.get()),
+                    () -> branchOf(exerciseWithTemplateAndBuildConfig.get()), participation);
+            return startProgrammingParticipation(copiedParticipation);
+        }
+        User user = student.get();
+        long milestoneExerciseId = milestoneExerciseGroupRepository.findMilestoneExerciseIdByGroupId(group.getId())
+                .orElseThrow(() -> new IllegalStateException("Milestone exercise group " + group.getId() + " has no anchor milestone exercise"));
+
+        ProgrammingExerciseStudentParticipation milestoneParticipation = programmingExerciseStudentParticipationRepository
+                .findByExerciseIdAndStudentLogin(milestoneExerciseId, user.getLogin()).filter(p -> p.getRepositoryUri() != null && !p.isTestRun())
+                .orElseGet(() -> startMilestoneParticipationForSibling(milestoneExerciseId, user));
+
+        participation.setRepositoryUri(milestoneParticipation.getRepositoryUri());
+        // No buildPlanId is set: only the milestone's own build plan is ever triggered for this repository (see
+        // the grading fan-out in ProgrammingExerciseGradingService that reevaluates every sibling's grade after that build).
+        participation.setInitializationState(InitializationState.INITIALIZED);
+
+        // createNewParticipation (called before this method, back in startExercise) already minted an independent
+        // token for this participation, on the assumption it would get its own repository. Git authentication against
+        // the shared repository is only ever checked against the milestone participation's own token (see
+        // ParticipationVcsAccessTokenService), so that independent token would never authenticate; replace it with a
+        // copy of the milestone participation's token value.
+        participationVCSAccessTokenService.findTokenValue(user.getId(), milestoneParticipation.getId())
+                .ifPresent(tokenValue -> participationVCSAccessTokenService.setParticipationVCSAccessTokenValue(user, participation, tokenValue));
+
+        provisionUserStoryParticipationsForGroup(milestoneParticipation, exercise.getId());
+
+        return participation;
+    }
+
+    /**
+     * Transparently starts the given student's {@code MilestoneExercise} participation as a side effect of starting
+     * one of its {@code UserStoryExercise} siblings first - creating the real repository and build plan under the
+     * milestone's own project key, exactly as {@link #startProgrammingExercise} would for a direct milestone start.
+     *
+     * @param milestoneExerciseId the id of the group's anchor milestone exercise
+     * @param student             the student starting a sibling user story exercise
+     * @return the milestone's own, now-{@link InitializationState#INITIALIZED} participation
+     */
+    private ProgrammingExerciseStudentParticipation startMilestoneParticipationForSibling(long milestoneExerciseId, User student) {
+        Supplier<MilestoneExercise> milestoneExercise = memoize(
+                () -> (MilestoneExercise) programmingExerciseRepository.findByIdWithTemplateParticipationAndBuildConfigElseThrow(milestoneExerciseId));
+
+        ProgrammingExerciseStudentParticipation milestoneParticipation = new ProgrammingExerciseStudentParticipation(defaultBranch);
+        milestoneParticipation.setInitializationState(InitializationState.UNINITIALIZED);
+        milestoneParticipation.setExercise(milestoneExercise.get());
+        milestoneParticipation.setParticipant(student);
+        milestoneParticipation = programmingExerciseStudentParticipationRepository.saveAndFlush(milestoneParticipation);
+        participationVCSAccessTokenService.createParticipationVCSAccessToken(student, milestoneParticipation);
+
+        milestoneParticipation = copyRepository(milestoneExercise.get(), () -> resolveTemplateRepositoryUri(milestoneExercise.get()), () -> branchOf(milestoneExercise.get()),
+                milestoneParticipation);
+        StudentParticipation started = startProgrammingParticipation(milestoneParticipation);
+        return programmingExerciseStudentParticipationRepository.saveAndFlush((ProgrammingExerciseStudentParticipation) started);
+    }
+
+    /**
+     * Eagerly creates an {@link InitializationState#INITIALIZED} participation, pointing at the given milestone
+     * participation's repository, for every {@code UserStoryExercise} member of the milestone's group that the
+     * student has not already started - except {@code exerciseIdAlreadyHandled}, whose own participation the caller
+     * is already setting up itself. Each repository call is its own transaction (no service-level
+     * {@code @Transactional} in this codebase), so only scalar values are read off {@code milestoneParticipation};
+     * everything else is looked up fresh.
+     *
+     * @param milestoneParticipation   the student's milestone participation, already pointing at a real repository
+     * @param exerciseIdAlreadyHandled the id of a UserStoryExercise the caller is already provisioning itself, or
+     *                                     {@code null} if none (a direct milestone start)
+     */
+    private void provisionUserStoryParticipationsForGroup(ProgrammingExerciseStudentParticipation milestoneParticipation, Long exerciseIdAlreadyHandled) {
+        Optional<User> student = milestoneParticipation.getStudent();
+        String repositoryUri = milestoneParticipation.getRepositoryUri();
+        if (student.isEmpty() || repositoryUri == null) {
+            return;
+        }
+        User user = student.get();
+        String studentLogin = user.getLogin();
+
+        ExerciseVariantGroup group = milestoneExerciseGroupRepository.findByMilestoneExerciseIdWithExercises(milestoneParticipation.getExercise().getId()).orElse(null);
+        if (group == null) {
+            return;
+        }
+        // Git authentication against the shared repository is only ever checked against the milestone's own
+        // participation token (see ParticipationVcsAccessTokenService), so every sibling must be issued an exact copy
+        // of it rather than an independently generated token, which would never authenticate.
+        String milestoneTokenValue = participationVCSAccessTokenService.findTokenValue(user.getId(), milestoneParticipation.getId()).orElse(null);
+        if (milestoneTokenValue == null) {
+            return;
+        }
+        for (Exercise member : group.getExercises()) {
+            if (!(member instanceof UserStoryExercise userStoryExercise) || Objects.equals(userStoryExercise.getId(), exerciseIdAlreadyHandled)) {
+                continue;
+            }
+            if (programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(userStoryExercise.getId(), studentLogin).isPresent()) {
+                continue;
+            }
+            createSharedParticipation(userStoryExercise, user, repositoryUri, milestoneTokenValue);
+        }
+    }
+
+    /**
+     * Creates an already-{@link InitializationState#INITIALIZED} participation for {@code user} in
+     * {@code userStoryExercise}, pointing at the given (already-shared) repository, without provisioning a new
+     * physical repository or build plan - the shared building block behind
+     * {@link #provisionUserStoryParticipationsForGroup} and {@link #provisionParticipationsForNewUserStoryExercise}.
+     *
+     * @param userStoryExercise the exercise to create the participation for
+     * @param user              the student to create the participation for
+     * @param repositoryUri     the shared repository URI to point the new participation at
+     * @param tokenValue        the shared VCS access token value to copy onto the new participation
+     * @return the newly created, already-shared participation
+     */
+    private ProgrammingExerciseStudentParticipation createSharedParticipation(UserStoryExercise userStoryExercise, User user, String repositoryUri, String tokenValue) {
+        ProgrammingExerciseStudentParticipation siblingParticipation = new ProgrammingExerciseStudentParticipation(defaultBranch);
+        siblingParticipation.setInitializationState(InitializationState.UNINITIALIZED);
+        siblingParticipation.setExercise(userStoryExercise);
+        siblingParticipation.setParticipant(user);
+        siblingParticipation = programmingExerciseStudentParticipationRepository.saveAndFlush(siblingParticipation);
+
+        participationVCSAccessTokenService.setParticipationVCSAccessTokenValue(user, siblingParticipation, tokenValue);
+
+        // No buildPlanId is set: only the milestone's own build plan is ever triggered for this repository (see
+        // the grading fan-out in ProgrammingExerciseGradingService that reevaluates every sibling's grade after that build).
+        siblingParticipation.setRepositoryUri(repositoryUri);
+        siblingParticipation.setInitializationState(InitializationState.INITIALIZED);
+        return programmingExerciseStudentParticipationRepository.saveAndFlush(siblingParticipation);
+    }
+
+    /**
+     * Backfills a participation for every student who already shares this milestone group's repository, for a
+     * {@code UserStoryExercise} that has just been added to the group - so a student never has to individually
+     * "start" a sibling exercise added after the fact for their existing repository to be recognized. The caller is
+     * expected to also backfill each returned participation's initial score (see
+     * {@code ProgrammingExerciseGradingService.fanOutResultToUserStoryExercise}), since a participation created here
+     * has no submissions/results of its own yet.
+     *
+     * @param userStoryExercise the newly created user story exercise
+     * @return the participations newly created, one per student who didn't already have one
+     */
+    public List<ProgrammingExerciseStudentParticipation> provisionParticipationsForNewUserStoryExercise(UserStoryExercise userStoryExercise) {
+        ExerciseVariantGroup group = userStoryExercise.getExerciseVariantGroup();
+        if (group == null) {
+            return List.of();
+        }
+        long milestoneExerciseId = milestoneExerciseGroupRepository.findMilestoneExerciseIdByGroupId(group.getId())
+                .orElseThrow(() -> new IllegalStateException("Milestone exercise group " + group.getId() + " has no anchor milestone exercise"));
+
+        List<ProgrammingExerciseStudentParticipation> created = new ArrayList<>();
+        for (ProgrammingExerciseStudentParticipation milestoneParticipation : programmingExerciseStudentParticipationRepository
+                .findAllByExerciseIdAndRepositoryUriIsNotNullAndTestRunFalse(milestoneExerciseId)) {
+            Optional<User> student = milestoneParticipation.getStudent();
+            if (student.isEmpty()) {
+                continue;
+            }
+            User user = student.get();
+            if (programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(userStoryExercise.getId(), user.getLogin()).isPresent()) {
+                continue;
+            }
+            String tokenValue = participationVCSAccessTokenService.findTokenValue(user.getId(), milestoneParticipation.getId()).orElse(null);
+            if (tokenValue == null) {
+                continue;
+            }
+            created.add(createSharedParticipation(userStoryExercise, user, milestoneParticipation.getRepositoryUri(), tokenValue));
+        }
+        return created;
     }
 
     /**

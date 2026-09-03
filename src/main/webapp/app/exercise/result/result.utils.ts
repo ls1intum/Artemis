@@ -245,8 +245,8 @@ export const evaluateTemplateStatus = (
         }
     }
 
-    // Evaluate status for programming and quiz exercises
-    if (exerciseType === ExerciseType.PROGRAMMING || exerciseType === ExerciseType.QUIZ) {
+    // Evaluate status for programming, user story and quiz exercises
+    if (exerciseType === ExerciseType.PROGRAMMING || exerciseType === ExerciseType.USER_STORY || exerciseType === ExerciseType.QUIZ) {
         if (isQueued) {
             return ResultTemplateStatus.IS_QUEUED;
         } else if (isBuilding) {
@@ -275,7 +275,7 @@ export const evaluateTemplateStatus = (
  */
 export const isOnlyCompilationTested = (result: Result | undefined, participation: Participation, templateStatus: ResultTemplateStatus): boolean => {
     const zeroTests = !result?.testCaseCount;
-    const isProgrammingExercise: boolean = participation?.exercise?.type === ExerciseType.PROGRAMMING;
+    const isProgrammingExercise: boolean = participation?.exercise?.type === ExerciseType.PROGRAMMING || participation?.exercise?.type === ExerciseType.USER_STORY;
     return (
         templateStatus !== ResultTemplateStatus.NO_RESULT &&
         templateStatus !== ResultTemplateStatus.IS_BUILDING &&

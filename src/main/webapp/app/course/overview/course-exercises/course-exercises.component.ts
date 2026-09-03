@@ -3,7 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { LtiService } from 'app/foundation/service/lti.service';
 import { NgStyle } from '@angular/common';
@@ -23,6 +23,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { UserStoryEffortService } from 'app/programming/shared/services/user-story-effort.service';
 
 /**
  * Minimal contract for exercise-details route components activated in the inner outlet.
@@ -83,6 +84,7 @@ export class CourseExercisesComponent implements SidebarView {
     private sessionStorageService = inject(SessionStorageService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private destroyRef = inject(DestroyRef);
+    private readonly userStoryEffortService = inject(UserStoryEffortService);
     private changeDetectorRef = inject(ChangeDetectorRef);
     private courseOverviewExercisesService = inject(CourseOverviewExercisesService);
     private courseTabRefreshService = inject(CourseTabRefreshService);
@@ -275,12 +277,56 @@ export class CourseExercisesComponent implements SidebarView {
     }
 
     processExercises(exercises: Exercise[]): void {
-        const sortedExercises = this.courseOverviewService.sortExercises(this.preserveSidebarParticipationSnapshots(exercises));
+        // MilestoneExercise instances only hold a milestone's shared config; they are never rendered as a normal
+        // exercise a student can open.
+        const visibleExercises = exercises.filter((exercise) => exercise.type !== ExerciseType.MILESTONE);
+        const sortedExercises = this.courseOverviewService.sortExercises(this.preserveSidebarParticipationSnapshots(visibleExercises));
         this._sortedExercises.set(sortedExercises);
         const { groupedData, ungroupedData } = this.courseOverviewService.buildGroupedExerciseData(sortedExercises, this._courseId());
         this._sidebarExercises.set(ungroupedData);
         this._accordionExerciseGroups.set(groupedData);
         this.updateSidebarData();
+        this.markUserStoriesMissingAnEstimate(sortedExercises);
+    }
+
+    /**
+     * Marks the user stories the student has started but not yet estimated, which is what blocks pushing to their
+     * milestone group's shared repository.
+     *
+     * One request for the whole course: the reported effort is deliberately not part of the serialized participation,
+     * because an inverse association there cost a query per participation and broke the dashboard payload.
+     */
+    private markUserStoriesMissingAnEstimate(exercises: Exercise[]): void {
+        if (!exercises.some((exercise) => exercise.type === ExerciseType.USER_STORY)) {
+            return;
+        }
+        this.userStoryEffortService
+            .getEffortsForCourse(this._courseId())
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (efforts) => {
+                    const missingEstimate = new Set(efforts.filter((effort) => effort.estimatedEffort === undefined).map((effort) => effort.exerciseId));
+                    const mark = (card: SidebarCardElement): SidebarCardElement =>
+                        cloneWith(card, {
+                            effortMissing: typeof card.id === 'number' && missingEstimate.has(card.id),
+                            groupedItems: card.groupedItems?.map(mark),
+                        });
+                    this._sidebarExercises.set(this._sidebarExercises().map(mark));
+                    this._accordionExerciseGroups.set(this.markGroups(this._accordionExerciseGroups(), mark));
+                    this.updateSidebarData();
+                },
+                // A failure here only costs the marker; the student still sees the requirement on the exercise itself.
+                error: () => {},
+            });
+    }
+
+    /** Applies the marker to every card inside the accordion groups, leaving the group structure untouched. */
+    private markGroups(groups: AccordionGroups, mark: (card: SidebarCardElement) => SidebarCardElement): AccordionGroups {
+        const marked: AccordionGroups = {};
+        for (const [key, group] of Object.entries(groups)) {
+            marked[key] = cloneWith(group, { entityData: group.entityData.map(mark) });
+        }
+        return marked;
     }
 
     private preserveSidebarParticipationSnapshots(exercises: Exercise[]): Exercise[] {

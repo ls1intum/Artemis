@@ -182,6 +182,9 @@
     @if (cell.data.state === CategoryState.Inactive) {
         <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
     }
+    @if (cell.data.state === CategoryState.Blocking) {
+        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.blocking"></span>
+    }
 </ng-template>
 
 <ng-template #maxPenaltyTemplate let-cell>
@@ -197,6 +200,9 @@
     }
     @if (cell.data.state === CategoryState.Inactive) {
         <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.noFeedback"></span>
+    }
+    @if (cell.data.state === CategoryState.Blocking) {
+        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.blocking"></span>
     }
 </ng-template>
 

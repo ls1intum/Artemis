@@ -805,6 +805,9 @@ public class FileUploadExerciseResource {
         if (updateFileUploadExerciseDTO.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(updateFileUploadExerciseDTO.presentationScoreEnabled());
         }
+        if (updateFileUploadExerciseDTO.allowTutorScoreRowActions() != null) {
+            exercise.setAllowTutorScoreRowActions(updateFileUploadExerciseDTO.allowTutorScoreRowActions());
+        }
         if (updateFileUploadExerciseDTO.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(updateFileUploadExerciseDTO.secondCorrectionEnabled());
         }

@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import jakarta.validation.Valid;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
+import de.tum.cit.aet.artemis.exercise.domain.MilestoneExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
@@ -43,7 +45,12 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.UpdateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
+import de.tum.cit.aet.artemis.exercise.repository.MilestoneExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
+import de.tum.cit.aet.artemis.programming.domain.MilestoneExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 
@@ -72,6 +79,9 @@ public class ExerciseVariantGroupResource {
 
     private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
+    /** Only for the exercise-assignment endpoint below, whose target may be a milestone group. */
+    private final MilestoneExerciseGroupRepository milestoneExerciseGroupRepository;
+
     private final ExerciseRepository exerciseRepository;
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
@@ -80,14 +90,20 @@ public class ExerciseVariantGroupResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ExerciseVariantGroupResource(CourseRepository courseRepository, ExerciseVariantGroupRepository exerciseVariantGroupRepository, ExerciseRepository exerciseRepository,
-            ExerciseVariantGroupService exerciseVariantGroupService, UserRepository userRepository, AuthorizationCheckService authCheckService) {
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    public ExerciseVariantGroupResource(CourseRepository courseRepository, ExerciseVariantGroupRepository exerciseVariantGroupRepository,
+            MilestoneExerciseGroupRepository milestoneExerciseGroupRepository, ExerciseRepository exerciseRepository, ExerciseVariantGroupService exerciseVariantGroupService,
+            UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.courseRepository = courseRepository;
         this.exerciseVariantGroupRepository = exerciseVariantGroupRepository;
+        this.milestoneExerciseGroupRepository = milestoneExerciseGroupRepository;
         this.exerciseRepository = exerciseRepository;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -203,7 +219,8 @@ public class ExerciseVariantGroupResource {
 
     /**
      * DELETE /courses/:courseId/exercise-variant-groups/:groupId : Delete an exercise variant group. The aggregated
-     * exercises survive and simply lose their group membership (the foreign key is set to null).
+     * exercises survive and simply lose their group membership (the foreign key is set to null). Deleting a milestone
+     * group also deletes its anchor exercise, so that goes through {@link MilestoneExerciseGroupResource} instead.
      *
      * @param groupId  the id of the group to delete
      * @param courseId the id of the course the group belongs to
@@ -216,6 +233,12 @@ public class ExerciseVariantGroupResource {
         // Load the group without its members so the ON DELETE SET NULL FK (see the Liquibase changelog) ungroups them;
         // loading them would fail Hibernate's flush because managed exercises still reference the removed group. Members survive.
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId);
+        if (group instanceof MilestoneExerciseGroup) {
+            // This lookup has no type restriction (it is the one query here that must still see every group), so guard
+            // explicitly: deleting a milestone group means deleting its anchor exercise too, which only
+            // MilestoneExerciseService does correctly.
+            throw new BadRequestAlertException("A milestone exercise group must be deleted through its own endpoint", ENTITY_NAME, "milestoneGroupWrongEndpoint");
+        }
         exerciseVariantGroupRepository.delete(group);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, group.getTitle())).build();
     }
@@ -246,13 +269,50 @@ public class ExerciseVariantGroupResource {
         if (exerciseCourse == null || !Objects.equals(exerciseCourse.getId(), courseId)) {
             throw new BadRequestAlertException("The exercise does not belong to the course in the path", ENTITY_NAME, "courseIdMismatch");
         }
-        ExerciseVariantGroup group = assignmentDTO.groupId() == null ? null : exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(assignmentDTO.groupId(), courseId);
+        ExerciseVariantGroup group = resolveTargetGroup(assignmentDTO.groupId(), courseId);
         if (group != null && exercise instanceof QuizExercise quizExercise && quizExercise.getQuizMode() != QuizMode.INDIVIDUAL) {
             // Synchronized/batched quizzes have a single shared run, so only individual-mode quizzes (which support
             // per-student dates) can share a group timeline.
             throw new BadRequestAlertException("Only individual-mode quizzes can be added to an exercise group", ENTITY_NAME, "quizNotIndividual");
         }
+        if (exercise instanceof UserStoryExercise && !(group instanceof MilestoneExerciseGroup)) {
+            // A UserStory is meaningless without a Milestone (repositories, timeline and shared test cases all come from
+            // one) — it may move between Milestone groups, but never leave one or join a plain variant group.
+            throw new BadRequestAlertException("A user story exercise must always belong to a milestone exercise group", ENTITY_NAME, "userStoryRequiresMilestoneGroup");
+        }
+        if (exercise instanceof UserStoryExercise && group instanceof MilestoneExerciseGroup
+                && programmingExerciseStudentParticipationRepository.existsByExerciseId(exercise.getId())) {
+            // Moving re-syncs the (shared) repository URIs onto the exercise (see ExerciseVariantGroupService.assignToGroup /
+            // UserStoryExerciseService.applyMilestoneConfig) - a student who already started at the old repository would be
+            // silently left behind, so the move is rejected once any participation exists.
+            throw new BadRequestAlertException("This user story exercise cannot be moved because students have already started it", ENTITY_NAME,
+                    "userStoryHasStudentParticipations");
+        }
+        if (group instanceof MilestoneExerciseGroup && (exercise.getClass() == ProgrammingExercise.class || exercise instanceof MilestoneExercise)) {
+            // Only user stories (and, implicitly, quiz/text/modeling/file-upload exercises) may join a milestone group —
+            // a bare programming exercise has no relevant task/test-case wiring to the milestone, and the milestone
+            // exercise itself is wired via its own dedicated field, never as a member of this collection.
+            throw new BadRequestAlertException("Only user story exercises may be added to a milestone exercise group", ENTITY_NAME, "onlyUserStoriesInMilestoneGroup");
+        }
         exerciseVariantGroupService.assignToGroup(exercise, group);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Resolves the assignment target, which may be a group of either type. Tried as a milestone group first, because that
+     * is the only case needing more than the group row itself: joining one copies the milestone exercise's build config
+     * and repository URIs onto the member, so its anchor must come fully hydrated.
+     *
+     * @param groupId  the id of the target group, or {@code null} to unassign
+     * @param courseId the id of the course the group must belong to
+     * @return the target group, or {@code null} when {@code groupId} is {@code null}
+     */
+    @Nullable
+    private ExerciseVariantGroup resolveTargetGroup(@Nullable Long groupId, Long courseId) {
+        if (groupId == null) {
+            return null;
+        }
+        return milestoneExerciseGroupRepository.findByIdAndCourseIdWithDetails(groupId, courseId).map(ExerciseVariantGroup.class::cast)
+                .orElseGet(() -> exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(groupId, courseId));
     }
 }

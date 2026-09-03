@@ -518,7 +518,7 @@ describe('Course Management Exercises Component', () => {
             comp.confirmDeleteGroup({ id: 10, title: 'G', exercises: [] });
             dialogOptions.delete();
 
-            expect(deleteSpy).toHaveBeenCalledWith(1, 10);
+            expect(deleteSpy).toHaveBeenCalledWith(1, 10, undefined);
             expect(groupsSpy).toHaveBeenCalled();
         });
 

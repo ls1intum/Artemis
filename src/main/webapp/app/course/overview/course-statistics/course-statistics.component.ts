@@ -9,7 +9,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { CourseOverviewExercisesService } from 'app/course/overview/services/course-overview-exercises.service';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType, baseExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
@@ -478,7 +478,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
         exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || dayjs().add(5, 'year')).valueOf()]);
         exercises.forEach((exercise) => {
-            if (!exercise.dueDate || exercise.dueDate.isBefore(dayjs()) || exercise.type === ExerciseType.PROGRAMMING) {
+            if (!exercise.dueDate || exercise.dueDate.isBefore(dayjs()) || baseExerciseType(exercise.type) === ExerciseType.PROGRAMMING) {
                 const series = CourseStatisticsComponent.generateDefaultSeries();
 
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
@@ -777,7 +777,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @param allSeries an array of dedicated objects containing the students' performance in this exercise that is visualized by the chart
      */
     private pushToData(exercise: Exercise, allSeries: Series[]): void {
-        const exerciseType = exercise.type!;
+        // Bucketed by the base type on purpose: the per-type scores this chart annotates the groups with are computed
+        // server-side over the five base types, so a `user-story` bucket would have no scores to read at all.
+        const exerciseType = baseExerciseType(exercise.type)!;
         const ngxExercise = new NgxExercise(exercise.title, allSeries, exerciseType);
         this.exerciseGroupsInProgress.get(exerciseType)!.push(ngxExercise);
         this.presentationScoreEnabled.set(exerciseType, (this.presentationScoreEnabled.get(exerciseType) ?? false) || (exercise.presentationScoreEnabled ?? false));

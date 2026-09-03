@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
@@ -98,6 +99,14 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
                 default -> {
                 }
             }
+        }
+
+        // Refuse the push while the participant still owes a time estimate on a user story they have started (see
+        // MilestoneEffortGateService). Checked before the tree walk below, so a blocked push does not pay for it.
+        Optional<String> milestoneEffortRejectionReason = localVCServletService.findMilestoneEffortRejectionReason(repository, user);
+        if (milestoneEffortRejectionReason.isPresent()) {
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, milestoneEffortRejectionReason.get());
+            return;
         }
 
         try (Git git = new Git(repository)) {

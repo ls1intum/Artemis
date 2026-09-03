@@ -8,7 +8,7 @@
     <ng-template titleBarActions>
         <div class="d-flex align-items-center gap-2 border-end pe-2">
             @if (!exercise()!.exerciseGroup) {
-                <a [routerLink]="['/course-management', course()!.id, exercise()!.type + '-exercises', exercise()!.id, 'participations']" class="btn btn-primary btn-sm">
+                <a [routerLink]="['/course-management', course()!.id, exerciseUrlSegment(), exercise()!.id, 'participations']" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="faListAlt" />
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
                 </a>
@@ -22,7 +22,7 @@
                         exercise()!.exerciseGroup!.exam!.id!,
                         'exercise-groups',
                         exercise()!.exerciseGroup!.id!,
-                        exercise()!.type + '-exercises',
+                        exerciseUrlSegment(),
                         exercise()!.id,
                         'participations',
                     ]"
@@ -93,7 +93,7 @@
                 [totalRows]="totalRows()"
                 [loading]="isLoading()"
                 [tableActions]="filterActionsTemplate() ?? null"
-                [rowActions]="exercise()!.isAtLeastInstructor ? actionsTemplate : null"
+                [rowActions]="showRowActions() ? actionsTemplate : null"
                 [options]="tableOptions()"
                 (onLazyLoad)="onLazyLoad($event)"
             />

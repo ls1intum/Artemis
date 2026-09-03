@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.exercise.repository.MilestoneExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.UserStoryExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
 
@@ -44,10 +46,15 @@ public class ProgrammingExerciseDeletionService {
 
     private final RepositoryVcsAccessTokenService repositoryVcsAccessTokenService;
 
+    private final MilestoneExerciseGroupRepository milestoneExerciseGroupRepository;
+
+    private final MilestoneExercisePointsService milestoneExercisePointsService;
+
     public ProgrammingExerciseDeletionService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationDeletionService participationDeletionService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, InstanceMessageSendService instanceMessageSendService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, RepositoryVcsAccessTokenService repositoryVcsAccessTokenService,
+            MilestoneExerciseGroupRepository milestoneExerciseGroupRepository, MilestoneExercisePointsService milestoneExercisePointsService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationDeletionService = participationDeletionService;
@@ -55,6 +62,8 @@ public class ProgrammingExerciseDeletionService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.repositoryVcsAccessTokenService = repositoryVcsAccessTokenService;
+        this.milestoneExerciseGroupRepository = milestoneExerciseGroupRepository;
+        this.milestoneExercisePointsService = milestoneExercisePointsService;
     }
 
     /**
@@ -68,6 +77,12 @@ public class ProgrammingExerciseDeletionService {
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         final var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+
+        // Resolved before the exercise is gone: a milestone's maxPoints is the sum of its user stories' points, so
+        // deleting one makes its group worth less. The sync itself has to run afterwards, once the row is actually gone.
+        Optional<Long> owningMilestoneExerciseId = programmingExercise instanceof UserStoryExercise
+                ? milestoneExerciseGroupRepository.findMilestoneExerciseIdByUserStoryExerciseId(programmingExerciseId)
+                : Optional.empty();
 
         // The delete operation cancels scheduled tasks (like locking/unlocking repositories)
         // As the programming exercise might already be deleted once the scheduling node receives the message, only the
@@ -92,10 +107,19 @@ public class ProgrammingExerciseDeletionService {
         // Note: we fetch the programming exercise again here with student participations to avoid Hibernate issues during the delete operation below
         var programmingExerciseWithStudentParticipations = programmingExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(programmingExerciseId);
         log.debug("Delete programming exercises with student participations: {}", programmingExerciseWithStudentParticipations.getStudentParticipations());
+        // Delete all student participations first (including their participation-scoped VCS access tokens, whose
+        // participation_id foreign key uses ON DELETE RESTRICT and would otherwise block the participation delete
+        // that cascades from deleteById below).
+        participationDeletionService.deleteAllByExercise(programmingExerciseWithStudentParticipations, false);
         // Remove the repository-scoped VCS access tokens before deleting the exercise (the exercise_id foreign key uses ON DELETE RESTRICT).
         repositoryVcsAccessTokenService.deleteByExerciseId(programmingExerciseId);
         // This will also delete the template & solution participation: we explicitly use deleteById to avoid potential Hibernate issues during deletion
         programmingExerciseRepository.deleteById(programmingExerciseId);
+
+        // Deliberately after the delete, so the sum is taken over what is left. Skipped when the milestone itself is on
+        // its way out with the group (its own delete goes through this same method), since syncing a row that is about
+        // to disappear is pointless.
+        owningMilestoneExerciseId.ifPresent(milestoneExercisePointsService::syncMaxPoints);
     }
 
     private void deleteBuildPlans(ProgrammingExercise programmingExercise) {

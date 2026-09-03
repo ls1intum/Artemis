@@ -346,7 +346,7 @@ public class CourseScoreCalculationService {
         for (StudentParticipation participation : participationsOfStudent) {
             Exercise exercise = participation.getExercise();
             ExerciseVariantGroup variantGroup = exercise.getExerciseVariantGroup();
-            if (variantGroup == null || !includeIntoScoreCalculation(ExerciseCourseScoreDTO.from(exercise))) {
+            if (variantGroup == null || !hasCountablePoints(ExerciseCourseScoreDTO.from(exercise))) {
                 continue;
             }
             Result result = getResultForParticipation(participation, exercise.getDueDate());
@@ -657,6 +657,22 @@ public class CourseScoreCalculationService {
      * @param exercise the exercise whose involvement should be determined
      */
     private boolean includeIntoScoreCalculation(ExerciseCourseScoreDTO exercise) {
+        // A milestone group's points are carried by its MilestoneExercise, which counts here in its own right; counting
+        // its user stories as well would count the whole group twice. Their own includedInOverallScore stays
+        // INCLUDED_COMPLETELY on purpose (see UserStoryExercise) - membership, not that flag, is what excludes them.
+        return !exercise.memberOfMilestoneGroup() && hasCountablePoints(exercise);
+    }
+
+    /**
+     * Whether the exercise's points are earned and countable now - the inclusion setting plus the timing rules of
+     * {@link #includeIntoScoreCalculation}, without asking whether the course counts this exercise directly or through
+     * its group. {@link #calculateAchievedPointsPerVariantGroup} needs exactly this: it reports what a student earned
+     * <em>within</em> a group, so it must see the group's members.
+     *
+     * @param exercise the exercise whose points are being considered
+     * @return true if the exercise's points are countable
+     */
+    private boolean hasCountablePoints(ExerciseCourseScoreDTO exercise) {
         boolean isExerciseIncluded = exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
         boolean isExerciseFinished = !isAssessedAutomatically(exercise) && (exercise.dueDate() == null || exercise.dueDate().isBefore(ZonedDateTime.now()));
 

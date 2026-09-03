@@ -2,6 +2,7 @@
     <div
         id="test-information-box"
         class="mw-content text-nowrap rounded-3 py-1 px-2 border border-1 bg-module small fw-semibold h-100"
+        [ngClass]="informationBoxData()!.borderColor ? 'border-' + informationBoxData()!.borderColor : ''"
         ngbTooltip="{{ informationBoxData()!.tooltip | artemisTranslate: informationBoxData()!.tooltipParams }}"
     >
         <div id="test-title" class="text-body-tertiary" [jhiTranslate]="informationBoxData()!.title"></div>

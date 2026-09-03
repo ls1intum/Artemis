@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- The estimated and actual effort a student reports for a UserStoryExercise. Its own table rather than columns on
+         "participation": that table is single-table for every participation of every exercise type, and this is a
+         user-story-only concern. Keyed by participation, which also gives one shared pair per team. -->
+    <changeSet id="20260828093607-1" author="markus">
+        <createTable tableName="user_story_effort">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="participation_id" type="bigint">
+                <constraints nullable="false" unique="true" uniqueConstraintName="ux_user_story_effort_participation"/>
+            </column>
+            <!-- Nullable: a student may record the estimate and come back for the actual effort later. -->
+            <column name="estimated_effort" type="double"/>
+            <column name="actual_effort" type="double"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20260828093607-2" author="markus">
+        <!-- CASCADE: the reported effort is meaningless once the participation it belongs to is gone, and deleting a
+             participation is a routine operation (exercise reset, participant removal). -->
+        <addForeignKeyConstraint baseColumnNames="participation_id" baseTableName="user_story_effort"
+                                 constraintName="fk_user_story_effort_participation" deferrable="false" initiallyDeferred="false"
+                                 onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="participation" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

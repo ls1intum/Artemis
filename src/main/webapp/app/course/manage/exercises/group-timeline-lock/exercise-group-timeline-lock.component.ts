@@ -69,6 +69,9 @@ function referenceToGroup(reference: ExerciseVariantGroupReference | undefined):
     return {
         id: reference?.id,
         title: reference?.title,
+        // Carried through because the two group types are saved to separate endpoints (see ExerciseVariantGroupService.updateGroup);
+        // a user story's owning group is always a milestone group, so dropping this would save it to the wrong resource.
+        type: reference?.type,
         maxPoints: reference?.maxPoints,
         releaseDate: reference?.releaseDate,
         startDate: reference?.startDate,

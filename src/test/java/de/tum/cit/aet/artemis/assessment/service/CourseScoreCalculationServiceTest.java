@@ -340,9 +340,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         long variantGroupId = 1L;
         double variantGroupCap = 5.0;
         var variant1 = new ExerciseCourseScoreDTO(101L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, null, null, null, 5.0, 0.0,
-                course.getId(), variantGroupId, variantGroupCap);
+                course.getId(), variantGroupId, variantGroupCap, false);
         var variant2 = new ExerciseCourseScoreDTO(102L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, null, null, null, 5.0, 0.0,
-                course.getId(), variantGroupId, variantGroupCap);
+                course.getId(), variantGroupId, variantGroupCap, false);
         Set<ExerciseCourseScoreDTO> courseExercises = Set.of(variant1, variant2);
 
         // The student fully solved both variants (100% each), which would be 10 points without the cap.
@@ -365,9 +365,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Two standalone (non-variant) exercises worth 5 points each.
         var exercise1 = new ExerciseCourseScoreDTO(101L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, null, null, null, 5.0, 0.0,
-                course.getId(), null, null);
+                course.getId(), null, null, false);
         var exercise2 = new ExerciseCourseScoreDTO(102L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, null, null, null, 5.0, 0.0,
-                course.getId(), null, null);
+                course.getId(), null, null, false);
         Set<ExerciseCourseScoreDTO> courseExercises = Set.of(exercise1, exercise2);
 
         var gradeScores = List.of(new CourseGradeScoreDTO(1L, student.getId(), 101L, 100.0, true, null, ExerciseType.TEXT),
@@ -390,11 +390,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         // Two variants worth 5 points each in a group capped at 5, plus a standalone exercise worth 3 points.
         var variant1 = new ExerciseCourseScoreDTO(101L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, past, past, null, 5.0, 0.0,
-                course.getId(), variantGroupId, variantGroupCap);
+                course.getId(), variantGroupId, variantGroupCap, false);
         var variant2 = new ExerciseCourseScoreDTO(102L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, past, past, null, 5.0, 0.0,
-                course.getId(), variantGroupId, variantGroupCap);
+                course.getId(), variantGroupId, variantGroupCap, false);
         var standalone = new ExerciseCourseScoreDTO(103L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, past, past, null, 3.0, 0.0,
-                course.getId(), null, null);
+                course.getId(), null, null, false);
 
         double reachablePoints = courseScoreCalculationService.calculateReachablePoints(null, Set.of(variant1, variant2, standalone));
 

@@ -15,6 +15,8 @@ export interface InformationBox {
     tooltip?: string;
     tooltipParams?: Record<string, string | undefined>;
     contentColor?: string;
+    /** Semantic colour suffix for the box's own border, e.g. `state-warning` to flag a value the student must supply. */
+    borderColor?: string;
 }
 
 export interface StudentExamContent {
@@ -42,7 +44,13 @@ export interface StringNumberContent {
     value: string | number;
 }
 
-export type InformationBoxContent = StudentExamContent | DateContent | ExerciseContent | DifficultyLevelContent | StringNumberContent;
+/** Which of the two reported effort values a box shows; the header projects an inline editor for it. */
+export interface UserStoryEffortContent {
+    type: 'userStoryEffort';
+    value: 'estimatedEffort' | 'actualEffort';
+}
+
+export type InformationBoxContent = StudentExamContent | DateContent | ExerciseContent | DifficultyLevelContent | StringNumberContent | UserStoryEffortContent;
 
 @Component({
     imports: [ArtemisTranslatePipe, TranslateDirective, CommonModule, NgbTooltipModule],

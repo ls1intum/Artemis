@@ -62,11 +62,37 @@ public enum ExerciseType {
     public static ExerciseType getExerciseTypeFromClass(Class<? extends Exercise> exerciseClass) {
         return switch (exerciseClass.getSimpleName()) {
             case "TextExercise" -> TEXT;
-            case "ProgrammingExercise" -> PROGRAMMING;
+            // MilestoneExercise and UserStoryExercise are ProgrammingExercise subtypes (see the programming.domain
+            // package); they are classified as PROGRAMMING here too, rather than adding new ExerciseType constants that
+            // would ripple through every exhaustive switch over this enum, both server-side and in the mirrored Angular
+            // ExerciseType. Their "not graded" / "always grouped" / "not rendered" behavior is layered on separately.
+            case "ProgrammingExercise", "MilestoneExercise", "UserStoryExercise" -> PROGRAMMING;
             case "ModelingExercise" -> MODELING;
             case "FileUploadExercise" -> FILE_UPLOAD;
             case "QuizExercise" -> QUIZ;
             default -> throw new IllegalArgumentException("Received unexecpted exercise class name %s".formatted(exerciseClass.getSimpleName()));
+        };
+    }
+
+    /**
+     * The wire discriminator for an exercise class - the {@code type} property clients read, matching
+     * {@code Exercise}'s {@code @JsonSubTypes} names and {@code Exercise#getType()}.
+     * <p>
+     * Deliberately not the same as {@link #getExerciseTypeFromClass}: that one is the server-side <em>category</em>, and
+     * it flattens {@code MilestoneExercise} and {@code UserStoryExercise} into {@link #PROGRAMMING} so score bucketing
+     * and every exhaustive switch over this enum keep working. A DTO that serializes the flattened value, however, tells
+     * the client a user story is a plain programming exercise - which is wrong, because the client mirrors the real
+     * discriminators and branches on them. Projections therefore carry both: the category for the server's own logic,
+     * this string for the wire.
+     *
+     * @param exerciseClass the class to resolve the discriminator for
+     * @return the discriminator, e.g. {@code "programming"}, {@code "user-story"} or {@code "milestone"}
+     */
+    public static String getDiscriminatorFromClass(Class<? extends Exercise> exerciseClass) {
+        return switch (exerciseClass.getSimpleName()) {
+            case "MilestoneExercise" -> "milestone";
+            case "UserStoryExercise" -> "user-story";
+            default -> getExerciseTypeFromClass(exerciseClass).getValue();
         };
     }
 }

@@ -7,7 +7,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -136,7 +136,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         } else {
             base.push(ex.course!.id);
         }
-        base.push(ex.type + '-exercises', ex.id, 'scores');
+        // Not `ex.type + '-exercises'`: a UserStoryExercise/MilestoneExercise carries its own type discriminator but has
+        // no route of its own, so the raw type would match nothing (see getExerciseUrlSegment).
+        base.push(getExerciseUrlSegment(ex.type), ex.id, 'scores');
         return base;
     });
 

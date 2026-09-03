@@ -190,7 +190,11 @@ export class SubmissionPolicyUpdateComponent {
             this.policyFormInitialized = false;
         }
         const submissionPolicy = programmingExercise.submissionPolicy;
-        this.applySubmissionPolicyType(submissionPolicy?.type ?? SubmissionPolicyType.NONE);
+        // Built/reset before applySubmissionPolicyType below: that call ends by emitting submissionPolicyTypeChange,
+        // which the grading page's calculateFormStatus() reads this.invalid in response to - and invalid treats a
+        // still-missing this.form as "not ready yet" (returns true). On this exercise's very first emission that
+        // would report a false invalid=true with no later re-check to correct it, since a MilestoneExercise hides
+        // every other grading field a user might otherwise incidentally type into and recover from the stale value.
         if (!this.form) {
             this.form = new FormGroup({
                 submissionLimit: new FormControl({ value: submissionPolicy?.submissionLimit, disabled: !this.editable() }, [
@@ -213,6 +217,7 @@ export class SubmissionPolicyUpdateComponent {
                 exceedingPenalty: { value: submissionPolicy?.exceedingPenalty, disabled: !this.editable() },
             });
         }
+        this.applySubmissionPolicyType(submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (submissionPolicy && submissionPolicy.type !== SubmissionPolicyType.NONE) {
             this.policyFormInitialized = true;
         }

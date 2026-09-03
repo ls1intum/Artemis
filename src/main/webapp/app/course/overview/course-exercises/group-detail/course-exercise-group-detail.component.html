@@ -1,11 +1,63 @@
 @if (group(); as group) {
     <div class="exercise-page d-flex flex-column h-100 overflow-hidden">
         <div class="d-flex flex-column p-2 rounded-3 module-bg mb-2">
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center justify-content-between gap-2">
                 <h5 class="mb-0 py-1">
                     <fa-icon [icon]="faLayerGroup" />
                     {{ group.title }}
                 </h5>
+                @if (group.type === 'milestone') {
+                    <div class="d-flex align-items-center gap-2">
+                        @if (milestoneStatus(); as status) {
+                            @if (status.started) {
+                                <jhi-code-button
+                                    [smallButtons]="false"
+                                    [repositoryUri]="status.repositoryUri ?? ''"
+                                    [routerLinkForRepositoryView]="routerLinkForMilestoneRepository()"
+                                    [participations]="milestoneCodeButtonParticipations()"
+                                    [hideLabelMobile]="true"
+                                />
+                            } @else {
+                                <button
+                                    jhi-exercise-action-button
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                                    [buttonIcon]="faPlayCircle"
+                                    [buttonLabel]="'artemisApp.exerciseVariantGroup.detail.startMilestone' | artemisTranslate"
+                                    [buttonLoading]="isStartingMilestone()"
+                                    [hideLabelMobile]="false"
+                                    (click)="startMilestone()"
+                                ></button>
+                            }
+                        } @else if (milestoneStatusFailed()) {
+                            <!-- Without this the header renders nothing at all when the status request fails, which reads as a missing start action. -->
+                            <button
+                                jhi-exercise-action-button
+                                [buttonIcon]="faRotateRight"
+                                [buttonLabel]="'artemisApp.exerciseVariantGroup.detail.retryMilestoneStatus' | artemisTranslate"
+                                [buttonLoading]="isLoadingMilestoneStatus()"
+                                [hideLabelMobile]="false"
+                                [outlined]="true"
+                                (click)="retryMilestoneStatus()"
+                            ></button>
+                        }
+                        @if (course()?.isAtLeastEditor) {
+                            <div ngbDropdown class="d-inline">
+                                <button id="milestone-instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
+                                    <fa-icon [icon]="faWrench" />
+                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseVariantGroup.detail.instructorActions"></span>
+                                </button>
+                                <div ngbDropdownMenu aria-labelledby="milestone-instructor-actions-dropdown">
+                                    @for (memberExercise of exercises(); track memberExercise.id) {
+                                        <a class="btn" [routerLink]="exerciseManagementRouterLink(memberExercise)" ngbDropdownItem>
+                                            <fa-icon [fixedWidth]="true" [icon]="getIcon(memberExercise.type)" class="ms-2 me-3" />
+                                            <span>{{ memberExercise.title }}</span>
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
             </div>
 
             <hr class="my-2" />
@@ -50,13 +102,19 @@
         <div class="d-flex flex-column h-100 overflow-hidden module-bg rounded-3 p-2">
             <div class="group-panel-scroll">
                 <div class="variant-callout rounded-3 p-3 mb-3">
-                    <div class="fw-semibold mb-1" jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.heading"></div>
-                    <p class="mb-0 text-body-secondary">
-                        <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.body" [translateValues]="{ count: exercises().length }"></span>
-                        @if (capReducesMaxPoints()) {
+                    @if (milestoneDescriptionHtml(); as descriptionHtml) {
+                        <div class="markdown-preview" [innerHTML]="descriptionHtml"></div>
+                    } @else {
+                        <div class="fw-semibold mb-1" jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.heading"></div>
+                        <p class="mb-0 text-body-secondary">
+                            <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.body" [translateValues]="{ count: exercises().length }"></span>
+                        </p>
+                    }
+                    @if (capReducesMaxPoints()) {
+                        <p class="mb-0 text-body-secondary">
                             <span jhiTranslate="artemisApp.exerciseVariantGroup.detail.callout.cappedScore" [translateValues]="{ maxPoints: group.maxPoints }"></span>
-                        }
-                    </p>
+                        </p>
+                    }
                 </div>
                 <div class="variant-grid">
                     @for (exercise of exercises(); track exercise.id) {

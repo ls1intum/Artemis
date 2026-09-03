@@ -4,7 +4,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, getExerciseUrlSegmentOrEmpty } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -91,6 +91,12 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly smallColumns = input(false);
 
     readonly exercise = input.required<Exercise>();
+
+    /**
+     * The route segment the exercise is reachable under. Not `type + '-exercises'`: a UserStoryExercise and a
+     * MilestoneExercise have no route of their own, under /courses either (see getExerciseUrlSegment).
+     */
+    protected readonly exerciseUrlSegment = computed(() => getExerciseUrlSegmentOrEmpty(this.exercise()?.type));
     readonly courseId = input.required<number>();
     readonly smallButtons = input<boolean>(false);
     readonly examMode = input<boolean>(false);

@@ -612,6 +612,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExercise.addExampleSubmission(exampleSubmission);
         textExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, textExercise, 1)));
 
+        // opt in to showing the scores-page row actions to tutors
+        textExercise.setAllowTutorScoreRowActions(true);
+
         TextExerciseResponseDTO updatedTextExercise = request.putWithResponseBody("/api/text/text-exercises",
                 de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK);
 
@@ -620,6 +623,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(updatedTextExercise.courseId()).as("course was set for normal exercise").isNotNull();
         assertThat(updatedTextExercise.exerciseGroupId()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(updatedTextExercise.courseId()).as("courseId was not updated").isEqualTo(course.getId());
+        assertThat(updatedTextExercise.allowTutorScoreRowActions()).as("allowTutorScoreRowActions was correctly updated and returned").isTrue();
+        assertThat(textExerciseRepository.findById(updatedTextExercise.id()).orElseThrow().isAllowTutorScoreRowActions()).as("allowTutorScoreRowActions was persisted").isTrue();
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), any(), any());
         verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
@@ -674,10 +679,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         UpdateTextExerciseDTO malformedCreateDto = new UpdateTextExerciseDTO(null, "text-create-" + suffix, "channel-" + suffix, "short-" + suffix,
                 textExercise.getProblemStatement(), textExercise.getCategories(), textExercise.getDifficulty(), textExercise.getMaxPoints(), textExercise.getBonusPoints(),
                 textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(), textExercise.getAllowFeedbackRequests(),
-                textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(),
-                textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(), textExercise.getDueDate(), textExercise.getAssessmentDueDate(),
-                textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(), null, null, null, null,
-                Set.of(new CompetencyLinkDTO(null, 1.0)));
+                textExercise.getPresentationScoreEnabled(), textExercise.isAllowTutorScoreRowActions(), textExercise.getSecondCorrectionEnabled(),
+                textExercise.getFeedbackSuggestionModule(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(),
+                textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(),
+                null, null, null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
 
         request.putWithResponseBody("/api/text/text-exercises", malformedCreateDto, TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -688,10 +693,10 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         UpdateTextExerciseDTO malformedUpdateDto = new UpdateTextExerciseDTO(textExercise.getId(), textExercise.getTitle(), textExercise.getChannelName(),
                 textExercise.getShortName(), textExercise.getProblemStatement(), textExercise.getCategories(), textExercise.getDifficulty(), textExercise.getMaxPoints(),
                 textExercise.getBonusPoints(), textExercise.getIncludedInOverallScore(), textExercise.getAllowComplaintsForAutomaticAssessments(),
-                textExercise.getAllowFeedbackRequests(), textExercise.getPresentationScoreEnabled(), textExercise.getSecondCorrectionEnabled(),
-                textExercise.getFeedbackSuggestionModule(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(), textExercise.getStartDate(),
-                textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(), textExercise.getExampleSolution(), course.getId(),
-                null, null, null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
+                textExercise.getAllowFeedbackRequests(), textExercise.getPresentationScoreEnabled(), textExercise.isAllowTutorScoreRowActions(),
+                textExercise.getSecondCorrectionEnabled(), textExercise.getFeedbackSuggestionModule(), textExercise.getGradingInstructions(), textExercise.getReleaseDate(),
+                textExercise.getStartDate(), textExercise.getDueDate(), textExercise.getAssessmentDueDate(), textExercise.getExampleSolutionPublicationDate(),
+                textExercise.getExampleSolution(), course.getId(), null, null, null, null, Set.of(new CompetencyLinkDTO(null, 1.0)));
 
         request.putWithResponseBody("/api/text/text-exercises", malformedUpdateDto, TextExerciseResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
@@ -894,9 +899,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         var src = ImportTextExerciseDTO.of(textExercise);
         var dto = new ImportTextExerciseDTO(src.id(), src.title(), src.channelName(), src.shortName(), src.problemStatement(), src.categories(), src.difficulty(), null,
                 src.maxPoints(), src.bonusPoints(), null, src.allowComplaintsForAutomaticAssessments(), src.allowFeedbackRequests(), src.presentationScoreEnabled(),
-                src.secondCorrectionEnabled(), src.feedbackSuggestionModule(), src.gradingInstructions(), src.releaseDate(), src.startDate(), src.dueDate(),
-                src.assessmentDueDate(), src.exampleSolutionPublicationDate(), src.exampleSolution(), src.courseId(), src.exerciseGroupId(), src.teamAssignmentConfig(),
-                src.plagiarismDetectionConfig(), src.gradingCriteria(), src.competencyLinks());
+                src.allowTutorScoreRowActions(), src.secondCorrectionEnabled(), src.feedbackSuggestionModule(), src.gradingInstructions(), src.releaseDate(), src.startDate(),
+                src.dueDate(), src.assessmentDueDate(), src.exampleSolutionPublicationDate(), src.exampleSolution(), src.courseId(), src.exerciseGroupId(),
+                src.teamAssignmentConfig(), src.plagiarismDetectionConfig(), src.gradingCriteria(), src.competencyLinks());
 
         var newTextExerciseDto = request.postWithResponseBody("/api/text/text-exercises/import?sourceExerciseId=" + textExercise.getId(), dto, TextExerciseResponseDTO.class,
                 HttpStatus.CREATED);

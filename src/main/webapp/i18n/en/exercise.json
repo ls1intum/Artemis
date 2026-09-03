@@ -285,6 +285,10 @@
                 "title": "Presentation",
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
             },
+            "allowTutorScoreRowActions": {
+                "title": "Allow tutors to use scores page actions",
+                "description": "If enabled, users who are at least tutor (not only instructors) can see and use the per-row actions on the exercise scores page."
+            },
             "codeEditorSync": {
                 "newCommitAlert": "New commit detected — A new commit was pushed to this repository. Save and submit your changes first, then refresh the page to load the latest version."
             },

@@ -287,7 +287,7 @@ public class ProgrammingExerciseParticipationService {
         if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return templateParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURL);
         }
-        return studentParticipationRepository.findWithSubmissionsByRepositoryUriElseThrow(repositoryURL);
+        return studentParticipationRepository.findWithSubmissionsByExerciseIdAndRepositoryUriElseThrow(exercise.getId(), repositoryURL);
 
     }
 
@@ -313,7 +313,7 @@ public class ProgrammingExerciseParticipationService {
             return templateParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
         }
 
-        return studentParticipationRepository.findByRepositoryUriElseThrow(repositoryURL);
+        return studentParticipationRepository.findByExerciseIdAndRepositoryUriElseThrow(exercise.getId(), repositoryURL);
     }
 
     /**

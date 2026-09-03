@@ -70,7 +70,7 @@
                         @if (isExerciseDashboard() && exercise() && exercise()!.id && course() && course()!.id) {
                             <td>
                                 <a
-                                    [routerLink]="['/course-management', course()!.id, exercise()!.type + '-exercises', exercise()!.id, 'complaints']"
+                                    [routerLink]="['/course-management', course()!.id, exerciseUrlSegment(), exercise()!.id, 'complaints']"
                                     [queryParams]="{ tutorId: tutor.userId }"
                                 >
                                     {{ tutor.numberOfAcceptedComplaints }}
@@ -79,7 +79,7 @@
                             @if (!isExamMode()) {
                                 <td>
                                     <a
-                                        [routerLink]="['/course-management', course()!.id, exercise()!.type + '-exercises', exercise()!.id, 'more-feedback-requests']"
+                                        [routerLink]="['/course-management', course()!.id, exerciseUrlSegment(), exercise()!.id, 'more-feedback-requests']"
                                         [queryParams]="{ tutorId: tutor.userId }"
                                     >
                                         {{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}

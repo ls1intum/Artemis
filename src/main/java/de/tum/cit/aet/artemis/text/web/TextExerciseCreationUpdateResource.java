@@ -407,6 +407,9 @@ public class TextExerciseCreationUpdateResource {
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
         }
+        if (dto.allowTutorScoreRowActions() != null) {
+            exercise.setAllowTutorScoreRowActions(dto.allowTutorScoreRowActions());
+        }
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
@@ -503,6 +506,9 @@ public class TextExerciseCreationUpdateResource {
         }
         if (dto.presentationScoreEnabled() != null) {
             exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.allowTutorScoreRowActions() != null) {
+            exercise.setAllowTutorScoreRowActions(dto.allowTutorScoreRowActions());
         }
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
