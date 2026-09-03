@@ -512,7 +512,7 @@ public class AgentSystemPromptService {
                     WORKSPACE
                     - SPEC.md: the only writable artifact in this stage
                     - problem-statement.md: placeholder or prior context, never authority over the instructor brief
-                    - reference/style/: form guidance only; do not copy its topic, API, requirements, or code
+                    - reference/style/: nothing here is needed in this stage. The SPEC form contract is stated above in full, so opening these costs turns and adds nothing
 
                     Programming language: %s
                     Package: %s
