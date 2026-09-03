@@ -289,13 +289,18 @@ public class LocalCIResultProcessingService {
             }
 
             if (programmingExerciseParticipation != null) {
-                if (result != null) {
-                    programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
-                }
-                else {
+                if (result == null) {
                     log.error("Result could not be processed for build job: {}", buildJob);
                     programmingSubmissionMessagingService.notifyUserAboutSubmissionError((Participation) programmingExerciseParticipation,
                             new BuildTriggerWebsocketError("Result could not be processed", programmingExerciseParticipation.getId()));
+                }
+                // A container of a multi-container build returns the result shared by the whole submission, which stays in
+                // progress until the last container finishes. Reporting it earlier tells the client the build is done and
+                // hands it a result carrying part of the feedback and no score, once per container: the client clears the
+                // pending submission on any result of that submission, and the same call reports the score to an external
+                // LMS over LTI and feeds Iris. A completion date marks the result the single-container path would emit.
+                else if (result.getCompletionDate() != null) {
+                    programmingMessagingService.notifyUserAboutNewResult(result, programmingExerciseParticipation);
                 }
 
                 if (!buildLogs.isEmpty()) {

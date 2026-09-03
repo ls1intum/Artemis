@@ -9,9 +9,13 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -402,9 +406,17 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, "mc-student-happy", RESULTS_DIRECTORY_REGEX, behaviorResults());
 
         ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        // The spy is not among the beans reset between tests, so only the calls of this build are counted.
+        clearInvocations(programmingMessagingService);
         processNewPush();
 
         ProgrammingSubmission submission = awaitFinalizedResult(participation.getId(), 120);
+
+        // The student is told about the build once, when the merged result is complete. A container that finishes first
+        // leaves the shared result in progress, and reporting that would show a finished build carrying part of the
+        // feedback and no score, corrected once per remaining container.
+        verify(programmingMessagingService, never()).notifyUserAboutNewResult(argThat(reported -> reported.getCompletionDate() == null), any());
+        verify(programmingMessagingService, timeout(2000).times(1)).notifyUserAboutNewResult(argThat(reported -> reported.getCompletionDate() != null), any());
 
         // The containers of one commit share a single submission and a single result.
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId())).hasSize(1);
