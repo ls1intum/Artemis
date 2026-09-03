@@ -28,8 +28,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
@@ -48,12 +46,9 @@ import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
@@ -80,8 +75,6 @@ public class LocalCIResultProcessingService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
-
-    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final ParticipationRepository participationRepository;
 
@@ -111,12 +104,10 @@ public class LocalCIResultProcessingService {
     public LocalCIResultProcessingService(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
-            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, DistributedDataAccessService distributedDataAccessService,
+            ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService,
             TransactionTemplate transactionTemplate) {
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
@@ -375,16 +366,14 @@ public class LocalCIResultProcessingService {
             // Append, link and finalize run in one programmatic transaction that commits before the lock is released, so
             // the next container of the same submission sees the appended feedback and the linked build job atomically.
             return transactionTemplate.execute(status -> {
-                // The count is resolved from the build plan only once per submission: the first container writes it to the
-                // submission, and every container (this one included) reads it back from there, so a plan edited while
-                // the build is running cannot change the number of containers this build is waiting for.
-                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected,
-                        determineExpectedContainerCount(buildJob.exerciseId()), buildJob.containerName());
+                Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, effectiveBuildResult, testsExpected, buildJob.containerName());
                 if (aggregatedResult == null) {
                     return null;
                 }
-                int expectedContainerCount = aggregatedResult.getSubmission() instanceof ProgrammingSubmission programmingSubmission
-                        && programmingSubmission.getExpectedContainerCount() != null ? programmingSubmission.getExpectedContainerCount() : 1;
+                // The trigger stamped every job of this commit with the number of jobs it scheduled, so the count this build
+                // waits for was fixed when the build started and is read from the job, not from the build plan, which may
+                // have been edited since. A job without the count is a single-container build.
+                int expectedContainerCount = buildJob.expectedContainerCount() != null ? buildJob.expectedContainerCount() : 1;
 
                 BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
                 // Link this container's build job to the shared result so finished containers can be counted below.
@@ -402,33 +391,6 @@ public class LocalCIResultProcessingService {
         }
         finally {
             aggregationLocks.unlock(lockKey);
-        }
-    }
-
-    /**
-     * Determines how many containers are expected to contribute to the submission's result, from the current build plan
-     * of the exercise. It matches the number of build jobs the trigger scheduled for the commit unless the build plan
-     * was edited in between.
-     * <p>
-     * The build config is loaded fresh by exercise id inside the current transaction, NOT read from the participation
-     * that was passed in: result processing runs on a pool thread with no open-session-in-view, so the participation is
-     * detached and its lazy {@code buildConfig} proxy would throw a {@link org.hibernate.LazyInitializationException}
-     * (it is bound to the closed session it was loaded in). Fetching in-session avoids that.
-     *
-     * @param exerciseId the id of the exercise that was built
-     * @return the expected number of containers, at least one
-     */
-    private int determineExpectedContainerCount(long exerciseId) {
-        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(exerciseId).orElse(null);
-        if (buildConfig == null) {
-            return 1;
-        }
-        try {
-            return Math.max(BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration()).effectiveContainers().size(), 1);
-        }
-        catch (JsonProcessingException e) {
-            log.warn("Could not determine the expected container count for exercise {}, assuming a single container", exerciseId, e);
-            return 1;
         }
     }
 

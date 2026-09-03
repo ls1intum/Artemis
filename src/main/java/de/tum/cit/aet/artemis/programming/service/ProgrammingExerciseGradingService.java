@@ -248,14 +248,13 @@ public class ProgrammingExerciseGradingService {
      * result grows as containers finish. All containers of one commit map to the same submission via participation and
      * commit hash, so no explicit grouping identity is needed.
      *
-     * @param participation          the participation that was built
-     * @param requestBody            the raw build result of the container
-     * @param testsExpected          whether tests were expected for this container
-     * @param expectedContainerCount the number of containers whose results are aggregated into the submission's result
-     * @param containerName          the name of the container that produced this result, used to label its build logs
+     * @param participation the participation that was built
+     * @param requestBody   the raw build result of the container
+     * @param testsExpected whether tests were expected for this container
+     * @param containerName the name of the container that produced this result, used to label its build logs
      * @return the aggregated result with this container's feedback appended, or null if it could not be created
      */
-    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected, int expectedContainerCount,
+    public Result appendContainerResult(@NonNull ProgrammingExerciseParticipation participation, @NonNull Object requestBody, boolean testsExpected,
             @Nullable String containerName) {
         try {
             ContinuousIntegrationResultService ciResultService = continuousIntegrationResultService.orElseThrow();
@@ -284,9 +283,6 @@ public class ProgrammingExerciseGradingService {
                         loaded.setParticipation((Participation) participation);
                         return loaded;
                     }).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            if (submission.getExpectedContainerCount() == null) {
-                submission.setExpectedContainerCount(expectedContainerCount);
-            }
 
             // Whether this container failed to build; applied to the submission once the attempt's result is resolved below.
             final boolean noTestFeedbacks = containerResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);

@@ -98,20 +98,18 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
 
         // First container finishes: its feedback is appended to a new, still in-progress result (no completion date yet).
         BuildResult resultA = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, false, 2, "container_a");
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, resultA, false, "container_a");
         assertThat(aggregatedResult).isNotNull();
         assertThat(aggregatedResult.getCompletionDate()).as("the result stays in progress until every container finished").isNull();
         buildJobRepository.save(new BuildJob(buildJobFor("job-a", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
         // Second container finishes: it appends to the same result rather than creating a second one.
         BuildResult resultB = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, false, 2, "container_b");
+        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, resultB, false, "container_b");
         assertThat(aggregatedResultAgain.getId()).as("all containers of one submission share a single result").isEqualTo(aggregatedResult.getId());
         buildJobRepository.save(new BuildJob(buildJobFor("job-b", participation, commitHash, "container_b"), BuildStatus.SUCCESSFUL, aggregatedResultAgain));
 
-        // The submission now expects two containers and both have finished (counted via the build jobs linked to the result).
-        ProgrammingSubmission reloadedSubmission = programmingSubmissionRepository.findById(submission.getId()).orElseThrow();
-        assertThat(reloadedSubmission.getExpectedContainerCount()).isEqualTo(2);
+        // Both containers have finished, counted via the build jobs linked to the result.
         assertThat(buildJobRepository.countByResultId(aggregatedResultAgain.getId())).isEqualTo(2);
         assertThat(buildJobRepository.existsByResultIdAndBuildStatusNot(aggregatedResultAgain.getId(), BuildStatus.SUCCESSFUL)).isFalse();
 
@@ -159,7 +157,7 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         submission.setParticipation(participation);
         submission = programmingSubmissionRepository.save(submission);
         BuildResult containerResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, false, 1, "container_a");
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, containerResult, false, "container_a");
         buildJobRepository.save(new BuildJob(buildJobFor("job-rated", participation, commitHash, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
         Result finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResult, participation, true, ZonedDateTime.now());
@@ -201,14 +199,14 @@ class LocalCIResultServiceIntegrationTest extends AbstractProgrammingIntegration
         // the instructor container finishes with a passing test
         var instructorJob = new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO("instructorTest", List.of())));
         BuildResult instructorResult = new BuildResult(null, commitHash, commitHash, true, ZonedDateTime.now(), List.of(instructorJob), null, null, false, 0);
-        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, instructorResult, true, 2, "instructor_tests");
+        Result aggregatedResult = programmingExerciseGradingService.appendContainerResult(participation, instructorResult, true, "instructor_tests");
         assertThat(aggregatedResult.getFeedbacks()).as("the instructor container produced feedback").isNotEmpty();
         buildJobRepository.save(new BuildJob(buildJobFor("job-instructor", participation, commitHash, "instructor_tests"), BuildStatus.SUCCESSFUL, aggregatedResult));
 
         // the student container crashes: no test feedback, but build logs and a non-zero exit code
         var crashLog = new BuildLogDTO(ZonedDateTime.now(), "student container terminated: out of memory");
         BuildResult studentResult = new BuildResult(null, commitHash, commitHash, false, ZonedDateTime.now(), List.of(), List.of(crashLog), null, true, 137);
-        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, studentResult, true, 2, "student_tests");
+        Result aggregatedResultAgain = programmingExerciseGradingService.appendContainerResult(participation, studentResult, true, "student_tests");
         buildJobRepository.save(new BuildJob(buildJobFor("job-student", participation, commitHash, "student_tests"), BuildStatus.FAILED, aggregatedResultAgain));
 
         // the instructor container's feedback survives the student container's crash

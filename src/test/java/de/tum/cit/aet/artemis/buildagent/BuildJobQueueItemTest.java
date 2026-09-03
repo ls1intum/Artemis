@@ -27,18 +27,18 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
  */
 class BuildJobQueueItemTest {
 
-    private static BuildJobQueueItem jobWithIdentity(Long submissionId, String containerName) {
+    private static BuildJobQueueItem jobWithIdentity(Integer expectedContainerCount, String containerName) {
         var jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().minusMinutes(1), null, null, null, 15);
         var repositoryInfo = new RepositoryInfo("slug", RepositoryType.USER, RepositoryType.USER, "https://example.com/assignment.git", "https://example.com/tests.git",
                 "https://example.com/solution.git", new String[] {}, new String[] {});
         var buildConfig = new BuildConfig("script", "image", "commit", "assignmentCommit", "testCommit", "main", ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, false, false,
                 List.of("results/*.xml"), 15, "assignmentPath", "testPath", "solutionPath", null);
-        return new BuildJobQueueItem("id", "name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, submissionId, containerName, null);
+        return new BuildJobQueueItem("id", "name", null, 1, 1, 1, 0, 0, null, repositoryInfo, jobTimingInfo, buildConfig, null, expectedContainerCount, containerName, null);
     }
 
     @Test
     void testJavaSerializationRoundTripKeepsContainerIdentity() throws Exception {
-        var original = jobWithIdentity(42L, "student_tests");
+        var original = jobWithIdentity(2, "student_tests");
 
         var out = new ByteArrayOutputStream();
         try (var objectOut = new ObjectOutputStream(out)) {
@@ -52,18 +52,18 @@ class BuildJobQueueItemTest {
         // record equals() compares the String[] arrays in RepositoryInfo by reference, so a plain isEqualTo would fail
         // after any round-trip; a recursive comparison checks the whole object (including the new identity fields) by value
         assertThat(deserialized).usingRecursiveComparison().isEqualTo(original);
-        assertThat(deserialized.submissionId()).isEqualTo(42L);
+        assertThat(deserialized.expectedContainerCount()).isEqualTo(2);
         assertThat(deserialized.containerName()).isEqualTo("student_tests");
     }
 
     @Test
     void testJsonSerializationRoundTripKeepsContainerIdentity() throws Exception {
         var mapper = JsonObjectMapper.get();
-        var original = jobWithIdentity(42L, "student_tests");
+        var original = jobWithIdentity(2, "student_tests");
 
         var deserialized = mapper.readValue(mapper.writeValueAsString(original), BuildJobQueueItem.class);
 
-        assertThat(deserialized.submissionId()).isEqualTo(42L);
+        assertThat(deserialized.expectedContainerCount()).isEqualTo(2);
         assertThat(deserialized.containerName()).isEqualTo("student_tests");
     }
 
@@ -75,7 +75,7 @@ class BuildJobQueueItemTest {
 
         var deserialized = mapper.readValue(mapper.writeValueAsString(original), BuildJobQueueItem.class);
 
-        assertThat(deserialized.submissionId()).isNull();
+        assertThat(deserialized.expectedContainerCount()).isNull();
         assertThat(deserialized.containerName()).isNull();
     }
 }

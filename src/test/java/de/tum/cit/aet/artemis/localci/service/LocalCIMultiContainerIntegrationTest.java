@@ -388,7 +388,6 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(result.getScore()).isGreaterThan(0.0);
         assertThat(result.isSuccessful()).isTrue();
         assertThat(submission.isBuildFailed()).isFalse();
-        assertThat(submission.getExpectedContainerCount()).isEqualTo(2);
     }
 
     @Test
@@ -409,7 +408,6 @@ class LocalCIMultiContainerIntegrationTest extends AbstractProgrammingIntegratio
 
         // The containers of one commit share a single submission and a single result.
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId())).hasSize(1);
-        assertThat(submission.getExpectedContainerCount()).isEqualTo(2);
         assertThat(submission.isBuildFailed()).isFalse();
         assertThat(submission.getResults()).hasSize(1);
 

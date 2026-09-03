@@ -539,6 +539,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
             assertThat(jobs).extracting(BuildJobQueueItem::containerName).containsExactlyInAnyOrder("container_a", "container_b");
             assertThat(jobs).extracting(BuildJobQueueItem::id).doesNotHaveDuplicates();
+            // every job carries the number of jobs scheduled for the commit; the result processing waits for that many
+            assertThat(jobs).extracting(BuildJobQueueItem::expectedContainerCount).containsOnly(2);
 
             BuildJobQueueItem jobA = jobs.stream().filter(job -> "container_a".equals(job.containerName())).findFirst().orElseThrow();
             BuildJobQueueItem jobB = jobs.stream().filter(job -> "container_b".equals(job.containerName())).findFirst().orElseThrow();
@@ -561,6 +563,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             List<BuildJobQueueItem> jobs = queuedJobs.getAll().stream().filter(job -> job.participationId() == studentParticipation.getId()).toList();
             assertThat(jobs).hasSize(1);
             assertThat(jobs.getFirst().containerName()).isNull();
+            assertThat(jobs.getFirst().expectedContainerCount()).isNull();
         }
 
         @Test
