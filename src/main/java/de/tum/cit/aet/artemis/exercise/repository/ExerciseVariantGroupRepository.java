@@ -96,6 +96,47 @@ public interface ExerciseVariantGroupRepository extends ArtemisJpaRepository<Exe
     int attachToCourse(@Param("groupId") long groupId, @Param("courseId") long courseId);
 
     /**
+     * Claims an exercise for a group, but only while it still belongs to none. Two variant jobs generated from the
+     * same source race here: both can read the source as ungrouped and then assign it, so the later write would take
+     * it out of the group the earlier one created and leave that group without the original it promised. Letting the
+     * database decide who wins makes the loser observable — a caller that does not update a row knows another job
+     * claimed the exercise first. Native for the same reason as {@link #attachToCourse}: this is a plain conditional
+     * FK write, and JPQL bulk updates on the polymorphic {@code Exercise} hierarchy are not.
+     *
+     * @param exerciseId the exercise to claim
+     * @param groupId    the group to claim it for
+     * @return 1 when the exercise was claimed, 0 when it already belonged to a group
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = """
+            UPDATE exercise
+            SET exercise_variant_group_id = :groupId
+            WHERE id = :exerciseId
+                AND exercise_variant_group_id IS NULL
+            """, nativeQuery = true)
+    int claimExerciseIfUngrouped(@Param("exerciseId") long exerciseId, @Param("groupId") long groupId);
+
+    /**
+     * Gives up a claim made by {@link #claimExerciseIfUngrouped} when the assignment that followed it was rejected
+     * before anything else was written. Scoped to the claiming group, so it can never release a membership somebody
+     * else established in the meantime.
+     *
+     * @param exerciseId the exercise to release
+     * @param groupId    the group it was claimed for
+     * @return 1 when the claim was released, 0 when the exercise no longer belonged to that group
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query(value = """
+            UPDATE exercise
+            SET exercise_variant_group_id = NULL
+            WHERE id = :exerciseId
+                AND exercise_variant_group_id = :groupId
+            """, nativeQuery = true)
+    int releaseExerciseFromGroup(@Param("exerciseId") long exerciseId, @Param("groupId") long groupId);
+
+    /**
      * Resolves the group owning the given exercise, or empty if the exercise is not a variant.
      * <p>
      * Navigating from {@code Exercise} in JPQL rather than reading {@link de.tum.cit.aet.artemis.exercise.domain.Exercise#getExerciseVariantGroup()}

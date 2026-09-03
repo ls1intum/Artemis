@@ -44,6 +44,8 @@ class VariantPlacementServiceNewGroupTest {
 
     private static final long VARIANT_ID = 12L;
 
+    private static final long GROUP_ID = 77L;
+
     private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     private ExerciseVariantGroupService exerciseVariantGroupService;
@@ -75,8 +77,10 @@ class VariantPlacementServiceNewGroupTest {
         when(exerciseRepository.findByIdElseThrow(SOURCE_ID)).thenReturn(source);
 
         createdGroup = new ExerciseVariantGroup();
-        createdGroup.setId(77L);
+        createdGroup.setId(GROUP_ID);
         when(exerciseVariantGroupService.createGroup(anyLong(), any())).thenReturn(createdGroup);
+        // The source is claimed atomically before it joins; it is ungrouped unless a test says another job won it.
+        when(exerciseVariantGroupRepository.claimExerciseIfUngrouped(SOURCE_ID, GROUP_ID)).thenReturn(1);
         // Editable unless a test says otherwise — the production predicate answers this for both members.
         when(exerciseVariantGroupService.canJoinGroup(any())).thenReturn(true);
     }
@@ -162,6 +166,41 @@ class VariantPlacementServiceNewGroupTest {
         // The variant is placed before the source, so its membership — and the group holding it — survive the failure.
         verify(exerciseVariantGroupService).assignToGroup(variant, createdGroup);
         verify(exerciseVariantGroupRepository, never()).delete(any());
+    }
+
+    @Test
+    void leavesTheSourceInTheGroupAParallelJobClaimedItFor() {
+        // Both jobs were generated from the same source and both read it as ungrouped. The other one claimed it
+        // first; assigning on this job's stale reading would take the source out of the group that job created.
+        when(exerciseVariantGroupRepository.claimExerciseIfUngrouped(SOURCE_ID, GROUP_ID)).thenReturn(0);
+
+        List<String> warnings = placementService.place(variant, SOURCE_ID, newGroupRequest());
+
+        verify(exerciseVariantGroupService).assignToGroup(variant, createdGroup);
+        verify(exerciseVariantGroupService, never()).assignToGroup(source, createdGroup);
+        verify(exerciseVariantGroupRepository, never()).delete(any());
+        assertThat(warnings).singleElement().asString().contains("its source exercise was not added").contains("already belongs to another variant group");
+    }
+
+    @Test
+    void givesTheClaimBackWhenTheSourceQuizStartedBeforeItCouldJoin() {
+        // The claim is the only thing written before the assignment's own editability check rejects, so it must not
+        // outlive it: the source would be a member of a group whose timeline it never adopted.
+        doThrow(new BadRequestAlertException("quiz started", "exerciseVariantGroup", "quizMemberNotEditable")).when(exerciseVariantGroupService).assignToGroup(source,
+                createdGroup);
+
+        placementService.place(variant, SOURCE_ID, newGroupRequest());
+
+        verify(exerciseVariantGroupRepository).releaseExerciseFromGroup(SOURCE_ID, GROUP_ID);
+    }
+
+    @Test
+    void keepsTheClaimWhenTheSourceAssignmentFailsForAReasonThatMayHavePersistedMembership() {
+        doThrow(invalidBuildPlanConfiguration()).when(exerciseVariantGroupService).assignToGroup(source, createdGroup);
+
+        catchThrowable(() -> placementService.place(variant, SOURCE_ID, newGroupRequest()));
+
+        verify(exerciseVariantGroupRepository, never()).releaseExerciseFromGroup(anyLong(), anyLong());
     }
 
     /** The rejection a programming member's timeline update raises after its membership was already persisted. */

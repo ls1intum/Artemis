@@ -41,6 +41,9 @@ public class VariantPlacementService {
     /** Error key {@code ExerciseVariantGroupService} rejects a started or ended quiz member with — the only recoverable assignment failure. */
     private static final String QUIZ_NOT_EDITABLE_ERROR_KEY = "quizMemberNotEditable";
 
+    /** Why a source cannot join its variant's new group: it is already in one, whether read before or claimed by a parallel job. */
+    private static final String SOURCE_ALREADY_GROUPED_REASON = "it already belongs to another variant group";
+
     private final ExerciseVariantGroupRepository exerciseVariantGroupRepository;
 
     private final ExerciseVariantGroupService exerciseVariantGroupService;
@@ -162,7 +165,7 @@ public class VariantPlacementService {
         }
         if (source.getExerciseVariantGroup() != null) {
             log.warn("Not adding source exercise {} to a new variant group: it already belongs to group {}", source.getId(), source.getExerciseVariantGroup().getId());
-            return "it already belongs to another variant group";
+            return SOURCE_ALREADY_GROUPED_REASON;
         }
         if (source instanceof QuizExercise quizExercise && quizExercise.getQuizMode() != QuizMode.INDIVIDUAL) {
             log.warn("Not adding source quiz {} to a new variant group: only individual-mode quizzes can join a group", source.getId());
@@ -179,21 +182,35 @@ public class VariantPlacementService {
      * Adds the eligible source exercise to the group its variant now belongs to. Runs after the variant's own
      * assignment, so a rejection here costs a warning instead of a rollback of persisted membership.
      *
+     * Membership is claimed atomically first. {@link #sourceSkipReason} read the source before the group was even
+     * created, and two jobs generated from the same source run in parallel by design, so by now another one may have
+     * grouped it: assigning on that stale reading would take the source out of the group the other job created and
+     * leave it without the original the wizard promised — while both jobs report success. The conditional claim lets
+     * only one job through and turns the other into the skip it already knows how to report.
+     *
      * @param source the exercise the variant was generated from
      * @param group  the group the variant was just placed in
      * @return null when the source was added, otherwise the instructor-facing reason it was skipped
      */
     @Nullable
     private String assignSourceToNewGroup(Exercise source, ExerciseVariantGroup group) {
+        if (exerciseVariantGroupRepository.claimExerciseIfUngrouped(source.getId(), group.getId()) != 1) {
+            log.warn("Not adding source exercise {} to new variant group {}: another job grouped it while this one was running", source.getId(), group.getId());
+            return SOURCE_ALREADY_GROUPED_REASON;
+        }
         try {
             exerciseVariantGroupService.assignToGroup(source, group);
         }
         catch (BadRequestAlertException raced) {
             if (!QUIZ_NOT_EDITABLE_ERROR_KEY.equals(raced.getErrorKey())) {
-                // Only the quiz race is a skip; every other rejection is a real placement failure for the caller.
+                // Only the quiz race is a skip; every other rejection is a real placement failure for the caller. The
+                // claim stays: such a rejection can be raised AFTER membership was persisted (see the variant's own
+                // assignment above), and releasing it would then ungroup an exercise whose timeline was already written.
                 throw raced;
             }
-            // The source's quiz batch started between the eligibility check and the assignment.
+            // The source's quiz batch started between the eligibility check and the assignment. That check is the
+            // first thing the assignment does, so nothing but the claim was written and the claim goes back.
+            exerciseVariantGroupRepository.releaseExerciseFromGroup(source.getId(), group.getId());
             log.warn("Could not add source exercise {} to new variant group {}: {}", source.getId(), group.getId(), raced.getMessage());
             return QUIZ_NOT_EDITABLE_REASON;
         }
