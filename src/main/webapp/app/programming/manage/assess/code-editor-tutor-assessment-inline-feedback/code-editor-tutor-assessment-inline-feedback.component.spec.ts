@@ -252,6 +252,47 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.viewOnly()).toBe(true);
     });
 
+    it('should keep the editor open after an instruction drop that refreshes the parent and restore on cancel', () => {
+        const existing = {
+            type: FeedbackType.MANUAL,
+            credits: 1,
+            detailText: 'note',
+            reference: `file:${fileName}_line:${codeLine}`,
+        } as Feedback;
+        fixture.componentRef.setInput('feedback', existing);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+        fixture.detectChanges();
+
+        // Detaches the working copy from the bound list item, so the emit below rebinds the input to a new reference.
+        fixture.debugElement.queryAll(By.css('.inline-feedback__step'))[1].nativeElement.click();
+        fixture.detectChanges();
+
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description', usageCount: 0 };
+        vi.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation((feedback: Feedback) => {
+            feedback.gradingInstruction = instruction;
+            feedback.credits = instruction.credits;
+        });
+        comp.onUpdateFeedback.subscribe((draft) => {
+            fixture.componentRef.setInput('feedback', draft);
+            fixture.detectChanges();
+        });
+
+        comp.updateFeedbackOnDrop(new Event(''));
+        fixture.detectChanges();
+
+        expect(comp.viewOnly()).toBe(false);
+        expect(fixture.debugElement.query(By.css('#feedback-textarea'))).not.toBeNull();
+
+        fixture.debugElement.queryAll(By.css('.inline-feedback__footer button'))[0].nativeElement.click();
+        fixture.detectChanges();
+
+        expect(comp.viewOnly()).toBe(true);
+        expect(comp.currentFeedback().credits).toBe(1);
+        expect(comp.currentFeedback().detailText).toBe('note');
+        expect(comp.currentFeedback().gradingInstruction).toBeUndefined();
+    });
+
     it('should count feedback with one credit as positive', () => {
         const feedbackWithCredit = new Feedback();
         feedbackWithCredit.credits = 1;

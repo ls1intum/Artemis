@@ -119,10 +119,20 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     protected readonly isKeyboardDropTarget = computed(() => !this.readOnly() && !this.viewOnly() && this.selectionService.hasArmedInstruction());
 
     /**
-     * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
-     * feedback was bound via the input and resets accordingly when the input changes.
+     * The draft last emitted to the parent. The parent writes it back into {@link feedback}, and once a point edit has
+     * detached the working copy that write is a new input reference — which must not close an open editor.
      */
-    readonly viewOnly = linkedSignal<boolean>(() => !!this.feedback());
+    private lastEmittedFeedback?: Feedback;
+
+    /**
+     * Whether the feedback is rendered in read-only mode. Mirrors the original setter behavior: it is `true` whenever a
+     * feedback was bound via the input and resets accordingly when the input changes — except for the parent refresh
+     * caused by our own mid-edit emit, which keeps the card open so Cancel can still restore the pre-edit state.
+     */
+    readonly viewOnly = linkedSignal<Feedback | undefined, boolean>({
+        source: () => this.feedback(),
+        computation: (feedback, previous) => (previous && feedback === this.lastEmittedFeedback ? previous.value : !!feedback),
+    });
 
     /**
      * Edit-start snapshot for Cancel. Independent of {@link feedback}: emitting {@link onUpdateFeedback} mid-edit
@@ -169,6 +179,12 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.currentFeedback.set(feedback);
         // Align cancel snapshot with the saved card so a later edit/cancel pair is coherent if editFeedback is skipped.
         this.oldFeedback.set(deepClone(feedback));
+        this.emitUpdate(feedback);
+    }
+
+    /** Emits to the parent and remembers the draft so the resulting input rebind does not reset {@link viewOnly}. */
+    private emitUpdate(feedback: Feedback): void {
+        this.lastEmittedFeedback = feedback;
         this.onUpdateFeedback.emit(feedback);
     }
 
@@ -201,7 +217,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         this.viewOnly.set(restored.type === this.MANUAL);
         if (this.feedback()) {
             // Existing card: push restored state so in-place link/unlink during edit reverts in usage counts.
-            this.onUpdateFeedback.emit(restored);
+            this.emitUpdate(restored);
         } else {
             this.onPendingFeedbackChange.emit(undefined);
             this.onCancelFeedback.emit(this.codeLine());
@@ -323,7 +339,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     private notifyInstructionLinkChange(feedback: Feedback): void {
         if (this.feedback()) {
-            this.onUpdateFeedback.emit(feedback);
+            this.emitUpdate(feedback);
             return;
         }
         this.onPendingFeedbackChange.emit(feedback.gradingInstruction ? feedback : undefined);
