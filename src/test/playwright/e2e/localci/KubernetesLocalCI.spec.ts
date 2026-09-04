@@ -33,7 +33,7 @@ interface BuildJob {
     };
 }
 
-test.describe('Kubernetes LocalCI execution', { tag: '@multi-node' }, () => {
+test.describe('Kubernetes LocalCI execution', { tag: ['@multi-node', '@kubernetes'] }, () => {
     test('preserves queue estimates, results, and cancellation across native Jobs', async ({
         page,
         login,

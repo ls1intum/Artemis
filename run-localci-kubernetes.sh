@@ -416,7 +416,7 @@ run_acceptance_test() {
     playwright_arguments=(
         exec playwright test
         e2e/localci/KubernetesLocalCI.spec.ts
-        --project=multi-node-tests
+        --project=kubernetes-tests
         --workers=1
         --retries=0
     )
