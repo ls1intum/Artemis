@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
@@ -115,6 +116,30 @@ class QuizVariantAdapterServiceBatchCopyTest {
     }
 
     @Test
+    void theVariantKeepsThePlannedMetadataRatherThanTheSourcesOwn() throws Exception {
+        // Separating the two roles must not let the source's values win back. It does not: the import fills a field
+        // from the source only when the target leaves it empty, so the stub replays that rule and the planned title,
+        // difficulty and problem statement have to survive it.
+        ArgumentCaptor<QuizExercise> target = ArgumentCaptor.forClass(QuizExercise.class);
+        when(quizExerciseImportService.importQuizExercise(any(), any(), any())).thenAnswer(invocation -> {
+            QuizExercise imported = invocation.getArgument(0, QuizExercise.class);
+            QuizExercise importedFrom = invocation.getArgument(1, QuizExercise.class);
+            imported.setTitle(imported.getTitle() != null ? imported.getTitle() : importedFrom.getTitle());
+            imported.setDifficulty(imported.getDifficulty() != null ? imported.getDifficulty() : importedFrom.getDifficulty());
+            imported.setProblemStatement(imported.getProblemStatement() != null ? imported.getProblemStatement() : importedFrom.getProblemStatement());
+            imported.setId(PROVISIONED_ID);
+            return imported;
+        });
+
+        adapters.provision(source, standaloneRequest(DifficultyLevel.HARD), job);
+
+        verify(quizExerciseImportService).importQuizExercise(target.capture(), any(), any());
+        assertThat(target.getValue().getTitle()).isEqualTo("Variant Title");
+        assertThat(target.getValue().getDifficulty()).isEqualTo(DifficultyLevel.HARD);
+        assertThat(target.getValue().getProblemStatement()).isEqualTo("Statement");
+    }
+
+    @Test
     void stillDropsTheBatchesWhenAGroupPlacementForcesIndividualMode() throws Exception {
         // A group's shared per-student timeline cannot host a synchronized run, so this variant legitimately loses
         // the batches — and the source must say so too, or the import would copy them straight back.
@@ -135,6 +160,9 @@ class QuizVariantAdapterServiceBatchCopyTest {
         QuizExercise quiz = new QuizExercise();
         quiz.setId(SOURCE_ID);
         quiz.setQuizMode(QuizMode.SYNCHRONIZED);
+        quiz.setTitle("Original quiz");
+        quiz.setProblemStatement("Original statement");
+        quiz.setDifficulty(DifficultyLevel.EASY);
         Set<QuizBatch> batches = new HashSet<>();
         batches.add(new QuizBatch());
         batches.add(new QuizBatch());
@@ -143,7 +171,11 @@ class QuizVariantAdapterServiceBatchCopyTest {
     }
 
     private static VariantGenerationRequestDTO standaloneRequest() {
-        return new VariantGenerationRequestDTO(null, null, null, null, new VariantPlacementDTO(VariantPlacementDTO.PlacementType.STANDALONE, null, null));
+        return standaloneRequest(null);
+    }
+
+    private static VariantGenerationRequestDTO standaloneRequest(DifficultyLevel targetDifficulty) {
+        return new VariantGenerationRequestDTO(targetDifficulty, null, null, null, new VariantPlacementDTO(VariantPlacementDTO.PlacementType.STANDALONE, null, null));
     }
 
     private static VariantGenerationRequestDTO groupRequest() {
