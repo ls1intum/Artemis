@@ -61,18 +61,12 @@
                 />
                 <!-- repository select -->
                 <div ngbDropdown class="d-inline-block me-2">
-                    <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle [disabled]="isExerciseGenerationActionBlocked()">
+                    <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
                         {{ selectedRepository === RepositoryType.AUXILIARY ? selectedAuxiliaryRepositoryName : selectedRepository }}
                     </button>
                     <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
                         <button
-                            [disabled]="
-                                isExerciseGenerationActionBlocked() ||
-                                !exercise ||
-                                !exercise.templateParticipation ||
-                                !exercise.templateParticipation.id ||
-                                !exercise.templateParticipation.repositoryUri
-                            "
+                            [disabled]="!exercise || !exercise.templateParticipation || !exercise.templateParticipation.id || !exercise.templateParticipation.repositoryUri"
                             (click)="selectTemplateParticipation()"
                             ngbDropdownItem
                             [style.background-color]="selectedRepository === RepositoryType.TEMPLATE ? 'var(--link-color)' : 'transparent'"
@@ -80,13 +74,7 @@
                             <span jhiTranslate="artemisApp.editor.repoSelect.templateRepo"></span>
                         </button>
                         <button
-                            [disabled]="
-                                isExerciseGenerationActionBlocked() ||
-                                !exercise ||
-                                !exercise.solutionParticipation ||
-                                !exercise.solutionParticipation.id ||
-                                !exercise.solutionParticipation.repositoryUri
-                            "
+                            [disabled]="!exercise || !exercise.solutionParticipation || !exercise.solutionParticipation.id || !exercise.solutionParticipation.repositoryUri"
                             (click)="selectSolutionParticipation()"
                             ngbDropdownItem
                             [style.background-color]="selectedRepository === RepositoryType.SOLUTION ? 'var(--link-color)' : 'transparent'"
@@ -99,7 +87,6 @@
                                 class="flex-grow-1 text-start"
                                 ngbDropdownItem
                                 [disabled]="
-                                    isExerciseGenerationActionBlocked() ||
                                     loadingState() === LOADING_STATE.CREATING_ASSIGNMENT_REPO ||
                                     loadingState() === LOADING_STATE.DELETING_ASSIGNMENT_REPO ||
                                     !exercise.studentParticipations ||
@@ -151,7 +138,7 @@
                             }
                         </div>
                         <button
-                            [disabled]="isExerciseGenerationActionBlocked() || !exercise"
+                            [disabled]="!exercise"
                             (click)="selectTestRepository()"
                             ngbDropdownItem
                             [style.background-color]="selectedRepository === RepositoryType.TESTS ? 'var(--link-color)' : 'transparent'"
@@ -160,7 +147,7 @@
                         @for (auxiliaryRepository of exercise.auxiliaryRepositories; track auxiliaryRepository.id ?? i; let i = $index) {
                             @if (auxiliaryRepository.id) {
                                 <button
-                                    [disabled]="isExerciseGenerationActionBlocked() || !exercise"
+                                    [disabled]="!exercise"
                                     (click)="selectAuxiliaryRepository(auxiliaryRepository.id)"
                                     ngbDropdownItem
                                     [style.background-color]="

@@ -841,23 +841,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     override selectTemplateParticipation(): Promise<boolean> {
-        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectTemplateParticipation();
+        return super.selectTemplateParticipation();
     }
 
     override selectSolutionParticipation(): Promise<boolean> {
-        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectSolutionParticipation();
+        return super.selectSolutionParticipation();
     }
 
     override selectAssignmentParticipation(): Promise<boolean> {
-        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectAssignmentParticipation();
+        return super.selectAssignmentParticipation();
     }
 
     override selectTestRepository(): Promise<boolean> {
-        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectTestRepository();
+        return super.selectTestRepository();
     }
 
     override selectAuxiliaryRepository(repositoryId: number): Promise<boolean> {
-        return this.isExerciseGenerationActionBlocked() ? Promise.resolve(false) : super.selectAuxiliaryRepository(repositoryId);
+        return super.selectAuxiliaryRepository(repositoryId);
     }
 
     /**

@@ -885,14 +885,13 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
     });
 
-    it('does not navigate to another repository while exercise generation locks editing', async () => {
+    it('can navigate to another repository while exercise generation locks mutations', async () => {
         vi.spyOn(comp as any, 'isExerciseGenerationActionBlocked').mockReturnValue(true);
-        const router = TestBed.inject(Router);
-        const navigate = vi.spyOn(router, 'navigate');
+        const selectTemplate = vi.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'selectTemplateParticipation').mockResolvedValue(true);
 
-        await comp.selectTemplateParticipation();
+        await CodeEditorInstructorAndEditorContainerComponent.prototype.selectTemplateParticipation.call(comp);
 
-        expect(navigate).not.toHaveBeenCalled();
+        expect(selectTemplate).toHaveBeenCalledOnce();
     });
 
     it('saves and switches domains normally when exercise generation does not lock editing', () => {
